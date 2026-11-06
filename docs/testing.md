@@ -27,6 +27,7 @@ ruff check .    # Lint
 | `tests/integration/test_automation.py` | Mit Home Assistant: scharf/unscharf nach Uhrzeit und Wochentag, nie über ein anderes Profil, kein Abbruch laufender Alarme, Wartezeit bei Abwesenheit, Rückkehr, Optionen |
 | `tests/core/test_homecoming.py` | Heimkehr-Auswertung: Anwesenheit, Verzögerung zur Tür, Fehlalarme je Eingangsverzögerung, Bericht |
 | `tests/integration/test_homecoming.py` | Mit Home Assistant: Push-Knopf (gültig, veraltet, ohne Benutzer, standardmäßig aus), Beobachtung schaltet nichts, Bericht |
+| `tests/integration/test_acknowledge.py` | Mit Home Assistant: Unscharf während des Alarms beendet nur den Alarm, Überbrückung bis zum Schließen, Push-Knopf „Alarm beenden“ |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
 
 ## Geplant

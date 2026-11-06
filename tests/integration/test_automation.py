@@ -42,6 +42,17 @@ async def _at(hass: HomeAssistant, hour: int, minute: int, days: int = 1) -> Non
     await hass.async_block_till_done()
 
 
+def _next(after: Any, hour: int, minute: int) -> Any:
+    """Nächstes Vorkommen einer Uhrzeit nach ``after`` (unabhängig von der Tageszeit des Tests)."""
+    moment = after.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return moment if moment > after else moment + timedelta(days=1)
+
+
+async def _fire(hass: HomeAssistant, moment: Any) -> None:
+    async_fire_time_changed(hass, moment)
+    await hass.async_block_till_done()
+
+
 async def _later(hass: HomeAssistant, minutes: int) -> None:
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=minutes))
     await hass.async_block_till_done()
@@ -63,9 +74,11 @@ async def _setup(hass: HomeAssistant, **auto: Any) -> None:
 
 async def test_arm_and_disarm_by_time(hass: HomeAssistant) -> None:
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
-    await _at(hass, 23, 0)
+    # Nur bis zum nächsten 23:00 vorspulen – sonst fiele auch 06:30 in den Sprung
+    arm_at = _next(dt_util.now(), 23, 0)
+    await _fire(hass, arm_at)
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
-    await _at(hass, 6, 30, days=2)
+    await _fire(hass, _next(arm_at, 6, 30))
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 

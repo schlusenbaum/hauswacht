@@ -43,7 +43,9 @@ in der Zustandsmaschine geführt.
 | pending | EntryDelayElapsed | – | triggered |
 | triggered | ReactionTimeElapsed | – | alarm_hold (Sirenen-Stopp anfordern) |
 | alarm_hold | Sensor | Zyklen < Maximum | triggered (neuer Zyklus) |
-| arming/armed/pending/triggered/alarm_hold | DisarmRequested | Code gültig | disarmed |
+| arming/armed/pending | DisarmRequested | Code gültig | disarmed |
+| triggered/alarm_hold | DisarmRequested | Code gültig | **armed** (Alarm beendet, `AlarmAcknowledged`, offene Sensoren bis zum Schließen überbrückt) |
+| armed | SensorClosed | Sensor war bis zum Schließen überbrückt | armed (`SensorsRestored`, wieder überwacht) |
 | beliebig | Startup | – | **disarmed** |
 | armed/pending/alarm_hold | tamper_24h | Profil: `tamper_triggers_alarm` | triggered |
 
@@ -59,8 +61,11 @@ in der Zustandsmaschine geführt.
 - **Erneute Prüfung am Ende der Ausgangsverzögerung.** Bereits bestätigte Überbrückungen
   bleiben gültig. Neue Probleme können dann nicht mehr bestätigt werden, die Scharfschaltung
   wird abgebrochen (sichere Seite).
-- **Unscharf während `triggered`** erzeugt `StopReaction`. Ob tatsächlich etwas
-  ausgeschaltet wird, entscheidet der Sirenen-Guard (Brandsperre).
+- **Unscharf während `triggered` oder `alarm_hold` beendet nur den Alarm:** `StopReaction`,
+  zurück nach `armed` mit demselben Profil, Alarmzyklen von vorn. Sensoren, die in diesem
+  Moment offen sind, werden überbrückt, bis sie wieder schließen – sonst löste z. B. die offene
+  Tür sofort erneut aus. Erst ein weiteres Unscharf schaltet wirklich unscharf. Ob Sirenen
+  tatsächlich ausgehen, entscheidet der Sirenen-Guard (Brandsperre).
 - **Testmodus** lässt sich nur im Zustand `disarmed` umschalten und bleibt über Neustarts
   erhalten. Alle Reaktionen tragen das Testmodus-Kennzeichen.
 - **Neustart:** immer `disarmed`. War die Anlage vorher scharf, entsteht

@@ -6,6 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-06
+
+### Geändert
+- **Unscharf während eines Alarms beendet nur den Alarm**, das Profil bleibt scharf.
+  Sirenen gehen aus (Brandsperre gilt), Sensoren, die gerade offen sind, werden überbrückt,
+  bis sie wieder schließen. Erst ein zweites Unscharf schaltet unscharf. Gilt für Karte,
+  Bedienfeld, Push-Knopf und Automationen; ein eingestellter PIN wird abgefragt.
+- Push-Knopf heißt während eines Alarms „Alarm beenden“.
+- Neues Attribut `bypassed_until_closed` am Bedienfeld.
+
+### Behoben
+- Test der Uhrzeit-Automatik hing von der Tageszeit ab, zu der die Tests liefen.
+
 ## [0.10.1] - 2026-11-06
 
 ### Behoben

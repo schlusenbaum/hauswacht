@@ -43,9 +43,9 @@ def _panel(hass: HomeAssistant) -> str:
     return state.state
 
 
-def _action(call: ServiceCall) -> str:
+def _action(call: ServiceCall, title: str = "Unscharf schalten") -> str:
     actions = call.data["data"]["actions"]
-    assert actions[0]["title"] == "Unscharf schalten"
+    assert actions[0]["title"] == title
     assert actions[0]["authenticationRequired"] is True
     return str(actions[0]["action"])
 
@@ -91,8 +91,9 @@ async def test_push_button_also_on_alarm(hass: HomeAssistant, hass_admin_user: M
     set_sensor(hass, "binary_sensor.kuechenfenster", "on")
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
-    await _press(hass, _action(push[0]), hass_admin_user.id)
-    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    await _press(hass, _action(push[0], "Alarm beenden"), hass_admin_user.id)
+    # Während eines Alarms beendet der Knopf nur den Alarm, das Profil bleibt scharf
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
 
 
 async def test_stale_button_from_earlier_arming_is_ignored(

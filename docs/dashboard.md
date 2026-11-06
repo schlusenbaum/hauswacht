@@ -19,7 +19,7 @@ stehen oben in der Datei.
 | Kachel „Hauswacht“ | immer | Zustand mit Symbol des aktiven Profils |
 | Kachel „Profil“ und „Scharf schalten“ | nur unscharf | Profil wählen und scharf schalten – der einzige Weg zum Scharfschalten auf der Karte |
 | „Offen: …“ und „Trotzdem scharf“ | nur unscharf **und** Sensoren offen | Offene Sensoren mit Raum (z. B. „Küche: Fensterkontakt links“); gewähltes Profil mit Bestätigung scharf schalten, offene Sensoren werden überbrückt |
-| Knopf „Unscharf schalten“ | scharf, Verzögerung oder Alarm | Unscharf schalten; ist ein PIN eingestellt, fragt Home Assistant ihn ab |
+| Knopf „Unscharf schalten“ | scharf, Verzögerung oder Alarm | Unscharf schalten; **während eines Alarms beendet er nur den Alarm** (Profil bleibt scharf), ein zweites Tippen schaltet unscharf. Ist ein PIN eingestellt, fragt Home Assistant ihn ab |
 | Kachel „Hauswacht-System“ | nur wenn der Systemstatus nicht OK ist | Hinweis auf ausgefallene Sensoren oder Störungen |
 
 Die Symbolleiste mit den Bedienfeld-Knöpfen (`alarm-modes` mit allen Modi) ist weiter

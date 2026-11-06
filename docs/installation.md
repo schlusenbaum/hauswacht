@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.10.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.11.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -170,7 +170,7 @@ ebenfalls „nicht verfügbar“, deckt also beides ab.
    Bestätigung anhaken. Ohne diese Freigabe sendet Hauswacht nie einen Sirenenbefehl.
 
 Die Laufzeit entspricht der „Dauer der Alarmreaktion“ des Profils. Danach – und beim
-Unscharfschalten – schaltet Hauswacht die Sirenen aus, die es selbst eingeschaltet hat. Das ist
+Beenden des Alarms – schaltet Hauswacht die Sirenen aus, die es selbst eingeschaltet hat. Das ist
 für Sirenen wichtig, die nur Ein und Aus kennen. Sirenen mit eigener Laufzeit (z. B. Rauchmelder
 mit Höchstdauer) bekommen die Dauer zusätzlich mitgeschickt, höchstens aber die Höchstdauer
 des Geräts. Diese Höchstdauer wird nur gelesen, nie verändert.
@@ -224,6 +224,20 @@ jeweils mit dem Knopf **„Unscharf schalten“** direkt in der Benachrichtigung
   Sperrbildschirm ausblenden“ für die Home-Assistant-App.
 - Der Knopf funktioniert ohne PIN – er ersetzt die PIN-Eingabe durch das angemeldete Handy.
 - Nach dem Unscharfschalten wird die Benachrichtigung auf den Handys entfernt.
+
+## Alarm beenden
+
+**„Unscharf schalten“ während eines Alarms beendet nur den Alarm** – egal ob über die Karte,
+das Bedienfeld, die Push-Nachricht oder eine Automation:
+
+- Sirenen aus (Brandsperre gilt), Anzeige wieder „Scharf“ mit demselben Profil.
+- Was in diesem Moment offen ist (z. B. die Tür, durch die jemand kam), wird **überbrückt, bis
+  es wieder geschlossen ist**, und danach automatisch wieder überwacht. Alle anderen Sensoren
+  bleiben scharf.
+- Benachrichtigung „Alarm beendet … bleibt scharf. Bis zum Schließen nicht überwacht: …“.
+- **Erst ein zweites „Unscharf schalten“ schaltet die Anlage wirklich unscharf.**
+- Ist ein PIN eingestellt, wird er auch zum Beenden des Alarms abgefragt.
+- In der Push-Nachricht heißt der Knopf während eines Alarms **„Alarm beenden“**.
 
 ## Heimkehr-Beobachtung
 
