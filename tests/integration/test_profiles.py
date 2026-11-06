@@ -5,12 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+import voluptuous as vol
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntityFeature,
     AlarmControlPanelState,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, section
 from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -211,3 +212,53 @@ async def test_options_flow_delete_profile(hass: HomeAssistant) -> None:
     assert "vacation" not in entry.options["profiles"]
     features = _state(hass).attributes["supported_features"]
     assert not features & AlarmControlPanelEntityFeature.ARM_VACATION
+
+
+def _initial_form_data(schema: vol.Schema) -> dict[str, Any]:
+    """Nachbildung der Vorbelegung im Home-Assistant-Frontend (computeInitialHaFormData)."""
+    data: dict[str, Any] = {}
+    for key, value in schema.schema.items():
+        name = str(key)
+        suggested = (key.description or {}).get("suggested_value")
+        if suggested is not None:
+            data[name] = suggested
+        elif key.default is not vol.UNDEFINED:
+            data[name] = key.default()
+        elif isinstance(value, section):
+            nested = _initial_form_data(value.schema)
+            if isinstance(key, vol.Required) or nested:
+                data[name] = nested
+    return data
+
+
+def _missing_required(schema: vol.Schema, data: dict[str, Any]) -> list[str]:
+    missing: list[str] = []
+    for key, value in schema.schema.items():
+        name = str(key)
+        if isinstance(value, section):
+            missing += _missing_required(value.schema, data.get(name) or {})
+        elif isinstance(key, vol.Required) and data.get(name) in (None, ""):
+            missing.append(name)
+    return missing
+
+
+@pytest.mark.parametrize("profile", ["night", "custom"])
+async def test_profile_form_can_be_submitted_unchanged(hass: HomeAssistant, profile: str) -> None:
+    """Regression: "OK" darf nicht an unbefüllten Pflichtfeldern im Bereich Automatik scheitern."""
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "profiles"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "profile_edit"}
+    )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": profile})
+    assert flow["step_id"] == "profile_settings"
+    schema = flow["data_schema"]
+    data = _initial_form_data(schema)
+    assert _missing_required(schema, data) == []
+
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], data)
+    assert flow["type"] is FlowResultType.CREATE_ENTRY

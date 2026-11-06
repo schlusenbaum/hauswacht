@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-06
+
+### Behoben
+- Profile ließen sich seit 0.9.0 nicht speichern („Nicht alle Pflichtfelder sind ausgefüllt“),
+  solange der Bereich „Automatik“ zugeklappt war. Die Felder darin sind jetzt alle freiwillig
+  und werden vorbelegt. Ein neuer Test bildet die Vorbelegung der Oberfläche nach und prüft,
+  dass das Formular unverändert abgeschickt werden kann.
+
 ## [0.10.0] - 2026-11-06
 
 ### Hinzugefügt

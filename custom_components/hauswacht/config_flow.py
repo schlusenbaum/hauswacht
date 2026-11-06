@@ -355,7 +355,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional("notify", default=list(reaction.notify)): _list_selector(
                     self._notify_services(), multiple=True, custom=True
                 ),
-                vol.Optional("automation", default={}): section(
+                # Kein default am Bereich: Sonst füllt die Oberfläche die Felder darin nicht
+                # vor, und "OK" bleibt ohne Meldung wirkungslos.
+                vol.Optional("automation"): section(
                     _automation_schema(parse_automation(options, pid)),
                     {"collapsed": True},
                 ),
@@ -673,7 +675,7 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
             vol.Optional(
                 "auto_away_persons", description=suggested(list(auto.away_persons))
             ): EntitySelector(EntitySelectorConfig(domain="person", multiple=True)),
-            vol.Required("auto_away_delay", default=auto.away_delay): NumberSelector(
+            vol.Optional("auto_away_delay", default=auto.away_delay): NumberSelector(
                 NumberSelectorConfig(
                     min=1,
                     max=MAX_AWAY_DELAY,
@@ -682,7 +684,7 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
                     mode=NumberSelectorMode.BOX,
                 )
             ),
-            vol.Required(
+            vol.Optional(
                 "auto_disarm_on_arrival", default=auto.disarm_on_arrival
             ): BooleanSelector(),
         }
