@@ -25,8 +25,10 @@ ignore = ["PLR2004", "PLR0911", "PLR0912", "RUF001", "RUF002", "RUF003"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
-files = ["custom_components", "tests"]
+# Strenge Typprüfung für den reinen Kern; HA-Schicht wird in der CI mit HA getestet
+files = ["custom_components/hauswacht/core", "tests/core"]
 explicit_package_bases = true
+follow_imports = "silent"
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]

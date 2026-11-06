@@ -1,0 +1,90 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hauswacht",
+        "description": "Einbruchmeldeanlage Hauswacht einrichten. Die Anlage startet unscharf. Sirenen werden in dieser Version noch nicht angesteuert."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Hauswacht ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hauswacht-Optionen",
+        "menu_options": {
+          "code": "PIN",
+          "profile": "Zeiten der Profile"
+        }
+      },
+      "code": {
+        "title": "PIN",
+        "description": "Aktueller Stand: {pin_status}. Der PIN wird nur als Hash gespeichert. Ohne PIN darf die Anlage nicht für Sprachassistenten freigegeben werden.",
+        "data": {
+          "new_pin": "Neuer PIN (4–8 Ziffern)",
+          "remove_pin": "PIN entfernen",
+          "code_arm_required": "PIN auch zum Scharfschalten verlangen"
+        }
+      },
+      "profile": {
+        "title": "Profil",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "profile_settings": {
+        "title": "Zeiten für Profil {profile}",
+        "data": {
+          "exit_delay": "Ausgangsverzögerung",
+          "entry_delay": "Eingangsverzögerung",
+          "reaction_time": "Dauer der Alarmreaktion"
+        }
+      }
+    },
+    "error": {
+      "invalid_pin": "Der PIN muss aus 4 bis 8 Ziffern bestehen."
+    },
+    "abort": {
+      "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden."
+    }
+  },
+  "selector": {
+    "profile": {
+      "options": {
+        "home": "Zuhause",
+        "night": "Nacht",
+        "away": "Abwesend",
+        "vacation": "Urlaub"
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "test_mode": {
+        "name": "Testmodus"
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_code": {
+      "message": "Falscher PIN."
+    },
+    "unknown_profile": {
+      "message": "Unbekanntes Profil: {profile}."
+    },
+    "rejected_not_disarmed": {
+      "message": "Hauswacht muss erst unscharf geschaltet werden, bevor ein anderes Profil scharf geschaltet wird."
+    },
+    "rejected_not_ready": {
+      "message": "Scharfschaltung verweigert. Offen: {open}. Nicht verfügbar: {unavailable}."
+    },
+    "confirmation_required": {
+      "message": "Scharfschaltung muss bestätigt werden. Offen: {open}. Nicht verfügbar: {unavailable}."
+    },
+    "rejected_test_mode_change_requires_disarmed": {
+      "message": "Der Testmodus kann nur im unscharfen Zustand umgeschaltet werden."
+    }
+  }
+}

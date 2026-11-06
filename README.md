@@ -4,9 +4,10 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.1.0 – Entwicklungsstand, nicht installierbar.**
-> Diese Version enthält nur die Kernlogik (Zustandsmaschine und Sirenen-Sicherheitslogik)
-> mit Tests. Die Home-Assistant-Anbindung folgt mit 0.2.0. Siehe [Roadmap](docs/roadmap.md).
+> **Status: 0.2.0 – frühe Entwicklungsversion.**
+> Installierbar mit Bedienfeld, Testmodus, PIN und Profilzeiten. Noch **keine Sensoren,
+> Sirenen oder Push-Nachrichten**. Siehe [Installation](docs/installation.md) und
+> [Roadmap](docs/roadmap.md).
 
 ## Ziele
 
@@ -33,6 +34,7 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 
 | Dokument | Inhalt |
 |---|---|
+| [docs/installation.md](docs/installation.md) | Installation, Einstellungen, Bedienung |
 | [docs/architecture.md](docs/architecture.md) | Gesamtarchitektur und Module |
 | [docs/state-model.md](docs/state-model.md) | Zustände, Ereignisse, Übergänge |
 | [docs/safety.md](docs/safety.md) | Sicherheitsregeln für Sirenen und Brandalarm |
@@ -40,9 +42,9 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 | [docs/roadmap.md](docs/roadmap.md) | Meilensteine und Versionsplanung |
 | [docs/adr/](docs/adr/) | Architekturentscheidungen mit Begründung |
 
-## Voraussetzungen (geplant)
+## Voraussetzungen
 
-- Home Assistant 2026.11 oder neuer
+- Home Assistant 2026.10 oder neuer
 - Installation über HACS (benutzerdefiniertes Repository)
 - Keine weiteren Abhängigkeiten von Drittanbieter-Integrationen
 
@@ -52,10 +54,14 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 pip install ruff mypy pytest
 ruff check . && ruff format --check .
 mypy
-pytest
+pytest tests/core
+
+# Integrationstests (installiert Home Assistant als Testumgebung)
+pip install pytest-homeassistant-custom-component
+pytest tests/integration -o asyncio_mode=auto
 ```
 
-Alle Tests laufen ohne Home Assistant und ohne echte Geräte.
+Kein Test braucht echte Geräte. Die Kerntests laufen sogar ohne Home Assistant.
 
 ## Lizenz
 

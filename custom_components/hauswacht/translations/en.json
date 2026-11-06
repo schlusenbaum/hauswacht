@@ -1,0 +1,90 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Hauswacht",
+        "description": "Set up the Hauswacht intrusion alarm. The alarm starts disarmed. Sirens are not controlled in this version."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Hauswacht is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Hauswacht options",
+        "menu_options": {
+          "code": "PIN code",
+          "profile": "Profile timings"
+        }
+      },
+      "code": {
+        "title": "PIN code",
+        "description": "Current status: {pin_status}. The PIN is stored hashed only. Without a PIN, the alarm must not be exposed to voice assistants.",
+        "data": {
+          "new_pin": "New PIN (4–8 digits)",
+          "remove_pin": "Remove PIN",
+          "code_arm_required": "Require PIN to arm"
+        }
+      },
+      "profile": {
+        "title": "Profile",
+        "data": {
+          "profile": "Profile"
+        }
+      },
+      "profile_settings": {
+        "title": "Timings for profile {profile}",
+        "data": {
+          "exit_delay": "Exit delay",
+          "entry_delay": "Entry delay",
+          "reaction_time": "Alarm reaction time"
+        }
+      }
+    },
+    "error": {
+      "invalid_pin": "The PIN must consist of 4 to 8 digits."
+    },
+    "abort": {
+      "disarm_first": "Please disarm Hauswacht before changing options."
+    }
+  },
+  "selector": {
+    "profile": {
+      "options": {
+        "home": "Home",
+        "night": "Night",
+        "away": "Away",
+        "vacation": "Vacation"
+      }
+    }
+  },
+  "entity": {
+    "switch": {
+      "test_mode": {
+        "name": "Test mode"
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_code": {
+      "message": "Invalid PIN code."
+    },
+    "unknown_profile": {
+      "message": "Unknown profile: {profile}."
+    },
+    "rejected_not_disarmed": {
+      "message": "Hauswacht must be disarmed before arming another profile."
+    },
+    "rejected_not_ready": {
+      "message": "Arming refused. Open: {open}. Unavailable: {unavailable}."
+    },
+    "confirmation_required": {
+      "message": "Arming needs confirmation. Open: {open}. Unavailable: {unavailable}."
+    },
+    "rejected_test_mode_change_requires_disarmed": {
+      "message": "Test mode can only be changed while disarmed."
+    }
+  }
+}
