@@ -267,3 +267,48 @@ async def test_enabling_hardware_requires_confirmation(hass: HomeAssistant) -> N
     assert flow["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options["sirens_hardware_enabled"] is True
     assert entry.options["sirens"] == [SIREN]
+
+
+# --- Gerätefähigkeiten ------------------------------------------------------
+
+PLAIN = "siren.aussensirene"
+
+
+async def test_plain_siren_gets_only_supported_fields(hass: HomeAssistant) -> None:
+    """Einfache Sirene ohne Rauchmelder: nur Ein/Aus, also ohne Ton, Lautstärke, Dauer."""
+    mocks = await _setup(
+        hass, sirens=[PLAIN], sirens_hardware_enabled=True, night={"sirens": [PLAIN]}
+    )
+    hass.states.async_set(PLAIN, "off", {"supported_features": 3})
+    await _alarm(hass)
+    assert [c.data for c in mocks.on] == [{"entity_id": PLAIN}]
+
+
+async def test_smoke_detector_without_tone_selection_is_not_used(hass: HomeAssistant) -> None:
+    mocks = await _setup(hass, sirens_hardware_enabled=True)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    hass.states.async_set(SIREN, "off", {"supported_features": 3})
+    await _alarm(hass)
+    assert mocks.on == []
+    decision = next(e for e in events if e.data["type"] == "SirenDecision")
+    assert decision.data["blocked"] == {SIREN: "no_burglar_tone"}
+
+
+async def test_other_burglar_tone_when_requested_one_missing(hass: HomeAssistant) -> None:
+    mocks = await _setup(hass, sirens_hardware_enabled=True)
+    hass.states.async_set(
+        SIREN,
+        "off",
+        {"supported_features": 31, "available_tones": {1: "fire", 2: "emergency"}},
+    )
+    await _alarm(hass)
+    assert mocks.on[0].data["tone"] == "emergency"
+
+
+async def test_device_with_only_fire_tones_is_not_used(hass: HomeAssistant) -> None:
+    mocks = await _setup(hass, sirens_hardware_enabled=True)
+    hass.states.async_set(
+        SIREN, "off", {"supported_features": 31, "available_tones": ["fire", "fire_panic"]}
+    )
+    await _alarm(hass)
+    assert mocks.on == []

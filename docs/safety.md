@@ -19,6 +19,9 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | S7 | Laufzeit wird auf die gerätseitige Höchstdauer begrenzt; diese wird **nie verändert** | Gerätewert kann das Brandverhalten beeinflussen |
 | S8 | Sirenen-Services werden nur im Siren Executor aufgerufen | Ein einziger, prüfbarer Pfad |
 | S9 | Fremde Abschalt-Scripts (z. B. ein Script, das alle Rauchmelder abschaltet) werden nie verwendet | Würde einen Brandalarm beenden |
+| S10 | Ton, Lautstärke und Dauer nur senden, wenn die Sirene sie unterstützt; fehlender Einbruchton → anderer Einbruchton, nie ein Brandton; nur Brandtöne → keine Ansteuerung | Abgelehnte Befehle ließen die Sirene stumm |
+| S11 | Rauchmelder ohne Tonauswahl → keine Einbruch-Ansteuerung | Ihr Standardton ist meist der Brandton |
+| S12 | Sirene ohne Dauer **und** ohne Ausschalten → keine Ansteuerung; Sirene ohne Ausschalten → kein Ausschaltbefehl | Hauswacht muss jeden Ton selbst begrenzen können |
 
 ### Umsetzung (ab 0.5.0)
 

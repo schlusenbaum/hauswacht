@@ -13,6 +13,12 @@ Verbindliche Regeln (siehe docs/safety.md):
 5. Ausschalten nur für Geräte, die Hauswacht selbst aktiviert hat.
 6. Brandtöne (fire, fire_panic) sind für Einbruchalarme verboten.
 7. Laufzeit wird auf die gerätseitige Höchstdauer begrenzt; diese wird nie verändert.
+8. Ton, Lautstärke und Dauer werden nur gesendet, wenn das Gerät sie unterstützt. Kennt ein
+   Gerät den gewünschten Einbruchton nicht, wird ein anderer Einbruchton gewählt – nie ein
+   Brandton. Ein Rauchmelder ohne Tonauswahl bekommt keinen Einbruchbefehl, weil er sonst
+   seinen Standardton (meist den Brandton) spielen könnte.
+9. Eine Sirene, die weder eine Dauer annimmt noch ausgeschaltet werden kann, wird nicht
+   eingeschaltet – Hauswacht könnte sie nicht wieder beenden.
 
 "Unklar" heißt: Der Brand-Indikator eines Geräts ist nicht verfügbar oder unbekannt.
 Wer nicht beweisen kann, dass es nicht brennt, darf nichts abschalten.
@@ -24,9 +30,9 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
-BURGLAR_TONES: frozenset[str] = frozenset(
-    {"burglar", "emergency", "police_panic", "emergency_panic"}
-)
+# Reihenfolge = Ausweichreihenfolge, wenn ein Gerät den gewünschten Ton nicht kennt
+BURGLAR_TONE_ORDER: tuple[str, ...] = ("burglar", "emergency", "police_panic", "emergency_panic")
+BURGLAR_TONES: frozenset[str] = frozenset(BURGLAR_TONE_ORDER)
 FIRE_TONES: frozenset[str] = frozenset({"fire", "fire_panic"})
 
 VOLUME_LEVELS: Mapping[str, float] = {
@@ -53,6 +59,24 @@ class BlockReason(StrEnum):
     UNKNOWN_DEVICE = "unknown_device"
     NOT_ALLOWED_FOR_BURGLAR = "not_allowed_for_burglar"
     NOT_ACTIVATED_BY_HAUSWACHT = "not_activated_by_hauswacht"
+    NO_BURGLAR_TONE = "no_burglar_tone"
+    CANNOT_LIMIT = "cannot_limit"
+    TURN_OFF_UNSUPPORTED = "turn_off_unsupported"
+
+
+@dataclass(frozen=True)
+class SirenCapabilities:
+    """Was eine Sirene laut Home Assistant kann (``supported_features``, ``available_tones``).
+
+    Die Standardwerte entsprechen einer voll ausgestatteten Sirene. ``tones`` ist ``None``,
+    wenn das Gerät Töne annimmt, aber keine Liste meldet.
+    """
+
+    tones_supported: bool = True
+    tones: frozenset[str] | None = None
+    volume: bool = True
+    duration: bool = True
+    turn_off: bool = True
 
 
 @dataclass(frozen=True)
@@ -62,6 +86,9 @@ class SirenDevice:
     fire_state: FireIndicator
     max_duration: int  # gerätseitige Höchstdauer in s (nur gelesen)
     burglar_allowed: bool = True
+    capabilities: SirenCapabilities = SirenCapabilities()
+    # Gerät hat eigene Brand-Indikatoren (Rauchmelder mit Sirene)
+    fire_detector: bool = False
 
 
 @dataclass(frozen=True)
@@ -127,6 +154,21 @@ def _global_block(ctx: GuardContext) -> BlockReason | None:
     return None
 
 
+def select_tone(requested: str, device: SirenDevice) -> tuple[bool, str | None]:
+    """Ton für ein Gerät: (erlaubt, Ton oder None = ohne Tonangabe senden)."""
+    caps = device.capabilities
+    if not caps.tones_supported:
+        # Ohne Tonauswahl spielt das Gerät seinen Standardton. Bei Rauchmeldern ist das
+        # meist der Brandton – das darf ein Einbruchalarm nie auslösen.
+        return (not device.fire_detector, None)
+    if not caps.tones:
+        return (True, requested)
+    for tone in (requested, *BURGLAR_TONE_ORDER):
+        if tone in caps.tones and tone not in FIRE_TONES:
+            return (True, tone)
+    return (False, None)
+
+
 def decide_activation(ctx: GuardContext, request: ActivateRequest) -> GuardDecision:
     """Entscheidet, welche Einbruch-Sirenen eingeschaltet werden dürfen."""
     targets = tuple(dict.fromkeys(request.targets))  # Duplikate entfernen, Reihenfolge halten
@@ -151,17 +193,25 @@ def decide_activation(ctx: GuardContext, request: ActivateRequest) -> GuardDecis
         if not device.burglar_allowed:
             blocked.append(BlockedCommand(key, BlockReason.NOT_ALLOWED_FOR_BURGLAR))
             continue
-        if device.max_duration <= 0:
+        caps = device.capabilities
+        if caps.duration and device.max_duration <= 0:
             blocked.append(BlockedCommand(key, BlockReason.INVALID_DURATION))
+            continue
+        if not caps.duration and not caps.turn_off:
+            blocked.append(BlockedCommand(key, BlockReason.CANNOT_LIMIT))
+            continue
+        allowed, tone = select_tone(request.tone, device)
+        if not allowed:
+            blocked.append(BlockedCommand(key, BlockReason.NO_BURGLAR_TONE))
             continue
         commands.append(
             SirenCommand(
                 action="turn_on",
                 device_key=key,
                 entity_id=device.entity_id,
-                tone=request.tone,
-                volume_level=VOLUME_LEVELS[request.volume],
-                duration=min(request.duration, device.max_duration),
+                tone=tone,
+                volume_level=VOLUME_LEVELS[request.volume] if caps.volume else None,
+                duration=min(request.duration, device.max_duration) if caps.duration else None,
             )
         )
     return GuardDecision(commands=tuple(commands), blocked=tuple(blocked))
@@ -190,6 +240,8 @@ def decide_stop(ctx: GuardContext, targets: Iterable[str] | None = None) -> Guar
             blocked.append(BlockedCommand(key, BlockReason.UNKNOWN_DEVICE))
         elif key not in ctx.activated_by_hauswacht:
             blocked.append(BlockedCommand(key, BlockReason.NOT_ACTIVATED_BY_HAUSWACHT))
+        elif not device.capabilities.turn_off:
+            blocked.append(BlockedCommand(key, BlockReason.TURN_OFF_UNSUPPORTED))
         else:
             commands.append(
                 SirenCommand(action="turn_off", device_key=key, entity_id=device.entity_id)

@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.9.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.9.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -159,8 +159,9 @@ ebenfalls „nicht verfügbar“, deckt also beides ab.
 
 **Konfigurieren → Sirenen.**
 
-> Getestet ist bisher nur der Rauchwarnmelder Develco SMSZB-120 über Zigbee2MQTT. Was andere
-> Sirenen können müssen, steht in der [README](../README.md#geräte-und-kompatibilität).
+> Getestet ist bisher nur der Rauchwarnmelder Develco SMSZB-120 über Zigbee2MQTT. Andere
+> Sirenen werden nach ihren Fähigkeiten angesteuert, siehe
+> [README](../README.md#geräte-und-kompatibilität).
 
 1. Sirenen auswählen, die Hauswacht für Einbruchalarme verwenden darf.
 2. In jedem Profil festlegen, welche dieser Sirenen ertönen, mit welchem Ton und welcher
