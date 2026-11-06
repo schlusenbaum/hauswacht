@@ -4,9 +4,10 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.4.0 – frühe Entwicklungsversion.**
-> Bedienfeld, Profile, Zonen, Sensoren, Systemüberwachung und Simulation im Testmodus
-> funktionieren; ein Alarm wird als Hinweis und Ereignis gemeldet. Noch **keine Sirenen und keine Push-Nachrichten**. Siehe [Installation](docs/installation.md) und
+> **Status: 0.5.0 – Entwicklungsversion.**
+> Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
+> Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
+> gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
 > [Roadmap](docs/roadmap.md).
 
 ## Ziele

@@ -17,6 +17,8 @@
         "menu_options": {
           "zones": "Zonen und Sensoren",
           "profile": "Profile",
+          "sirens": "Sirenen",
+          "notifications": "Benachrichtigungen",
           "roles": "Sensorrollen (Ausnahmen)",
           "monitoring": "Sensorüberwachung",
           "infrastructure": "Systemüberwachung",
@@ -49,7 +51,12 @@
           "open_policy": "Offene Sensoren beim Scharfschalten",
           "unavailable_policy": "Ausgefallene Sensoren beim Scharfschalten",
           "max_alarm_cycles": "Maximale Alarmzyklen",
-          "tamper_triggers_alarm": "Manipulation löst Alarm aus"
+          "tamper_triggers_alarm": "Manipulation löst Alarm aus",
+          "sirens": "Sirenen in diesem Profil",
+          "siren_tone": "Sirenenton",
+          "siren_volume": "Lautstärke",
+          "silent": "Stiller Alarm (nur Benachrichtigungen)",
+          "notify": "Benachrichtigen (Alarm)"
         }
       },
       "zones": {
@@ -112,12 +119,30 @@
         "data": {
           "infrastructure": "Indikatoren"
         }
+      },
+      "sirens": {
+        "title": "Sirenen",
+        "description": "Hier legst du fest, welche Sirenen Hauswacht für Einbruchalarme verwenden darf. Brandschutz: Hauswacht schaltet niemals eine Sirene ein oder aus, solange irgendein Rauchmelder Brand meldet oder der Brandzustand einer registrierten Sirene unklar ist. Die Ansteuerung bleibt GESPERRT, bis du sie hier freigibst und bestätigst.",
+        "data": {
+          "sirens": "Sirenen",
+          "sirens_hardware_enabled": "Echte Sirenenansteuerung erlauben",
+          "confirm_hardware": "Ich bestätige: Bei einem Alarm dürfen echte Sirenen ertönen"
+        }
+      },
+      "notifications": {
+        "title": "Benachrichtigungen",
+        "description": "Systemmeldungen (Störung, Sensorausfall, Manipulation, Neustart) gehen an diese Dienste. Alarmmeldungen werden pro Profil festgelegt.",
+        "data": {
+          "notify_system": "Dienste für Systemmeldungen",
+          "notify_in_test_mode": "Auch im Testmodus benachrichtigen"
+        }
       }
     },
     "error": {
       "invalid_pin": "Der PIN muss aus 4 bis 8 Ziffern bestehen.",
       "zone_name_required": "Bitte einen Namen eingeben.",
-      "zone_empty": "Mindestens einen Sensor oder ein Label auswählen."
+      "zone_empty": "Mindestens einen Sensor oder ein Label auswählen.",
+      "confirm_hardware_required": "Bitte bestätigen, dass echte Sirenen ertönen dürfen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -153,6 +178,22 @@
         "instant": "Sofort",
         "follower": "Mitläufer",
         "tamper_24h": "Manipulation (24 h)"
+      }
+    },
+    "siren_tone": {
+      "options": {
+        "burglar": "Einbruch",
+        "emergency": "Notfall",
+        "police_panic": "Polizei-Panik",
+        "emergency_panic": "Notfall-Panik"
+      }
+    },
+    "siren_volume": {
+      "options": {
+        "low": "Leise",
+        "medium": "Mittel",
+        "high": "Laut",
+        "very_high": "Sehr laut"
       }
     }
   },

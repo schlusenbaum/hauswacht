@@ -70,10 +70,16 @@ class GuardContext:
     test_mode: bool
     devices: Mapping[str, SirenDevice]
     activated_by_hauswacht: frozenset[str] = frozenset()
+    # Brand an Meldern, die keine registrierte Sirene sind (z. B. ein Rauchmelder in einem
+    # anderen Raum). Hier zählt nur ein AKTIVER Brand; ein irgendwo ausgefallener Melder soll
+    # die Einbruchsirenen nicht dauerhaft sperren.
+    external_fire: FireIndicator = FireIndicator.CLEAR
 
     @property
     def fire_lock(self) -> bool:
-        """True, sobald irgendein Gerät Brand meldet oder sein Zustand unklar ist."""
+        """True bei Brand irgendwo oder unklarem Brandzustand an einer registrierten Sirene."""
+        if self.external_fire is FireIndicator.ACTIVE:
+            return True
         return any(d.fire_state is not FireIndicator.CLEAR for d in self.devices.values())
 
 

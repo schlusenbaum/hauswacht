@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-06
+
+### Hinzugefügt
+- **Sirenen:** Registrierung unter Konfigurieren → Sirenen. Die echte Ansteuerung ist
+  standardmäßig **gesperrt** und lässt sich nur mit ausdrücklicher Bestätigung freigeben.
+- **Reaktion je Profil:** welche Sirenen, Ton (Einbruch, Notfall, Polizei-Panik,
+  Notfall-Panik), Lautstärke, stiller Alarm, wer benachrichtigt wird.
+- **Brandschutz:** Brand-Indikatoren (Rauch, Testknopf) werden am Sirenengerät automatisch
+  erkannt. Meldet irgendein Rauchmelder Brand oder ist der Brandzustand einer registrierten
+  Sirene unklar, schaltet Hauswacht keine Sirene ein **und keine aus**.
+- Laufzeit wird auf die gerätseitige Höchstdauer begrenzt; dieser Wert wird nur gelesen.
+- **Push-Benachrichtigungen** über notify-Dienste (z. B. Home-Assistant-App) mit hoher
+  Priorität: Alarm je Profil, Systemmeldungen (Störung, Sensorausfall, Manipulation,
+  Neustart) an eigene Empfänger.
+- **Testmodus:** nie Sirenen; Push nur, wenn „Auch im Testmodus benachrichtigen“ an ist,
+  dann mit „[TEST]“ im Titel.
+- Ereignis `SirenDecision` und Attribute `sirens_hardware_enabled`, `last_siren_decision`.
+
+### Sicherheit
+- Statischer Test prüft per Syntaxbaum, dass nur der Siren Executor Sirenen-Dienste aufruft
+  und keine Gerätewerte geschrieben werden.
+
 ## [0.4.0] - 2026-11-06
 
 ### Hinzugefügt

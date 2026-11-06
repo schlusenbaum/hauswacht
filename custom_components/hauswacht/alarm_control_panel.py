@@ -103,6 +103,8 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
             "unavailable_sensors": sorted(readiness.unavailable_sensors),
             "zones": self.runtime.zone_members(),
             "last_contact": self.runtime.last_contacts(),
+            "sirens_hardware_enabled": self.runtime.sirens.hardware_enabled,
+            "last_siren_decision": self.runtime.sirens.last_result or None,
         }
 
     def _arm(self, profile_id: str, code: str | None, *, confirm: bool = False) -> None:

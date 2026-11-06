@@ -6,19 +6,29 @@ erleichtern. Jede Regel ist durch Tests abgesichert.
 ## Sirenen
 
 Implementierung: `custom_components/hauswacht/core/siren_guard.py`
-Tests: `tests/test_siren_guard.py`, `tests/test_static_safety.py`
+Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `tests/integration/test_reactions.py`
 
 | Nr. | Regel | Grund |
 |---|---|---|
 | S1 | Testmodus aktiv → keinerlei Sirenenbefehle | Fehlbedienung im Test darf keinen echten Alarm auslösen |
 | S2 | Hardware-Freigabe aus → keinerlei Sirenenbefehle. Standard nach Installation: **aus** | Sirenen erst nach bewusster Freigabe |
-| S3 | Brand an irgendeinem Gerät **aktiv oder unklar** → keine Einbruch-Aktivierung | Brandalarm hat Vorrang, kein verwirrender Einbruchton während einer Evakuierung |
-| S4 | Brand an irgendeinem Gerät **aktiv oder unklar** → kein einziger Ausschaltbefehl | Ein Stoppbefehl könnte einen lokalen Brandalarm stumm schalten (nicht ausgeschlossen) |
+| S3 | Brand an irgendeinem Melder **aktiv** oder an einer registrierten Sirene **unklar** → keine Einbruch-Aktivierung | Brandalarm hat Vorrang, kein verwirrender Einbruchton während einer Evakuierung |
+| S4 | Brand an irgendeinem Melder **aktiv** oder an einer registrierten Sirene **unklar** → kein einziger Ausschaltbefehl | Ein Stoppbefehl könnte einen lokalen Brandalarm stumm schalten (nicht ausgeschlossen) |
 | S5 | Ausschalten nur für Geräte, die Hauswacht selbst aktiviert hat | Fremde Alarme werden nie beeinflusst |
 | S6 | Brandtöne (`fire`, `fire_panic`) sind für Einbruchalarme verboten | Eindeutige Unterscheidung der Alarmarten |
 | S7 | Laufzeit wird auf die gerätseitige Höchstdauer begrenzt; diese wird **nie verändert** | Gerätewert kann das Brandverhalten beeinflussen |
 | S8 | Sirenen-Services werden nur im Siren Executor aufgerufen | Ein einziger, prüfbarer Pfad |
 | S9 | Fremde Abschalt-Scripts (z. B. ein Script, das alle Rauchmelder abschaltet) werden nie verwendet | Würde einen Brandalarm beenden |
+
+### Umsetzung (ab 0.5.0)
+
+- `siren_executor.py` ist die einzige Datei, die Sirenen-Dienste aufruft; ein statischer Test
+  prüft das per Syntaxbaum.
+- Brand-Indikatoren einer registrierten Sirene werden über das Gerät erkannt: Binärsensoren mit
+  Geräteklasse Rauch, Gas, CO oder Hitze sowie Testknopf-Sensoren (`…_test`). Deaktivierte
+  Indikatoren zählen als „unklar“.
+- Melder ohne registrierte Sirene zählen nur, wenn sie **aktiv** Brand melden; ein irgendwo
+  ausgefallener Melder sperrt die Einbruchsirenen nicht dauerhaft.
 
 ### Was heißt „unklar“?
 

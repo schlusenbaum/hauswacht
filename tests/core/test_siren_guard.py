@@ -212,3 +212,28 @@ def test_no_command_ever_escapes_the_locks(
     all_open = hardware and not test_mode and fire is FireIndicator.CLEAR
     assert bool(decide_activation(guard, REQ).commands) is all_open
     assert bool(decide_stop(guard).commands) is all_open
+
+
+# --- Brand an fremden Meldern -----------------------------------------------
+
+
+def test_external_active_fire_blocks_activation_and_stop() -> None:
+    guard = GuardContext(
+        hardware_enabled=True,
+        test_mode=False,
+        devices={"diele": device("diele")},
+        activated_by_hauswacht=frozenset({"diele"}),
+        external_fire=FireIndicator.ACTIVE,
+    )
+    assert decide_activation(guard, REQ).commands == ()
+    assert decide_stop(guard).commands == ()
+
+
+def test_external_unknown_fire_does_not_block() -> None:
+    guard = GuardContext(
+        hardware_enabled=True,
+        test_mode=False,
+        devices={"diele": device("diele")},
+        external_fire=FireIndicator.UNKNOWN,
+    )
+    assert decide_activation(guard, REQ).commands

@@ -18,9 +18,9 @@ CORE_SOURCES = sorted((SOURCE_ROOT / "core").rglob("*.py"))
 FORBIDDEN_SNIPPETS = {
     # Script, das ALLE Rauchmelder-Sirenen abschaltet – würde einen Brandalarm beenden.
     "rauchmelder_alarm_aus": "Fremdes Rauchmelder-Script darf nie aufgerufen werden",
-    # Die gerätseitige Höchstdauer der Rauchmelder darf nie verändert werden.
-    'max_duration"': "Gerätewert max_duration darf nicht geschrieben werden",
-    "number.set_value": "Hauswacht schreibt keine number-Entitäten",
+    # Gerätewerte (z. B. die Höchstdauer der Rauchmelder) werden nie geschrieben.
+    "set_value": "Hauswacht schreibt keine Gerätewerte",
+    '"number"': "Hauswacht ruft keine number-Dienste auf",
 }
 
 
@@ -50,17 +50,37 @@ def test_core_has_no_home_assistant_imports(path: Path) -> None:
             assert not name.startswith("homeassistant"), f"{path.name} importiert {name}"
 
 
+def _siren_service_calls(tree: ast.AST) -> list[int]:
+    """Zeilen mit async_call(...), deren Domain "siren" bzw. SIREN_DOMAIN ist."""
+    lines: list[int] = []
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)):
+            continue
+        if node.func.attr not in {"async_call", "call"} or not node.args:
+            continue
+        first = node.args[0]
+        is_siren = (isinstance(first, ast.Constant) and first.value == "siren") or (
+            isinstance(first, ast.Name) and first.id == "SIREN_DOMAIN"
+        )
+        if is_siren:
+            lines.append(node.lineno)
+    return lines
+
+
 @pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(SOURCE_ROOT)))
 def test_siren_services_only_in_executor(path: Path) -> None:
-    """Sirenen-Services dürfen nur an einer Stelle aufgerufen werden.
-
-    Ab 0.5.0 ist das ausschließlich ``siren_executor.py``. Bis dahin darf es
-    nirgends einen Aufruf geben.
-    """
+    """Sirenen-Dienste dürfen ausschließlich im Siren Executor aufgerufen werden."""
+    text = path.read_text(encoding="utf-8")
+    calls = _siren_service_calls(ast.parse(text))
     if path.name == "siren_executor.py":
         return
-    text = path.read_text(encoding="utf-8")
-    message = f"{path.name} spricht Sirenen-Services direkt an"
-    assert '"siren"' not in text, message
-    assert "'siren'" not in text, message
-    assert "siren.turn_" not in text, message
+    assert not calls, f"{path.name} ruft Sirenen-Dienste direkt auf (Zeilen {calls})"
+    assert "siren.turn_" not in text, f"{path.name} nennt einen Sirenen-Dienst"
+
+
+def test_executor_is_the_only_siren_caller_and_uses_the_guard() -> None:
+    executor = SOURCE_ROOT / "siren_executor.py"
+    text = executor.read_text(encoding="utf-8")
+    assert _siren_service_calls(ast.parse(text)), "Executor ruft keine Sirenen auf?"
+    assert "decide_activation" in text
+    assert "decide_stop" in text
