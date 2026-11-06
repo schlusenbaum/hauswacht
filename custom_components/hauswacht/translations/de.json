@@ -155,7 +155,8 @@
         "home": "Zuhause",
         "night": "Nacht",
         "away": "Abwesend",
-        "vacation": "Urlaub"
+        "vacation": "Urlaub",
+        "custom": "Individuell"
       }
     },
     "open_policy": {
@@ -246,6 +247,9 @@
     },
     "unknown_sensor": {
       "message": "{sensor} gehört zu keiner Hauswacht-Zone."
+    },
+    "code_locked": {
+      "message": "Zu viele falsche PIN-Eingaben. Bitte {seconds} Sekunden warten."
     }
   },
   "services": {

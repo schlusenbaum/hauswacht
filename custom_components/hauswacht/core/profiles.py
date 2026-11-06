@@ -1,6 +1,6 @@
 """Profilverwaltung (reine Logik).
 
-Es gibt die vier eingebauten Profile Zuhause, Nacht, Abwesend und Urlaub. Pro Profil sind
+Es gibt die eingebauten Profile Zuhause, Nacht, Abwesend, Urlaub und Individuell. Pro Profil sind
 Zeiten, überwachte Zonen, der Umgang mit offenen bzw. ausgefallenen Sensoren, die Zahl der
 Alarmzyklen und die Reaktion auf Manipulation einstellbar.
 """
@@ -34,6 +34,7 @@ BUILTIN_PROFILES: tuple[BuiltinProfile, ...] = (
     BuiltinProfile("night", "armed_night", exit_delay=0, entry_delay=30),
     BuiltinProfile("away", "armed_away", exit_delay=60, entry_delay=30),
     BuiltinProfile("vacation", "armed_vacation", exit_delay=60, entry_delay=30),
+    BuiltinProfile("custom", "armed_custom_bypass", exit_delay=0, entry_delay=30),
 )
 
 PROFILE_IDS: tuple[str, ...] = tuple(p.profile_id for p in BUILTIN_PROFILES)

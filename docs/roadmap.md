@@ -7,9 +7,9 @@
 | 0.3.0 ✅ | Datenmodell: Sensor-Register, Zonen, Profile; Bereitschaftsprüfung; Verfügbarkeit und veraltete Werte | nur lesen |
 | 0.4.0 ✅ | Testmodus komplett, Simulation, Infrastruktur-Überwachung (MQTT, Z2M, BLE) | nur lesen |
 | 0.5.0 ✅ | Reaktionen, Benachrichtigungen, Siren Executor (Hardware-Freigabe aus) | Push ja, Sirenen nein |
-| **0.6.0** ✅ | Beispiel-Dashboard (Standardkarten, Smartphone) | – |
-| 0.7.0 | Installation in einer echten Instanz, Betrieb im Testmodus | nach Freigabe |
-| 0.8.0 | Kontrollierter Sirenentest | nach Freigabe, bei Anwesenheit |
+| 0.6.0 ✅ | Beispiel-Dashboard (Standardkarten, Smartphone) | – |
+| **0.7.0** ✅ | Profil „Individuell“, Schutz gegen PIN-Raten | nein |
+| 0.8.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Automatische Scharfschaltung, Anwesenheit, Keypad, RFID/NFC | – |
 

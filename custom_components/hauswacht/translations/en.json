@@ -155,7 +155,8 @@
         "home": "Home",
         "night": "Night",
         "away": "Away",
-        "vacation": "Vacation"
+        "vacation": "Vacation",
+        "custom": "Custom"
       }
     },
     "open_policy": {
@@ -246,6 +247,9 @@
     },
     "unknown_sensor": {
       "message": "{sensor} is not part of any Hauswacht zone."
+    },
+    "code_locked": {
+      "message": "Too many wrong PIN entries. Please wait {seconds} seconds."
     }
   },
   "services": {

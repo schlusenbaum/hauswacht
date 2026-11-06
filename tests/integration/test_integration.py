@@ -5,6 +5,7 @@ Es werden keine Sirenen und keine Geräte angesprochen.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import timedelta
 from typing import Any
 
@@ -18,6 +19,7 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
     async_fire_time_changed,
+    async_mock_service,
 )
 
 from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
@@ -272,3 +274,48 @@ async def test_options_flow_blocked_while_armed(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "disarm_first"
+
+
+# --- Profil "Individuell" ---------------------------------------------------
+
+
+async def test_custom_profile(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry())
+    await _service(hass, "alarm_control_panel", "alarm_arm_custom_bypass", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_CUSTOM_BYPASS
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["profile"] == "custom"
+
+
+# --- Schutz gegen PIN-Raten -------------------------------------------------
+
+
+async def test_pin_lock_after_five_wrong_entries(hass: HomeAssistant) -> None:
+    push = async_mock_service(hass, "notify", "mobile_app_test")
+    await setup_entry(hass, make_entry({**_pin_options(), "notify_system": ["mobile_app_test"]}))
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    for _ in range(5):
+        with pytest.raises(ServiceValidationError):
+            await _service(
+                hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code="0000"
+            )
+    # Gesperrt: auch der richtige PIN wird jetzt abgelehnt
+    with pytest.raises(ServiceValidationError, match=r"."):
+        await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code="4711")
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert len(push) >= 3  # Warnungen ab dem 3. Fehlversuch
+
+    await _advance(hass, 61)
+    _shift_monotonic(hass, 61)
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code="4711")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+def _shift_monotonic(hass: HomeAssistant, seconds: float) -> None:
+    """Die Sperre nutzt time.monotonic(); im Test verschieben wir ihr Ende direkt."""
+    entry = hass.config_entries.async_entries("hauswacht")[0]
+    runtime = entry.runtime_data
+    runtime._code_guard = replace(
+        runtime._code_guard, locked_until=runtime._code_guard.locked_until - seconds
+    )

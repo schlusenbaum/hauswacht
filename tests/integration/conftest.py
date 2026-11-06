@@ -33,6 +33,7 @@ ZONE_OPTIONS: dict[str, Any] = {
         "night": {"zones": ["aussenhaut", "keller"]},
         "away": {"zones": ["aussenhaut", "keller"]},
         "vacation": {"zones": ["aussenhaut", "keller"]},
+        "custom": {"zones": ["keller"]},
     },
 }
 

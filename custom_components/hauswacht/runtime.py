@@ -45,12 +45,19 @@ from .const import (
     OPT_PIN_SALT,
     STORAGE_VERSION,
 )
+from .core.code_guard import (
+    CodeGuardState,
+    register_failure,
+    register_success,
+    remaining_lock,
+)
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.pin import PinHash, verify_pin
 from .core.profiles import build_profiles, profile_behaviour, stale_after_seconds
 from .core.reactions import (
     alarm_message,
     fault_message,
+    invalid_code_message,
     parse_reaction,
     restart_message,
     sensor_lost_message,
@@ -147,6 +154,7 @@ class HauswachtRuntime:
         self.ctx = AlarmContext()
         self.profiles = build_profiles(entry.options)
         self.sirens = SirenExecutor(hass, entry.options)
+        self._code_guard = CodeGuardState()
         self.notifier = Notifier(hass, entry.options)
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
@@ -252,9 +260,41 @@ class HauswachtRuntime:
         self._raise_for_rejection(effects)
 
     @callback
+    def verify_code(self, code: str | None) -> None:
+        """Prüft den PIN mit Schutz gegen Durchprobieren. Wirft bei Fehler oder Sperre."""
+        if self.pin is None:
+            return
+        now = time.monotonic()
+        locked = remaining_lock(self._code_guard, now)
+        if locked:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="code_locked",
+                translation_placeholders={"seconds": str(locked)},
+            )
+        if self.check_code(code):
+            self._code_guard = register_success(self._code_guard)
+            return
+        result = register_failure(self._code_guard, now)
+        self._code_guard = result.state
+        failures = result.state.failures
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {"type": "InvalidCode", "failures": failures, "lock_seconds": result.lock_seconds},
+        )
+        if result.warn:
+            self.notifier.send_system(*invalid_code_message(failures, result.lock_seconds))
+        if result.lock_seconds:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="code_locked",
+                translation_placeholders={"seconds": str(result.lock_seconds)},
+            )
+        raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
+
+    @callback
     def disarm(self, code: str | None) -> None:
-        if not self.check_code(code):
-            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
+        self.verify_code(code)
         self._dispatch(DisarmRequested(code_valid=True))
 
     @callback
