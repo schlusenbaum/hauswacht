@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.9.3:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.10.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -200,6 +200,60 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
   scharfen Zustand): unter **Konfigurieren → Benachrichtigungen**.
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
+
+### Push-Knopf „Unscharf schalten“
+
+**Konfigurieren → Benachrichtigungen → „Push bei Türöffnung mit Knopf ‚Unscharf schalten‘“.**
+
+Ist die Option an, bekommen die Alarm-Empfänger des Profils:
+
+- beim **Öffnen einer Eingangstür** (Eingangsverzögerung läuft) sofort eine Benachrichtigung
+  „Tür geöffnet“,
+- beim **Alarm** die Alarmmeldung,
+
+jeweils mit dem Knopf **„Unscharf schalten“** direkt in der Benachrichtigung.
+
+- Funktioniert nur mit der **Home-Assistant-App** (`notify.mobile_app_…`).
+- Der Knopf gilt nur für die **laufende Scharfschaltung**. Ein alter Knopf aus einer früheren
+  Benachrichtigung bewirkt nichts.
+- Hauswacht prüft, dass der Knopf von einem angemeldeten Home-Assistant-Benutzer kommt, und
+  meldet danach „Unscharf geschaltet über den Push-Knopf von …“.
+- **iPhone:** Der Knopf verlangt ein entsperrtes Gerät (Face ID oder Code).
+  **Android:** Die App kennt diese Sperre nicht. Wer das Handy in die Hand bekommt, kann den
+  Knopf auf dem Sperrbildschirm drücken. Abhilfe: in Android „Sensible Inhalte auf dem
+  Sperrbildschirm ausblenden“ für die Home-Assistant-App.
+- Der Knopf funktioniert ohne PIN – er ersetzt die PIN-Eingabe durch das angemeldete Handy.
+- Nach dem Unscharfschalten wird die Benachrichtigung auf den Handys entfernt.
+
+## Heimkehr-Beobachtung
+
+**Konfigurieren → Heimkehr-Beobachtung.** Personen auswählen und „Heimkehr beobachten“
+einschalten.
+
+Hauswacht zeichnet dann auf, wann eine **Eingangstür** (Sensoren mit der Rolle „entry“)
+geöffnet wird und wann eine Person als **heimgekommen** erkannt wird – für die Person insgesamt
+und für jede ihrer Ortungsquellen einzeln (z. B. Router, App, iCloud). Daraus berechnet
+Hauswacht, wie eine automatische Heimkehr bei euch funktionieren würde.
+
+> Die Beobachtung **schaltet nichts**: kein Unscharf, kein Alarm, keine Benachrichtigung.
+> Ein Test stellt sicher, dass dieser Teil des Codes keine Aktionen aufrufen kann.
+
+Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
+
+| Wert | Bedeutung |
+|---|---|
+| mit Tür | Innerhalb von 5 Minuten wurde eine Eingangstür geöffnet |
+| ohne Tür | Keine Türöffnung – meist eine Falschmeldung der Ortung |
+| Verzögerung | Sekunden zwischen Türöffnung und erkannter Heimkehr (negativ = vorher erkannt) |
+| Fehlalarme bei X s | So oft wäre die Heimkehr erst nach einer Eingangsverzögerung von X Sekunden erkannt worden |
+
+- **Sensor „Heimkehr-Beobachtung“**: Anzahl ausgewerteter Heimkehrten; die Zahlen pro Quelle
+  stehen im Attribut `sources`, die letzten zehn Heimkehrten im Attribut `recent`.
+- **Knopf „Heimkehr-Bericht“**: erstellt eine Übersicht als Benachrichtigung in Home Assistant.
+- Gespeichert werden nur Zeitpunkte, höchstens 60 Tage lang.
+
+Nach zwei bis vier Wochen zeigt der Bericht, ob eine Heimkehr-Automatik bei euch zuverlässig
+wäre, für welche Personen und Ortungsquellen, und mit welcher Eingangsverzögerung.
 
 ## Testmodus und Simulation
 

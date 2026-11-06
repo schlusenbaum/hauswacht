@@ -25,6 +25,8 @@ ruff check .    # Lint
 | `tests/integration/test_profiles.py` | Mit Home Assistant: keine Standardprofile, Migration der festen Profile, Profile ohne Knopf, nur zugeordnete Knöpfe, Auswahlliste und Knöpfe, Profilverwaltung in den Optionen |
 | `tests/core/test_automation.py` | Uhrzeiten, Wochentage, „alle weg“ (unbekannt zählt nicht als weg) |
 | `tests/integration/test_automation.py` | Mit Home Assistant: scharf/unscharf nach Uhrzeit und Wochentag, nie über ein anderes Profil, kein Abbruch laufender Alarme, Wartezeit bei Abwesenheit, Rückkehr, Optionen |
+| `tests/core/test_homecoming.py` | Heimkehr-Auswertung: Anwesenheit, Verzögerung zur Tür, Fehlalarme je Eingangsverzögerung, Bericht |
+| `tests/integration/test_homecoming.py` | Mit Home Assistant: Push-Knopf (gültig, veraltet, ohne Benutzer, standardmäßig aus), Beobachtung schaltet nichts, Bericht |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
 
 ## Geplant

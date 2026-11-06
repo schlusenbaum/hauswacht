@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-06
+
+### Hinzugefügt
+- **Push-Knopf „Unscharf schalten“** (Option unter „Benachrichtigungen“, standardmäßig aus):
+  Beim Öffnen einer Eingangstür im scharfen Zustand und beim Alarm bekommen die
+  Alarm-Empfänger eine Benachrichtigung mit Knopf direkt in der Benachrichtigung. Gilt nur
+  für die laufende Scharfschaltung und nur für angemeldete Home-Assistant-Benutzer; auf dem
+  iPhone nur mit entsperrtem Gerät. Nach dem Unscharfschalten wird die Benachrichtigung
+  entfernt.
+- **Heimkehr-Beobachtung** (neuer Menüpunkt, standardmäßig aus): zeichnet Türöffnungen und
+  Heimkehrten pro Person und Ortungsquelle auf und berechnet, wie zuverlässig eine
+  automatische Heimkehr wäre (Verzögerung zur Tür, Ankünfte ohne Tür, Fehlalarme je
+  Eingangsverzögerung). **Schaltet nichts.** Sensor „Heimkehr-Beobachtung“ und Knopf
+  „Heimkehr-Bericht“.
+
+### Geändert
+- Alarmmeldungen nennen den auslösenden Sensor mit Namen und Raum statt der Entitäts-ID.
+
 ## [0.9.3] - 2026-11-06
 
 ### Behoben
