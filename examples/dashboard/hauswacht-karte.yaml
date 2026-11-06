@@ -7,12 +7,14 @@
 #   select.hauswacht_profile, button.hauswacht_arm, button.hauswacht_arm_anyway,
 #   binary_sensor.hauswacht_open_sensors, sensor.hauswacht_system_status
 #
-# Inhalt:
-#  1. Kachel mit Zustand und den Bedienfeld-Knöpfen (nur Knöpfe, denen ein Profil zugeordnet ist)
-#  2. Nur unscharf: Auswahl eines beliebigen Profils und "Scharf schalten"
-#  3. Nur unscharf UND Sensoren offen: "Trotzdem scharf schalten" (mit Rückfrage).
-#     Offene Sensoren werden dabei überbrückt, also bis zum Unscharfschalten nicht
-#     überwacht. Klappt nur, wenn das Profil offene Sensoren nicht grundsätzlich verweigert.
+# Inhalt (ein Weg zum Scharfschalten statt Symbolleiste plus Auswahlliste):
+#  1. Unscharf: Kachel mit Zustand, Auswahl des Profils und "Scharf schalten"
+#  2. Unscharf UND Sensoren offen: "Offen: Raum: Sensor, …" und "Trotzdem scharf"
+#     (mit Rückfrage). Offene Sensoren werden dabei überbrückt, also bis zum
+#     Unscharfschalten nicht überwacht. Klappt nur, wenn das Profil offene Sensoren
+#     nicht grundsätzlich verweigert.
+#  3. Nicht unscharf (scharf, Verzögerung, Alarm): Kachel mit "Unscharf schalten".
+#     Ist ein PIN eingestellt, fragt Home Assistant ihn hier ab.
 #  4. Nur bei Problemen: Systemstatus
 
 type: vertical-stack
@@ -20,10 +22,23 @@ cards:
   - type: tile
     entity: alarm_control_panel.hauswacht
     name: Hauswacht
-    icon: mdi:shield-home-outline
+    visibility:
+      - condition: state
+        entity: alarm_control_panel.hauswacht
+        state: disarmed
+
+  - type: tile
+    entity: alarm_control_panel.hauswacht
+    name: Hauswacht
     features_position: bottom
     features:
       - type: alarm-modes
+        modes:
+          - disarmed
+    visibility:
+      - condition: state
+        entity: alarm_control_panel.hauswacht
+        state_not: disarmed
 
   - type: tile
     entity: select.hauswacht_profil

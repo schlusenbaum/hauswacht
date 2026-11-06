@@ -11,6 +11,8 @@ import pytest
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import async_capture_events
 
 from custom_components.hauswacht.const import EVENT_HAUSWACHT
@@ -206,3 +208,20 @@ async def test_open_sensors_binary_sensor(hass: HomeAssistant) -> None:
     assert state.attributes["sensors"] == [WINDOW]
     await _set(hass, WINDOW, "off")
     assert _value(hass, OPEN) == "off"
+
+
+async def test_open_sensor_names_include_area(hass: HomeAssistant) -> None:
+    kitchen = ar.async_get(hass).async_create("Küche")
+    registry = er.async_get(hass)
+    entry = registry.async_get_or_create(
+        "binary_sensor", "test", "fenster1", suggested_object_id="kuechenfenster"
+    )
+    registry.async_update_entity(entry.entity_id, area_id=kitchen.id)
+    await setup_entry(hass, make_entry())
+    hass.states.async_set(
+        WINDOW, "on", {"device_class": "window", "friendly_name": "Fensterkontakt links"}
+    )
+    await hass.async_block_till_done()
+    state = hass.states.get(OPEN)
+    assert state is not None
+    assert state.attributes["names"] == ["Küche: Fensterkontakt links"]

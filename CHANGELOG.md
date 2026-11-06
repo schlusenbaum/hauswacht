@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-06
+
+### Geändert
+- Offene Sensoren werden mit Raum angezeigt (Attribut `names` von
+  `binary_sensor.hauswacht_offene_sensoren`, z. B. „Küche: Fensterkontakt links“). Steht der
+  Raum schon im Namen, wird er nicht wiederholt.
+- Beispielkarte vereinfacht: Scharfschalten nur noch über Profilauswahl und „Scharf schalten“,
+  im scharfen Zustand ein Knopf „Unscharf schalten“ (mit PIN-Abfrage, falls eingestellt).
+
 ## [0.9.0] - 2026-11-06
 
 ### Hinzugefügt
