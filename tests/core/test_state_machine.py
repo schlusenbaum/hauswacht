@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from custom_components.hauswacht.core.state_machine import (
     ActivateReaction,
+    AlarmAcknowledged,
     AlarmContext,
     AlarmState,
     ArmingAborted,
@@ -24,8 +27,10 @@ from custom_components.hauswacht.core.state_machine import (
     Readiness,
     Rejected,
     RestartedDisarmed,
+    SensorClosed,
     SensorRole,
     SensorsBypassed,
+    SensorsRestored,
     SensorTriggered,
     SetTestMode,
     StartTimer,
@@ -364,24 +369,70 @@ def test_retrigger_respects_max_cycles() -> None:
     assert of_type(effects, Ignored)[0].reason == "max_alarm_cycles_reached"
 
 
-def test_disarm_while_triggered_requests_stop() -> None:
+def test_disarm_while_triggered_only_ends_alarm() -> None:
+    """Unscharf während des Alarms: Alarm beenden, Profil bleibt scharf."""
     h = Harness()
     h.arm(NIGHT)
     h.send(SensorTriggered("x", SensorRole.INSTANT))
-    effects = h.send(DisarmRequested())
-    assert h.ctx.state is AlarmState.DISARMED
+    effects = h.send(DisarmRequested(open_sensors=frozenset({"x"})))
+    assert h.ctx.state is AlarmState.ARMED
+    assert h.ctx.profile == NIGHT
     assert of_type(effects, StopReaction)[0].profile_id == "night"
+    assert of_type(effects, CancelTimer)  # Reaktionszeit-Timer beendet
+    ack = of_type(effects, AlarmAcknowledged)[0]
+    assert ack.bypassed_until_closed == frozenset({"x"})
+    assert h.ctx.alarm_cycles == 0
+    # zweites Unscharf: jetzt wirklich unscharf
+    h.send(DisarmRequested())
+    assert h.ctx.state is AlarmState.DISARMED
+    assert h.ctx.bypassed_until_closed == frozenset()
 
 
-def test_disarm_from_alarm_hold() -> None:
+def test_end_alarm_from_alarm_hold() -> None:
     h = Harness()
     h.arm(NIGHT)
     h.send(SensorTriggered("x", SensorRole.INSTANT))
     h.send(ReactionTimeElapsed(token=h.timer().token))
     effects = h.send(DisarmRequested())
-    assert h.ctx.state is AlarmState.DISARMED
+    assert h.ctx.state is AlarmState.ARMED
     # Erneuter Stopp, falls er am Ende der Reaktionszeit durch die Brandsperre blockiert war
     assert of_type(effects, StopReaction)[0].profile_id == "night"
+
+
+def test_open_sensor_bypassed_until_closed() -> None:
+    h = Harness()
+    h.arm(NIGHT)
+    h.send(SensorTriggered("door", SensorRole.ENTRY))
+    h.send(EntryDelayElapsed(token=h.timer().token))
+    h.send(DisarmRequested(open_sensors=frozenset({"door"})))
+    # offene Tür löst nicht erneut aus
+    assert of_type(h.send(SensorTriggered("door", SensorRole.ENTRY)), Ignored)
+    assert h.ctx.state is AlarmState.ARMED
+    # andere Sensoren bleiben scharf
+    h.send(SensorTriggered("window", SensorRole.INSTANT))
+    assert h.ctx.state is AlarmState.TRIGGERED
+    h.send(DisarmRequested(open_sensors=frozenset({"door"})))
+    # Tür zu: wieder überwacht
+    restored = h.send(SensorClosed("door"))
+    assert of_type(restored, SensorsRestored)[0].sensors == frozenset({"door"})
+    h.send(SensorTriggered("door", SensorRole.ENTRY))
+    assert h.ctx.state is AlarmState.PENDING
+
+
+def test_sensor_closed_does_not_restore_permanent_bypass() -> None:
+    h = Harness()
+    h.arm(NIGHT)
+    h.ctx = replace(h.ctx, bypassed=frozenset({"door"}))
+    assert of_type(h.send(SensorClosed("door")), Ignored)
+    assert "door" in h.ctx.bypassed
+
+
+def test_invalid_code_does_not_end_alarm() -> None:
+    h = Harness()
+    h.arm(NIGHT)
+    h.send(SensorTriggered("x", SensorRole.INSTANT))
+    h.send(DisarmRequested(code_valid=False))
+    assert h.ctx.state is AlarmState.TRIGGERED
 
 
 def test_invalid_code_does_not_disarm() -> None:

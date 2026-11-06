@@ -118,6 +118,7 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
             "trigger_sensor": ctx.trigger_sensor,
             "alarm_cycles": ctx.alarm_cycles,
             "bypassed_sensors": sorted(ctx.bypassed),
+            "bypassed_until_closed": sorted(ctx.bypassed_until_closed),
             "monitored_sensors": sorted(self.runtime.armed_sensors),
             "open_sensors": sorted(readiness.open_sensors),
             "unavailable_sensors": sorted(readiness.unavailable_sensors),

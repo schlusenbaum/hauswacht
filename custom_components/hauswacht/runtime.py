@@ -91,6 +91,7 @@ from .core.sensors import (
 )
 from .core.state_machine import (
     ActivateReaction,
+    AlarmAcknowledged,
     AlarmContext,
     AlarmState,
     ArmingAborted,
@@ -106,7 +107,9 @@ from .core.state_machine import (
     Readiness,
     Rejected,
     RestartedDisarmed,
+    SensorClosed,
     SensorRole,
+    SensorsRestored,
     SensorTriggered,
     SetTestMode,
     StartTimer,
@@ -198,6 +201,7 @@ class HauswachtRuntime:
         self._session: str | None = None
         self._pushed_targets: set[str] = set()
         self._unsub_push: CALLBACK_TYPE | None = None
+        self._acting_user: str | None = None  # wer gerade per Push-Knopf bedient
         self.homecoming = HomecomingObserver(
             hass, entry.entry_id, dict(entry.options), self.entry_doors, self._notify
         )
@@ -373,13 +377,22 @@ class HauswachtRuntime:
 
     @callback
     def disarm(self, code: str | None) -> None:
+        """Unscharf schalten; während eines Alarms nur den Alarm beenden (bleibt scharf)."""
         self.verify_code(code)
-        self._dispatch(DisarmRequested(code_valid=True))
+        self._dispatch(self._disarm_request())
 
     @callback
     def disarm_trusted(self) -> None:
-        """Unscharf ohne PIN – nur für die eigene, vom Nutzer konfigurierte Automatik."""
-        self._dispatch(DisarmRequested(code_valid=True))
+        """Wie ``disarm`` ohne PIN – nur für eigene Automatik und den Push-Knopf."""
+        self._dispatch(self._disarm_request())
+
+    def _disarm_request(self) -> DisarmRequested:
+        open_now = (
+            self._readiness().open_sensors
+            if self.ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD)
+            else frozenset()
+        )
+        return DisarmRequested(code_valid=True, open_sensors=open_now)
 
     # --- Push-Knopf "Unscharf schalten" --------------------------------------
 
@@ -393,7 +406,7 @@ class HauswachtRuntime:
                 doors.add(entity_id)
         return frozenset(doors)
 
-    def _push_actions(self) -> dict[str, Any]:
+    def _push_actions(self, title: str = "Unscharf schalten") -> dict[str, Any]:
         if not self.push_disarm or self._session is None:
             return {"tag": PUSH_TAG}
         return {
@@ -401,7 +414,7 @@ class HauswachtRuntime:
             "actions": [
                 {
                     "action": f"{PUSH_ACTION_PREFIX}{self._session}",
-                    "title": "Unscharf schalten",
+                    "title": title,
                     # iOS: nur mit entsperrtem Gerät (Face ID / Code)
                     "authenticationRequired": True,
                 }
@@ -451,14 +464,19 @@ class HauswachtRuntime:
             return
         targets = self._alarm_targets()
         test_mode = self.ctx.test_mode
-        _LOGGER.warning("Unscharf über Push-Knopf durch %s", user.name)
-        self.disarm_trusted()
-        self.notifier.send(
-            targets,
-            "Hauswacht: unscharf",
-            f"Unscharf geschaltet über den Push-Knopf von {user.name}.",
-            test_mode=test_mode,
-        )
+        _LOGGER.warning("Push-Knopf durch %s (Zustand %s)", user.name, self.ctx.state.value)
+        self._acting_user = user.name
+        try:
+            self.disarm_trusted()
+        finally:
+            self._acting_user = None
+        if self.ctx.state is AlarmState.DISARMED:
+            self.notifier.send(
+                targets,
+                "Hauswacht: unscharf",
+                f"Unscharf geschaltet über den Push-Knopf von {user.name}.",
+                test_mode=test_mode,
+            )
 
     @callback
     def set_test_mode(self, enabled: bool) -> None:
@@ -693,6 +711,9 @@ class HauswachtRuntime:
             return
         if armed and entity_id in self.armed_sensors and became_unavailable(old_state, new_state):
             self._on_sensor_lost(entity_id)
+        if entity_id in self.ctx.bypassed_until_closed and new_state == "off":
+            self._dispatch(SensorClosed(sensor_key=entity_id))
+            return
         self._notify()
 
     @callback
@@ -809,6 +830,10 @@ class HauswachtRuntime:
                     title="Hauswacht: nach Neustart unscharf",
                     notification_id=NOTIFICATION_RESTART,
                 )
+            case AlarmAcknowledged():
+                self._on_acknowledged(effect)
+            case SensorsRestored():
+                _LOGGER.info("Wieder überwacht: %s", sorted(effect.sensors))
             case ArmingAborted():
                 _LOGGER.warning(
                     "Scharfschaltung abgebrochen: offen=%s, nicht verfügbar=%s",
@@ -817,6 +842,26 @@ class HauswachtRuntime:
                 )
             case _:
                 pass
+
+    @callback
+    def _on_acknowledged(self, effect: AlarmAcknowledged) -> None:
+        name = self.profile_name(effect.profile_id)
+        by = f" von {self._acting_user}" if self._acting_user else ""
+        message = f"Alarm beendet{by}. Profil {name} bleibt scharf."
+        if effect.bypassed_until_closed:
+            names = ", ".join(
+                display_name(self.hass, s) for s in sorted(effect.bypassed_until_closed)
+            )
+            message += f" Bis zum Schließen nicht überwacht: {names}."
+        _LOGGER.warning(message)
+        targets = parse_reaction(self.entry.options, effect.profile_id).notify
+        if self._pushed_targets:
+            self.notifier.clear(self._pushed_targets, PUSH_TAG)
+            self._pushed_targets.clear()
+        self.notifier.send(
+            targets, "Hauswacht: Alarm beendet", message, test_mode=self.ctx.test_mode
+        )
+        persistent_notification.async_dismiss(self.hass, NOTIFICATION_ALARM)
 
     @callback
     def _on_alarm(self, effect: ActivateReaction) -> None:
@@ -854,7 +899,7 @@ class HauswachtRuntime:
             title,
             message,
             test_mode=effect.test_mode,
-            data=self._push_actions(),
+            data=self._push_actions("Alarm beenden"),
         )
         self._pushed_targets.update(sent)
         persistent_notification.async_create(
