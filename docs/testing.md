@@ -23,6 +23,8 @@ ruff check .    # Lint
 | `tests/core/test_reactions.py` | Reaktion je Profil, Brand-Indikatoren, Höchstdauer, Texte |
 | `tests/integration/test_reactions.py` | Mit Home Assistant und **Attrappen-Diensten**: Hardware-Sperre, Testmodus, Brand am eigenen/fremden Melder, Brand während Alarm, keine Schreibzugriffe, Push, Freigabe nur mit Bestätigung |
 | `tests/integration/test_profiles.py` | Mit Home Assistant: keine Standardprofile, Migration der festen Profile, Profile ohne Knopf, nur zugeordnete Knöpfe, Auswahlliste und Knöpfe, Profilverwaltung in den Optionen |
+| `tests/core/test_automation.py` | Uhrzeiten, Wochentage, „alle weg“ (unbekannt zählt nicht als weg) |
+| `tests/integration/test_automation.py` | Mit Home Assistant: scharf/unscharf nach Uhrzeit und Wochentag, nie über ein anderes Profil, kein Abbruch laufender Alarme, Wartezeit bei Abwesenheit, Rückkehr, Optionen |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
 
 ## Geplant
