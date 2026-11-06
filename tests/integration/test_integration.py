@@ -252,7 +252,10 @@ async def test_options_flow_profile_timings(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     result = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "profile"}
+        result["flow_id"], {"next_step_id": "profiles"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "profile_edit"}
     )
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"profile": "away"}

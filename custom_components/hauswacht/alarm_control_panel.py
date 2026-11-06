@@ -12,16 +12,26 @@ from homeassistant.components.alarm_control_panel import (
     CodeFormat,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     async_get_current_platform,
 )
 
-from .core.profiles import PANEL_STATE_BY_PROFILE, PROFILE_IDS
+from .const import DOMAIN
+from .core.profiles import panel_state, profile_for_mode, profile_info, used_panel_modes
 from .core.state_machine import AlarmState
 from .entity import HauswachtEntity
 from .runtime import HauswachtConfigEntry
+
+_FEATURE_BY_MODE: dict[str, AlarmControlPanelEntityFeature] = {
+    "home": AlarmControlPanelEntityFeature.ARM_HOME,
+    "night": AlarmControlPanelEntityFeature.ARM_NIGHT,
+    "away": AlarmControlPanelEntityFeature.ARM_AWAY,
+    "vacation": AlarmControlPanelEntityFeature.ARM_VACATION,
+    "custom": AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS,
+}
 
 _STATE_MAP: dict[AlarmState, AlarmControlPanelState] = {
     AlarmState.DISARMED: AlarmControlPanelState.DISARMED,
@@ -41,7 +51,7 @@ async def async_setup_entry(
     async_get_current_platform().async_register_entity_service(
         "arm",
         {
-            vol.Required("profile"): vol.In(PROFILE_IDS),
+            vol.Required("profile"): cv.string,
             vol.Optional("confirm", default=False): cv.boolean,
             vol.Optional("code"): cv.string,
         },
@@ -57,23 +67,31 @@ async def async_setup_entry(
 class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
     _attr_name = None  # Entität heißt wie das Gerät: "Hauswacht"
     _attr_translation_key = "panel"
-    _attr_supported_features = (
-        AlarmControlPanelEntityFeature.ARM_HOME
-        | AlarmControlPanelEntityFeature.ARM_NIGHT
-        | AlarmControlPanelEntityFeature.ARM_AWAY
-        | AlarmControlPanelEntityFeature.ARM_VACATION
-        | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
-    )
 
     def __init__(self, entry: HauswachtConfigEntry) -> None:
         super().__init__(entry, "panel")
+        # Nur Knöpfe anbieten, denen ein Profil zugeordnet ist. Optionen ändern lädt neu.
+        features = AlarmControlPanelEntityFeature(0)
+        for mode in used_panel_modes(entry.options):
+            features |= _FEATURE_BY_MODE[mode]
+        self._attr_supported_features = features
 
     @property
     def alarm_state(self) -> AlarmControlPanelState:
         ctx = self.runtime.ctx
         if ctx.state is AlarmState.ARMED and ctx.profile is not None:
-            return AlarmControlPanelState(PANEL_STATE_BY_PROFILE[ctx.profile.profile_id])
+            return AlarmControlPanelState(
+                panel_state(self.runtime.entry.options, ctx.profile.profile_id)
+            )
         return _STATE_MAP[ctx.state]
+
+    @property
+    def icon(self) -> str | None:
+        """Im scharfen Zustand das Symbol des aktiven Profils."""
+        profile = self.runtime.ctx.profile
+        if profile is None:
+            return None
+        return profile_info(self.runtime.entry.options, profile.profile_id).icon
 
     @property
     def code_format(self) -> CodeFormat | None:
@@ -90,6 +108,9 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
         readiness = self.runtime.readiness_for(self.runtime.candidates)
         return {
             "profile": ctx.profile.profile_id if ctx.profile else None,
+            "profile_name": self.runtime.profile_name(ctx.profile.profile_id)
+            if ctx.profile
+            else None,
             "phase": ctx.state.value,
             "test_mode": ctx.test_mode,
             "timer": ctx.timer_kind.value if ctx.timer_kind else None,
@@ -105,6 +126,16 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
             "sirens_hardware_enabled": self.runtime.sirens.hardware_enabled,
             "last_siren_decision": self.runtime.sirens.last_result or None,
         }
+
+    def _arm_mode(self, mode: str, code: str | None) -> None:
+        profile_id = profile_for_mode(self.runtime.entry.options, mode)
+        if profile_id is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="no_profile_for_mode",
+                translation_placeholders={"mode": mode},
+            )
+        self._arm(profile_id, code)
 
     def _arm(self, profile_id: str, code: str | None, *, confirm: bool = False) -> None:
         if self.runtime.code_arm_required:
@@ -125,16 +156,16 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
         self.runtime.disarm(code)
 
     async def async_alarm_arm_home(self, code: str | None = None) -> None:
-        self._arm("home", code)
+        self._arm_mode("home", code)
 
     async def async_alarm_arm_night(self, code: str | None = None) -> None:
-        self._arm("night", code)
+        self._arm_mode("night", code)
 
     async def async_alarm_arm_away(self, code: str | None = None) -> None:
-        self._arm("away", code)
+        self._arm_mode("away", code)
 
     async def async_alarm_arm_vacation(self, code: str | None = None) -> None:
-        self._arm("vacation", code)
+        self._arm_mode("vacation", code)
 
     async def async_alarm_arm_custom_bypass(self, code: str | None = None) -> None:
-        self._arm("custom", code)
+        self._arm_mode("custom", code)

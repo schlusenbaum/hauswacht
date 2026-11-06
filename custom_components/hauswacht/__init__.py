@@ -14,7 +14,14 @@ if TYPE_CHECKING:
 
     from .runtime import HauswachtConfigEntry
 
-PLATFORMS: list[str] = ["alarm_control_panel", "binary_sensor", "sensor", "switch"]
+PLATFORMS: list[str] = [
+    "alarm_control_panel",
+    "binary_sensor",
+    "button",
+    "select",
+    "sensor",
+    "switch",
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
@@ -27,6 +34,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
+    """Version 1 (feste Profile) -> 2 (frei definierbare Profile)."""
+    from .core.profiles import migrate_v1_options  # noqa: PLC0415
+
+    if entry.version == 1:
+        hass.config_entries.async_update_entry(
+            entry, options=migrate_v1_options(entry.options), version=2
+        )
+    return entry.version == 2
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:

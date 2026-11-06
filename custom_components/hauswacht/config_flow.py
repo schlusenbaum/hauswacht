@@ -17,6 +17,7 @@ from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
     EntitySelectorConfig,
+    IconSelector,
     LabelSelector,
     NumberSelector,
     NumberSelectorConfig,
@@ -49,12 +50,17 @@ from .const import (
 )
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
+    DEFAULT_ICON,
     MAX_ALARM_CYCLES,
     MAX_DELAY,
     MAX_REACTION_TIME,
     MAX_STALE_HOURS,
-    PROFILE_IDS,
+    PANEL_MODE_NONE,
+    PANEL_MODES,
     profile_behaviour,
+    profile_ids,
+    profile_info,
+    profile_infos,
     profile_settings,
     stale_after_seconds,
 )
@@ -73,7 +79,7 @@ SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 
 class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
@@ -118,7 +124,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             step_id="init",
             menu_options=[
                 "zones",
-                "profile",
+                "profiles",
                 "sirens",
                 "notifications",
                 "roles",
@@ -169,57 +175,135 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     # --- Profile ----------------------------------------------------------
 
-    async def async_step_profile(
+    async def async_step_profiles(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="profiles", menu_options=["profile_add", "profile_edit", "profile_delete"]
+        )
+
+    def _profile_selector(self) -> SelectSelector:
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=i.profile_id, label=i.name)
+                    for i in profile_infos(self.config_entry.options)
+                ],
+                mode=SelectSelectorMode.LIST,
+            )
+        )
+
+    async def async_step_profile_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._profile_id = None
+        return await self.async_step_profile_settings()
+
+    async def async_step_profile_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not profile_ids(self.config_entry.options):
+            return self.async_abort(reason="no_profiles")
         if user_input is not None:
             self._profile_id = user_input["profile"]
             return await self.async_step_profile_settings()
-        schema = vol.Schema(
-            {
-                vol.Required("profile"): SelectSelector(
-                    SelectSelectorConfig(
-                        options=list(PROFILE_IDS),
-                        translation_key="profile",
-                        mode=SelectSelectorMode.LIST,
-                    )
-                )
-            }
+        return self.async_show_form(
+            step_id="profile_edit",
+            data_schema=vol.Schema({vol.Required("profile"): self._profile_selector()}),
         )
-        return self.async_show_form(step_id="profile", data_schema=schema)
+
+    async def async_step_profile_delete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not profile_ids(self.config_entry.options):
+            return self.async_abort(reason="no_profiles")
+        if user_input is not None:
+            options = dict(self.config_entry.options)
+            options[OPT_PROFILES] = {
+                k: v for k, v in options.get(OPT_PROFILES, {}).items() if k != user_input["profile"]
+            }
+            return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="profile_delete",
+            data_schema=vol.Schema({vol.Required("profile"): self._profile_selector()}),
+        )
+
+    def _validate_profile(self, user_input: dict[str, Any]) -> dict[str, str]:
+        options = self.config_entry.options
+        others = [i for i in profile_infos(options) if i.profile_id != self._profile_id]
+        name = str(user_input.get("name") or "").strip()
+        errors: dict[str, str] = {}
+        if not name:
+            errors["name"] = "profile_name_required"
+        elif any(i.name.casefold() == name.casefold() for i in others):
+            errors["name"] = "profile_name_taken"
+        mode = user_input.get("panel_mode", PANEL_MODE_NONE)
+        if mode != PANEL_MODE_NONE and any(i.panel_mode == mode for i in others):
+            errors["panel_mode"] = "panel_mode_taken"
+        return errors
 
     async def async_step_profile_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        assert self._profile_id is not None
         options = dict(self.config_entry.options)
         zones = parse_zones(options)
         registered_sirens = [s for s in options.get(OPT_SIRENS, []) if isinstance(s, str)]
-        if user_input is not None and "exit_delay" in user_input:
-            profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
-            profiles[self._profile_id] = {
-                "exit_delay": int(user_input["exit_delay"]),
-                "entry_delay": int(user_input["entry_delay"]),
-                "reaction_time": int(user_input["reaction_time"]),
-                "zones": [z for z in user_input.get("zones", []) if z in zones],
-                "open_policy": user_input["open_policy"],
-                "unavailable_policy": user_input["unavailable_policy"],
-                "max_alarm_cycles": int(user_input["max_alarm_cycles"]),
-                "tamper_triggers_alarm": bool(user_input["tamper_triggers_alarm"]),
-                "sirens": [s for s in user_input.get("sirens", []) if s in registered_sirens],
-                "siren_tone": user_input["siren_tone"],
-                "siren_volume": user_input["siren_volume"],
-                "silent": bool(user_input["silent"]),
-                "notify": list(user_input.get("notify", [])),
-            }
-            options[OPT_PROFILES] = profiles
-            return self.async_create_entry(data=options)
+        errors: dict[str, str] = {}
+        if user_input is not None and "name" in user_input:
+            errors = self._validate_profile(user_input)
+            if not errors:
+                profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
+                name = str(user_input["name"]).strip()
+                profile_id = self._profile_id or slugify(name, existing=profiles.keys())
+                mode = user_input.get("panel_mode", PANEL_MODE_NONE)
+                data = dict(profiles.get(profile_id, {}))  # unbekannte Schlüssel behalten
+                data.update(
+                    {
+                        "name": name,
+                        "icon": user_input.get("icon") or DEFAULT_ICON,
+                        "panel_mode": None if mode == PANEL_MODE_NONE else mode,
+                        "exit_delay": int(user_input["exit_delay"]),
+                        "entry_delay": int(user_input["entry_delay"]),
+                        "reaction_time": int(user_input["reaction_time"]),
+                        "zones": [z for z in user_input.get("zones", []) if z in zones],
+                        "open_policy": user_input["open_policy"],
+                        "unavailable_policy": user_input["unavailable_policy"],
+                        "max_alarm_cycles": int(user_input["max_alarm_cycles"]),
+                        "tamper_triggers_alarm": bool(user_input["tamper_triggers_alarm"]),
+                        "sirens": [
+                            s for s in user_input.get("sirens", []) if s in registered_sirens
+                        ],
+                        "siren_tone": user_input["siren_tone"],
+                        "siren_volume": user_input["siren_volume"],
+                        "silent": bool(user_input["silent"]),
+                        "notify": list(user_input.get("notify", [])),
+                    }
+                )
+                profiles[profile_id] = data
+                options[OPT_PROFILES] = profiles
+                return self.async_create_entry(data=options)
 
-        current = profile_settings(options, self._profile_id)
-        behaviour = profile_behaviour(options, self._profile_id)
-        reaction = parse_reaction(options, self._profile_id)
+        pid = self._profile_id or ""
+        info = profile_info(options, pid) if self._profile_id else None
+        current = profile_settings(options, pid)
+        behaviour = profile_behaviour(options, pid)
+        reaction = parse_reaction(options, pid)
+        source = user_input or {}
         schema = vol.Schema(
             {
+                vol.Required("name", default=source.get("name", info.name if info else "")): (
+                    TextSelector()
+                ),
+                vol.Required(
+                    "icon", default=source.get("icon", info.icon if info else DEFAULT_ICON)
+                ): IconSelector(),
+                vol.Required(
+                    "panel_mode",
+                    default=source.get(
+                        "panel_mode",
+                        (info.panel_mode if info and info.panel_mode else PANEL_MODE_NONE),
+                    ),
+                ): _select([PANEL_MODE_NONE, *PANEL_MODES], "panel_mode"),
                 vol.Optional(
                     "zones", default=[z for z in behaviour.zones if z in zones]
                 ): _zone_selector(zones, multiple=True),
@@ -262,7 +346,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="profile_settings",
             data_schema=schema,
-            description_placeholders={"profile": self._profile_id},
+            errors=errors,
+            description_placeholders={"profile": info.name if info else "–"},
         )
 
     # --- Zonen ------------------------------------------------------------
