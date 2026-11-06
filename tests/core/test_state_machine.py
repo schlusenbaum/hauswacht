@@ -341,8 +341,10 @@ def test_reaction_time_elapsed_goes_to_alarm_hold() -> None:
     h = Harness()
     h.arm(NIGHT)
     h.send(SensorTriggered("x", SensorRole.INSTANT))
-    h.send(ReactionTimeElapsed(token=h.timer().token))
+    effects = h.send(ReactionTimeElapsed(token=h.timer().token))
     assert h.ctx.state is AlarmState.ALARM_HOLD
+    # Ende der Reaktionszeit beendet auch Sirenen ohne eigene Laufzeit
+    assert of_type(effects, StopReaction)[0].profile_id == "night"
 
 
 def test_retrigger_respects_max_cycles() -> None:
@@ -378,7 +380,8 @@ def test_disarm_from_alarm_hold() -> None:
     h.send(ReactionTimeElapsed(token=h.timer().token))
     effects = h.send(DisarmRequested())
     assert h.ctx.state is AlarmState.DISARMED
-    assert not of_type(effects, StopReaction)  # Geräte sind bereits ausgelaufen
+    # Erneuter Stopp, falls er am Ende der Reaktionszeit durch die Brandsperre blockiert war
+    assert of_type(effects, StopReaction)[0].profile_id == "night"
 
 
 def test_invalid_code_does_not_disarm() -> None:

@@ -9,16 +9,19 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.siren import SirenEntityFeature
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.event import async_track_time_interval
 
 from .const import EVENT_HAUSWACHT, OPT_SIRENS, OPT_SIRENS_HARDWARE_ENABLED
 from .core.reactions import FIRE_DEVICE_CLASSES, fire_state, is_fire_indicator, parse_max_duration
 from .core.siren_guard import (
     ActivateRequest,
+    BlockReason,
     FireIndicator,
     GuardContext,
     GuardDecision,
@@ -34,6 +37,8 @@ _LOGGER = logging.getLogger(__name__)
 SIREN_DOMAIN = "siren"
 DEFAULT_MAX_DURATION = 240  # s, falls das Gerät keine Höchstdauer meldet
 MAX_DURATION_SUFFIX = "_max_duration"
+# Abstand der Wiederholversuche, wenn die Brandsperre das Ausschalten verhindert hat
+RETRY_STOP_INTERVAL = timedelta(seconds=60)
 
 
 class SirenExecutor:
@@ -44,6 +49,9 @@ class SirenExecutor:
         )
         self.hardware_enabled = bool(options.get(OPT_SIRENS_HARDWARE_ENABLED, False))
         self.activated: set[str] = set()
+        # Eigene Sirenen, deren Ausschalten die Brandsperre verhindert hat
+        self.pending_stop: set[str] = set()
+        self._unsub_retry: CALLBACK_TYPE | None = None
         self.last_result: dict[str, Any] = {}
 
     # --- Lagebild ------------------------------------------------------------
@@ -139,6 +147,7 @@ class SirenExecutor:
         for command in decision.commands:
             self._send(command)
             self.activated.add(command.device_key)
+            self.pending_stop.discard(command.device_key)
         self._report("activate", decision)
         return decision
 
@@ -148,13 +157,43 @@ class SirenExecutor:
         for command in decision.commands:
             self._send(command)
             self.activated.discard(command.device_key)
+            self.pending_stop.discard(command.device_key)
+        for blocked in decision.blocked:
+            if blocked.reason is BlockReason.FIRE_LOCK:
+                # Nicht vergessen: Sirenen ohne eigene Laufzeit liefen sonst endlos weiter.
+                self.pending_stop.add(blocked.device_key)
         self._report("stop", decision)
+        self._schedule_retry(test_mode=test_mode)
         return decision
 
     @callback
+    def _schedule_retry(self, *, test_mode: bool) -> None:
+        if self.pending_stop and self._unsub_retry is None:
+
+            @callback
+            def _retry(_now: datetime) -> None:
+                self.stop(test_mode=test_mode)
+
+            self._unsub_retry = async_track_time_interval(
+                self.hass, _retry, RETRY_STOP_INTERVAL, name="hauswacht_siren_retry_stop"
+            )
+        elif not self.pending_stop:
+            self.cancel_retry()
+
+    @callback
+    def cancel_retry(self) -> None:
+        if self._unsub_retry is not None:
+            self._unsub_retry()
+            self._unsub_retry = None
+
+    @callback
     def reset(self) -> None:
-        """Nach dem Unscharfschalten: Merkliste leeren (Geräte laufen per Dauer aus)."""
-        self.activated.clear()
+        """Nach dem Unscharfschalten: Merkliste leeren.
+
+        Sirenen, deren Ausschalten noch aussteht (Brandsperre), bleiben gemerkt und werden
+        ausgeschaltet, sobald der Guard es erlaubt.
+        """
+        self.activated &= self.pending_stop
 
     @callback
     def _send(self, command: SirenCommand) -> None:

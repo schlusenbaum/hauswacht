@@ -270,6 +270,7 @@ class HauswachtRuntime:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
         self.automation.stop()
+        self.sirens.cancel_retry()
         for unsub in (self._unsub_states, self._unsub_registry):
             if unsub is not None:
                 unsub()

@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-06
+
+### Behoben
+- Sirenen, die nur Ein und Aus kennen, liefen bis zum Unscharfschalten – oder nach dem Ende
+  der Reaktionszeit sogar endlos weiter. Hauswacht schaltet die eigenen Sirenen jetzt am Ende
+  der Reaktionszeit aus und beim Unscharfschalten auch aus dem Zustand „Alarm gehalten“.
+- Hat die Brandsperre das Ausschalten verhindert, versucht Hauswacht es jede Minute erneut,
+  bis kein Brand mehr gemeldet wird. Solange es brennt, wird nie ausgeschaltet.
+
 ## [0.9.2] - 2026-11-06
 
 ### Geändert

@@ -22,6 +22,7 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | S10 | Ton, Lautstärke und Dauer nur senden, wenn die Sirene sie unterstützt; fehlender Einbruchton → anderer Einbruchton, nie ein Brandton; nur Brandtöne → keine Ansteuerung | Abgelehnte Befehle ließen die Sirene stumm |
 | S11 | Rauchmelder ohne Tonauswahl → keine Einbruch-Ansteuerung | Ihr Standardton ist meist der Brandton |
 | S12 | Sirene ohne Dauer **und** ohne Ausschalten → keine Ansteuerung; Sirene ohne Ausschalten → kein Ausschaltbefehl | Hauswacht muss jeden Ton selbst begrenzen können |
+| S13 | Ende der Reaktionszeit und Unscharfschalten → eigene Sirenen ausschalten. Hat die Brandsperre das verhindert, wird es jede Minute erneut versucht, bis der Guard es erlaubt | Sirenen ohne eigene Laufzeit verstummen sonst nie |
 
 ### Umsetzung (ab 0.5.0)
 
