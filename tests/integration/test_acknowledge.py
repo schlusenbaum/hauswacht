@@ -85,3 +85,50 @@ async def test_push_button_during_alarm_ends_alarm(
     messages = [c.data["message"] for c in push[1:]]
     assert "clear_notification" in messages
     assert any("Alarm beendet von" in m and "bleibt scharf" in m for m in messages)
+
+
+# --- Knöpfe "Unscharf schalten" und "Alarm beenden" --------------------------
+
+DISARM_NOW = "button.hauswacht_disarm_now"
+END_ALARM = "button.hauswacht_end_alarm"
+
+
+async def test_disarm_button_disarms_even_during_alarm(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry())
+    await _alarm_by_window(hass)
+    await _service(hass, "button", "press", entity_id=DISARM_NOW)
+    state = _state(hass)
+    assert state.state == AlarmControlPanelState.DISARMED
+    assert state.attributes["bypassed_until_closed"] == []
+
+
+async def test_disarm_button_when_armed(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry())
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    await _service(hass, "button", "press", entity_id=DISARM_NOW)
+    assert _state(hass).state == AlarmControlPanelState.DISARMED
+
+
+async def test_end_alarm_button_keeps_armed(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry())
+    await _alarm_by_window(hass)
+    await _service(hass, "button", "press", entity_id=END_ALARM)
+    assert _state(hass).state == AlarmControlPanelState.ARMED_NIGHT
+    # außerhalb eines Alarms bewirkt der Knopf nichts
+    await _service(hass, "button", "press", entity_id=END_ALARM)
+    assert _state(hass).state == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_buttons_unavailable_with_pin(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "code"}
+    )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"new_pin": "2468"})
+    await hass.async_block_till_done()
+    for entity_id in (DISARM_NOW, END_ALARM):
+        state = hass.states.get(entity_id)
+        assert state is not None
+        assert state.state == "unavailable"

@@ -298,6 +298,12 @@
       },
       "homecoming_report": {
         "name": "Homecoming report"
+      },
+      "disarm_now": {
+        "name": "Disarm now"
+      },
+      "end_alarm": {
+        "name": "End alarm"
       }
     }
   },
@@ -343,6 +349,9 @@
     },
     "button_needs_code": {
       "message": "A PIN is required for arming. Use the alarm panel or the action hauswacht.arm with a code."
+    },
+    "button_needs_code_disarm": {
+      "message": "With a PIN set, disarming is only possible from the alarm panel (PIN prompt)."
     }
   },
   "services": {

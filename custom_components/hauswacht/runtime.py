@@ -386,6 +386,19 @@ class HauswachtRuntime:
         """Wie ``disarm`` ohne PIN – nur für eigene Automatik und den Push-Knopf."""
         self._dispatch(self._disarm_request())
 
+    @callback
+    def disarm_now(self) -> None:
+        """Sofort unscharf, auch während eines Alarms (erst Alarm beenden, dann unscharf)."""
+        if self.ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
+            self._dispatch(self._disarm_request())
+        self._dispatch(DisarmRequested(code_valid=True))
+
+    @callback
+    def end_alarm(self) -> None:
+        """Nur den Alarm beenden; außerhalb eines Alarms passiert nichts."""
+        if self.ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
+            self._dispatch(self._disarm_request())
+
     def _disarm_request(self) -> DisarmRequested:
         open_now = (
             self._readiness().open_sensors
