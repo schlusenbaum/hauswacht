@@ -28,11 +28,12 @@
       },
       "code": {
         "title": "PIN",
-        "description": "Aktueller Stand: {pin_status}. Der PIN wird nur als Hash gespeichert. Ohne PIN darf die Anlage nicht für Sprachassistenten freigegeben werden.",
+        "description": "Aktueller Stand: {pin_status}. Der PIN wird nur als Hash gespeichert. Ohne PIN darf die Anlage nicht für Sprachassistenten freigegeben werden. Mit „Alarm ohne PIN beenden“ funktioniert der Knopf „Alarm beenden“ auch mit PIN – Unscharfschalten verlangt weiter den PIN.",
         "data": {
           "new_pin": "Neuer PIN (4–8 Ziffern)",
           "remove_pin": "PIN entfernen",
-          "code_arm_required": "PIN auch zum Scharfschalten verlangen"
+          "code_arm_required": "PIN auch zum Scharfschalten verlangen",
+          "end_alarm_without_pin": "Alarm ohne PIN beenden (Sirene aus, Anlage bleibt scharf)"
         }
       },
       "profile_settings": {

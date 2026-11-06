@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-06
+
+### Hinzugefügt
+- Option **„Alarm ohne PIN beenden“** (unter PIN, standardmäßig aus): Der Knopf
+  „Alarm beenden“ funktioniert dann auch bei eingestelltem PIN. Unscharfschalten verlangt
+  weiter den PIN.
+
 ## [0.12.0] - 2026-11-06
 
 ### Hinzugefügt

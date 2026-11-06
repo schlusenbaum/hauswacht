@@ -28,11 +28,12 @@
       },
       "code": {
         "title": "PIN code",
-        "description": "Current status: {pin_status}. The PIN is stored hashed only. Without a PIN, the alarm must not be exposed to voice assistants.",
+        "description": "Current status: {pin_status}. The PIN is stored hashed only. Without a PIN, the alarm must not be exposed to voice assistants. With “End alarm without PIN”, the “End alarm” button works even with a PIN – disarming still requires the PIN.",
         "data": {
           "new_pin": "New PIN (4–8 digits)",
           "remove_pin": "Remove PIN",
-          "code_arm_required": "Require PIN to arm"
+          "code_arm_required": "Require PIN to arm",
+          "end_alarm_without_pin": "End alarm without PIN (sirens off, system stays armed)"
         }
       },
       "profile_settings": {

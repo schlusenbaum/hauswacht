@@ -37,6 +37,7 @@ from .const import (
     DOMAIN,
     NAME,
     OPT_CODE_ARM_REQUIRED,
+    OPT_END_ALARM_WITHOUT_PIN,
     OPT_HOMECOMING_OBSERVE,
     OPT_HOMECOMING_PERSONS,
     OPT_INFRASTRUCTURE,
@@ -163,6 +164,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                     options[OPT_PIN_SALT] = stored.salt
                     options[OPT_PIN_DIGEST] = stored.digest
             options[OPT_CODE_ARM_REQUIRED] = bool(user_input.get(OPT_CODE_ARM_REQUIRED, False))
+            options[OPT_END_ALARM_WITHOUT_PIN] = bool(
+                user_input.get(OPT_END_ALARM_WITHOUT_PIN, False)
+            )
             if not errors:
                 return self.async_create_entry(data=options)
 
@@ -176,6 +180,10 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     OPT_CODE_ARM_REQUIRED,
                     default=bool(options.get(OPT_CODE_ARM_REQUIRED, False)),
+                ): BooleanSelector(),
+                vol.Optional(
+                    OPT_END_ALARM_WITHOUT_PIN,
+                    default=bool(options.get(OPT_END_ALARM_WITHOUT_PIN, False)),
                 ): BooleanSelector(),
             }
         )
