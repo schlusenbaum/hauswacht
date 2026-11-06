@@ -105,6 +105,8 @@ class AlarmContext:
     state: AlarmState = AlarmState.DISARMED
     profile: ProfileRuntime | None = None
     bypassed: frozenset[str] = frozenset()
+    # Nach "Alarm beenden" überbrückt, bis der Sensor wieder geschlossen ist
+    bypassed_until_closed: frozenset[str] = frozenset()
     accepted_unavailable: frozenset[str] = frozenset()
     timer_token: int = 0
     timer_kind: TimerKind | None = None
@@ -136,7 +138,18 @@ class ArmRequested:
 
 @dataclass(frozen=True)
 class DisarmRequested:
+    """Unscharf schalten. Während eines Alarms: nur den Alarm beenden, scharf bleiben."""
+
     code_valid: bool = True
+    # Sensoren des Profils, die gerade offen sind (für "Alarm beenden")
+    open_sensors: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class SensorClosed:
+    """Ein überwachter Sensor ist wieder geschlossen bzw. in Ruhe."""
+
+    sensor_key: str
 
 
 @dataclass(frozen=True)
@@ -171,6 +184,7 @@ Event = (
     | ArmRequested
     | DisarmRequested
     | SensorTriggered
+    | SensorClosed
     | ExitDelayElapsed
     | EntryDelayElapsed
     | ReactionTimeElapsed
@@ -204,6 +218,21 @@ class ConfirmationRequired:
 
 @dataclass(frozen=True)
 class SensorsBypassed:
+    sensors: frozenset[str]
+
+
+@dataclass(frozen=True)
+class AlarmAcknowledged:
+    """Alarm beendet, das Profil bleibt scharf."""
+
+    profile_id: str
+    bypassed_until_closed: frozenset[str]
+
+
+@dataclass(frozen=True)
+class SensorsRestored:
+    """Überbrückte Sensoren sind wieder geschlossen und werden wieder überwacht."""
+
     sensors: frozenset[str]
 
 
@@ -269,6 +298,8 @@ Effect = (
     | Rejected
     | ConfirmationRequired
     | SensorsBypassed
+    | AlarmAcknowledged
+    | SensorsRestored
     | ArmingAborted
     | StartTimer
     | CancelTimer
@@ -449,19 +480,15 @@ def _on_disarm(ctx: AlarmContext, event: DisarmRequested) -> Result:
     if not event.code_valid:
         return ctx, (Rejected(reason="invalid_code"),)
 
-    profile = _profile(ctx)
+    if ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
+        return _acknowledge(ctx, event)
     effects: list[Effect] = []
-    # Auch aus ALARM_HOLD: Ein Stopp am Ende der Reaktionszeit kann durch die Brandsperre
-    # verhindert worden sein. Der Guard schaltet nur ab, was Hauswacht selbst eingeschaltet hat.
-    was_triggered = ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD)
+    # Aus TRIGGERED/ALARM_HOLD geht es nur über "Alarm beenden" (bleibt scharf). Ein durch
+    # die Brandsperre verhinderter Sirenen-Stopp wird vom Executor bis zum Erfolg wiederholt.
     ctx, cancel = _cancel_timer(ctx)
     effects += cancel
     ctx, changed = _goto(ctx, AlarmState.DISARMED, "disarm_requested")
     effects.append(changed)
-    if was_triggered:
-        # Ob und welche Sirenen tatsächlich gestoppt werden, entscheidet der Sirenen-Guard
-        # (Brandsperre!). Die Zustandsmaschine meldet nur das Ende der Reaktion.
-        effects.append(StopReaction(profile_id=profile.profile_id, test_mode=ctx.test_mode))
     ctx = replace(
         ctx,
         profile=None,
@@ -469,8 +496,46 @@ def _on_disarm(ctx: AlarmContext, event: DisarmRequested) -> Result:
         accepted_unavailable=frozenset(),
         alarm_cycles=0,
         trigger_sensor=None,
+        bypassed_until_closed=frozenset(),
     )
     return ctx, tuple(effects)
+
+
+def _acknowledge(ctx: AlarmContext, event: DisarmRequested) -> Result:
+    """Alarm beenden: Sirenen aus, Profil bleibt scharf, offene Sensoren bis zum Schließen
+    überbrückt (sonst löste z. B. die offene Tür sofort erneut aus)."""
+    profile = _profile(ctx)
+    effects: list[Effect] = []
+    ctx, cancel = _cancel_timer(ctx)
+    effects += cancel
+    ctx, changed = _goto(ctx, AlarmState.ARMED, "alarm_acknowledged")
+    effects.append(changed)
+    # Ob und welche Sirenen tatsächlich gestoppt werden, entscheidet der Sirenen-Guard.
+    effects.append(StopReaction(profile_id=profile.profile_id, test_mode=ctx.test_mode))
+    temporary = event.open_sensors - ctx.bypassed
+    ctx = replace(
+        ctx,
+        bypassed=ctx.bypassed | temporary,
+        bypassed_until_closed=ctx.bypassed_until_closed | temporary,
+        alarm_cycles=0,
+        trigger_sensor=None,
+    )
+    effects.append(
+        AlarmAcknowledged(profile_id=profile.profile_id, bypassed_until_closed=temporary)
+    )
+    return ctx, tuple(effects)
+
+
+def _on_sensor_closed(ctx: AlarmContext, event: SensorClosed) -> Result:
+    if event.sensor_key not in ctx.bypassed_until_closed:
+        return ctx, (Ignored(reason="not_temporarily_bypassed"),)
+    restored = frozenset({event.sensor_key})
+    ctx = replace(
+        ctx,
+        bypassed=ctx.bypassed - restored,
+        bypassed_until_closed=ctx.bypassed_until_closed - restored,
+    )
+    return ctx, (SensorsRestored(sensors=restored),)
 
 
 def _on_sensor(ctx: AlarmContext, event: SensorTriggered, now: float) -> Result:
@@ -600,6 +665,8 @@ def step(ctx: AlarmContext, event: Event, now: float) -> Result:
             return _on_disarm(ctx, event)
         case SensorTriggered():
             return _on_sensor(ctx, event, now)
+        case SensorClosed():
+            return _on_sensor_closed(ctx, event)
         case ExitDelayElapsed():
             return _on_exit_elapsed(ctx, event)
         case EntryDelayElapsed():

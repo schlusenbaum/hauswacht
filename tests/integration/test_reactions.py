@@ -225,7 +225,8 @@ async def test_fire_during_alarm_blocks_turn_off(hass: HomeAssistant) -> None:
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
     state = hass.states.get(PANEL)
     assert state is not None
-    assert state.state == AlarmControlPanelState.DISARMED
+    # Unscharf während des Alarms beendet nur den Alarm; das Profil bleibt scharf
+    assert state.state == AlarmControlPanelState.ARMED_NIGHT
     assert mocks.off == []  # Brand: niemals ausschalten
 
 
