@@ -66,3 +66,12 @@ verhält sich wie bei einem aktiven Brand.
   erlaubt.
 - Echte Sirenentests erfolgen erst nach ausdrücklicher Freigabe, mit Ankündigung und bei
   Anwesenheit der Bewohner.
+
+## Heimkehr und Push-Knopf
+
+| Nr. | Regel | Grund |
+|---|---|---|
+| H1 | Die Heimkehr-Beobachtung schaltet nichts: keine Dienste, kein Scharf/Unscharf, kein Alarm (statischer Test) | Erst messen, dann entscheiden |
+| H2 | Ein Push-Knopf gilt nur für die Scharfschaltung, in der er verschickt wurde | Alte Benachrichtigungen dürfen eine spätere Scharfschaltung nicht aufheben |
+| H3 | Der Push-Knopf wirkt nur mit einem aktiven, nicht systemeigenen Home-Assistant-Benutzer | Nur angemeldete Handys |
+| H4 | Push-Knopf standardmäßig aus | Bewusste Entscheidung, auch wegen Android (keine Gerätesperre für Knöpfe) |

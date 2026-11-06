@@ -10,8 +10,10 @@
 | 0.6.0 ✅ | Beispiel-Dashboard (Standardkarten, Smartphone) | – |
 | 0.7.0 ✅ | Profil „Individuell“, Schutz gegen PIN-Raten | nein |
 | 0.8.0 ✅ | Frei definierbare Profile (Name, Symbol, Bedienfeld-Knopf), Auswahlliste und Knöpfe | nein |
-| **0.9.0** ✅ | Automatik pro Profil (Uhrzeit, Anwesenheit), Integrationssymbol | nein |
-| 0.10.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten | nach Freigabe, bei Anwesenheit |
+| 0.9.0 ✅ | Automatik pro Profil (Uhrzeit, Anwesenheit), Integrationssymbol | nein |
+| 0.9.1–0.9.3 ✅ | Raumnamen, Sirenen nach Fähigkeiten, Sirenen-Ende nach Reaktionszeit | nein |
+| **0.10.0** ✅ | Heimkehr-Beobachtung (schaltet nichts), Push-Knopf „Unscharf schalten“ | Push ja |
+| 0.11.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Keypad, RFID/NFC, weitere Automatik-Bedingungen | – |
 

@@ -19,6 +19,7 @@
           "profiles": "Profile",
           "sirens": "Sirenen",
           "notifications": "Benachrichtigungen",
+          "homecoming": "Heimkehr-Beobachtung",
           "roles": "Sensorrollen (Ausnahmen)",
           "monitoring": "Sensorüberwachung",
           "infrastructure": "Systemüberwachung",
@@ -147,10 +148,11 @@
       },
       "notifications": {
         "title": "Benachrichtigungen",
-        "description": "Systemmeldungen (Störung, Sensorausfall, Manipulation, Neustart) gehen an diese Dienste. Alarmmeldungen werden pro Profil festgelegt.",
+        "description": "Systemmeldungen (Störung, Sensorausfall, Manipulation, Neustart) gehen an diese Dienste. Alarmmeldungen werden pro Profil festgelegt. Mit „Push bei Türöffnung“ bekommen die Dienste des Profils beim Öffnen einer Eingangstür (und beim Alarm) eine Benachrichtigung mit dem Knopf „Unscharf schalten“ – nur für die Home-Assistant-App, gültig nur für die laufende Scharfschaltung.",
         "data": {
           "notify_system": "Dienste für Systemmeldungen",
-          "notify_in_test_mode": "Auch im Testmodus benachrichtigen"
+          "notify_in_test_mode": "Auch im Testmodus benachrichtigen",
+          "push_disarm": "Push bei Türöffnung mit Knopf „Unscharf schalten“"
         }
       },
       "profiles": {
@@ -171,6 +173,14 @@
         "title": "Profil löschen",
         "data": {
           "profile": "Profil"
+        }
+      },
+      "homecoming": {
+        "title": "Heimkehr-Beobachtung",
+        "description": "Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS: kein Unscharf, kein Alarm. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.",
+        "data": {
+          "homecoming_observe": "Heimkehr beobachten",
+          "homecoming_persons": "Personen"
         }
       }
     },
@@ -264,6 +274,9 @@
           "degraded": "Sensoren ausgefallen",
           "fault": "Störung"
         }
+      },
+      "homecoming": {
+        "name": "Heimkehr-Beobachtung"
       }
     },
     "binary_sensor": {
@@ -282,6 +295,9 @@
       },
       "arm_selected_confirmed": {
         "name": "Trotzdem scharf schalten"
+      },
+      "homecoming_report": {
+        "name": "Heimkehr-Bericht"
       }
     }
   },

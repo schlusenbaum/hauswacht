@@ -19,7 +19,7 @@ async def async_setup_entry(
     entry: HauswachtConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([HauswachtSystemStatusSensor(entry)])
+    async_add_entities([HauswachtSystemStatusSensor(entry), HauswachtHomecomingSensor(entry)])
 
 
 class HauswachtSystemStatusSensor(HauswachtEntity, SensorEntity):
@@ -43,3 +43,22 @@ class HauswachtSystemStatusSensor(HauswachtEntity, SensorEntity):
             "unavailable_sensors": sorted(report.unavailable_sensors),
             "monitored_infrastructure": sorted(self.runtime.infrastructure),
         }
+
+
+class HauswachtHomecomingSensor(HauswachtEntity, SensorEntity):
+    """Heimkehr-Beobachtung: Anzahl ausgewerteter Heimkehrten, Details in den Attributen."""
+
+    _attr_translation_key = "homecoming"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:home-import-outline"
+
+    def __init__(self, entry: HauswachtConfigEntry) -> None:
+        super().__init__(entry, "homecoming")
+
+    @property
+    def native_value(self) -> int | None:
+        return self.runtime.homecoming.summary()
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return self.runtime.homecoming.attributes()

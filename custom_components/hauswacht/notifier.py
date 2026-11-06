@@ -32,7 +32,13 @@ class Notifier:
 
     @callback
     def send(
-        self, targets: Iterable[str], title: str, message: str, *, test_mode: bool = False
+        self,
+        targets: Iterable[str],
+        title: str,
+        message: str,
+        *,
+        test_mode: bool = False,
+        data: Mapping[str, Any] | None = None,
     ) -> list[str]:
         """Verschickt eine Nachricht. Im Testmodus nur, wenn das ausdrücklich erlaubt ist."""
         targets = tuple(dict.fromkeys(targets))
@@ -52,7 +58,8 @@ class Notifier:
                 _LOGGER.warning("Benachrichtigungsdienst notify.%s existiert nicht", target)
                 continue
             self.hass.async_create_task(
-                self._call(target, title, message), f"hauswacht_notify_{target}"
+                self._call(target, title, message, {**PUSH_DATA, **(data or {})}),
+                f"hauswacht_notify_{target}",
             )
             sent.append(target)
         return sent
@@ -61,13 +68,23 @@ class Notifier:
     def send_system(self, title: str, message: str, *, test_mode: bool = False) -> list[str]:
         return self.send(self.system_targets, title, message, test_mode=test_mode)
 
-    async def _call(self, target: str, title: str, message: str) -> None:
+    @callback
+    def clear(self, targets: Iterable[str], tag: str) -> None:
+        """Entfernt eine frühere Benachrichtigung (Home-Assistant-App, per ``tag``)."""
+        for target in dict.fromkeys(targets):
+            if self.hass.services.has_service(NOTIFY_DOMAIN, target):
+                self.hass.async_create_task(
+                    self._call(target, None, "clear_notification", {"tag": tag}),
+                    f"hauswacht_clear_{target}",
+                )
+
+    async def _call(
+        self, target: str, title: str | None, message: str, data: Mapping[str, Any]
+    ) -> None:
+        payload: dict[str, Any] = {"message": message, "data": dict(data)}
+        if title is not None:
+            payload["title"] = title
         try:
-            await self.hass.services.async_call(
-                NOTIFY_DOMAIN,
-                target,
-                {"title": title, "message": message, "data": PUSH_DATA},
-                blocking=True,
-            )
+            await self.hass.services.async_call(NOTIFY_DOMAIN, target, payload, blocking=True)
         except Exception:
             _LOGGER.exception("Benachrichtigung an notify.%s fehlgeschlagen", target)
