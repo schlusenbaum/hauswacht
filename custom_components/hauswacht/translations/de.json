@@ -53,7 +53,26 @@
           "siren_tone": "Sirenenton",
           "siren_volume": "Lautstärke",
           "silent": "Stiller Alarm (nur Benachrichtigungen)",
-          "notify": "Benachrichtigen (Alarm)"
+          "notify": "Benachrichtigen (Alarm)",
+          "automation": "Automatik"
+        },
+        "sections": {
+          "automation": {
+            "name": "Automatik",
+            "description": "Optional: wann dieses Profil von selbst scharf oder unscharf wird. Automatisch scharf geschaltet wird nur aus „unscharf“ heraus; offene Sensoren werden dabei nie überbrückt. Ein laufender Alarm wird nie automatisch beendet.",
+            "data": {
+              "auto_arm_time": "Scharf um",
+              "auto_disarm_time": "Unscharf um",
+              "auto_weekdays": "An diesen Tagen (leer = täglich)",
+              "auto_away_persons": "Scharf, wenn alle diese Personen weg sind",
+              "auto_away_delay": "Wartezeit, bevor scharf geschaltet wird",
+              "auto_disarm_on_arrival": "Unscharf, wenn eine dieser Personen heimkommt"
+            },
+            "data_description": {
+              "auto_away_delay": "Handys, die nur über das WLAN erkannt werden, melden im Standby manchmal kurz „weg“. Die Wartezeit verhindert, dass dann versehentlich scharf geschaltet wird.",
+              "auto_disarm_on_arrival": "Nur wenn das Profil zuvor automatisch scharf geschaltet wurde. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf."
+            }
+          }
         }
       },
       "zones": {
@@ -217,6 +236,17 @@
         "away": "Abwesend",
         "vacation": "Urlaub",
         "custom": "Benutzerdefiniert"
+      }
+    },
+    "weekday": {
+      "options": {
+        "mon": "Mo",
+        "tue": "Di",
+        "wed": "Mi",
+        "thu": "Do",
+        "fri": "Fr",
+        "sat": "Sa",
+        "sun": "So"
       }
     }
   },

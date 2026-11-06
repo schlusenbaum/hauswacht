@@ -134,3 +134,25 @@ def invalid_code_message(failures: int, lock_seconds: int | None) -> tuple[str, 
     if lock_seconds:
         text += f" Die PIN-Eingabe ist für {lock_seconds} Sekunden gesperrt."
     return ("Hauswacht: falscher PIN", text)
+
+
+def auto_armed_message(profile_name: str, reason: str) -> tuple[str, str]:
+    return (
+        "Hauswacht: automatisch scharf",
+        f"Profil {profile_name} wurde automatisch scharf geschaltet ({reason}).",
+    )
+
+
+def auto_arm_failed_message(profile_name: str, reason: str, details: str) -> tuple[str, str]:
+    return (
+        "Hauswacht: automatisches Scharfschalten fehlgeschlagen",
+        f"Profil {profile_name} konnte nicht automatisch scharf geschaltet werden ({reason}): "
+        f"{details}",
+    )
+
+
+def auto_disarmed_message(profile_name: str, reason: str) -> tuple[str, str]:
+    return (
+        "Hauswacht: automatisch unscharf",
+        f"Profil {profile_name} wurde automatisch unscharf geschaltet ({reason}).",
+    )

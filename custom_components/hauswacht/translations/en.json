@@ -53,7 +53,26 @@
           "siren_tone": "Siren tone",
           "siren_volume": "Volume",
           "silent": "Silent alarm (notifications only)",
-          "notify": "Notify (alarm)"
+          "notify": "Notify (alarm)",
+          "automation": "Automation"
+        },
+        "sections": {
+          "automation": {
+            "name": "Automation",
+            "description": "Optional: when this profile arms or disarms by itself. Automatic arming only happens from \"disarmed\"; open sensors are never bypassed automatically. A running alarm is never ended automatically.",
+            "data": {
+              "auto_arm_time": "Arm at",
+              "auto_disarm_time": "Disarm at",
+              "auto_weekdays": "On these days (empty = every day)",
+              "auto_away_persons": "Arm when all of these persons are away",
+              "auto_away_delay": "Delay before arming",
+              "auto_disarm_on_arrival": "Disarm when one of these persons arrives home"
+            },
+            "data_description": {
+              "auto_away_delay": "Phones detected only via Wi-Fi sometimes briefly report \"away\" in standby. The delay prevents accidental arming.",
+              "auto_disarm_on_arrival": "Only if the profile was armed automatically. Note: whoever has one of these phones can disarm with it."
+            }
+          }
         }
       },
       "zones": {
@@ -217,6 +236,17 @@
         "away": "Away",
         "vacation": "Vacation",
         "custom": "Custom"
+      }
+    },
+    "weekday": {
+      "options": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
       }
     }
   },

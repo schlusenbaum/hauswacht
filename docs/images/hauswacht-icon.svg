@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2E7BE6"/>
+      <stop offset="1" stop-color="#1B4FA0"/>
+    </linearGradient>
+  </defs>
+  <!-- Schild -->
+  <path d="M256 8 L462 76 C470 79 476 87 476 96 L476 236 C476 370 382 456 262 503 C258 505 254 505 250 503 C130 456 36 370 36 236 L36 96 C36 87 42 79 50 76 Z" fill="url(#g)"/>
+  <!-- Haus -->
+  <path d="M256 128 L384 236 L352 236 L352 360 L160 360 L160 236 L128 236 Z" fill="#FFFFFF"/>
+  <!-- Tür mit Schlüsselloch-Andeutung -->
+  <rect x="226" y="276" width="60" height="84" rx="8" fill="url(#g)"/>
+  <circle cx="256" cy="306" r="10" fill="#FFFFFF"/>
+  <rect x="251" y="310" width="10" height="24" rx="3" fill="#FFFFFF"/>
+</svg>

@@ -1,10 +1,12 @@
+<img src="docs/images/hauswacht-icon.svg" alt="Hauswacht" width="96" align="right">
+
 # Hauswacht
 
 **Profilbasierte Einbruchmeldeanlage für Home Assistant** – frei konfigurierbare Profile,
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.8.0 – Entwicklungsversion.**
+> **Status: 0.9.0 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und

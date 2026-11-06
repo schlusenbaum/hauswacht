@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.8.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.9.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -79,6 +79,35 @@ das Haus sei geschützt, obwohl nichts überwacht wird.
 Auswahlliste **Profil** und den Knopf **Scharf schalten**, oder per Aktion
 `hauswacht.arm` mit dem Profilnamen. Profile ohne eigenen Knopf zeigt das Bedienfeld im
 scharfen Zustand als „benutzerdefiniert“; das Attribut `profile_name` nennt das Profil.
+
+### Automatik
+
+Im Profil gibt es den aufklappbaren Bereich **Automatik**. Alle Felder sind optional – leer
+heißt: diese Automatik ist aus.
+
+| Einstellung | Wirkung |
+|---|---|
+| Scharf um / Unscharf um | Uhrzeit, zu der das Profil scharf bzw. unscharf geschaltet wird |
+| An diesen Tagen | Gilt für beide Uhrzeiten; leer = täglich |
+| Scharf, wenn alle diese Personen weg sind | Sind alle gewählten Personen nicht zu Hause, wird nach der Wartezeit scharf geschaltet |
+| Wartezeit | Standard 15 Minuten. Kommt in dieser Zeit jemand zurück, wird nichts geschaltet |
+| Unscharf, wenn eine dieser Personen heimkommt | Nur wenn das Profil vorher **automatisch** scharf geschaltet wurde |
+
+Sicherheitsregeln:
+
+- Automatisch scharf geschaltet wird nur, wenn die Anlage unscharf ist – nie über ein anderes
+  Profil hinweg.
+- Offene oder ausgefallene Sensoren werden automatisch **nie** bestätigt. Klappt das
+  Scharfschalten deshalb nicht, kommt eine Systemmeldung.
+- Ein laufender Alarm oder eine laufende Eingangsverzögerung wird nie automatisch beendet.
+- Eine Person mit unbekanntem oder nicht verfügbarem Aufenthalt gilt **nicht** als weg.
+- Nach einem Neustart ist die Anlage unscharf; die Anwesenheits-Automatik greift erst beim
+  nächsten Wechsel einer Person.
+- Hinweis zu „Unscharf bei Rückkehr“: Wer das Handy einer der Personen hat, schaltet damit
+  unscharf. Für „Abwesend“ oder „Urlaub“ deshalb gut überlegen.
+
+Handys, die nur über das WLAN erkannt werden (Ping am Router), melden im Standby manchmal kurz
+„weg“. Die Wartezeit fängt das ab.
 
 ### 3. Rollen prüfen (meist nicht nötig)
 

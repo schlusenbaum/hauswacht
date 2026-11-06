@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-06
+
+### Hinzugefügt
+- **Automatik pro Profil** (aufklappbarer Bereich „Automatik“ im Profil):
+  - scharf und/oder unscharf zu einer Uhrzeit, wahlweise nur an bestimmten Wochentagen
+  - scharf, wenn alle ausgewählten Personen weg sind – nach einer einstellbaren Wartezeit
+    (Standard 15 Minuten), damit kurze WLAN-Aussetzer von Handys nicht scharf schalten
+  - optional unscharf, sobald eine dieser Personen heimkommt – nur wenn das Profil vorher
+    automatisch scharf geschaltet wurde
+- Sicherheitsregeln der Automatik: nur aus „unscharf“ heraus, nie offene Sensoren überbrücken,
+  nie einen laufenden Alarm oder eine Eingangsverzögerung beenden; Personen mit unbekanntem
+  Aufenthalt gelten nicht als weg.
+- Systemmeldungen und Ereignisse: `AutoArmed`, `AutoArmFailed`, `AutoArmScheduled`,
+  `AutoArmCancelled`, `AutoArmSkipped`, `AutoDisarmed`, `AutoDisarmSkipped`.
+- **Integrationssymbol** für helles und dunkles Design (ab Home Assistant 2026.3).
+
 ## [0.8.0] - 2026-11-06
 
 ### Geändert (Breaking)
