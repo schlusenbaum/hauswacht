@@ -13,10 +13,12 @@
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Automatische Scharfschaltung, Anwesenheit, Keypad, RFID/NFC | – |
 
-## Offene Entscheidungen
+## Entscheidungen
 
-- Bedienung per PIN und Freigabe für Sprachassistenten (spätestens vor 0.2.0). Vorschlag:
-  PIN optional, standardmäßig **nicht** für Sprachassistenten freigegeben.
+- **PIN:** optional und einstellbar (2026-11-06).
+- **Sprachassistenten:** standardmäßig nicht freigegeben. Eine spätere Freigabe (z. B. Alexa
+  über Home Assistant Cloud) muss ohne Codeänderung möglich sein: Sie erfolgt über die normale
+  Entitätsfreigabe von Home Assistant. Unscharfschalten per Sprache nur mit PIN.
 
 ## Versionierung und Releases
 
