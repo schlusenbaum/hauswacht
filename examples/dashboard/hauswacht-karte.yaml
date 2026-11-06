@@ -51,10 +51,10 @@ cards:
           columns: 4
           square: false
           cards:
-            - type: button
-              name: Zuhause
+            - type: shortcut
+              label: Zuhause
               icon: mdi:home-outline
-              icon_height: 20px
+              vertical: true
               tap_action:
                 action: perform-action
                 perform_action: hauswacht.arm
@@ -67,10 +67,10 @@ cards:
                   text: >-
                     „Zuhause“ trotzdem scharf schalten? Die offenen Sensoren werden bis
                     zum Unscharfschalten NICHT überwacht.
-            - type: button
-              name: Nacht
+            - type: shortcut
+              label: Nacht
               icon: mdi:weather-night
-              icon_height: 20px
+              vertical: true
               tap_action:
                 action: perform-action
                 perform_action: hauswacht.arm
@@ -83,10 +83,10 @@ cards:
                   text: >-
                     „Nacht“ trotzdem scharf schalten? Die offenen Sensoren werden bis
                     zum Unscharfschalten NICHT überwacht.
-            - type: button
-              name: Abwesend
+            - type: shortcut
+              label: Abwesend
               icon: mdi:shield-lock-outline
-              icon_height: 20px
+              vertical: true
               tap_action:
                 action: perform-action
                 perform_action: hauswacht.arm
@@ -99,10 +99,10 @@ cards:
                   text: >-
                     „Abwesend“ trotzdem scharf schalten? Die offenen Sensoren werden bis
                     zum Unscharfschalten NICHT überwacht.
-            - type: button
-              name: Urlaub
+            - type: shortcut
+              label: Urlaub
               icon: mdi:airplane
-              icon_height: 20px
+              vertical: true
               tap_action:
                 action: perform-action
                 perform_action: hauswacht.arm

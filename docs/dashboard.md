@@ -7,7 +7,7 @@ nutzt nur Standardkarten von Home Assistant und funktioniert in jeder Ansichtsar
 ## Einfügen
 
 Dashboard bearbeiten → **Karte hinzufügen** → ganz unten **Manuell** → Inhalt der Datei
-einfügen → Speichern.
+einfügen → Speichern. Die Knöpfe sind Kurzbefehl-Karten (`shortcut`, ab Home Assistant 2026.5).
 
 Die Entitäts-IDs in der Datei gelten für eine deutschsprachige Instanz. Auf Englisch heißen
 zwei davon anders: `binary_sensor.hauswacht_open_sensors` und
