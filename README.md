@@ -4,9 +4,9 @@
 
 **Profilbasierte Einbruchmeldeanlage für Home Assistant** – frei konfigurierbare Profile,
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
-gesperrter Testmodus. Ohne Alarmo.
+gesperrter Testmodus.
 
-> **Status: 0.9.0 – Entwicklungsversion.**
+> **Status: 0.9.1 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
@@ -33,6 +33,32 @@ gesperrter Testmodus. Ohne Alarmo.
 Hauswacht ist ein Hobbyprojekt und **kein zertifiziertes Sicherheitssystem** (keine VdS- oder
 EN-50131-Zertifizierung). Es ersetzt weder eine professionelle Einbruchmeldeanlage noch
 geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmeldefunktion.
+
+## Geräte und Kompatibilität
+
+> **Getestet ist bisher nur ein Sirenenmodell:** Rauchwarnmelder **Develco SMSZB-120**
+> („Smoke detector with siren“) über **Zigbee2MQTT**. Auch damit ist der echte Sirenentest
+> noch offen (geplant für 0.10.0); bis dahin ist nur die Logik mit nachgebildeten Geräten
+> geprüft.
+
+**Sensoren** (Tür-, Fenster-, Bewegungs- und Präsenzmelder, Sabotagekontakte) sind
+herstellerunabhängig: Hauswacht nutzt jeden `binary_sensor` mit passender Geräteklasse.
+
+**Sirenen** sind Home-Assistant-Entitäten der Domain `siren`. Hauswacht ist auf Sirenen
+ausgelegt, die gleichzeitig **Rauchwarnmelder** sind – daher die Brandsperre. Für andere
+Sirenen gilt derzeit:
+
+| Eigenschaft | Erwartet | Bei abweichenden Geräten |
+|---|---|---|
+| Ton | Die Sirene versteht einen der Töne `burglar`, `emergency`, `police_panic`, `emergency_panic` | Der Befehl kann von Home Assistant abgelehnt werden – die Sirene bleibt dann **stumm** |
+| Lautstärke und Dauer | Die Sirene unterstützt `volume_level` und `duration` | wie oben |
+| Höchstdauer | `number.<sirene>_max_duration` am selben Gerät (Zigbee2MQTT) | Hauswacht nimmt 240 Sekunden an |
+| Brandanzeige | Rauch-, Gas-, CO- oder Hitze-Binärsensor am selben Gerät | Keine gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt trotzdem |
+
+Reine Innen- oder Außensirenen ohne Rauchmelder können also funktionieren, sind aber **nicht
+getestet**. Wer andere Geräte einsetzt: vorher mit Testmodus und Simulation prüfen, dann die
+Sirene bei Anwesenheit einmal bewusst auslösen und `last_siren_decision` am Bedienfeld
+ansehen. Rückmeldungen zu weiteren Modellen sind willkommen.
 
 ## Dokumentation
 

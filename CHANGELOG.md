@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Neuer Abschnitt „Geräte und Kompatibilität“: getestetes Sirenenmodell (Develco SMSZB-120 über
+  Zigbee2MQTT) und Anforderungen an andere Sirenen.
+
 ## [0.9.1] - 2026-11-06
 
 ### Geändert
