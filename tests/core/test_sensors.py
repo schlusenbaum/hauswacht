@@ -17,6 +17,7 @@ from custom_components.hauswacht.core.sensors import (
     became_unavailable,
     default_role,
     evaluate_readiness,
+    is_last_seen_entity,
     is_trigger,
     parse_role_overrides,
     parse_zones,
@@ -259,3 +260,80 @@ def test_invalid_policies_fall_back_to_refuse() -> None:
 @pytest.mark.parametrize(("hours", "expected"), [(0, None), (None, None), (2, 7200.0), (999, None)])
 def test_stale_after_seconds(hours: object, expected: float | None) -> None:
     assert stale_after_seconds({"stale_after_hours": hours}) == expected
+
+
+# --- Letzter Kontakt (last_seen) --------------------------------------------
+
+
+def test_last_seen_wins_over_last_reported() -> None:
+    # HA hat den Sensor gerade erst (Neustart) aktualisiert, das Gerät schweigt aber seit 3 h.
+    snapshot = SensorSnapshot(
+        entity_id="a", state="off", last_reported=NOW - 10, last_seen=NOW - 3 * 3600
+    )
+    assert snapshot.last_contact == NOW - 3 * 3600
+    readiness = evaluate_readiness(["a"], {"a": snapshot}, now=NOW, stale_after=3600)
+    assert readiness.unavailable_sensors == {"a"}
+
+
+def test_without_last_seen_falls_back_to_last_reported() -> None:
+    snapshot = SensorSnapshot(entity_id="a", state="off", last_reported=NOW - 10)
+    assert snapshot.last_contact == NOW - 10
+    assert not evaluate_readiness(
+        ["a"], {"a": snapshot}, now=NOW, stale_after=3600
+    ).unavailable_sensors
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "expected"),
+    [
+        (
+            {"entity_id": "sensor.tuer_last_seen", "unique_id": None, "device_class": "timestamp"},
+            True,
+        ),
+        (
+            {
+                "entity_id": "sensor.x",
+                "unique_id": "0x1_last_seen_zigbee2mqtt",
+                "device_class": "timestamp",
+            },
+            True,
+        ),
+        (
+            {
+                "entity_id": "sensor.x",
+                "unique_id": None,
+                "device_class": "timestamp",
+                "original_name": "Last seen",
+            },
+            True,
+        ),
+        (
+            {
+                "entity_id": "sensor.x",
+                "unique_id": None,
+                "device_class": "timestamp",
+                "translation_key": "last_seen",
+            },
+            True,
+        ),
+        ({"entity_id": "sensor.tuer_last_seen", "unique_id": None, "device_class": None}, False),
+        (
+            {
+                "entity_id": "binary_sensor.tuer_last_seen",
+                "unique_id": None,
+                "device_class": "timestamp",
+            },
+            False,
+        ),
+        (
+            {
+                "entity_id": "sensor.letzter_batteriewechsel",
+                "unique_id": None,
+                "device_class": "timestamp",
+            },
+            False,
+        ),
+    ],
+)
+def test_is_last_seen_entity(kwargs: dict[str, str | None], expected: bool) -> None:
+    assert is_last_seen_entity(**kwargs) is expected  # type: ignore[arg-type]

@@ -13,10 +13,12 @@ from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import label_registry as lr
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
     async_capture_events,
     async_fire_time_changed,
 )
@@ -343,3 +345,59 @@ async def test_options_flow_monitoring(hass: HomeAssistant) -> None:
     )
     assert flow["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options["stale_after_hours"] == 26
+
+
+# --- Letzter Kontakt (last_seen) --------------------------------------------
+
+
+def _device_with_last_seen(hass: HomeAssistant) -> tuple[str, str]:
+    """Legt ein Testgerät mit Kontakt und Zigbee2MQTT-artigem last_seen-Sensor an."""
+    source = MockConfigEntry(domain="test")
+    source.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=source.entry_id, identifiers={("test", "kontakt1")}
+    )
+    registry = er.async_get(hass)
+    contact = registry.async_get_or_create(
+        "binary_sensor",
+        "test",
+        "0x1_contact",
+        suggested_object_id="testkontakt",
+        device_id=device.id,
+        config_entry=source,
+    )
+    last_seen = registry.async_get_or_create(
+        "sensor",
+        "test",
+        "0x1_last_seen_zigbee2mqtt",
+        suggested_object_id="testkontakt_last_seen",
+        device_id=device.id,
+        config_entry=source,
+        original_device_class="timestamp",
+    )
+    return contact.entity_id, last_seen.entity_id
+
+
+@pytest.mark.parametrize(("hours_ago", "armable"), [(3, False), (0.1, True)])
+async def test_stale_check_uses_device_last_seen(
+    hass: HomeAssistant, hours_ago: float, armable: bool
+) -> None:
+    contact, last_seen = _device_with_last_seen(hass)
+    hass.states.async_set(contact, "off", {"device_class": "window"})  # gerade "frisch" in HA
+    seen = dt_util.utcnow() - timedelta(hours=hours_ago)
+    hass.states.async_set(last_seen, seen.isoformat(), {"device_class": "timestamp"})
+    options = {
+        "zones": {"og": {"name": "OG", "entities": [contact], "label": None}},
+        "profiles": {"home": {"zones": ["og"]}},
+        "stale_after_hours": 1,
+    }
+    await setup_entry(hass, make_entry(options))
+    assert _attr(hass, "last_contact")[contact] is not None
+
+    if armable:
+        await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
+        assert _state(hass) == AlarmControlPanelState.ARMED_HOME
+    else:
+        assert _attr(hass, "unavailable_sensors") == [contact]
+        with pytest.raises(ServiceValidationError):
+            await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
