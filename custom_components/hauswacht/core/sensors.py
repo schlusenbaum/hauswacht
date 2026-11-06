@@ -48,7 +48,18 @@ class SensorSnapshot:
     entity_id: str
     state: str | None  # None = Entität existiert nicht
     device_class: str | None = None
-    last_reported: float | None = None  # Unix-Zeitstempel
+    last_reported: float | None = None  # Unix-Zeitstempel: letzte Aktualisierung in HA
+    last_seen: float | None = None  # Unix-Zeitstempel: letzte Meldung des Geräts (falls bekannt)
+
+    @property
+    def last_contact(self) -> float | None:
+        """Bester bekannter Zeitpunkt, zu dem sich das Gerät gemeldet hat.
+
+        Der gerätseitige Wert (z. B. ``last_seen`` von Zigbee2MQTT) hat Vorrang, denn der
+        HA-Zeitstempel wird bei jedem Neustart von Home Assistant erneuert und würde einen
+        toten Sensor dann stundenlang als lebendig erscheinen lassen.
+        """
+        return self.last_seen if self.last_seen is not None else self.last_reported
 
 
 # --- Konfiguration lesen ----------------------------------------------------
@@ -153,9 +164,10 @@ def is_unavailable(snapshot: SensorSnapshot, now: float, stale_after: float | No
     if snapshot.state is None or snapshot.state in UNAVAILABLE_STATES:
         return True
     if stale_after and stale_after > 0:
-        if snapshot.last_reported is None:
+        contact = snapshot.last_contact
+        if contact is None:
             return True
-        return now - snapshot.last_reported > stale_after
+        return now - contact > stale_after
     return False
 
 
@@ -181,6 +193,29 @@ def evaluate_readiness(
     return Readiness(
         open_sensors=frozenset(open_sensors), unavailable_sensors=frozenset(unavailable)
     )
+
+
+LAST_SEEN_NAMES = frozenset({"last seen", "zuletzt gesehen"})
+
+
+def is_last_seen_entity(
+    *,
+    entity_id: str,
+    unique_id: str | None,
+    device_class: str | None,
+    original_name: str | None = None,
+    translation_key: str | None = None,
+) -> bool:
+    """Erkennt einen "Zuletzt gesehen"-Zeitstempelsensor (z. B. von Zigbee2MQTT)."""
+    if not entity_id.startswith("sensor.") or device_class != "timestamp":
+        return False
+    hints = (
+        entity_id.endswith("_last_seen"),
+        "last_seen" in (unique_id or ""),
+        translation_key == "last_seen",
+        (original_name or "").strip().lower() in LAST_SEEN_NAMES,
+    )
+    return any(hints)
 
 
 def is_trigger(old_state: str | None, new_state: str | None) -> bool:

@@ -50,6 +50,7 @@ from .core.sensors import (
     all_configured_sensors,
     became_unavailable,
     evaluate_readiness,
+    is_last_seen_entity,
     is_trigger,
     parse_role_overrides,
     parse_zones,
@@ -138,6 +139,7 @@ class HauswachtRuntime:
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
         self._labels: dict[str, frozenset[str]] = {}
+        self._last_seen_entity: dict[str, str] = {}
         self._timer_cancel: CALLBACK_TYPE | None = None
         self._unsub_states: CALLBACK_TYPE | None = None
         self._unsub_registry: CALLBACK_TYPE | None = None
@@ -259,8 +261,48 @@ class HauswachtRuntime:
                 state=state.state if state else None,
                 device_class=state.attributes.get("device_class") if state else None,
                 last_reported=state.last_reported.timestamp() if state else None,
+                last_seen=self._last_seen(entity_id),
             )
         return result
+
+    def _last_seen(self, entity_id: str) -> float | None:
+        """Gerätseitiger "Zuletzt gesehen"-Zeitpunkt, falls das Gerät einen solchen Sensor hat."""
+        companion = self._last_seen_entity.get(entity_id)
+        state = self.hass.states.get(companion) if companion else None
+        if state is None:
+            return None
+        parsed = dt_util.parse_datetime(state.state)
+        return parsed.timestamp() if parsed is not None else None
+
+    def last_contacts(self) -> dict[str, str | None]:
+        """Letzter Kontakt je konfiguriertem Sensor (für Anzeige und Auswertung)."""
+        contacts: dict[str, str | None] = {}
+        for entity_id, snapshot in self.snapshots(self.candidates).items():
+            contact = snapshot.last_contact
+            contacts[entity_id] = (
+                dt_util.utc_from_timestamp(contact).isoformat() if contact is not None else None
+            )
+        return dict(sorted(contacts.items()))
+
+    @callback
+    def _find_last_seen_entities(self, entity_ids: frozenset[str]) -> dict[str, str]:
+        registry = er.async_get(self.hass)
+        found: dict[str, str] = {}
+        for entity_id in entity_ids:
+            entry = registry.async_get(entity_id)
+            if entry is None or entry.device_id is None:
+                continue
+            for sibling in er.async_entries_for_device(registry, entry.device_id):
+                if is_last_seen_entity(
+                    entity_id=sibling.entity_id,
+                    unique_id=sibling.unique_id,
+                    device_class=sibling.device_class or sibling.original_device_class,
+                    original_name=sibling.original_name,
+                    translation_key=sibling.translation_key,
+                ):
+                    found[entity_id] = sibling.entity_id
+                    break
+        return found
 
     def readiness_for(self, entity_ids: frozenset[str]) -> Readiness:
         return evaluate_readiness(
@@ -278,9 +320,11 @@ class HauswachtRuntime:
         """Labels neu einlesen und Zustandsabos auf alle konfigurierten Sensoren setzen."""
         self._labels = entities_by_label(self.hass)
         self.candidates = all_configured_sensors(self.zones, self._labels)
+        self._last_seen_entity = self._find_last_seen_entities(self.candidates | self.armed_sensors)
         # Gerade scharf überwachte Sensoren bleiben abonniert, auch wenn ihr Label
         # inzwischen entfernt wurde – sonst würden sie unbemerkt nicht mehr überwacht.
-        wanted = self.candidates | self.armed_sensors
+        # Die "Zuletzt gesehen"-Sensoren werden mit abonniert, damit die Anzeige aktuell bleibt.
+        wanted = self.candidates | self.armed_sensors | frozenset(self._last_seen_entity.values())
         if wanted == self._subscribed and self._unsub_states is not None:
             return
         if self._unsub_states is not None:
@@ -302,6 +346,9 @@ class HauswachtRuntime:
     @callback
     def _on_sensor_state(self, event: HaEvent[EventStateChangedData]) -> None:
         entity_id = event.data["entity_id"]
+        if entity_id not in self.candidates and entity_id not in self.armed_sensors:
+            self._notify()  # nur ein "Zuletzt gesehen"-Sensor hat sich geändert
+            return
         old = event.data["old_state"]
         new = event.data["new_state"]
         old_state = old.state if old else None
