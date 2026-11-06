@@ -189,3 +189,20 @@ async def test_problem_indicator_off_means_ok(hass: HomeAssistant) -> None:
     hass.states.async_set(problem, "on", {"device_class": "problem"})
     await hass.async_block_till_done()
     assert _value(hass, STATUS) == "fault"
+
+
+# --- Offene Sensoren --------------------------------------------------------
+
+OPEN = "binary_sensor.hauswacht_open_sensors"
+
+
+async def test_open_sensors_binary_sensor(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry())
+    assert _value(hass, OPEN) == "off"
+    await _set(hass, WINDOW, "on")
+    assert _value(hass, OPEN) == "on"
+    state = hass.states.get(OPEN)
+    assert state is not None
+    assert state.attributes["sensors"] == [WINDOW]
+    await _set(hass, WINDOW, "off")
+    assert _value(hass, OPEN) == "off"

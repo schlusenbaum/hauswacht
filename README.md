@@ -4,7 +4,7 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.5.0 – Entwicklungsversion.**
+> **Status: 0.6.0 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
@@ -36,6 +36,7 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 | Dokument | Inhalt |
 |---|---|
 | [docs/installation.md](docs/installation.md) | Installation, Einstellungen, Bedienung |
+| [docs/dashboard.md](docs/dashboard.md) | Beispielkarte und nützliche Entitäten |
 | [docs/architecture.md](docs/architecture.md) | Gesamtarchitektur und Module |
 | [docs/state-model.md](docs/state-model.md) | Zustände, Ereignisse, Übergänge |
 | [docs/safety.md](docs/safety.md) | Sicherheitsregeln für Sirenen und Brandalarm |

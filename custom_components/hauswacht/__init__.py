@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from .runtime import HauswachtConfigEntry
 
-PLATFORMS: list[str] = ["alarm_control_panel", "sensor", "switch"]
+PLATFORMS: list[str] = ["alarm_control_panel", "binary_sensor", "sensor", "switch"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:

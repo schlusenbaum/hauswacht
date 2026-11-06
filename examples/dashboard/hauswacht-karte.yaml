@@ -1,0 +1,125 @@
+# Hauswacht – Beispielkarte
+#
+# Dezente Bedienkarte mit Standardkarten von Home Assistant (keine Zusatzkarten nötig).
+# Einfügen: Dashboard bearbeiten → Karte hinzufügen → "Manuell" → diesen Text einfügen.
+#
+# Die Entitäts-IDs gelten für eine deutschsprachige Home-Assistant-Instanz.
+# Auf Englisch heißen sie binary_sensor.hauswacht_open_sensors und
+# sensor.hauswacht_system_status.
+#
+# Inhalt:
+#  1. Kachel mit Zustand und Knöpfen für die Profile
+#  2. Nur wenn unscharf UND Sensoren offen sind: Liste der offenen Sensoren und Knöpfe
+#     "trotzdem scharf schalten" (mit Rückfrage). Offene Sensoren werden dabei überbrückt,
+#     also bis zum Unscharfschalten nicht überwacht. Das klappt nur bei Profilen, deren
+#     Einstellung "Offene Sensoren beim Scharfschalten" nicht auf "verweigern" steht.
+#  3. Nur bei Problemen: Systemstatus
+
+type: vertical-stack
+cards:
+  - type: tile
+    entity: alarm_control_panel.hauswacht
+    name: Hauswacht
+    icon: mdi:shield-home-outline
+    features_position: bottom
+    features:
+      - type: alarm-modes
+        modes:
+          - armed_home
+          - armed_night
+          - armed_away
+          - armed_vacation
+          - disarmed
+
+  - type: conditional
+    conditions:
+      - condition: state
+        entity: binary_sensor.hauswacht_offene_sensoren
+        state: "on"
+      - condition: state
+        entity: alarm_control_panel.hauswacht
+        state: disarmed
+    card:
+      type: vertical-stack
+      cards:
+        - type: markdown
+          text_only: true
+          content: >-
+            **Offen:** {{ state_attr('binary_sensor.hauswacht_offene_sensoren', 'names')
+            | join(', ') }} – trotzdem scharf schalten:
+        - type: grid
+          columns: 4
+          square: false
+          cards:
+            - type: button
+              name: Zuhause
+              icon: mdi:home-outline
+              icon_height: 20px
+              tap_action:
+                action: perform-action
+                perform_action: hauswacht.arm
+                target:
+                  entity_id: alarm_control_panel.hauswacht
+                data:
+                  profile: home
+                  confirm: true
+                confirmation:
+                  text: >-
+                    „Zuhause“ trotzdem scharf schalten? Die offenen Sensoren werden bis
+                    zum Unscharfschalten NICHT überwacht.
+            - type: button
+              name: Nacht
+              icon: mdi:weather-night
+              icon_height: 20px
+              tap_action:
+                action: perform-action
+                perform_action: hauswacht.arm
+                target:
+                  entity_id: alarm_control_panel.hauswacht
+                data:
+                  profile: night
+                  confirm: true
+                confirmation:
+                  text: >-
+                    „Nacht“ trotzdem scharf schalten? Die offenen Sensoren werden bis
+                    zum Unscharfschalten NICHT überwacht.
+            - type: button
+              name: Abwesend
+              icon: mdi:shield-lock-outline
+              icon_height: 20px
+              tap_action:
+                action: perform-action
+                perform_action: hauswacht.arm
+                target:
+                  entity_id: alarm_control_panel.hauswacht
+                data:
+                  profile: away
+                  confirm: true
+                confirmation:
+                  text: >-
+                    „Abwesend“ trotzdem scharf schalten? Die offenen Sensoren werden bis
+                    zum Unscharfschalten NICHT überwacht.
+            - type: button
+              name: Urlaub
+              icon: mdi:airplane
+              icon_height: 20px
+              tap_action:
+                action: perform-action
+                perform_action: hauswacht.arm
+                target:
+                  entity_id: alarm_control_panel.hauswacht
+                data:
+                  profile: vacation
+                  confirm: true
+                confirmation:
+                  text: >-
+                    „Urlaub“ trotzdem scharf schalten? Die offenen Sensoren werden bis
+                    zum Unscharfschalten NICHT überwacht.
+
+  - type: tile
+    entity: sensor.hauswacht_systemstatus
+    name: Hauswacht-System
+    visibility:
+      - condition: state
+        entity: sensor.hauswacht_systemstatus
+        state_not: ok

@@ -212,6 +212,11 @@
           "fault": "Störung"
         }
       }
+    },
+    "binary_sensor": {
+      "open_sensors": {
+        "name": "Offene Sensoren"
+      }
     }
   },
   "exceptions": {
