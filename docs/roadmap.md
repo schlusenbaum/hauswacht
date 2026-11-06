@@ -8,8 +8,10 @@
 | 0.4.0 ✅ | Testmodus komplett, Simulation, Infrastruktur-Überwachung (MQTT, Z2M, BLE) | nur lesen |
 | 0.5.0 ✅ | Reaktionen, Benachrichtigungen, Siren Executor (Hardware-Freigabe aus) | Push ja, Sirenen nein |
 | 0.6.0 ✅ | Beispiel-Dashboard (Standardkarten, Smartphone) | – |
-| **0.7.0** ✅ | Profil „Individuell“, Schutz gegen PIN-Raten | nein |
-| 0.8.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten | nach Freigabe, bei Anwesenheit |
+| 0.7.0 ✅ | Profil „Individuell“, Schutz gegen PIN-Raten | nein |
+| **0.8.0** ✅ | Frei definierbare Profile (Name, Symbol, Bedienfeld-Knopf), Auswahlliste und Knöpfe | nein |
+| 0.9.0 | Automatik pro Profil (Uhrzeit, Anwesenheit) | nur lesen |
+| 0.10.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Automatische Scharfschaltung, Anwesenheit, Keypad, RFID/NFC | – |
 

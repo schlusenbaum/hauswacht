@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.7.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.8.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -24,7 +24,10 @@ Hauswacht kann nur einmal eingerichtet werden.
 
 | Entität | Zweck |
 |---|---|
-| `alarm_control_panel.hauswacht` | Bedienfeld: Zuhause, Nacht, Abwesend, Urlaub, Individuell (benutzerdefiniert), Unscharf |
+| `alarm_control_panel.hauswacht` | Bedienfeld mit den Knöpfen, denen ein Profil zugeordnet ist, und Unscharf |
+| `select.hauswacht_profil` | Auswahl des Profils für die Knöpfe „Scharf schalten“ |
+| `button.hauswacht_scharf_schalten` | Gewähltes Profil scharf schalten |
+| `button.hauswacht_trotzdem_scharf_schalten` | Gewähltes Profil scharf schalten und offene Sensoren überbrücken |
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
 | `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
 | `binary_sensor.hauswacht_offene_sensoren` | An, sobald ein Sensor einer Zone offen ist |
@@ -50,32 +53,32 @@ Sensoren kommen auf zwei Wegen in eine Zone, beide lassen sich kombinieren:
 
 Welche Sensoren eine Zone am Ende umfasst, zeigt das Attribut `zones` am Bedienfeld.
 
-### 2. Zonen den Profilen zuordnen
+### 2. Profile anlegen
 
-**Profile → Profil wählen.** Dort legst du fest:
+**Profile → Profil anlegen.** Es gibt keine vorgegebenen Profile – du legst jedes selbst an,
+so viele du brauchst. Pro Profil:
 
 | Einstellung | Bedeutung |
 |---|---|
+| Name, Symbol | Wie das Profil in Auswahlliste, Meldungen und am Bedienfeld erscheint |
+| Knopf am Bedienfeld | Optional: Zuhause, Nacht, Abwesend, Urlaub oder Benutzerdefiniert. Jeder Knopf gehört höchstens einem Profil |
 | Überwachte Zonen | Welche Zonen in diesem Profil scharf sind |
-| Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten |
-| Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert |
+| Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten (Standard je 30 s) |
+| Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert (Standard 180 s) |
 | Offene Sensoren beim Scharfschalten | Verweigern · nach Bestätigung erlauben · automatisch überbrücken |
 | Ausgefallene Sensoren beim Scharfschalten | Verweigern · nach Bestätigung erlauben |
 | Maximale Alarmzyklen | Wie oft nach einem Alarm erneut ausgelöst werden darf |
 | Manipulation löst Alarm aus | Sonst wird Manipulation nur gemeldet |
+| Sirenen, Ton, Lautstärke, stiller Alarm | Reaktion bei Alarm (siehe [Sirenen](#sirenen)) |
+| Benachrichtigen (Alarm) | Wer bei einem Alarm eine Push-Nachricht bekommt |
 
 Ein Profil ohne Zonen lässt sich **nicht** scharf schalten. So entsteht nie der Eindruck,
 das Haus sei geschützt, obwohl nichts überwacht wird.
 
-Standardzeiten:
-
-| Profil | Ausgang | Eingang | Alarmreaktion |
-|---|---|---|---|
-| Zuhause | 0 s | 30 s | 180 s |
-| Nacht | 0 s | 30 s | 180 s |
-| Abwesend | 60 s | 30 s | 180 s |
-| Urlaub | 60 s | 30 s | 180 s |
-| Individuell | 0 s | 30 s | 180 s |
+**Bedienen:** Profile mit Knopf über das Bedienfeld; jedes Profil – auch ohne Knopf – über die
+Auswahlliste **Profil** und den Knopf **Scharf schalten**, oder per Aktion
+`hauswacht.arm` mit dem Profilnamen. Profile ohne eigenen Knopf zeigt das Bedienfeld im
+scharfen Zustand als „benutzerdefiniert“; das Attribut `profile_name` nennt das Profil.
 
 ### 3. Rollen prüfen (meist nicht nötig)
 
@@ -193,9 +196,12 @@ action: hauswacht.arm
 target:
   entity_id: alarm_control_panel.hauswacht
 data:
-  profile: night
+  profile: Nacht
   confirm: true
 ```
+
+Einfacher geht es mit dem Knopf **Trotzdem scharf schalten** für das in der Auswahlliste
+gewählte Profil.
 
 Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nicht überwacht.
 
@@ -235,7 +241,10 @@ Jede Aktion wird als Ereignis `hauswacht_event` gemeldet. Das Feld `type` nennt 
 `InfrastructureFault`, `InfrastructureRecovered`, `SensorSimulated`, `SirenDecision`,
 `NotificationSuppressed` und weitere.
 
-## Upgrade von 0.2.0
+## Upgrade
 
-Nach dem Update haben die Profile noch keine Zonen. Lege zuerst Zonen an und ordne sie den
-Profilen zu, sonst verweigert Hauswacht das Scharfschalten.
+- **Von 0.7.x auf 0.8.0:** Die bisherigen fünf festen Profile werden automatisch zu normalen
+  Profilen mit gleichem Namen, Knopf und allen Einstellungen. Du kannst sie danach umbenennen,
+  ändern oder löschen.
+- **Von 0.2.0:** Lege zuerst Zonen an und ordne sie den Profilen zu, sonst verweigert
+  Hauswacht das Scharfschalten.

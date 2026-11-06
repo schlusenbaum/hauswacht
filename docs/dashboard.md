@@ -9,24 +9,23 @@ nutzt nur Standardkarten von Home Assistant und funktioniert in jeder Ansichtsar
 Dashboard bearbeiten → **Karte hinzufügen** → ganz unten **Manuell** → Inhalt der Datei
 einfügen → Speichern. Die Knöpfe sind Kurzbefehl-Karten (`shortcut`, ab Home Assistant 2026.5).
 
-Die Entitäts-IDs in der Datei gelten für eine deutschsprachige Instanz. Auf Englisch heißen
-zwei davon anders: `binary_sensor.hauswacht_open_sensors` und
-`sensor.hauswacht_system_status`.
+Die Entitäts-IDs in der Datei gelten für eine deutschsprachige Instanz; die englischen Namen
+stehen oben in der Datei.
 
 ## Was die Karte zeigt
 
 | Teil | Wann sichtbar | Zweck |
 |---|---|---|
-| Kachel „Hauswacht“ | immer | Zustand und Knöpfe für Zuhause, Nacht, Abwesend, Urlaub, Unscharf |
-| „Offen: … – trotzdem scharf schalten“ | nur unscharf **und** Sensoren offen | Liste der offenen Sensoren und vier Knöpfe zum Scharfschalten mit Bestätigung |
+| Kachel „Hauswacht“ | immer | Zustand und die Bedienfeld-Knöpfe, denen ein Profil zugeordnet ist |
+| Kachel „Profil“ und „Scharf schalten“ | nur unscharf | Beliebiges Profil wählen und scharf schalten |
+| „Trotzdem scharf“ und „Offen: …“ | nur unscharf **und** Sensoren offen | Gewähltes Profil mit Bestätigung scharf schalten; offene Sensoren werden überbrückt |
 | Kachel „Hauswacht-System“ | nur wenn der Systemstatus nicht OK ist | Hinweis auf ausgefallene Sensoren oder Störungen |
 
 ## Trotzdem scharf schalten
 
-Die normalen Knöpfe auf der Kachel verweigern das Scharfschalten, solange Sensoren offen
-sind – so schaltet niemand versehentlich mit offenem Fenster scharf. Die Knöpfe
-„trotzdem scharf schalten“ fragen vorher nach und rufen dann die Aktion `hauswacht.arm` mit
-`confirm: true` auf.
+Die normalen Knöpfe verweigern das Scharfschalten, solange Sensoren offen sind – so schaltet
+niemand versehentlich mit offenem Fenster scharf. „Trotzdem scharf“ fragt vorher nach und
+drückt dann `button.hauswacht_trotzdem_scharf_schalten` für das gewählte Profil.
 
 - Offene Sensoren werden dabei **überbrückt** und bis zum Unscharfschalten nicht überwacht.
 - Das funktioniert nur für Profile, bei denen „Offene Sensoren beim Scharfschalten“ auf
@@ -45,3 +44,5 @@ Nützliche Entitäten und Attribute:
 | `binary_sensor.hauswacht_offene_sensoren` | an, sobald ein Sensor einer Zone offen ist; Attribute `sensors`, `names` |
 | `sensor.hauswacht_systemstatus` | `ok`, `degraded`, `fault`; Attribute `faulty_infrastructure`, `unavailable_sensors` |
 | `switch.hauswacht_testmodus` | Testmodus |
+| `select.hauswacht_profil` | Gewähltes Profil (im scharfen Zustand: aktives Profil) |
+| `button.hauswacht_scharf_schalten`, `button.hauswacht_trotzdem_scharf_schalten` | Gewähltes Profil scharf schalten (ohne / mit Bestätigung) |
