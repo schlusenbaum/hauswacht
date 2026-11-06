@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.11.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.12.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -238,6 +238,16 @@ das Bedienfeld, die Push-Nachricht oder eine Automation:
 - **Erst ein zweites „Unscharf schalten“ schaltet die Anlage wirklich unscharf.**
 - Ist ein PIN eingestellt, wird er auch zum Beenden des Alarms abgefragt.
 - In der Push-Nachricht heißt der Knopf während eines Alarms **„Alarm beenden“**.
+
+Für Dashboards gibt es zusätzlich zwei Knöpfe (Entitäten):
+
+| Knopf | Wirkung |
+|---|---|
+| **Unscharf schalten** (`button.hauswacht_unscharf_schalten`) | Sofort unscharf – auch während eines Alarms, ohne Zwischenschritt |
+| **Alarm beenden** (`button.hauswacht_alarm_beenden`) | Nur während eines Alarms: Alarm aus, Profil bleibt scharf; sonst ohne Wirkung |
+
+Knöpfe können keinen PIN abfragen. Ist ein PIN eingestellt, sind beide **nicht verfügbar** –
+dann über das Bedienfeld bedienen.
 
 ## Heimkehr-Beobachtung
 

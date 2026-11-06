@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-06
+
+### Hinzugefügt
+- Knopf **„Unscharf schalten“**: sofort unscharf, auch während eines Alarms.
+- Knopf **„Alarm beenden“**: nur den Alarm beenden, das Profil bleibt scharf.
+- Beide Knöpfe sind nicht verfügbar, wenn ein PIN eingestellt ist (Knöpfe können keinen PIN
+  abfragen).
+
 ## [0.11.0] - 2026-11-06
 
 ### Geändert

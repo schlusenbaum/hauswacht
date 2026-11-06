@@ -298,6 +298,12 @@
       },
       "homecoming_report": {
         "name": "Heimkehr-Bericht"
+      },
+      "disarm_now": {
+        "name": "Unscharf schalten"
+      },
+      "end_alarm": {
+        "name": "Alarm beenden"
       }
     }
   },
@@ -343,6 +349,9 @@
     },
     "button_needs_code": {
       "message": "Zum Scharfschalten wird ein PIN verlangt. Bitte das Bedienfeld oder die Aktion hauswacht.arm mit PIN verwenden."
+    },
+    "button_needs_code_disarm": {
+      "message": "Mit eingestelltem PIN geht Unscharfschalten nur über das Bedienfeld (PIN-Abfrage)."
     }
   },
   "services": {
