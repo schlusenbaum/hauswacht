@@ -29,11 +29,31 @@ ZONE_OPTIONS: dict[str, Any] = {
         "keller": {"name": "Keller", "entities": [MOTION], "label": None},
     },
     "profiles": {
-        "home": {"zones": ["aussenhaut"]},
-        "night": {"zones": ["aussenhaut", "keller"]},
-        "away": {"zones": ["aussenhaut", "keller"]},
-        "vacation": {"zones": ["aussenhaut", "keller"]},
-        "custom": {"zones": ["keller"]},
+        "home": {"name": "Zuhause", "panel_mode": "home", "exit_delay": 0, "zones": ["aussenhaut"]},
+        "night": {
+            "name": "Nacht",
+            "panel_mode": "night",
+            "exit_delay": 0,
+            "zones": ["aussenhaut", "keller"],
+        },
+        "away": {
+            "name": "Abwesend",
+            "panel_mode": "away",
+            "exit_delay": 60,
+            "zones": ["aussenhaut", "keller"],
+        },
+        "vacation": {
+            "name": "Urlaub",
+            "panel_mode": "vacation",
+            "exit_delay": 60,
+            "zones": ["aussenhaut", "keller"],
+        },
+        "custom": {
+            "name": "Individuell",
+            "panel_mode": "custom",
+            "exit_delay": 0,
+            "zones": ["keller"],
+        },
     },
 }
 
@@ -59,7 +79,7 @@ else:
                 merged["profiles"] = profiles
             else:
                 merged[key] = value
-        return MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=merged)
+        return MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=merged, version=2)
 
     def set_sensor(hass: HomeAssistant, entity_id: str, state: str) -> None:
         hass.states.async_set(entity_id, state, {"device_class": DEVICE_CLASSES.get(entity_id)})

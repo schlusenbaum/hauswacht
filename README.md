@@ -4,7 +4,7 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.7.0 – Entwicklungsversion.**
+> **Status: 0.8.0 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
@@ -12,8 +12,9 @@ gesperrter Testmodus. Ohne Alarmo.
 
 ## Ziele
 
-- **Profile statt fester Modi:** Zuhause, Nacht, Abwesend, Urlaub und beliebig viele eigene
-  Profile. Jedes Profil legt Sensoren, Verzögerungen und Alarmreaktionen selbst fest.
+- **Profile statt fester Modi:** beliebig viele, frei benannte Profile mit eigenem Symbol.
+  Jedes Profil legt Sensoren, Verzögerungen und Alarmreaktionen selbst fest und kann einem
+  Knopf des Home-Assistant-Bedienfelds zugeordnet werden.
 - **Datengetrieben:** Neue Profile, Sensoren und Reaktionen sind Konfiguration, kein Code.
 - **Eine maßgebliche Zustandsmaschine:** Kein Geflecht aus Automationen, die sich gegenseitig
   beeinflussen.

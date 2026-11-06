@@ -11,43 +11,102 @@ from custom_components.hauswacht.core.pin import (
     verify_pin,
 )
 from custom_components.hauswacht.core.profiles import (
-    PANEL_STATE_BY_PROFILE,
-    PROFILE_IDS,
+    DEFAULT_EXIT_DELAY,
+    FALLBACK_PANEL_STATE,
     build_profiles,
+    find_profile,
+    migrate_v1_options,
+    panel_state,
+    profile_for_mode,
+    profile_ids,
+    profile_info,
     profile_settings,
+    used_panel_modes,
 )
+
+OPTIONS = {
+    "profiles": {
+        "nacht_eg": {"name": "Nacht EG", "icon": "mdi:weather-night", "panel_mode": "night"},
+        "garten": {"name": "Garten", "exit_delay": 90},
+        "kaputt": "kein Profil",
+    }
+}
 
 # --- Profile ----------------------------------------------------------------
 
 
-def test_builtin_profiles_with_defaults() -> None:
-    profiles = build_profiles({})
-    assert set(profiles) == {"home", "night", "away", "vacation", "custom"}
-    assert profiles["away"].exit_delay == 60
-    assert profiles["night"].exit_delay == 0
-    assert all(p.entry_delay == 30 for p in profiles.values())
+def test_no_builtin_profiles() -> None:
+    assert profile_ids({}) == ()
+    assert build_profiles({}) == {}
 
 
-def test_every_profile_has_a_panel_state() -> None:
-    assert set(PANEL_STATE_BY_PROFILE) == set(PROFILE_IDS)
-    assert PANEL_STATE_BY_PROFILE["vacation"] == "armed_vacation"
+def test_profiles_in_stored_order_and_garbage_ignored() -> None:
+    assert profile_ids(OPTIONS) == ("nacht_eg", "garten")
 
 
-def test_options_override_defaults() -> None:
-    options = {"profiles": {"away": {"exit_delay": 90, "entry_delay": 15, "reaction_time": 240}}}
-    away = build_profiles(options)["away"]
-    assert (away.exit_delay, away.entry_delay, away.reaction_time) == (90, 15, 240)
+def test_profile_info() -> None:
+    info = profile_info(OPTIONS, "nacht_eg")
+    assert (info.name, info.icon, info.panel_mode) == ("Nacht EG", "mdi:weather-night", "night")
+    garten = profile_info(OPTIONS, "garten")
+    assert garten.panel_mode is None
+    assert garten.icon.startswith("mdi:")
+
+
+def test_invalid_panel_mode_is_ignored() -> None:
+    options = {"profiles": {"x": {"name": "X", "panel_mode": "armed_galaxy"}}}
+    assert profile_info(options, "x").panel_mode is None
+
+
+def test_find_profile_by_id_or_name() -> None:
+    assert find_profile(OPTIONS, "garten") == "garten"
+    assert find_profile(OPTIONS, "nacht eg") == "nacht_eg"
+    assert find_profile(OPTIONS, "Keller") is None
+
+
+def test_panel_modes() -> None:
+    assert profile_for_mode(OPTIONS, "night") == "nacht_eg"
+    assert profile_for_mode(OPTIONS, "away") is None
+    assert used_panel_modes(OPTIONS) == ("night",)
+    assert panel_state(OPTIONS, "nacht_eg") == "armed_night"
+    assert panel_state(OPTIONS, "garten") == FALLBACK_PANEL_STATE
+
+
+def test_settings_defaults_and_overrides() -> None:
+    assert profile_settings(OPTIONS, "nacht_eg")["exit_delay"] == DEFAULT_EXIT_DELAY
+    assert profile_settings(OPTIONS, "garten")["exit_delay"] == 90
+    assert set(build_profiles(OPTIONS)) == {"nacht_eg", "garten"}
 
 
 @pytest.mark.parametrize("bad", [-1, 601, "abc", None, 3.7e9])
 def test_invalid_option_values_fall_back_to_defaults(bad: object) -> None:
-    settings = profile_settings({"profiles": {"home": {"entry_delay": bad}}}, "home")
+    settings = profile_settings({"profiles": {"p": {"entry_delay": bad}}}, "p")
     assert settings["entry_delay"] == 30
 
 
 def test_reaction_time_zero_falls_back() -> None:
-    settings = profile_settings({"profiles": {"home": {"reaction_time": 0}}}, "home")
+    settings = profile_settings({"profiles": {"p": {"reaction_time": 0}}}, "p")
     assert settings["reaction_time"] == 180
+
+
+# --- Migration ----------------------------------------------------------------
+
+
+def test_migration_creates_former_fixed_profiles() -> None:
+    old = {
+        "zones": {"aussenhaut": {"name": "Außenhaut", "entities": ["binary_sensor.t"]}},
+        "profiles": {"night": {"zones": ["aussenhaut"], "entry_delay": 15}},
+        "pin_salt": "aa",
+    }
+    new = migrate_v1_options(old)
+    assert profile_ids(new) == ("home", "night", "away", "vacation", "custom")
+    night = new["profiles"]["night"]
+    assert night["name"] == "Nacht"
+    assert night["panel_mode"] == "night"
+    assert night["zones"] == ["aussenhaut"]
+    assert night["entry_delay"] == 15  # geänderter Wert bleibt
+    assert new["profiles"]["away"]["exit_delay"] == 60  # alter Standard festgeschrieben
+    assert new["pin_salt"] == "aa"  # andere Optionen bleiben unverändert
+    assert used_panel_modes(new) == ("home", "night", "away", "vacation", "custom")
 
 
 # --- PIN --------------------------------------------------------------------

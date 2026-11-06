@@ -16,7 +16,7 @@
         "title": "Hauswacht options",
         "menu_options": {
           "zones": "Zones and sensors",
-          "profile": "Profiles",
+          "profiles": "Profiles",
           "sirens": "Sirens",
           "notifications": "Notifications",
           "roles": "Sensor roles (exceptions)",
@@ -34,16 +34,13 @@
           "code_arm_required": "Require PIN to arm"
         }
       },
-      "profile": {
-        "title": "Profile",
-        "data": {
-          "profile": "Profile"
-        }
-      },
       "profile_settings": {
         "title": "Profile {profile}",
-        "description": "Choose which zones this profile monitors and how it behaves.",
+        "description": "Name, icon and optionally a button on the alarm panel. Each button can belong to one profile only; profiles without a button are armed via the \"Profile\" select and the \"Arm\" buttons.",
         "data": {
+          "name": "Name",
+          "icon": "Icon",
+          "panel_mode": "Alarm panel button",
           "zones": "Monitored zones",
           "exit_delay": "Exit delay",
           "entry_delay": "Entry delay",
@@ -136,29 +133,44 @@
           "notify_system": "Services for system messages",
           "notify_in_test_mode": "Send notifications in test mode too"
         }
+      },
+      "profiles": {
+        "title": "Profiles",
+        "menu_options": {
+          "profile_add": "Add profile",
+          "profile_edit": "Edit profile",
+          "profile_delete": "Delete profile"
+        }
+      },
+      "profile_edit": {
+        "title": "Edit profile",
+        "data": {
+          "profile": "Profile"
+        }
+      },
+      "profile_delete": {
+        "title": "Delete profile",
+        "data": {
+          "profile": "Profile"
+        }
       }
     },
     "error": {
       "invalid_pin": "The PIN must consist of 4 to 8 digits.",
       "zone_name_required": "Please enter a name.",
       "zone_empty": "Select at least one sensor or a label.",
-      "confirm_hardware_required": "Please confirm that real sirens may sound."
+      "confirm_hardware_required": "Please confirm that real sirens may sound.",
+      "profile_name_required": "Please enter a name.",
+      "profile_name_taken": "A profile with this name already exists.",
+      "panel_mode_taken": "This button is already assigned to another profile."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
-      "no_zones": "No zones have been created yet."
+      "no_zones": "No zones have been created yet.",
+      "no_profiles": "No profiles have been created yet."
     }
   },
   "selector": {
-    "profile": {
-      "options": {
-        "home": "Home",
-        "night": "Night",
-        "away": "Away",
-        "vacation": "Vacation",
-        "custom": "Custom"
-      }
-    },
     "open_policy": {
       "options": {
         "refuse": "Refuse arming",
@@ -196,6 +208,16 @@
         "high": "High",
         "very_high": "Very high"
       }
+    },
+    "panel_mode": {
+      "options": {
+        "none": "No button",
+        "home": "Home",
+        "night": "Night",
+        "away": "Away",
+        "vacation": "Vacation",
+        "custom": "Custom"
+      }
     }
   },
   "entity": {
@@ -217,6 +239,19 @@
     "binary_sensor": {
       "open_sensors": {
         "name": "Open sensors"
+      }
+    },
+    "select": {
+      "profile": {
+        "name": "Profile"
+      }
+    },
+    "button": {
+      "arm_selected": {
+        "name": "Arm"
+      },
+      "arm_selected_confirmed": {
+        "name": "Arm anyway"
       }
     }
   },
@@ -250,6 +285,18 @@
     },
     "code_locked": {
       "message": "Too many wrong PIN entries. Please wait {seconds} seconds."
+    },
+    "select_requires_disarmed": {
+      "message": "The profile can only be changed while disarmed."
+    },
+    "no_profiles": {
+      "message": "There is no profile yet. Create one under Hauswacht → Configure → Profiles."
+    },
+    "no_profile_for_mode": {
+      "message": "No profile is assigned to this button."
+    },
+    "button_needs_code": {
+      "message": "A PIN is required for arming. Use the alarm panel or the action hauswacht.arm with a code."
     }
   },
   "services": {
@@ -259,7 +306,7 @@
       "fields": {
         "profile": {
           "name": "Profile",
-          "description": "Profile to arm."
+          "description": "Name or ID of the profile."
         },
         "confirm": {
           "name": "Confirm",

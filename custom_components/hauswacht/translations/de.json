@@ -16,7 +16,7 @@
         "title": "Hauswacht-Optionen",
         "menu_options": {
           "zones": "Zonen und Sensoren",
-          "profile": "Profile",
+          "profiles": "Profile",
           "sirens": "Sirenen",
           "notifications": "Benachrichtigungen",
           "roles": "Sensorrollen (Ausnahmen)",
@@ -34,16 +34,13 @@
           "code_arm_required": "PIN auch zum Scharfschalten verlangen"
         }
       },
-      "profile": {
-        "title": "Profil",
-        "data": {
-          "profile": "Profil"
-        }
-      },
       "profile_settings": {
         "title": "Profil {profile}",
-        "description": "Lege fest, welche Zonen dieses Profil überwacht und wie es sich verhält.",
+        "description": "Name, Symbol und optional ein Knopf am Bedienfeld. Jeder Knopf kann nur einem Profil zugeordnet sein; Profile ohne Knopf schaltest du über die Auswahlliste „Profil“ und die Knöpfe „Scharf schalten“ scharf.",
         "data": {
+          "name": "Name",
+          "icon": "Symbol",
+          "panel_mode": "Knopf am Bedienfeld",
           "zones": "Überwachte Zonen",
           "exit_delay": "Ausgangsverzögerung",
           "entry_delay": "Eingangsverzögerung",
@@ -136,29 +133,44 @@
           "notify_system": "Dienste für Systemmeldungen",
           "notify_in_test_mode": "Auch im Testmodus benachrichtigen"
         }
+      },
+      "profiles": {
+        "title": "Profile",
+        "menu_options": {
+          "profile_add": "Profil anlegen",
+          "profile_edit": "Profil bearbeiten",
+          "profile_delete": "Profil löschen"
+        }
+      },
+      "profile_edit": {
+        "title": "Profil bearbeiten",
+        "data": {
+          "profile": "Profil"
+        }
+      },
+      "profile_delete": {
+        "title": "Profil löschen",
+        "data": {
+          "profile": "Profil"
+        }
       }
     },
     "error": {
       "invalid_pin": "Der PIN muss aus 4 bis 8 Ziffern bestehen.",
       "zone_name_required": "Bitte einen Namen eingeben.",
       "zone_empty": "Mindestens einen Sensor oder ein Label auswählen.",
-      "confirm_hardware_required": "Bitte bestätigen, dass echte Sirenen ertönen dürfen."
+      "confirm_hardware_required": "Bitte bestätigen, dass echte Sirenen ertönen dürfen.",
+      "profile_name_required": "Bitte einen Namen eingeben.",
+      "profile_name_taken": "Ein Profil mit diesem Namen gibt es schon.",
+      "panel_mode_taken": "Dieser Knopf ist bereits einem anderen Profil zugeordnet."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
-      "no_zones": "Es wurden noch keine Zonen angelegt."
+      "no_zones": "Es wurden noch keine Zonen angelegt.",
+      "no_profiles": "Es wurden noch keine Profile angelegt."
     }
   },
   "selector": {
-    "profile": {
-      "options": {
-        "home": "Zuhause",
-        "night": "Nacht",
-        "away": "Abwesend",
-        "vacation": "Urlaub",
-        "custom": "Individuell"
-      }
-    },
     "open_policy": {
       "options": {
         "refuse": "Scharfschalten verweigern",
@@ -196,6 +208,16 @@
         "high": "Laut",
         "very_high": "Sehr laut"
       }
+    },
+    "panel_mode": {
+      "options": {
+        "none": "Kein Knopf",
+        "home": "Zuhause",
+        "night": "Nacht",
+        "away": "Abwesend",
+        "vacation": "Urlaub",
+        "custom": "Benutzerdefiniert"
+      }
     }
   },
   "entity": {
@@ -217,6 +239,19 @@
     "binary_sensor": {
       "open_sensors": {
         "name": "Offene Sensoren"
+      }
+    },
+    "select": {
+      "profile": {
+        "name": "Profil"
+      }
+    },
+    "button": {
+      "arm_selected": {
+        "name": "Scharf schalten"
+      },
+      "arm_selected_confirmed": {
+        "name": "Trotzdem scharf schalten"
       }
     }
   },
@@ -250,6 +285,18 @@
     },
     "code_locked": {
       "message": "Zu viele falsche PIN-Eingaben. Bitte {seconds} Sekunden warten."
+    },
+    "select_requires_disarmed": {
+      "message": "Das Profil kann nur im unscharfen Zustand gewechselt werden."
+    },
+    "no_profiles": {
+      "message": "Es gibt noch kein Profil. Bitte zuerst unter Hauswacht → Konfigurieren → Profile eines anlegen."
+    },
+    "no_profile_for_mode": {
+      "message": "Diesem Knopf ist kein Profil zugeordnet."
+    },
+    "button_needs_code": {
+      "message": "Zum Scharfschalten wird ein PIN verlangt. Bitte das Bedienfeld oder die Aktion hauswacht.arm mit PIN verwenden."
     }
   },
   "services": {
@@ -259,7 +306,7 @@
       "fields": {
         "profile": {
           "name": "Profil",
-          "description": "Profil, das scharf geschaltet wird."
+          "description": "Name oder ID des Profils."
         },
         "confirm": {
           "name": "Bestätigen",

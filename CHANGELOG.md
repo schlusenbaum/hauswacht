@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-06
+
+### Geändert (Breaking)
+- **Profile sind jetzt frei definierbar.** Es gibt keine eingebauten Profile mehr; bei einer
+  Neuinstallation legst du bereits das erste Profil selbst an. Jedes Profil hat Name, Symbol,
+  optional einen Knopf am Bedienfeld und alle bisherigen Einstellungen.
+- Jeder Bedienfeld-Knopf (Zuhause, Nacht, Abwesend, Urlaub, Benutzerdefiniert) kann höchstens
+  einem Profil zugeordnet sein. Das Bedienfeld bietet nur zugeordnete Knöpfe an. Profile ohne
+  Knopf erscheinen im scharfen Zustand als „benutzerdefiniert“.
+- `hauswacht.arm` akzeptiert den Profilnamen oder die ID.
+
+### Hinzugefügt
+- Auswahlliste **„Profil“** und Knöpfe **„Scharf schalten“** und **„Trotzdem scharf
+  schalten“** für das gewählte Profil – so ist jedes Profil bedienbar, auch ohne Knopf.
+- Im scharfen Zustand zeigt das Bedienfeld das Symbol des aktiven Profils; neues Attribut
+  `profile_name`.
+
+### Migration
+- Bestehende Installationen: Die bisherigen fünf Profile werden mit ihren Einstellungen als
+  normale Profile übernommen (Zuhause, Nacht, Abwesend, Urlaub, Individuell) und lassen sich
+  danach umbenennen, ändern oder löschen.
+
 ## [0.7.0] - 2026-11-06
 
 ### Hinzugefügt

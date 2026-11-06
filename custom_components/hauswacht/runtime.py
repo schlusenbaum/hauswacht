@@ -53,7 +53,13 @@ from .core.code_guard import (
 )
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.pin import PinHash, verify_pin
-from .core.profiles import build_profiles, profile_behaviour, stale_after_seconds
+from .core.profiles import (
+    build_profiles,
+    find_profile,
+    profile_behaviour,
+    profile_info,
+    stale_after_seconds,
+)
 from .core.reactions import (
     alarm_message,
     fault_message,
@@ -155,6 +161,7 @@ class HauswachtRuntime:
         self.profiles = build_profiles(entry.options)
         self.sirens = SirenExecutor(hass, entry.options)
         self._code_guard = CodeGuardState()
+        self._selected_profile: str | None = None
         self.notifier = Notifier(hass, entry.options)
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
@@ -196,8 +203,50 @@ class HauswachtRuntime:
 
     # --- Lebenszyklus ------------------------------------------------------
 
+    # --- Profile ----------------------------------------------------------
+
+    def profile_name(self, profile_id: str | None) -> str:
+        if profile_id is None:
+            return "-"
+        return profile_info(self.entry.options, profile_id).name
+
+    @property
+    def selected_profile(self) -> str | None:
+        """Profil der Auswahlliste: das aktive Profil, sonst die Auswahl, sonst das erste."""
+        if self.ctx.profile is not None:
+            return self.ctx.profile.profile_id
+        if self._selected_profile in self.profiles:
+            return self._selected_profile
+        return next(iter(self.profiles), None)
+
+    @callback
+    def select_profile(self, profile_ref: str) -> None:
+        if self.ctx.state is not AlarmState.DISARMED:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="select_requires_disarmed"
+            )
+        profile_id = find_profile(self.entry.options, profile_ref)
+        if profile_id is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unknown_profile",
+                translation_placeholders={"profile": profile_ref},
+            )
+        self._selected_profile = profile_id
+        self._store.async_delay_save(self._storage_data, 0)
+        self._notify()
+
+    @callback
+    def arm_selected(self, *, confirmed: bool = False) -> None:
+        profile_id = self.selected_profile
+        if profile_id is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_profiles")
+        self.arm(profile_id, confirmed=confirmed)
+
     async def async_start(self) -> None:
         data = await self._store.async_load() or {}
+        selected = data.get("selected_profile")
+        self._selected_profile = selected if isinstance(selected, str) else None
         previous = data.get("armed_profile")
         self._dispatch(
             Startup(
@@ -237,20 +286,22 @@ class HauswachtRuntime:
     # --- Bedienung ---------------------------------------------------------
 
     @callback
-    def arm(self, profile_id: str, *, confirmed: bool = False) -> None:
-        profile = self.profiles.get(profile_id)
-        if profile is None:
+    def arm(self, profile_ref: str, *, confirmed: bool = False) -> None:
+        """Schaltet ein Profil scharf (Profil-ID oder Name)."""
+        profile_id = find_profile(self.entry.options, profile_ref)
+        profile = self.profiles.get(profile_id) if profile_id else None
+        if profile_id is None or profile is None:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="unknown_profile",
-                translation_placeholders={"profile": profile_id},
+                translation_placeholders={"profile": profile_ref},
             )
         sensors = self.profile_sensors(profile_id)
         if not sensors:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="profile_has_no_sensors",
-                translation_placeholders={"profile": profile_id},
+                translation_placeholders={"profile": self.profile_name(profile_id)},
             )
         if self.ctx.state is AlarmState.DISARMED:
             self.armed_sensors = sensors
@@ -598,6 +649,7 @@ class HauswachtRuntime:
         return {
             "armed_profile": self.ctx.profile.profile_id if armed and self.ctx.profile else None,
             "test_mode": self.ctx.test_mode,
+            "selected_profile": self._selected_profile,
         }
 
     @callback
@@ -623,11 +675,14 @@ class HauswachtRuntime:
                     *tamper_message(effect.sensor_key), test_mode=self.ctx.test_mode
                 )
             case RestartedDisarmed():
-                self.notifier.send_system(*restart_message(effect.previous_profile_id))
+                self.notifier.send_system(
+                    *restart_message(self.profile_name(effect.previous_profile_id))
+                )
                 persistent_notification.async_create(
                     self.hass,
                     f"Home Assistant wurde neu gestartet. Hauswacht war vorher scharf "
-                    f"(Profil: {effect.previous_profile_id}) und ist jetzt UNSCHARF.",
+                    f"(Profil: {self.profile_name(effect.previous_profile_id)}) "
+                    "und ist jetzt UNSCHARF.",
                     title="Hauswacht: nach Neustart unscharf",
                     notification_id=NOTIFICATION_RESTART,
                 )
@@ -660,7 +715,7 @@ class HauswachtRuntime:
             test_mode=effect.test_mode,
         )
         title, message = alarm_message(
-            effect.profile_id, effect.sensor_key, test_mode=effect.test_mode
+            self.profile_name(effect.profile_id), effect.sensor_key, test_mode=effect.test_mode
         )
         if decision.commands:
             message += " Sirenen: " + ", ".join(c.entity_id for c in decision.commands) + "."
