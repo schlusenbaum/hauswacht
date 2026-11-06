@@ -12,6 +12,7 @@ Sirenen und Benachrichtigungen folgen mit 0.5.0 über den Siren Executor.
 from __future__ import annotations
 
 import logging
+import secrets
 import time
 from collections.abc import Callable
 from dataclasses import fields
@@ -23,6 +24,7 @@ from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.core import Event as HaEvent
+from homeassistant.core import Event as HaEventAny
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import (
@@ -44,6 +46,10 @@ from .const import (
     OPT_INFRASTRUCTURE,
     OPT_PIN_DIGEST,
     OPT_PIN_SALT,
+    OPT_PUSH_DISARM,
+    PUSH_ACTION_EVENT,
+    PUSH_ACTION_PREFIX,
+    PUSH_TAG,
     STORAGE_VERSION,
 )
 from .core.code_guard import (
@@ -111,6 +117,8 @@ from .core.state_machine import (
     TimerKind,
     step,
 )
+from .homecoming_observer import HomecomingObserver
+from .names import display_name
 from .notifier import Notifier
 from .siren_executor import SirenExecutor
 
@@ -184,6 +192,14 @@ class HauswachtRuntime:
         self._listeners: list[Callable[[], None]] = []
         self._store: Store[dict[str, Any]] = Store(
             hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}"
+        )
+        # Push-Knopf "Unscharf schalten": gilt nur für die laufende Scharfschaltung
+        self.push_disarm = bool(entry.options.get(OPT_PUSH_DISARM, False))
+        self._session: str | None = None
+        self._pushed_targets: set[str] = set()
+        self._unsub_push: CALLBACK_TYPE | None = None
+        self.homecoming = HomecomingObserver(
+            hass, entry.entry_id, dict(entry.options), self.entry_doors, self._notify
         )
 
     # --- Konfiguration -----------------------------------------------------
@@ -264,6 +280,9 @@ class HauswachtRuntime:
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
+        if self.push_disarm:
+            self._unsub_push = self.hass.bus.async_listen(PUSH_ACTION_EVENT, self._on_push_action)
+        await self.homecoming.async_start()
 
     @callback
     def async_stop(self) -> None:
@@ -271,6 +290,10 @@ class HauswachtRuntime:
         self._cancel_timer()
         self.automation.stop()
         self.sirens.cancel_retry()
+        self.homecoming.async_stop()
+        if self._unsub_push is not None:
+            self._unsub_push()
+            self._unsub_push = None
         for unsub in (self._unsub_states, self._unsub_registry):
             if unsub is not None:
                 unsub()
@@ -357,6 +380,85 @@ class HauswachtRuntime:
     def disarm_trusted(self) -> None:
         """Unscharf ohne PIN – nur für die eigene, vom Nutzer konfigurierte Automatik."""
         self._dispatch(DisarmRequested(code_valid=True))
+
+    # --- Push-Knopf "Unscharf schalten" --------------------------------------
+
+    def entry_doors(self) -> frozenset[str]:
+        """Alle konfigurierten Sensoren mit der Rolle "Eingang" (für die Heimkehr-Beobachtung)."""
+        doors: set[str] = set()
+        for entity_id in self.candidates:
+            state = self.hass.states.get(entity_id)
+            device_class = state.attributes.get("device_class") if state else None
+            if sensor_role(entity_id, device_class, self.role_overrides) is SensorRole.ENTRY:
+                doors.add(entity_id)
+        return frozenset(doors)
+
+    def _push_actions(self) -> dict[str, Any]:
+        if not self.push_disarm or self._session is None:
+            return {"tag": PUSH_TAG}
+        return {
+            "tag": PUSH_TAG,
+            "actions": [
+                {
+                    "action": f"{PUSH_ACTION_PREFIX}{self._session}",
+                    "title": "Unscharf schalten",
+                    # iOS: nur mit entsperrtem Gerät (Face ID / Code)
+                    "authenticationRequired": True,
+                }
+            ],
+        }
+
+    def _alarm_targets(self) -> tuple[str, ...]:
+        if self.ctx.profile is None:
+            return ()
+        return parse_reaction(self.entry.options, self.ctx.profile.profile_id).notify
+
+    @callback
+    def _send_alarm_push(self, title: str, message: str) -> None:
+        targets = self._alarm_targets()
+        sent = self.notifier.send(
+            targets, title, message, test_mode=self.ctx.test_mode, data=self._push_actions()
+        )
+        self._pushed_targets.update(sent)
+
+    @callback
+    def _on_entry_delay(self) -> None:
+        if not self.push_disarm or self.ctx.profile is None:
+            return
+        sensor = self.ctx.trigger_sensor or ""
+        self._send_alarm_push(
+            "Hauswacht: Tür geöffnet",
+            f"{display_name(self.hass, sensor)} – Eingangsverzögerung "
+            f"{self.ctx.profile.entry_delay} s läuft "
+            f"(Profil {self.profile_name(self.ctx.profile.profile_id)}).",
+        )
+
+    async def _on_push_action(self, event: HaEventAny[Any]) -> None:
+        action = event.data.get("action")
+        if not isinstance(action, str) or not action.startswith(PUSH_ACTION_PREFIX):
+            return
+        if self._session is None or action != f"{PUSH_ACTION_PREFIX}{self._session}":
+            _LOGGER.warning(
+                "Veralteter Push-Knopf ignoriert (gehört zu einer früheren Scharfschaltung)"
+            )
+            return
+        user_id = event.context.user_id
+        user = await self.hass.auth.async_get_user(user_id) if user_id else None
+        if user is None or not user.is_active or user.system_generated:
+            _LOGGER.warning("Push-Knopf ohne gültigen Home-Assistant-Benutzer ignoriert")
+            return
+        if self.ctx.state is AlarmState.DISARMED:
+            return
+        targets = self._alarm_targets()
+        test_mode = self.ctx.test_mode
+        _LOGGER.warning("Unscharf über Push-Knopf durch %s", user.name)
+        self.disarm_trusted()
+        self.notifier.send(
+            targets,
+            "Hauswacht: unscharf",
+            f"Unscharf geschaltet über den Push-Knopf von {user.name}.",
+            test_mode=test_mode,
+        )
 
     @callback
     def set_test_mode(self, enabled: bool) -> None:
@@ -550,6 +652,7 @@ class HauswachtRuntime:
             | self.infrastructure
             | frozenset(self._last_seen_entity.values())
         )
+        self.homecoming.refresh()
         if wanted == self._subscribed and self._unsub_states is not None:
             return
         if self._unsub_states is not None:
@@ -676,6 +779,15 @@ class HauswachtRuntime:
                 _LOGGER.info(
                     "Zustand %s -> %s (%s)", effect.old.value, effect.new.value, effect.cause
                 )
+                if effect.old is AlarmState.DISARMED:
+                    self._session = secrets.token_hex(8)
+                if effect.new is AlarmState.PENDING:
+                    self._on_entry_delay()
+                if effect.new is AlarmState.DISARMED:
+                    self._session = None
+                    if self._pushed_targets:
+                        self.notifier.clear(self._pushed_targets, PUSH_TAG)
+                        self._pushed_targets.clear()
             case ActivateReaction():
                 self._on_alarm(effect)
             case StopReaction():
@@ -726,7 +838,9 @@ class HauswachtRuntime:
             test_mode=effect.test_mode,
         )
         title, message = alarm_message(
-            self.profile_name(effect.profile_id), effect.sensor_key, test_mode=effect.test_mode
+            self.profile_name(effect.profile_id),
+            display_name(self.hass, effect.sensor_key),
+            test_mode=effect.test_mode,
         )
         if decision.commands:
             message += " Sirenen: " + ", ".join(c.entity_id for c in decision.commands) + "."
@@ -735,7 +849,14 @@ class HauswachtRuntime:
             message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
         if reaction.silent:
             message += " Stiller Alarm."
-        self.notifier.send(reaction.notify, title, message, test_mode=effect.test_mode)
+        sent = self.notifier.send(
+            reaction.notify,
+            title,
+            message,
+            test_mode=effect.test_mode,
+            data=self._push_actions(),
+        )
+        self._pushed_targets.update(sent)
         persistent_notification.async_create(
             self.hass, message, title=title, notification_id=NOTIFICATION_ALARM
         )

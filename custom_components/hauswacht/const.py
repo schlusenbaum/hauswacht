@@ -24,6 +24,14 @@ OPT_SIRENS: Final = "sirens"
 OPT_SIRENS_HARDWARE_ENABLED: Final = "sirens_hardware_enabled"
 OPT_NOTIFY_SYSTEM: Final = "notify_system"
 OPT_NOTIFY_IN_TEST_MODE: Final = "notify_in_test_mode"
+OPT_PUSH_DISARM: Final = "push_disarm"
+OPT_HOMECOMING_OBSERVE: Final = "homecoming_observe"
+OPT_HOMECOMING_PERSONS: Final = "homecoming_persons"
+
+# Aktions-Knopf in der Push-Benachrichtigung (Home-Assistant-App)
+PUSH_ACTION_EVENT: Final = "mobile_app_notification_action"
+PUSH_ACTION_PREFIX: Final = "HAUSWACHT_DISARM_"
+PUSH_TAG: Final = "hauswacht"
 
 NOTIFICATION_RESTART: Final = "hauswacht_restart"
 NOTIFICATION_ALARM: Final = "hauswacht_alarm"

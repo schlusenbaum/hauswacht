@@ -37,12 +37,15 @@ from .const import (
     DOMAIN,
     NAME,
     OPT_CODE_ARM_REQUIRED,
+    OPT_HOMECOMING_OBSERVE,
+    OPT_HOMECOMING_PERSONS,
     OPT_INFRASTRUCTURE,
     OPT_NOTIFY_IN_TEST_MODE,
     OPT_NOTIFY_SYSTEM,
     OPT_PIN_DIGEST,
     OPT_PIN_SALT,
     OPT_PROFILES,
+    OPT_PUSH_DISARM,
     OPT_SENSOR_ROLES,
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
@@ -136,6 +139,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 "profiles",
                 "sirens",
                 "notifications",
+                "homecoming",
                 "roles",
                 "monitoring",
                 "infrastructure",
@@ -579,6 +583,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
             options[OPT_NOTIFY_IN_TEST_MODE] = bool(user_input.get(OPT_NOTIFY_IN_TEST_MODE))
+            options[OPT_PUSH_DISARM] = bool(user_input.get(OPT_PUSH_DISARM))
             return self.async_create_entry(data=options)
         schema = vol.Schema(
             {
@@ -589,9 +594,36 @@ class HauswachtOptionsFlow(OptionsFlow):
                     OPT_NOTIFY_IN_TEST_MODE,
                     default=bool(options.get(OPT_NOTIFY_IN_TEST_MODE, False)),
                 ): BooleanSelector(),
+                vol.Required(
+                    OPT_PUSH_DISARM, default=bool(options.get(OPT_PUSH_DISARM, False))
+                ): BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="notifications", data_schema=schema)
+
+    # --- Heimkehr-Beobachtung ---------------------------------------------
+
+    async def async_step_homecoming(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        if user_input is not None:
+            options[OPT_HOMECOMING_OBSERVE] = bool(user_input.get(OPT_HOMECOMING_OBSERVE))
+            options[OPT_HOMECOMING_PERSONS] = list(user_input.get(OPT_HOMECOMING_PERSONS) or [])
+            return self.async_create_entry(data=options)
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    OPT_HOMECOMING_OBSERVE,
+                    default=bool(options.get(OPT_HOMECOMING_OBSERVE, False)),
+                ): BooleanSelector(),
+                vol.Optional(
+                    OPT_HOMECOMING_PERSONS,
+                    default=list(options.get(OPT_HOMECOMING_PERSONS, [])),
+                ): EntitySelector(EntitySelectorConfig(domain="person", multiple=True)),
+            }
+        )
+        return self.async_show_form(step_id="homecoming", data_schema=schema)
 
     # --- Infrastruktur ------------------------------------------------------
 

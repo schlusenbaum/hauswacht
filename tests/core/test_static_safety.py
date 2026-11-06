@@ -84,3 +84,18 @@ def test_executor_is_the_only_siren_caller_and_uses_the_guard() -> None:
     assert _siren_service_calls(ast.parse(text)), "Executor ruft keine Sirenen auf?"
     assert "decide_activation" in text
     assert "decide_stop" in text
+
+
+def test_homecoming_observer_switches_nothing() -> None:
+    """Die Heimkehr-Beobachtung liest nur: keine Dienste, kein Scharf/Unscharf, kein Alarm."""
+    source = (SOURCE_ROOT / "homecoming_observer.py").read_text(encoding="utf-8")
+    for forbidden in (
+        "async_call",
+        "_dispatch",
+        "disarm",
+        ".arm(",
+        "SensorTriggered",
+        "sirens",
+        "notifier",
+    ):
+        assert forbidden not in source, forbidden

@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from homeassistant.components.button import ButtonEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -37,7 +38,9 @@ async def async_setup_entry(
     entry: HauswachtConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities(HauswachtArmButton(entry, desc) for desc in BUTTONS)
+    async_add_entities(
+        [*(HauswachtArmButton(entry, desc) for desc in BUTTONS), HomecomingReportButton(entry)]
+    )
 
 
 class HauswachtArmButton(HauswachtEntity, ButtonEntity):
@@ -53,3 +56,17 @@ class HauswachtArmButton(HauswachtEntity, ButtonEntity):
                 translation_domain=DOMAIN, translation_key="button_needs_code"
             )
         self.runtime.arm_selected(confirmed=self._description.confirm)
+
+
+class HomecomingReportButton(HauswachtEntity, ButtonEntity):
+    """Erstellt den Bericht der Heimkehr-Beobachtung als Benachrichtigung in Home Assistant."""
+
+    _attr_translation_key = "homecoming_report"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:file-chart-outline"
+
+    def __init__(self, entry: HauswachtConfigEntry) -> None:
+        super().__init__(entry, "homecoming_report")
+
+    async def async_press(self) -> None:
+        self.runtime.homecoming.create_report()

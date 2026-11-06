@@ -19,6 +19,7 @@
           "profiles": "Profiles",
           "sirens": "Sirens",
           "notifications": "Notifications",
+          "homecoming": "Homecoming observation",
           "roles": "Sensor roles (exceptions)",
           "monitoring": "Sensor monitoring",
           "infrastructure": "System monitoring",
@@ -147,10 +148,11 @@
       },
       "notifications": {
         "title": "Notifications",
-        "description": "System messages (fault, sensor lost, tampering, restart) go to these services. Alarm messages are configured per profile.",
+        "description": "System messages (fault, sensor loss, tamper, restart) go to these services. Alarm messages are set per profile. With “Push on door opening”, the profile's services receive a notification with a “Disarm” button when an entry door opens (and on alarm) – Home Assistant app only, valid for the current arming only.",
         "data": {
           "notify_system": "Services for system messages",
-          "notify_in_test_mode": "Send notifications in test mode too"
+          "notify_in_test_mode": "Send notifications in test mode too",
+          "push_disarm": "Push on door opening with a “Disarm” button"
         }
       },
       "profiles": {
@@ -171,6 +173,14 @@
         "title": "Delete profile",
         "data": {
           "profile": "Profile"
+        }
+      },
+      "homecoming": {
+        "title": "Homecoming observation",
+        "description": "Hauswacht records when entry doors open and people are detected as home – per location source – and calculates whether automatic homecoming would be reliable. The observation switches NOTHING: no disarm, no alarm. Press “Homecoming report” for the report.",
+        "data": {
+          "homecoming_observe": "Observe homecoming",
+          "homecoming_persons": "People"
         }
       }
     },
@@ -264,6 +274,9 @@
           "degraded": "Sensors unavailable",
           "fault": "Fault"
         }
+      },
+      "homecoming": {
+        "name": "Homecoming observation"
       }
     },
     "binary_sensor": {
@@ -282,6 +295,9 @@
       },
       "arm_selected_confirmed": {
         "name": "Arm anyway"
+      },
+      "homecoming_report": {
+        "name": "Homecoming report"
       }
     }
   },
