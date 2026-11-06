@@ -15,8 +15,11 @@
       "init": {
         "title": "Hauswacht-Optionen",
         "menu_options": {
-          "code": "PIN",
-          "profile": "Zeiten der Profile"
+          "zones": "Zonen und Sensoren",
+          "profile": "Profile",
+          "roles": "Sensorrollen (Ausnahmen)",
+          "monitoring": "Sensorüberwachung",
+          "code": "PIN"
         }
       },
       "code": {
@@ -35,19 +38,82 @@
         }
       },
       "profile_settings": {
-        "title": "Zeiten für Profil {profile}",
+        "title": "Profil {profile}",
+        "description": "Lege fest, welche Zonen dieses Profil überwacht und wie es sich verhält.",
         "data": {
+          "zones": "Überwachte Zonen",
           "exit_delay": "Ausgangsverzögerung",
           "entry_delay": "Eingangsverzögerung",
-          "reaction_time": "Dauer der Alarmreaktion"
+          "reaction_time": "Dauer der Alarmreaktion",
+          "open_policy": "Offene Sensoren beim Scharfschalten",
+          "unavailable_policy": "Ausgefallene Sensoren beim Scharfschalten",
+          "max_alarm_cycles": "Maximale Alarmzyklen",
+          "tamper_triggers_alarm": "Manipulation löst Alarm aus"
+        }
+      },
+      "zones": {
+        "title": "Zonen",
+        "menu_options": {
+          "zone_add": "Zone anlegen",
+          "zone_edit": "Zone bearbeiten",
+          "zone_delete": "Zone löschen"
+        }
+      },
+      "zone_add": {
+        "title": "Zone anlegen",
+        "description": "Eine Zone umfasst die ausgewählten Sensoren und zusätzlich alle Binärsensoren mit dem gewählten Label (Label direkt an der Entität).",
+        "data": {
+          "name": "Name",
+          "entities": "Sensoren",
+          "label": "Label (optional)"
+        }
+      },
+      "zone_edit": {
+        "title": "Zone bearbeiten",
+        "data": {
+          "zone": "Zone"
+        }
+      },
+      "zone_edit_settings": {
+        "title": "Zone {zone}",
+        "description": "Eine Zone umfasst die ausgewählten Sensoren und zusätzlich alle Binärsensoren mit dem gewählten Label (Label direkt an der Entität).",
+        "data": {
+          "name": "Name",
+          "entities": "Sensoren",
+          "label": "Label (optional)"
+        }
+      },
+      "zone_delete": {
+        "title": "Zone löschen",
+        "description": "Die Zone wird auch aus allen Profilen entfernt.",
+        "data": {
+          "zone": "Zone"
+        }
+      },
+      "roles": {
+        "title": "Sensorrollen",
+        "description": "Die Rolle ergibt sich aus der Geräteklasse (Tür: Eingang mit Verzögerung, Fenster: sofort, Bewegung/Präsenz: Mitläufer, Manipulation: 24 h). Hier legst du Ausnahmen fest. Aktuelle Ausnahmen: {overrides}",
+        "data": {
+          "entity": "Sensor",
+          "role": "Rolle"
+        }
+      },
+      "monitoring": {
+        "title": "Sensorüberwachung",
+        "description": "Ein Sensor, der sich so lange nicht gemeldet hat, gilt beim Scharfschalten als ausgefallen. 0 = aus. Batteriesensoren melden sich teils nur alle paar Stunden, deshalb großzügig wählen.",
+        "data": {
+          "stale_after_hours": "Maximale Funkstille"
         }
       }
     },
     "error": {
-      "invalid_pin": "Der PIN muss aus 4 bis 8 Ziffern bestehen."
+      "invalid_pin": "Der PIN muss aus 4 bis 8 Ziffern bestehen.",
+      "zone_name_required": "Bitte einen Namen eingeben.",
+      "zone_empty": "Mindestens einen Sensor oder ein Label auswählen."
     },
     "abort": {
-      "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden."
+      "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
+      "no_zones": "Es wurden noch keine Zonen angelegt."
     }
   },
   "selector": {
@@ -57,6 +123,28 @@
         "night": "Nacht",
         "away": "Abwesend",
         "vacation": "Urlaub"
+      }
+    },
+    "open_policy": {
+      "options": {
+        "refuse": "Scharfschalten verweigern",
+        "confirm": "Nach Bestätigung erlauben (Sensor wird überbrückt)",
+        "bypass_auto": "Automatisch überbrücken"
+      }
+    },
+    "unavailable_policy": {
+      "options": {
+        "refuse": "Scharfschalten verweigern",
+        "confirm": "Nach Bestätigung erlauben"
+      }
+    },
+    "role": {
+      "options": {
+        "auto": "Automatisch (Geräteklasse)",
+        "entry": "Eingang (verzögert)",
+        "instant": "Sofort",
+        "follower": "Mitläufer",
+        "tamper_24h": "Manipulation (24 h)"
       }
     }
   },
@@ -81,10 +169,33 @@
       "message": "Scharfschaltung verweigert. Offen: {open}. Nicht verfügbar: {unavailable}."
     },
     "confirmation_required": {
-      "message": "Scharfschaltung muss bestätigt werden. Offen: {open}. Nicht verfügbar: {unavailable}."
+      "message": "Scharfschaltung muss bestätigt werden. Offen: {open}. Nicht verfügbar: {unavailable}. Zum Bestätigen die Aktion hauswacht.arm mit confirm verwenden."
     },
     "rejected_test_mode_change_requires_disarmed": {
       "message": "Der Testmodus kann nur im unscharfen Zustand umgeschaltet werden."
+    },
+    "profile_has_no_sensors": {
+      "message": "Profil {profile} überwacht keine Sensoren. Bitte zuerst in den Hauswacht-Optionen Zonen zuordnen."
+    }
+  },
+  "services": {
+    "arm": {
+      "name": "Profil scharf schalten",
+      "description": "Schaltet ein Hauswacht-Profil scharf, optional mit Bestätigung offener oder ausgefallener Sensoren.",
+      "fields": {
+        "profile": {
+          "name": "Profil",
+          "description": "Profil, das scharf geschaltet wird."
+        },
+        "confirm": {
+          "name": "Bestätigen",
+          "description": "Auch scharf schalten, wenn Sensoren offen oder ausgefallen sind (sofern das Profil das erlaubt). Offene Sensoren werden überbrückt."
+        },
+        "code": {
+          "name": "PIN",
+          "description": "Nötig, wenn zum Scharfschalten ein PIN verlangt wird."
+        }
+      }
     }
   }
 }
