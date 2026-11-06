@@ -49,6 +49,11 @@ async def async_setup_entry(
         },
         "async_arm_profile",
     )
+    async_get_current_platform().async_register_entity_service(
+        "simulate_trigger",
+        {vol.Required("sensor"): cv.entity_id},
+        "async_simulate_trigger",
+    )
 
 
 class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
@@ -110,6 +115,10 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
     ) -> None:
         """Dienst hauswacht.arm: Profil scharf schalten, optional mit Bestätigung."""
         self._arm(profile, code, confirm=confirm)
+
+    async def async_simulate_trigger(self, sensor: str) -> None:
+        """Dienst hauswacht.simulate_trigger: Sensorauslösung simulieren (nur Testmodus)."""
+        self.runtime.simulate_trigger(sensor)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         self.runtime.disarm(code)

@@ -1,6 +1,6 @@
 [project]
 name = "hauswacht"
-version = "0.3.1"
+version = "0.4.0"
 description = "Profilbasierte Einbruchmeldeanlage für Home Assistant"
 license = "MIT"
 requires-python = ">=3.13"

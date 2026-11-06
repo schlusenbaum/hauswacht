@@ -18,6 +18,8 @@ ruff check .    # Lint
 | `tests/core/test_profiles_and_pin.py` | Profile aus Optionen (inkl. ungültiger Werte), PIN-Format, Hash und Prüfung |
 | `tests/core/test_sensors.py` | Zonen, Labels, Rollen aus Geräteklasse, Bereitschaft (offen, ausgefallen, Funkstille), Auslöseerkennung, Profilverhalten |
 | `tests/integration/test_sensors.py` | Mit Home Assistant: Auslösung je Rolle, Eingangsverzögerung, Profil-Zonen, Bereitschaft, Bestätigung, Labels (auch Label-Entfernung im scharfen Zustand), Rollen-Ausnahmen, Zonen-Optionen |
+| `tests/core/test_infrastructure.py` | Indikatoren und Systemstatus |
+| `tests/integration/test_system.py` | Mit Home Assistant: Systemstatus, Störung verweigert Scharfschalten, Ausfall und Wiederkehr von Zigbee2MQTT ohne Fehlalarm, Simulation nur im Testmodus |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
 
 ## Geplant
@@ -25,5 +27,4 @@ ruff check .    # Lint
 | Version | Tests |
 |---|---|
 | 0.2.x | Store-Migration, sobald sich das Speicherformat ändert |
-| 0.4.0 | Ausfall und Wiederkehr von MQTT, Zigbee2MQTT und Bluetooth ohne Fehlalarm; Simulation kompletter Abläufe im Testmodus |
 | 0.5.0 | Executor mit gemockten Services: im Testmodus und ohne Hardware-Freigabe **kein** Aufruf; Brand während Einbruchalarm; gleichzeitige Alarme; Benachrichtigungen |

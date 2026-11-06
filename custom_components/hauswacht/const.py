@@ -19,6 +19,8 @@ OPT_ZONES: Final = "zones"
 OPT_SENSOR_ROLES: Final = "sensor_roles"
 OPT_STALE_AFTER_HOURS: Final = "stale_after_hours"
 ROLE_AUTO: Final = "auto"
+OPT_INFRASTRUCTURE: Final = "infrastructure"
 
 NOTIFICATION_RESTART: Final = "hauswacht_restart"
 NOTIFICATION_ALARM: Final = "hauswacht_alarm"
+NOTIFICATION_FAULT: Final = "hauswacht_fault"

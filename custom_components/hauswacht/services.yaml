@@ -22,3 +22,15 @@ arm:
       selector:
         text:
           type: password
+
+simulate_trigger:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    sensor:
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor

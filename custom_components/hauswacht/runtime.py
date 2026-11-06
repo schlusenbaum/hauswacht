@@ -37,12 +37,15 @@ from .const import (
     DOMAIN,
     EVENT_HAUSWACHT,
     NOTIFICATION_ALARM,
+    NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
     OPT_CODE_ARM_REQUIRED,
+    OPT_INFRASTRUCTURE,
     OPT_PIN_DIGEST,
     OPT_PIN_SALT,
     STORAGE_VERSION,
 )
+from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.pin import PinHash, verify_pin
 from .core.profiles import build_profiles, profile_behaviour, stale_after_seconds
 from .core.sensors import (
@@ -135,6 +138,10 @@ class HauswachtRuntime:
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
         self.stale_after = stale_after_seconds(entry.options)
+        self.infrastructure: frozenset[str] = frozenset(
+            str(e) for e in entry.options.get(OPT_INFRASTRUCTURE, []) if isinstance(e, str)
+        )
+        self._infra_faulty: frozenset[str] = frozenset()
         self.delay_ends_at: datetime | None = None
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
@@ -180,6 +187,7 @@ class HauswachtRuntime:
         # Sofort speichern, damit ein erneuter Absturz nicht doppelt meldet.
         await self._store.async_save(self._storage_data())
         self._refresh_sensors()
+        self._infra_faulty = self.faulty_infrastructure()
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
@@ -305,12 +313,98 @@ class HauswachtRuntime:
         return found
 
     def readiness_for(self, entity_ids: frozenset[str]) -> Readiness:
-        return evaluate_readiness(
+        """Bereitschaft der Sensoren. Gestörte Infrastruktur zählt als "nicht verfügbar"."""
+        readiness = evaluate_readiness(
             entity_ids,
             self.snapshots(entity_ids),
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
         )
+        faulty = self.faulty_infrastructure()
+        if not faulty:
+            return readiness
+        return Readiness(
+            open_sensors=readiness.open_sensors,
+            unavailable_sensors=readiness.unavailable_sensors | faulty,
+        )
+
+    # --- Infrastruktur und Systemstatus -------------------------------------
+
+    def _infrastructure_states(self) -> dict[str, str | None]:
+        states: dict[str, str | None] = {}
+        for entity_id in self.infrastructure:
+            state = self.hass.states.get(entity_id)
+            states[entity_id] = state.state if state else None
+        return states
+
+    def faulty_infrastructure(self) -> frozenset[str]:
+        return faulty_indicators(self._infrastructure_states())
+
+    def system_report(self) -> SystemReport:
+        sensors = evaluate_readiness(
+            self.candidates,
+            self.snapshots(self.candidates),
+            now=dt_util.utcnow().timestamp(),
+            stale_after=self.stale_after,
+        )
+        return system_report(self._infrastructure_states(), sensors.unavailable_sensors)
+
+    @callback
+    def _check_infrastructure(self) -> None:
+        faulty = self.faulty_infrastructure()
+        if faulty == self._infra_faulty:
+            return
+        new_faults = faulty - self._infra_faulty
+        recovered = self._infra_faulty - faulty
+        self._infra_faulty = faulty
+        armed = self.ctx.state is not AlarmState.DISARMED
+        for entity_id in sorted(new_faults):
+            _LOGGER.warning("Infrastruktur gestört: %s", entity_id)
+            self.hass.bus.async_fire(
+                EVENT_HAUSWACHT,
+                {"type": "InfrastructureFault", "indicator": entity_id, "armed": armed},
+            )
+        for entity_id in sorted(recovered):
+            _LOGGER.info("Infrastruktur wieder verfügbar: %s", entity_id)
+            self.hass.bus.async_fire(
+                EVENT_HAUSWACHT,
+                {"type": "InfrastructureRecovered", "indicator": entity_id, "armed": armed},
+            )
+        if faulty and armed and new_faults:
+            persistent_notification.async_create(
+                self.hass,
+                "Hauswacht ist scharf, aber folgende Systeme sind gestört: "
+                f"{', '.join(sorted(faulty))}. Sensoren dahinter können nicht melden.",
+                title="Hauswacht: Störung",
+                notification_id=NOTIFICATION_FAULT,
+            )
+        elif not faulty:
+            persistent_notification.async_dismiss(self.hass, NOTIFICATION_FAULT)
+
+    # --- Simulation (nur Testmodus) -----------------------------------------
+
+    @callback
+    def simulate_trigger(self, entity_id: str) -> None:
+        """Simuliert das Auslösen eines konfigurierten Sensors. Nur im Testmodus erlaubt."""
+        if not self.ctx.test_mode:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="simulation_requires_test_mode"
+            )
+        if entity_id not in self.candidates and entity_id not in self.armed_sensors:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unknown_sensor",
+                translation_placeholders={"sensor": entity_id},
+            )
+        state = self.hass.states.get(entity_id)
+        device_class = state.attributes.get("device_class") if state else None
+        role = sensor_role(entity_id, device_class, self.role_overrides)
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT, {"type": "SensorSimulated", "sensor_key": entity_id}
+        )
+        armed = self.ctx.state is not AlarmState.DISARMED
+        if role is SensorRole.TAMPER_24H or (armed and entity_id in self.armed_sensors):
+            self._dispatch(SensorTriggered(sensor_key=entity_id, role=role))
 
     def _readiness(self) -> Readiness:
         return self.readiness_for(self.armed_sensors)
@@ -324,7 +418,12 @@ class HauswachtRuntime:
         # Gerade scharf überwachte Sensoren bleiben abonniert, auch wenn ihr Label
         # inzwischen entfernt wurde – sonst würden sie unbemerkt nicht mehr überwacht.
         # Die "Zuletzt gesehen"-Sensoren werden mit abonniert, damit die Anzeige aktuell bleibt.
-        wanted = self.candidates | self.armed_sensors | frozenset(self._last_seen_entity.values())
+        wanted = (
+            self.candidates
+            | self.armed_sensors
+            | self.infrastructure
+            | frozenset(self._last_seen_entity.values())
+        )
         if wanted == self._subscribed and self._unsub_states is not None:
             return
         if self._unsub_states is not None:
@@ -346,8 +445,10 @@ class HauswachtRuntime:
     @callback
     def _on_sensor_state(self, event: HaEvent[EventStateChangedData]) -> None:
         entity_id = event.data["entity_id"]
+        if entity_id in self.infrastructure:
+            self._check_infrastructure()
         if entity_id not in self.candidates and entity_id not in self.armed_sensors:
-            self._notify()  # nur ein "Zuletzt gesehen"-Sensor hat sich geändert
+            self._notify()  # Infrastruktur oder "Zuletzt gesehen"-Sensor
             return
         old = event.data["old_state"]
         new = event.data["new_state"]
