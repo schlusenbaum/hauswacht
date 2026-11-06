@@ -16,10 +16,15 @@ stehen oben in der Datei.
 
 | Teil | Wann sichtbar | Zweck |
 |---|---|---|
-| Kachel „Hauswacht“ | immer | Zustand und die Bedienfeld-Knöpfe, denen ein Profil zugeordnet ist |
-| Kachel „Profil“ und „Scharf schalten“ | nur unscharf | Beliebiges Profil wählen und scharf schalten |
-| „Trotzdem scharf“ und „Offen: …“ | nur unscharf **und** Sensoren offen | Gewähltes Profil mit Bestätigung scharf schalten; offene Sensoren werden überbrückt |
+| Kachel „Hauswacht“ | immer | Zustand mit Symbol des aktiven Profils |
+| Kachel „Profil“ und „Scharf schalten“ | nur unscharf | Profil wählen und scharf schalten – der einzige Weg zum Scharfschalten auf der Karte |
+| „Offen: …“ und „Trotzdem scharf“ | nur unscharf **und** Sensoren offen | Offene Sensoren mit Raum (z. B. „Küche: Fensterkontakt links“); gewähltes Profil mit Bestätigung scharf schalten, offene Sensoren werden überbrückt |
+| Knopf „Unscharf schalten“ | scharf, Verzögerung oder Alarm | Unscharf schalten; ist ein PIN eingestellt, fragt Home Assistant ihn ab |
 | Kachel „Hauswacht-System“ | nur wenn der Systemstatus nicht OK ist | Hinweis auf ausgefallene Sensoren oder Störungen |
+
+Die Symbolleiste mit den Bedienfeld-Knöpfen (`alarm-modes` mit allen Modi) ist weiter
+möglich, doppelt aber die Profilauswahl. Wer sie trotzdem will, ergänzt sie an der
+Zustandskachel.
 
 ## Trotzdem scharf schalten
 
@@ -41,7 +46,7 @@ Nützliche Entitäten und Attribute:
 | Entität | Inhalt |
 |---|---|
 | `alarm_control_panel.hauswacht` | Zustand; Attribute `profile`, `timer_ends_at`, `open_sensors`, `unavailable_sensors`, `bypassed_sensors`, `zones`, `last_contact`, `last_siren_decision` |
-| `binary_sensor.hauswacht_offene_sensoren` | an, sobald ein Sensor einer Zone offen ist; Attribute `sensors`, `names` |
+| `binary_sensor.hauswacht_offene_sensoren` | an, sobald ein Sensor einer Zone offen ist; Attribute `sensors` (Entitäts-IDs), `names` (Anzeigenamen mit Raum) |
 | `sensor.hauswacht_systemstatus` | `ok`, `degraded`, `fault`; Attribute `faulty_infrastructure`, `unavailable_sensors` |
 | `switch.hauswacht_testmodus` | Testmodus |
 | `select.hauswacht_profil` | Gewähltes Profil (im scharfen Zustand: aktives Profil) |
