@@ -12,14 +12,12 @@ from homeassistant.components.alarm_control_panel import (
     CodeFormat,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     async_get_current_platform,
 )
 
-from .const import DOMAIN
 from .core.profiles import PANEL_STATE_BY_PROFILE, PROFILE_IDS
 from .core.state_machine import AlarmState
 from .entity import HauswachtEntity
@@ -64,6 +62,7 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
         | AlarmControlPanelEntityFeature.ARM_NIGHT
         | AlarmControlPanelEntityFeature.ARM_AWAY
         | AlarmControlPanelEntityFeature.ARM_VACATION
+        | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
     )
 
     def __init__(self, entry: HauswachtConfigEntry) -> None:
@@ -108,8 +107,8 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
         }
 
     def _arm(self, profile_id: str, code: str | None, *, confirm: bool = False) -> None:
-        if self.runtime.code_arm_required and not self.runtime.check_code(code):
-            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
+        if self.runtime.code_arm_required:
+            self.runtime.verify_code(code)
         self.runtime.arm(profile_id, confirmed=confirm)
 
     async def async_arm_profile(
@@ -136,3 +135,6 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
 
     async def async_alarm_arm_vacation(self, code: str | None = None) -> None:
         self._arm("vacation", code)
+
+    async def async_alarm_arm_custom_bypass(self, code: str | None = None) -> None:
+        self._arm("custom", code)

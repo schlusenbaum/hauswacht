@@ -22,7 +22,7 @@ from custom_components.hauswacht.core.profiles import (
 
 def test_builtin_profiles_with_defaults() -> None:
     profiles = build_profiles({})
-    assert set(profiles) == {"home", "night", "away", "vacation"}
+    assert set(profiles) == {"home", "night", "away", "vacation", "custom"}
     assert profiles["away"].exit_delay == 60
     assert profiles["night"].exit_delay == 0
     assert all(p.entry_delay == 30 for p in profiles.values())

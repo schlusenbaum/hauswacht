@@ -4,7 +4,7 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.6.0 – Entwicklungsversion.**
+> **Status: 0.7.0 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und

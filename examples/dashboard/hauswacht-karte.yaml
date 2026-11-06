@@ -29,6 +29,7 @@ cards:
           - armed_night
           - armed_away
           - armed_vacation
+          - armed_custom_bypass
           - disarmed
 
   - type: conditional

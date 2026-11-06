@@ -127,3 +127,10 @@ def blocked_message(reasons: Iterable[str]) -> tuple[str, str]:
         "Alarm ausgelöst, Sirenen wurden aber nicht angesteuert: "
         f"{', '.join(sorted(set(reasons)))}.",
     )
+
+
+def invalid_code_message(failures: int, lock_seconds: int | None) -> tuple[str, str]:
+    text = f"{failures} falsche PIN-Eingaben in Folge."
+    if lock_seconds:
+        text += f" Die PIN-Eingabe ist für {lock_seconds} Sekunden gesperrt."
+    return ("Hauswacht: falscher PIN", text)

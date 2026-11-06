@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.6.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.7.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -24,7 +24,7 @@ Hauswacht kann nur einmal eingerichtet werden.
 
 | Entität | Zweck |
 |---|---|
-| `alarm_control_panel.hauswacht` | Bedienfeld: Zuhause, Nacht, Abwesend, Urlaub, Unscharf |
+| `alarm_control_panel.hauswacht` | Bedienfeld: Zuhause, Nacht, Abwesend, Urlaub, Individuell (benutzerdefiniert), Unscharf |
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
 | `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
 | `binary_sensor.hauswacht_offene_sensoren` | An, sobald ein Sensor einer Zone offen ist |
@@ -75,6 +75,7 @@ Standardzeiten:
 | Nacht | 0 s | 30 s | 180 s |
 | Abwesend | 60 s | 30 s | 180 s |
 | Urlaub | 60 s | 30 s | 180 s |
+| Individuell | 0 s | 30 s | 180 s |
 
 ### 3. Rollen prüfen (meist nicht nötig)
 
@@ -216,6 +217,9 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 
 - 4 bis 8 Ziffern, wird nur als Hash gespeichert.
 - Mit PIN ist er zum Unscharfschalten immer nötig, optional auch zum Scharfschalten.
+- Nach 5 falschen Eingaben in Folge ist die Eingabe 1 Minute gesperrt, bei weiteren
+  Fehlversuchen jeweils doppelt so lange (höchstens 15 Minuten). Ab der 3. falschen Eingabe
+  geht eine Systemmeldung an die eingetragenen Empfänger.
 - Ohne PIN darf die Anlage nicht für Sprachassistenten (z. B. Alexa) freigegeben werden.
 
 ## Verhalten nach einem Neustart
