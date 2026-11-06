@@ -1,9 +1,7 @@
 # Installation und Bedienung
 
-> **Stand 0.4.0:** Bedienfeld, Profile, Zonen, Sensoren, Systemüberwachung und Simulation
-> funktionieren. Ein Alarm erscheint
-> als Hinweis in Home Assistant und als Ereignis. Es werden **noch keine Sirenen angesteuert
-> und keine Push-Nachrichten verschickt.**
+> **Stand 0.5.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
 
@@ -120,10 +118,49 @@ ebenfalls „nicht verfügbar“, deckt also beides ab.
 - Kommen die Sensoren nach einem Ausfall geschlossen zurück, gibt es keinen Alarm. Kommt ein
   Sensor offen zurück, löst er aus – ein verpasstes Öffnen wird so nachgeholt.
 
+## Sirenen
+
+**Konfigurieren → Sirenen.**
+
+1. Sirenen auswählen, die Hauswacht für Einbruchalarme verwenden darf.
+2. In jedem Profil festlegen, welche dieser Sirenen ertönen, mit welchem Ton und welcher
+   Lautstärke – oder „Stiller Alarm“ für nur Benachrichtigungen.
+3. Erst wenn alles getestet ist: **„Echte Sirenenansteuerung erlauben“** einschalten und die
+   Bestätigung anhaken. Ohne diese Freigabe sendet Hauswacht nie einen Sirenenbefehl.
+
+Die Laufzeit entspricht der „Dauer der Alarmreaktion“ des Profils, höchstens aber der
+Höchstdauer, die das Gerät meldet. Diese Höchstdauer wird nur gelesen, nie verändert.
+
+### Brandschutz
+
+Sind die Sirenen zugleich Rauchmelder, erkennt Hauswacht deren Rauch- und
+Testknopf-Sensoren automatisch.
+
+- Meldet **irgendein** Rauchmelder in Home Assistant Brand, schaltet Hauswacht keine Sirene
+  ein und keine aus.
+- Ist der Brandzustand einer **registrierten** Sirene unklar (Sensor nicht verfügbar oder
+  deaktiviert), gilt dasselbe.
+- Wurde während eines Einbruchalarms Brand gemeldet, schaltet auch das Unscharfschalten keine
+  Sirene ab. Der Einbruchton endet spätestens nach der Gerätehöchstdauer.
+- Fremde Abschalt-Skripte (z. B. „alle Rauchmelder aus“) verwendet Hauswacht nie.
+
+Das Attribut `last_siren_decision` am Bedienfeld zeigt nach jedem Alarm, welche Sirenen
+angesteuert und welche aus welchem Grund gesperrt wurden.
+
+## Benachrichtigungen
+
+- **Alarm:** pro Profil unter „Benachrichtigen (Alarm)“ die notify-Dienste wählen, z. B.
+  `mobile_app_…` der Home-Assistant-App. Nachrichten gehen mit hoher Priorität raus.
+- **Systemmeldungen** (Störung, Sensorausfall im scharfen Zustand, Manipulation, Neustart im
+  scharfen Zustand): unter **Konfigurieren → Benachrichtigungen**.
+- Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
+  benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
+
 ## Testmodus und Simulation
 
 Im **Testmodus** laufen alle Abläufe wie im Ernstfall, Alarme sind aber als Testalarm
-gekennzeichnet. Sirenen und Benachrichtigungen werden im Testmodus nie ausgelöst.
+gekennzeichnet. Sirenen werden im Testmodus **nie** angesteuert – auch nicht bei
+freigegebener Hardware. Benachrichtigungen nur, wenn ausdrücklich erlaubt.
 
 Mit der Aktion **`hauswacht.simulate_trigger`** kannst du einen Sensor virtuell auslösen, ohne
 eine Tür oder ein Fenster zu öffnen. Das geht nur bei eingeschaltetem Testmodus:
@@ -187,7 +224,8 @@ Hauswacht startet **immer unscharf**. War die Anlage vorher scharf, erscheint ei
 Jede Aktion wird als Ereignis `hauswacht_event` gemeldet. Das Feld `type` nennt die Art:
 `StateChanged`, `ActivateReaction` (Alarm), `StopReaction`, `TamperDetected`,
 `SensorUnavailable`, `SensorsBypassed`, `ArmingAborted`, `RestartedDisarmed`,
-`InfrastructureFault`, `InfrastructureRecovered`, `SensorSimulated` und weitere.
+`InfrastructureFault`, `InfrastructureRecovered`, `SensorSimulated`, `SirenDecision`,
+`NotificationSuppressed` und weitere.
 
 ## Upgrade von 0.2.0
 
