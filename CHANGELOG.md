@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-06
+
+### Behoben
+- Die Funkstille-Prüfung nutzte den Zeitstempel von Home Assistant. Der wird bei jedem
+  Neustart erneuert, sodass ein ausgefallener Sensor danach stundenlang als lebendig galt.
+  Hauswacht verwendet jetzt den gerätseitigen „Zuletzt gesehen“-Wert (z. B. `last_seen` von
+  Zigbee2MQTT) desselben Geräts, sofern vorhanden.
+
+### Hinzugefügt
+- Attribut `last_contact` am Bedienfeld: letzter Kontakt je Sensor.
+
 ## [0.3.0] - 2026-11-06
 
 ### Hinzugefügt

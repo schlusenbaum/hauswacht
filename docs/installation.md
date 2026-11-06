@@ -94,6 +94,10 @@ man das Haus betritt, als „Eingang“.
 - Optional (**Sensorüberwachung → Maximale Funkstille**) gilt ein Sensor auch dann als
   ausgefallen, wenn er sich so viele Stunden nicht gemeldet hat. Batteriesensoren melden sich
   teils nur alle paar Stunden, der Wert sollte deshalb großzügig sein. Standard: aus.
+- Als „letzter Kontakt“ zählt der „Zuletzt gesehen“-Sensor desselben Geräts (bei Zigbee2MQTT
+  `sensor.<gerät>_last_seen`), falls vorhanden und aktiviert. Sonst nimmt Hauswacht den
+  Zeitpunkt der letzten Aktualisierung in Home Assistant – der wird allerdings bei jedem
+  Neustart erneuert. Das Attribut `last_contact` zeigt den Wert je Sensor.
 - Fällt ein überwachter Sensor im scharfen Zustand aus, erscheint ein Hinweis
   „Hauswacht: Sensor ausgefallen“ und ein Ereignis `SensorUnavailable`.
 - Die überwachten Sensoren werden beim Scharfschalten festgehalten. Wird während des scharfen
@@ -128,6 +132,7 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 | `monitored_sensors` | Gerade scharf überwachte Sensoren |
 | `open_sensors`, `unavailable_sensors` | Offene bzw. ausgefallene Sensoren aller Zonen |
 | `bypassed_sensors` | Überbrückte Sensoren |
+| `last_contact` | Letzter Kontakt je Sensor |
 
 ## PIN
 
