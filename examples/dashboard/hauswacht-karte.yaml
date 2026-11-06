@@ -40,6 +40,16 @@ cards:
         entity: alarm_control_panel.hauswacht
         state_not: disarmed
 
+  - type: markdown
+    text_only: true
+    content: >-
+      **Alarm!** „Unscharf“ beendet nur den Alarm – die Anlage bleibt scharf.
+      Zum Unscharfschalten danach noch einmal tippen.
+    visibility:
+      - condition: state
+        entity: alarm_control_panel.hauswacht
+        state: triggered
+
   - type: tile
     entity: select.hauswacht_profil
     name: Profil
