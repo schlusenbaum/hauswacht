@@ -343,6 +343,13 @@ class HauswachtRuntime:
 
     # --- Infrastruktur und Systemstatus -------------------------------------
 
+    def _infrastructure_classes(self) -> dict[str, str | None]:
+        classes: dict[str, str | None] = {}
+        for entity_id in self.infrastructure:
+            state = self.hass.states.get(entity_id)
+            classes[entity_id] = state.attributes.get("device_class") if state else None
+        return classes
+
     def _infrastructure_states(self) -> dict[str, str | None]:
         states: dict[str, str | None] = {}
         for entity_id in self.infrastructure:
@@ -351,7 +358,7 @@ class HauswachtRuntime:
         return states
 
     def faulty_infrastructure(self) -> frozenset[str]:
-        return faulty_indicators(self._infrastructure_states())
+        return faulty_indicators(self._infrastructure_states(), self._infrastructure_classes())
 
     def system_report(self) -> SystemReport:
         sensors = evaluate_readiness(
@@ -360,7 +367,11 @@ class HauswachtRuntime:
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
         )
-        return system_report(self._infrastructure_states(), sensors.unavailable_sensors)
+        return system_report(
+            self._infrastructure_states(),
+            sensors.unavailable_sensors,
+            self._infrastructure_classes(),
+        )
 
     @callback
     def _check_infrastructure(self) -> None:

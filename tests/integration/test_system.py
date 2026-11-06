@@ -177,3 +177,15 @@ async def test_options_flow_infrastructure(hass: HomeAssistant) -> None:
     )
     await hass.async_block_till_done()
     assert entry.options["infrastructure"] == [Z2M]
+
+
+async def test_problem_indicator_off_means_ok(hass: HomeAssistant) -> None:
+    problem = "binary_sensor.z2m_stoerung"
+    hass.states.async_set(problem, "off", {"device_class": "problem"})
+    await setup_entry(hass, make_entry({"infrastructure": [problem]}))
+    assert _value(hass, STATUS) == "ok"
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    assert _value(hass, PANEL) == AlarmControlPanelState.ARMED_NIGHT
+    hass.states.async_set(problem, "on", {"device_class": "problem"})
+    await hass.async_block_till_done()
+    assert _value(hass, STATUS) == "fault"

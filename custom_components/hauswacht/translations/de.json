@@ -115,7 +115,7 @@
       },
       "infrastructure": {
         "title": "Systemüberwachung",
-        "description": "Binärsensoren, die \"an\" melden, solange ein System läuft, z. B. der Verbindungsstatus der Zigbee2MQTT-Bridge. Ist einer aus oder nicht verfügbar, meldet Hauswacht eine Störung und behandelt das Scharfschalten wie bei ausgefallenen Sensoren.",
+        "description": "Binärsensoren, die den Zustand eines Systems melden, z. B. der Verbindungsstatus der Zigbee2MQTT-Bridge. Bei Sensoren der Art „Problem“ bedeutet „an“ Störung, bei allen anderen bedeutet „an“ in Ordnung. Bei einer Störung meldet Hauswacht das und behandelt das Scharfschalten wie bei ausgefallenen Sensoren.",
         "data": {
           "infrastructure": "Indikatoren"
         }
