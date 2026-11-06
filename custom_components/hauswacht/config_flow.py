@@ -13,6 +13,7 @@ from homeassistant.config_entries import (
     OptionsFlow,
 )
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
@@ -29,6 +30,7 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
+    TimeSelector,
 )
 
 from .const import (
@@ -47,6 +49,13 @@ from .const import (
     OPT_STALE_AFTER_HOURS,
     OPT_ZONES,
     ROLE_AUTO,
+)
+from .core.automation import (
+    DEFAULT_AWAY_DELAY,
+    MAX_AWAY_DELAY,
+    WEEKDAYS,
+    AutoConfig,
+    parse_automation,
 )
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
@@ -277,6 +286,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "siren_volume": user_input["siren_volume"],
                         "silent": bool(user_input["silent"]),
                         "notify": list(user_input.get("notify", [])),
+                        **_automation_from_input(user_input.get("automation") or {}),
                     }
                 )
                 profiles[profile_id] = data
@@ -340,6 +350,10 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Required("silent", default=reaction.silent): BooleanSelector(),
                 vol.Optional("notify", default=list(reaction.notify)): _list_selector(
                     self._notify_services(), multiple=True, custom=True
+                ),
+                vol.Optional("automation", default={}): section(
+                    _automation_schema(parse_automation(options, pid)),
+                    {"collapsed": True},
                 ),
             }
         )
@@ -596,6 +610,62 @@ class HauswachtOptionsFlow(OptionsFlow):
             }
         )
         return self.async_show_form(step_id="infrastructure", data_schema=schema)
+
+
+def _automation_schema(auto: AutoConfig) -> vol.Schema:
+    """Automatik eines Profils. Leere Felder bedeuten: diese Automatik ist aus."""
+
+    def suggested(value: Any) -> dict[str, Any]:
+        return {"suggested_value": value} if value else {}
+
+    return vol.Schema(
+        {
+            vol.Optional(
+                "auto_arm_time",
+                description=suggested(auto.arm_time.isoformat() if auto.arm_time else None),
+            ): TimeSelector(),
+            vol.Optional(
+                "auto_disarm_time",
+                description=suggested(auto.disarm_time.isoformat() if auto.disarm_time else None),
+            ): TimeSelector(),
+            vol.Optional("auto_weekdays", default=sorted(auto.weekdays, key=WEEKDAYS.index)): (
+                SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(WEEKDAYS),
+                        multiple=True,
+                        translation_key="weekday",
+                        mode=SelectSelectorMode.LIST,
+                    )
+                )
+            ),
+            vol.Optional(
+                "auto_away_persons", description=suggested(list(auto.away_persons))
+            ): EntitySelector(EntitySelectorConfig(domain="person", multiple=True)),
+            vol.Required("auto_away_delay", default=auto.away_delay): NumberSelector(
+                NumberSelectorConfig(
+                    min=1,
+                    max=MAX_AWAY_DELAY,
+                    step=1,
+                    unit_of_measurement="min",
+                    mode=NumberSelectorMode.BOX,
+                )
+            ),
+            vol.Required(
+                "auto_disarm_on_arrival", default=auto.disarm_on_arrival
+            ): BooleanSelector(),
+        }
+    )
+
+
+def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "auto_arm_time": data.get("auto_arm_time") or None,
+        "auto_disarm_time": data.get("auto_disarm_time") or None,
+        "auto_weekdays": [d for d in data.get("auto_weekdays", []) if d in WEEKDAYS],
+        "auto_away_persons": list(data.get("auto_away_persons") or []),
+        "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
+        "auto_disarm_on_arrival": bool(data.get("auto_disarm_on_arrival", False)),
+    }
 
 
 def _select(options: list[str], translation_key: str) -> SelectSelector:

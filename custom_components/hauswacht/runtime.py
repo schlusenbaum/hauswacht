@@ -33,6 +33,7 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
+from .automation_runner import AutomationRunner
 from .const import (
     DOMAIN,
     EVENT_HAUSWACHT,
@@ -162,6 +163,7 @@ class HauswachtRuntime:
         self.sirens = SirenExecutor(hass, entry.options)
         self._code_guard = CodeGuardState()
         self._selected_profile: str | None = None
+        self.automation = AutomationRunner(self)
         self.notifier = Notifier(hass, entry.options)
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
@@ -258,6 +260,7 @@ class HauswachtRuntime:
         await self._store.async_save(self._storage_data())
         self._refresh_sensors()
         self._infra_faulty = self.faulty_infrastructure()
+        self.automation.start()
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
@@ -266,6 +269,7 @@ class HauswachtRuntime:
     def async_stop(self) -> None:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
+        self.automation.stop()
         for unsub in (self._unsub_states, self._unsub_registry):
             if unsub is not None:
                 unsub()
@@ -346,6 +350,11 @@ class HauswachtRuntime:
     @callback
     def disarm(self, code: str | None) -> None:
         self.verify_code(code)
+        self._dispatch(DisarmRequested(code_valid=True))
+
+    @callback
+    def disarm_trusted(self) -> None:
+        """Unscharf ohne PIN – nur für die eigene, vom Nutzer konfigurierte Automatik."""
         self._dispatch(DisarmRequested(code_valid=True))
 
     @callback
@@ -627,6 +636,7 @@ class HauswachtRuntime:
             self._apply(effect)
         if self.ctx.state is AlarmState.DISARMED:
             self.sirens.reset()
+            self.automation.on_disarmed()
             if self.armed_sensors:
                 self.armed_sensors = frozenset()
                 self._refresh_sensors()
