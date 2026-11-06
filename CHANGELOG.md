@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-06
+
+### Geändert
+- **Sirenen nach ihren Fähigkeiten ansteuern:** Hauswacht liest `supported_features` und
+  `available_tones` und sendet Ton, Lautstärke und Dauer nur, wenn die Sirene sie unterstützt.
+  Damit funktionieren auch einfache Sirenen ohne Rauchmelder.
+- Kennt eine Sirene den gewählten Einbruchton nicht, wird ein anderer Einbruchton gewählt –
+  nie ein Brandton.
+
+### Sicherheit
+- Rauchmelder ohne Tonauswahl, Sirenen mit nur Brandtönen und Sirenen, die sich weder zeitlich
+  begrenzen noch ausschalten lassen, werden für Einbruchalarme nicht angesteuert (Grund in
+  `last_siren_decision`). Sirenen ohne Ausschaltfunktion bekommen keinen Ausschaltbefehl.
+
 ### Dokumentation
 - Neuer Abschnitt „Geräte und Kompatibilität“: getestetes Sirenenmodell (Develco SMSZB-120 über
   Zigbee2MQTT) und Anforderungen an andere Sirenen.

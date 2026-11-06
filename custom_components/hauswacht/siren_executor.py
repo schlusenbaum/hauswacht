@@ -11,6 +11,7 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
+from homeassistant.components.siren import SirenEntityFeature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 
@@ -21,6 +22,7 @@ from .core.siren_guard import (
     FireIndicator,
     GuardContext,
     GuardDecision,
+    SirenCapabilities,
     SirenCommand,
     SirenDevice,
     decide_activation,
@@ -74,8 +76,39 @@ class SirenExecutor:
                 entity_id=siren,
                 fire_state=fire_state(indicators),
                 max_duration=parse_max_duration(max_state, DEFAULT_MAX_DURATION),
+                capabilities=self.capabilities(siren),
+                fire_detector=bool(indicators),
             )
         return devices
+
+    def capabilities(self, entity_id: str) -> SirenCapabilities:
+        """Fähigkeiten laut ``supported_features`` und ``available_tones`` der Sirene.
+
+        Ist die Sirene gerade nicht verfügbar, gelten die Standardwerte; ein Befehl an eine
+        nicht verfügbare Sirene schlägt ohnehin fehl.
+        """
+        state = self.hass.states.get(entity_id)
+        if state is None or "supported_features" not in state.attributes:
+            return SirenCapabilities()
+        try:
+            features = SirenEntityFeature(int(state.attributes["supported_features"]))
+        except (TypeError, ValueError):
+            return SirenCapabilities()
+        available = state.attributes.get("available_tones")
+        tones: set[str] = set()
+        if isinstance(available, Mapping):
+            # Home Assistant nimmt Schlüssel oder Namen an
+            tones.update(str(k) for k in available)
+            tones.update(str(v) for v in available.values())
+        elif isinstance(available, (list, tuple)):
+            tones.update(str(v) for v in available)
+        return SirenCapabilities(
+            tones_supported=SirenEntityFeature.TONES in features,
+            tones=frozenset(tones) or None,
+            volume=SirenEntityFeature.VOLUME_SET in features,
+            duration=SirenEntityFeature.DURATION in features,
+            turn_off=SirenEntityFeature.TURN_OFF in features,
+        )
 
     def external_fire(self) -> FireIndicator:
         """Brand an irgendeinem Melder in Home Assistant (nur aktive Meldungen zählen)."""
@@ -127,9 +160,13 @@ class SirenExecutor:
     def _send(self, command: SirenCommand) -> None:
         data: dict[str, Any] = {"entity_id": command.entity_id}
         if command.action == "turn_on":
-            data.update(
-                tone=command.tone, volume_level=command.volume_level, duration=command.duration
-            )
+            # Nur senden, was das Gerät unterstützt (None = weglassen)
+            optional = {
+                "tone": command.tone,
+                "volume_level": command.volume_level,
+                "duration": command.duration,
+            }
+            data.update({k: v for k, v in optional.items() if v is not None})
         _LOGGER.warning("Sirenenbefehl %s an %s", command.action, command.entity_id)
 
         async def _call() -> None:

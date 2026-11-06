@@ -6,7 +6,7 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus.
 
-> **Status: 0.9.1 – Entwicklungsversion.**
+> **Status: 0.9.2 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
@@ -44,21 +44,24 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 **Sensoren** (Tür-, Fenster-, Bewegungs- und Präsenzmelder, Sabotagekontakte) sind
 herstellerunabhängig: Hauswacht nutzt jeden `binary_sensor` mit passender Geräteklasse.
 
-**Sirenen** sind Home-Assistant-Entitäten der Domain `siren`. Hauswacht ist auf Sirenen
-ausgelegt, die gleichzeitig **Rauchwarnmelder** sind – daher die Brandsperre. Für andere
-Sirenen gilt derzeit:
+**Sirenen** sind Home-Assistant-Entitäten der Domain `siren`, auch reine Innen- oder
+Außensirenen ohne Rauchmelder. Hauswacht liest vor jedem Alarm, was eine Sirene kann
+(`supported_features`, `available_tones`), und sendet nur das:
 
-| Eigenschaft | Erwartet | Bei abweichenden Geräten |
-|---|---|---|
-| Ton | Die Sirene versteht einen der Töne `burglar`, `emergency`, `police_panic`, `emergency_panic` | Der Befehl kann von Home Assistant abgelehnt werden – die Sirene bleibt dann **stumm** |
-| Lautstärke und Dauer | Die Sirene unterstützt `volume_level` und `duration` | wie oben |
-| Höchstdauer | `number.<sirene>_max_duration` am selben Gerät (Zigbee2MQTT) | Hauswacht nimmt 240 Sekunden an |
-| Brandanzeige | Rauch-, Gas-, CO- oder Hitze-Binärsensor am selben Gerät | Keine gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt trotzdem |
+| Fähigkeit der Sirene | Verhalten |
+|---|---|
+| Tonauswahl mit Einbruchton | Gewählter Ton; fehlt er, ein anderer Einbruchton (`burglar`, `emergency`, `police_panic`, `emergency_panic`) – **nie ein Brandton** |
+| Tonauswahl nur mit Brandtönen | Sirene wird für Einbruch **nicht** verwendet |
+| Keine Tonauswahl | Einfache Sirene: ohne Tonangabe. **Rauchmelder** ohne Tonauswahl werden nicht verwendet, weil ihr Standardton meist der Brandton ist |
+| Lautstärke, Dauer | Nur gesendet, wenn unterstützt |
+| Weder Dauer noch Ausschalten | Sirene wird nicht verwendet – Hauswacht könnte sie nicht beenden |
+| Höchstdauer (`number.<sirene>_max_duration`, Zigbee2MQTT) | Dauer wird darauf begrenzt; fehlt sie, gelten 240 Sekunden |
+| Brandsensor am selben Gerät | Gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt immer |
 
-Reine Innen- oder Außensirenen ohne Rauchmelder können also funktionieren, sind aber **nicht
-getestet**. Wer andere Geräte einsetzt: vorher mit Testmodus und Simulation prüfen, dann die
-Sirene bei Anwesenheit einmal bewusst auslösen und `last_siren_decision` am Bedienfeld
-ansehen. Rückmeldungen zu weiteren Modellen sind willkommen.
+Warum eine Sirene nicht angesteuert wurde, steht nach jedem Alarm im Attribut
+`last_siren_decision` am Bedienfeld. Andere Modelle als das getestete vorher mit Testmodus und
+Simulation prüfen und die Sirene dann bei Anwesenheit einmal bewusst auslösen. Rückmeldungen
+zu weiteren Modellen sind willkommen.
 
 ## Dokumentation
 

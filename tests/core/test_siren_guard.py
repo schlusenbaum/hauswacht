@@ -12,6 +12,7 @@ from custom_components.hauswacht.core.siren_guard import (
     FireIndicator,
     GuardContext,
     GuardDecision,
+    SirenCapabilities,
     SirenDevice,
     decide_activation,
     decide_stop,
@@ -237,3 +238,83 @@ def test_external_unknown_fire_does_not_block() -> None:
         external_fire=FireIndicator.UNKNOWN,
     )
     assert decide_activation(guard, REQ).commands
+
+
+# --- Gerätefähigkeiten ------------------------------------------------------
+
+ONE = ActivateRequest(targets=("s",), tone="burglar", volume="high", duration=180)
+
+
+def caps(**kw: object) -> SirenCapabilities:
+    return SirenCapabilities(**kw)  # type: ignore[arg-type]
+
+
+def test_full_capabilities_send_everything() -> None:
+    tones = frozenset({"burglar", "fire", "emergency"})
+    decision = decide_activation(ctx(device("s", capabilities=caps(tones=tones))), ONE)
+    command = decision.commands[0]
+    assert (command.tone, command.volume_level, command.duration) == ("burglar", 0.75, 180)
+
+
+def test_fallback_to_other_burglar_tone_never_fire() -> None:
+    tones = frozenset({"fire", "fire_panic", "police_panic"})
+    decision = decide_activation(ctx(device("s", capabilities=caps(tones=tones))), ONE)
+    assert decision.commands[0].tone == "police_panic"
+
+
+def test_only_fire_tones_blocks() -> None:
+    tones = frozenset({"fire", "fire_panic"})
+    decision = decide_activation(ctx(device("s", capabilities=caps(tones=tones))), ONE)
+    assert decision.commands == ()
+    assert reasons(decision) == {BlockReason.NO_BURGLAR_TONE}
+
+
+def test_unknown_tone_list_sends_requested_tone() -> None:
+    decision = decide_activation(ctx(device("s", capabilities=caps(tones=None))), ONE)
+    assert decision.commands[0].tone == "burglar"
+
+
+def test_plain_siren_without_tones_volume_duration() -> None:
+    plain = caps(tones_supported=False, volume=False, duration=False, turn_off=True)
+    decision = decide_activation(ctx(device("s", capabilities=plain)), ONE)
+    command = decision.commands[0]
+    assert (command.tone, command.volume_level, command.duration) == (None, None, None)
+
+
+def test_smoke_detector_without_tone_selection_blocked() -> None:
+    no_tones = caps(tones_supported=False)
+    decision = decide_activation(ctx(device("s", capabilities=no_tones, fire_detector=True)), ONE)
+    assert decision.commands == ()
+    assert reasons(decision) == {BlockReason.NO_BURGLAR_TONE}
+
+
+def test_siren_that_cannot_be_limited_is_blocked() -> None:
+    endless = caps(tones_supported=False, duration=False, turn_off=False)
+    decision = decide_activation(ctx(device("s", capabilities=endless)), ONE)
+    assert reasons(decision) == {BlockReason.CANNOT_LIMIT}
+
+
+def test_duration_only_device_without_turn_off_is_allowed() -> None:
+    decision = decide_activation(ctx(device("s", capabilities=caps(turn_off=False))), ONE)
+    assert decision.commands[0].duration == 180
+
+
+def test_max_duration_ignored_when_duration_unsupported() -> None:
+    plain = caps(duration=False)
+    decision = decide_activation(ctx(device("s", capabilities=plain, max_duration=0)), ONE)
+    assert decision.commands[0].duration is None
+
+
+def test_stop_skips_device_without_turn_off() -> None:
+    decision = decide_stop(
+        ctx(device("s", capabilities=caps(turn_off=False)), activated=frozenset({"s"}))
+    )
+    assert decision.commands == ()
+    assert reasons(decision) == {BlockReason.TURN_OFF_UNSUPPORTED}
+
+
+@pytest.mark.parametrize("fire", [FireIndicator.ACTIVE, FireIndicator.UNKNOWN])
+def test_capabilities_never_bypass_fire_lock(fire: FireIndicator) -> None:
+    plain = caps(tones_supported=False, volume=False)
+    decision = decide_activation(ctx(device("s", fire, capabilities=plain)), ONE)
+    assert reasons(decision) == {BlockReason.FIRE_LOCK}
