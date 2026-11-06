@@ -17,6 +17,8 @@
         "menu_options": {
           "zones": "Zones and sensors",
           "profile": "Profiles",
+          "sirens": "Sirens",
+          "notifications": "Notifications",
           "roles": "Sensor roles (exceptions)",
           "monitoring": "Sensor monitoring",
           "infrastructure": "System monitoring",
@@ -49,7 +51,12 @@
           "open_policy": "Open sensors when arming",
           "unavailable_policy": "Unavailable sensors when arming",
           "max_alarm_cycles": "Maximum alarm cycles",
-          "tamper_triggers_alarm": "Tampering triggers alarm"
+          "tamper_triggers_alarm": "Tampering triggers alarm",
+          "sirens": "Sirens for this profile",
+          "siren_tone": "Siren tone",
+          "siren_volume": "Volume",
+          "silent": "Silent alarm (notifications only)",
+          "notify": "Notify (alarm)"
         }
       },
       "zones": {
@@ -112,12 +119,30 @@
         "data": {
           "infrastructure": "Indicators"
         }
+      },
+      "sirens": {
+        "title": "Sirens",
+        "description": "Register the sirens Hauswacht may use for intrusion alarms. Fire safety: Hauswacht never switches a siren on or off while any smoke detector reports fire, or while the fire state of a registered siren is unknown. Siren control stays LOCKED until you enable it here and confirm.",
+        "data": {
+          "sirens": "Sirens",
+          "sirens_hardware_enabled": "Allow real siren control",
+          "confirm_hardware": "I confirm: real sirens may sound during an alarm"
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "System messages (fault, sensor lost, tampering, restart) go to these services. Alarm messages are configured per profile.",
+        "data": {
+          "notify_system": "Services for system messages",
+          "notify_in_test_mode": "Send notifications in test mode too"
+        }
       }
     },
     "error": {
       "invalid_pin": "The PIN must consist of 4 to 8 digits.",
       "zone_name_required": "Please enter a name.",
-      "zone_empty": "Select at least one sensor or a label."
+      "zone_empty": "Select at least one sensor or a label.",
+      "confirm_hardware_required": "Please confirm that real sirens may sound."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -153,6 +178,22 @@
         "instant": "Instant",
         "follower": "Follower",
         "tamper_24h": "Tamper (24 h)"
+      }
+    },
+    "siren_tone": {
+      "options": {
+        "burglar": "Burglar",
+        "emergency": "Emergency",
+        "police_panic": "Police panic",
+        "emergency_panic": "Emergency panic"
+      }
+    },
+    "siren_volume": {
+      "options": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "very_high": "Very high"
       }
     }
   },

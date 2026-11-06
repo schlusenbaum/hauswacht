@@ -48,6 +48,14 @@ from .const import (
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.pin import PinHash, verify_pin
 from .core.profiles import build_profiles, profile_behaviour, stale_after_seconds
+from .core.reactions import (
+    alarm_message,
+    fault_message,
+    parse_reaction,
+    restart_message,
+    sensor_lost_message,
+    tamper_message,
+)
 from .core.sensors import (
     SensorSnapshot,
     all_configured_sensors,
@@ -85,9 +93,12 @@ from .core.state_machine import (
     Startup,
     StateChanged,
     StopReaction,
+    TamperDetected,
     TimerKind,
     step,
 )
+from .notifier import Notifier
+from .siren_executor import SirenExecutor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -135,6 +146,8 @@ class HauswachtRuntime:
         self.entry = entry
         self.ctx = AlarmContext()
         self.profiles = build_profiles(entry.options)
+        self.sirens = SirenExecutor(hass, entry.options)
+        self.notifier = Notifier(hass, entry.options)
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
         self.stale_after = stale_after_seconds(entry.options)
@@ -371,6 +384,7 @@ class HauswachtRuntime:
                 {"type": "InfrastructureRecovered", "indicator": entity_id, "armed": armed},
             )
         if faulty and armed and new_faults:
+            self.notifier.send_system(*fault_message(faulty), test_mode=self.ctx.test_mode)
             persistent_notification.async_create(
                 self.hass,
                 "Hauswacht ist scharf, aber folgende Systeme sind gestört: "
@@ -472,6 +486,7 @@ class HauswachtRuntime:
         self.hass.bus.async_fire(
             EVENT_HAUSWACHT, {"type": "SensorUnavailable", "sensor_key": entity_id}
         )
+        self.notifier.send_system(*sensor_lost_message(entity_id), test_mode=self.ctx.test_mode)
         persistent_notification.async_create(
             self.hass,
             f"Der überwachte Sensor {entity_id} ist nicht mehr verfügbar. "
@@ -508,9 +523,11 @@ class HauswachtRuntime:
         self.ctx, effects = step(self.ctx, event, time.monotonic())
         for effect in effects:
             self._apply(effect)
-        if self.ctx.state is AlarmState.DISARMED and self.armed_sensors:
-            self.armed_sensors = frozenset()
-            self._refresh_sensors()
+        if self.ctx.state is AlarmState.DISARMED:
+            self.sirens.reset()
+            if self.armed_sensors:
+                self.armed_sensors = frozenset()
+                self._refresh_sensors()
         if (old_ctx.state, old_ctx.profile, old_ctx.test_mode) != (
             self.ctx.state,
             self.ctx.profile,
@@ -549,7 +566,13 @@ class HauswachtRuntime:
                 self._on_alarm(effect)
             case StopReaction():
                 _LOGGER.info("Alarmreaktion beendet (Profil %s)", effect.profile_id)
+                self.sirens.stop(test_mode=effect.test_mode)
+            case TamperDetected():
+                self.notifier.send_system(
+                    *tamper_message(effect.sensor_key), test_mode=self.ctx.test_mode
+                )
             case RestartedDisarmed():
+                self.notifier.send_system(*restart_message(effect.previous_profile_id))
                 persistent_notification.async_create(
                     self.hass,
                     f"Home Assistant wurde neu gestartet. Hauswacht war vorher scharf "
@@ -576,12 +599,28 @@ class HauswachtRuntime:
             effect.profile_id,
             effect.cycle,
         )
+        reaction = parse_reaction(self.entry.options, effect.profile_id)
+        profile = self.profiles[effect.profile_id]
+        decision = self.sirens.activate(
+            reaction.siren_targets,
+            reaction.tone,
+            reaction.volume,
+            profile.reaction_time,
+            test_mode=effect.test_mode,
+        )
+        title, message = alarm_message(
+            effect.profile_id, effect.sensor_key, test_mode=effect.test_mode
+        )
+        if decision.commands:
+            message += " Sirenen: " + ", ".join(c.entity_id for c in decision.commands) + "."
+        if decision.blocked:
+            reasons = sorted({b.reason.value for b in decision.blocked})
+            message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
+        if reaction.silent:
+            message += " Stiller Alarm."
+        self.notifier.send(reaction.notify, title, message, test_mode=effect.test_mode)
         persistent_notification.async_create(
-            self.hass,
-            f"{prefix}: ausgelöst durch {effect.sensor_key} (Profil {effect.profile_id}). "
-            "Sirenen und Push-Benachrichtigungen sind in dieser Version noch nicht aktiv.",
-            title=f"Hauswacht: {prefix}",
-            notification_id=NOTIFICATION_ALARM,
+            self.hass, message, title=title, notification_id=NOTIFICATION_ALARM
         )
 
     @callback

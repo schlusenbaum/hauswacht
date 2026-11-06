@@ -35,10 +35,14 @@ from .const import (
     NAME,
     OPT_CODE_ARM_REQUIRED,
     OPT_INFRASTRUCTURE,
+    OPT_NOTIFY_IN_TEST_MODE,
+    OPT_NOTIFY_SYSTEM,
     OPT_PIN_DIGEST,
     OPT_PIN_SALT,
     OPT_PROFILES,
     OPT_SENSOR_ROLES,
+    OPT_SIRENS,
+    OPT_SIRENS_HARDWARE_ENABLED,
     OPT_STALE_AFTER_HOURS,
     OPT_ZONES,
     ROLE_AUTO,
@@ -54,7 +58,9 @@ from .core.profiles import (
     profile_settings,
     stale_after_seconds,
 )
+from .core.reactions import parse_reaction
 from .core.sensors import Zone, parse_zones, slugify
+from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
 from .core.state_machine import (
     AlarmState,
     OpenSensorPolicy,
@@ -63,6 +69,7 @@ from .core.state_machine import (
 )
 
 SENSOR_DOMAIN = "binary_sensor"
+SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 
 class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -109,7 +116,16 @@ class HauswachtOptionsFlow(OptionsFlow):
             return self.async_abort(reason="disarm_first")
         return self.async_show_menu(
             step_id="init",
-            menu_options=["zones", "profile", "roles", "monitoring", "infrastructure", "code"],
+            menu_options=[
+                "zones",
+                "profile",
+                "sirens",
+                "notifications",
+                "roles",
+                "monitoring",
+                "infrastructure",
+                "code",
+            ],
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -178,6 +194,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         assert self._profile_id is not None
         options = dict(self.config_entry.options)
         zones = parse_zones(options)
+        registered_sirens = [s for s in options.get(OPT_SIRENS, []) if isinstance(s, str)]
         if user_input is not None and "exit_delay" in user_input:
             profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
             profiles[self._profile_id] = {
@@ -189,12 +206,18 @@ class HauswachtOptionsFlow(OptionsFlow):
                 "unavailable_policy": user_input["unavailable_policy"],
                 "max_alarm_cycles": int(user_input["max_alarm_cycles"]),
                 "tamper_triggers_alarm": bool(user_input["tamper_triggers_alarm"]),
+                "sirens": [s for s in user_input.get("sirens", []) if s in registered_sirens],
+                "siren_tone": user_input["siren_tone"],
+                "siren_volume": user_input["siren_volume"],
+                "silent": bool(user_input["silent"]),
+                "notify": list(user_input.get("notify", [])),
             }
             options[OPT_PROFILES] = profiles
             return self.async_create_entry(data=options)
 
         current = profile_settings(options, self._profile_id)
         behaviour = profile_behaviour(options, self._profile_id)
+        reaction = parse_reaction(options, self._profile_id)
         schema = vol.Schema(
             {
                 vol.Optional(
@@ -221,6 +244,19 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Required(
                     "tamper_triggers_alarm", default=behaviour.tamper_triggers_alarm
                 ): BooleanSelector(),
+                vol.Optional("sirens", default=list(reaction.sirens)): _list_selector(
+                    registered_sirens, multiple=True
+                ),
+                vol.Required("siren_tone", default=reaction.tone): _select(
+                    sorted(BURGLAR_TONES), "siren_tone"
+                ),
+                vol.Required("siren_volume", default=reaction.volume): _select(
+                    list(VOLUME_LEVELS), "siren_volume"
+                ),
+                vol.Required("silent", default=reaction.silent): BooleanSelector(),
+                vol.Optional("notify", default=list(reaction.notify)): _list_selector(
+                    self._notify_services(), multiple=True, custom=True
+                ),
             }
         )
         return self.async_show_form(
@@ -399,6 +435,65 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
         return self.async_show_form(step_id="monitoring", data_schema=schema)
 
+    # --- Sirenen -----------------------------------------------------------
+
+    async def async_step_sirens(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        was_enabled = bool(options.get(OPT_SIRENS_HARDWARE_ENABLED, False))
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            enable = bool(user_input.get(OPT_SIRENS_HARDWARE_ENABLED, False))
+            if enable and not was_enabled and not user_input.get("confirm_hardware"):
+                errors["base"] = "confirm_hardware_required"
+            else:
+                sirens = sorted(set(user_input.get(OPT_SIRENS) or []))
+                options[OPT_SIRENS] = sirens
+                options[OPT_SIRENS_HARDWARE_ENABLED] = enable
+                # Aus Profilen entfernen, was nicht mehr registriert ist
+                profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
+                for settings in profiles.values():
+                    if "sirens" in settings:
+                        settings["sirens"] = [s for s in settings["sirens"] if s in sirens]
+                options[OPT_PROFILES] = profiles
+                return self.async_create_entry(data=options)
+        schema = vol.Schema(
+            {
+                vol.Optional(OPT_SIRENS, default=list(options.get(OPT_SIRENS, []))): EntitySelector(
+                    EntitySelectorConfig(domain=SIREN_ENTITY_DOMAIN, multiple=True)
+                ),
+                vol.Required(OPT_SIRENS_HARDWARE_ENABLED, default=was_enabled): BooleanSelector(),
+                vol.Optional("confirm_hardware", default=False): BooleanSelector(),
+            }
+        )
+        return self.async_show_form(step_id="sirens", data_schema=schema, errors=errors)
+
+    # --- Benachrichtigungen --------------------------------------------------
+
+    def _notify_services(self) -> list[str]:
+        services = self.hass.services.async_services_for_domain("notify")
+        return sorted(s for s in services if s not in {"send_message", "notify"})
+
+    async def async_step_notifications(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        if user_input is not None:
+            options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
+            options[OPT_NOTIFY_IN_TEST_MODE] = bool(user_input.get(OPT_NOTIFY_IN_TEST_MODE))
+            return self.async_create_entry(data=options)
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    OPT_NOTIFY_SYSTEM, default=list(options.get(OPT_NOTIFY_SYSTEM, []))
+                ): _list_selector(self._notify_services(), multiple=True, custom=True),
+                vol.Required(
+                    OPT_NOTIFY_IN_TEST_MODE,
+                    default=bool(options.get(OPT_NOTIFY_IN_TEST_MODE, False)),
+                ): BooleanSelector(),
+            }
+        )
+        return self.async_show_form(step_id="notifications", data_schema=schema)
+
     # --- Infrastruktur ------------------------------------------------------
 
     async def async_step_infrastructure(
@@ -422,6 +517,19 @@ def _select(options: list[str], translation_key: str) -> SelectSelector:
     return SelectSelector(
         SelectSelectorConfig(
             options=options, translation_key=translation_key, mode=SelectSelectorMode.DROPDOWN
+        )
+    )
+
+
+def _list_selector(
+    values: list[str], *, multiple: bool = False, custom: bool = False
+) -> SelectSelector:
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=values,
+            multiple=multiple,
+            custom_value=custom,
+            mode=SelectSelectorMode.DROPDOWN,
         )
     )
 
