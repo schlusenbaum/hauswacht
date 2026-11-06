@@ -451,7 +451,9 @@ def _on_disarm(ctx: AlarmContext, event: DisarmRequested) -> Result:
 
     profile = _profile(ctx)
     effects: list[Effect] = []
-    was_triggered = ctx.state is AlarmState.TRIGGERED
+    # Auch aus ALARM_HOLD: Ein Stopp am Ende der Reaktionszeit kann durch die Brandsperre
+    # verhindert worden sein. Der Guard schaltet nur ab, was Hauswacht selbst eingeschaltet hat.
+    was_triggered = ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD)
     ctx, cancel = _cancel_timer(ctx)
     effects += cancel
     ctx, changed = _goto(ctx, AlarmState.DISARMED, "disarm_requested")
@@ -570,7 +572,10 @@ def _on_reaction_elapsed(ctx: AlarmContext, event: ReactionTimeElapsed) -> Resul
         return ctx, (Ignored(reason="stale_timer"),)
     ctx = replace(ctx, timer_kind=None, deadline=None)
     ctx, changed = _goto(ctx, AlarmState.ALARM_HOLD, "reaction_time_elapsed")
-    return ctx, (changed,)
+    # Sirenen ohne eigene Laufzeitbegrenzung laufen sonst weiter. Ob tatsächlich
+    # ausgeschaltet wird, entscheidet der Sirenen-Guard (Brandsperre!).
+    profile = _profile(ctx)
+    return ctx, (changed, StopReaction(profile_id=profile.profile_id, test_mode=ctx.test_mode))
 
 
 def _on_test_mode(ctx: AlarmContext, event: SetTestMode) -> Result:

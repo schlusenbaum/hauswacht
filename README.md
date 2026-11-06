@@ -6,7 +6,7 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus.
 
-> **Status: 0.9.2 – Entwicklungsversion.**
+> **Status: 0.9.3 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
 > Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
@@ -54,6 +54,7 @@ Außensirenen ohne Rauchmelder. Hauswacht liest vor jedem Alarm, was eine Sirene
 | Tonauswahl nur mit Brandtönen | Sirene wird für Einbruch **nicht** verwendet |
 | Keine Tonauswahl | Einfache Sirene: ohne Tonangabe. **Rauchmelder** ohne Tonauswahl werden nicht verwendet, weil ihr Standardton meist der Brandton ist |
 | Lautstärke, Dauer | Nur gesendet, wenn unterstützt |
+| Nur Ein und Aus | Hauswacht schaltet sie nach der Reaktionszeit und beim Unscharfschalten selbst aus |
 | Weder Dauer noch Ausschalten | Sirene wird nicht verwendet – Hauswacht könnte sie nicht beenden |
 | Höchstdauer (`number.<sirene>_max_duration`, Zigbee2MQTT) | Dauer wird darauf begrenzt; fehlt sie, gelten 240 Sekunden |
 | Brandsensor am selben Gerät | Gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt immer |

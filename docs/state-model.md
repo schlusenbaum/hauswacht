@@ -41,7 +41,7 @@ in der Zustandsmaschine geführt.
 | pending | entry, follower | – | bleibt |
 | pending | instant | – | triggered |
 | pending | EntryDelayElapsed | – | triggered |
-| triggered | ReactionTimeElapsed | – | alarm_hold |
+| triggered | ReactionTimeElapsed | – | alarm_hold (Sirenen-Stopp anfordern) |
 | alarm_hold | Sensor | Zyklen < Maximum | triggered (neuer Zyklus) |
 | arming/armed/pending/triggered/alarm_hold | DisarmRequested | Code gültig | disarmed |
 | beliebig | Startup | – | **disarmed** |

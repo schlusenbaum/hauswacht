@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.9.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.9.3:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -169,8 +169,11 @@ ebenfalls „nicht verfügbar“, deckt also beides ab.
 3. Erst wenn alles getestet ist: **„Echte Sirenenansteuerung erlauben“** einschalten und die
    Bestätigung anhaken. Ohne diese Freigabe sendet Hauswacht nie einen Sirenenbefehl.
 
-Die Laufzeit entspricht der „Dauer der Alarmreaktion“ des Profils, höchstens aber der
-Höchstdauer, die das Gerät meldet. Diese Höchstdauer wird nur gelesen, nie verändert.
+Die Laufzeit entspricht der „Dauer der Alarmreaktion“ des Profils. Danach – und beim
+Unscharfschalten – schaltet Hauswacht die Sirenen aus, die es selbst eingeschaltet hat. Das ist
+für Sirenen wichtig, die nur Ein und Aus kennen. Sirenen mit eigener Laufzeit (z. B. Rauchmelder
+mit Höchstdauer) bekommen die Dauer zusätzlich mitgeschickt, höchstens aber die Höchstdauer
+des Geräts. Diese Höchstdauer wird nur gelesen, nie verändert.
 
 ### Brandschutz
 
@@ -182,7 +185,8 @@ Testknopf-Sensoren automatisch.
 - Ist der Brandzustand einer **registrierten** Sirene unklar (Sensor nicht verfügbar oder
   deaktiviert), gilt dasselbe.
 - Wurde während eines Einbruchalarms Brand gemeldet, schaltet auch das Unscharfschalten keine
-  Sirene ab. Der Einbruchton endet spätestens nach der Gerätehöchstdauer.
+  Sirene ab. Sirenen mit eigener Laufzeit verstummen nach ihrer Höchstdauer. Alle anderen
+  schaltet Hauswacht aus, sobald kein Brand mehr gemeldet wird (Prüfung jede Minute).
 - Fremde Abschalt-Skripte (z. B. „alle Rauchmelder aus“) verwendet Hauswacht nie.
 
 Das Attribut `last_siren_decision` am Bedienfeld zeigt nach jedem Alarm, welche Sirenen

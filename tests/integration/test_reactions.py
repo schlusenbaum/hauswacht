@@ -6,6 +6,7 @@ Gerät; geprüft wird nur, welche Dienstaufrufe Hauswacht absetzen WÜRDE.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 import pytest
@@ -14,9 +15,11 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     async_capture_events,
+    async_fire_time_changed,
     async_mock_service,
 )
 
@@ -312,3 +315,40 @@ async def test_device_with_only_fire_tones_is_not_used(hass: HomeAssistant) -> N
     )
     await _alarm(hass)
     assert mocks.on == []
+
+
+# --- Ende des Sirenentons ---------------------------------------------------
+
+
+def _later(hass: HomeAssistant, seconds: int) -> None:
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=seconds))
+
+
+async def test_reaction_end_turns_off_plain_siren(hass: HomeAssistant) -> None:
+    """Sirene ohne eigene Laufzeit: Hauswacht schaltet sie nach der Reaktionszeit aus."""
+    mocks = await _setup(
+        hass, sirens=[PLAIN], sirens_hardware_enabled=True, night={"sirens": [PLAIN]}
+    )
+    hass.states.async_set(PLAIN, "off", {"supported_features": 3})
+    await _alarm(hass)
+    assert mocks.off == []
+    _later(hass, 181)
+    await hass.async_block_till_done()
+    assert [c.data["entity_id"] for c in mocks.off] == [PLAIN]
+
+
+async def test_stop_blocked_by_fire_is_retried_after_fire(hass: HomeAssistant) -> None:
+    mocks = await _setup(hass, sirens_hardware_enabled=True)
+    await _alarm(hass)
+    hass.states.async_set(SMOKE, "on", {"device_class": "smoke"})
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    _later(hass, 61)
+    await hass.async_block_till_done()
+    assert mocks.off == []  # solange es brennt: nie ausschalten
+    hass.states.async_set(SMOKE, "off", {"device_class": "smoke"})
+    _later(hass, 122)
+    await hass.async_block_till_done()
+    assert [c.data["entity_id"] for c in mocks.off] == [SIREN]
+    _later(hass, 183)
+    await hass.async_block_till_done()
+    assert len(mocks.off) == 1  # danach keine weiteren Versuche
