@@ -43,6 +43,7 @@ from .const import (
     NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
     OPT_CODE_ARM_REQUIRED,
+    OPT_END_ALARM_WITHOUT_PIN,
     OPT_INFRASTRUCTURE,
     OPT_PIN_DIGEST,
     OPT_PIN_SALT,
@@ -215,6 +216,13 @@ class HauswachtRuntime:
         if not salt or not digest:
             return None
         return PinHash(salt=salt, digest=digest)
+
+    @property
+    def end_alarm_needs_code(self) -> bool:
+        """Braucht "Alarm beenden" einen PIN? Nur mit PIN und ohne die Ausnahme-Option."""
+        return self.pin is not None and not bool(
+            self.entry.options.get(OPT_END_ALARM_WITHOUT_PIN, False)
+        )
 
     @property
     def code_arm_required(self) -> bool:

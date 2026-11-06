@@ -132,3 +132,28 @@ async def test_buttons_unavailable_with_pin(hass: HomeAssistant) -> None:
         state = hass.states.get(entity_id)
         assert state is not None
         assert state.state == "unavailable"
+
+
+async def test_end_alarm_without_pin_option(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "code"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"new_pin": "2468", "end_alarm_without_pin": True}
+    )
+    await hass.async_block_till_done()
+    assert entry.options["end_alarm_without_pin"] is True
+
+    disarm = hass.states.get(DISARM_NOW)
+    assert disarm is not None
+    assert disarm.state == "unavailable"  # Unscharf verlangt weiter den PIN
+
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL, code="2468")
+    set_sensor(hass, WINDOW, "on")
+    await hass.async_block_till_done()
+    assert _state(hass).state == AlarmControlPanelState.TRIGGERED
+    await _service(hass, "button", "press", entity_id=END_ALARM)
+    assert _state(hass).state == AlarmControlPanelState.ARMED_NIGHT

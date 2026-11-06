@@ -6,7 +6,8 @@ die Aktion hauswacht.arm mit code verwenden.
 
 "Unscharf schalten" schaltet sofort unscharf – auch während eines Alarms. "Alarm beenden"
 beendet nur den Alarm, das Profil bleibt scharf. Knöpfe können keinen PIN abfragen: Ist ein
-PIN eingestellt, sind beide nicht verfügbar; dann über das Bedienfeld bedienen.
+PIN eingestellt, ist "Unscharf schalten" nicht verfügbar; "Alarm beenden" nur, wenn die Option
+"Alarm ohne PIN beenden" aus ist.
 """
 
 from __future__ import annotations
@@ -99,10 +100,10 @@ class HauswachtEndAlarmButton(HauswachtEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
-        return self.runtime.pin is None
+        return not self.runtime.end_alarm_needs_code
 
     async def async_press(self) -> None:
-        if self.runtime.pin is not None:
+        if self.runtime.end_alarm_needs_code:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code_disarm"
             )
