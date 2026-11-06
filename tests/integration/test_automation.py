@@ -33,8 +33,11 @@ def _state(hass: HomeAssistant) -> str:
     return state.state
 
 
-async def _at(hass: HomeAssistant, hour: int, minute: int) -> None:
-    moment = dt_util.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
+async def _at(hass: HomeAssistant, hour: int, minute: int, days: int = 1) -> None:
+    """Simuliert die Uhrzeit an einem künftigen Tag (geplante Zeitpunkte liegen in der Zukunft)."""
+    moment = (dt_util.now() + timedelta(days=days)).replace(
+        hour=hour, minute=minute, second=0, microsecond=0
+    )
     async_fire_time_changed(hass, moment)
     await hass.async_block_till_done()
 
@@ -62,7 +65,7 @@ async def test_arm_and_disarm_by_time(hass: HomeAssistant) -> None:
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
     await _at(hass, 23, 0)
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
-    await _at(hass, 6, 30)
+    await _at(hass, 6, 30, days=2)
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 
@@ -86,7 +89,7 @@ async def test_disarm_time_does_not_end_running_alarm(hass: HomeAssistant) -> No
     await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=PANEL)
     set_sensor(hass, WINDOW, "on")
     await hass.async_block_till_done()
-    await _at(hass, 6, 30)
+    await _at(hass, 6, 30, days=2)
     assert _state(hass) == AlarmControlPanelState.TRIGGERED
 
 
