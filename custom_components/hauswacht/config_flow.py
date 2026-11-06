@@ -34,6 +34,7 @@ from .const import (
     DOMAIN,
     NAME,
     OPT_CODE_ARM_REQUIRED,
+    OPT_INFRASTRUCTURE,
     OPT_PIN_DIGEST,
     OPT_PIN_SALT,
     OPT_PROFILES,
@@ -107,7 +108,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self._is_disarmed():
             return self.async_abort(reason="disarm_first")
         return self.async_show_menu(
-            step_id="init", menu_options=["zones", "profile", "roles", "monitoring", "code"]
+            step_id="init",
+            menu_options=["zones", "profile", "roles", "monitoring", "infrastructure", "code"],
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -396,6 +398,24 @@ class HauswachtOptionsFlow(OptionsFlow):
             }
         )
         return self.async_show_form(step_id="monitoring", data_schema=schema)
+
+    # --- Infrastruktur ------------------------------------------------------
+
+    async def async_step_infrastructure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        if user_input is not None:
+            options[OPT_INFRASTRUCTURE] = sorted(set(user_input.get(OPT_INFRASTRUCTURE) or []))
+            return self.async_create_entry(data=options)
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    OPT_INFRASTRUCTURE, default=list(options.get(OPT_INFRASTRUCTURE, []))
+                ): EntitySelector(EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True))
+            }
+        )
+        return self.async_show_form(step_id="infrastructure", data_schema=schema)
 
 
 def _select(options: list[str], translation_key: str) -> SelectSelector:

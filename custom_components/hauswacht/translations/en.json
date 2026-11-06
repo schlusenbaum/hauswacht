@@ -19,6 +19,7 @@
           "profile": "Profiles",
           "roles": "Sensor roles (exceptions)",
           "monitoring": "Sensor monitoring",
+          "infrastructure": "System monitoring",
           "code": "PIN code"
         }
       },
@@ -104,6 +105,13 @@
         "data": {
           "stale_after_hours": "Maximum silence"
         }
+      },
+      "infrastructure": {
+        "title": "System monitoring",
+        "description": "Binary sensors that report \"on\" while a system is running, e.g. the Zigbee2MQTT bridge connection state. If one of them is off or unavailable, Hauswacht reports a fault and treats arming as with unavailable sensors.",
+        "data": {
+          "infrastructure": "Indicators"
+        }
       }
     },
     "error": {
@@ -153,6 +161,16 @@
       "test_mode": {
         "name": "Test mode"
       }
+    },
+    "sensor": {
+      "system_status": {
+        "name": "System status",
+        "state": {
+          "ok": "OK",
+          "degraded": "Sensors unavailable",
+          "fault": "Fault"
+        }
+      }
     }
   },
   "exceptions": {
@@ -176,6 +194,12 @@
     },
     "profile_has_no_sensors": {
       "message": "Profile {profile} does not monitor any sensors. Assign zones in the Hauswacht options first."
+    },
+    "simulation_requires_test_mode": {
+      "message": "Simulation is only possible while test mode is on."
+    },
+    "unknown_sensor": {
+      "message": "{sensor} is not part of any Hauswacht zone."
     }
   },
   "services": {
@@ -194,6 +218,16 @@
         "code": {
           "name": "PIN code",
           "description": "Required if a PIN is needed for arming."
+        }
+      }
+    },
+    "simulate_trigger": {
+      "name": "Simulate sensor",
+      "description": "Simulates the triggering of a configured sensor. Only possible in test mode; no device is switched.",
+      "fields": {
+        "sensor": {
+          "name": "Sensor",
+          "description": "Configured sensor whose triggering is simulated."
         }
       }
     }

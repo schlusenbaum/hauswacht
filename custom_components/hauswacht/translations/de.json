@@ -19,6 +19,7 @@
           "profile": "Profile",
           "roles": "Sensorrollen (Ausnahmen)",
           "monitoring": "Sensorüberwachung",
+          "infrastructure": "Systemüberwachung",
           "code": "PIN"
         }
       },
@@ -104,6 +105,13 @@
         "data": {
           "stale_after_hours": "Maximale Funkstille"
         }
+      },
+      "infrastructure": {
+        "title": "Systemüberwachung",
+        "description": "Binärsensoren, die \"an\" melden, solange ein System läuft, z. B. der Verbindungsstatus der Zigbee2MQTT-Bridge. Ist einer aus oder nicht verfügbar, meldet Hauswacht eine Störung und behandelt das Scharfschalten wie bei ausgefallenen Sensoren.",
+        "data": {
+          "infrastructure": "Indikatoren"
+        }
       }
     },
     "error": {
@@ -153,6 +161,16 @@
       "test_mode": {
         "name": "Testmodus"
       }
+    },
+    "sensor": {
+      "system_status": {
+        "name": "Systemstatus",
+        "state": {
+          "ok": "OK",
+          "degraded": "Sensoren ausgefallen",
+          "fault": "Störung"
+        }
+      }
     }
   },
   "exceptions": {
@@ -176,6 +194,12 @@
     },
     "profile_has_no_sensors": {
       "message": "Profil {profile} überwacht keine Sensoren. Bitte zuerst in den Hauswacht-Optionen Zonen zuordnen."
+    },
+    "simulation_requires_test_mode": {
+      "message": "Simulation ist nur im Testmodus möglich."
+    },
+    "unknown_sensor": {
+      "message": "{sensor} gehört zu keiner Hauswacht-Zone."
     }
   },
   "services": {
@@ -194,6 +218,16 @@
         "code": {
           "name": "PIN",
           "description": "Nötig, wenn zum Scharfschalten ein PIN verlangt wird."
+        }
+      }
+    },
+    "simulate_trigger": {
+      "name": "Sensor simulieren",
+      "description": "Simuliert das Auslösen eines konfigurierten Sensors. Nur im Testmodus möglich; es wird kein Gerät geschaltet.",
+      "fields": {
+        "sensor": {
+          "name": "Sensor",
+          "description": "Konfigurierter Sensor, dessen Auslösung simuliert wird."
         }
       }
     }

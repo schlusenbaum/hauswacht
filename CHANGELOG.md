@@ -6,6 +6,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-06
+
+### Hinzugefügt
+- **Simulation im Testmodus:** Aktion `hauswacht.simulate_trigger` löst einen konfigurierten
+  Sensor virtuell aus, ohne ein Gerät zu verändern. Nur bei eingeschaltetem Testmodus möglich.
+  So lassen sich komplette Abläufe (Eingangsverzögerung, Alarm, Unscharfschalten) gefahrlos
+  durchspielen.
+- **Systemüberwachung:** Infrastruktur-Indikatoren (z. B. Verbindungsstatus der
+  Zigbee2MQTT-Bridge) sind in den Optionen wählbar. Ist ein Indikator aus oder nicht
+  verfügbar, meldet Hauswacht eine Störung und behandelt das Scharfschalten wie bei
+  ausgefallenen Sensoren.
+- **Systemstatus-Entität** `sensor.hauswacht_systemstatus`: OK, Sensoren ausgefallen, Störung.
+- Ereignisse `InfrastructureFault`, `InfrastructureRecovered`, `SensorSimulated`.
+- Hinweis „Hauswacht: Störung“, wenn im scharfen Zustand ein System ausfällt.
+
+### Getestet
+- Ausfall und Wiederkehr von Zigbee2MQTT im scharfen Zustand ohne Fehlalarm; ein nach dem
+  Ausfall offen zurückkehrender Sensor löst dagegen aus (sichere Seite).
+
 ## [0.3.1] - 2026-11-06
 
 ### Behoben

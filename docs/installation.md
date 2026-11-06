@@ -1,6 +1,7 @@
 # Installation und Bedienung
 
-> **Stand 0.3.0:** Bedienfeld, Profile, Zonen und Sensoren funktionieren. Ein Alarm erscheint
+> **Stand 0.4.0:** Bedienfeld, Profile, Zonen, Sensoren, Systemüberwachung und Simulation
+> funktionieren. Ein Alarm erscheint
 > als Hinweis in Home Assistant und als Ereignis. Es werden **noch keine Sirenen angesteuert
 > und keine Push-Nachrichten verschickt.**
 
@@ -27,6 +28,7 @@ Hauswacht kann nur einmal eingerichtet werden.
 |---|---|
 | `alarm_control_panel.hauswacht` | Bedienfeld: Zuhause, Nacht, Abwesend, Urlaub, Unscharf |
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
+| `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
 
 ## Einrichtung in drei Schritten
 
@@ -103,6 +105,41 @@ man das Haus betritt, als „Eingang“.
 - Die überwachten Sensoren werden beim Scharfschalten festgehalten. Wird während des scharfen
   Zustands ein Label entfernt, bleibt der Sensor bis zum Unscharfschalten überwacht.
 
+## Systemüberwachung
+
+Unter **Konfigurieren → Systemüberwachung** wählst du Binärsensoren, die „an“ melden, solange
+ein System läuft. Für Zigbee2MQTT ist das
+`binary_sensor.zigbee2mqtt_bridge_connection_state`. Fällt MQTT aus, wird dieser Sensor
+ebenfalls „nicht verfügbar“, deckt also beides ab.
+
+- Ist ein Indikator aus oder nicht verfügbar, zeigt der Systemstatus **Störung**.
+- Scharfschalten wird dann wie bei ausgefallenen Sensoren behandelt (je nach Profil
+  verweigert oder nach Bestätigung erlaubt).
+- Fällt ein System im scharfen Zustand aus, erscheint der Hinweis „Hauswacht: Störung“.
+  Die Anlage bleibt scharf.
+- Kommen die Sensoren nach einem Ausfall geschlossen zurück, gibt es keinen Alarm. Kommt ein
+  Sensor offen zurück, löst er aus – ein verpasstes Öffnen wird so nachgeholt.
+
+## Testmodus und Simulation
+
+Im **Testmodus** laufen alle Abläufe wie im Ernstfall, Alarme sind aber als Testalarm
+gekennzeichnet. Sirenen und Benachrichtigungen werden im Testmodus nie ausgelöst.
+
+Mit der Aktion **`hauswacht.simulate_trigger`** kannst du einen Sensor virtuell auslösen, ohne
+eine Tür oder ein Fenster zu öffnen. Das geht nur bei eingeschaltetem Testmodus:
+
+```yaml
+action: hauswacht.simulate_trigger
+target:
+  entity_id: alarm_control_panel.hauswacht
+data:
+  sensor: binary_sensor.turkontakt_vorne_contact
+```
+
+Die Simulation verhält sich genau wie eine echte Auslösung: Eine Tür startet die
+Eingangsverzögerung, ein Fenster löst sofort aus, ein Sensor außerhalb des aktiven Profils wird
+ignoriert. Der echte Sensorzustand bleibt unverändert.
+
 ## Scharfschalten mit Bestätigung
 
 Erlaubt ein Profil offene oder ausgefallene Sensoren nur „nach Bestätigung“, verweigert das
@@ -149,7 +186,8 @@ Hauswacht startet **immer unscharf**. War die Anlage vorher scharf, erscheint ei
 
 Jede Aktion wird als Ereignis `hauswacht_event` gemeldet. Das Feld `type` nennt die Art:
 `StateChanged`, `ActivateReaction` (Alarm), `StopReaction`, `TamperDetected`,
-`SensorUnavailable`, `SensorsBypassed`, `ArmingAborted`, `RestartedDisarmed` und weitere.
+`SensorUnavailable`, `SensorsBypassed`, `ArmingAborted`, `RestartedDisarmed`,
+`InfrastructureFault`, `InfrastructureRecovered`, `SensorSimulated` und weitere.
 
 ## Upgrade von 0.2.0
 
