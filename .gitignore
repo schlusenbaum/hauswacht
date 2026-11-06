@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Werkzeuge
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor / System
+.idea/
+.vscode/
+.DS_Store
+
+# Lokale Home-Assistant-Daten und Geheimnisse – niemals einchecken
+secrets.yaml
+*.secret
+.env
+.env.*
+local/
+config/
+.storage/
+*.db
+*.log
