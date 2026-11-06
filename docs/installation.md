@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.5.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.6.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -27,6 +27,9 @@ Hauswacht kann nur einmal eingerichtet werden.
 | `alarm_control_panel.hauswacht` | Bedienfeld: Zuhause, Nacht, Abwesend, Urlaub, Unscharf |
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
 | `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
+| `binary_sensor.hauswacht_offene_sensoren` | An, sobald ein Sensor einer Zone offen ist |
+
+Eine fertige Bedienkarte steht in [docs/dashboard.md](dashboard.md).
 
 ## Einrichtung in drei Schritten
 

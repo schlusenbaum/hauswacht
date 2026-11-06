@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-06
+
+### Hinzugefügt
+- **Beispielkarte** `examples/dashboard/hauswacht-karte.yaml` nur mit Standardkarten:
+  Bedienkachel, „Trotzdem scharf schalten“-Knöpfe mit Rückfrage (nur sichtbar, wenn
+  unscharf und Sensoren offen sind) und Systemstatus bei Problemen.
+- Binärsensor **„Offene Sensoren“** (`binary_sensor.hauswacht_offene_sensoren`) mit den
+  Attributen `sensors` und `names`.
+- Anleitung `docs/dashboard.md`.
+
 ## [0.5.1] - 2026-11-06
 
 ### Behoben
