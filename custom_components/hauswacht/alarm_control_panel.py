@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature,
@@ -12,10 +13,14 @@ from homeassistant.components.alarm_control_panel import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    async_get_current_platform,
+)
 
 from .const import DOMAIN
-from .core.profiles import PANEL_STATE_BY_PROFILE
+from .core.profiles import PANEL_STATE_BY_PROFILE, PROFILE_IDS
 from .core.state_machine import AlarmState
 from .entity import HauswachtEntity
 from .runtime import HauswachtConfigEntry
@@ -35,6 +40,15 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     async_add_entities([HauswachtAlarmPanel(entry)])
+    async_get_current_platform().async_register_entity_service(
+        "arm",
+        {
+            vol.Required("profile"): vol.In(PROFILE_IDS),
+            vol.Optional("confirm", default=False): cv.boolean,
+            vol.Optional("code"): cv.string,
+        },
+        "async_arm_profile",
+    )
 
 
 class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
@@ -69,6 +83,7 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         ctx = self.runtime.ctx
         ends_at = self.runtime.delay_ends_at
+        readiness = self.runtime.readiness_for(self.runtime.candidates)
         return {
             "profile": ctx.profile.profile_id if ctx.profile else None,
             "phase": ctx.state.value,
@@ -78,12 +93,22 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
             "trigger_sensor": ctx.trigger_sensor,
             "alarm_cycles": ctx.alarm_cycles,
             "bypassed_sensors": sorted(ctx.bypassed),
+            "monitored_sensors": sorted(self.runtime.armed_sensors),
+            "open_sensors": sorted(readiness.open_sensors),
+            "unavailable_sensors": sorted(readiness.unavailable_sensors),
+            "zones": self.runtime.zone_members(),
         }
 
-    def _arm(self, profile_id: str, code: str | None) -> None:
+    def _arm(self, profile_id: str, code: str | None, *, confirm: bool = False) -> None:
         if self.runtime.code_arm_required and not self.runtime.check_code(code):
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
-        self.runtime.arm(profile_id)
+        self.runtime.arm(profile_id, confirmed=confirm)
+
+    async def async_arm_profile(
+        self, profile: str, confirm: bool = False, code: str | None = None
+    ) -> None:
+        """Dienst hauswacht.arm: Profil scharf schalten, optional mit Bestätigung."""
+        self._arm(profile, code, confirm=confirm)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         self.runtime.disarm(code)

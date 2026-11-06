@@ -15,8 +15,11 @@
       "init": {
         "title": "Hauswacht options",
         "menu_options": {
-          "code": "PIN code",
-          "profile": "Profile timings"
+          "zones": "Zones and sensors",
+          "profile": "Profiles",
+          "roles": "Sensor roles (exceptions)",
+          "monitoring": "Sensor monitoring",
+          "code": "PIN code"
         }
       },
       "code": {
@@ -35,19 +38,82 @@
         }
       },
       "profile_settings": {
-        "title": "Timings for profile {profile}",
+        "title": "Profile {profile}",
+        "description": "Choose which zones this profile monitors and how it behaves.",
         "data": {
+          "zones": "Monitored zones",
           "exit_delay": "Exit delay",
           "entry_delay": "Entry delay",
-          "reaction_time": "Alarm reaction time"
+          "reaction_time": "Alarm reaction time",
+          "open_policy": "Open sensors when arming",
+          "unavailable_policy": "Unavailable sensors when arming",
+          "max_alarm_cycles": "Maximum alarm cycles",
+          "tamper_triggers_alarm": "Tampering triggers alarm"
+        }
+      },
+      "zones": {
+        "title": "Zones",
+        "menu_options": {
+          "zone_add": "Add zone",
+          "zone_edit": "Edit zone",
+          "zone_delete": "Delete zone"
+        }
+      },
+      "zone_add": {
+        "title": "Add zone",
+        "description": "A zone contains the selected sensors plus all binary sensors carrying the chosen label (label set directly on the entity).",
+        "data": {
+          "name": "Name",
+          "entities": "Sensors",
+          "label": "Label (optional)"
+        }
+      },
+      "zone_edit": {
+        "title": "Edit zone",
+        "data": {
+          "zone": "Zone"
+        }
+      },
+      "zone_edit_settings": {
+        "title": "Zone {zone}",
+        "description": "A zone contains the selected sensors plus all binary sensors carrying the chosen label (label set directly on the entity).",
+        "data": {
+          "name": "Name",
+          "entities": "Sensors",
+          "label": "Label (optional)"
+        }
+      },
+      "zone_delete": {
+        "title": "Delete zone",
+        "description": "The zone is also removed from all profiles.",
+        "data": {
+          "zone": "Zone"
+        }
+      },
+      "roles": {
+        "title": "Sensor roles",
+        "description": "The role is derived from the device class (door: entry delay, window: instant, motion/presence: follower, tamper: 24h). Set exceptions here. Current exceptions: {overrides}",
+        "data": {
+          "entity": "Sensor",
+          "role": "Role"
+        }
+      },
+      "monitoring": {
+        "title": "Sensor monitoring",
+        "description": "A sensor that has not reported for this long counts as unavailable when arming. 0 = off. Battery sensors may report only every few hours, so choose generously.",
+        "data": {
+          "stale_after_hours": "Maximum silence"
         }
       }
     },
     "error": {
-      "invalid_pin": "The PIN must consist of 4 to 8 digits."
+      "invalid_pin": "The PIN must consist of 4 to 8 digits.",
+      "zone_name_required": "Please enter a name.",
+      "zone_empty": "Select at least one sensor or a label."
     },
     "abort": {
-      "disarm_first": "Please disarm Hauswacht before changing options."
+      "disarm_first": "Please disarm Hauswacht before changing options.",
+      "no_zones": "No zones have been created yet."
     }
   },
   "selector": {
@@ -57,6 +123,28 @@
         "night": "Night",
         "away": "Away",
         "vacation": "Vacation"
+      }
+    },
+    "open_policy": {
+      "options": {
+        "refuse": "Refuse arming",
+        "confirm": "Allow after confirmation (sensor is bypassed)",
+        "bypass_auto": "Bypass automatically"
+      }
+    },
+    "unavailable_policy": {
+      "options": {
+        "refuse": "Refuse arming",
+        "confirm": "Allow after confirmation"
+      }
+    },
+    "role": {
+      "options": {
+        "auto": "Automatic (device class)",
+        "entry": "Entry (delayed)",
+        "instant": "Instant",
+        "follower": "Follower",
+        "tamper_24h": "Tamper (24 h)"
       }
     }
   },
@@ -81,10 +169,33 @@
       "message": "Arming refused. Open: {open}. Unavailable: {unavailable}."
     },
     "confirmation_required": {
-      "message": "Arming needs confirmation. Open: {open}. Unavailable: {unavailable}."
+      "message": "Arming needs confirmation. Open: {open}. Unavailable: {unavailable}. Use the action hauswacht.arm with confirm to arm anyway."
     },
     "rejected_test_mode_change_requires_disarmed": {
       "message": "Test mode can only be changed while disarmed."
+    },
+    "profile_has_no_sensors": {
+      "message": "Profile {profile} does not monitor any sensors. Assign zones in the Hauswacht options first."
+    }
+  },
+  "services": {
+    "arm": {
+      "name": "Arm profile",
+      "description": "Arms a Hauswacht profile, optionally confirming open or unavailable sensors.",
+      "fields": {
+        "profile": {
+          "name": "Profile",
+          "description": "Profile to arm."
+        },
+        "confirm": {
+          "name": "Confirm",
+          "description": "Arm even if sensors are open or unavailable (if the profile allows it). Open sensors are bypassed."
+        },
+        "code": {
+          "name": "PIN code",
+          "description": "Required if a PIN is needed for arming."
+        }
+      }
     }
   }
 }

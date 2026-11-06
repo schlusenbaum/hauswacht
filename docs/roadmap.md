@@ -3,8 +3,8 @@
 | Version | Inhalt | Echte Geräte |
 |---|---|---|
 | 0.1.0 ✅ | Repo, CI, Zustandsmaschine und Sirenen-Guard als reine Logik mit Tests | nein |
-| **0.2.0** ✅ | Integrationsgerüst (manifest, Config Flow), `alarm_control_panel`, Scharf/Unscharf, Store, Neustartverhalten | nein |
-| 0.3.0 | Datenmodell: Sensor-Register, Zonen, Profile; Bereitschaftsprüfung; Verfügbarkeit und veraltete Werte | nur lesen |
+| 0.2.0 ✅ | Integrationsgerüst (manifest, Config Flow), `alarm_control_panel`, Scharf/Unscharf, Store, Neustartverhalten | nein |
+| **0.3.0** ✅ | Datenmodell: Sensor-Register, Zonen, Profile; Bereitschaftsprüfung; Verfügbarkeit und veraltete Werte | nur lesen |
 | 0.4.0 | Testmodus komplett, Simulation, Infrastruktur-Überwachung (MQTT, Z2M, BLE) | nur lesen |
 | 0.5.0 | Reaktionen, Benachrichtigungen, Siren Executor (Hardware-Freigabe aus) | Push ja, Sirenen nein |
 | 0.6.0 | Beispiel-Dashboard (Standardkarten, Smartphone) | – |

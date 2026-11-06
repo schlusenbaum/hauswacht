@@ -1,0 +1,24 @@
+arm:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    profile:
+      required: true
+      selector:
+        select:
+          translation_key: profile
+          options:
+            - home
+            - night
+            - away
+            - vacation
+    confirm:
+      default: false
+      selector:
+        boolean:
+    code:
+      selector:
+        text:
+          type: password

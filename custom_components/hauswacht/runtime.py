@@ -22,8 +22,14 @@ from typing import Any
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import Event as HaEvent
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.event import (
+    EventStateChangedData,
+    async_call_later,
+    async_track_state_change_event,
+)
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -38,7 +44,19 @@ from .const import (
     STORAGE_VERSION,
 )
 from .core.pin import PinHash, verify_pin
-from .core.profiles import build_profiles
+from .core.profiles import build_profiles, profile_behaviour, stale_after_seconds
+from .core.sensors import (
+    SensorSnapshot,
+    all_configured_sensors,
+    became_unavailable,
+    evaluate_readiness,
+    is_trigger,
+    parse_role_overrides,
+    parse_zones,
+    resolve_zone,
+    resolve_zones,
+    sensor_role,
+)
 from .core.state_machine import (
     ActivateReaction,
     AlarmContext,
@@ -56,6 +74,8 @@ from .core.state_machine import (
     Readiness,
     Rejected,
     RestartedDisarmed,
+    SensorRole,
+    SensorTriggered,
     SetTestMode,
     StartTimer,
     Startup,
@@ -68,6 +88,23 @@ from .core.state_machine import (
 _LOGGER = logging.getLogger(__name__)
 
 type HauswachtConfigEntry = ConfigEntry[HauswachtRuntime]
+
+SENSOR_DOMAIN = "binary_sensor"
+
+
+def entities_by_label(hass: HomeAssistant) -> dict[str, frozenset[str]]:
+    """Label-ID -> binary_sensor-Entitäten mit diesem Label.
+
+    Bewusst nur Labels direkt an der Entität (nicht am Gerät): Ein Geräte-Label würde sonst
+    auch Batterie- oder Verbindungs-Sensoren desselben Geräts in die Zone ziehen.
+    """
+    index: dict[str, set[str]] = {}
+    for entry in er.async_get(hass).entities.values():
+        if entry.domain != SENSOR_DOMAIN or entry.disabled_by is not None:
+            continue
+        for label in entry.labels:
+            index.setdefault(label, set()).add(entry.entity_id)
+    return {label: frozenset(ids) for label, ids in index.items()}
 
 
 def _jsonable(value: Any) -> Any:
@@ -94,8 +131,17 @@ class HauswachtRuntime:
         self.entry = entry
         self.ctx = AlarmContext()
         self.profiles = build_profiles(entry.options)
+        self.zones = parse_zones(entry.options)
+        self.role_overrides = parse_role_overrides(entry.options)
+        self.stale_after = stale_after_seconds(entry.options)
         self.delay_ends_at: datetime | None = None
+        self.armed_sensors: frozenset[str] = frozenset()
+        self.candidates: frozenset[str] = frozenset()
+        self._labels: dict[str, frozenset[str]] = {}
         self._timer_cancel: CALLBACK_TYPE | None = None
+        self._unsub_states: CALLBACK_TYPE | None = None
+        self._unsub_registry: CALLBACK_TYPE | None = None
+        self._subscribed: frozenset[str] = frozenset()
         self._listeners: list[Callable[[], None]] = []
         self._store: Store[dict[str, Any]] = Store(
             hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}"
@@ -131,11 +177,19 @@ class HauswachtRuntime:
         )
         # Sofort speichern, damit ein erneuter Absturz nicht doppelt meldet.
         await self._store.async_save(self._storage_data())
+        self._refresh_sensors()
+        self._unsub_registry = self.hass.bus.async_listen(
+            er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
+        )
 
     @callback
     def async_stop(self) -> None:
-        """Beim Entladen: Timer stoppen. Der gespeicherte Zustand bleibt erhalten."""
+        """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
+        for unsub in (self._unsub_states, self._unsub_registry):
+            if unsub is not None:
+                unsub()
+        self._unsub_states = self._unsub_registry = None
         self._listeners.clear()
 
     @callback
@@ -160,6 +214,15 @@ class HauswachtRuntime:
                 translation_key="unknown_profile",
                 translation_placeholders={"profile": profile_id},
             )
+        sensors = self.profile_sensors(profile_id)
+        if not sensors:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="profile_has_no_sensors",
+                translation_placeholders={"profile": profile_id},
+            )
+        if self.ctx.state is AlarmState.DISARMED:
+            self.armed_sensors = sensors
         effects = self._dispatch(
             ArmRequested(profile=profile, readiness=self._readiness(), confirmed=confirmed)
         )
@@ -178,9 +241,96 @@ class HauswachtRuntime:
 
     # --- Interna -----------------------------------------------------------
 
+    # --- Sensoren ----------------------------------------------------------
+
+    def profile_sensors(self, profile_id: str) -> frozenset[str]:
+        zone_ids = profile_behaviour(self.entry.options, profile_id).zones
+        return resolve_zones(zone_ids, self.zones, self._labels)
+
+    def zone_members(self) -> dict[str, list[str]]:
+        return {zone.name: sorted(resolve_zone(zone, self._labels)) for zone in self.zones.values()}
+
+    def snapshots(self, entity_ids: frozenset[str]) -> dict[str, SensorSnapshot]:
+        result: dict[str, SensorSnapshot] = {}
+        for entity_id in entity_ids:
+            state = self.hass.states.get(entity_id)
+            result[entity_id] = SensorSnapshot(
+                entity_id=entity_id,
+                state=state.state if state else None,
+                device_class=state.attributes.get("device_class") if state else None,
+                last_reported=state.last_reported.timestamp() if state else None,
+            )
+        return result
+
+    def readiness_for(self, entity_ids: frozenset[str]) -> Readiness:
+        return evaluate_readiness(
+            entity_ids,
+            self.snapshots(entity_ids),
+            now=dt_util.utcnow().timestamp(),
+            stale_after=self.stale_after,
+        )
+
     def _readiness(self) -> Readiness:
-        # Sensorbewertung folgt mit 0.3.0.
-        return Readiness()
+        return self.readiness_for(self.armed_sensors)
+
+    @callback
+    def _refresh_sensors(self) -> None:
+        """Labels neu einlesen und Zustandsabos auf alle konfigurierten Sensoren setzen."""
+        self._labels = entities_by_label(self.hass)
+        self.candidates = all_configured_sensors(self.zones, self._labels)
+        # Gerade scharf überwachte Sensoren bleiben abonniert, auch wenn ihr Label
+        # inzwischen entfernt wurde – sonst würden sie unbemerkt nicht mehr überwacht.
+        wanted = self.candidates | self.armed_sensors
+        if wanted == self._subscribed and self._unsub_states is not None:
+            return
+        if self._unsub_states is not None:
+            self._unsub_states()
+            self._unsub_states = None
+        self._subscribed = wanted
+        if wanted:
+            self._unsub_states = async_track_state_change_event(
+                self.hass, sorted(wanted), self._on_sensor_state
+            )
+        self._notify()
+
+    @callback
+    def _on_registry_updated(self, _event: HaEvent[Any]) -> None:
+        # Die Menge der GERADE überwachten Sensoren bleibt bis zum Unscharfschalten fest
+        # (armed_sensors). Neu gelabelte Sensoren zählen ab der nächsten Scharfschaltung.
+        self._refresh_sensors()
+
+    @callback
+    def _on_sensor_state(self, event: HaEvent[EventStateChangedData]) -> None:
+        entity_id = event.data["entity_id"]
+        old = event.data["old_state"]
+        new = event.data["new_state"]
+        old_state = old.state if old else None
+        new_state = new.state if new else None
+        device_class = new.attributes.get("device_class") if new else None
+        role = sensor_role(entity_id, device_class, self.role_overrides)
+        armed = self.ctx.state is not AlarmState.DISARMED
+
+        relevant = role is SensorRole.TAMPER_24H or (armed and entity_id in self.armed_sensors)
+        if relevant and is_trigger(old_state, new_state):
+            self._dispatch(SensorTriggered(sensor_key=entity_id, role=role))
+            return
+        if armed and entity_id in self.armed_sensors and became_unavailable(old_state, new_state):
+            self._on_sensor_lost(entity_id)
+        self._notify()
+
+    @callback
+    def _on_sensor_lost(self, entity_id: str) -> None:
+        _LOGGER.warning("Überwachter Sensor nicht mehr verfügbar: %s", entity_id)
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT, {"type": "SensorUnavailable", "sensor_key": entity_id}
+        )
+        persistent_notification.async_create(
+            self.hass,
+            f"Der überwachte Sensor {entity_id} ist nicht mehr verfügbar. "
+            "Hauswacht ist scharf, kann diesen Bereich aber nicht mehr überwachen.",
+            title="Hauswacht: Sensor ausgefallen",
+            notification_id=f"{NOTIFICATION_ALARM}_{entity_id}",
+        )
 
     @staticmethod
     def _raise_for_rejection(effects: tuple[Effect, ...]) -> None:
@@ -210,15 +360,22 @@ class HauswachtRuntime:
         self.ctx, effects = step(self.ctx, event, time.monotonic())
         for effect in effects:
             self._apply(effect)
+        if self.ctx.state is AlarmState.DISARMED and self.armed_sensors:
+            self.armed_sensors = frozenset()
+            self._refresh_sensors()
         if (old_ctx.state, old_ctx.profile, old_ctx.test_mode) != (
             self.ctx.state,
             self.ctx.profile,
             self.ctx.test_mode,
         ):
             self._store.async_delay_save(self._storage_data, 0)
+        self._notify()
+        return effects
+
+    @callback
+    def _notify(self) -> None:
         for listener in list(self._listeners):
             listener()
-        return effects
 
     def _storage_data(self) -> dict[str, Any]:
         armed = self.ctx.state is not AlarmState.DISARMED and self.ctx.profile is not None
