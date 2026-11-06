@@ -44,3 +44,28 @@ def test_fault_beats_degraded() -> None:
     report = system_report({"binary_sensor.z2m": "off"}, ["binary_sensor.fenster"])
     assert report.status is SystemStatus.FAULT
     assert report.faulty_infrastructure == {"binary_sensor.z2m"}
+
+
+@pytest.mark.parametrize(
+    ("state", "device_class", "healthy"),
+    [
+        ("on", "connectivity", True),
+        ("off", "connectivity", False),
+        ("off", "problem", True),  # Problem-Sensor: aus = alles in Ordnung
+        ("on", "problem", False),
+        ("unavailable", "problem", False),
+        ("off", "safety", True),
+        ("on", None, True),
+    ],
+)
+def test_polarity_depends_on_device_class(
+    state: str, device_class: str | None, healthy: bool
+) -> None:
+    assert is_healthy(state, device_class) is healthy
+
+
+def test_problem_sensor_off_is_ok_in_report() -> None:
+    report = system_report(
+        {"binary_sensor.z2m_stoerung": "off"}, [], {"binary_sensor.z2m_stoerung": "problem"}
+    )
+    assert report.status is SystemStatus.OK

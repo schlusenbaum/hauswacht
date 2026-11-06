@@ -105,8 +105,9 @@ man das Haus betritt, als „Eingang“.
 
 ## Systemüberwachung
 
-Unter **Konfigurieren → Systemüberwachung** wählst du Binärsensoren, die „an“ melden, solange
-ein System läuft. Für Zigbee2MQTT ist das
+Unter **Konfigurieren → Systemüberwachung** wählst du Binärsensoren, die den Zustand eines
+Systems melden. Bei Sensoren der Geräteklasse „Problem“ bedeutet „an“ Störung, bei allen
+anderen (z. B. „Verbindung“) bedeutet „an“ in Ordnung. Für Zigbee2MQTT ist das
 `binary_sensor.zigbee2mqtt_bridge_connection_state`. Fällt MQTT aus, wird dieser Sensor
 ebenfalls „nicht verfügbar“, deckt also beides ab.
 

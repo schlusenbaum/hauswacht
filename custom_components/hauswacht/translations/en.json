@@ -115,7 +115,7 @@
       },
       "infrastructure": {
         "title": "System monitoring",
-        "description": "Binary sensors that report \"on\" while a system is running, e.g. the Zigbee2MQTT bridge connection state. If one of them is off or unavailable, Hauswacht reports a fault and treats arming as with unavailable sensors.",
+        "description": "Binary sensors reporting the state of a system, e.g. the Zigbee2MQTT bridge connection state. For \"problem\" sensors \"on\" means fault; for all others \"on\" means OK. On a fault, Hauswacht reports it and treats arming as with unavailable sensors.",
         "data": {
           "infrastructure": "Indicators"
         }
