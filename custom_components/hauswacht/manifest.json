@@ -1,0 +1,14 @@
+{
+  "domain": "hauswacht",
+  "name": "Hauswacht",
+  "codeowners": ["@schlusenbaum"],
+  "config_flow": true,
+  "dependencies": ["persistent_notification"],
+  "documentation": "https://github.com/schlusenbaum/hauswacht",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/schlusenbaum/hauswacht/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.2.0"
+}

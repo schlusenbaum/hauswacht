@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-SOURCE_ROOT = Path(__file__).resolve().parent.parent / "custom_components" / "hauswacht"
+SOURCE_ROOT = Path(__file__).resolve().parents[2] / "custom_components" / "hauswacht"
 SOURCES = sorted(SOURCE_ROOT.rglob("*.py"))
 CORE_SOURCES = sorted((SOURCE_ROOT / "core").rglob("*.py"))
 

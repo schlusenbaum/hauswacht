@@ -9,11 +9,12 @@ permissions:
   contents: read
 
 jobs:
-  checks:
+  core:
+    name: Kernlogik (Lint, Typen, Tests)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Werkzeuge installieren
@@ -24,5 +25,30 @@ jobs:
         run: ruff format --check .
       - name: Mypy
         run: mypy
-      - name: Pytest
-        run: pytest
+      - name: Pytest (Kern)
+        run: pytest tests/core
+
+  integration:
+    name: Integrationstests mit Home Assistant
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Home-Assistant-Testumgebung installieren
+        run: pip install pytest-homeassistant-custom-component
+      - name: Installierte Home-Assistant-Version
+        run: pip show homeassistant | head -2
+      - name: Pytest (Integration)
+        run: >-
+          pytest tests/integration
+          -o asyncio_mode=auto
+          -o asyncio_default_fixture_loop_scope=function
+
+  hassfest:
+    name: Hassfest (Manifest-Prüfung)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: home-assistant/actions/hassfest@master
