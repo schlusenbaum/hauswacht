@@ -63,6 +63,12 @@ pytest tests/integration -o asyncio_mode=auto
 
 Kein Test braucht echte Geräte. Die Kerntests laufen sogar ohne Home Assistant.
 
+## Unterstützen
+
+Wenn dir Hauswacht gefällt, freue ich mich über einen Kaffee:
+
+[![Buy me a coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=schlusenbaum&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/schlusenbaum)
+
 ## Lizenz
 
 [MIT](LICENSE)
