@@ -6,6 +6,38 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-06
+
+### Hinzugefügt
+- **Sensoren und Zonen:** Zonen bestehen aus direkt gewählten Binärsensoren und optional allen
+  Binärsensoren mit einem bestimmten Label (Label direkt an der Entität).
+- **Rollen automatisch aus der Geräteklasse:** Tür → Eingang (verzögert), Fenster → sofort,
+  Bewegung/Präsenz → Mitläufer, Manipulation → 24 h. Ausnahmen pro Sensor einstellbar.
+- **Profile wählen Zonen** und legen fest, wie mit offenen und ausgefallenen Sensoren
+  umgegangen wird (verweigern / nach Bestätigung / automatisch überbrücken), wie viele
+  Alarmzyklen erlaubt sind und ob Manipulation Alarm auslöst.
+- **Bereitschaftsprüfung** beim Scharfschalten und am Ende der Ausgangsverzögerung.
+- Optionale **Funkstille-Prüfung:** Ein Sensor, der sich zu lange nicht meldet, gilt als
+  ausgefallen (Standard: aus).
+- **Ausfallmeldung**, wenn ein überwachter Sensor im scharfen Zustand nicht mehr verfügbar ist.
+- Aktion **`hauswacht.arm`** mit `confirm`, um offene oder ausgefallene Sensoren bewusst zu
+  bestätigen.
+- Neue Attribute am Bedienfeld: `zones`, `monitored_sensors`, `open_sensors`,
+  `unavailable_sensors`.
+
+### Geändert
+- Ein Profil ohne zugeordnete Sensoren lässt sich nicht mehr scharf schalten.
+- Standard für Alarmzyklen: 3.
+
+### Upgrade-Hinweis
+- Nach dem Update haben die Profile noch keine Zonen und lassen sich deshalb erst scharf
+  schalten, wenn unter **Konfigurieren → Zonen und Sensoren** Zonen angelegt und unter
+  **Profile** zugeordnet wurden.
+
+### Hinweis
+- Weiterhin keine Sirenen und keine Push-Benachrichtigungen. Ein Alarm erscheint als Hinweis
+  in Home Assistant und als Ereignis `hauswacht_event`.
+
 ## [0.2.0] - 2026-11-06
 
 ### Hinzugefügt

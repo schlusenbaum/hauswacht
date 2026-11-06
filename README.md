@@ -4,9 +4,9 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus. Ohne Alarmo.
 
-> **Status: 0.2.0 – frühe Entwicklungsversion.**
-> Installierbar mit Bedienfeld, Testmodus, PIN und Profilzeiten. Noch **keine Sensoren,
-> Sirenen oder Push-Nachrichten**. Siehe [Installation](docs/installation.md) und
+> **Status: 0.3.0 – frühe Entwicklungsversion.**
+> Bedienfeld, Profile, Zonen und Sensoren funktionieren; ein Alarm wird als Hinweis und
+> Ereignis gemeldet. Noch **keine Sirenen und keine Push-Nachrichten**. Siehe [Installation](docs/installation.md) und
 > [Roadmap](docs/roadmap.md).
 
 ## Ziele

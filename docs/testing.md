@@ -16,6 +16,8 @@ ruff check .    # Lint
 | `tests/core/test_siren_guard.py` | Alle Sperren einzeln und als vollständige Kombinationsmatrix (Hardware × Testmodus × Brandzustand) |
 | `tests/core/test_static_safety.py` | Keine verbotenen Aufrufe im Code, keine HA-Importe im Kern, Sirenen-Services nur im Executor |
 | `tests/core/test_profiles_and_pin.py` | Profile aus Optionen (inkl. ungültiger Werte), PIN-Format, Hash und Prüfung |
+| `tests/core/test_sensors.py` | Zonen, Labels, Rollen aus Geräteklasse, Bereitschaft (offen, ausgefallen, Funkstille), Auslöseerkennung, Profilverhalten |
+| `tests/integration/test_sensors.py` | Mit Home Assistant: Auslösung je Rolle, Eingangsverzögerung, Profil-Zonen, Bereitschaft, Bestätigung, Labels (auch Label-Entfernung im scharfen Zustand), Rollen-Ausnahmen, Zonen-Optionen |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
 
 ## Geplant
@@ -23,6 +25,5 @@ ruff check .    # Lint
 | Version | Tests |
 |---|---|
 | 0.2.x | Store-Migration, sobald sich das Speicherformat ändert |
-| 0.3.0 | Profile und Zonen, offene/nicht verfügbare Sensoren, veraltete Werte (`last_seen`), Profilwechsel |
 | 0.4.0 | Ausfall und Wiederkehr von MQTT, Zigbee2MQTT und Bluetooth ohne Fehlalarm; Simulation kompletter Abläufe im Testmodus |
 | 0.5.0 | Executor mit gemockten Services: im Testmodus und ohne Hardware-Freigabe **kein** Aufruf; Brand während Einbruchalarm; gleichzeitige Alarme; Benachrichtigungen |
