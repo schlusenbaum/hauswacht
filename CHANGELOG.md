@@ -6,6 +6,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-07
+
+### Geändert
+- Meldung „Scharfschaltung verweigert“ nennt gestörte Infrastruktur jetzt getrennt
+  („Gestört: …“) statt unter „Nicht verfügbar“, und alle Sensoren mit Namen und Raum.
+
 ## [0.13.0] - 2026-11-06
 
 ### Hinzugefügt

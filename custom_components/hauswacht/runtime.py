@@ -752,26 +752,38 @@ class HauswachtRuntime:
             notification_id=f"{NOTIFICATION_ALARM}_{entity_id}",
         )
 
-    @staticmethod
-    def _raise_for_rejection(effects: tuple[Effect, ...]) -> None:
+    def _rejection_placeholders(
+        self, open_sensors: frozenset[str], unavailable: frozenset[str]
+    ) -> dict[str, str]:
+        """Klartext für Meldungen: Namen mit Raum, gestörte Infrastruktur getrennt."""
+        faulty = unavailable & self.infrastructure
+
+        def names(ids: frozenset[str]) -> str:
+            return ", ".join(sorted(display_name(self.hass, e) for e in ids)) or "-"
+
+        return {
+            "open": names(open_sensors),
+            "unavailable": names(unavailable - faulty),
+            "faulty": names(faulty),
+        }
+
+    def _raise_for_rejection(self, effects: tuple[Effect, ...]) -> None:
         for effect in effects:
             if isinstance(effect, Rejected):
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,
                     translation_key=f"rejected_{effect.reason}",
-                    translation_placeholders={
-                        "open": ", ".join(sorted(effect.open_sensors)) or "-",
-                        "unavailable": ", ".join(sorted(effect.unavailable_sensors)) or "-",
-                    },
+                    translation_placeholders=self._rejection_placeholders(
+                        effect.open_sensors, effect.unavailable_sensors
+                    ),
                 )
             if isinstance(effect, ConfirmationRequired):
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,
                     translation_key="confirmation_required",
-                    translation_placeholders={
-                        "open": ", ".join(sorted(effect.open_sensors)) or "-",
-                        "unavailable": ", ".join(sorted(effect.unavailable_sensors)) or "-",
-                    },
+                    translation_placeholders=self._rejection_placeholders(
+                        effect.open_sensors, effect.unavailable_sensors
+                    ),
                 )
 
     @callback
