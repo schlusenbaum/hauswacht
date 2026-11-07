@@ -73,8 +73,12 @@ async def test_status_fault_on_infrastructure_failure(hass: HomeAssistant) -> No
 async def test_infrastructure_fault_refuses_arming(hass: HomeAssistant) -> None:
     await _setup_with_infra(hass)
     await _set(hass, Z2M, "unavailable")
-    with pytest.raises(ServiceValidationError):
+    with pytest.raises(ServiceValidationError) as err:
         await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    # gestörte Infrastruktur wird getrennt von nicht verfügbaren Sensoren genannt
+    placeholders = err.value.translation_placeholders or {}
+    assert placeholders["unavailable"] == "-"
+    assert placeholders["faulty"] != "-"
 
 
 # --- Ausfall und Wiederkehr im scharfen Zustand -----------------------------

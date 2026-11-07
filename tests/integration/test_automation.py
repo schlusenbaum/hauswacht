@@ -74,8 +74,12 @@ async def _setup(hass: HomeAssistant, **auto: Any) -> None:
 
 async def test_arm_and_disarm_by_time(hass: HomeAssistant) -> None:
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
-    # Nur bis zum nächsten 23:00 vorspulen – sonst fiele auch 06:30 in den Sprung
-    arm_at = _next(dt_util.now(), 23, 0)
+    # Schrittweise vorspulen: Ein Sprung über beide Uhrzeiten löst beide Timer in beliebiger
+    # Reihenfolge aus. Erst bis 06:30 (unscharf ist dann ohne Wirkung), dann bis 23:00.
+    first_disarm = _next(dt_util.now(), 6, 30)
+    await _fire(hass, first_disarm)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    arm_at = _next(first_disarm, 23, 0)
     await _fire(hass, arm_at)
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
     await _fire(hass, _next(arm_at, 6, 30))

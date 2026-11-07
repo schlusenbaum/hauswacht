@@ -319,10 +319,10 @@
       "message": "Hauswacht muss erst unscharf geschaltet werden, bevor ein anderes Profil scharf geschaltet wird."
     },
     "rejected_not_ready": {
-      "message": "Scharfschaltung verweigert. Offen: {open}. Nicht verfügbar: {unavailable}."
+      "message": "Scharfschaltung verweigert. Offen: {open}. Nicht verfügbar: {unavailable}. Gestört: {faulty}."
     },
     "confirmation_required": {
-      "message": "Scharfschaltung muss bestätigt werden. Offen: {open}. Nicht verfügbar: {unavailable}. Zum Bestätigen die Aktion hauswacht.arm mit confirm verwenden."
+      "message": "Scharfschaltung muss bestätigt werden. Offen: {open}. Nicht verfügbar: {unavailable}. Gestört: {faulty}. Zum Bestätigen die Aktion hauswacht.arm mit confirm verwenden."
     },
     "rejected_test_mode_change_requires_disarmed": {
       "message": "Der Testmodus kann nur im unscharfen Zustand umgeschaltet werden."

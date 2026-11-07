@@ -319,10 +319,10 @@
       "message": "Hauswacht must be disarmed before arming another profile."
     },
     "rejected_not_ready": {
-      "message": "Arming refused. Open: {open}. Unavailable: {unavailable}."
+      "message": "Arming refused. Open: {open}. Unavailable: {unavailable}. Faulty: {faulty}."
     },
     "confirmation_required": {
-      "message": "Arming needs confirmation. Open: {open}. Unavailable: {unavailable}. Use the action hauswacht.arm with confirm to arm anyway."
+      "message": "Arming needs confirmation. Open: {open}. Unavailable: {unavailable}. Faulty: {faulty}. Use the action hauswacht.arm with confirm to arm anyway."
     },
     "rejected_test_mode_change_requires_disarmed": {
       "message": "Test mode can only be changed while disarmed."
