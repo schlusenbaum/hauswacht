@@ -127,17 +127,15 @@ class HauswachtEinstellungenCard extends HTMLElement {
   }
 
   _name(entityId) {
+    // Anzeigename ohne Gerätenamen ("Hauswacht Eingangsverzögerung" -> "Eingangsverzögerung").
+    // Bewusst ohne hass.formatEntityName: dessen Aufruf hat sich zwischen Versionen geändert.
     const state = this._hass.states[entityId];
-    if (!state) return entityId;
-    if (typeof this._hass.formatEntityName === "function") {
-      try {
-        const name = this._hass.formatEntityName(state, "entity");
-        if (name) return name;
-      } catch (e) {
-        /* ältere Home-Assistant-Versionen */
-      }
-    }
-    return (state.attributes.friendly_name || entityId).replace(/^Hauswacht\s+/, "");
+    const name = (state && state.attributes.friendly_name) || entityId;
+    const entry = (this._hass.entities || {})[entityId];
+    const device = entry && entry.device_id && (this._hass.devices || {})[entry.device_id];
+    const prefix = device && (device.name_by_user || device.name);
+    if (prefix && name.startsWith(prefix + " ")) return name.slice(prefix.length + 1);
+    return name.replace(/^Hauswacht\s+/, "");
   }
 
   _optionLabel(state, option) {
