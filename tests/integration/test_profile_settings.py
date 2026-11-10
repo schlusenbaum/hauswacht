@@ -63,8 +63,16 @@ async def test_settings_locked_while_armed(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     assert _state(hass, EXIT_DELAY) == "unavailable"
+    # Home Assistant leitet Änderungen an nicht verfügbare Entitäten gar nicht weiter
+    await _service(hass, "number", "set_value", entity_id=EXIT_DELAY, value=300)
+    assert entry.options["profiles"]["night"]["exit_delay"] == 0
+
+
+async def test_runtime_refuses_change_while_armed(hass: HomeAssistant) -> None:
+    """Zweite Sperre direkt in Hauswacht, falls die Entität doch aufgerufen wird."""
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     with pytest.raises(ServiceValidationError):
-        await hass.services.async_call(
-            "number", "set_value", {"entity_id": EXIT_DELAY, "value": 300}, blocking=True
-        )
+        await entry.runtime_data.async_set_profile_setting("exit_delay", 300)
     assert entry.options["profiles"]["night"]["exit_delay"] == 0
