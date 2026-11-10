@@ -15,8 +15,9 @@
 | 0.10.0 ✅ | Heimkehr-Beobachtung (schaltet nichts), Push-Knopf „Unscharf schalten“ | Push ja |
 | 0.11.0 ✅ | Alarm beenden, Profil bleibt scharf | nein |
 | 0.12.0 ✅ | Knöpfe „Unscharf schalten“ und „Alarm beenden“ | nein |
-| **0.13.0** ✅ | Option „Alarm ohne PIN beenden“ | nein |
-| 0.14.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
+| 0.13.0 ✅ | Option „Alarm ohne PIN beenden“ | nein |
+| **0.14.0** ✅ | Profil-Einstellungen als Entitäten (Dashboard) | nein |
+| 0.15.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Keypad, RFID/NFC, weitere Automatik-Bedingungen | – |
 

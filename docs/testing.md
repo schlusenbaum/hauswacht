@@ -28,6 +28,8 @@ ruff check .    # Lint
 | `tests/core/test_homecoming.py` | Heimkehr-Auswertung: Anwesenheit, Verzögerung zur Tür, Fehlalarme je Eingangsverzögerung, Bericht |
 | `tests/integration/test_homecoming.py` | Mit Home Assistant: Push-Knopf (gültig, veraltet, ohne Benutzer, standardmäßig aus), Beobachtung schaltet nichts, Bericht |
 | `tests/integration/test_acknowledge.py` | Mit Home Assistant: Unscharf während des Alarms beendet nur den Alarm, Überbrückung bis zum Schließen, Push-Knopf „Alarm beenden“ |
+| `tests/core/test_profile_settings.py` | Profil-Einstellungen lesen/schreiben, Grenzen, keine Brandtöne, keine Listen |
+| `tests/integration/test_profile_settings.py` | Mit Home Assistant: Profil bearbeiten, Werte ändern, Sperre im scharfen Zustand |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
 
 ## Geplant

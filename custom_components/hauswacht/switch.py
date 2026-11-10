@@ -1,4 +1,4 @@
-"""Testmodus-Schalter.
+"""Testmodus-Schalter und Schalter-Einstellungen des bearbeiteten Profils.
 
 Der Testmodus lässt sich nur im unscharfen Zustand umschalten (Regel Z3).
 Er bleibt über Neustarts erhalten.
@@ -13,7 +13,9 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .core.profile_settings import SWITCHES, read_switch
 from .entity import HauswachtEntity
+from .profile_setting_entities import ProfileSettingEntity
 from .runtime import HauswachtConfigEntry
 
 
@@ -22,7 +24,9 @@ async def async_setup_entry(
     entry: HauswachtConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([HauswachtTestModeSwitch(entry)])
+    async_add_entities(
+        [HauswachtTestModeSwitch(entry), *(ProfileSwitch(entry, key) for key in SWITCHES)]
+    )
 
 
 class HauswachtTestModeSwitch(HauswachtEntity, SwitchEntity):
@@ -41,3 +45,28 @@ class HauswachtTestModeSwitch(HauswachtEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         self.runtime.set_test_mode(False)
+
+
+SWITCH_ICONS = {
+    "silent": "mdi:volume-off",
+    "tamper_triggers_alarm": "mdi:shield-alert-outline",
+    "auto_disarm_on_arrival": "mdi:home-import-outline",
+}
+
+
+class ProfileSwitch(ProfileSettingEntity, SwitchEntity):
+    def __init__(self, entry: HauswachtConfigEntry, key: str) -> None:
+        super().__init__(entry, key)
+        self._attr_icon = SWITCH_ICONS.get(key)
+
+    @property
+    def is_on(self) -> bool | None:
+        if self.runtime.edit_profile is None:
+            return None
+        return read_switch(self.runtime.entry.options, self._profile_id, self._key)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self.runtime.async_set_profile_setting(self._key, True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.runtime.async_set_profile_setting(self._key, False)
