@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.16.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.16.3:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -401,6 +401,15 @@ Allgemein:
   „Hauptbenutzer“.
 
 ## Benutzer und PINs
+
+> ⚠️ **Wichtig: Entweder alle bekommen einen PIN – oder keiner.**
+> Sobald **ein** PIN existiert (auch der Master-PIN), verlangt das Bedienfeld – und Alexa –
+> zum Unscharfschalten einen PIN, **von allen**. Wer keinen PIN hat, kann dann nur noch über
+> die Dashboard-Knöpfe (nur wenn unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ an ist)
+> oder den Push-Knopf unscharf schalten. Ein gemeinsamer Familien-PIN ist erlaubt.
+> Fehlt jemandem ein PIN, zeigt Home Assistant unter **Einstellungen → Reparaturen** den
+> Hinweis „Nicht alle Personen haben einen PIN“ mit den Namen.
+> Zeitgesteuerte Profile und die Anwesenheits-Automatik brauchen keinen PIN.
 
 **Konfigurieren → Benutzer und PINs.** Jede Person bekommt einen Benutzer:
 

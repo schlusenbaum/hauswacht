@@ -267,3 +267,21 @@ async def test_buttons_allowed_despite_pin(hass: HomeAssistant) -> None:
     assert _panel(hass).state == AlarmControlPanelState.ARMED_NIGHT
     await _service(hass, "button", "press", entity_id="button.hauswacht_disarm_now")
     assert _panel(hass).state == AlarmControlPanelState.DISARMED
+
+
+async def test_repair_issue_when_not_everyone_has_pin(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    users = {"c": user("Christian", "1357"), "p": user("Petra")}
+    await setup_entry(hass, make_entry({"users": users}))
+    issue = ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin")
+    assert issue is not None
+    assert "Petra" in issue.translation_placeholders["people"]
+
+
+async def test_no_repair_issue_when_all_have_pin(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    users = {"c": user("Christian", "1357"), "p": user("Petra", "1357")}
+    await setup_entry(hass, make_entry({"users": users}))
+    assert ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin") is None

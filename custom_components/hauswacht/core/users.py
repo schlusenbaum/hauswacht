@@ -211,3 +211,28 @@ def migrate_legacy_pin(options: Mapping[str, Any]) -> dict[str, Any]:
     users[user_id] = {"name": LEGACY_USER_NAME, "pin_salt": salt, "pin_digest": digest}
     new["users"] = users
     return new
+
+
+def people_without_pin(
+    users: Iterable[User], ha_users: Mapping[str, str], *, ignore: Iterable[str] = ()
+) -> list[str]:
+    """Wer kann am Bedienfeld nicht unscharf schalten, weil er keinen PIN hat?
+
+    Nur relevant, wenn es überhaupt PINs gibt. ``ha_users``: ID -> Name der
+    Home-Assistant-Benutzer. Ein Home-Assistant-Benutzer gilt als versorgt, wenn ein
+    Hauswacht-Benutzer mit PIN mit ihm verknüpft ist oder seinen Namen trägt.
+    """
+    users = list(users)
+    if not has_codes(users):
+        return []
+    skip = set(ignore)
+    with_pin = [u for u in users if u.pin is not None]
+    missing = [u.name for u in users if u.pin is None and u.user_id not in skip]
+    linked = {u.ha_user for u in with_pin if u.ha_user}
+    named = {u.name.casefold() for u in with_pin}
+    pinless_names = {u.name.casefold() for u in users if u.pin is None}
+    for ha_id, ha_name in ha_users.items():
+        if ha_id in linked or ha_name.casefold() in named or ha_name.casefold() in pinless_names:
+            continue
+        missing.append(ha_name)
+    return sorted(set(missing), key=str.casefold)

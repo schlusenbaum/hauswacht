@@ -30,6 +30,7 @@ OPT_USERS: Final = "users"
 # Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)
 OPT_BUTTONS_WITHOUT_PIN: Final = "buttons_without_pin"
 MASTER_USER_ID: Final = "master"
+ISSUE_PIN_COVERAGE: Final = "users_without_pin"
 MASTER_USER_NAME: Final = "Master-PIN"
 # "Alarm beenden" (Sirene aus, bleibt scharf) auch bei eingestelltem PIN ohne PIN erlauben
 OPT_END_ALARM_WITHOUT_PIN: Final = "end_alarm_without_pin"

@@ -29,7 +29,7 @@
       },
       "code": {
         "title": "PIN rules",
-        "description": "Users with a PIN: {pin_users}.\n\n**Master PIN:** a simple PIN without separate users, e.g. so voice assistants (Alexa) can only disarm with a PIN. It also appears in the user list as “Master-PIN”.\n\nAs soon as a PIN exists, the panel requires it to disarm. With “Allow dashboard buttons despite PIN”, the dashboard buttons “Disarm now” and “End alarm” keep working – only logged-in Home Assistant users can reach them anyway.",
+        "description": "Users with a PIN: {pin_users}.\n\n**Master PIN:** a simple PIN without separate users, e.g. so voice assistants (Alexa) can only disarm with a PIN. It also appears in the user list as “Master-PIN”.\n\nAs soon as a PIN exists, the panel requires it to disarm. With “Allow dashboard buttons despite PIN”, the dashboard buttons “Disarm now” and “End alarm” keep working – only logged-in Home Assistant users can reach them anyway.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
         "data": {
           "master_pin": "Master PIN (4–8 digits, optional)",
           "remove_master_pin": "Remove master PIN",
@@ -189,7 +189,7 @@
       },
       "users": {
         "title": "Users",
-        "description": "Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it. The PIN under “PIN” remains the “main user”.",
+        "description": "Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it. The PIN under “PIN” remains the “main user”.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
         "menu_options": {
           "user_add": "Add user",
           "user_edit": "Edit user",
@@ -210,7 +210,7 @@
       },
       "user_settings": {
         "title": "User",
-        "description": "Status: {status}. Leave PIN fields empty to keep them.\n\n**Duress PIN:** works normally but silently sends an emergency message to the recipients under “Notifications → Duress recipients”. It must not equal any normal PIN.\n\n**Valid from/until:** for guests – outside this time the PIN is blocked.",
+        "description": "Status: {status}. Leave PIN fields empty to keep them.\n\n**Duress PIN:** works normally but silently sends an emergency message to the recipients under “Notifications → Duress recipients”. It must not equal any normal PIN.\n\n**Valid from/until:** for guests – outside this time the PIN is blocked.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
         "data": {
           "name": "Name",
           "new_pin": "New PIN (4–8 digits)",
@@ -510,6 +510,12 @@
           "description": "Configured sensor whose triggering is simulated."
         }
       }
+    }
+  },
+  "issues": {
+    "users_without_pin": {
+      "title": "Hauswacht: not everyone has a PIN",
+      "description": "As soon as a PIN exists, the panel (and Alexa) require it **from everyone** to disarm. These people have no PIN and cannot disarm there: **{people}**.\n\nOptions:\n- Give them a PIN under Hauswacht → Configure → Users and PINs (a shared family PIN is allowed), or\n- enable “Allow dashboard buttons despite PIN” under PIN rules (currently: {buttons}) – dashboard buttons and the push button then keep working without a PIN.\n\nScheduled profiles and presence automation are not affected."
     }
   }
 }
