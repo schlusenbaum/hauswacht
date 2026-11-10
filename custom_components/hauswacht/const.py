@@ -25,6 +25,8 @@ OPT_SIRENS_HARDWARE_ENABLED: Final = "sirens_hardware_enabled"
 OPT_NOTIFY_SYSTEM: Final = "notify_system"
 OPT_NOTIFY_IN_TEST_MODE: Final = "notify_in_test_mode"
 OPT_PUSH_DISARM: Final = "push_disarm"
+OPT_DURESS_NOTIFY: Final = "duress_notify"
+OPT_USERS: Final = "users"
 # "Alarm beenden" (Sirene aus, bleibt scharf) auch bei eingestelltem PIN ohne PIN erlauben
 OPT_END_ALARM_WITHOUT_PIN: Final = "end_alarm_without_pin"
 OPT_HOMECOMING_OBSERVE: Final = "homecoming_observe"

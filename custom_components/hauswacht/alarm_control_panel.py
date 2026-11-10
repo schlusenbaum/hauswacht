@@ -22,6 +22,7 @@ from homeassistant.helpers.entity_platform import (
 from .const import DOMAIN
 from .core.profiles import panel_state, profile_for_mode, profile_info, used_panel_modes
 from .core.state_machine import AlarmState
+from .core.users import Action
 from .entity import HauswachtEntity
 from .runtime import HauswachtConfigEntry
 
@@ -95,7 +96,7 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
 
     @property
     def code_format(self) -> CodeFormat | None:
-        return CodeFormat.NUMBER if self.runtime.pin is not None else None
+        return CodeFormat.NUMBER if self.runtime.has_codes else None
 
     @property
     def code_arm_required(self) -> bool:
@@ -128,7 +129,15 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
             "last_siren_decision": self.runtime.sirens.last_result or None,
         }
 
-    def _arm_mode(self, mode: str, code: str | None) -> None:
+    @property
+    def changed_by(self) -> str | None:
+        return self.runtime.changed_by
+
+    @property
+    def _user_id(self) -> str | None:
+        return self._context.user_id if self._context else None
+
+    async def _arm_mode(self, mode: str, code: str | None) -> None:
         profile_id = profile_for_mode(self.runtime.entry.options, mode)
         if profile_id is None:
             raise ServiceValidationError(
@@ -136,37 +145,41 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
                 translation_key="no_profile_for_mode",
                 translation_placeholders={"mode": mode},
             )
-        self._arm(profile_id, code)
+        await self._arm(profile_id, code)
 
-    def _arm(self, profile_id: str, code: str | None, *, confirm: bool = False) -> None:
-        if self.runtime.code_arm_required:
-            self.runtime.verify_code(code)
-        self.runtime.arm(profile_id, confirmed=confirm)
+    async def _arm(self, profile_id: str, code: str | None, *, confirm: bool = False) -> None:
+        actor = await self.runtime.async_authorize(
+            code=code,
+            user_id=self._user_id,
+            action=Action.ARM,
+            require_code=self.runtime.code_arm_required,
+        )
+        self.runtime.arm(profile_id, confirmed=confirm, changed_by=actor)
 
     async def async_arm_profile(
         self, profile: str, confirm: bool = False, code: str | None = None
     ) -> None:
         """Dienst hauswacht.arm: Profil scharf schalten, optional mit Bestätigung."""
-        self._arm(profile, code, confirm=confirm)
+        await self._arm(profile, code, confirm=confirm)
 
     async def async_simulate_trigger(self, sensor: str) -> None:
         """Dienst hauswacht.simulate_trigger: Sensorauslösung simulieren (nur Testmodus)."""
         self.runtime.simulate_trigger(sensor)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
-        self.runtime.disarm(code)
+        await self.runtime.async_disarm(code, self._user_id)
 
     async def async_alarm_arm_home(self, code: str | None = None) -> None:
-        self._arm_mode("home", code)
+        await self._arm_mode("home", code)
 
     async def async_alarm_arm_night(self, code: str | None = None) -> None:
-        self._arm_mode("night", code)
+        await self._arm_mode("night", code)
 
     async def async_alarm_arm_away(self, code: str | None = None) -> None:
-        self._arm_mode("away", code)
+        await self._arm_mode("away", code)
 
     async def async_alarm_arm_vacation(self, code: str | None = None) -> None:
-        self._arm_mode("vacation", code)
+        await self._arm_mode("vacation", code)
 
     async def async_alarm_arm_custom_bypass(self, code: str | None = None) -> None:
-        self._arm_mode("custom", code)
+        await self._arm_mode("custom", code)

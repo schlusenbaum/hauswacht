@@ -17,6 +17,7 @@
         "menu_options": {
           "zones": "Zones and sensors",
           "profiles": "Profiles",
+          "users": "Users and PINs",
           "sirens": "Sirens",
           "notifications": "Notifications",
           "homecoming": "Homecoming observation",
@@ -153,7 +154,8 @@
         "data": {
           "notify_system": "Services for system messages",
           "notify_in_test_mode": "Send notifications in test mode too",
-          "push_disarm": "Push on door opening with a “Disarm” button"
+          "push_disarm": "Push on door opening with a “Disarm” button",
+          "duress_notify": "Duress recipients"
         }
       },
       "profiles": {
@@ -183,6 +185,45 @@
           "homecoming_observe": "Observe homecoming",
           "homecoming_persons": "People"
         }
+      },
+      "users": {
+        "title": "Users",
+        "description": "Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it. The PIN under “PIN” remains the “main user”.",
+        "menu_options": {
+          "user_add": "Add user",
+          "user_edit": "Edit user",
+          "user_delete": "Delete user"
+        }
+      },
+      "user_edit": {
+        "title": "Edit user",
+        "data": {
+          "user": "User"
+        }
+      },
+      "user_delete": {
+        "title": "Delete user",
+        "data": {
+          "user": "User"
+        }
+      },
+      "user_settings": {
+        "title": "User",
+        "description": "Status: {status}. Leave PIN fields empty to keep them.\n\n**Duress PIN:** works normally but silently sends an emergency message to the recipients under “Notifications → Duress recipients”. It must not equal any normal PIN.\n\n**Valid from/until:** for guests – outside this time the PIN is blocked.",
+        "data": {
+          "name": "Name",
+          "new_pin": "New PIN (4–8 digits)",
+          "remove_pin": "Remove PIN",
+          "new_duress_pin": "New duress PIN (4–8 digits)",
+          "remove_duress_pin": "Remove duress PIN",
+          "active": "Active",
+          "can_arm": "May arm",
+          "can_disarm": "May disarm",
+          "can_end_alarm": "May end alarm",
+          "ha_user": "Home Assistant account (for push and dashboard buttons)",
+          "valid_from": "Valid from",
+          "valid_until": "Valid until"
+        }
       }
     },
     "error": {
@@ -192,12 +233,18 @@
       "confirm_hardware_required": "Please confirm that real sirens may sound.",
       "profile_name_required": "Please enter a name.",
       "profile_name_taken": "A profile with this name already exists.",
-      "panel_mode_taken": "This button is already assigned to another profile."
+      "panel_mode_taken": "This button is already assigned to another profile.",
+      "user_name_required": "Please enter a name.",
+      "user_name_taken": "This name already exists.",
+      "duress_equals_pin": "Duress PIN and PIN must differ.",
+      "pin_is_duress": "This PIN is already a duress PIN ({conflict}).",
+      "duress_conflict": "This duress PIN is already in use ({conflict})."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
       "no_zones": "No zones have been created yet.",
-      "no_profiles": "No profiles have been created yet."
+      "no_profiles": "No profiles have been created yet.",
+      "no_users": "There are no users yet."
     }
   },
   "selector": {
@@ -429,6 +476,9 @@
     },
     "invalid_setting": {
       "message": "Invalid value for {setting}."
+    },
+    "action_not_allowed": {
+      "message": "{user} is not allowed to do this."
     }
   },
   "services": {

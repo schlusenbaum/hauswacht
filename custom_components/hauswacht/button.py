@@ -21,6 +21,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import DOMAIN
+from .core.users import Action
 from .entity import HauswachtEntity
 from .runtime import HauswachtConfigEntry
 
@@ -53,6 +54,12 @@ async def async_setup_entry(
     )
 
 
+def _user_id(entity: ButtonEntity) -> str | None:
+    """Home-Assistant-Konto, das den Knopf gedrückt hat."""
+    context = entity._context
+    return context.user_id if context else None
+
+
 class HauswachtArmButton(HauswachtEntity, ButtonEntity):
     def __init__(self, entry: HauswachtConfigEntry, description: _ArmButton) -> None:
         super().__init__(entry, description.key)
@@ -65,7 +72,8 @@ class HauswachtArmButton(HauswachtEntity, ButtonEntity):
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code"
             )
-        self.runtime.arm_selected(confirmed=self._description.confirm)
+        actor = await self.runtime.async_actor_for_user(_user_id(self), Action.ARM)
+        self.runtime.arm_selected(confirmed=self._description.confirm, changed_by=actor)
 
 
 class HauswachtDisarmButton(HauswachtEntity, ButtonEntity):
@@ -79,14 +87,15 @@ class HauswachtDisarmButton(HauswachtEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
-        return self.runtime.pin is None
+        return not self.runtime.has_codes
 
     async def async_press(self) -> None:
-        if self.runtime.pin is not None:
+        if self.runtime.has_codes:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code_disarm"
             )
-        self.runtime.disarm_now()
+        actor = await self.runtime.async_actor_for_user(_user_id(self), Action.DISARM)
+        self.runtime.disarm_now(changed_by=actor)
 
 
 class HauswachtEndAlarmButton(HauswachtEntity, ButtonEntity):
@@ -107,7 +116,8 @@ class HauswachtEndAlarmButton(HauswachtEntity, ButtonEntity):
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code_disarm"
             )
-        self.runtime.end_alarm()
+        actor = await self.runtime.async_actor_for_user(_user_id(self), Action.END_ALARM)
+        self.runtime.end_alarm(changed_by=actor)
 
 
 class HomecomingReportButton(HauswachtEntity, ButtonEntity):
