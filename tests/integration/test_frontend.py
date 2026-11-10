@@ -44,3 +44,5 @@ def test_card_file_defines_custom_element() -> None:
     ).read_text(encoding="utf-8")
     assert 'customElements.define("hauswacht-einstellungen-card"' in source
     assert "window.customCards" in source
+    # Regression 0.15.0: formatEntityName lieferte je nach Version nur "entity"
+    assert "formatEntityName(" not in source

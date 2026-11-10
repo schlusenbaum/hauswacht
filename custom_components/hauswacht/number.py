@@ -11,8 +11,8 @@ from .profile_setting_entities import ProfileSettingEntity
 from .runtime import HauswachtConfigEntry
 
 ICONS = {
-    "exit_delay": "mdi:timer-arrow-right-outline",
-    "entry_delay": "mdi:timer-arrow-left-outline",
+    "exit_delay": "mdi:exit-run",
+    "entry_delay": "mdi:location-enter",
     "reaction_time": "mdi:timer-alert-outline",
     "max_alarm_cycles": "mdi:repeat",
     "auto_away_delay": "mdi:account-clock-outline",

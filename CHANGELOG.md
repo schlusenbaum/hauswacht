@@ -6,6 +6,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-11-10
+
+### Behoben
+- Karte „Hauswacht Einstellungen“ zeigte statt der Namen nur „entity“.
+- Fehlende Symbole bei Ausgangs- und Eingangsverzögerung.
+
 ## [0.15.0] - 2026-11-10
 
 ### Hinzugefügt
