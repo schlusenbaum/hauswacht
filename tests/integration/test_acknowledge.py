@@ -119,15 +119,17 @@ async def test_end_alarm_button_keeps_armed(hass: HomeAssistant) -> None:
     assert _state(hass).state == AlarmControlPanelState.ARMED_NIGHT
 
 
+def _with_pin(**extra: Any) -> dict[str, Any]:
+    from custom_components.hauswacht.core.pin import hash_pin  # noqa: PLC0415
+
+    hashed = hash_pin("2468")
+    user = {"name": "Christian", "pin_salt": hashed.salt, "pin_digest": hashed.digest}
+    return {"users": {"c": user}, **extra}
+
+
 async def test_buttons_unavailable_with_pin(hass: HomeAssistant) -> None:
-    entry = make_entry()
+    entry = make_entry(_with_pin())
     await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "code"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"new_pin": "2468"})
-    await hass.async_block_till_done()
     for entity_id in (DISARM_NOW, END_ALARM):
         state = hass.states.get(entity_id)
         assert state is not None
@@ -135,17 +137,8 @@ async def test_buttons_unavailable_with_pin(hass: HomeAssistant) -> None:
 
 
 async def test_end_alarm_without_pin_option(hass: HomeAssistant) -> None:
-    entry = make_entry()
+    entry = make_entry(_with_pin(end_alarm_without_pin=True))
     await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "code"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"new_pin": "2468", "end_alarm_without_pin": True}
-    )
-    await hass.async_block_till_done()
-    assert entry.options["end_alarm_without_pin"] is True
 
     disarm = hass.states.get(DISARM_NOW)
     assert disarm is not None

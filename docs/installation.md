@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.16.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.16.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -248,7 +248,7 @@ Für Dashboards gibt es zusätzlich zwei Knöpfe (Entitäten):
 
 Knöpfe können keinen PIN abfragen. Ist ein PIN eingestellt, ist „Unscharf schalten“ **nicht
 verfügbar** – dann über das Bedienfeld bedienen. „Alarm beenden“ bleibt mit PIN verfügbar, wenn
-unter **Konfigurieren → PIN** die Option **„Alarm ohne PIN beenden“** an ist (standardmäßig aus).
+unter **Konfigurieren → PIN-Regeln** die Option **„Alarm ohne PIN beenden“** an ist (standardmäßig aus).
 
 > Abwägung: Mit der Option kann jeder, der ein entsperrtes Dashboard in der Hand hat, die
 > Sirenen abstellen. Die Anlage bleibt aber scharf, die Alarm-Nachricht ist schon verschickt,
@@ -376,15 +376,23 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 | `bypassed_sensors` | Überbrückte Sensoren |
 | `last_contact` | Letzter Kontakt je Sensor |
 
-## PIN
+## PIN-Regeln
+
+PINs gehören zu den Benutzern (siehe „Benutzer und PINs“). Unter **Konfigurieren → PIN-Regeln**:
+
+- **PIN auch zum Scharfschalten verlangen**
+- **Alarm ohne PIN beenden** (Knopf „Alarm beenden“ auch mit PIN)
+
+Allgemein:
 
 - 4 bis 8 Ziffern, wird nur als Hash gespeichert.
-- Mit PIN ist er zum Unscharfschalten immer nötig, optional auch zum Scharfschalten.
+- Sobald es einen PIN gibt, ist er zum Unscharfschalten am Bedienfeld immer nötig.
 - Nach 5 falschen Eingaben in Folge ist die Eingabe 1 Minute gesperrt, bei weiteren
   Fehlversuchen jeweils doppelt so lange (höchstens 15 Minuten). Ab der 3. falschen Eingabe
   geht eine Systemmeldung an die eingetragenen Empfänger.
 - Ohne PIN darf die Anlage nicht für Sprachassistenten (z. B. Alexa) freigegeben werden.
-- Der PIN unter **Konfigurieren → PIN** gilt als Benutzer „Hauptbenutzer“.
+- Ein PIN aus Versionen vor 0.16.1 wurde beim Update automatisch zum Benutzer
+  „Hauptbenutzer“.
 
 ## Benutzer und PINs
 
@@ -392,12 +400,12 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 
 | Feld | Bedeutung |
 |---|---|
-| Name | erscheint als „geändert von“ am Bedienfeld, im Logbuch und in Push-Nachrichten |
+| Name | Vorschläge aus den Home-Assistant-Benutzern oder frei (z. B. „Putzhilfe“). Erscheint als „geändert von“ am Bedienfeld, im Logbuch und in Push-Nachrichten |
 | PIN | 4–8 Ziffern, nur als Hash gespeichert |
 | Bedrohungs-PIN | siehe unten |
 | Aktiv | aus = PIN gesperrt, ohne ihn zu löschen |
 | Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte |
-| Home-Assistant-Konto | ordnet Push-Knopf und Dashboard-Knöpfe diesem Benutzer zu (mit seinen Rechten) |
+| Home-Assistant-Konto | ordnet Push-Knopf und Dashboard-Knöpfe diesem Benutzer zu (mit seinen Rechten). Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit ist der PIN gesperrt |
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben. Dann steht dort

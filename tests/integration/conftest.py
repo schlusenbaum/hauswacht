@@ -79,7 +79,7 @@ else:
                 merged["profiles"] = profiles
             else:
                 merged[key] = value
-        return MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=merged, version=2)
+        return MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=merged, version=3)
 
     def set_sensor(hass: HomeAssistant, entity_id: str, state: str) -> None:
         hass.states.async_set(entity_id, state, {"device_class": DEVICE_CLASSES.get(entity_id)})

@@ -24,15 +24,13 @@
           "roles": "Sensor roles (exceptions)",
           "monitoring": "Sensor monitoring",
           "infrastructure": "System monitoring",
-          "code": "PIN code"
+          "code": "PIN rules"
         }
       },
       "code": {
-        "title": "PIN code",
-        "description": "Current status: {pin_status}. The PIN is stored hashed only. Without a PIN, the alarm must not be exposed to voice assistants. With “End alarm without PIN”, the “End alarm” button works even with a PIN – disarming still requires the PIN.",
+        "title": "PIN rules",
+        "description": "PINs belong to users (menu “Users and PINs”). Users with a PIN: {pin_users}.\n\nAs soon as a PIN exists, the panel requires it to disarm. Without a PIN the system must not be exposed to voice assistants. With “End alarm without PIN”, the “End alarm” button works even with a PIN – disarming still requires the PIN.",
         "data": {
-          "new_pin": "New PIN (4–8 digits)",
-          "remove_pin": "Remove PIN",
           "code_arm_required": "Require PIN to arm",
           "end_alarm_without_pin": "End alarm without PIN (sirens off, system stays armed)"
         }

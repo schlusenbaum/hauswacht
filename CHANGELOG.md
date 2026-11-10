@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-11-10
+
+### Geändert
+- Benutzer anlegen: Das Namensfeld schlägt die Home-Assistant-Benutzer vor (freie Namen
+  weiter möglich); ein gewählter Home-Assistant-Benutzer wird automatisch verknüpft.
+- Menüpunkt „PIN“ heißt jetzt „PIN-Regeln“ und enthält nur noch „PIN auch zum
+  Scharfschalten“ und „Alarm ohne PIN beenden“. PINs gehören zu den Benutzern.
+- Migration (Version 3): Ein vorhandener einzelner PIN wird zum Benutzer „Hauptbenutzer“.
+
 ## [0.16.0] - 2026-11-10
 
 ### Hinzugefügt
