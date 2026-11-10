@@ -227,7 +227,7 @@ Wird das Scharfschalten abgelehnt (z. B. Fenster offen), kommt eine Benachrichti
 Grund und den Knöpfen:
 
 - **„Trotzdem scharf“** – nur wenn das Profil offene Sensoren nach Rückfrage überbrücken darf
-  („Offene Sensoren: nachfragen“). Offene Sensoren werden bis zum Schließen überbrückt.
+  („Offene Sensoren beim Scharfschalten: Nach Bestätigung erlauben“). Offene Sensoren werden bis zum Schließen überbrückt.
 - **„Erneut versuchen“** – prüft noch einmal (z. B. nachdem das Fenster zu ist). Klappt es
   wieder nicht, kommt eine neue Benachrichtigung.
 
