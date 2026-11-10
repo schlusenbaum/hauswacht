@@ -16,6 +16,7 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
     BooleanSelector,
+    DateTimeSelector,
     EntitySelector,
     EntitySelectorConfig,
     IconSelector,
@@ -32,11 +33,13 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
     TimeSelector,
 )
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
     NAME,
     OPT_CODE_ARM_REQUIRED,
+    OPT_DURESS_NOTIFY,
     OPT_END_ALARM_WITHOUT_PIN,
     OPT_HOMECOMING_OBSERVE,
     OPT_HOMECOMING_PERSONS,
@@ -51,6 +54,7 @@ from .const import (
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
     OPT_STALE_AFTER_HOURS,
+    OPT_USERS,
     OPT_ZONES,
     ROLE_AUTO,
 )
@@ -86,6 +90,7 @@ from .core.state_machine import (
     SensorRole,
     UnavailableSensorPolicy,
 )
+from .core.users import parse_users, pin_conflicts
 
 SENSOR_DOMAIN = "binary_sensor"
 SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
@@ -138,6 +143,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             menu_options=[
                 "zones",
                 "profiles",
+                "users",
                 "sirens",
                 "notifications",
                 "homecoming",
@@ -594,6 +600,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
             options[OPT_NOTIFY_IN_TEST_MODE] = bool(user_input.get(OPT_NOTIFY_IN_TEST_MODE))
             options[OPT_PUSH_DISARM] = bool(user_input.get(OPT_PUSH_DISARM))
+            options[OPT_DURESS_NOTIFY] = list(user_input.get(OPT_DURESS_NOTIFY) or [])
             return self.async_create_entry(data=options)
         schema = vol.Schema(
             {
@@ -607,9 +614,137 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Required(
                     OPT_PUSH_DISARM, default=bool(options.get(OPT_PUSH_DISARM, False))
                 ): BooleanSelector(),
+                vol.Optional(
+                    OPT_DURESS_NOTIFY, default=list(options.get(OPT_DURESS_NOTIFY, []))
+                ): _list_selector(self._notify_services(), multiple=True, custom=True),
             }
         )
         return self.async_show_form(step_id="notifications", data_schema=schema)
+
+    # --- Benutzer ------------------------------------------------------------
+
+    async def async_step_users(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="users", menu_options=["user_add", "user_edit", "user_delete"]
+        )
+
+    def _user_selector(self) -> SelectSelector:
+        stored = self.config_entry.options.get(OPT_USERS, {})
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=uid, label=str(data.get("name") or uid))
+                    for uid, data in stored.items()
+                ],
+                mode=SelectSelectorMode.LIST,
+            )
+        )
+
+    async def async_step_user_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._user_id = None
+        return await self.async_step_user_settings()
+
+    async def async_step_user_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not self.config_entry.options.get(OPT_USERS):
+            return self.async_abort(reason="no_users")
+        if user_input is not None:
+            self._user_id = user_input["user"]
+            return await self.async_step_user_settings()
+        return self.async_show_form(
+            step_id="user_edit",
+            data_schema=vol.Schema({vol.Required("user"): self._user_selector()}),
+        )
+
+    async def async_step_user_delete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not self.config_entry.options.get(OPT_USERS):
+            return self.async_abort(reason="no_users")
+        if user_input is not None:
+            options = dict(self.config_entry.options)
+            options[OPT_USERS] = {
+                k: v for k, v in options.get(OPT_USERS, {}).items() if k != user_input["user"]
+            }
+            return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="user_delete",
+            data_schema=vol.Schema({vol.Required("user"): self._user_selector()}),
+        )
+
+    async def _ha_user_options(self) -> list[SelectOptionDict]:
+        users = await self.hass.auth.async_get_users()
+        return [
+            SelectOptionDict(value=u.id, label=u.name or u.id)
+            for u in users
+            if u.is_active and not u.system_generated
+        ]
+
+    async def async_step_user_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = self.config_entry.options
+        stored_all: dict[str, Any] = dict(options.get(OPT_USERS, {}))
+        user_id = getattr(self, "_user_id", None)
+        current: dict[str, Any] = dict(stored_all.get(user_id, {})) if user_id else {}
+        errors: dict[str, str] = {}
+        placeholders = {"conflict": ""}
+        if user_input is not None:
+            name = str(user_input.get("name") or "").strip()
+            new_pin = str(user_input.get("new_pin") or "").strip()
+            new_duress = str(user_input.get("new_duress_pin") or "").strip()
+            errors, conflict = await self._validate_user(
+                name, (new_pin, new_duress), user_id, stored_all
+            )
+            placeholders["conflict"] = conflict
+            if not errors:
+                data = dict(current)
+                data.update(
+                    {
+                        "name": name,
+                        "active": bool(user_input.get("active", True)),
+                        "can_arm": bool(user_input.get("can_arm", True)),
+                        "can_disarm": bool(user_input.get("can_disarm", True)),
+                        "can_end_alarm": bool(user_input.get("can_end_alarm", True)),
+                        "ha_user": user_input.get("ha_user") or None,
+                        "valid_from": _to_iso(user_input.get("valid_from")),
+                        "valid_until": _to_iso(user_input.get("valid_until")),
+                    }
+                )
+                if user_input.get("remove_pin"):
+                    data.pop("pin_salt", None)
+                    data.pop("pin_digest", None)
+                elif new_pin:
+                    hashed = await self.hass.async_add_executor_job(hash_pin, new_pin)
+                    data["pin_salt"], data["pin_digest"] = hashed.salt, hashed.digest
+                if user_input.get("remove_duress_pin"):
+                    data.pop("duress_salt", None)
+                    data.pop("duress_digest", None)
+                elif new_duress:
+                    hashed = await self.hass.async_add_executor_job(hash_pin, new_duress)
+                    data["duress_salt"], data["duress_digest"] = hashed.salt, hashed.digest
+                new_id = user_id or _unique_id(name, stored_all)
+                stored_all[new_id] = data
+                new_options = dict(options)
+                new_options[OPT_USERS] = stored_all
+                return self.async_create_entry(data=new_options)
+
+        status = []
+        if current.get("pin_digest"):
+            status.append("PIN gesetzt")
+        if current.get("duress_digest"):
+            status.append("Bedrohungs-PIN gesetzt")
+        placeholders["status"] = ", ".join(status) or "kein PIN"
+        schema = await self._user_schema(current)
+        return self.async_show_form(
+            step_id="user_settings",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders=placeholders,
+        )
 
     # --- Heimkehr-Beobachtung ---------------------------------------------
 
@@ -652,6 +787,83 @@ class HauswachtOptionsFlow(OptionsFlow):
             }
         )
         return self.async_show_form(step_id="infrastructure", data_schema=schema)
+
+    async def _validate_user(
+        self, name: str, pins: tuple[str, str], user_id: str | None, stored_all: dict[str, Any]
+    ) -> tuple[dict[str, str], str]:
+        new_pin, new_duress = pins
+        errors: dict[str, str] = {}
+        conflict = ""
+        if not name:
+            errors["name"] = "user_name_required"
+        elif any(
+            str(d.get("name", "")).casefold() == name.casefold()
+            for uid, d in stored_all.items()
+            if uid != user_id
+        ):
+            errors["name"] = "user_name_taken"
+        if new_pin and not is_valid_pin_format(new_pin):
+            errors["new_pin"] = "invalid_pin"
+        if new_duress and not is_valid_pin_format(new_duress):
+            errors["new_duress_pin"] = "invalid_pin"
+        if new_pin and new_duress and new_pin == new_duress:
+            errors["new_duress_pin"] = "duress_equals_pin"
+        users = parse_users(self.config_entry.options)
+        if not errors and new_pin:
+            found = await self.hass.async_add_executor_job(
+                lambda: pin_conflicts(new_pin, users, kind="pin")
+            )
+            if found:
+                errors["new_pin"] = "pin_is_duress"
+                conflict = ", ".join(found)
+        if not errors and new_duress:
+            found = await self.hass.async_add_executor_job(
+                lambda: pin_conflicts(new_duress, users, kind="duress", exclude=user_id)
+            )
+            if found:
+                errors["new_duress_pin"] = "duress_conflict"
+                conflict = ", ".join(found)
+        return errors, conflict
+
+    async def _user_schema(self, current: dict[str, Any]) -> vol.Schema:
+        ha_user = current.get("ha_user")
+        ha_desc = {"suggested_value": ha_user} if ha_user else {}
+        return vol.Schema(
+            {
+                vol.Required("name", default=current.get("name", "")): TextSelector(),
+                vol.Optional("new_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_pin", default=False): BooleanSelector(),
+                vol.Optional("new_duress_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_duress_pin", default=False): BooleanSelector(),
+                vol.Optional("active", default=bool(current.get("active", True))): (
+                    BooleanSelector()
+                ),
+                vol.Optional("can_arm", default=bool(current.get("can_arm", True))): (
+                    BooleanSelector()
+                ),
+                vol.Optional("can_disarm", default=bool(current.get("can_disarm", True))): (
+                    BooleanSelector()
+                ),
+                vol.Optional(
+                    "can_end_alarm", default=bool(current.get("can_end_alarm", True))
+                ): BooleanSelector(),
+                vol.Optional("ha_user", description=ha_desc): SelectSelector(
+                    SelectSelectorConfig(
+                        options=await self._ha_user_options(), mode=SelectSelectorMode.DROPDOWN
+                    )
+                ),
+                vol.Optional(
+                    "valid_from", description=_suggested_local(current.get("valid_from"))
+                ): DateTimeSelector(),
+                vol.Optional(
+                    "valid_until", description=_suggested_local(current.get("valid_until"))
+                ): DateTimeSelector(),
+            }
+        )
 
 
 def _automation_schema(auto: AutoConfig) -> vol.Schema:
@@ -741,3 +953,32 @@ def _zone_selector(zones: dict[str, Zone], *, multiple: bool = False) -> SelectS
             mode=SelectSelectorMode.LIST,
         )
     )
+
+
+def _to_iso(value: Any) -> str | None:
+    """Datum/Uhrzeit aus dem Formular (lokale Zeit) als ISO-Text mit Zeitzone."""
+    if not value:
+        return None
+    parsed = dt_util.parse_datetime(str(value))
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt_util.get_default_time_zone())
+    return parsed.isoformat()
+
+
+def _suggested_local(value: Any) -> dict[str, Any]:
+    if not isinstance(value, str) or not value:
+        return {}
+    parsed = dt_util.parse_datetime(value)
+    if parsed is None:
+        return {}
+    return {"suggested_value": dt_util.as_local(parsed).strftime("%Y-%m-%d %H:%M:%S")}
+
+
+def _unique_id(name: str, existing: dict[str, Any]) -> str:
+    base = "".join(c if c.isalnum() else "_" for c in name.casefold()).strip("_") or "benutzer"
+    candidate, n = base, 2
+    while candidate in existing:
+        candidate, n = f"{base}_{n}", n + 1
+    return candidate

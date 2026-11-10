@@ -156,7 +156,7 @@ class AutomationRunner:
             self._event("AutoArmSkipped", profile_id, reason=reason)
             return
         try:
-            runtime.arm(profile_id)
+            runtime.arm(profile_id, changed_by="Automatik")
         except HomeAssistantError as err:
             details = str(err) or type(err).__name__
             _LOGGER.warning("Automatisches Scharfschalten von %s fehlgeschlagen: %s", name, details)
@@ -183,7 +183,7 @@ class AutomationRunner:
             return
         if only_if_auto and self.auto_armed_by != profile_id:
             return
-        runtime.disarm_trusted()
+        runtime.disarm_trusted(changed_by="Automatik")
         self._event("AutoDisarmed", profile_id, reason=reason)
         runtime.notifier.send_system(
             *auto_disarmed_message(runtime.profile_name(profile_id), reason),

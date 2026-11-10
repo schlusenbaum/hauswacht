@@ -18,7 +18,7 @@
 | 0.13.0 ✅ | Option „Alarm ohne PIN beenden“ | nein |
 | 0.14.0 ✅ | Profil-Einstellungen als Entitäten (Dashboard) | nein |
 | **0.15.0** ✅ | Karte „Hauswacht Einstellungen“ | nein |
-| 0.16.0 | Benutzer und Codes: mehrere Personen mit eigenem PIN, einzeln sperrbar, „geändert von“ | nein |
+| **0.16.0** ✅ | Benutzer und Codes: mehrere Personen mit eigenem PIN, einzeln sperrbar, „geändert von“ | nein |
 | 0.17.0 | Benachrichtigungen pro Ereignis, Texte mit Platzhaltern, weitere Knöpfe („Trotzdem scharf“, „Erneut versuchen“) | Push ja |
 | 0.18.0 | Sensorgruppen: Alarm erst bei zwei Meldern einer Gruppe kurz nacheinander | nein |
 | 0.19.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |

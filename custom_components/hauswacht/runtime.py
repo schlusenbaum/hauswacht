@@ -43,10 +43,9 @@ from .const import (
     NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
     OPT_CODE_ARM_REQUIRED,
+    OPT_DURESS_NOTIFY,
     OPT_END_ALARM_WITHOUT_PIN,
     OPT_INFRASTRUCTURE,
-    OPT_PIN_DIGEST,
-    OPT_PIN_SALT,
     OPT_PUSH_DISARM,
     PUSH_ACTION_EVENT,
     PUSH_ACTION_PREFIX,
@@ -60,7 +59,6 @@ from .core.code_guard import (
     remaining_lock,
 )
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
-from .core.pin import PinHash, verify_pin
 from .core.profile_settings import SettingError
 from .core.profile_settings import write as write_setting
 from .core.profiles import (
@@ -123,6 +121,8 @@ from .core.state_machine import (
     TimerKind,
     step,
 )
+from .core.users import Action, allowed, find_by_ha_user, has_codes, match_pin, parse_users
+from .core.users import label as users_label
 from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
@@ -205,7 +205,9 @@ class HauswachtRuntime:
         self._session: str | None = None
         self._pushed_targets: set[str] = set()
         self._unsub_push: CALLBACK_TYPE | None = None
-        self._acting_user: str | None = None  # wer gerade per Push-Knopf bedient
+        # Wer zuletzt bedient hat (Benutzer, gemeinsamer PIN, HA-Konto oder "Automatik")
+        self.changed_by: str | None = None
+        self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
             hass, entry.entry_id, dict(entry.options), self.entry_doors, self._notify
         )
@@ -213,26 +215,18 @@ class HauswachtRuntime:
     # --- Konfiguration -----------------------------------------------------
 
     @property
-    def pin(self) -> PinHash | None:
-        salt = self.entry.options.get(OPT_PIN_SALT)
-        digest = self.entry.options.get(OPT_PIN_DIGEST)
-        if not salt or not digest:
-            return None
-        return PinHash(salt=salt, digest=digest)
+    def has_codes(self) -> bool:
+        """Gibt es mindestens einen PIN (Hauptbenutzer oder Benutzer)?"""
+        return has_codes(self.users)
 
     @property
     def end_alarm_needs_code(self) -> bool:
         """Braucht "Alarm beenden" einen PIN? Nur mit PIN und ohne die Ausnahme-Option."""
-        return self.pin is not None and not bool(
-            self.entry.options.get(OPT_END_ALARM_WITHOUT_PIN, False)
-        )
+        return self.has_codes and not bool(self.entry.options.get(OPT_END_ALARM_WITHOUT_PIN, False))
 
     @property
     def code_arm_required(self) -> bool:
-        return self.pin is not None and bool(self.entry.options.get(OPT_CODE_ARM_REQUIRED, False))
-
-    def check_code(self, code: str | None) -> bool:
-        return verify_pin(code, self.pin)
+        return self.has_codes and bool(self.entry.options.get(OPT_CODE_ARM_REQUIRED, False))
 
     # --- Lebenszyklus ------------------------------------------------------
 
@@ -330,11 +324,11 @@ class HauswachtRuntime:
         self._notify()
 
     @callback
-    def arm_selected(self, *, confirmed: bool = False) -> None:
+    def arm_selected(self, *, confirmed: bool = False, changed_by: str | None = None) -> None:
         profile_id = self.selected_profile
         if profile_id is None:
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_profiles")
-        self.arm(profile_id, confirmed=confirmed)
+        self.arm(profile_id, confirmed=confirmed, changed_by=changed_by)
 
     async def async_start(self) -> None:
         data = await self._store.async_load() or {}
@@ -391,7 +385,9 @@ class HauswachtRuntime:
     # --- Bedienung ---------------------------------------------------------
 
     @callback
-    def arm(self, profile_ref: str, *, confirmed: bool = False) -> None:
+    def arm(
+        self, profile_ref: str, *, confirmed: bool = False, changed_by: str | None = None
+    ) -> None:
         """Schaltet ein Profil scharf (Profil-ID oder Name)."""
         profile_id = find_profile(self.entry.options, profile_ref)
         profile = self.profiles.get(profile_id) if profile_id else None
@@ -410,16 +406,24 @@ class HauswachtRuntime:
             )
         if self.ctx.state is AlarmState.DISARMED:
             self.armed_sensors = sensors
+        previous = self.changed_by
+        self.changed_by = changed_by
         effects = self._dispatch(
             ArmRequested(profile=profile, readiness=self._readiness(), confirmed=confirmed)
         )
-        self._raise_for_rejection(effects)
+        try:
+            self._raise_for_rejection(effects)
+        except ServiceValidationError:
+            self.changed_by = previous
+            raise
 
-    @callback
-    def verify_code(self, code: str | None) -> None:
-        """Prüft den PIN mit Schutz gegen Durchprobieren. Wirft bei Fehler oder Sperre."""
-        if self.pin is None:
-            return
+    async def async_check_code(self, code: str | None, action: Action) -> str | None:
+        """Prüft den PIN (mit Schutz gegen Durchprobieren) und liefert, wer es war.
+
+        Ohne PINs: None. Bedrohungs-PIN: gilt als gültig, löst heimlich einen Notruf aus.
+        """
+        if not self.has_codes:
+            return None
         now = time.monotonic()
         locked = remaining_lock(self._code_guard, now)
         if locked:
@@ -428,9 +432,30 @@ class HauswachtRuntime:
                 translation_key="code_locked",
                 translation_placeholders={"seconds": str(locked)},
             )
-        if self.check_code(code):
+        # PBKDF2 ist absichtlich langsam: im Hintergrund, damit Home Assistant nicht hängt
+        match = await self.hass.async_add_executor_job(
+            match_pin, code, self.users, dt_util.utcnow().timestamp()
+        )
+        if match.duress:
             self._code_guard = register_success(self._code_guard)
-            return
+            actor = users_label(match.duress)
+            self._send_duress_alert(actor, action)
+            return actor
+        if match.users:
+            if not allowed(match.users, action):
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="action_not_allowed",
+                    translation_placeholders={"user": users_label(match.users)},
+                )
+            self._code_guard = register_success(self._code_guard)
+            return users_label(match.users)
+        if match.blocked:
+            self.notifier.send_system(
+                "Hauswacht: gesperrter PIN",
+                "Ein gesperrter oder abgelaufener PIN wurde verwendet: "
+                f"{users_label(match.blocked)}.",
+            )
         result = register_failure(self._code_guard, now)
         self._code_guard = result.state
         failures = result.state.failures
@@ -448,28 +473,77 @@ class HauswachtRuntime:
             )
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
 
-    @callback
-    def disarm(self, code: str | None) -> None:
+    async def async_actor_for_user(self, user_id: str | None, action: Action) -> str | None:
+        """Wer bedient ohne PIN (Dashboard-Knopf, Push)? Verknüpfter Benutzer mit Rechten,
+        sonst der Name des Home-Assistant-Kontos (dann ist alles erlaubt, wie bisher)."""
+        linked = find_by_ha_user(self.users, user_id)
+        if linked is not None:
+            if not linked.valid_at(dt_util.utcnow().timestamp()) or not linked.may(action):
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="action_not_allowed",
+                    translation_placeholders={"user": linked.name},
+                )
+            return linked.name
+        user = await self.hass.auth.async_get_user(user_id) if user_id else None
+        return user.name if user is not None else None
+
+    async def async_authorize(
+        self, *, code: str | None, user_id: str | None, action: Action, require_code: bool
+    ) -> str | None:
+        """PIN prüfen, wenn nötig – sonst über das Home-Assistant-Konto zuordnen."""
+        if require_code and self.has_codes:
+            return await self.async_check_code(code, action)
+        return await self.async_actor_for_user(user_id, action)
+
+    def _send_duress_alert(self, actor: str, action: Action) -> None:
+        """Heimlicher Notruf: nur Push an die eigens festgelegten Empfänger, sonst nichts
+        Sichtbares (kein Logbuch-Text, keine Benachrichtigung in Home Assistant)."""
+        targets = [t for t in self.entry.options.get(OPT_DURESS_NOTIFY, []) if isinstance(t, str)]
+        what = {
+            Action.ARM: "scharf geschaltet",
+            Action.DISARM: "unscharf geschaltet",
+            Action.END_ALARM: "einen Alarm beendet",
+        }[action]
+        self.notifier.send(
+            targets,
+            "BEDROHUNG – Hauswacht",
+            f"{actor} hat mit dem Bedrohungs-PIN {what}. Möglicherweise Gefahr – bitte "
+            "unauffällig reagieren.",
+            test_mode=self.ctx.test_mode,
+        )
+
+    def _action_for_disarm(self) -> Action:
+        if self.ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
+            return Action.END_ALARM
+        return Action.DISARM
+
+    async def async_disarm(self, code: str | None, user_id: str | None = None) -> None:
         """Unscharf schalten; während eines Alarms nur den Alarm beenden (bleibt scharf)."""
-        self.verify_code(code)
+        actor = await self.async_authorize(
+            code=code, user_id=user_id, action=self._action_for_disarm(), require_code=True
+        )
+        self.disarm_trusted(changed_by=actor)
+
+    @callback
+    def disarm_trusted(self, changed_by: str | None = None) -> None:
+        """Wie ``async_disarm`` ohne PIN – für eigene Automatik und bereits Geprüftes."""
+        self.changed_by = changed_by
         self._dispatch(self._disarm_request())
 
     @callback
-    def disarm_trusted(self) -> None:
-        """Wie ``disarm`` ohne PIN – nur für eigene Automatik und den Push-Knopf."""
-        self._dispatch(self._disarm_request())
-
-    @callback
-    def disarm_now(self) -> None:
+    def disarm_now(self, changed_by: str | None = None) -> None:
         """Sofort unscharf, auch während eines Alarms (erst Alarm beenden, dann unscharf)."""
+        self.changed_by = changed_by
         if self.ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
             self._dispatch(self._disarm_request())
         self._dispatch(DisarmRequested(code_valid=True))
 
     @callback
-    def end_alarm(self) -> None:
+    def end_alarm(self, changed_by: str | None = None) -> None:
         """Nur den Alarm beenden; außerhalb eines Alarms passiert nichts."""
         if self.ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
+            self.changed_by = changed_by
             self._dispatch(self._disarm_request())
 
     def _disarm_request(self) -> DisarmRequested:
@@ -550,17 +624,23 @@ class HauswachtRuntime:
             return
         targets = self._alarm_targets()
         test_mode = self.ctx.test_mode
-        _LOGGER.warning("Push-Knopf durch %s (Zustand %s)", user.name, self.ctx.state.value)
-        self._acting_user = user.name
         try:
-            self.disarm_trusted()
-        finally:
-            self._acting_user = None
+            actor = await self.async_actor_for_user(user.id, self._action_for_disarm())
+        except ServiceValidationError:
+            self.notifier.send(
+                targets,
+                "Hauswacht: nicht erlaubt",
+                f"Push-Knopf von {user.name}: dafür fehlt die Berechtigung.",
+                test_mode=test_mode,
+            )
+            return
+        _LOGGER.warning("Push-Knopf durch %s (Zustand %s)", actor, self.ctx.state.value)
+        self.disarm_trusted(changed_by=actor)
         if self.ctx.state is AlarmState.DISARMED:
             self.notifier.send(
                 targets,
                 "Hauswacht: unscharf",
-                f"Unscharf geschaltet über den Push-Knopf von {user.name}.",
+                f"Unscharf geschaltet über den Push-Knopf von {actor}.",
                 test_mode=test_mode,
             )
 
@@ -945,7 +1025,7 @@ class HauswachtRuntime:
     @callback
     def _on_acknowledged(self, effect: AlarmAcknowledged) -> None:
         name = self.profile_name(effect.profile_id)
-        by = f" von {self._acting_user}" if self._acting_user else ""
+        by = f" von {self.changed_by}" if self.changed_by else ""
         message = f"Alarm beendet{by}. Profil {name} bleibt scharf."
         if effect.bypassed_until_closed:
             names = ", ".join(
