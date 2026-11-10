@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.14.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.15.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -274,6 +274,22 @@ Kleinigkeiten lassen sich ohne die Integration ändern. Die Entitäten stehen am
 - Name, Symbol, Bedienfeld-Knopf, Zonen, Sirenen, Benachrichtigungsziele, Personen und
   Wochentage sowie das **Entfernen** einer Uhrzeit gehen nur in der Integration.
 - Tipp: Eine Dashboard-Seite dafür nur für Administratoren sichtbar machen.
+
+### Karte „Hauswacht Einstellungen“
+
+Hauswacht bringt eine fertige Karte mit allen diesen Einstellungen mit. Sie wird automatisch
+geladen – kein Eintrag unter „Ressourcen“ nötig.
+
+Dashboard bearbeiten → **Karte hinzufügen** → **„Hauswacht Einstellungen“** – oder in YAML:
+
+```yaml
+type: custom:hauswacht-einstellungen-card
+title: Einstellungen   # optional
+```
+
+Die Karte findet die Einstellungs-Entitäten selbst; umbenannte Entitäten stören nicht. Im
+scharfen Zustand sind alle Einstellungen gesperrt. Nach einem Update von Hauswacht ggf. die
+Seite neu laden (in der App: Einstellungen → Frontend-Cache zurücksetzen).
 
 ## Heimkehr-Beobachtung
 

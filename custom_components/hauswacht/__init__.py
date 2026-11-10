@@ -35,6 +35,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     entry.async_on_unload(runtime.async_stop)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    from homeassistant.loader import async_get_integration  # noqa: PLC0415
+
+    from .frontend import async_register_card  # noqa: PLC0415
+
+    integration = await async_get_integration(hass, entry.domain)
+    await async_register_card(hass, str(integration.version or "0"))
     return True
 
 

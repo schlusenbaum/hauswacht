@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-10
+
+### Hinzugefügt
+- Dashboard-Karte **„Hauswacht Einstellungen“** (`custom:hauswacht-einstellungen-card`):
+  alle Profil-Einstellungen aus 0.14.0 in einer Karte. Wird von der Integration automatisch
+  geladen und erscheint im Kartenauswahl-Dialog.
+
 ## [0.14.0] - 2026-11-10
 
 ### Hinzugefügt
