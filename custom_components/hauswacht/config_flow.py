@@ -788,6 +788,83 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
         return self.async_show_form(step_id="infrastructure", data_schema=schema)
 
+    async def _validate_user(
+        self, name: str, pins: tuple[str, str], user_id: str | None, stored_all: dict[str, Any]
+    ) -> tuple[dict[str, str], str]:
+        new_pin, new_duress = pins
+        errors: dict[str, str] = {}
+        conflict = ""
+        if not name:
+            errors["name"] = "user_name_required"
+        elif any(
+            str(d.get("name", "")).casefold() == name.casefold()
+            for uid, d in stored_all.items()
+            if uid != user_id
+        ):
+            errors["name"] = "user_name_taken"
+        if new_pin and not is_valid_pin_format(new_pin):
+            errors["new_pin"] = "invalid_pin"
+        if new_duress and not is_valid_pin_format(new_duress):
+            errors["new_duress_pin"] = "invalid_pin"
+        if new_pin and new_duress and new_pin == new_duress:
+            errors["new_duress_pin"] = "duress_equals_pin"
+        users = parse_users(self.config_entry.options)
+        if not errors and new_pin:
+            found = await self.hass.async_add_executor_job(
+                lambda: pin_conflicts(new_pin, users, kind="pin")
+            )
+            if found:
+                errors["new_pin"] = "pin_is_duress"
+                conflict = ", ".join(found)
+        if not errors and new_duress:
+            found = await self.hass.async_add_executor_job(
+                lambda: pin_conflicts(new_duress, users, kind="duress", exclude=user_id)
+            )
+            if found:
+                errors["new_duress_pin"] = "duress_conflict"
+                conflict = ", ".join(found)
+        return errors, conflict
+
+    async def _user_schema(self, current: dict[str, Any]) -> vol.Schema:
+        ha_user = current.get("ha_user")
+        ha_desc = {"suggested_value": ha_user} if ha_user else {}
+        return vol.Schema(
+            {
+                vol.Required("name", default=current.get("name", "")): TextSelector(),
+                vol.Optional("new_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_pin", default=False): BooleanSelector(),
+                vol.Optional("new_duress_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_duress_pin", default=False): BooleanSelector(),
+                vol.Optional("active", default=bool(current.get("active", True))): (
+                    BooleanSelector()
+                ),
+                vol.Optional("can_arm", default=bool(current.get("can_arm", True))): (
+                    BooleanSelector()
+                ),
+                vol.Optional("can_disarm", default=bool(current.get("can_disarm", True))): (
+                    BooleanSelector()
+                ),
+                vol.Optional(
+                    "can_end_alarm", default=bool(current.get("can_end_alarm", True))
+                ): BooleanSelector(),
+                vol.Optional("ha_user", description=ha_desc): SelectSelector(
+                    SelectSelectorConfig(
+                        options=await self._ha_user_options(), mode=SelectSelectorMode.DROPDOWN
+                    )
+                ),
+                vol.Optional(
+                    "valid_from", description=_suggested_local(current.get("valid_from"))
+                ): DateTimeSelector(),
+                vol.Optional(
+                    "valid_until", description=_suggested_local(current.get("valid_until"))
+                ): DateTimeSelector(),
+            }
+        )
+
 
 def _automation_schema(auto: AutoConfig) -> vol.Schema:
     """Automatik eines Profils. Leere Felder bedeuten: diese Automatik ist aus."""
@@ -876,83 +953,6 @@ def _zone_selector(zones: dict[str, Zone], *, multiple: bool = False) -> SelectS
             mode=SelectSelectorMode.LIST,
         )
     )
-
-    async def _validate_user(
-        self, name: str, pins: tuple[str, str], user_id: str | None, stored_all: dict[str, Any]
-    ) -> tuple[dict[str, str], str]:
-        new_pin, new_duress = pins
-        errors: dict[str, str] = {}
-        conflict = ""
-        if not name:
-            errors["name"] = "user_name_required"
-        elif any(
-            str(d.get("name", "")).casefold() == name.casefold()
-            for uid, d in stored_all.items()
-            if uid != user_id
-        ):
-            errors["name"] = "user_name_taken"
-        if new_pin and not is_valid_pin_format(new_pin):
-            errors["new_pin"] = "invalid_pin"
-        if new_duress and not is_valid_pin_format(new_duress):
-            errors["new_duress_pin"] = "invalid_pin"
-        if new_pin and new_duress and new_pin == new_duress:
-            errors["new_duress_pin"] = "duress_equals_pin"
-        users = parse_users(self.config_entry.options)
-        if not errors and new_pin:
-            found = await self.hass.async_add_executor_job(
-                lambda: pin_conflicts(new_pin, users, kind="pin")
-            )
-            if found:
-                errors["new_pin"] = "pin_is_duress"
-                conflict = ", ".join(found)
-        if not errors and new_duress:
-            found = await self.hass.async_add_executor_job(
-                lambda: pin_conflicts(new_duress, users, kind="duress", exclude=user_id)
-            )
-            if found:
-                errors["new_duress_pin"] = "duress_conflict"
-                conflict = ", ".join(found)
-        return errors, conflict
-
-    async def _user_schema(self, current: dict[str, Any]) -> vol.Schema:
-        ha_user = current.get("ha_user")
-        ha_desc = {"suggested_value": ha_user} if ha_user else {}
-        return vol.Schema(
-            {
-                vol.Required("name", default=current.get("name", "")): TextSelector(),
-                vol.Optional("new_pin"): TextSelector(
-                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                ),
-                vol.Optional("remove_pin", default=False): BooleanSelector(),
-                vol.Optional("new_duress_pin"): TextSelector(
-                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                ),
-                vol.Optional("remove_duress_pin", default=False): BooleanSelector(),
-                vol.Optional("active", default=bool(current.get("active", True))): (
-                    BooleanSelector()
-                ),
-                vol.Optional("can_arm", default=bool(current.get("can_arm", True))): (
-                    BooleanSelector()
-                ),
-                vol.Optional("can_disarm", default=bool(current.get("can_disarm", True))): (
-                    BooleanSelector()
-                ),
-                vol.Optional(
-                    "can_end_alarm", default=bool(current.get("can_end_alarm", True))
-                ): BooleanSelector(),
-                vol.Optional("ha_user", description=ha_desc): SelectSelector(
-                    SelectSelectorConfig(
-                        options=await self._ha_user_options(), mode=SelectSelectorMode.DROPDOWN
-                    )
-                ),
-                vol.Optional(
-                    "valid_from", description=_suggested_local(current.get("valid_from"))
-                ): DateTimeSelector(),
-                vol.Optional(
-                    "valid_until", description=_suggested_local(current.get("valid_until"))
-                ): DateTimeSelector(),
-            }
-        )
 
 
 def _to_iso(value: Any) -> str | None:
