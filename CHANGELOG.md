@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-10
+
+### Hinzugefügt
+- **Benutzer und PINs** (Konfigurieren → Benutzer und PINs): Name, eigener PIN, Rechte
+  (scharf, unscharf, Alarm beenden), aktiv/gesperrt, Zuordnung zu einem Home-Assistant-Konto.
+- **Gemeinsame PINs** erlaubt; Anzeige „gemeinsamer PIN (…)“, erlaubt, wenn einer darf.
+- **Gäste-Zeitraum** („gültig von/bis“).
+- **Bedrohungs-PIN** mit heimlichem Notruf an eigene Empfänger.
+- „Geändert von“ am Bedienfeld (Benutzer, gemeinsamer PIN, Home-Assistant-Konto oder
+  „Automatik“), auch in den Push-Nachrichten.
+
+### Geändert
+- PIN-Prüfung läuft im Hintergrund (kein kurzes Hängen von Home Assistant).
+- Der bisherige einzelne PIN gilt als Benutzer „Hauptbenutzer“.
+
 ## [0.15.1] - 2026-11-10
 
 ### Behoben

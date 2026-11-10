@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.15.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.16.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -384,6 +384,45 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
   Fehlversuchen jeweils doppelt so lange (höchstens 15 Minuten). Ab der 3. falschen Eingabe
   geht eine Systemmeldung an die eingetragenen Empfänger.
 - Ohne PIN darf die Anlage nicht für Sprachassistenten (z. B. Alexa) freigegeben werden.
+- Der PIN unter **Konfigurieren → PIN** gilt als Benutzer „Hauptbenutzer“.
+
+## Benutzer und PINs
+
+**Konfigurieren → Benutzer und PINs.** Jede Person bekommt einen Benutzer:
+
+| Feld | Bedeutung |
+|---|---|
+| Name | erscheint als „geändert von“ am Bedienfeld, im Logbuch und in Push-Nachrichten |
+| PIN | 4–8 Ziffern, nur als Hash gespeichert |
+| Bedrohungs-PIN | siehe unten |
+| Aktiv | aus = PIN gesperrt, ohne ihn zu löschen |
+| Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte |
+| Home-Assistant-Konto | ordnet Push-Knopf und Dashboard-Knöpfe diesem Benutzer zu (mit seinen Rechten) |
+| Gültig von / bis | für Gäste: außerhalb dieser Zeit ist der PIN gesperrt |
+
+- **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben. Dann steht dort
+  „gemeinsamer PIN (Christian, Petra)“. Eine Aktion ist erlaubt, wenn **mindestens einer**
+  dieser Benutzer sie darf.
+- **Gesperrter oder abgelaufener PIN:** wird abgelehnt wie ein falscher PIN; zusätzlich geht
+  eine Systemmeldung an die Empfänger der Systemmeldungen.
+- **Ohne PIN** (Push-Knopf, Dashboard-Knöpfe): Ist das Home-Assistant-Konto einem Benutzer
+  zugeordnet, gelten dessen Name und Rechte; sonst erscheint der Name des Kontos und alles ist
+  erlaubt.
+- Automatik (Uhrzeit, Anwesenheit) erscheint als „Automatik“.
+
+### Bedrohungs-PIN
+
+Wer gezwungen wird, die Anlage auszuschalten, gibt seinen **Bedrohungs-PIN** ein:
+
+- Die Anlage schaltet **ganz normal**; Bedienfeld, Logbuch und Dashboard sehen **unauffällig**
+  aus („geändert von Petra“).
+- Heimlich geht ein Notruf mit höchster Priorität an die **Empfänger Bedrohungsalarm**
+  (Konfigurieren → Benachrichtigungen). Keine Sirene, keine sichtbare Meldung in Home Assistant.
+- Der Bedrohungs-PIN wirkt auch, wenn der Benutzer das Recht sonst nicht hätte.
+- Er darf keinem normalen PIN und keinem anderen Bedrohungs-PIN gleichen; das wird beim
+  Speichern geprüft.
+- **Unbedingt Empfänger eintragen** – ohne Empfänger hat der Bedrohungs-PIN keine Wirkung außer
+  dem normalen Schalten.
 
 ## Verhalten nach einem Neustart
 
