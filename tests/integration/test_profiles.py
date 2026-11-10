@@ -74,7 +74,7 @@ async def test_migration_from_fixed_profiles(hass: HomeAssistant) -> None:
     old.add_to_hass(hass)
     assert await hass.config_entries.async_setup(old.entry_id)
     await hass.async_block_till_done()
-    assert old.version == 2
+    assert old.version == 3
     assert list(old.options["profiles"]) == ["home", "night", "away", "vacation", "custom"]
     assert old.options["profiles"]["night"]["name"] == "Nacht"
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)

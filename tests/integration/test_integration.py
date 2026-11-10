@@ -17,6 +17,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
     async_capture_events,
     async_fire_time_changed,
     async_mock_service,
@@ -245,8 +246,10 @@ async def test_migration_turns_old_pin_into_user(hass: HomeAssistant) -> None:
     from custom_components.hauswacht.core.pin import hash_pin  # noqa: PLC0415
 
     hashed = hash_pin("2468")
-    entry = make_entry({"pin_salt": hashed.salt, "pin_digest": hashed.digest})
-    entry.version = 2
+    old = make_entry({"pin_salt": hashed.salt, "pin_digest": hashed.digest})
+    entry = MockConfigEntry(
+        domain=old.domain, title=old.title, data={}, options=dict(old.options), version=2
+    )
     await setup_entry(hass, entry)
     assert entry.version == 3
     assert "pin_salt" not in entry.options
