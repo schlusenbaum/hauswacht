@@ -195,3 +195,19 @@ def pin_conflicts(
         ):
             conflicts.append(user.name)
     return conflicts
+
+
+def migrate_legacy_pin(options: Mapping[str, Any]) -> dict[str, Any]:
+    """Optionen ab Version 3: Der alte einzelne PIN wird zum Benutzer "Hauptbenutzer"."""
+    new = dict(options)
+    salt = new.pop("pin_salt", None)
+    digest = new.pop("pin_digest", None)
+    if not (isinstance(salt, str) and isinstance(digest, str) and salt and digest):
+        return new
+    users = dict(new.get("users", {})) if isinstance(new.get("users"), Mapping) else {}
+    user_id = "hauptbenutzer"
+    while user_id in users:
+        user_id += "_alt"
+    users[user_id] = {"name": LEGACY_USER_NAME, "pin_salt": salt, "pin_digest": digest}
+    new["users"] = users
+    return new

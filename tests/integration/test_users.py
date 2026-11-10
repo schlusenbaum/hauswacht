@@ -200,3 +200,27 @@ async def test_automation_shows_automatik(hass: HomeAssistant) -> None:
     entry.runtime_data.arm("night", changed_by="Automatik")
     await hass.async_block_till_done()
     assert _panel(hass).attributes["changed_by"] == "Automatik"
+
+
+async def test_name_suggests_ha_users_and_links(
+    hass: HomeAssistant, hass_admin_user: MockUser
+) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "users"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "user_add"}
+    )
+    name_selector = flow["data_schema"].schema["name"]
+    assert hass_admin_user.name in name_selector.config["options"]
+    assert name_selector.config["custom_value"] is True
+    result = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": hass_admin_user.name}
+    )
+    await hass.async_block_till_done()
+    assert result["type"] == "create_entry"
+    stored = next(iter(entry.options["users"].values()))
+    assert stored["ha_user"] == hass_admin_user.id

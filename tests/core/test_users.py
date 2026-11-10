@@ -12,6 +12,7 @@ from custom_components.hauswacht.core.users import (
     has_codes,
     label,
     match_pin,
+    migrate_legacy_pin,
     parse_users,
     pin_conflicts,
 )
@@ -129,3 +130,16 @@ def test_parse_users_with_legacy_pin() -> None:
     assert petra.valid_until is not None
     assert petra.ha_user == "ha-p"
     assert parse_users({}) == ()
+
+
+def test_migrate_legacy_pin() -> None:
+    new = migrate_legacy_pin({"pin_salt": "s", "pin_digest": "d", "users": {"p": {"name": "P"}}})
+    assert "pin_salt" not in new
+    assert new["users"]["hauptbenutzer"] == {
+        "name": LEGACY_USER_NAME,
+        "pin_salt": "s",
+        "pin_digest": "d",
+    }
+    assert new["users"]["p"] == {"name": "P"}
+    assert LEGACY_USER_NAME in {u.name for u in parse_users(new)}
+    assert migrate_legacy_pin({"x": 1}) == {"x": 1}

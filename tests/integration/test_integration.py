@@ -224,7 +224,7 @@ async def test_reload_while_armed_disarms(hass: HomeAssistant) -> None:
 # --- Optionen ---------------------------------------------------------------
 
 
-async def test_options_flow_sets_pin(hass: HomeAssistant) -> None:
+async def test_options_flow_pin_rules(hass: HomeAssistant) -> None:
     entry = make_entry()
     await setup_entry(hass, entry)
     result = await hass.config_entries.options.async_init(entry.entry_id)
@@ -232,16 +232,25 @@ async def test_options_flow_sets_pin(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"next_step_id": "code"}
     )
+    assert "new_pin" not in result["data_schema"].schema  # PINs gehören zu den Benutzern
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"new_pin": "12a"}
-    )
-    assert result["errors"] == {"new_pin": "invalid_pin"}
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"new_pin": "2468"}
+        result["flow_id"], {"code_arm_required": True}
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert "2468" not in str(entry.options)
+    assert entry.options["code_arm_required"] is True
+
+
+async def test_migration_turns_old_pin_into_user(hass: HomeAssistant) -> None:
+    from custom_components.hauswacht.core.pin import hash_pin  # noqa: PLC0415
+
+    hashed = hash_pin("2468")
+    entry = make_entry({"pin_salt": hashed.salt, "pin_digest": hashed.digest})
+    entry.version = 2
+    await setup_entry(hass, entry)
+    assert entry.version == 3
+    assert "pin_salt" not in entry.options
+    assert entry.options["users"]["hauptbenutzer"]["name"] == "Hauptbenutzer"
     state = hass.states.get(PANEL)
     assert state is not None
     assert state.attributes["code_format"] == "number"

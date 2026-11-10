@@ -46,8 +46,6 @@ from .const import (
     OPT_INFRASTRUCTURE,
     OPT_NOTIFY_IN_TEST_MODE,
     OPT_NOTIFY_SYSTEM,
-    OPT_PIN_DIGEST,
-    OPT_PIN_SALT,
     OPT_PROFILES,
     OPT_PUSH_DISARM,
     OPT_SENSOR_ROLES,
@@ -97,7 +95,7 @@ SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 
 class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 3
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
@@ -155,34 +153,18 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """PIN-Regeln. Die PINs selbst gehören zu den Benutzern (Menüpunkt "Benutzer und PINs")."""
         options = dict(self.config_entry.options)
-        errors: dict[str, str] = {}
         if user_input is not None:
-            new_pin = str(user_input.get("new_pin") or "").strip()
-            if user_input.get("remove_pin"):
-                options.pop(OPT_PIN_SALT, None)
-                options.pop(OPT_PIN_DIGEST, None)
-            elif new_pin:
-                if not is_valid_pin_format(new_pin):
-                    errors["new_pin"] = "invalid_pin"
-                else:
-                    stored = hash_pin(new_pin)
-                    options[OPT_PIN_SALT] = stored.salt
-                    options[OPT_PIN_DIGEST] = stored.digest
             options[OPT_CODE_ARM_REQUIRED] = bool(user_input.get(OPT_CODE_ARM_REQUIRED, False))
             options[OPT_END_ALARM_WITHOUT_PIN] = bool(
                 user_input.get(OPT_END_ALARM_WITHOUT_PIN, False)
             )
-            if not errors:
-                return self.async_create_entry(data=options)
-
-        has_pin = bool(options.get(OPT_PIN_DIGEST))
+            return self.async_create_entry(data=options)
+        users = parse_users(options)
+        with_pin = sorted(u.name for u in users if u.pin is not None)
         schema = vol.Schema(
             {
-                vol.Optional("new_pin"): TextSelector(
-                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                ),
-                vol.Optional("remove_pin", default=False): BooleanSelector(),
                 vol.Optional(
                     OPT_CODE_ARM_REQUIRED,
                     default=bool(options.get(OPT_CODE_ARM_REQUIRED, False)),
@@ -196,8 +178,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="code",
             data_schema=schema,
-            errors=errors,
-            description_placeholders={"pin_status": "●●●●" if has_pin else "–"},
+            description_placeholders={"pin_users": ", ".join(with_pin) or "–"},
         )
 
     # --- Profile ----------------------------------------------------------
@@ -675,6 +656,13 @@ class HauswachtOptionsFlow(OptionsFlow):
             data_schema=vol.Schema({vol.Required("user"): self._user_selector()}),
         )
 
+    async def _ha_user_by_name(self, name: str) -> str | None:
+        """Wurde ein Home-Assistant-Benutzer als Name gewählt, wird er automatisch verknüpft."""
+        for option in await self._ha_user_options():
+            if option["label"].casefold() == name.casefold():
+                return option["value"]
+        return None
+
     async def _ha_user_options(self) -> list[SelectOptionDict]:
         users = await self.hass.auth.async_get_users()
         return [
@@ -709,7 +697,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "can_arm": bool(user_input.get("can_arm", True)),
                         "can_disarm": bool(user_input.get("can_disarm", True)),
                         "can_end_alarm": bool(user_input.get("can_end_alarm", True)),
-                        "ha_user": user_input.get("ha_user") or None,
+                        "ha_user": user_input.get("ha_user") or await self._ha_user_by_name(name),
                         "valid_from": _to_iso(user_input.get("valid_from")),
                         "valid_until": _to_iso(user_input.get("valid_until")),
                     }
@@ -828,9 +816,28 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def _user_schema(self, current: dict[str, Any]) -> vol.Schema:
         ha_user = current.get("ha_user")
         ha_desc = {"suggested_value": ha_user} if ha_user else {}
+        # Namen: Vorschläge aus den Home-Assistant-Benutzern, freie Namen erlaubt
+        taken = {
+            str(d.get("name", "")).casefold()
+            for uid, d in self.config_entry.options.get(OPT_USERS, {}).items()
+            if uid != getattr(self, "_user_id", None)
+        }
+        name_options = [
+            o["label"] for o in await self._ha_user_options() if o["label"].casefold() not in taken
+        ]
+        current_name = current.get("name")
+        if current_name and current_name not in name_options:
+            name_options.insert(0, current_name)
+        name_key = (
+            vol.Required("name", default=current_name) if current_name else vol.Required("name")
+        )
         return vol.Schema(
             {
-                vol.Required("name", default=current.get("name", "")): TextSelector(),
+                name_key: SelectSelector(
+                    SelectSelectorConfig(
+                        options=name_options, custom_value=True, mode=SelectSelectorMode.DROPDOWN
+                    )
+                ),
                 vol.Optional("new_pin"): TextSelector(
                     TextSelectorConfig(type=TextSelectorType.PASSWORD)
                 ),
