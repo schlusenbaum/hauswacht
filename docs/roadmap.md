@@ -25,7 +25,7 @@
 | 0.20.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
 | 0.21.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
-| 1.x | Keypad, RFID/NFC, weitere Automatik-Bedingungen | – |
+| 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten | – |
 
 ## Entscheidungen
 
