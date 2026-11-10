@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-11-10
+
+### Hinzugefügt
+- **Master-PIN** unter PIN-Regeln: einfacher PIN ohne eigene Benutzer (intern Benutzer
+  „Master-PIN“ mit allen Rechten).
+- Option **„Dashboard-Knöpfe trotz PIN erlauben“**: Der PIN schützt dann nur Bedienfeld und
+  Sprachassistenten.
+
 ## [0.16.1] - 2026-11-10
 
 ### Geändert

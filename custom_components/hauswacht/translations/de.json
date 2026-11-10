@@ -29,10 +29,13 @@
       },
       "code": {
         "title": "PIN-Regeln",
-        "description": "PINs gehören zu den Benutzern (Menüpunkt „Benutzer und PINs“). Benutzer mit PIN: {pin_users}.\n\nSobald es einen PIN gibt, verlangt das Bedienfeld ihn zum Unscharfschalten. Ohne PIN darf die Anlage nicht für Sprachassistenten freigegeben werden. Mit „Alarm ohne PIN beenden“ funktioniert der Knopf „Alarm beenden“ auch mit PIN – Unscharfschalten verlangt weiter den PIN.",
+        "description": "Benutzer mit PIN: {pin_users}.\n\n**Master-PIN:** ein einfacher PIN ohne eigene Benutzer, z. B. damit Sprachassistenten (Alexa) nur mit PIN unscharf schalten. Er erscheint auch in der Benutzerliste als „Master-PIN“.\n\nSobald es einen PIN gibt, verlangt das Bedienfeld ihn zum Unscharfschalten. Mit „Dashboard-Knöpfe trotz PIN erlauben“ funktionieren „Unscharf schalten“ und „Alarm beenden“ auf dem Dashboard weiter – dort kommen ohnehin nur angemeldete Home-Assistant-Benutzer dran.",
         "data": {
+          "master_pin": "Master-PIN (4–8 Ziffern, optional)",
+          "remove_master_pin": "Master-PIN entfernen",
           "code_arm_required": "PIN auch zum Scharfschalten verlangen",
-          "end_alarm_without_pin": "Alarm ohne PIN beenden (Sirene aus, Anlage bleibt scharf)"
+          "end_alarm_without_pin": "Alarm ohne PIN beenden (Sirene aus, Anlage bleibt scharf)",
+          "buttons_without_pin": "Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)"
         }
       },
       "profile_settings": {

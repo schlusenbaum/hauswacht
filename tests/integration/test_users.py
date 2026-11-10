@@ -224,3 +224,46 @@ async def test_name_suggests_ha_users_and_links(
     assert result["type"] == "create_entry"
     stored = next(iter(entry.options["users"].values()))
     assert stored["ha_user"] == hass_admin_user.id
+
+
+async def _pin_rules(hass: HomeAssistant, entry: Any, data: dict) -> None:
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "code"}
+    )
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], data)
+    await hass.async_block_till_done()
+    assert result["type"] == "create_entry"
+
+
+async def test_master_pin(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    await _pin_rules(hass, entry, {"master_pin": "8642"})
+    assert entry.options["users"]["master"]["name"] == "Master-PIN"
+    assert _panel(hass).attributes["code_format"] == "number"
+    await _arm(hass)
+    with pytest.raises(ServiceValidationError):
+        await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code="8642")
+    assert _panel(hass).attributes["changed_by"] == "Master-PIN"
+    # entfernen
+    await _pin_rules(hass, entry, {"remove_master_pin": True})
+    assert "master" not in entry.options["users"]
+    assert _panel(hass).attributes.get("code_format") is None
+
+
+async def test_buttons_allowed_despite_pin(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    await _pin_rules(hass, entry, {"master_pin": "8642", "buttons_without_pin": True})
+    disarm_now = hass.states.get("button.hauswacht_disarm_now")
+    assert disarm_now is not None
+    assert disarm_now.state != "unavailable"
+    await _arm(hass)
+    set_sensor(hass, WINDOW, "on")
+    await hass.async_block_till_done()
+    await _service(hass, "button", "press", entity_id="button.hauswacht_end_alarm")
+    assert _panel(hass).state == AlarmControlPanelState.ARMED_NIGHT
+    await _service(hass, "button", "press", entity_id="button.hauswacht_disarm_now")
+    assert _panel(hass).state == AlarmControlPanelState.DISARMED

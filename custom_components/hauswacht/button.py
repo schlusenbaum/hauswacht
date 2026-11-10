@@ -68,7 +68,7 @@ class HauswachtArmButton(HauswachtEntity, ButtonEntity):
         self._attr_icon = description.icon
 
     async def async_press(self) -> None:
-        if self.runtime.code_arm_required:
+        if self.runtime.button_blocked(Action.ARM):
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code"
             )
@@ -87,10 +87,10 @@ class HauswachtDisarmButton(HauswachtEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
-        return not self.runtime.has_codes
+        return not self.runtime.button_blocked(Action.DISARM)
 
     async def async_press(self) -> None:
-        if self.runtime.has_codes:
+        if self.runtime.button_blocked(Action.DISARM):
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code_disarm"
             )
@@ -109,10 +109,10 @@ class HauswachtEndAlarmButton(HauswachtEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
-        return not self.runtime.end_alarm_needs_code
+        return not self.runtime.button_blocked(Action.END_ALARM)
 
     async def async_press(self) -> None:
-        if self.runtime.end_alarm_needs_code:
+        if self.runtime.button_blocked(Action.END_ALARM):
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="button_needs_code_disarm"
             )
