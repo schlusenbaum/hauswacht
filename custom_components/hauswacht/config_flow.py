@@ -37,7 +37,10 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
+    MASTER_USER_ID,
+    MASTER_USER_NAME,
     NAME,
+    OPT_BUTTONS_WITHOUT_PIN,
     OPT_CODE_ARM_REQUIRED,
     OPT_DURESS_NOTIFY,
     OPT_END_ALARM_WITHOUT_PIN,
@@ -153,18 +156,49 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """PIN-Regeln. Die PINs selbst gehören zu den Benutzern (Menüpunkt "Benutzer und PINs")."""
+        """PIN-Regeln und optionaler Master-PIN (intern ein Benutzer mit allen Rechten)."""
         options = dict(self.config_entry.options)
+        errors: dict[str, str] = {}
+        placeholders: dict[str, str] = {"conflict": ""}
         if user_input is not None:
-            options[OPT_CODE_ARM_REQUIRED] = bool(user_input.get(OPT_CODE_ARM_REQUIRED, False))
-            options[OPT_END_ALARM_WITHOUT_PIN] = bool(
-                user_input.get(OPT_END_ALARM_WITHOUT_PIN, False)
-            )
-            return self.async_create_entry(data=options)
+            master = str(user_input.get("master_pin") or "").strip()
+            users_opt: dict[str, Any] = dict(options.get(OPT_USERS, {}))
+            if user_input.get("remove_master_pin"):
+                users_opt.pop(MASTER_USER_ID, None)
+            elif master:
+                if not is_valid_pin_format(master):
+                    errors["master_pin"] = "invalid_pin"
+                else:
+                    users = parse_users(options)
+                    found = await self.hass.async_add_executor_job(
+                        lambda: pin_conflicts(master, users, kind="pin")
+                    )
+                    if found:
+                        errors["master_pin"] = "pin_is_duress"
+                        placeholders["conflict"] = ", ".join(found)
+                    else:
+                        hashed = await self.hass.async_add_executor_job(hash_pin, master)
+                        users_opt[MASTER_USER_ID] = {
+                            **users_opt.get(MASTER_USER_ID, {}),
+                            "name": MASTER_USER_NAME,
+                            "pin_salt": hashed.salt,
+                            "pin_digest": hashed.digest,
+                        }
+            if not errors:
+                options[OPT_USERS] = users_opt
+                for key in (OPT_CODE_ARM_REQUIRED, OPT_END_ALARM_WITHOUT_PIN):
+                    options[key] = bool(user_input.get(key, False))
+                options[OPT_BUTTONS_WITHOUT_PIN] = bool(user_input.get(OPT_BUTTONS_WITHOUT_PIN))
+                return self.async_create_entry(data=options)
         users = parse_users(options)
         with_pin = sorted(u.name for u in users if u.pin is not None)
+        placeholders["pin_users"] = ", ".join(with_pin) or "–"
         schema = vol.Schema(
             {
+                vol.Optional("master_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_master_pin", default=False): BooleanSelector(),
                 vol.Optional(
                     OPT_CODE_ARM_REQUIRED,
                     default=bool(options.get(OPT_CODE_ARM_REQUIRED, False)),
@@ -173,12 +207,14 @@ class HauswachtOptionsFlow(OptionsFlow):
                     OPT_END_ALARM_WITHOUT_PIN,
                     default=bool(options.get(OPT_END_ALARM_WITHOUT_PIN, False)),
                 ): BooleanSelector(),
+                vol.Optional(
+                    OPT_BUTTONS_WITHOUT_PIN,
+                    default=bool(options.get(OPT_BUTTONS_WITHOUT_PIN, False)),
+                ): BooleanSelector(),
             }
         )
         return self.async_show_form(
-            step_id="code",
-            data_schema=schema,
-            description_placeholders={"pin_users": ", ".join(with_pin) or "–"},
+            step_id="code", data_schema=schema, errors=errors, description_placeholders=placeholders
         )
 
     # --- Profile ----------------------------------------------------------

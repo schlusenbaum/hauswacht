@@ -29,10 +29,13 @@
       },
       "code": {
         "title": "PIN rules",
-        "description": "PINs belong to users (menu “Users and PINs”). Users with a PIN: {pin_users}.\n\nAs soon as a PIN exists, the panel requires it to disarm. Without a PIN the system must not be exposed to voice assistants. With “End alarm without PIN”, the “End alarm” button works even with a PIN – disarming still requires the PIN.",
+        "description": "Users with a PIN: {pin_users}.\n\n**Master PIN:** a simple PIN without separate users, e.g. so voice assistants (Alexa) can only disarm with a PIN. It also appears in the user list as “Master-PIN”.\n\nAs soon as a PIN exists, the panel requires it to disarm. With “Allow dashboard buttons despite PIN”, the dashboard buttons “Disarm now” and “End alarm” keep working – only logged-in Home Assistant users can reach them anyway.",
         "data": {
+          "master_pin": "Master PIN (4–8 digits, optional)",
+          "remove_master_pin": "Remove master PIN",
           "code_arm_required": "Require PIN to arm",
-          "end_alarm_without_pin": "End alarm without PIN (sirens off, system stays armed)"
+          "end_alarm_without_pin": "End alarm without PIN (sirens off, system stays armed)",
+          "buttons_without_pin": "Allow dashboard buttons despite PIN (PIN then only protects the panel and voice assistants)"
         }
       },
       "profile_settings": {

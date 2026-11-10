@@ -42,6 +42,7 @@ from .const import (
     NOTIFICATION_ALARM,
     NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
+    OPT_BUTTONS_WITHOUT_PIN,
     OPT_CODE_ARM_REQUIRED,
     OPT_DURESS_NOTIFY,
     OPT_END_ALARM_WITHOUT_PIN,
@@ -223,6 +224,20 @@ class HauswachtRuntime:
     def end_alarm_needs_code(self) -> bool:
         """Braucht "Alarm beenden" einen PIN? Nur mit PIN und ohne die Ausnahme-Option."""
         return self.has_codes and not bool(self.entry.options.get(OPT_END_ALARM_WITHOUT_PIN, False))
+
+    @property
+    def buttons_without_pin(self) -> bool:
+        return bool(self.entry.options.get(OPT_BUTTONS_WITHOUT_PIN, False))
+
+    def button_blocked(self, action: Action) -> bool:
+        """Kann ein Dashboard-Knopf (ohne PIN-Abfrage) diese Aktion nicht ausführen?"""
+        if self.buttons_without_pin:
+            return False
+        if action is Action.ARM:
+            return self.code_arm_required
+        if action is Action.END_ALARM:
+            return self.end_alarm_needs_code
+        return self.has_codes
 
     @property
     def code_arm_required(self) -> bool:

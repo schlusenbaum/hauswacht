@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.16.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.16.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -380,8 +380,14 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 
 PINs gehören zu den Benutzern (siehe „Benutzer und PINs“). Unter **Konfigurieren → PIN-Regeln**:
 
+- **Master-PIN** (optional): ein einfacher PIN ohne eigene Benutzer, z. B. damit
+  Sprachassistenten wie Alexa nur mit PIN unscharf schalten. Erscheint in der Benutzerliste als
+  „Master-PIN“ mit allen Rechten.
 - **PIN auch zum Scharfschalten verlangen**
 - **Alarm ohne PIN beenden** (Knopf „Alarm beenden“ auch mit PIN)
+- **Dashboard-Knöpfe trotz PIN erlauben:** „Unscharf schalten“, „Alarm beenden“ und die
+  Scharf-Knöpfe funktionieren weiter. Der PIN schützt dann nur noch das Bedienfeld und
+  Sprachassistenten – an die Knöpfe kommen ohnehin nur angemeldete Home-Assistant-Benutzer.
 
 Allgemein:
 
