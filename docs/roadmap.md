@@ -19,13 +19,13 @@
 | 0.14.0 ✅ | Profil-Einstellungen als Entitäten (Dashboard) | nein |
 | **0.15.0** ✅ | Karte „Hauswacht Einstellungen“ | nein |
 | **0.16.0** ✅ | Benutzer und Codes: mehrere Personen mit eigenem PIN, einzeln sperrbar, „geändert von“ | nein |
-| 0.17.0 | Benachrichtigungen pro Ereignis, Texte mit Platzhaltern, weitere Knöpfe („Trotzdem scharf“, „Erneut versuchen“) | Push ja |
+| **0.17.0** ✅ | Benachrichtigungen pro Ereignis, wichtige Hinweise, Knöpfe „Trotzdem scharf“ / „Erneut versuchen“, Erinnerung „Alle weg“ | Push ja |
 | 0.18.0 | Sensorgruppen: Alarm erst bei zwei Meldern einer Gruppe kurz nacheinander | nein |
 | 0.19.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |
 | 0.20.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
 | 0.21.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
-| 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten | – |
+| 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, eigene Benachrichtigungstexte | – |
 
 ## Entscheidungen
 

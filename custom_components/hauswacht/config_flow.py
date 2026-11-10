@@ -42,8 +42,10 @@ from .const import (
     NAME,
     OPT_BUTTONS_WITHOUT_PIN,
     OPT_CODE_ARM_REQUIRED,
+    OPT_CRITICAL_ALERTS,
     OPT_DURESS_NOTIFY,
     OPT_END_ALARM_WITHOUT_PIN,
+    OPT_EVENTS,
     OPT_HOMECOMING_OBSERVE,
     OPT_HOMECOMING_PERSONS,
     OPT_INFRASTRUCTURE,
@@ -51,6 +53,9 @@ from .const import (
     OPT_NOTIFY_SYSTEM,
     OPT_PROFILES,
     OPT_PUSH_DISARM,
+    OPT_REMINDER_DELAY,
+    OPT_REMINDER_PERSONS,
+    OPT_REMINDER_PROFILE,
     OPT_SENSOR_ROLES,
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
@@ -66,6 +71,7 @@ from .core.automation import (
     AutoConfig,
     parse_automation,
 )
+from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
     DEFAULT_ICON,
@@ -617,26 +623,84 @@ class HauswachtOptionsFlow(OptionsFlow):
             options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
             options[OPT_NOTIFY_IN_TEST_MODE] = bool(user_input.get(OPT_NOTIFY_IN_TEST_MODE))
             options[OPT_PUSH_DISARM] = bool(user_input.get(OPT_PUSH_DISARM))
+            options[OPT_CRITICAL_ALERTS] = bool(user_input.get(OPT_CRITICAL_ALERTS, True))
             options[OPT_DURESS_NOTIFY] = list(user_input.get(OPT_DURESS_NOTIFY) or [])
+            events: dict[str, dict[str, Any]] = {}
+            for event in NotifyEvent:
+                stored = user_input.get(f"event_{event.value}")
+                if isinstance(stored, dict):
+                    events[event.value] = {
+                        "enabled": bool(stored.get("enabled")),
+                        "targets": list(stored.get("targets") or []),
+                    }
+                elif event.value in options.get(OPT_EVENTS, {}):
+                    events[event.value] = options[OPT_EVENTS][event.value]
+            options[OPT_EVENTS] = events
+            reminder = user_input.get("reminder")
+            if isinstance(reminder, dict):
+                options[OPT_REMINDER_PERSONS] = list(reminder.get(OPT_REMINDER_PERSONS) or [])
+                profile = reminder.get(OPT_REMINDER_PROFILE)
+                if profile:
+                    options[OPT_REMINDER_PROFILE] = profile
+                else:
+                    options.pop(OPT_REMINDER_PROFILE, None)
+                options[OPT_REMINDER_DELAY] = int(reminder.get(OPT_REMINDER_DELAY) or 15)
             return self.async_create_entry(data=options)
-        schema = vol.Schema(
-            {
-                vol.Optional(
-                    OPT_NOTIFY_SYSTEM, default=list(options.get(OPT_NOTIFY_SYSTEM, []))
-                ): _list_selector(self._notify_services(), multiple=True, custom=True),
-                vol.Required(
-                    OPT_NOTIFY_IN_TEST_MODE,
-                    default=bool(options.get(OPT_NOTIFY_IN_TEST_MODE, False)),
-                ): BooleanSelector(),
-                vol.Required(
-                    OPT_PUSH_DISARM, default=bool(options.get(OPT_PUSH_DISARM, False))
-                ): BooleanSelector(),
-                vol.Optional(
-                    OPT_DURESS_NOTIFY, default=list(options.get(OPT_DURESS_NOTIFY, []))
-                ): _list_selector(self._notify_services(), multiple=True, custom=True),
-            }
+
+        services = self._notify_services()
+        push_disarm = bool(options.get(OPT_PUSH_DISARM, False))
+        fields: dict[Any, Any] = {
+            vol.Optional(
+                OPT_NOTIFY_SYSTEM, default=list(options.get(OPT_NOTIFY_SYSTEM, []))
+            ): _list_selector(services, multiple=True, custom=True),
+            vol.Required(
+                OPT_NOTIFY_IN_TEST_MODE,
+                default=bool(options.get(OPT_NOTIFY_IN_TEST_MODE, False)),
+            ): BooleanSelector(),
+            vol.Required(OPT_PUSH_DISARM, default=push_disarm): BooleanSelector(),
+            vol.Required(
+                OPT_CRITICAL_ALERTS, default=bool(options.get(OPT_CRITICAL_ALERTS, True))
+            ): BooleanSelector(),
+            vol.Optional(
+                OPT_DURESS_NOTIFY, default=list(options.get(OPT_DURESS_NOTIFY, []))
+            ): _list_selector(services, multiple=True, custom=True),
+        }
+        for event in NotifyEvent:
+            # Kein default am Bereich (siehe Profile), Felder darin optional mit default
+            fields[vol.Optional(f"event_{event.value}")] = section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            "enabled", default=enabled(options, event, push_disarm=push_disarm)
+                        ): BooleanSelector(),
+                        vol.Optional(
+                            "targets", default=list(event_targets(options, event))
+                        ): _list_selector(services, multiple=True, custom=True),
+                    }
+                ),
+                {"collapsed": True},
+            )
+        reminder_fields: dict[Any, Any] = {
+            vol.Optional(
+                OPT_REMINDER_PERSONS, default=list(options.get(OPT_REMINDER_PERSONS, []))
+            ): EntitySelector(EntitySelectorConfig(domain="person", multiple=True)),
+        }
+        profile = options.get(OPT_REMINDER_PROFILE)
+        profile_key = (
+            vol.Optional(OPT_REMINDER_PROFILE, default=profile)
+            if isinstance(profile, str) and profile in profile_ids(options)
+            else vol.Optional(OPT_REMINDER_PROFILE)
         )
-        return self.async_show_form(step_id="notifications", data_schema=schema)
+        reminder_fields[profile_key] = self._profile_selector()
+        reminder_fields[
+            vol.Optional(OPT_REMINDER_DELAY, default=int(options.get(OPT_REMINDER_DELAY, 15)))
+        ] = NumberSelector(
+            NumberSelectorConfig(
+                min=1, max=240, step=1, unit_of_measurement="min", mode=NumberSelectorMode.BOX
+            )
+        )
+        fields[vol.Optional("reminder")] = section(vol.Schema(reminder_fields), {"collapsed": True})
+        return self.async_show_form(step_id="notifications", data_schema=vol.Schema(fields))
 
     # --- Benutzer ------------------------------------------------------------
 

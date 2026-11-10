@@ -151,12 +151,107 @@
       },
       "notifications": {
         "title": "Notifications",
-        "description": "System messages (fault, sensor loss, tamper, restart) go to these services. Alarm messages are set per profile. With “Push on door opening”, the profile's services receive a notification with a “Disarm” button when an entry door opens (and on alarm) – Home Assistant app only, valid for the current arming only.",
+        "description": "General recipients get every message for which the event has no recipients of its own. Alarm, door opened and alarm ended go to the profile's recipients first. Buttons in notifications only work with the Home Assistant app.",
         "data": {
-          "notify_system": "Services for system messages",
-          "notify_in_test_mode": "Send notifications in test mode too",
-          "push_disarm": "Push on door opening with a “Disarm” button",
-          "duress_notify": "Duress recipients"
+          "notify_system": "General recipients",
+          "notify_in_test_mode": "Also notify in test mode",
+          "push_disarm": "Button \"Disarm\" / \"End alarm\" in notifications",
+          "critical_alerts": "Alarm and duress as critical alerts (break through Do Not Disturb)",
+          "duress_notify": "Duress alarm recipients"
+        },
+        "data_description": {
+          "critical_alerts": "iPhone: critical alert (allow once in the app). Android: channel \"alarm_stream\" – rings even when silenced."
+        },
+        "sections": {
+          "event_alarm": {
+            "name": "Alarm",
+            "description": "Burglar alarm triggered. Goes to the profile's recipients first.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_entry": {
+            "name": "Door opened (entry delay)",
+            "description": "When an entry door opens while armed. Default: only with the push button. Profile recipients first.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_armed": {
+            "name": "Armed",
+            "description": "Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_disarmed": {
+            "name": "Disarmed",
+            "description": "Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_alarm_ended": {
+            "name": "Alarm ended",
+            "description": "Who ended the alarm. Profile recipients first.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_arm_failed": {
+            "name": "Arming rejected",
+            "description": "With the buttons \"Arm anyway\" (only if open sensors may be bypassed) and \"Try again\".",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_automation": {
+            "name": "Automation",
+            "description": "Armed or disarmed automatically.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_fault": {
+            "name": "Fault",
+            "description": "Sensor lost, tamper, infrastructure fault.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_system": {
+            "name": "System",
+            "description": "Restart, PIN locked, wrong PIN.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_reminder": {
+            "name": "Reminder",
+            "description": "\"Everyone away, system disarmed\" with button \"Arm now\". Set up under \"Reminder\".",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "reminder": {
+            "name": "Reminder \"everyone away\"",
+            "description": "If all selected persons are away and the system is disarmed, a single reminder with the button \"Arm now\" is sent after the delay. Hauswacht does not switch anything by itself. Unknown location does not count as away.",
+            "data": {
+              "reminder_persons": "Persons",
+              "reminder_profile": "Profile for \"Arm now\"",
+              "reminder_delay": "Delay"
+            }
+          }
         }
       },
       "profiles": {

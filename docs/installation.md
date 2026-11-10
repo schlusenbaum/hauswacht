@@ -194,16 +194,59 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 
 ## Benachrichtigungen
 
-- **Alarm:** pro Profil unter „Benachrichtigen (Alarm)“ die notify-Dienste wählen, z. B.
-  `mobile_app_…` der Home-Assistant-App. Nachrichten gehen mit hoher Priorität raus.
-- **Systemmeldungen** (Störung, Sensorausfall im scharfen Zustand, Manipulation, Neustart im
-  scharfen Zustand): unter **Konfigurieren → Benachrichtigungen**.
+**Konfigurieren → Benachrichtigungen.**
+
+- **Allgemeine Empfänger:** notify-Dienste, z. B. `mobile_app_…` der Home-Assistant-App. Sie
+  bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger eingetragen sind.
+- **Pro Ereignis** (aufklappbare Bereiche): an/aus und eigene Empfänger.
+
+| Ereignis | Standard | Empfänger |
+|---|---|---|
+| Alarm | an, **wichtig** | zuerst „Benachrichtigen (Alarm)“ des Profils |
+| Tür geöffnet (Eingangsverzögerung) | nur mit Push-Knopf | zuerst die des Profils |
+| Alarm beendet | an | zuerst die des Profils |
+| Scharf geschaltet / Unscharf geschaltet | aus | Ereignis, sonst allgemein |
+| Scharfschaltung abgelehnt | an, mit Knöpfen | Ereignis, sonst allgemein |
+| Automatik (automatisch scharf/unscharf) | an | Ereignis, sonst allgemein |
+| Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
+| System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
+| Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
+
+- **Bedrohungsalarm** ist kein Ereignis zum Abschalten: immer an, eigene Empfänger
+  („Empfänger Bedrohungsalarm“).
+- **Wichtige Hinweise:** Alarm und Bedrohung durchbrechen „Nicht stören“ (Option „Alarm und
+  Bedrohung als wichtige Hinweise“, Standard an). iPhone: kritischer Hinweis – beim ersten Mal
+  in der App erlauben. Android: Kanal `alarm_stream`, klingt auch im lautlosen Modus. Alle
+  anderen Meldungen gehen mit hoher Priorität, aber normal raus.
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
 
+### Scharfschaltung abgelehnt: „Trotzdem scharf“ / „Erneut versuchen“
+
+Wird das Scharfschalten abgelehnt (z. B. Fenster offen), kommt eine Benachrichtigung mit dem
+Grund und den Knöpfen:
+
+- **„Trotzdem scharf“** – nur wenn das Profil offene Sensoren nach Rückfrage überbrücken darf
+  („Offene Sensoren beim Scharfschalten: Nach Bestätigung erlauben“). Offene Sensoren werden bis zum Schließen überbrückt.
+- **„Erneut versuchen“** – prüft noch einmal (z. B. nachdem das Fenster zu ist). Klappt es
+  wieder nicht, kommt eine neue Benachrichtigung.
+
+Die Knöpfe gelten 15 Minuten und je einmal, brauchen einen angemeldeten Home-Assistant-Benutzer
+mit dem Recht „Scharf schalten“ und wirken nur, wenn die Anlage noch unscharf ist.
+
+### Erinnerung „Alle weg, Anlage unscharf“
+
+**Konfigurieren → Benachrichtigungen → Erinnerung „Alle weg“:** Personen, Profil, Wartezeit.
+
+Sind alle gewählten Personen weg und die Anlage ist unscharf, kommt nach der Wartezeit
+**einmal** eine Erinnerung mit dem Knopf **„Jetzt scharf (Profil)“**. Hauswacht schaltet
+dabei **nichts selbst** – die sichere Alternative zum automatischen Scharfschalten.
+Unbekannter Aufenthalt zählt nicht als weg. Kommt jemand heim, beginnt alles von vorn. Der
+Knopf gilt 2 Stunden.
+
 ### Push-Knopf „Unscharf schalten“
 
-**Konfigurieren → Benachrichtigungen → „Push bei Türöffnung mit Knopf ‚Unscharf schalten‘“.**
+**Konfigurieren → Benachrichtigungen → „Knopf ‚Unscharf schalten‘ / ‚Alarm beenden‘ in Benachrichtigungen“.**
 
 Ist die Option an, bekommen die Alarm-Empfänger des Profils:
 
