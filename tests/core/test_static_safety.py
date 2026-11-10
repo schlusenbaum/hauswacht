@@ -19,9 +19,13 @@ FORBIDDEN_SNIPPETS = {
     # Script, das ALLE Rauchmelder-Sirenen abschaltet – würde einen Brandalarm beenden.
     "rauchmelder_alarm_aus": "Fremdes Rauchmelder-Script darf nie aufgerufen werden",
     # Gerätewerte (z. B. die Höchstdauer der Rauchmelder) werden nie geschrieben.
-    "set_value": "Hauswacht schreibt keine Gerätewerte",
-    '"number"': "Hauswacht ruft keine number-Dienste auf",
+    '"set_value"': "Hauswacht schreibt keine Gerätewerte",
+    "SERVICE_SET_VALUE": "Hauswacht schreibt keine Gerätewerte",
+    "number.set_value": "Hauswacht schreibt keine Gerätewerte",
 }
+
+# Einzige Dienste, die Hauswacht aufrufen darf: Sirenen (nur im Executor) und Benachrichtigungen.
+ALLOWED_SERVICE_DOMAINS = {"siren", "SIREN_DOMAIN", "notify", "NOTIFY_DOMAIN"}
 
 
 def test_sources_exist() -> None:
@@ -99,3 +103,29 @@ def test_homecoming_observer_switches_nothing() -> None:
         "notifier",
     ):
         assert forbidden not in source, forbidden
+
+
+def _service_call_domains(tree: ast.AST) -> list[tuple[int, str]]:
+    calls: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)):
+            continue
+        if node.func.attr not in {"async_call", "call"}:
+            continue
+        first = node.args[0] if node.args else None
+        if isinstance(first, ast.Constant):
+            calls.append((node.lineno, str(first.value)))
+        elif isinstance(first, ast.Name):
+            calls.append((node.lineno, first.id))
+        else:
+            calls.append((node.lineno, "<dynamisch>"))
+    return calls
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(SOURCE_ROOT)))
+def test_only_siren_and_notify_services(path: Path) -> None:
+    """Hauswacht ruft keine anderen Dienste auf – also schaltet und schreibt es keine Geräte
+    (z. B. keine number-Dienste, die die Höchstdauer der Rauchmelder ändern könnten)."""
+    calls = _service_call_domains(ast.parse(path.read_text(encoding="utf-8")))
+    bad = [(line, domain) for line, domain in calls if domain not in ALLOWED_SERVICE_DOMAINS]
+    assert not bad, f"{path.name}: unerlaubte Dienstaufrufe {bad}"

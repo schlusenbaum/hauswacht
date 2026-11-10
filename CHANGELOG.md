@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-10
+
+### Hinzugefügt
+- **Profil-Einstellungen als Entitäten** für Dashboards: „Profil bearbeiten“ wählt das Profil,
+  dazu Verzögerungen, Reaktionszeit, Alarmzyklen, Wartezeit, Verhalten bei offenen/ausgefallenen
+  Sensoren, Sirenenton, Lautstärke, stiller Alarm, Sabotage, Unscharf beim Heimkommen und die
+  Uhrzeiten der Automatik. Änderungen nur im unscharfen Zustand.
+
+### Sicherheit
+- Statischer Test verschärft: Hauswacht darf ausschließlich Dienste von `siren` (nur im
+  Sirenen-Executor) und `notify` aufrufen.
+
 ## [0.13.1] - 2026-11-07
 
 ### Geändert

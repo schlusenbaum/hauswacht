@@ -265,6 +265,15 @@
     "switch": {
       "test_mode": {
         "name": "Test mode"
+      },
+      "setting_silent": {
+        "name": "Silent alarm"
+      },
+      "setting_tamper_triggers_alarm": {
+        "name": "Tamper triggers alarm"
+      },
+      "setting_auto_disarm_on_arrival": {
+        "name": "Disarm on arrival"
       }
     },
     "sensor": {
@@ -288,6 +297,42 @@
     "select": {
       "profile": {
         "name": "Profile"
+      },
+      "edit_profile": {
+        "name": "Edit profile"
+      },
+      "setting_open_policy": {
+        "name": "Open sensors when arming",
+        "state": {
+          "refuse": "Refuse arming",
+          "confirm": "Allow after confirmation (sensor is bypassed)",
+          "bypass_auto": "Bypass automatically"
+        }
+      },
+      "setting_unavailable_policy": {
+        "name": "Unavailable sensors when arming",
+        "state": {
+          "refuse": "Refuse arming",
+          "confirm": "Allow after confirmation"
+        }
+      },
+      "setting_siren_tone": {
+        "name": "Siren tone",
+        "state": {
+          "burglar": "Burglar",
+          "emergency": "Emergency",
+          "police_panic": "Police panic",
+          "emergency_panic": "Emergency panic"
+        }
+      },
+      "setting_siren_volume": {
+        "name": "Siren volume",
+        "state": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "very_high": "Very high"
+        }
       }
     },
     "button": {
@@ -305,6 +350,31 @@
       },
       "end_alarm": {
         "name": "End alarm"
+      }
+    },
+    "number": {
+      "setting_exit_delay": {
+        "name": "Exit delay"
+      },
+      "setting_entry_delay": {
+        "name": "Entry delay"
+      },
+      "setting_reaction_time": {
+        "name": "Alarm reaction time"
+      },
+      "setting_max_alarm_cycles": {
+        "name": "Alarm cycles"
+      },
+      "setting_auto_away_delay": {
+        "name": "Away delay"
+      }
+    },
+    "time": {
+      "setting_auto_arm_time": {
+        "name": "Arm automatically at"
+      },
+      "setting_auto_disarm_time": {
+        "name": "Disarm automatically at"
       }
     }
   },
@@ -353,6 +423,12 @@
     },
     "button_needs_code_disarm": {
       "message": "With a PIN set, disarming is only possible from the alarm panel (PIN prompt)."
+    },
+    "settings_require_disarmed": {
+      "message": "Profile settings can only be changed while disarmed."
+    },
+    "invalid_setting": {
+      "message": "Invalid value for {setting}."
     }
   },
   "services": {

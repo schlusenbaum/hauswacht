@@ -265,6 +265,15 @@
     "switch": {
       "test_mode": {
         "name": "Testmodus"
+      },
+      "setting_silent": {
+        "name": "Stiller Alarm"
+      },
+      "setting_tamper_triggers_alarm": {
+        "name": "Sabotage löst Alarm aus"
+      },
+      "setting_auto_disarm_on_arrival": {
+        "name": "Unscharf beim Heimkommen"
       }
     },
     "sensor": {
@@ -288,6 +297,42 @@
     "select": {
       "profile": {
         "name": "Profil"
+      },
+      "edit_profile": {
+        "name": "Profil bearbeiten"
+      },
+      "setting_open_policy": {
+        "name": "Offene Sensoren beim Scharfschalten",
+        "state": {
+          "refuse": "Scharfschalten verweigern",
+          "confirm": "Nach Bestätigung erlauben (Sensor wird überbrückt)",
+          "bypass_auto": "Automatisch überbrücken"
+        }
+      },
+      "setting_unavailable_policy": {
+        "name": "Ausgefallene Sensoren beim Scharfschalten",
+        "state": {
+          "refuse": "Scharfschalten verweigern",
+          "confirm": "Nach Bestätigung erlauben"
+        }
+      },
+      "setting_siren_tone": {
+        "name": "Sirenenton",
+        "state": {
+          "burglar": "Einbruch",
+          "emergency": "Notfall",
+          "police_panic": "Polizei-Panik",
+          "emergency_panic": "Notfall-Panik"
+        }
+      },
+      "setting_siren_volume": {
+        "name": "Sirenenlautstärke",
+        "state": {
+          "low": "Leise",
+          "medium": "Mittel",
+          "high": "Laut",
+          "very_high": "Sehr laut"
+        }
       }
     },
     "button": {
@@ -305,6 +350,31 @@
       },
       "end_alarm": {
         "name": "Alarm beenden"
+      }
+    },
+    "number": {
+      "setting_exit_delay": {
+        "name": "Ausgangsverzögerung"
+      },
+      "setting_entry_delay": {
+        "name": "Eingangsverzögerung"
+      },
+      "setting_reaction_time": {
+        "name": "Dauer der Alarmreaktion"
+      },
+      "setting_max_alarm_cycles": {
+        "name": "Alarmzyklen"
+      },
+      "setting_auto_away_delay": {
+        "name": "Wartezeit bei Abwesenheit"
+      }
+    },
+    "time": {
+      "setting_auto_arm_time": {
+        "name": "Automatisch scharf um"
+      },
+      "setting_auto_disarm_time": {
+        "name": "Automatisch unscharf um"
       }
     }
   },
@@ -353,6 +423,12 @@
     },
     "button_needs_code_disarm": {
       "message": "Mit eingestelltem PIN geht Unscharfschalten nur über das Bedienfeld (PIN-Abfrage)."
+    },
+    "settings_require_disarmed": {
+      "message": "Profil-Einstellungen lassen sich nur im unscharfen Zustand ändern."
+    },
+    "invalid_setting": {
+      "message": "Ungültiger Wert für {setting}."
     }
   },
   "services": {

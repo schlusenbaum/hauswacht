@@ -61,6 +61,8 @@ from .core.code_guard import (
 )
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.pin import PinHash, verify_pin
+from .core.profile_settings import SettingError
+from .core.profile_settings import write as write_setting
 from .core.profiles import (
     build_profiles,
     find_profile,
@@ -175,6 +177,7 @@ class HauswachtRuntime:
         self.sirens = SirenExecutor(hass, entry.options)
         self._code_guard = CodeGuardState()
         self._selected_profile: str | None = None
+        self._edit_profile: str | None = None
         self.automation = AutomationRunner(self)
         self.notifier = Notifier(hass, entry.options)
         self.zones = parse_zones(entry.options)
@@ -249,6 +252,66 @@ class HauswachtRuntime:
             return self._selected_profile
         return next(iter(self.profiles), None)
 
+    # --- Profil-Einstellungen im Dashboard -------------------------------------
+
+    @property
+    def is_disarmed(self) -> bool:
+        return self.ctx.state is AlarmState.DISARMED
+
+    @property
+    def edit_profile(self) -> str | None:
+        """Profil, dessen Einstellungen die Einstellungs-Entitäten zeigen und ändern."""
+        if self._edit_profile in self.profiles:
+            return self._edit_profile
+        return next(iter(self.profiles), None)
+
+    @callback
+    def select_edit_profile(self, profile_ref: str) -> None:
+        profile_id = next(
+            (
+                pid
+                for pid in self.profiles
+                if pid == profile_ref or self.profile_name(pid) == profile_ref
+            ),
+            None,
+        )
+        if profile_id is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unknown_profile",
+                translation_placeholders={"profile": profile_ref},
+            )
+        self._edit_profile = profile_id
+        self._store.async_delay_save(self._storage_data, 0)
+        self._notify()
+
+    async def async_set_profile_setting(self, key: str, value: Any) -> None:
+        """Eine Einstellung des bearbeiteten Profils ändern – nur im unscharfen Zustand."""
+        if self.ctx.state is not AlarmState.DISARMED:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="settings_require_disarmed"
+            )
+        profile_id = self.edit_profile
+        if profile_id is None:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="no_profiles")
+        try:
+            options = write_setting(self.entry.options, profile_id, key, value)
+        except (SettingError, TypeError, ValueError) as err:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="invalid_setting",
+                translation_placeholders={"setting": key},
+            ) from err
+        _LOGGER.info(
+            "Profil %s: %s = %s",
+            self.profile_name(profile_id),
+            key,
+            options["profiles"][profile_id][key],
+        )
+        # Auswahl sichern, bevor das Neuladen nach der Optionsänderung startet
+        await self._store.async_save(self._storage_data())
+        self.hass.config_entries.async_update_entry(self.entry, options=options)
+
     @callback
     def select_profile(self, profile_ref: str) -> None:
         if self.ctx.state is not AlarmState.DISARMED:
@@ -277,6 +340,8 @@ class HauswachtRuntime:
         data = await self._store.async_load() or {}
         selected = data.get("selected_profile")
         self._selected_profile = selected if isinstance(selected, str) else None
+        edit = data.get("edit_profile")
+        self._edit_profile = edit if isinstance(edit, str) else None
         previous = data.get("armed_profile")
         self._dispatch(
             Startup(
@@ -818,6 +883,7 @@ class HauswachtRuntime:
             "armed_profile": self.ctx.profile.profile_id if armed and self.ctx.profile else None,
             "test_mode": self.ctx.test_mode,
             "selected_profile": self._selected_profile,
+            "edit_profile": self._edit_profile,
         }
 
     @callback

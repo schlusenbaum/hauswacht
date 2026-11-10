@@ -74,5 +74,6 @@ verhält sich wie bei einem aktiven Brand.
 | H1 | Die Heimkehr-Beobachtung schaltet nichts: keine Dienste, kein Scharf/Unscharf, kein Alarm (statischer Test) | Erst messen, dann entscheiden |
 | H2 | Ein Push-Knopf gilt nur für die Scharfschaltung, in der er verschickt wurde | Alte Benachrichtigungen dürfen eine spätere Scharfschaltung nicht aufheben |
 | H3 | Der Push-Knopf wirkt nur mit einem aktiven, nicht systemeigenen Home-Assistant-Benutzer | Nur angemeldete Handys |
+| H6 | Profil-Einstellungen über Entitäten nur im unscharfen Zustand | Im scharfen Zustand darf niemand die Anlage schwächen |
 | H5 | Knopf „Unscharf schalten“ bei eingestelltem PIN nie verfügbar; „Alarm beenden“ ohne PIN nur mit ausdrücklicher Option | Unscharfschalten bleibt immer durch den PIN geschützt |
 | H4 | Push-Knopf standardmäßig aus | Bewusste Entscheidung, auch wegen Android (keine Gerätesperre für Knöpfe) |

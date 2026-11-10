@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.13.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.14.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -254,6 +254,26 @@ unter **Konfigurieren → PIN** die Option **„Alarm ohne PIN beenden“** an i
 > Sirenen abstellen. Die Anlage bleibt aber scharf, die Alarm-Nachricht ist schon verschickt,
 > und jeder weitere Melder löst sofort wieder aus. Der Melder, der ausgelöst hat, bleibt bis zum
 > Schließen überbrückt.
+
+## Profil-Einstellungen im Dashboard
+
+Kleinigkeiten lassen sich ohne die Integration ändern. Die Entitäten stehen am Gerät
+„Hauswacht“ unter **Konfiguration** und können auf ein Dashboard gelegt werden:
+
+1. **Profil bearbeiten** (`select.hauswacht_profil_bearbeiten`): welches Profil die
+   folgenden Einstellungen zeigen und ändern.
+2. Zahlen: Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Alarmzyklen,
+   Wartezeit bei Abwesenheit.
+3. Auswahl: Verhalten bei offenen bzw. ausgefallenen Sensoren, Sirenenton, Lautstärke.
+4. Schalter: Stiller Alarm, Sabotage löst Alarm aus, Unscharf beim Heimkommen.
+5. Uhrzeiten: Automatisch scharf um / unscharf um.
+
+- Änderungen sind **nur im unscharfen Zustand** möglich; im scharfen Zustand sind die
+  Einstellungen „nicht verfügbar“.
+- Jede Änderung wird sofort gespeichert und im Logbuch mit Benutzer festgehalten.
+- Name, Symbol, Bedienfeld-Knopf, Zonen, Sirenen, Benachrichtigungsziele, Personen und
+  Wochentage sowie das **Entfernen** einer Uhrzeit gehen nur in der Integration.
+- Tipp: Eine Dashboard-Seite dafür nur für Administratoren sichtbar machen.
 
 ## Heimkehr-Beobachtung
 
