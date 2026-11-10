@@ -151,12 +151,107 @@
       },
       "notifications": {
         "title": "Benachrichtigungen",
-        "description": "Systemmeldungen (Störung, Sensorausfall, Manipulation, Neustart) gehen an diese Dienste. Alarmmeldungen werden pro Profil festgelegt. Mit „Push bei Türöffnung“ bekommen die Dienste des Profils beim Öffnen einer Eingangstür (und beim Alarm) eine Benachrichtigung mit dem Knopf „Unscharf schalten“ – nur für die Home-Assistant-App, gültig nur für die laufende Scharfschaltung.",
+        "description": "Allgemeine Empfänger bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger eingetragen sind. Alarm, Türöffnung und „Alarm beendet“ gehen zuerst an die Empfänger des Profils. Knöpfe in Benachrichtigungen funktionieren nur mit der Home-Assistant-App.",
         "data": {
-          "notify_system": "Dienste für Systemmeldungen",
+          "notify_system": "Allgemeine Empfänger",
           "notify_in_test_mode": "Auch im Testmodus benachrichtigen",
-          "push_disarm": "Push bei Türöffnung mit Knopf „Unscharf schalten“",
+          "push_disarm": "Knopf „Unscharf schalten“ / „Alarm beenden“ in Benachrichtigungen",
+          "critical_alerts": "Alarm und Bedrohung als wichtige Hinweise (durchbrechen „Nicht stören“)",
           "duress_notify": "Empfänger Bedrohungsalarm"
+        },
+        "data_description": {
+          "critical_alerts": "iPhone: kritischer Hinweis (einmalig in der App erlauben). Android: Kanal „alarm_stream“ – klingt auch im lautlosen Modus."
+        },
+        "sections": {
+          "event_alarm": {
+            "name": "Alarm",
+            "description": "Einbruchalarm ausgelöst. Geht zuerst an die Empfänger des Profils.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_entry": {
+            "name": "Tür geöffnet (Eingangsverzögerung)",
+            "description": "Beim Öffnen einer Eingangstür während scharf. Standard: nur mit Push-Knopf. Zuerst an die Empfänger des Profils.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_armed": {
+            "name": "Scharf geschaltet",
+            "description": "Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_disarmed": {
+            "name": "Unscharf geschaltet",
+            "description": "Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_alarm_ended": {
+            "name": "Alarm beendet",
+            "description": "Wer den Alarm beendet hat. Zuerst an die Empfänger des Profils.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_arm_failed": {
+            "name": "Scharfschaltung abgelehnt",
+            "description": "Mit den Knöpfen „Trotzdem scharf“ (nur wenn offene Sensoren überbrückt werden dürfen) und „Erneut versuchen“.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_automation": {
+            "name": "Automatik",
+            "description": "Automatisch scharf oder unscharf geschaltet.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_fault": {
+            "name": "Störung",
+            "description": "Sensor ausgefallen, Manipulation, Infrastruktur gestört.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_system": {
+            "name": "System",
+            "description": "Neustart, gesperrter PIN, falscher PIN.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_reminder": {
+            "name": "Erinnerung",
+            "description": "„Alle weg, Anlage unscharf“ mit Knopf „Jetzt scharf“. Einrichten unter „Erinnerung“.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "reminder": {
+            "name": "Erinnerung „Alle weg“",
+            "description": "Sind alle gewählten Personen weg und die Anlage ist unscharf, kommt nach der Wartezeit einmal eine Erinnerung mit dem Knopf „Jetzt scharf“. Hauswacht schaltet dabei nichts selbst. Unbekannter Aufenthalt zählt nicht als weg.",
+            "data": {
+              "reminder_persons": "Personen",
+              "reminder_profile": "Profil für „Jetzt scharf“",
+              "reminder_delay": "Wartezeit"
+            }
+          }
         }
       },
       "profiles": {

@@ -23,8 +23,9 @@ from homeassistant.util import dt as dt_util
 
 from .const import EVENT_HAUSWACHT
 from .core.automation import AutoConfig, all_away, anyone_home, is_active_day, parse_automation
+from .core.notify_events import NotifyEvent
 from .core.profiles import profile_ids
-from .core.reactions import auto_arm_failed_message, auto_armed_message, auto_disarmed_message
+from .core.reactions import auto_armed_message, auto_disarmed_message
 from .core.state_machine import AlarmState
 
 if TYPE_CHECKING:
@@ -160,15 +161,15 @@ class AutomationRunner:
         except HomeAssistantError as err:
             details = str(err) or type(err).__name__
             _LOGGER.warning("Automatisches Scharfschalten von %s fehlgeschlagen: %s", name, details)
+            # Die Nachricht "nicht scharf geschaltet" (mit Knöpfen) verschickt runtime.arm()
             self._event("AutoArmFailed", profile_id, reason=reason, details=details)
-            runtime.notifier.send_system(
-                *auto_arm_failed_message(name, reason, details), test_mode=runtime.ctx.test_mode
-            )
             return
         self.auto_armed_by = profile_id
         self._event("AutoArmed", profile_id, reason=reason)
-        runtime.notifier.send_system(
-            *auto_armed_message(name, reason), test_mode=runtime.ctx.test_mode
+        runtime.notifier.notify(
+            NotifyEvent.AUTOMATION,
+            *auto_armed_message(name, reason),
+            test_mode=runtime.ctx.test_mode,
         )
 
     @callback
@@ -185,7 +186,8 @@ class AutomationRunner:
             return
         runtime.disarm_trusted(changed_by="Automatik")
         self._event("AutoDisarmed", profile_id, reason=reason)
-        runtime.notifier.send_system(
+        runtime.notifier.notify(
+            NotifyEvent.AUTOMATION,
             *auto_disarmed_message(runtime.profile_name(profile_id), reason),
             test_mode=ctx.test_mode,
         )

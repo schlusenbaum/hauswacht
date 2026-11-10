@@ -53,6 +53,10 @@ from .const import (
     OPT_PUSH_DISARM,
     PUSH_ACTION_EVENT,
     PUSH_ACTION_PREFIX,
+    PUSH_ARM_FORCE_PREFIX,
+    PUSH_ARM_NOW_PREFIX,
+    PUSH_ARM_RETRY_PREFIX,
+    PUSH_ARM_TAG,
     PUSH_TAG,
     STORAGE_VERSION,
 )
@@ -63,6 +67,7 @@ from .core.code_guard import (
     remaining_lock,
 )
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
+from .core.notify_events import NotifyEvent
 from .core.profile_settings import SettingError
 from .core.profile_settings import write as write_setting
 from .core.profiles import (
@@ -138,9 +143,14 @@ from .core.users import label as users_label
 from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
+from .reminder import ReminderRunner
 from .siren_executor import SirenExecutor
 
 _LOGGER = logging.getLogger(__name__)
+
+# So lange gelten Push-Knöpfe zum Scharfschalten ("Trotzdem scharf", "Jetzt scharf")
+PENDING_ARM_SECONDS = 15 * 60
+REMINDER_ARM_SECONDS = 2 * 60 * 60  # Erinnerung wird oft erst später gelesen
 
 type HauswachtConfigEntry = ConfigEntry[HauswachtRuntime]
 
@@ -192,6 +202,7 @@ class HauswachtRuntime:
         self._edit_profile: str | None = None
         self.automation = AutomationRunner(self)
         self.notifier = Notifier(hass, entry.options)
+        self.reminder = ReminderRunner(self)
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
         self.stale_after = stale_after_seconds(entry.options)
@@ -219,6 +230,10 @@ class HauswachtRuntime:
         self._unsub_push: CALLBACK_TYPE | None = None
         # Wer zuletzt bedient hat (Benutzer, gemeinsamer PIN, HA-Konto oder "Automatik")
         self.changed_by: str | None = None
+        # Push-Knöpfe zum Scharfschalten: Kennung -> (Profil, gültig bis)
+        self._pending_arms: dict[str, tuple[str, float]] = {}
+        self._arm_pushed: set[str] = set()
+        self._via_push = False
         self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
             hass, entry.entry_id, dict(entry.options), self.entry_doors, self._notify
@@ -374,11 +389,11 @@ class HauswachtRuntime:
         self._refresh_sensors()
         self._infra_faulty = self.faulty_infrastructure()
         self.automation.start()
+        self.reminder.start()
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
-        if self.push_disarm:
-            self._unsub_push = self.hass.bus.async_listen(PUSH_ACTION_EVENT, self._on_push_action)
+        self._unsub_push = self.hass.bus.async_listen(PUSH_ACTION_EVENT, self._on_push_action)
         await self.homecoming.async_start()
         await self._async_check_pin_coverage()
 
@@ -387,6 +402,7 @@ class HauswachtRuntime:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
         self.automation.stop()
+        self.reminder.stop()
         self.sirens.cancel_retry()
         self.homecoming.async_stop()
         if self._unsub_push is not None:
@@ -440,9 +456,73 @@ class HauswachtRuntime:
         )
         try:
             self._raise_for_rejection(effects)
-        except ServiceValidationError:
+        except ServiceValidationError as err:
             self.changed_by = previous
+            self._notify_arm_failed(profile_id, effects, err, changed_by)
             raise
+        if self._arm_pushed:
+            self.notifier.clear(self._arm_pushed, PUSH_ARM_TAG)
+            self._arm_pushed.clear()
+
+    def _notify_arm_failed(
+        self,
+        profile_id: str,
+        effects: tuple[Effect, ...],
+        err: ServiceValidationError,
+        changed_by: str | None,
+    ) -> None:
+        """Push "Scharfschalten gescheitert" mit "Trotzdem scharf" / "Erneut versuchen"."""
+        can_confirm = any(isinstance(e, ConfirmationRequired) for e in effects)
+        token = secrets.token_hex(8)
+        self._pending_arms[token] = (profile_id, time.monotonic() + PENDING_ARM_SECONDS)
+        actions = []
+        if can_confirm:
+            actions.append(
+                {
+                    "action": f"{PUSH_ARM_FORCE_PREFIX}{token}",
+                    "title": "Trotzdem scharf",
+                    "authenticationRequired": True,
+                }
+            )
+        actions.append(
+            {
+                "action": f"{PUSH_ARM_RETRY_PREFIX}{token}",
+                "title": "Erneut versuchen",
+                "authenticationRequired": True,
+            }
+        )
+        by = f" ({changed_by})" if changed_by else ""
+        sent = self.notifier.notify(
+            NotifyEvent.ARM_FAILED,
+            "Hauswacht: nicht scharf geschaltet",
+            f"Profil {self.profile_name(profile_id)}{by}: {err}",
+            data={"tag": PUSH_ARM_TAG, "actions": actions},
+            test_mode=self.ctx.test_mode,
+        )
+        self._arm_pushed.update(sent)
+
+    @callback
+    def send_arm_reminder(self, profile_id: str, message: str) -> None:
+        """Erinnerung mit Knopf "Jetzt scharf schalten"."""
+        token = secrets.token_hex(8)
+        self._pending_arms[token] = (profile_id, time.monotonic() + REMINDER_ARM_SECONDS)
+        sent = self.notifier.notify(
+            NotifyEvent.REMINDER,
+            "Hauswacht: Anlage ist unscharf",
+            message,
+            data={
+                "tag": PUSH_ARM_TAG,
+                "actions": [
+                    {
+                        "action": f"{PUSH_ARM_NOW_PREFIX}{token}",
+                        "title": f"Jetzt scharf ({self.profile_name(profile_id)})",
+                        "authenticationRequired": True,
+                    }
+                ],
+            },
+            test_mode=self.ctx.test_mode,
+        )
+        self._arm_pushed.update(sent)
 
     async def async_check_code(self, code: str | None, action: Action) -> str | None:
         """Prüft den PIN (mit Schutz gegen Durchprobieren) und liefert, wer es war.
@@ -556,7 +636,7 @@ class HauswachtRuntime:
             Action.DISARM: "unscharf geschaltet",
             Action.END_ALARM: "einen Alarm beendet",
         }[action]
-        self.notifier.send(
+        self.notifier.send_duress(
             targets,
             "BEDROHUNG – Hauswacht",
             f"{actor} hat mit dem Bedrohungs-PIN {what}. Möglicherweise Gefahr – bitte "
@@ -639,15 +719,19 @@ class HauswachtRuntime:
 
     @callback
     def _send_alarm_push(self, title: str, message: str) -> None:
-        targets = self._alarm_targets()
-        sent = self.notifier.send(
-            targets, title, message, test_mode=self.ctx.test_mode, data=self._push_actions()
+        sent = self.notifier.notify(
+            NotifyEvent.ENTRY,
+            title,
+            message,
+            profile_targets=self._alarm_targets(),
+            data=self._push_actions(),
+            test_mode=self.ctx.test_mode,
         )
         self._pushed_targets.update(sent)
 
     @callback
     def _on_entry_delay(self) -> None:
-        if not self.push_disarm or self.ctx.profile is None:
+        if self.ctx.profile is None:
             return
         sensor = self.ctx.trigger_sensor or ""
         self._send_alarm_push(
@@ -659,7 +743,13 @@ class HauswachtRuntime:
 
     async def _on_push_action(self, event: HaEventAny[Any]) -> None:
         action = event.data.get("action")
-        if not isinstance(action, str) or not action.startswith(PUSH_ACTION_PREFIX):
+        if not isinstance(action, str):
+            return
+        for prefix in (PUSH_ARM_FORCE_PREFIX, PUSH_ARM_RETRY_PREFIX, PUSH_ARM_NOW_PREFIX):
+            if action.startswith(prefix):
+                await self._on_push_arm(prefix, action[len(prefix) :], event.context.user_id)
+                return
+        if not action.startswith(PUSH_ACTION_PREFIX) or not self.push_disarm:
             return
         if self._session is None or action != f"{PUSH_ACTION_PREFIX}{self._session}":
             _LOGGER.warning(
@@ -686,7 +776,11 @@ class HauswachtRuntime:
             )
             return
         _LOGGER.warning("Push-Knopf durch %s (Zustand %s)", actor, self.ctx.state.value)
-        self.disarm_trusted(changed_by=actor)
+        self._via_push = True
+        try:
+            self.disarm_trusted(changed_by=actor)
+        finally:
+            self._via_push = False
         if self.ctx.state is AlarmState.DISARMED:
             self.notifier.send(
                 targets,
@@ -694,6 +788,26 @@ class HauswachtRuntime:
                 f"Unscharf geschaltet über den Push-Knopf von {actor}.",
                 test_mode=test_mode,
             )
+
+    async def _on_push_arm(self, prefix: str, token: str, user_id: str | None) -> None:
+        """Push-Knöpfe "Trotzdem scharf", "Erneut versuchen", "Jetzt scharf"."""
+        pending = self._pending_arms.pop(token, None)
+        if pending is None or pending[1] < time.monotonic():
+            _LOGGER.warning("Veralteter Push-Knopf zum Scharfschalten ignoriert")
+            return
+        user = await self.hass.auth.async_get_user(user_id) if user_id else None
+        if user is None or not user.is_active or user.system_generated:
+            _LOGGER.warning("Push-Knopf ohne gültigen Home-Assistant-Benutzer ignoriert")
+            return
+        if self.ctx.state is not AlarmState.DISARMED:
+            return
+        profile_id = pending[0]
+        try:
+            actor = await self.async_actor_for_user(user.id, Action.ARM)
+            # Scheitert es erneut, kommt eine neue Nachricht mit neuen Knöpfen
+            self.arm(profile_id, confirmed=prefix == PUSH_ARM_FORCE_PREFIX, changed_by=actor)
+        except ServiceValidationError as err:
+            _LOGGER.info("Scharfschalten per Push-Knopf nicht möglich: %s", err)
 
     @callback
     def set_test_mode(self, enabled: bool) -> None:
@@ -833,7 +947,9 @@ class HauswachtRuntime:
                 {"type": "InfrastructureRecovered", "indicator": entity_id, "armed": armed},
             )
         if faulty and armed and new_faults:
-            self.notifier.send_system(*fault_message(faulty), test_mode=self.ctx.test_mode)
+            self.notifier.notify(
+                NotifyEvent.FAULT, *fault_message(faulty), test_mode=self.ctx.test_mode
+            )
             persistent_notification.async_create(
                 self.hass,
                 "Hauswacht ist scharf, aber folgende Systeme sind gestört: "
@@ -939,7 +1055,9 @@ class HauswachtRuntime:
         self.hass.bus.async_fire(
             EVENT_HAUSWACHT, {"type": "SensorUnavailable", "sensor_key": entity_id}
         )
-        self.notifier.send_system(*sensor_lost_message(entity_id), test_mode=self.ctx.test_mode)
+        self.notifier.notify(
+            NotifyEvent.FAULT, *sensor_lost_message(entity_id), test_mode=self.ctx.test_mode
+        )
         persistent_notification.async_create(
             self.hass,
             f"Der überwachte Sensor {entity_id} ist nicht mehr verfügbar. "
@@ -1039,14 +1157,17 @@ class HauswachtRuntime:
                     if self._pushed_targets:
                         self.notifier.clear(self._pushed_targets, PUSH_TAG)
                         self._pushed_targets.clear()
+                self._notify_state_change(effect)
             case ActivateReaction():
                 self._on_alarm(effect)
             case StopReaction():
                 _LOGGER.info("Alarmreaktion beendet (Profil %s)", effect.profile_id)
                 self.sirens.stop(test_mode=effect.test_mode)
             case TamperDetected():
-                self.notifier.send_system(
-                    *tamper_message(effect.sensor_key), test_mode=self.ctx.test_mode
+                self.notifier.notify(
+                    NotifyEvent.FAULT,
+                    *tamper_message(effect.sensor_key),
+                    test_mode=self.ctx.test_mode,
                 )
             case RestartedDisarmed():
                 self.notifier.send_system(
@@ -1074,6 +1195,33 @@ class HauswachtRuntime:
                 pass
 
     @callback
+    def _notify_state_change(self, effect: StateChanged) -> None:
+        """Ereignisse "Scharf geschaltet" und "Unscharf geschaltet" (standardmäßig aus)."""
+        by = f" von {self.changed_by}" if self.changed_by else ""
+        if (
+            effect.new is AlarmState.ARMED
+            and effect.old in (AlarmState.ARMING, AlarmState.DISARMED)
+            and self.ctx.profile is not None
+        ):
+            self.notifier.notify(
+                NotifyEvent.ARMED,
+                "Hauswacht: scharf",
+                f"Profil {self.profile_name(self.ctx.profile.profile_id)} scharf geschaltet{by}.",
+                test_mode=self.ctx.test_mode,
+            )
+        elif (
+            effect.new is AlarmState.DISARMED
+            and effect.old is not AlarmState.DISARMED
+            and not self._via_push  # dort gibt es eine eigene Rückmeldung
+        ):
+            self.notifier.notify(
+                NotifyEvent.DISARMED,
+                "Hauswacht: unscharf",
+                f"Unscharf geschaltet{by}.",
+                test_mode=self.ctx.test_mode,
+            )
+
+    @callback
     def _on_acknowledged(self, effect: AlarmAcknowledged) -> None:
         name = self.profile_name(effect.profile_id)
         by = f" von {self.changed_by}" if self.changed_by else ""
@@ -1088,8 +1236,12 @@ class HauswachtRuntime:
         if self._pushed_targets:
             self.notifier.clear(self._pushed_targets, PUSH_TAG)
             self._pushed_targets.clear()
-        self.notifier.send(
-            targets, "Hauswacht: Alarm beendet", message, test_mode=self.ctx.test_mode
+        self.notifier.notify(
+            NotifyEvent.ALARM_ENDED,
+            "Hauswacht: Alarm beendet",
+            message,
+            profile_targets=targets,
+            test_mode=self.ctx.test_mode,
         )
         persistent_notification.async_dismiss(self.hass, NOTIFICATION_ALARM)
 
@@ -1124,10 +1276,11 @@ class HauswachtRuntime:
             message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
         if reaction.silent:
             message += " Stiller Alarm."
-        sent = self.notifier.send(
-            reaction.notify,
+        sent = self.notifier.notify(
+            NotifyEvent.ALARM,
             title,
             message,
+            profile_targets=reaction.notify,
             test_mode=effect.test_mode,
             data=self._push_actions("Alarm beenden"),
         )

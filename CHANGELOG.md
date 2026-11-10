@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-10
+
+### Hinzugefügt
+- **Benachrichtigungen pro Ereignis** (Alarm, Tür geöffnet, Alarm beendet, scharf, unscharf,
+  Scharfschaltung abgelehnt, Automatik, Störung, System, Erinnerung): an/aus und eigene
+  Empfänger; sonst gehen sie an die allgemeinen Empfänger.
+- **Wichtige Hinweise:** Alarm und Bedrohung durchbrechen „Nicht stören“ (iPhone kritischer
+  Hinweis, Android Kanal `alarm_stream`); abschaltbar.
+- **Scharfschaltung abgelehnt** mit Knöpfen „Trotzdem scharf“ (nur wenn Überbrücken erlaubt
+  ist) und „Erneut versuchen“.
+- **Erinnerung „Alle weg, Anlage unscharf“** mit Knopf „Jetzt scharf“ – Hauswacht schaltet
+  dabei nichts selbst.
+
+### Geändert
+- „Dienste für Systemmeldungen“ heißen jetzt „Allgemeine Empfänger“.
+- Scharf- und Unscharf-Meldungen sind neu und standardmäßig aus; die bisherige Systemmeldung
+  „Automatisch scharf schalten fehlgeschlagen“ ist jetzt „Scharfschaltung abgelehnt“.
+
 ## [0.16.3] - 2026-11-10
 
 ### Hinzugefügt
