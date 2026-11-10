@@ -27,6 +27,7 @@ from homeassistant.core import Event as HaEvent
 from homeassistant.core import Event as HaEventAny
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import (
     EventStateChangedData,
     async_call_later,
@@ -39,6 +40,8 @@ from .automation_runner import AutomationRunner
 from .const import (
     DOMAIN,
     EVENT_HAUSWACHT,
+    ISSUE_PIN_COVERAGE,
+    MASTER_USER_ID,
     NOTIFICATION_ALARM,
     NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
@@ -122,7 +125,15 @@ from .core.state_machine import (
     TimerKind,
     step,
 )
-from .core.users import Action, allowed, find_by_ha_user, has_codes, match_pin, parse_users
+from .core.users import (
+    Action,
+    allowed,
+    find_by_ha_user,
+    has_codes,
+    match_pin,
+    parse_users,
+    people_without_pin,
+)
 from .core.users import label as users_label
 from .homecoming_observer import HomecomingObserver
 from .names import display_name
@@ -369,6 +380,7 @@ class HauswachtRuntime:
         if self.push_disarm:
             self._unsub_push = self.hass.bus.async_listen(PUSH_ACTION_EVENT, self._on_push_action)
         await self.homecoming.async_start()
+        await self._async_check_pin_coverage()
 
     @callback
     def async_stop(self) -> None:
@@ -510,6 +522,30 @@ class HauswachtRuntime:
         if require_code and self.has_codes:
             return await self.async_check_code(code, action)
         return await self.async_actor_for_user(user_id, action)
+
+    async def _async_check_pin_coverage(self) -> None:
+        """Reparatur-Hinweis, wenn es PINs gibt, aber Personen ohne PIN."""
+        ha_users = {
+            u.id: u.name
+            for u in await self.hass.auth.async_get_users()
+            if u.is_active and not u.system_generated and u.name
+        }
+        missing = people_without_pin(self.users, ha_users, ignore=[MASTER_USER_ID])
+        if missing:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                ISSUE_PIN_COVERAGE,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key=ISSUE_PIN_COVERAGE,
+                translation_placeholders={
+                    "people": ", ".join(missing),
+                    "buttons": "an" if self.buttons_without_pin else "aus",
+                },
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_PIN_COVERAGE)
 
     def _send_duress_alert(self, actor: str, action: Action) -> None:
         """Heimlicher Notruf: nur Push an die eigens festgelegten Empfänger, sonst nichts

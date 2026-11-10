@@ -29,7 +29,7 @@
       },
       "code": {
         "title": "PIN-Regeln",
-        "description": "Benutzer mit PIN: {pin_users}.\n\n**Master-PIN:** ein einfacher PIN ohne eigene Benutzer, z. B. damit Sprachassistenten (Alexa) nur mit PIN unscharf schalten. Er erscheint auch in der Benutzerliste als „Master-PIN“.\n\nSobald es einen PIN gibt, verlangt das Bedienfeld ihn zum Unscharfschalten. Mit „Dashboard-Knöpfe trotz PIN erlauben“ funktionieren „Unscharf schalten“ und „Alarm beenden“ auf dem Dashboard weiter – dort kommen ohnehin nur angemeldete Home-Assistant-Benutzer dran.",
+        "description": "Benutzer mit PIN: {pin_users}.\n\n**Master-PIN:** ein einfacher PIN ohne eigene Benutzer, z. B. damit Sprachassistenten (Alexa) nur mit PIN unscharf schalten. Er erscheint auch in der Benutzerliste als „Master-PIN“.\n\nSobald es einen PIN gibt, verlangt das Bedienfeld ihn zum Unscharfschalten. Mit „Dashboard-Knöpfe trotz PIN erlauben“ funktionieren „Unscharf schalten“ und „Alarm beenden“ auf dem Dashboard weiter – dort kommen ohnehin nur angemeldete Home-Assistant-Benutzer dran.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
         "data": {
           "master_pin": "Master-PIN (4–8 Ziffern, optional)",
           "remove_master_pin": "Master-PIN entfernen",
@@ -189,7 +189,7 @@
       },
       "users": {
         "title": "Benutzer",
-        "description": "Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf. Der PIN unter „PIN“ gilt weiter als „Hauptbenutzer“.",
+        "description": "Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf. Der PIN unter „PIN“ gilt weiter als „Hauptbenutzer“.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
         "menu_options": {
           "user_add": "Benutzer anlegen",
           "user_edit": "Benutzer bearbeiten",
@@ -210,7 +210,7 @@
       },
       "user_settings": {
         "title": "Benutzer",
-        "description": "Stand: {status}. PIN-Felder leer lassen, um nichts zu ändern.\n\n**Bedrohungs-PIN:** schaltet ganz normal, schickt aber heimlich einen Notruf an die Empfänger unter „Benachrichtigungen → Empfänger Bedrohungsalarm“. Er darf keinem normalen PIN gleichen.\n\n**Gültig von/bis:** für Gäste – außerhalb dieser Zeit ist der PIN gesperrt.",
+        "description": "Stand: {status}. PIN-Felder leer lassen, um nichts zu ändern.\n\n**Bedrohungs-PIN:** schaltet ganz normal, schickt aber heimlich einen Notruf an die Empfänger unter „Benachrichtigungen → Empfänger Bedrohungsalarm“. Er darf keinem normalen PIN gleichen.\n\n**Gültig von/bis:** für Gäste – außerhalb dieser Zeit ist der PIN gesperrt.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
         "data": {
           "name": "Name",
           "new_pin": "Neuer PIN (4–8 Ziffern)",
@@ -510,6 +510,12 @@
           "description": "Konfigurierter Sensor, dessen Auslösung simuliert wird."
         }
       }
+    }
+  },
+  "issues": {
+    "users_without_pin": {
+      "title": "Hauswacht: nicht alle Personen haben einen PIN",
+      "description": "Sobald es einen PIN gibt, verlangt das Bedienfeld (und Alexa) ihn **von allen** zum Unscharfschalten. Ohne eigenen PIN können diese Personen dort nicht unscharf schalten: **{people}**.\n\nAuswege:\n- Ihnen unter Hauswacht → Konfigurieren → Benutzer und PINs einen PIN geben (gemeinsamer Familien-PIN ist erlaubt), oder\n- unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ einschalten (derzeit: {buttons}) – dann bleiben Dashboard-Knöpfe und Push-Knopf ohne PIN nutzbar.\n\nZeitgesteuerte Profile und die Anwesenheits-Automatik sind davon nicht betroffen."
     }
   }
 }

@@ -14,6 +14,7 @@ from custom_components.hauswacht.core.users import (
     match_pin,
     migrate_legacy_pin,
     parse_users,
+    people_without_pin,
     pin_conflicts,
 )
 
@@ -143,3 +144,16 @@ def test_migrate_legacy_pin() -> None:
     assert new["users"]["p"] == {"name": "P"}
     assert LEGACY_USER_NAME in {u.name for u in parse_users(new)}
     assert migrate_legacy_pin({"x": 1}) == {"x": 1}
+
+
+def test_people_without_pin() -> None:
+    ha = {"ha-c": "Christian", "ha-p": "Petra", "ha-f": "Finja"}
+    only_me = [User("c", "Christian", pin=ph("1111"), ha_user="ha-c")]
+    assert people_without_pin(only_me, ha) == ["Finja", "Petra"]
+    users = [*only_me, User("p", "Petra"), User("f", "Finja", pin=ph("2222"))]
+    assert people_without_pin(users, ha) == ["Petra"]
+    # ohne PINs ist alles egal
+    assert people_without_pin([User("p", "Petra")], ha) == []
+    # Master-PIN zählt nicht als Person
+    master = [User("master", "Master-PIN", pin=ph("9999"))]
+    assert people_without_pin(master, {"ha-c": "Christian"}) == ["Christian"]

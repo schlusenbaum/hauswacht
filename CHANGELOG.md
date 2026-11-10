@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.16.3] - 2026-11-10
+
+### Hinzugefügt
+- Reparatur-Hinweis „Nicht alle Personen haben einen PIN“, sobald es PINs gibt, aber Benutzer
+  oder Home-Assistant-Konten ohne PIN – mit Namen und Auswegen.
+- Deutlicher Hinweis in den Formularen „Benutzer und PINs“, „Benutzer“, „PIN-Regeln“ und in
+  der Anleitung: Ein PIN gilt beim Unscharfschalten für alle.
+
 ## [0.16.2] - 2026-11-10
 
 ### Hinzugefügt
