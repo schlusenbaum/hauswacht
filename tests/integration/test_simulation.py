@@ -161,3 +161,54 @@ async def test_overview_and_leaving_test_mode_clears(hass: HomeAssistant) -> Non
     sensor = hass.states.get(_sim_sensor(hass))
     assert sensor is not None
     assert sensor.state == "0"  # alte Simulation kommt nicht wieder
+
+
+def _rows(hass: HomeAssistant) -> dict[str, dict[str, Any]]:
+    sensor = hass.states.get(_sim_sensor(hass))
+    assert sensor is not None
+    return {r["entity_id"]: r for r in sensor.attributes["sensors"]}
+
+
+async def test_status_shows_bypass_and_profile(hass: HomeAssistant) -> None:
+    await _setup_test_mode(hass)
+    assert _rows(hass)[WINDOW]["status"] == "disarmed"
+    assert _rows(hass)[TAMPER]["status"] == "tamper_message"
+
+    await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
+    rows = _rows(hass)
+    assert rows[WINDOW]["status"] == "monitored"
+    assert rows[MOTION]["status"] == "not_monitored"  # Keller gehört nicht zu "Zuhause"
+    assert rows[TAMPER]["status"] == "tamper_message"
+
+    await _sim(hass, WINDOW, "on")
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    assert _rows(hass)[WINDOW]["status"] == "bypassed_until_closed"
+
+    # Zweites "Auf" an einem offenen Fenster ändert nichts; erst "Zu", dann wieder überwacht
+    await _sim(hass, WINDOW, "on")
+    assert _state(hass) == AlarmControlPanelState.ARMED_HOME
+    await _sim(hass, WINDOW, "off")
+    assert _rows(hass)[WINDOW]["status"] == "monitored"
+    await _sim(hass, WINDOW, "on")
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_door_after_ended_alarm_starts_entry_delay(hass: HomeAssistant) -> None:
+    """Fenster löst aus, Alarm beendet (Fenster bleibt offen), Tür geht auf -> neuer Alarm."""
+    await setup_entry(hass, make_entry({"profiles": {"home": {"entry_delay": 30}}}))
+    await _service(hass, "switch", "turn_on", entity_id=TEST_MODE)
+    await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
+    await _sim(hass, WINDOW, "on")
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_HOME
+    await _sim(hass, DOOR, "on")
+    assert _state(hass) == AlarmControlPanelState.PENDING
+
+
+async def test_tamper_status_with_alarm_setting(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry({"profiles": {"home": {"tamper_triggers_alarm": True}}}))
+    await _service(hass, "switch", "turn_on", entity_id=TEST_MODE)
+    await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
+    assert _rows(hass)[TAMPER]["status"] == "tamper_alarm"

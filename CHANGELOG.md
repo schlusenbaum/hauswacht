@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-11-11
+
+### Hinzugefügt
+- Karte „Hauswacht Test“: Zustand der Anlage mit Profil und Countdown der Ein-/Ausgangs-
+  verzögerung; pro Sensor der Hinweis „überwacht“, „nicht im aktiven Profil“, „überbrückt bis
+  zum Schließen“ bzw. bei Manipulationssensoren „löst Alarm aus“ / „nur Meldung“.
+- Attribut `status` je Sensor am Sensor „Simulierte Sensoren“.
+
 ## [0.17.1] - 2026-11-11
 
 ### Hinzugefügt

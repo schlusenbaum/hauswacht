@@ -39,6 +39,24 @@ const TEXT = {
     openStates: { on: "offen", off: "zu" },
     motionStates: { on: "Bewegung", off: "Ruhe" },
     tamperStates: { on: "Manipulation", off: "OK" },
+    status: {
+      disarmed: "",
+      monitored: "überwacht",
+      not_monitored: "nicht im aktiven Profil – wird ignoriert",
+      bypassed: "überbrückt",
+      bypassed_until_closed: "überbrückt bis zum Schließen – erst „Zu“, dann wieder überwacht",
+      tamper_alarm: "Manipulation löst Alarm aus",
+      tamper_message: "Manipulation: nur Meldung, kein Alarm",
+    },
+    phase: {
+      disarmed: "unscharf",
+      arming: "Ausgangsverzögerung",
+      armed: "scharf",
+      pending: "Eingangsverzögerung",
+      triggered: "ALARM",
+      alarm_hold: "Alarm (Sirenen aus, noch nicht beendet)",
+    },
+    profile: "Profil",
   },
   en: {
     title: "Test",
@@ -62,6 +80,24 @@ const TEXT = {
     openStates: { on: "open", off: "closed" },
     motionStates: { on: "motion", off: "clear" },
     tamperStates: { on: "tamper", off: "OK" },
+    status: {
+      disarmed: "",
+      monitored: "monitored",
+      not_monitored: "not in the active profile – ignored",
+      bypassed: "bypassed",
+      bypassed_until_closed: "bypassed until closed – press \"Closed\" to monitor again",
+      tamper_alarm: "tamper triggers an alarm",
+      tamper_message: "tamper: message only, no alarm",
+    },
+    phase: {
+      disarmed: "disarmed",
+      arming: "exit delay",
+      armed: "armed",
+      pending: "entry delay",
+      triggered: "ALARM",
+      alarm_hold: "alarm (sirens off, not ended yet)",
+    },
+    profile: "Profile",
   },
 };
 
@@ -101,6 +137,12 @@ const STYLE = `
   .name { overflow: hidden; text-overflow: ellipsis; }
   .state { color: var(--secondary-text-color); font-size: 0.85em; }
   .row.sim .state { color: var(--warning-color); }
+  .status { font-size: 0.85em; color: var(--secondary-text-color); }
+  .status.warn { color: var(--warning-color); }
+  .status.muted { opacity: 0.7; }
+  .phase { margin: 0 0 8px; padding: 8px 12px; border-radius: 8px; background: var(--secondary-background-color, rgba(127,127,127,.1)); }
+  .phase.alarm { background: var(--error-color); color: var(--text-primary-color, #fff); }
+  .phase.delay { background: var(--warning-color); color: var(--text-primary-color, #fff); }
   .seg { display: flex; flex: none; }
   .seg button { border-radius: 0; margin-left: -1px; padding: 6px 8px; }
   .seg button:first-child { border-radius: 8px 0 0 8px; margin-left: 0; }
@@ -190,10 +232,12 @@ class HauswachtTestCard extends HTMLElement {
 
     const title = document.createElement("div");
     title.className = "title";
-    title.innerHTML = `<ha-icon icon="mdi:test-tube"></ha-icon><span></span><span class="panel"></span>`;
+    title.innerHTML = `<ha-icon icon="mdi:test-tube"></ha-icon><span></span>`;
     title.querySelector("span").textContent = this._config.title || this._t("title");
-    this._panelText = title.querySelector(".panel");
     card.appendChild(title);
+    this._phase = document.createElement("div");
+    this._phase.className = "phase";
+    card.appendChild(this._phase);
 
     this._rows = [];
     if (!this._ids.simulation) {
@@ -248,7 +292,9 @@ class HauswachtTestCard extends HTMLElement {
     name.textContent = sensor.name || sensor.entity_id;
     const state = document.createElement("div");
     state.className = "state";
-    info.append(name, state);
+    const status = document.createElement("div");
+    status.className = "status";
+    info.append(name, state, status);
 
     const labels = this._t(kind);
     const seg = document.createElement("div");
@@ -273,8 +319,44 @@ class HauswachtTestCard extends HTMLElement {
       seg.appendChild(button);
     }
     row.append(icon, info, seg);
-    this._rows.push({ entityId: sensor.entity_id, row, state, buttons });
+    this._rows.push({ entityId: sensor.entity_id, row, state, status, buttons });
     return row;
+  }
+
+  _updatePhase() {
+    if (!this._phase) return;
+    const panel = this._ids.panel && this._hass.states[this._ids.panel];
+    if (!panel) {
+      this._phase.style.display = "none";
+      return;
+    }
+    this._phase.style.display = "";
+    const attrs = panel.attributes || {};
+    const phase = attrs.phase || panel.state;
+    let text = (this._t("phase") || {})[phase] || panel.state;
+    if (attrs.profile_name && phase !== "disarmed") text += ` · ${this._t("profile")} ${attrs.profile_name}`;
+    const delay = (phase === "pending" || phase === "arming") && attrs.timer_ends_at;
+    if (delay) {
+      const left = Math.max(0, Math.ceil((Date.parse(attrs.timer_ends_at) - Date.now()) / 1000));
+      text += ` · ${left} s`;
+    }
+    this._phase.textContent = text;
+    this._phase.classList.toggle("alarm", phase === "triggered" || phase === "alarm_hold");
+    this._phase.classList.toggle("delay", Boolean(delay));
+    // Countdown jede Sekunde neu zeichnen, solange eine Verzögerung läuft
+    if (delay && !this._tick) {
+      this._tick = setInterval(() => this._updatePhase(), 1000);
+    } else if (!delay && this._tick) {
+      clearInterval(this._tick);
+      this._tick = null;
+    }
+  }
+
+  disconnectedCallback() {
+    if (this._tick) {
+      clearInterval(this._tick);
+      this._tick = null;
+    }
   }
 
   _testMode() {
@@ -296,21 +378,7 @@ class HauswachtTestCard extends HTMLElement {
 
   _update() {
     if (!this._hass || !this._ids) return;
-    const panel = this._ids.panel && this._hass.states[this._ids.panel];
-    if (this._panelText) {
-      let text = "";
-      if (panel) {
-        text = panel.state;
-        if (typeof this._hass.formatEntityState === "function") {
-          try {
-            text = this._hass.formatEntityState(panel);
-          } catch (e) {
-            /* Rohwert */
-          }
-        }
-      }
-      this._panelText.textContent = panel ? `${this._t("panel")}: ${text}` : "";
-    }
+    this._updatePhase();
     if (!this._hint) return;
     const testMode = this._testMode();
     this._hint.textContent = testMode ? this._t("testOn") : this._t("testOff");
@@ -330,6 +398,13 @@ class HauswachtTestCard extends HTMLElement {
       item.state.textContent = isSim
         ? `${this._t("simulated")}: ${this._stateText(sensor, simulated)} · ${this._t("realValue")}: ${this._stateText(sensor, sensor.real)}`
         : this._stateText(sensor, sensor.real);
+      const statusText = (this._t("status") || {})[sensor.status] || "";
+      item.status.textContent = statusText;
+      item.status.style.display = statusText ? "" : "none";
+      item.status.className =
+        "status" +
+        (["bypassed_until_closed", "bypassed", "tamper_alarm"].includes(sensor.status) ? " warn" : "") +
+        (["not_monitored", "tamper_message"].includes(sensor.status) ? " muted" : "");
       for (const [value, button] of Object.entries(item.buttons)) {
         button.disabled = !testMode || !this._ids.panel;
         button.classList.toggle("active", testMode && (isSim ? value === simulated : value === "real"));
