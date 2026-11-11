@@ -531,7 +531,7 @@
       },
       "area_settings": {
         "title": "Area: {area}",
-        "description": "The name appears on the panel (“Hauswacht <name>”) and in notifications.",
+        "description": "The name appears on the panel (“Hauswacht” plus the name) and in notifications.",
         "data": {
           "name": "Name",
           "icon": "Icon"

@@ -20,7 +20,7 @@ from .conftest import PANEL, WINDOW, ZONE_OPTIONS, make_entry, set_sensor, setup
 
 GATE = "binary_sensor.garagenfenster"
 GARAGE_PANEL = "alarm_control_panel.hauswacht_garage"
-ALL_PANEL = "alarm_control_panel.hauswacht_alle"
+ALL_PANEL = "all_panel"  # über die unique_id gesucht (ID hängt von der Sprache ab)
 
 AREA_OPTIONS: dict[str, Any] = {
     "areas": {"garage": {"name": "Garage", "icon": "mdi:garage"}},
@@ -41,11 +41,26 @@ AREA_OPTIONS: dict[str, Any] = {
 
 
 async def _service(hass: HomeAssistant, domain: str, service: str, **data: Any) -> None:
+    if "entity_id" in data:
+        data["entity_id"] = _eid(hass, data["entity_id"])
     await hass.services.async_call(domain, service, data, blocking=True)
     await hass.async_block_till_done()
 
 
+def _eid(hass: HomeAssistant, entity_id: str) -> str:
+    """Panel "Alle" über die unique_id finden, sonst die ID unverändert."""
+    if entity_id != ALL_PANEL:
+        return entity_id
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    found = er.async_get(hass).async_get_entity_id(
+        "alarm_control_panel", DOMAIN, f"{entry.entry_id}_all_panel"
+    )
+    assert found is not None, "Bedienfeld Alle fehlt"
+    return found
+
+
 def _state(hass: HomeAssistant, entity_id: str) -> str:
+    entity_id = _eid(hass, entity_id)
     state = hass.states.get(entity_id)
     assert state is not None, entity_id
     return state.state
@@ -61,20 +76,21 @@ async def _setup(hass: HomeAssistant) -> Any:
 async def test_single_area_has_no_extra_entities(hass: HomeAssistant) -> None:
     await setup_entry(hass, make_entry())
     assert hass.states.get(PANEL) is not None
-    assert hass.states.get(ALL_PANEL) is None
+    assert not [s for s in hass.states.async_all("alarm_control_panel") if s.entity_id != PANEL]
     assert hass.states.get(GARAGE_PANEL) is None
 
 
 async def test_area_entities_and_device(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
-    for entity_id in (
-        PANEL,
-        GARAGE_PANEL,
-        ALL_PANEL,
-        "binary_sensor.hauswacht_garage_offene_sensoren",
-        "binary_sensor.hauswacht_offene_sensoren",
-    ):
+    for entity_id in (PANEL, GARAGE_PANEL, _eid(hass, ALL_PANEL)):
         assert hass.states.get(entity_id) is not None, entity_id
+    open_sensors = [
+        s.entity_id
+        for s in hass.states.async_all("binary_sensor")
+        if s.entity_id.startswith("binary_sensor.hauswacht")
+    ]
+    assert len(open_sensors) == 2
+    assert any(e.startswith("binary_sensor.hauswacht_garage_") for e in open_sensors)
     # Hauptbereich behält seine IDs, der Bereich hat ein eigenes Gerät
     registry = er.async_get(hass)
     garage = registry.async_get(GARAGE_PANEL)
@@ -190,7 +206,7 @@ async def test_options_add_area_and_assign_profile(hass: HomeAssistant) -> None:
     assert flow["errors"] == {"name": "area_name_taken"}
     await hass.async_block_till_done()
     assert hass.states.get("alarm_control_panel.hauswacht_gartenhaus") is not None
-    assert hass.states.get(ALL_PANEL) is not None
+    assert _eid(hass, ALL_PANEL)
 
 
 async def test_options_area_with_profiles_cannot_be_deleted(hass: HomeAssistant) -> None:

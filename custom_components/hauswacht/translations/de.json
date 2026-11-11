@@ -531,7 +531,7 @@
       },
       "area_settings": {
         "title": "Bereich: {area}",
-        "description": "Der Name erscheint im Bedienfeld („Hauswacht <Name>“) und in Benachrichtigungen.",
+        "description": "Der Name erscheint im Bedienfeld („Hauswacht“ und der Name) und in Benachrichtigungen.",
         "data": {
           "name": "Name",
           "icon": "Symbol"
