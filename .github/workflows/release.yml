@@ -1,0 +1,40 @@
+name: Release
+
+# Packt die Integration in hauswacht.zip und hängt sie an jedes veröffentlichte Release.
+# HACS installiert aus dieser ZIP (siehe hacs.json) und zählt ihre Downloads.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    name: ZIP bauen und anhängen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Tag und Version im Manifest müssen übereinstimmen
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest="$(jq -r .version custom_components/hauswacht/manifest.json)"
+          echo "Tag: $tag – Manifest: $manifest"
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::Der Tag ($tag) passt nicht zur Version im Manifest ($manifest)."
+            exit 1
+          fi
+
+      - name: ZIP bauen
+        run: |
+          cd custom_components/hauswacht
+          zip -r "$GITHUB_WORKSPACE/hauswacht.zip" . -x '__pycache__/*' '*/__pycache__/*' '*.pyc'
+          cd "$GITHUB_WORKSPACE"
+          unzip -l hauswacht.zip
+
+      - name: ZIP an das Release hängen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" hauswacht.zip --clobber

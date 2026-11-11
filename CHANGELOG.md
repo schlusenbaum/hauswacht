@@ -16,6 +16,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 - Link zur Anleitung auf der Geräteseite von Hauswacht.
+- Erstes offizielles Release: `hauswacht.zip` hängt an jedem Release (HACS installiert daraus
+  und zählt die Downloads); der Tag muss zur Manifest-Version passen. Abzeichen für Release,
+  Downloads, HACS und CI im README.
 
 ## [0.17.5] - 2026-11-11
 
