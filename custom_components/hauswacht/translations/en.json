@@ -95,11 +95,15 @@
         "data": {
           "name": "Zone name (e.g. Perimeter, Inside, Basement)",
           "entities": "Sensors in this zone",
-          "label": "Additionally all sensors with this label (optional)"
+          "label": "Additionally all sensors with this label (optional)",
+          "confirm": "Alarm only when a second sensor of this zone confirms",
+          "confirm_window": "Confirmation window"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically.",
+          "confirm": "Against false alarms from single motion or presence sensors: one sensor alone does not trigger; only when another sensor of this zone also triggers within the window. The same sensor twice does not count. Doors still start the entry delay, tamper is always reported. If no second sensor is available, Hauswacht triggers immediately to be safe.",
+          "confirm_window": "How long after the first trigger a second sensor can confirm (10–600 s)."
         }
       },
       "zone_edit": {
@@ -114,11 +118,15 @@
         "data": {
           "name": "Zone name (e.g. Perimeter, Inside, Basement)",
           "entities": "Sensors in this zone",
-          "label": "Additionally all sensors with this label (optional)"
+          "label": "Additionally all sensors with this label (optional)",
+          "confirm": "Alarm only when a second sensor of this zone confirms",
+          "confirm_window": "Confirmation window"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically.",
+          "confirm": "Against false alarms from single motion or presence sensors: one sensor alone does not trigger; only when another sensor of this zone also triggers within the window. The same sensor twice does not count. Doors still start the entry delay, tamper is always reported. If no second sensor is available, Hauswacht triggers immediately to be safe.",
+          "confirm_window": "How long after the first trigger a second sensor can confirm (10–600 s)."
         }
       },
       "zone_delete": {
@@ -246,6 +254,22 @@
               "reminder_profile": "Profile for \"Arm now\"",
               "reminder_delay": "Delay"
             }
+          },
+          "event_unconfirmed": {
+            "name": "Unconfirmed trigger",
+            "description": "A sensor of a zone with confirmation triggered alone and no second sensor confirmed – there was no alarm. Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_unconfirmed_frequent": {
+            "name": "Sensor often triggers alone",
+            "description": "A sensor triggered alone (unconfirmed) three times within an hour – a hint to check it. Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
           }
         }
       },
@@ -354,7 +378,8 @@
       "duress_equals_pin": "Duress PIN and PIN must differ.",
       "pin_is_duress": "This PIN is already a duress PIN ({conflict}).",
       "duress_conflict": "This duress PIN is already in use ({conflict}).",
-      "zone_overlap": "These sensors are already in another zone: {conflicts}. A sensor can only be in one zone – remove it there or deselect it here."
+      "zone_overlap": "These sensors are already in another zone: {conflicts}. A sensor can only be in one zone – remove it there or deselect it here.",
+      "confirm_needs_two": "Confirmation needs at least two motion, presence or window sensors in the zone."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

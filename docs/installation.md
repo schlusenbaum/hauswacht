@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.17.6:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.18.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -78,6 +78,25 @@ schalten ganze Zonen scharf, nicht einzelne Sensoren. Typisch:
   lässt sich die Zone nicht speichern; die Meldung nennt Sensor und Zone.
 - Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation),
   ergibt sich aus der Geräteklasse – siehe [Rollen prüfen](#3-rollen-prüfen-meist-nicht-nötig).
+
+#### Bestätigung durch einen zweiten Melder
+
+Gegen Fehlalarme einzelner Bewegungs- oder Präsenzmelder hat jede Zone die Option
+**„Alarm erst, wenn ein zweiter Melder dieser Zone bestätigt“** mit einem Zeitfenster
+(Standard 120 s, 10–600 s).
+
+- Ein Melder allein löst dann **keinen Alarm** aus. Erst wenn ein **anderer** Melder derselben
+  Zone innerhalb des Zeitfensters ebenfalls auslöst, gibt es Alarm. Derselbe Melder zweimal
+  zählt nicht – ein flatternder Melder ist genau das, was die Option abfangen soll.
+- Gilt für die Rollen „sofort“ und „Mitläufer“ (Bewegung, Präsenz, Fenster). **Türen** starten
+  weiter sofort die Eingangsverzögerung, **Manipulation** wird immer gemeldet.
+- **Sichere Seite:** Ist in der Zone gerade kein anderer bestätigungsfähiger Melder verfügbar
+  (ausgefallen, überbrückt), löst der Melder sofort aus.
+- Die Option lässt sich nur einschalten, wenn die Zone mindestens zwei solche Melder hat.
+- Sinnvoll für eine Zone wie „Keller“ mit mehreren Bewegungs- und Präsenzmeldern; Türen und
+  Fenster der Außenhaut besser in einer eigenen Zone ohne Bestätigung.
+- Unbestätigte Einzelauslösungen meldet Hauswacht auf Wunsch (Benachrichtigungen:
+  „Unbestätigte Auslösung“ und „Melder löst häufig allein aus“, beide standardmäßig aus).
 
 Sensoren kommen auf zwei Wegen in eine Zone, beide lassen sich kombinieren:
 
@@ -250,6 +269,8 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 | Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
+| Unbestätigte Auslösung (Melder allein, kein Alarm) | aus | Ereignis, sonst allgemein |
+| Melder löst häufig allein aus (3× in einer Stunde) | aus | Ereignis, sonst allgemein |
 
 - **Bedrohungsalarm** ist kein Ereignis zum Abschalten: immer an, eigene Empfänger
   („Empfänger Bedrohungsalarm“).
@@ -452,6 +473,8 @@ Countdown. Unter jedem Sensor steht, was Hauswacht gerade mit ihm macht:
 |---|---|
 | überwacht | löst im aktiven Profil aus |
 | nicht im aktiven Profil | wird ignoriert (z. B. Keller beim Profil „Zuhause“) |
+| überwacht – Alarm erst, wenn ein zweiter Melder bestätigt | Zone mit Bestätigung |
+| ausgelöst – wartet auf zweiten Melder · 85 s | erste Auslösung, Countdown bis zum Ablauf des Zeitfensters |
 | überbrückt bis zum Schließen | war beim Beenden eines Alarms offen; erst nach **Zu** wieder überwacht – ein zweites **Auf** ändert an einer offenen Tür nichts |
 | Manipulation löst Alarm aus / nur Meldung | je nach Profil-Einstellung „Manipulation löst Alarm aus“; unscharf immer nur Meldung |
 

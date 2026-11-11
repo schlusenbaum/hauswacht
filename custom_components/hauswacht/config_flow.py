@@ -71,6 +71,7 @@ from .core.automation import (
     AutoConfig,
     parse_automation,
 )
+from .core.confirmation import CONFIRMABLE_ROLES
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
@@ -89,7 +90,18 @@ from .core.profiles import (
     stale_after_seconds,
 )
 from .core.reactions import parse_reaction
-from .core.sensors import Zone, parse_zones, slugify, zone_conflicts
+from .core.sensors import (
+    DEFAULT_CONFIRM_WINDOW,
+    MAX_CONFIRM_WINDOW,
+    MIN_CONFIRM_WINDOW,
+    Zone,
+    parse_role_overrides,
+    parse_zones,
+    resolve_zone,
+    sensor_role,
+    slugify,
+    zone_conflicts,
+)
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
 from .core.state_machine import (
     AlarmState,
@@ -448,8 +460,34 @@ class HauswachtOptionsFlow(OptionsFlow):
                     EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
                 ),
                 label_key: LabelSelector(),
+                vol.Optional("confirm", default=bool(defaults.get("confirm", False))): (
+                    BooleanSelector()
+                ),
+                vol.Optional(
+                    "confirm_window",
+                    default=int(defaults.get("confirm_window", DEFAULT_CONFIRM_WINDOW)),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=MIN_CONFIRM_WINDOW,
+                        max=MAX_CONFIRM_WINDOW,
+                        step=10,
+                        unit_of_measurement="s",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
             }
         )
+
+    def _confirmable_count(self, zone: Zone) -> int:
+        """Melder der Zone, die sich gegenseitig bestätigen können (sofort/Mitläufer)."""
+        overrides = parse_role_overrides(self.config_entry.options)
+        count = 0
+        for entity_id in resolve_zone(zone, entities_by_label(self.hass)):
+            state = self.hass.states.get(entity_id)
+            device_class = state.attributes.get("device_class") if state else None
+            if sensor_role(entity_id, device_class, overrides) in CONFIRMABLE_ROLES:
+                count += 1
+        return count
 
     def _save_zone(
         self, zone_id: str | None, user_input: dict[str, Any]
@@ -467,18 +505,33 @@ class HauswachtOptionsFlow(OptionsFlow):
         options = dict(self.config_entry.options)
         zones = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
         new_id = zone_id or slugify(name, existing=zones.keys())
-        conflicts = zone_conflicts(
-            Zone(zone_id=new_id, name=name, entities=frozenset(entities), label=label),
-            parse_zones(options),
-            entities_by_label(self.hass),
+        confirm = bool(user_input.get("confirm", False))
+        window = int(user_input.get("confirm_window") or DEFAULT_CONFIRM_WINDOW)
+        window = min(max(window, MIN_CONFIRM_WINDOW), MAX_CONFIRM_WINDOW)
+        new_zone = Zone(
+            zone_id=new_id,
+            name=name,
+            entities=frozenset(entities),
+            label=label,
+            confirm=confirm,
+            confirm_window=window,
         )
+        if confirm and self._confirmable_count(new_zone) < 2:
+            return None, {"confirm": "confirm_needs_two"}, {}
+        conflicts = zone_conflicts(new_zone, parse_zones(options), entities_by_label(self.hass))
         if conflicts:
             text = ", ".join(
                 f"{display_name(self.hass, entity_id)} ({zone})"
                 for entity_id, zone in conflicts.items()
             )
             return None, {"base": "zone_overlap"}, {"conflicts": text}
-        zones[new_id] = {"name": name, "entities": sorted(set(entities)), "label": label}
+        zones[new_id] = {
+            "name": name,
+            "entities": sorted(set(entities)),
+            "label": label,
+            "confirm": confirm,
+            "confirm_window": window,
+        }
         options[OPT_ZONES] = zones
         return options, {}, {}
 
@@ -529,6 +582,8 @@ class HauswachtOptionsFlow(OptionsFlow):
             "name": zone.name,
             "entities": sorted(zone.entities),
             "label": zone.label,
+            "confirm": zone.confirm,
+            "confirm_window": zone.confirm_window,
         }
         return self.async_show_form(
             step_id="zone_edit_settings",

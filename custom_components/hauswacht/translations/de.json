@@ -95,11 +95,15 @@
         "data": {
           "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
           "entities": "Sensoren dieser Zone",
-          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
+          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)",
+          "confirm": "Alarm erst, wenn ein zweiter Melder dieser Zone bestätigt",
+          "confirm_window": "Zeitfenster für die Bestätigung"
         },
         "data_description": {
           "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
-          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
+          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu.",
+          "confirm": "Gegen Fehlalarme einzelner Bewegungs- oder Präsenzmelder: Ein Melder allein löst keinen Alarm aus, erst wenn ein anderer Melder dieser Zone innerhalb des Zeitfensters ebenfalls auslöst. Derselbe Melder zweimal zählt nicht. Türen starten weiter sofort die Eingangsverzögerung, Manipulation wird immer gemeldet. Ist kein zweiter Melder verfügbar, löst Hauswacht sicherheitshalber sofort aus.",
+          "confirm_window": "Wie lange nach der ersten Auslösung ein zweiter Melder bestätigen kann (10–600 s)."
         }
       },
       "zone_edit": {
@@ -114,11 +118,15 @@
         "data": {
           "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
           "entities": "Sensoren dieser Zone",
-          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
+          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)",
+          "confirm": "Alarm erst, wenn ein zweiter Melder dieser Zone bestätigt",
+          "confirm_window": "Zeitfenster für die Bestätigung"
         },
         "data_description": {
           "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
-          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
+          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu.",
+          "confirm": "Gegen Fehlalarme einzelner Bewegungs- oder Präsenzmelder: Ein Melder allein löst keinen Alarm aus, erst wenn ein anderer Melder dieser Zone innerhalb des Zeitfensters ebenfalls auslöst. Derselbe Melder zweimal zählt nicht. Türen starten weiter sofort die Eingangsverzögerung, Manipulation wird immer gemeldet. Ist kein zweiter Melder verfügbar, löst Hauswacht sicherheitshalber sofort aus.",
+          "confirm_window": "Wie lange nach der ersten Auslösung ein zweiter Melder bestätigen kann (10–600 s)."
         }
       },
       "zone_delete": {
@@ -246,6 +254,22 @@
               "reminder_profile": "Profil für „Jetzt scharf“",
               "reminder_delay": "Wartezeit"
             }
+          },
+          "event_unconfirmed": {
+            "name": "Unbestätigte Auslösung",
+            "description": "Ein Melder einer Zone mit Bestätigung hat allein ausgelöst, kein zweiter Melder hat bestätigt – es gab keinen Alarm. Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_unconfirmed_frequent": {
+            "name": "Melder löst häufig allein aus",
+            "description": "Ein Melder hat innerhalb einer Stunde dreimal allein (unbestätigt) ausgelöst – Hinweis, ihn zu prüfen. Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
           }
         }
       },
@@ -354,7 +378,8 @@
       "duress_equals_pin": "Bedrohungs-PIN und PIN dürfen nicht gleich sein.",
       "pin_is_duress": "Dieser PIN ist bereits ein Bedrohungs-PIN ({conflict}).",
       "duress_conflict": "Dieser Bedrohungs-PIN ist schon vergeben ({conflict}).",
-      "zone_overlap": "Diese Sensoren sind schon in einer anderen Zone: {conflicts}. Ein Sensor kann nur in einer Zone sein – bitte dort entfernen oder hier abwählen."
+      "zone_overlap": "Diese Sensoren sind schon in einer anderen Zone: {conflicts}. Ein Sensor kann nur in einer Zone sein – bitte dort entfernen oder hier abwählen.",
+      "confirm_needs_two": "Für die Bestätigung braucht die Zone mindestens zwei Bewegungs-, Präsenz- oder Fenstermelder."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

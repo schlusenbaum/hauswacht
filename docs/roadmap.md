@@ -21,7 +21,7 @@
 | **0.16.0** ✅ | Benutzer und Codes: mehrere Personen mit eigenem PIN, einzeln sperrbar, „geändert von“ | nein |
 | **0.17.0** ✅ | Benachrichtigungen pro Ereignis, wichtige Hinweise, Knöpfe „Trotzdem scharf“ / „Erneut versuchen“, Erinnerung „Alle weg“ | Push ja |
 | 0.17.1–0.17.6 ✅ | Testkarte (Sensoren simulieren), Zonen verständlicher und ohne Mehrfachzuordnung, Optionen neu gegliedert mit Zurück, klarere Entitäten | nein |
-| 0.18.0 | Sensorgruppen: Alarm erst bei zwei Meldern einer Gruppe kurz nacheinander | nein |
+| **0.18.0** ✅ | Bestätigung durch einen zweiten Melder (Zonen-Option), Meldung unbestätigter und häufiger Einzelauslösungen | nein |
 | 0.19.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |
 | 0.20.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
 | 0.21.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
@@ -29,6 +29,11 @@
 | 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, eigene Benachrichtigungstexte | – |
 
 ## Entscheidungen
+
+- **Sensorgruppen (2026-11-11):** als Option der Zone („Alarm erst, wenn ein zweiter Melder
+  dieser Zone bestätigt“) statt eigener Gruppen quer zu den Zonen. Nur verschiedene Melder
+  zählen; ohne verfügbaren zweiten Melder sofortiger Alarm. Eigene Gruppen lassen sich später
+  ergänzen.
 
 - **Ausbau (2026-11-10):** Benutzer und Codes, Benachrichtigungen, Sensorgruppen,
   „immer aktiv“, Scharf durch Türschließen und Bereiche kommen nach und nach – je mit Konzept
