@@ -15,15 +15,15 @@
       "init": {
         "title": "Hauswacht options",
         "menu_options": {
-          "zones": "Zones and sensors",
+          "zones": "Zones – which sensors are monitored",
           "profiles": "Profiles",
           "users": "Users and PINs",
           "sirens": "Sirens",
           "notifications": "Notifications",
           "homecoming": "Homecoming observation",
-          "roles": "Sensor roles (exceptions)",
-          "monitoring": "Sensor monitoring",
-          "infrastructure": "System monitoring",
+          "roles": "Sensor roles – exceptions (door, window, motion …)",
+          "monitoring": "Sensor radio silence",
+          "infrastructure": "System monitoring (Zigbee, MQTT …)",
           "code": "PIN rules"
         }
       },
@@ -77,6 +77,9 @@
               "auto_disarm_on_arrival": "Only if the profile was armed automatically. Note: whoever has one of these phones can disarm with it."
             }
           }
+        },
+        "data_description": {
+          "zones": "Which zones are armed in this profile. Sensors of other zones are ignored (tamper is always reported)."
         }
       },
       "zones": {
@@ -85,15 +88,20 @@
           "zone_add": "Add zone",
           "zone_edit": "Edit zone",
           "zone_delete": "Delete zone"
-        }
+        },
+        "description": "A **zone** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which zones are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** zone. Hauswacht only monitors sensors that are in a zone."
       },
       "zone_add": {
         "title": "Add zone",
-        "description": "A zone contains the selected sensors plus all binary sensors carrying the chosen label (label set directly on the entity).",
+        "description": "Select all sensors that belong to this zone. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under \"Sensor roles\".\n\nEach sensor can only be in **one** zone.",
         "data": {
-          "name": "Name",
-          "entities": "Sensors",
-          "label": "Label (optional)"
+          "name": "Zone name (e.g. Perimeter, Inside, Basement)",
+          "entities": "Sensors in this zone",
+          "label": "Additionally all sensors with this label (optional)"
+        },
+        "data_description": {
+          "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
         }
       },
       "zone_edit": {
@@ -104,11 +112,15 @@
       },
       "zone_edit_settings": {
         "title": "Zone {zone}",
-        "description": "A zone contains the selected sensors plus all binary sensors carrying the chosen label (label set directly on the entity).",
+        "description": "Select all sensors that belong to this zone. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under \"Sensor roles\".\n\nEach sensor can only be in **one** zone.",
         "data": {
-          "name": "Name",
-          "entities": "Sensors",
-          "label": "Label (optional)"
+          "name": "Zone name (e.g. Perimeter, Inside, Basement)",
+          "entities": "Sensors in this zone",
+          "label": "Additionally all sensors with this label (optional)"
+        },
+        "data_description": {
+          "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
         }
       },
       "zone_delete": {
@@ -334,7 +346,8 @@
       "user_name_taken": "This name already exists.",
       "duress_equals_pin": "Duress PIN and PIN must differ.",
       "pin_is_duress": "This PIN is already a duress PIN ({conflict}).",
-      "duress_conflict": "This duress PIN is already in use ({conflict})."
+      "duress_conflict": "This duress PIN is already in use ({conflict}).",
+      "zone_overlap": "These sensors are already in another zone: {conflicts}. A sensor can only be in one zone – remove it there or deselect it here."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

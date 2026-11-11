@@ -121,6 +121,25 @@ def resolve_zone(zone: Zone, entities_by_label: Mapping[str, frozenset[str]]) ->
     return zone.entities | from_label
 
 
+def zone_conflicts(
+    zone: Zone,
+    zones: Mapping[str, Zone],
+    entities_by_label: Mapping[str, frozenset[str]],
+) -> dict[str, str]:
+    """Sensoren der Zone, die schon in einer ANDEREN Zone stecken: Sensor -> Name der Zone.
+
+    Ein Sensor gehört genau zu einer Zone – sonst wäre unklar, welches Profil ihn überwacht.
+    """
+    members = resolve_zone(zone, entities_by_label)
+    conflicts: dict[str, str] = {}
+    for other_id, other in zones.items():
+        if other_id == zone.zone_id:
+            continue
+        for entity_id in members & resolve_zone(other, entities_by_label):
+            conflicts.setdefault(entity_id, other.name)
+    return dict(sorted(conflicts.items()))
+
+
 def resolve_zones(
     zone_ids: Iterable[str],
     zones: Mapping[str, Zone],
