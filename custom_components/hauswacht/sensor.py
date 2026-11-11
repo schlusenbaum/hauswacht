@@ -76,11 +76,15 @@ class HauswachtSimulationSensor(HauswachtEntity, SensorEntity):
     _attr_translation_key = "simulation"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_icon = "mdi:test-tube"
+    _platform_domain = "sensor"
+    # Nur für die Testkarte – auf der Geräteseite standardmäßig ausgeblendet
+    _attr_entity_registry_visible_default = False
     # Die Liste ändert sich mit jedem Sensor – nicht in die Historie schreiben
     _unrecorded_attributes = frozenset({"sensors"})
 
     def __init__(self, entry: HauswachtConfigEntry) -> None:
         super().__init__(entry, "simulation")
+        self._keep_object_id("hauswacht_simulierte_sensoren", "hauswacht_simulated_sensors")
 
     @property
     def native_value(self) -> int:

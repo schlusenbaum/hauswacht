@@ -30,7 +30,8 @@ Hauswacht kann nur einmal eingerichtet werden.
 | `button.hauswacht_trotzdem_scharf_schalten` | Gewähltes Profil scharf schalten und offene Sensoren überbrücken |
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
 | `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
-| `binary_sensor.hauswacht_offene_sensoren` | An, sobald ein Sensor einer Zone offen ist |
+| `binary_sensor.hauswacht_offene_sensoren` | „Offene Sensoren in den Zonen“: „Offen“, sobald ein Sensor einer Zone offen ist (welche: Attribut `names`), sonst „Alles zu“ |
+| `sensor.hauswacht_simulierte_sensoren` | „Testkarte: simulierte Sensoren“ – Grundlage der Karte „Hauswacht Test“, standardmäßig ausgeblendet |
 
 Eine fertige Bedienkarte steht in [docs/dashboard.md](dashboard.md).
 

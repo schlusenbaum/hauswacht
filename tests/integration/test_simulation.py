@@ -212,3 +212,19 @@ async def test_tamper_status_with_alarm_setting(hass: HomeAssistant) -> None:
     await _service(hass, "switch", "turn_on", entity_id=TEST_MODE)
     await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
     assert _rows(hass)[TAMPER]["status"] == "tamper_alarm"
+
+
+async def test_entities_explain_themselves(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
+
+    await setup_entry(hass, make_entry())
+    registry = er.async_get(hass)
+    simulation = registry.async_get(_sim_sensor(hass))
+    assert simulation is not None
+    assert simulation.hidden_by is er.RegistryEntryHider.INTEGRATION  # nur für die Testkarte
+    assert simulation.entity_id == "sensor.hauswacht_simulated_sensors"  # ID bleibt kurz
+    assert registry.async_get("binary_sensor.hauswacht_open_sensors") is not None
+    device = dr.async_get(hass).async_get(simulation.device_id or "")
+    assert device is not None
+    assert device.configuration_url is not None
+    assert "docs/installation.md" in device.configuration_url
