@@ -369,7 +369,7 @@
       },
       "rules": {
         "title": "Rules",
-        "description": "{saved}A **rule** triggers only on a sequence of sensors, e.g. “front door, then basement within 120 s” – door alone or basement alone then trigger nothing. Rules stand on their own; each alarm profile chooses which apply. Rules are OR-combined: a rule can only trigger an alarm, never prevent another rule's alarm.",
+        "description": "{saved}A **rule** triggers only on a **sequence** of sensors – e.g. “front door, then basement within 120 s”. The door alone or the basement alone then trigger nothing.\n\nHow a rule works:\n- It consists of **steps** that must happen **one after another**. Step 2 only counts once step 1 is fulfilled – and only within the time set at step 1.\n- In each step you pick sensors and decide when **this step** is fulfilled: one of them (OR), all of them in any order (AND) or at least N different ones.\n- When the last step is fulfilled, there is an alarm – immediately or after the entry delay.\n\nEach alarm profile chooses which rules apply. One fulfilled rule is enough.\n\n**Existing rules:**\n{rules}",
         "menu_options": {
           "rule_add": "Add rule",
           "rule_edit": "Edit rule",
@@ -390,73 +390,47 @@
           "rule": "Rule"
         }
       },
-      "rule_settings": {
-        "title": "Rule",
-        "description": "Steps in order: step 2 must be fulfilled within the time of step 1, step 3 within the time of step 2 and so on. Empty steps are ignored. Sensors can be single entities and/or whole zones.",
+      "rule_meta": {
+        "title": "Rule: name and result",
+        "description": "Name the rule and decide what happens when all steps are fulfilled. You add the steps one by one afterwards.",
         "data": {
           "name": "Name",
-          "result": "When the rule is fulfilled"
+          "result": "When all steps are fulfilled"
         },
         "data_description": {
-          "result": "“Entry delay” gives time to disarm (time from the alarm profile), then alarm."
+          "result": "“Entry delay” still gives time to disarm (time from the alarm profile), then alarm."
+        }
+      },
+      "rule_step": {
+        "title": "Step {step}",
+        "description": "**So far:** {rule_text}\n\nPick the sensors of this step and when **this step** is fulfilled. The setting only applies to this step. The next step only counts afterwards – that creates the order. Whatever may happen in any order belongs in **one** step with “all of them”.",
+        "data": {
+          "sensors": "Sensors",
+          "zones": "Zones (any sensor of the zone)",
+          "mode": "This step is fulfilled when",
+          "count": "Number N (only for “at least N”)",
+          "within": "Time until the next step"
         },
-        "sections": {
-          "step_1": {
-            "name": "Step 1",
-            "description": "Sensors of this step and how many of them must trigger.",
-            "data": {
-              "sensors": "Sensors",
-              "zones": "Zones",
-              "mode": "Fulfilled when",
-              "count": "Number (for “at least N”)",
-              "within": "Time until the next step"
-            },
-            "data_description": {
-              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
-            }
-          },
-          "step_2": {
-            "name": "Step 2",
-            "description": "Sensors of this step and how many of them must trigger.",
-            "data": {
-              "sensors": "Sensors",
-              "zones": "Zones",
-              "mode": "Fulfilled when",
-              "count": "Number (for “at least N”)",
-              "within": "Time until the next step"
-            },
-            "data_description": {
-              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
-            }
-          },
-          "step_3": {
-            "name": "Step 3",
-            "description": "Sensors of this step and how many of them must trigger.",
-            "data": {
-              "sensors": "Sensors",
-              "zones": "Zones",
-              "mode": "Fulfilled when",
-              "count": "Number (for “at least N”)",
-              "within": "Time until the next step"
-            },
-            "data_description": {
-              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
-            }
-          },
-          "step_4": {
-            "name": "Step 4",
-            "description": "Sensors of this step and how many of them must trigger.",
-            "data": {
-              "sensors": "Sensors",
-              "zones": "Zones",
-              "mode": "Fulfilled when",
-              "count": "Number (for “at least N”)",
-              "within": "Time until the next step"
-            },
-            "data_description": {
-              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
-            }
-          }
+        "data_description": {
+          "within": "From the moment this step is fulfilled, the next step has this much time. Irrelevant for the last step. For “all” or “at least N” in the first step also: how close its sensors must be."
+        }
+      },
+      "rule_overview": {
+        "title": "Rule “{name}”",
+        "description": "**{steps} step(s):** {rule_text}{problems}",
+        "menu_options": {
+          "rule_save": "Done – save",
+          "rule_step_add": "Add another step",
+          "rule_step_edit": "Edit a step",
+          "rule_step_remove": "Remove last step",
+          "rule_meta": "Change name and result",
+          "rule_cancel": "Cancel (do not save)"
+        }
+      },
+      "rule_step_edit": {
+        "title": "Edit a step",
+        "data": {
+          "step": "Step"
         }
       }
     },
@@ -476,7 +450,7 @@
       "zone_overlap": "These sensors are already in another zone: {conflicts}. A sensor can only be in one zone – remove it there or deselect it here.",
       "rule_name_required": "Please enter a name.",
       "rule_name_taken": "A rule with this name already exists.",
-      "rule_invalid": "The rule cannot trigger like this: {problems}"
+      "step_empty": "Please choose at least one sensor or zone."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

@@ -155,6 +155,7 @@ const STYLE = `
   .rules .head { color: var(--secondary-text-color); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
   .rules .rule { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
   .rules .rule.active { color: var(--warning-color); }
+  .rules .rule-text { color: var(--secondary-text-color); font-size: 0.85em; margin: 0 0 4px; }
   .phase.alarm { background: var(--error-color); color: var(--text-primary-color, #fff); }
   .phase.delay { background: var(--warning-color); color: var(--text-primary-color, #fff); }
   .seg { display: flex; flex: none; }
@@ -392,6 +393,12 @@ class HauswachtTestCard extends HTMLElement {
       }
       row.append(name, state);
       this._rulesBox.appendChild(row);
+      if (rule.text) {
+        const text = document.createElement("div");
+        text.className = "rule-text";
+        text.textContent = rule.text;
+        this._rulesBox.appendChild(text);
+      }
     }
     return running;
   }

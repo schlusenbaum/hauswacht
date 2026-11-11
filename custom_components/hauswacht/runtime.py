@@ -94,6 +94,7 @@ from .core.rules import (
     RuleEngine,
     RuleResult,
     build_engine,
+    describe_rule,
     parse_rules,
     profile_rule_ids,
     rule_members,
@@ -1131,6 +1132,12 @@ class HauswachtRuntime:
                     if progress
                     else None,
                     "result": rule.result.value,
+                    "text": describe_rule(
+                        rule,
+                        lambda e: display_name(self.hass, e),
+                        lambda z: self.zones[z].name if z in self.zones else z,
+                        "de" if (self.hass.config.language or "").startswith("de") else "en",
+                    ),
                 }
             )
         return rows

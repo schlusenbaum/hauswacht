@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.19.2] - 2026-11-11
+
+### Geändert
+- Regeln werden mit einem **Assistenten** angelegt: Name und Ergebnis → Schritt für Schritt →
+  Übersicht mit „Weiteren Schritt hinzufügen“, „Schritt bearbeiten“, „Letzten Schritt
+  entfernen“, „Fertig – speichern“. Bis zu 10 Schritte statt 4.
+- Jede Regel wird als **Satz** beschrieben („eine(r) von Tür vorne / Tür hinten, dann innerhalb
+  von 120 s Zone Keller → Eingangsverzögerung, dann Alarm“) – im Assistenten, in der
+  Regelliste und in der Testkarte.
+- Deutlich ausführlichere Erklärung von Schritten, „einer / alle / mindestens N“ und der
+  Reihenfolge in den Formularen und in der Anleitung.
+
 ## [0.19.1] - 2026-11-11
 
 ### Hinzugefügt

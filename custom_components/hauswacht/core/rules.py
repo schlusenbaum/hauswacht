@@ -18,14 +18,14 @@ anderen Regel verhindern. Ergebnis einer erfüllten Regel ist ``alarm`` (sofort)
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
 from .sensors import Zone, resolve_zone
 
-MAX_STEPS = 4
+MAX_STEPS = 10
 DEFAULT_WITHIN = 60
 MAX_WITHIN = 3600
 MAX_HISTORY_AGE = 2 * MAX_WITHIN * MAX_STEPS
@@ -394,3 +394,69 @@ def migrate_zone_confirmation(options: Mapping[str, Any]) -> dict[str, Any]:
     new["rules"] = rules
     new["profiles"] = profiles
     return new
+
+
+# --- Klartext ----------------------------------------------------------------
+
+_TEXT = {
+    "de": {
+        "or": " / ",
+        "and": " und ",
+        "one_of": "eine(r) von {m}",
+        "all_of": "{m} (alle, beliebige Reihenfolge)",
+        "count_of": "mindestens {n} verschiedene von {m}",
+        "zone": "Zone {z}",
+        "then": ", dann innerhalb von {s} s ",
+        "alarm": "sofort Alarm",
+        "entry_delay": "Eingangsverzögerung, dann Alarm",
+        "empty": "(noch keine Schritte)",
+    },
+    "en": {
+        "or": " / ",
+        "and": " and ",
+        "one_of": "one of {m}",
+        "all_of": "{m} (all, any order)",
+        "count_of": "at least {n} different of {m}",
+        "zone": "zone {z}",
+        "then": ", then within {s} s ",
+        "alarm": "alarm immediately",
+        "entry_delay": "entry delay, then alarm",
+        "empty": "(no steps yet)",
+    },
+}
+
+
+def describe_step(
+    step: Step,
+    sensor_name: Callable[[str], str],
+    zone_name: Callable[[str], str],
+    language: str = "de",
+) -> str:
+    text = _TEXT.get(language, _TEXT["en"])
+    parts = [sensor_name(s) for s in sorted(step.sensors)]
+    parts += [text["zone"].format(z=zone_name(z)) for z in step.zones]
+    single_zone = not step.sensors and len(step.zones) == 1
+    if step.mode is StepMode.ALL and len(parts) > 1:
+        return text["all_of"].format(m=text["and"].join(parts))
+    if step.mode is StepMode.COUNT:
+        return text["count_of"].format(n=step.count, m=text["or"].join(parts))
+    if len(parts) == 1 or single_zone:
+        return parts[0] if parts else "–"
+    return text["one_of"].format(m=text["or"].join(parts))
+
+
+def describe_rule(
+    rule: Rule,
+    sensor_name: Callable[[str], str],
+    zone_name: Callable[[str], str],
+    language: str = "de",
+) -> str:
+    """Die Regel als ein Satz, z. B. "Tür hinten, dann innerhalb von 120 s Zone Keller → …"."""
+    text = _TEXT.get(language, _TEXT["en"])
+    if not rule.steps:
+        return text["empty"]
+    sentence = describe_step(rule.steps[0], sensor_name, zone_name, language)
+    for previous, step in zip(rule.steps, rule.steps[1:], strict=False):
+        sentence += text["then"].format(s=previous.within)
+        sentence += describe_step(step, sensor_name, zone_name, language)
+    return f"{sentence} → {text[rule.result.value]}"

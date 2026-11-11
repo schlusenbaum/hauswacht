@@ -369,7 +369,7 @@
       },
       "rules": {
         "title": "Regeln",
-        "description": "{saved}Eine **Regel** löst erst bei einer Abfolge von Meldern aus, z. B. „Haustür, dann innerhalb von 120 s Keller“ – nur Tür oder nur Keller lösen dann nichts aus. Regeln stehen für sich; in jedem Alarmprofil wählst du, welche gelten. Regeln sind mit ODER verknüpft: Eine Regel kann einen Alarm nur auslösen, nie den einer anderen verhindern.",
+        "description": "{saved}Eine **Regel** löst erst bei einer **Abfolge** von Meldern aus – z. B. „Haustür, dann innerhalb von 120 s Keller“. Nur die Tür oder nur der Keller lösen dann nichts aus.\n\nSo ist eine Regel aufgebaut:\n- Sie besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt erst, wenn Schritt 1 erfüllt ist – und nur innerhalb der Zeit, die bei Schritt 1 steht.\n- In jedem Schritt wählst du Melder und legst fest, wann **dieser Schritt** erfüllt ist: einer davon (ODER), alle davon in beliebiger Reihenfolge (UND) oder mindestens N verschiedene.\n- Ist der letzte Schritt erfüllt, gibt es Alarm – sofort oder nach der Eingangsverzögerung.\n\nIn jedem Alarmprofil wählst du, welche Regeln gelten. Es reicht, wenn eine erfüllt ist.\n\n**Vorhandene Regeln:**\n{rules}",
         "menu_options": {
           "rule_add": "Regel anlegen",
           "rule_edit": "Regel bearbeiten",
@@ -390,73 +390,47 @@
           "rule": "Regel"
         }
       },
-      "rule_settings": {
-        "title": "Regel",
-        "description": "Schritte nacheinander: Schritt 2 muss innerhalb der Zeit von Schritt 1 erfüllt sein, Schritt 3 innerhalb der Zeit von Schritt 2 usw. Leere Schritte werden ignoriert. Melder können einzelne Sensoren und/oder ganze Zonen sein.",
+      "rule_meta": {
+        "title": "Regel: Name und Ergebnis",
+        "description": "Gib der Regel einen Namen und lege fest, was passiert, wenn alle Schritte erfüllt sind. Die Schritte legst du danach einzeln an.",
         "data": {
           "name": "Name",
-          "result": "Wenn die Regel erfüllt ist"
+          "result": "Wenn alle Schritte erfüllt sind"
         },
         "data_description": {
-          "result": "„Eingangsverzögerung“ gibt Zeit zum Unscharfschalten (Zeit aus dem Alarmprofil), danach Alarm."
+          "result": "„Eingangsverzögerung“ gibt noch Zeit zum Unscharfschalten (Zeit aus dem Alarmprofil), danach Alarm."
+        }
+      },
+      "rule_step": {
+        "title": "Schritt {step}",
+        "description": "**Bisher:** {rule_text}\n\nWähle die Melder dieses Schritts und wann **dieser Schritt** erfüllt ist. Die Einstellung gilt nur für diesen Schritt. Der nächste Schritt zählt erst danach – so entsteht die Reihenfolge. Was in beliebiger Reihenfolge passieren darf, gehört in **einen** Schritt mit „alle davon“.",
+        "data": {
+          "sensors": "Sensoren",
+          "zones": "Zonen (irgendein Melder der Zone)",
+          "mode": "Dieser Schritt ist erfüllt, wenn",
+          "count": "Anzahl N (nur bei „mindestens N“)",
+          "within": "Zeit bis zum nächsten Schritt"
         },
-        "sections": {
-          "step_1": {
-            "name": "Schritt 1",
-            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
-            "data": {
-              "sensors": "Sensoren",
-              "zones": "Zonen",
-              "mode": "Erfüllt, wenn",
-              "count": "Anzahl (bei „mindestens N“)",
-              "within": "Zeit bis zum nächsten Schritt"
-            },
-            "data_description": {
-              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
-            }
-          },
-          "step_2": {
-            "name": "Schritt 2",
-            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
-            "data": {
-              "sensors": "Sensoren",
-              "zones": "Zonen",
-              "mode": "Erfüllt, wenn",
-              "count": "Anzahl (bei „mindestens N“)",
-              "within": "Zeit bis zum nächsten Schritt"
-            },
-            "data_description": {
-              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
-            }
-          },
-          "step_3": {
-            "name": "Schritt 3",
-            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
-            "data": {
-              "sensors": "Sensoren",
-              "zones": "Zonen",
-              "mode": "Erfüllt, wenn",
-              "count": "Anzahl (bei „mindestens N“)",
-              "within": "Zeit bis zum nächsten Schritt"
-            },
-            "data_description": {
-              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
-            }
-          },
-          "step_4": {
-            "name": "Schritt 4",
-            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
-            "data": {
-              "sensors": "Sensoren",
-              "zones": "Zonen",
-              "mode": "Erfüllt, wenn",
-              "count": "Anzahl (bei „mindestens N“)",
-              "within": "Zeit bis zum nächsten Schritt"
-            },
-            "data_description": {
-              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
-            }
-          }
+        "data_description": {
+          "within": "Ab dem Moment, in dem dieser Schritt erfüllt ist, hat der nächste Schritt so viel Zeit. Beim letzten Schritt ohne Bedeutung. Bei „alle“ oder „mindestens N“ im ersten Schritt zusätzlich: so nah müssen dessen Melder beieinander liegen."
+        }
+      },
+      "rule_overview": {
+        "title": "Regel „{name}“",
+        "description": "**{steps} Schritt(e):** {rule_text}{problems}",
+        "menu_options": {
+          "rule_save": "Fertig – speichern",
+          "rule_step_add": "Weiteren Schritt hinzufügen",
+          "rule_step_edit": "Schritt bearbeiten",
+          "rule_step_remove": "Letzten Schritt entfernen",
+          "rule_meta": "Name und Ergebnis ändern",
+          "rule_cancel": "Abbrechen (nicht speichern)"
+        }
+      },
+      "rule_step_edit": {
+        "title": "Schritt bearbeiten",
+        "data": {
+          "step": "Schritt"
         }
       }
     },
@@ -476,7 +450,7 @@
       "zone_overlap": "Diese Sensoren sind schon in einer anderen Zone: {conflicts}. Ein Sensor kann nur in einer Zone sein – bitte dort entfernen oder hier abwählen.",
       "rule_name_required": "Bitte einen Namen eingeben.",
       "rule_name_taken": "Eine Regel mit diesem Namen gibt es schon.",
-      "rule_invalid": "Die Regel kann so nicht auslösen: {problems}"
+      "step_empty": "Bitte mindestens einen Sensor oder eine Zone wählen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
