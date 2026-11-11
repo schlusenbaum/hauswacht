@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.22.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.23.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -459,7 +459,8 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 
 ## Benachrichtigungen
 
-**Konfigurieren → Benachrichtigungen.**
+**Konfigurieren → Benachrichtigungen** mit den Punkten „Empfänger und Ereignisse“, „Eigene
+Texte für Push-Nachrichten“ und zwei Punkten zur [Sprachausgabe](#sprachausgabe-lautsprecher).
 
 - **Allgemeine Empfänger:** notify-Dienste, z. B. `mobile_app_…` der Home-Assistant-App. Sie
   bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger eingetragen sind.
@@ -490,6 +491,67 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
   anderen Meldungen gehen mit hoher Priorität, aber normal raus.
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
+
+### Eigene Texte und Platzhalter
+
+**Benachrichtigungen → Eigene Texte für Push-Nachrichten:** Titel und Text je Ereignis selbst
+formulieren; leer = Standardtext. Dieselben Platzhalter gelten für die Sprachausgabe:
+
+| Platzhalter | Inhalt |
+|---|---|
+| `{bereich}` | Bereichsname (leer bei nur einem Bereich) |
+| `{profil}` | Alarmprofil |
+| `{melder}` | auslösender Melder mit Raum |
+| `{offen}` | offene Melder |
+| `{wer}` | wer geschaltet hat |
+| `{sekunden}` | Eingangsverzögerung in Sekunden |
+| `{uhrzeit}` | aktuelle Uhrzeit |
+| `{regel}` | Auslöseregel |
+| `{grund}` | Grund, z. B. warum das Scharfschalten scheiterte |
+| `{text}` | der Standardtext von Hauswacht (im Titel: der Standardtitel) |
+
+Beispiel: `Einbruch {bereich}: {melder} ({profil}, {uhrzeit})`. Unbekannte Platzhalter oder
+Klammerfehler lassen sich nicht speichern; nach dem Speichern zeigt das Menü eine Vorschau mit
+Beispielwerten. Nicht vorhandene Werte bleiben leer. Die Knöpfe in Push-Nachrichten bleiben
+unverändert.
+
+### Sprachausgabe (Lautsprecher)
+
+Hauswacht kann Ereignisse über Lautsprecher ansagen, z. B. **Echo-Geräte** über die
+Home-Assistant-Integration „Alexa Devices“. Geeignet ist jedes Gerät mit
+Benachrichtigungs-Entitäten (`notify.…`).
+
+**Benachrichtigungen → Sprachausgabe – Lautsprecher, Wiederholung, Nachtruhe:**
+
+| Einstellung | Bedeutung |
+|---|---|
+| Lautsprecher | Geräte, die standardmäßig alle eingeschalteten Ereignisse ansagen |
+| Alarm-Durchsage wiederholen alle | wiederholt die Alarm-Durchsage alle N Sekunden (10–300), bis der Alarm beendet ist; 0 = nur einmal |
+| Nachtruhe von–bis | in dieser Zeit nur Ereignisse mit „Auch in der Nachtruhe ansagen“ |
+
+**Benachrichtigungen → Sprachausgabe – Ereignisse, Art und Texte** (je Ereignis):
+
+| Einstellung | Bedeutung |
+|---|---|
+| Ansagen | an/aus |
+| Art | **Durchsage** (mit Gong) oder **Sprechen**; Hauswacht wählt am Gerät die passende Entität |
+| Eigene Lautsprecher | statt der Standard-Lautsprecher |
+| Auch in der Nachtruhe ansagen | |
+| Text | eigener Text mit Platzhaltern, leer = Standardtext (die Form zeigt Standardtext und Vorschau) |
+
+Standardmäßig an (sobald Lautsprecher gewählt sind): Alarm, Eingangsverzögerung, Scharfschaltung
+abgelehnt, immer aktiver Melder. In der Nachtruhe standardmäßig erlaubt: Alarm,
+Eingangsverzögerung, immer aktiver Melder.
+
+- **Pro Alarmprofil** gibt es „Zusätzliche Lautsprecher“: Sie sagen Alarm, Eingangsverzögerung
+  und „Alarm beendet“ dieses Profils an – statt der Standard-Lautsprecher. Weil jedes Profil zu
+  einem Bereich gehört, lässt sich so festlegen, wo ein Alarm in der Garage angesagt wird.
+- Bei mehreren Bereichen steht der Bereichsname vor dem Standardtext („Garage: Achtung …“).
+- Ein **stiller Alarm** wird nie angesagt, der **Bedrohungsalarm** nie über Lautsprecher.
+- **Testmodus:** angesagt wird nur mit „Auch im Testmodus benachrichtigen“, dann mit „Test.“
+  vorweg.
+- Ist am Echo „Nicht stören“ an, sagt er unter Umständen nichts an. Die Sprachausgabe ergänzt
+  Push und Sirene, sie ersetzt sie nicht.
 
 ### Scharfschaltung abgelehnt: „Trotzdem scharf“ / „Erneut versuchen“
 

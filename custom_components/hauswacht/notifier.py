@@ -7,6 +7,8 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
 
 from .const import (
     EVENT_HAUSWACHT,
@@ -15,7 +17,9 @@ from .const import (
     OPT_NOTIFY_SYSTEM,
     OPT_PUSH_DISARM,
 )
+from .core.messages import default_speech, render
 from .core.notify_events import NORMAL_DATA, NotifyEvent, push_data, route
+from .core.speech import Candidate, parse_speech, pick_entity, speakers_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,6 +84,20 @@ class Notifier:
     def send_system(self, title: str, message: str, *, test_mode: bool = False) -> list[str]:
         return self.notify(NotifyEvent.SYSTEM, title, message, test_mode=test_mode)
 
+    def fill_values(self, message: str, values: Mapping[str, Any] | None) -> dict[str, str]:
+        """Platzhalter-Werte; Bereich, Uhrzeit und Standardtext ergänzt Hauswacht selbst."""
+        filled = {k: str(v) for k, v in (values or {}).items() if v is not None}
+        filled.setdefault("bereich", self.label or "")
+        filled.setdefault("uhrzeit", dt_util.now().strftime("%H:%M"))
+        filled["text"] = message
+        return filled
+
+    def _custom_text(self, event: NotifyEvent, key: str) -> str:
+        events = self.options.get("events", {})
+        stored = events.get(event.value, {}) if isinstance(events, Mapping) else {}
+        value = stored.get(key) if isinstance(stored, Mapping) else None
+        return str(value).strip() if isinstance(value, str) else ""
+
     @callback
     def notify(  # noqa: PLR0913
         self,
@@ -88,10 +106,23 @@ class Notifier:
         message: str,
         *,
         profile_targets: Iterable[str] = (),
+        profile_speakers: Iterable[str] = (),
+        values: Mapping[str, Any] | None = None,
         data: Mapping[str, Any] | None = None,
         test_mode: bool = False,
+        speak: bool = True,
     ) -> list[str]:
-        """Nachricht zu einem Ereignis – an/aus und Empfänger laut Einstellungen."""
+        """Nachricht zu einem Ereignis – Push und Sprachausgabe laut Einstellungen.
+
+        ``values`` füllt die Platzhalter eigener Texte (siehe ``core.messages``).
+        """
+        filled = self.fill_values(message, values)
+        if speak:
+            self.speak(event, filled, profile_speakers=profile_speakers, test_mode=test_mode)
+        if custom := self._custom_text(event, "title"):
+            title = render(custom, {**filled, "text": title}) or title
+        if custom := self._custom_text(event, "message"):
+            message = render(custom, filled) or message
         targets = route(
             self.options,
             event,
@@ -107,6 +138,71 @@ class Notifier:
             data=data,
             base=push_data(event, critical_allowed=self.critical_allowed),
         )
+
+    @callback
+    def speak(
+        self,
+        event: NotifyEvent,
+        values: Mapping[str, str],
+        *,
+        profile_speakers: Iterable[str] = (),
+        test_mode: bool = False,
+    ) -> list[str]:
+        """Sprachausgabe für ein Ereignis. Liefert die angesprochenen Entitäten."""
+        config = parse_speech(self.options)
+        devices = speakers_for(
+            config, event, now=dt_util.now().time(), profile_speakers=profile_speakers
+        )
+        if not devices:
+            return []
+        setting = config.events[event]
+        german = (self.hass.config.language or "de").startswith("de")
+        text = render(setting.text or default_speech(event, german=german), values)
+        if not setting.text and self.label:
+            text = f"{self.label}: {text}"
+        if not text:
+            return []
+        entities = self.speaker_entities(devices, setting.mode)
+        if not entities:
+            return []
+        if test_mode and not self.in_test_mode:
+            self.hass.bus.async_fire(
+                EVENT_HAUSWACHT,
+                {"type": "SpeechSuppressed", "event": event.value, "entities": entities},
+            )
+            return []
+        if test_mode:
+            text = "Test. " + text
+        self.hass.async_create_task(self._speak(entities, text), f"hauswacht_speak_{event.value}")
+        return entities
+
+    def speaker_entities(self, devices: Iterable[str], mode: str) -> list[str]:
+        """Benachrichtigungs-Entität je Gerät, passend zur Art (Durchsage/Sprechen)."""
+        registry = er.async_get(self.hass)
+        found: list[str] = []
+        for device_id in devices:
+            candidates = [
+                Candidate(e.entity_id, e.unique_id, e.translation_key)
+                for e in er.async_entries_for_device(registry, device_id)
+                if e.domain == NOTIFY_DOMAIN and not e.disabled_by
+            ]
+            entity_id = pick_entity(candidates, mode)
+            if entity_id is None:
+                _LOGGER.warning("Lautsprecher %s hat keine Benachrichtigungs-Entität", device_id)
+                continue
+            found.append(entity_id)
+        return list(dict.fromkeys(found))
+
+    async def _speak(self, entities: list[str], text: str) -> None:
+        try:
+            await self.hass.services.async_call(
+                NOTIFY_DOMAIN,
+                "send_message",
+                {"entity_id": entities, "message": text},
+                blocking=True,
+            )
+        except Exception:
+            _LOGGER.exception("Sprachausgabe an %s fehlgeschlagen", ", ".join(entities))
 
     @callback
     def send_duress(

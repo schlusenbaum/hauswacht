@@ -19,6 +19,8 @@ from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
     BooleanSelector,
     DateTimeSelector,
+    DeviceSelector,
+    DeviceSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
     IconSelector,
@@ -63,6 +65,7 @@ from .const import (
     OPT_SENSOR_ROLES,
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
+    OPT_SPEECH,
     OPT_STALE_AFTER_HOURS,
     OPT_USERS,
     OPT_ZONES,
@@ -83,6 +86,15 @@ from .core.automation import (
     WEEKDAYS,
     AutoConfig,
     parse_automation,
+)
+from .core.messages import (
+    EXAMPLE_VALUES_DE,
+    EXAMPLE_VALUES_EN,
+    PLACEHOLDERS,
+    TemplateError,
+    check_template,
+    default_speech,
+    render,
 )
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.pin import hash_pin, is_valid_pin_format
@@ -136,6 +148,9 @@ from .core.sensors import (
     zone_conflicts,
 )
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
+from .core.speech import MAX_REPEAT as SPEECH_MAX_REPEAT
+from .core.speech import MODES as SPEECH_MODES
+from .core.speech import parse_speech, profile_speakers
 from .core.state_machine import (
     OpenSensorPolicy,
     SensorRole,
@@ -219,6 +234,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._draft: dict[str, Any] | None = None
         self._draft_step = 0
         self._area_id: str | None = None
+        self._event: str | None = None
+        self._notes: list[str] = []
 
     async def _save(self, options: dict[str, Any], back: str) -> ConfigFlowResult:
         """Sofort speichern und zurück ins Menü – so lassen sich mehrere Dinge nacheinander
@@ -240,6 +257,10 @@ class HauswachtOptionsFlow(OptionsFlow):
         hints, self._hints = self._hints, []
         if hints:
             text += "\n\n" + "\n".join(f"⚠️ {h}" for h in hints)
+        notes, self._notes = self._notes, []
+        if notes:
+            label = "Vorschau" if self._german() else "Preview"
+            text += "\n\n" + "\n".join(f"💬 {label}: „{n}“" for n in notes)
         return text + "\n\n"
 
     def _finding_text(self, finding: Finding) -> str:
@@ -585,6 +606,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "siren_volume": user_input["siren_volume"],
                         "silent": bool(user_input["silent"]),
                         "notify": list(user_input.get("notify", [])),
+                        "speakers": list(user_input.get("speakers") or []),
                         **_automation_from_input(user_input.get("automation") or {}),
                         "arm_on_close": _arm_on_close_from_input(
                             user_input.get("arm_on_close") or {}
@@ -669,6 +691,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional("notify", default=list(reaction.notify)): _list_selector(
                     self._notify_services(), multiple=True, custom=True
                 ),
+                vol.Optional(
+                    "speakers", default=list(profile_speakers(options, pid))
+                ): self._speaker_selector(),
                 # Kein default am Bereich: Sonst füllt die Oberfläche die Felder darin nicht
                 # vor, und "OK" bleibt ohne Meldung wirkungslos.
                 vol.Optional("automation"): section(
@@ -1341,6 +1366,197 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def async_step_notifications(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        return self._menu(
+            "notifications",
+            ["notify_settings", "notify_texts", "speech", "speech_events", "init"],
+        )
+
+    # --- Eigene Texte und Sprachausgabe ------------------------------------------
+
+    def _event_selector(self) -> SelectSelector:
+        return _select([e.value for e in NotifyEvent], "notify_event")
+
+    def _example_values(self) -> Mapping[str, str]:
+        return EXAMPLE_VALUES_DE if self._german() else EXAMPLE_VALUES_EN
+
+    def _placeholder_help(self) -> str:
+        return ", ".join(f"{{{p}}}" for p in PLACEHOLDERS)
+
+    async def async_step_notify_texts(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._event = user_input["event"]
+            return await self.async_step_notify_text_edit()
+        return self.async_show_form(
+            step_id="notify_texts",
+            data_schema=vol.Schema({vol.Required("event"): self._event_selector()}),
+        )
+
+    async def async_step_notify_text_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        event = NotifyEvent(self._event or NotifyEvent.ALARM.value)
+        events = {k: dict(v) for k, v in options.get(OPT_EVENTS, {}).items()}
+        stored = events.get(event.value, {})
+        errors: dict[str, str] = {}
+        placeholders = {"error": "", "placeholders": self._placeholder_help(), "preview": ""}
+        if user_input is not None:
+            texts = {k: str(user_input.get(k) or "").strip() for k in ("title", "message")}
+            for key, text in texts.items():
+                try:
+                    check_template(text)
+                except TemplateError as err:
+                    errors[key] = "invalid_template"
+                    placeholders["error"] = str(err)
+            if not errors:
+                for key, text in texts.items():
+                    if text:
+                        stored[key] = text
+                    else:
+                        stored.pop(key, None)
+                events[event.value] = stored
+                options[OPT_EVENTS] = events
+                example = {**self._example_values()}
+                if texts["message"]:
+                    self._notes.append(render(texts["message"], example))
+                return await self._save(options, "notifications")
+        current = stored.get("message")
+        if isinstance(current, str) and current:
+            placeholders["preview"] = render(current, self._example_values())
+        return self.async_show_form(
+            step_id="notify_text_edit",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        "title", description={"suggested_value": stored.get("title", "")}
+                    ): TextSelector(),
+                    vol.Optional(
+                        "message", description={"suggested_value": stored.get("message", "")}
+                    ): TextSelector(TextSelectorConfig(multiline=True)),
+                }
+            ),
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
+    def _speaker_selector(self) -> DeviceSelector:
+        return DeviceSelector(DeviceSelectorConfig(entity=[{"domain": "notify"}], multiple=True))
+
+    async def async_step_speech(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        raw = dict(options.get(OPT_SPEECH, {}))
+        config = parse_speech(options)
+        if user_input is not None:
+            raw["speakers"] = list(user_input.get("speakers") or [])
+            raw["repeat"] = int(user_input.get("repeat") or 0)
+            raw["quiet"] = {
+                "enabled": bool(user_input.get("quiet_enabled")),
+                "start": str(user_input.get("quiet_start") or "22:00")[:5],
+                "end": str(user_input.get("quiet_end") or "07:00")[:5],
+            }
+            options[OPT_SPEECH] = raw
+            return await self._save(options, "notifications")
+        return self.async_show_form(
+            step_id="speech",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("speakers", default=list(config.speakers)): (
+                        self._speaker_selector()
+                    ),
+                    vol.Required("repeat", default=config.repeat): NumberSelector(
+                        NumberSelectorConfig(
+                            min=0,
+                            max=SPEECH_MAX_REPEAT,
+                            step=5,
+                            unit_of_measurement="s",
+                            mode=NumberSelectorMode.BOX,
+                        )
+                    ),
+                    vol.Required("quiet_enabled", default=config.quiet_enabled): (
+                        BooleanSelector()
+                    ),
+                    vol.Required(
+                        "quiet_start", default=config.quiet_start.strftime("%H:%M:00")
+                    ): TimeSelector(),
+                    vol.Required(
+                        "quiet_end", default=config.quiet_end.strftime("%H:%M:00")
+                    ): TimeSelector(),
+                }
+            ),
+        )
+
+    async def async_step_speech_events(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._event = user_input["event"]
+            return await self.async_step_speech_event_edit()
+        return self.async_show_form(
+            step_id="speech_events",
+            data_schema=vol.Schema({vol.Required("event"): self._event_selector()}),
+        )
+
+    async def async_step_speech_event_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        event = NotifyEvent(self._event or NotifyEvent.ALARM.value)
+        setting = parse_speech(options).events[event]
+        default_text = default_speech(event, german=self._german())
+        errors: dict[str, str] = {}
+        placeholders = {
+            "error": "",
+            "placeholders": self._placeholder_help(),
+            "default": default_text,
+            "preview": render(setting.text or default_text, self._example_values()),
+        }
+        if user_input is not None and "mode" in user_input:
+            text = str(user_input.get("text") or "").strip()
+            try:
+                check_template(text)
+            except TemplateError as err:
+                errors["text"] = "invalid_template"
+                placeholders["error"] = str(err)
+            if not errors:
+                raw = dict(options.get(OPT_SPEECH, {}))
+                stored_events = {k: dict(v) for k, v in raw.get("events", {}).items()}
+                stored_events[event.value] = {
+                    "enabled": bool(user_input.get("enabled")),
+                    "mode": user_input["mode"],
+                    "speakers": list(user_input.get("speakers") or []),
+                    "in_quiet": bool(user_input.get("in_quiet")),
+                    "text": text,
+                }
+                raw["events"] = stored_events
+                options[OPT_SPEECH] = raw
+                self._notes.append(render(text or default_text, self._example_values()))
+                return await self._save(options, "notifications")
+        return self.async_show_form(
+            step_id="speech_event_edit",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("enabled", default=setting.enabled): BooleanSelector(),
+                    vol.Required("mode", default=setting.mode): _select(
+                        list(SPEECH_MODES), "speech_mode"
+                    ),
+                    vol.Optional("speakers", default=list(setting.speakers)): (
+                        self._speaker_selector()
+                    ),
+                    vol.Required("in_quiet", default=setting.in_quiet): BooleanSelector(),
+                    vol.Optional("text", description={"suggested_value": setting.text}): (
+                        TextSelector(TextSelectorConfig(multiline=True))
+                    ),
+                }
+            ),
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
+    async def async_step_notify_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         options = dict(self.config_entry.options)
         if user_input is not None:
             options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
@@ -1352,7 +1568,9 @@ class HauswachtOptionsFlow(OptionsFlow):
             for event in NotifyEvent:
                 stored = user_input.get(f"event_{event.value}")
                 if isinstance(stored, dict):
+                    # Eigene Texte (title/message) behalten
                     events[event.value] = {
+                        **options.get(OPT_EVENTS, {}).get(event.value, {}),
                         "enabled": bool(stored.get("enabled")),
                         "targets": list(stored.get("targets") or []),
                     }
@@ -1368,7 +1586,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 else:
                     options.pop(OPT_REMINDER_PROFILE, None)
                 options[OPT_REMINDER_DELAY] = int(reminder.get(OPT_REMINDER_DELAY) or 15)
-            return await self._save(options, "init")
+            return await self._save(options, "notifications")
 
         services = self._notify_services()
         push_disarm = bool(options.get(OPT_PUSH_DISARM, False))
@@ -1423,7 +1641,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             )
         )
         fields[vol.Optional("reminder")] = section(vol.Schema(reminder_fields), {"collapsed": True})
-        return self.async_show_form(step_id="notifications", data_schema=vol.Schema(fields))
+        return self.async_show_form(step_id="notify_settings", data_schema=vol.Schema(fields))
 
     # --- Benutzer ------------------------------------------------------------
 

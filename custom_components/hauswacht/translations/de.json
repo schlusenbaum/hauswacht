@@ -57,7 +57,8 @@
           "notify": "Benachrichtigen (Alarm)",
           "automation": "Automatik",
           "rules": "Auslöseregeln",
-          "area": "Bereich"
+          "area": "Bereich",
+          "speakers": "Zusätzliche Lautsprecher"
         },
         "sections": {
           "automation": {
@@ -89,7 +90,8 @@
         "data_description": {
           "zones": "Jeder Melder dieser Meldergruppen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …). Offene Melder dieser Meldergruppen verhindern das Scharfschalten.",
           "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.",
-          "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei."
+          "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei.",
+          "speakers": "Für Alarm, Eingangsverzögerung und „Alarm beendet“ dieses Profils statt der Standard-Lautsprecher."
         }
       },
       "zones": {
@@ -155,151 +157,6 @@
           "sirens": "Sirenen",
           "sirens_hardware_enabled": "Echte Sirenenansteuerung erlauben",
           "confirm_hardware": "Ich bestätige: Bei einem Alarm dürfen echte Sirenen ertönen"
-        }
-      },
-      "notifications": {
-        "title": "Benachrichtigungen",
-        "description": "Allgemeine Empfänger bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger eingetragen sind. Alarm, Türöffnung und „Alarm beendet“ gehen zuerst an die Empfänger des Profils. Knöpfe in Benachrichtigungen funktionieren nur mit der Home-Assistant-App.",
-        "data": {
-          "notify_system": "Allgemeine Empfänger",
-          "notify_in_test_mode": "Auch im Testmodus benachrichtigen",
-          "push_disarm": "Knopf „Unscharf schalten“ / „Alarm beenden“ in Benachrichtigungen",
-          "critical_alerts": "Alarm und Bedrohung als wichtige Hinweise (durchbrechen „Nicht stören“)",
-          "duress_notify": "Empfänger Bedrohungsalarm"
-        },
-        "data_description": {
-          "critical_alerts": "iPhone: kritischer Hinweis (einmalig in der App erlauben). Android: Kanal „alarm_stream“ – klingt auch im lautlosen Modus."
-        },
-        "sections": {
-          "event_alarm": {
-            "name": "Alarm",
-            "description": "Einbruchalarm ausgelöst. Geht zuerst an die Empfänger des Profils.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_entry": {
-            "name": "Tür geöffnet (Eingangsverzögerung)",
-            "description": "Beim Öffnen einer Eingangstür während scharf. Standard: nur mit Push-Knopf. Zuerst an die Empfänger des Profils.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_armed": {
-            "name": "Scharf geschaltet",
-            "description": "Standard: aus.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_disarmed": {
-            "name": "Unscharf geschaltet",
-            "description": "Standard: aus.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_alarm_ended": {
-            "name": "Alarm beendet",
-            "description": "Wer den Alarm beendet hat. Zuerst an die Empfänger des Profils.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_arm_failed": {
-            "name": "Scharfschaltung abgelehnt",
-            "description": "Mit den Knöpfen „Trotzdem scharf“ (nur wenn offene Sensoren überbrückt werden dürfen) und „Erneut versuchen“.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_automation": {
-            "name": "Automatik",
-            "description": "Automatisch scharf oder unscharf geschaltet.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_fault": {
-            "name": "Störung",
-            "description": "Sensor ausgefallen, Manipulation, Infrastruktur gestört.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_system": {
-            "name": "System",
-            "description": "Neustart, gesperrter PIN, falscher PIN.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_reminder": {
-            "name": "Erinnerung",
-            "description": "„Alle weg, Anlage unscharf“ mit Knopf „Jetzt scharf“. Einrichten unter „Erinnerung“.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "reminder": {
-            "name": "Erinnerung „Alle weg“",
-            "description": "Sind alle gewählten Personen weg und die Anlage ist unscharf, kommt nach der Wartezeit einmal eine Erinnerung mit dem Knopf „Jetzt scharf“. Hauswacht schaltet dabei nichts selbst. Unbekannter Aufenthalt zählt nicht als weg.",
-            "data": {
-              "reminder_persons": "Personen",
-              "reminder_profile": "Profil für „Jetzt scharf“",
-              "reminder_delay": "Wartezeit"
-            }
-          },
-          "event_unconfirmed": {
-            "name": "Unbestätigte Auslösung",
-            "description": "Eine Auslöseregel wurde begonnen, aber nicht rechtzeitig erfüllt (z. B. nur die Tür) – es gab keinen Alarm. Standard: aus.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_unconfirmed_frequent": {
-            "name": "Melder löst häufig allein aus",
-            "description": "Derselbe Melder hat innerhalb einer Stunde dreimal eine Auslöseregel begonnen, die nicht erfüllt wurde – Hinweis, ihn zu prüfen. Standard: aus.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_arm_hint": {
-            "name": "Hinweis beim Scharfschalten",
-            "description": "Offene Melder, die im Profil nur in Auslöseregeln vorkommen: Sie können ihre Auslöseregel erst auslösen, wenn sie zu und wieder auf gehen (z. B. ein offenes Fenster). Standard: an.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_rule_notify": {
-            "name": "Auslöseregel „nur Benachrichtigung“",
-            "description": "Eine Auslöseregel mit dem Ergebnis „nur Benachrichtigung“ wurde erfüllt. Standard: an.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          },
-          "event_always_active": {
-            "name": "Immer aktiver Melder",
-            "description": "Ein immer aktiver Melder hat im unscharfen Zustand ausgelöst (ohne Sirene). Wichtiger Hinweis. Standard: an.",
-            "data": {
-              "enabled": "Benachrichtigen",
-              "targets": "Eigene Empfänger (leer = allgemeine)"
-            }
-          }
         }
       },
       "profiles": {
@@ -536,6 +393,206 @@
           "name": "Name",
           "icon": "Symbol"
         }
+      },
+      "notify_settings": {
+        "title": "Empfänger und Ereignisse",
+        "description": "Allgemeine Empfänger bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger eingetragen sind. Alarm, Türöffnung und „Alarm beendet“ gehen zuerst an die Empfänger des Profils. Knöpfe in Benachrichtigungen funktionieren nur mit der Home-Assistant-App.",
+        "data": {
+          "notify_system": "Allgemeine Empfänger",
+          "notify_in_test_mode": "Auch im Testmodus benachrichtigen",
+          "push_disarm": "Knopf „Unscharf schalten“ / „Alarm beenden“ in Benachrichtigungen",
+          "critical_alerts": "Alarm und Bedrohung als wichtige Hinweise (durchbrechen „Nicht stören“)",
+          "duress_notify": "Empfänger Bedrohungsalarm"
+        },
+        "data_description": {
+          "critical_alerts": "iPhone: kritischer Hinweis (einmalig in der App erlauben). Android: Kanal „alarm_stream“ – klingt auch im lautlosen Modus."
+        },
+        "sections": {
+          "event_alarm": {
+            "name": "Alarm",
+            "description": "Einbruchalarm ausgelöst. Geht zuerst an die Empfänger des Profils.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_entry": {
+            "name": "Tür geöffnet (Eingangsverzögerung)",
+            "description": "Beim Öffnen einer Eingangstür während scharf. Standard: nur mit Push-Knopf. Zuerst an die Empfänger des Profils.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_armed": {
+            "name": "Scharf geschaltet",
+            "description": "Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_disarmed": {
+            "name": "Unscharf geschaltet",
+            "description": "Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_alarm_ended": {
+            "name": "Alarm beendet",
+            "description": "Wer den Alarm beendet hat. Zuerst an die Empfänger des Profils.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_arm_failed": {
+            "name": "Scharfschaltung abgelehnt",
+            "description": "Mit den Knöpfen „Trotzdem scharf“ (nur wenn offene Sensoren überbrückt werden dürfen) und „Erneut versuchen“.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_automation": {
+            "name": "Automatik",
+            "description": "Automatisch scharf oder unscharf geschaltet.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_fault": {
+            "name": "Störung",
+            "description": "Sensor ausgefallen, Manipulation, Infrastruktur gestört.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_system": {
+            "name": "System",
+            "description": "Neustart, gesperrter PIN, falscher PIN.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_reminder": {
+            "name": "Erinnerung",
+            "description": "„Alle weg, Anlage unscharf“ mit Knopf „Jetzt scharf“. Einrichten unter „Erinnerung“.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "reminder": {
+            "name": "Erinnerung „Alle weg“",
+            "description": "Sind alle gewählten Personen weg und die Anlage ist unscharf, kommt nach der Wartezeit einmal eine Erinnerung mit dem Knopf „Jetzt scharf“. Hauswacht schaltet dabei nichts selbst. Unbekannter Aufenthalt zählt nicht als weg.",
+            "data": {
+              "reminder_persons": "Personen",
+              "reminder_profile": "Profil für „Jetzt scharf“",
+              "reminder_delay": "Wartezeit"
+            }
+          },
+          "event_unconfirmed": {
+            "name": "Unbestätigte Auslösung",
+            "description": "Eine Auslöseregel wurde begonnen, aber nicht rechtzeitig erfüllt (z. B. nur die Tür) – es gab keinen Alarm. Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_unconfirmed_frequent": {
+            "name": "Melder löst häufig allein aus",
+            "description": "Derselbe Melder hat innerhalb einer Stunde dreimal eine Auslöseregel begonnen, die nicht erfüllt wurde – Hinweis, ihn zu prüfen. Standard: aus.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_arm_hint": {
+            "name": "Hinweis beim Scharfschalten",
+            "description": "Offene Melder, die im Profil nur in Auslöseregeln vorkommen: Sie können ihre Auslöseregel erst auslösen, wenn sie zu und wieder auf gehen (z. B. ein offenes Fenster). Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_rule_notify": {
+            "name": "Auslöseregel „nur Benachrichtigung“",
+            "description": "Eine Auslöseregel mit dem Ergebnis „nur Benachrichtigung“ wurde erfüllt. Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_always_active": {
+            "name": "Immer aktiver Melder",
+            "description": "Ein immer aktiver Melder hat im unscharfen Zustand ausgelöst (ohne Sirene). Wichtiger Hinweis. Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Benachrichtigungen",
+        "description": "{saved}Push-Nachrichten an die Home-Assistant-App und Sprachausgabe über Lautsprecher (z. B. Echo-Geräte).",
+        "menu_options": {
+          "notify_settings": "Empfänger und Ereignisse",
+          "notify_texts": "Eigene Texte für Push-Nachrichten",
+          "speech": "Sprachausgabe – Lautsprecher, Wiederholung, Nachtruhe",
+          "speech_events": "Sprachausgabe – Ereignisse, Art und Texte",
+          "init": "← Zurück"
+        }
+      },
+      "notify_texts": {
+        "title": "Eigene Texte",
+        "description": "Für welches Ereignis?",
+        "data": {
+          "event": "Ereignis"
+        }
+      },
+      "notify_text_edit": {
+        "title": "Eigener Text",
+        "description": "Leer = Standardtext von Hauswacht. Platzhalter: {placeholders}. Der Platzhalter „text“ ist der Standardtext, im Titel der Standardtitel.\n\nAktuelle Vorschau: {preview}\n\n{error}",
+        "data": {
+          "title": "Titel",
+          "message": "Text"
+        }
+      },
+      "speech": {
+        "title": "Sprachausgabe",
+        "description": "Lautsprecher sind Geräte mit Benachrichtigungs-Entitäten, z. B. Echo-Geräte (Integration „Alexa Devices“). Ob Durchsage oder Sprechen, legst du je Ereignis fest.\n\n**Wiederholung:** Die Alarm-Durchsage wird alle N Sekunden wiederholt, bis der Alarm beendet ist (0 = nur einmal).\n\n**Nachtruhe:** In dieser Zeit wird nur angesagt, was beim Ereignis „auch in der Nachtruhe“ erlaubt ist.\n\nEin stiller Alarm wird nie angesagt, der Bedrohungs-Notruf nie über Lautsprecher.",
+        "data": {
+          "speakers": "Lautsprecher (Standard für alle Ereignisse)",
+          "repeat": "Alarm-Durchsage wiederholen alle",
+          "quiet_enabled": "Nachtruhe",
+          "quiet_start": "Nachtruhe von",
+          "quiet_end": "Nachtruhe bis"
+        }
+      },
+      "speech_events": {
+        "title": "Sprachausgabe – Ereignis",
+        "description": "Für welches Ereignis?",
+        "data": {
+          "event": "Ereignis"
+        }
+      },
+      "speech_event_edit": {
+        "title": "Sprachausgabe – Ereignis",
+        "description": "Standardtext: „{default}“\nAktuelle Vorschau: „{preview}“\n\nPlatzhalter: {placeholders}. Leer = Standardtext. Bei mehreren Bereichen wird dem Standardtext der Bereichsname vorangestellt.\n\n{error}",
+        "data": {
+          "enabled": "Ansagen",
+          "mode": "Art",
+          "speakers": "Eigene Lautsprecher (leer = Standard)",
+          "in_quiet": "Auch in der Nachtruhe ansagen",
+          "text": "Text"
+        }
       }
     },
     "error": {
@@ -558,7 +615,8 @@
       "rule_yaml_invalid": "So nicht speicherbar: {problem}",
       "area_has_profiles": "Diesem Bereich gehören noch Alarmprofile – erst die Profile löschen oder einem anderen Bereich zuordnen.",
       "area_name_required": "Bitte einen Namen angeben.",
-      "area_name_taken": "Diesen Namen hat bereits ein anderer Bereich."
+      "area_name_taken": "Diesen Namen hat bereits ein anderer Bereich.",
+      "invalid_template": "Text fehlerhaft"
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -649,6 +707,31 @@
         "alarm": "sofort Alarm",
         "entry_delay": "Eingangsverzögerung, dann Alarm",
         "notify": "nur Benachrichtigung, kein Alarm"
+      }
+    },
+    "notify_event": {
+      "options": {
+        "alarm": "Alarm",
+        "entry": "Tür geöffnet (Eingangsverzögerung)",
+        "armed": "Scharf geschaltet",
+        "disarmed": "Unscharf geschaltet",
+        "alarm_ended": "Alarm beendet",
+        "arm_failed": "Scharfschaltung abgelehnt",
+        "automation": "Automatik",
+        "fault": "Störung",
+        "system": "System",
+        "reminder": "Erinnerung",
+        "unconfirmed": "Unbestätigte Auslösung",
+        "unconfirmed_frequent": "Melder löst häufig allein aus",
+        "arm_hint": "Hinweis beim Scharfschalten",
+        "rule_notify": "Auslöseregel „nur Benachrichtigung“",
+        "always_active": "Immer aktiver Melder"
+      }
+    },
+    "speech_mode": {
+      "options": {
+        "announce": "Durchsage (mit Gong)",
+        "speak": "Sprechen"
       }
     }
   },

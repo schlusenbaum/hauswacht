@@ -26,9 +26,10 @@
 | **0.20.0** ✅ | Expertenmodus für Auslöseregeln: YAML-Editor mit Prüfung, Verschachtelung, Ausnahme „nicht, wenn vorher …“ (auch im Assistenten), Bedingungen (Uhrzeit, Person/Zone, Zustand, Zahlenwert, und/oder/nicht), Ergebnis „nur Benachrichtigung“ | nein |
 | **0.21.0** ✅ | Immer aktive Melder (unscharf: Benachrichtigung, optional Sirene), Scharf durch Schließen der Tür (optional, Beruhigungszeit) | nein |
 | **0.22.0** ✅ | Bereiche: frei benannte, unabhängig scharf schaltbare Bereiche mit eigenem Bedienfeld plus „Alle Bereiche“; Benutzer je Bereich | nein |
-| 0.23.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
+| **0.23.0** ✅ | Sprachausgabe über Lautsprecher (z. B. Echo): Durchsage oder Sprechen, Wiederholung, Nachtruhe, Lautsprecher je Profil; eigene Texte mit Platzhaltern für Sprache und Push | nein |
+| 0.24.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
-| 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, eigene Benachrichtigungstexte | – |
+| 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, weitere Platzhalter | – |
 
 ## Entscheidungen
 

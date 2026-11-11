@@ -32,6 +32,7 @@ from homeassistant.helpers.event import (
     EventStateChangedData,
     async_call_later,
     async_track_state_change_event,
+    async_track_time_interval,
 )
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
@@ -123,6 +124,7 @@ from .core.sensors import (
     resolve_zones,
     sensor_role,
 )
+from .core.speech import parse_speech, profile_speakers
 from .core.state_machine import (
     ActivateReaction,
     AlarmAcknowledged,
@@ -276,6 +278,7 @@ class HauswachtRuntime:
         self._exit_doors: frozenset[str] = frozenset()
         self._exit_settle = 5
         self._settle_timer: CALLBACK_TYPE | None = None
+        self._speech_repeat: CALLBACK_TYPE | None = None
         self.delay_ends_at: datetime | None = None
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
@@ -482,6 +485,7 @@ class HauswachtRuntime:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
         self._cancel_settle()
+        self._cancel_speech_repeat()
         self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
@@ -597,6 +601,7 @@ class HauswachtRuntime:
             NotifyEvent.ARM_FAILED,
             "Hauswacht: nicht scharf geschaltet",
             f"Profil {self.profile_name(profile_id)}{by}: {err}",
+            values={"profil": self.profile_name(profile_id), "wer": changed_by, "grund": str(err)},
             data={"tag": PUSH_ARM_TAG, "actions": actions},
             test_mode=self.ctx.test_mode,
         )
@@ -611,6 +616,7 @@ class HauswachtRuntime:
             NotifyEvent.REMINDER,
             "Hauswacht: Anlage ist unscharf",
             message,
+            values={"profil": self.profile_name(profile_id)},
             data={
                 "tag": PUSH_ARM_TAG,
                 "actions": [
@@ -830,13 +836,22 @@ class HauswachtRuntime:
             return ()
         return parse_reaction(self.entry.options, self.ctx.profile.profile_id).notify
 
+    def _profile_speakers(self, profile_id: str | None = None) -> tuple[str, ...]:
+        if profile_id is None and self.ctx.profile is not None:
+            profile_id = self.ctx.profile.profile_id
+        return profile_speakers(self.entry.options, profile_id)
+
     @callback
-    def _send_alarm_push(self, title: str, message: str) -> None:
+    def _send_alarm_push(
+        self, title: str, message: str, values: Mapping[str, Any] | None = None
+    ) -> None:
         sent = self.notifier.notify(
             NotifyEvent.ENTRY,
             title,
             message,
+            values=values,
             profile_targets=self._alarm_targets(),
+            profile_speakers=self._profile_speakers(),
             data=self._push_actions(),
             test_mode=self.ctx.test_mode,
         )
@@ -852,6 +867,11 @@ class HauswachtRuntime:
             f"{display_name(self.hass, sensor)} – Eingangsverzögerung "
             f"{self.ctx.profile.entry_delay} s läuft "
             f"(Profil {self.profile_name(self.ctx.profile.profile_id)}).",
+            {
+                "melder": display_name(self.hass, sensor),
+                "sekunden": self.ctx.profile.entry_delay,
+                "profil": self.profile_name(self.ctx.profile.profile_id),
+            },
         )
 
     async def _on_push_action(self, event: HaEventAny[Any]) -> None:
@@ -1110,6 +1130,7 @@ class HauswachtRuntime:
                 NotifyEvent.ALWAYS_ACTIVE,
                 "Hauswacht: immer aktiver Melder",
                 message,
+                values={"melder": name},
                 test_mode=self.ctx.test_mode,
             )
             persistent_notification.async_create(
@@ -1220,6 +1241,7 @@ class HauswachtRuntime:
                 "Hauswacht: Auslöseregel erfüllt",
                 f"Auslöseregel „{rule.name}“ erfüllt (durch {display_name(self.hass, entity_id)}) "
                 "– nur Benachrichtigung, kein Alarm.",
+                values={"regel": rule.name, "melder": display_name(self.hass, entity_id)},
                 test_mode=self.ctx.test_mode,
             )
             self._reset_rules()
@@ -1283,6 +1305,7 @@ class HauswachtRuntime:
             "Hauswacht: unbestätigte Auslösung",
             f"Auslöseregel „{name}“ nur teilweise erfüllt ({progress.done} von {progress.total} "
             f"Schritten, begonnen mit {first}) – kein Alarm.",
+            values={"regel": name, "melder": first},
             test_mode=self.ctx.test_mode,
         )
         if self._lone.record(progress.first_sensor, now):
@@ -1292,6 +1315,7 @@ class HauswachtRuntime:
                 f"{first} hat innerhalb einer Stunde {FREQUENT_COUNT}-mal eine Auslöseregel "
                 "begonnen, die nicht erfüllt wurde. Bitte Melder prüfen "
                 "(Empfindlichkeit, Ausrichtung, Batterie).",
+                values={"melder": first},
                 test_mode=self.ctx.test_mode,
             )
 
@@ -1713,6 +1737,8 @@ class HauswachtRuntime:
             case CancelTimer():
                 self._cancel_timer()
             case StateChanged():
+                if effect.new is not AlarmState.TRIGGERED:
+                    self._cancel_speech_repeat()
                 _LOGGER.info(
                     "Zustand %s -> %s (%s)", effect.old.value, effect.new.value, effect.cause
                 )
@@ -1800,6 +1826,10 @@ class HauswachtRuntime:
             NotifyEvent.ARM_HINT,
             "Hauswacht: Hinweis beim Scharfschalten",
             message,
+            values={
+                "profil": self.profile_name(self.ctx.profile.profile_id),
+                "offen": ", ".join(display_name(self.hass, e) for e in open_sensors),
+            },
             test_mode=self.ctx.test_mode,
         )
         persistent_notification.async_create(
@@ -1818,6 +1848,10 @@ class HauswachtRuntime:
                 NotifyEvent.ARMED,
                 "Hauswacht: scharf",
                 f"Profil {self.profile_name(self.ctx.profile.profile_id)} scharf geschaltet{by}.",
+                values={
+                    "profil": self.profile_name(self.ctx.profile.profile_id),
+                    "wer": self.changed_by,
+                },
                 test_mode=self.ctx.test_mode,
             )
             self._hint_open_rule_sensors()
@@ -1829,6 +1863,7 @@ class HauswachtRuntime:
                 NotifyEvent.ALARM_ENDED,
                 "Hauswacht: Alarm beendet",
                 f"Alarm beendet{by}. Die Anlage ist unscharf.",
+                values={"wer": self.changed_by},
                 test_mode=self.ctx.test_mode,
             )
         if (
@@ -1840,6 +1875,7 @@ class HauswachtRuntime:
                 NotifyEvent.DISARMED,
                 "Hauswacht: unscharf",
                 f"Unscharf geschaltet{by}.",
+                values={"wer": self.changed_by},
                 test_mode=self.ctx.test_mode,
             )
 
@@ -1863,6 +1899,8 @@ class HauswachtRuntime:
             "Hauswacht: Alarm beendet",
             message,
             profile_targets=targets,
+            profile_speakers=self._profile_speakers(effect.profile_id),
+            values={"wer": self.changed_by, "profil": name},
             test_mode=self.ctx.test_mode,
         )
         persistent_notification.async_dismiss(self.hass, NOTIFICATION_ALARM)
@@ -1902,6 +1940,11 @@ class HauswachtRuntime:
         if decision.blocked:
             reasons = sorted({b.reason.value for b in decision.blocked})
             message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
+        alarm_values = {
+            "melder": display_name(self.hass, effect.sensor_key),
+            "profil": self.profile_name(effect.profile_id),
+            "regel": self._fired_rule or "",
+        }
         if self._fired_rule:
             message += f" Auslöseregel: {self._fired_rule}."
             self._fired_rule = None
@@ -1912,13 +1955,53 @@ class HauswachtRuntime:
             title,
             message,
             profile_targets=reaction.notify,
+            profile_speakers=self._profile_speakers(effect.profile_id),
+            values=alarm_values,
             test_mode=effect.test_mode,
             data=self._push_actions("Alarm beenden"),
+            # Stiller Alarm: nichts ansagen (sonst hört es der Eindringling)
+            speak=not reaction.silent,
         )
+        if not reaction.silent:
+            self._start_speech_repeat(
+                effect.profile_id,
+                self.notifier.fill_values(message, alarm_values),
+                test_mode=effect.test_mode,
+            )
         self._pushed_targets.update(sent)
         persistent_notification.async_create(
             self.hass, message, title=title, notification_id=NOTIFICATION_ALARM
         )
+
+    @callback
+    def _start_speech_repeat(
+        self, profile_id: str, values: Mapping[str, str], *, test_mode: bool
+    ) -> None:
+        """Alarm-Durchsage alle N Sekunden wiederholen, solange der Alarm läuft."""
+        self._cancel_speech_repeat()
+        seconds = parse_speech(self.entry.options).repeat
+        if not seconds:
+            return
+        speakers = self._profile_speakers(profile_id)
+
+        @callback
+        def _again(_now: datetime) -> None:
+            if self.ctx.state is not AlarmState.TRIGGERED:
+                self._cancel_speech_repeat()
+                return
+            self.notifier.speak(
+                NotifyEvent.ALARM, values, profile_speakers=speakers, test_mode=test_mode
+            )
+
+        self._speech_repeat = async_track_time_interval(
+            self.hass, _again, timedelta(seconds=seconds)
+        )
+
+    @callback
+    def _cancel_speech_repeat(self) -> None:
+        if self._speech_repeat is not None:
+            self._speech_repeat()
+            self._speech_repeat = None
 
     @callback
     def _start_timer(self, effect: StartTimer) -> None:
