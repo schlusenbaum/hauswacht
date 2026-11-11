@@ -6,6 +6,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-11-11
+
+### Hinzugefügt
+- Bedingungen können `if_unknown: not_met` tragen: Lässt sich die Bedingung nicht auswerten,
+  gilt sie dann als nicht erfüllt („im Zweifel kein Alarm“). Standard bleibt `met`.
+
 ## [0.20.0] - 2026-11-11
 
 ### Hinzugefügt

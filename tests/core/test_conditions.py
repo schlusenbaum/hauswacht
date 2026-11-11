@@ -85,3 +85,26 @@ def test_check_and_entities() -> None:
     ):
         with pytest.raises(ConditionError):
             check(bad)
+
+
+def test_if_unknown_not_met() -> None:
+    unknown = {"numeric": {"entity": "sensor.kaputt", "below": 30}, "if_unknown": "not_met"}
+    check(unknown)
+    assert evaluate(unknown, get, DAY) is False
+    assert all_met([unknown], get, DAY) is False  # im Zweifel kein Alarm
+    known = {"numeric": {"entity": "sensor.temp", "below": 30}, "if_unknown": "not_met"}
+    assert all_met([known], get, DAY) is True
+    # Standard bleibt: unbekannt = erfüllt
+    assert all_met([{"numeric": {"entity": "sensor.kaputt", "below": 30}}], get, DAY) is True
+    # auch an einer Verknüpfung
+    either = {
+        "or": [{"state": {"entity": "sensor.kaputt", "is": "on"}}],
+        "if_unknown": "not_met",
+    }
+    assert evaluate(either, get, DAY) is False
+    with pytest.raises(ConditionError):
+        check({"state": {"entity": "switch.x", "is": "on"}, "if_unknown": "vielleicht"})
+    assert entities(unknown) == {"sensor.kaputt"}
+    from custom_components.hauswacht.core.conditions import describe  # noqa: PLC0415
+
+    assert describe(unknown, str).endswith("(unbekannt = nicht erfüllt)")

@@ -463,7 +463,7 @@
       },
       "rule_yaml": {
         "title": "Trigger rule as YAML",
-        "description": "Expert mode: the whole trigger rule as YAML. Sensor groups by name (`group: Basement`), sensors by entity ID (`sensor: binary_sensor.x`).\n\n- Steps: `any: [...]` (one of), `all: [...]` (all), `count: 2` + `of: [...]` (at least N), nestable; `within:` time until the next step.\n- `result:` alarm, entry_delay or notify (notification only).\n- `unless:` expression + `before:` seconds – not if that happened within this time before step 1.\n- `conditions:` list: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Not evaluable = met.\n\nExamples are in the documentation.",
+        "description": "Expert mode: the whole trigger rule as YAML. Sensor groups by name (`group: Basement`), sensors by entity ID (`sensor: binary_sensor.x`).\n\n- Steps: `any: [...]` (one of), `all: [...]` (all), `count: 2` + `of: [...]` (at least N), nestable; `within:` time until the next step.\n- `result:` alarm, entry_delay or notify (notification only).\n- `unless:` expression + `before:` seconds – not if that happened within this time before step 1.\n- `conditions:` list: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Not evaluable = met. Per condition optionally `if_unknown: not_met` = not met when unknown.\n\nExamples are in the documentation.",
         "data": {
           "rule": "Trigger rule"
         }
