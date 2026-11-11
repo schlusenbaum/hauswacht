@@ -402,6 +402,14 @@
         "sat": "Sa",
         "sun": "So"
       }
+    },
+    "simulate_state": {
+      "options": {
+        "on": "Offen / ausgelöst",
+        "off": "Zu / ruhig",
+        "unavailable": "Nicht verfügbar",
+        "real": "Echt (zurücksetzen)"
+      }
     }
   },
   "entity": {
@@ -430,6 +438,9 @@
       },
       "homecoming": {
         "name": "Heimkehr-Beobachtung"
+      },
+      "simulation": {
+        "name": "Simulierte Sensoren"
       }
     },
     "binary_sensor": {
@@ -605,6 +616,24 @@
           "description": "Konfigurierter Sensor, dessen Auslösung simuliert wird."
         }
       }
+    },
+    "simulate_state": {
+      "name": "Sensorzustand simulieren",
+      "description": "Täuscht Hauswacht einen Sensorzustand vor (offen/ausgelöst, zu/ruhig, nicht verfügbar) oder setzt ihn auf den echten Wert zurück. Nur im Testmodus; Gerät und Zustand in Home Assistant bleiben unverändert.",
+      "fields": {
+        "sensor": {
+          "name": "Sensor",
+          "description": "Konfigurierter Sensor."
+        },
+        "state": {
+          "name": "Zustand",
+          "description": "„Echt“ setzt auf den echten Wert zurück."
+        }
+      }
+    },
+    "simulate_reset": {
+      "name": "Simulation zurücksetzen",
+      "description": "Alle simulierten Sensoren wieder mit ihrem echten Zustand."
     }
   },
   "issues": {

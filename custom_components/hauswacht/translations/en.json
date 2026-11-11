@@ -402,6 +402,14 @@
         "sat": "Sat",
         "sun": "Sun"
       }
+    },
+    "simulate_state": {
+      "options": {
+        "on": "Open / triggered",
+        "off": "Closed / idle",
+        "unavailable": "Unavailable",
+        "real": "Real (reset)"
+      }
     }
   },
   "entity": {
@@ -430,6 +438,9 @@
       },
       "homecoming": {
         "name": "Homecoming observation"
+      },
+      "simulation": {
+        "name": "Simulated sensors"
       }
     },
     "binary_sensor": {
@@ -605,6 +616,24 @@
           "description": "Configured sensor whose triggering is simulated."
         }
       }
+    },
+    "simulate_state": {
+      "name": "Simulate sensor state",
+      "description": "Makes Hauswacht see a sensor state (open/triggered, closed/idle, unavailable) or resets it to the real value. Test mode only; the device and its state in Home Assistant stay unchanged.",
+      "fields": {
+        "sensor": {
+          "name": "Sensor",
+          "description": "Configured sensor."
+        },
+        "state": {
+          "name": "State",
+          "description": "\"Real\" resets to the real value."
+        }
+      }
+    },
+    "simulate_reset": {
+      "name": "Reset simulation",
+      "description": "All simulated sensors back to their real state."
     }
   },
   "issues": {

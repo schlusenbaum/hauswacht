@@ -148,6 +148,9 @@ from .siren_executor import SirenExecutor
 
 _LOGGER = logging.getLogger(__name__)
 
+SIMULATION_REAL = "real"
+SIMULATION_VALUES = frozenset({"on", "off", "unavailable", SIMULATION_REAL})
+
 # So lange gelten Push-Knöpfe zum Scharfschalten ("Trotzdem scharf", "Jetzt scharf")
 PENDING_ARM_SECONDS = 15 * 60
 REMINDER_ARM_SECONDS = 2 * 60 * 60  # Erinnerung wird oft erst später gelesen
@@ -210,6 +213,8 @@ class HauswachtRuntime:
             str(e) for e in entry.options.get(OPT_INFRASTRUCTURE, []) if isinstance(e, str)
         )
         self._infra_faulty: frozenset[str] = frozenset()
+        # Simulierte Sensorzustände (nur Testmodus, nur für Hauswacht, nie in Home Assistant)
+        self._simulated: dict[str, str] = {}
         self.delay_ends_at: datetime | None = None
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
@@ -813,6 +818,9 @@ class HauswachtRuntime:
     def set_test_mode(self, enabled: bool) -> None:
         effects = self._dispatch(SetTestMode(enabled=enabled))
         self._raise_for_rejection(effects)
+        if not self.ctx.test_mode and self._simulated:
+            self._simulated.clear()  # ohne Testmodus gelten wieder nur echte Zustände
+            self._notify()
 
     # --- Interna -----------------------------------------------------------
 
@@ -827,8 +835,18 @@ class HauswachtRuntime:
 
     def snapshots(self, entity_ids: frozenset[str]) -> dict[str, SensorSnapshot]:
         result: dict[str, SensorSnapshot] = {}
+        now = dt_util.utcnow().timestamp()
         for entity_id in entity_ids:
             state = self.hass.states.get(entity_id)
+            if (simulated := self.simulated(entity_id)) is not None:
+                result[entity_id] = SensorSnapshot(
+                    entity_id=entity_id,
+                    state=simulated,
+                    device_class=state.attributes.get("device_class") if state else None,
+                    last_reported=now,
+                    last_seen=None,
+                )
+                continue
             result[entity_id] = SensorSnapshot(
                 entity_id=entity_id,
                 state=state.state if state else None,
@@ -962,9 +980,13 @@ class HauswachtRuntime:
 
     # --- Simulation (nur Testmodus) -----------------------------------------
 
-    @callback
-    def simulate_trigger(self, entity_id: str) -> None:
-        """Simuliert das Auslösen eines konfigurierten Sensors. Nur im Testmodus erlaubt."""
+    def simulated(self, entity_id: str) -> str | None:
+        """Simulierter Zustand – nur im Testmodus wirksam."""
+        if not self.ctx.test_mode:
+            return None
+        return self._simulated.get(entity_id)
+
+    def _require_simulation(self, entity_id: str) -> None:
         if not self.ctx.test_mode:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="simulation_requires_test_mode"
@@ -975,6 +997,70 @@ class HauswachtRuntime:
                 translation_key="unknown_sensor",
                 translation_placeholders={"sensor": entity_id},
             )
+
+    @callback
+    def simulate_state(self, entity_id: str, value: str) -> None:
+        """Sensorzustand für Hauswacht simulieren ("on", "off", "unavailable") oder mit
+        "real" auf den echten Wert zurücksetzen. Das Gerät und sein Zustand in Home
+        Assistant bleiben unverändert; andere Automationen merken nichts davon."""
+        if value not in SIMULATION_VALUES:
+            raise ServiceValidationError(f"Unbekannter Zustand: {value}")
+        self._require_simulation(entity_id)
+        real = self.hass.states.get(entity_id)
+        real_state = real.state if real else None
+        old = self._simulated.get(entity_id, real_state)
+        if value == SIMULATION_REAL:
+            self._simulated.pop(entity_id, None)
+            new = real_state
+        else:
+            self._simulated[entity_id] = value
+            new = value
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {"type": "SensorSimulated", "sensor_key": entity_id, "state": value},
+        )
+        if old == new:
+            self._notify()
+            return
+        device_class = real.attributes.get("device_class") if real else None
+        self._handle_sensor_change(entity_id, old, new, device_class)
+
+    @callback
+    def simulate_reset(self) -> None:
+        """Alle simulierten Zustände auf die echten Werte zurücksetzen."""
+        if not self.ctx.test_mode:
+            self._simulated.clear()
+            self._notify()
+            return
+        for entity_id in list(self._simulated):
+            self.simulate_state(entity_id, SIMULATION_REAL)
+
+    def simulation_overview(self) -> list[dict[str, Any]]:
+        """Alle Hauswacht-Sensoren mit echtem und simuliertem Zustand (für die Testkarte)."""
+        rows: list[dict[str, Any]] = []
+        for entity_id in self.candidates | self.armed_sensors:
+            state = self.hass.states.get(entity_id)
+            device_class = state.attributes.get("device_class") if state else None
+            rows.append(
+                {
+                    "entity_id": entity_id,
+                    "name": display_name(self.hass, entity_id),
+                    "device_class": device_class,
+                    "role": sensor_role(entity_id, device_class, self.role_overrides).value,
+                    "real": state.state if state else None,
+                    "simulated": self.simulated(entity_id),
+                }
+            )
+        return sorted(rows, key=lambda r: str(r["name"]).casefold())
+
+    @property
+    def simulated_count(self) -> int:
+        return len(self._simulated) if self.ctx.test_mode else 0
+
+    @callback
+    def simulate_trigger(self, entity_id: str) -> None:
+        """Simuliert das Auslösen eines konfigurierten Sensors. Nur im Testmodus erlaubt."""
+        self._require_simulation(entity_id)
         state = self.hass.states.get(entity_id)
         device_class = state.attributes.get("device_class") if state else None
         role = sensor_role(entity_id, device_class, self.role_overrides)
@@ -1030,11 +1116,28 @@ class HauswachtRuntime:
         if entity_id not in self.candidates and entity_id not in self.armed_sensors:
             self._notify()  # Infrastruktur oder "Zuletzt gesehen"-Sensor
             return
+        if self.simulated(entity_id) is not None:
+            self._notify()  # simulierter Zustand hat Vorrang; der echte wird nur angezeigt
+            return
         old = event.data["old_state"]
         new = event.data["new_state"]
-        old_state = old.state if old else None
-        new_state = new.state if new else None
         device_class = new.attributes.get("device_class") if new else None
+        self._handle_sensor_change(
+            entity_id,
+            old.state if old else None,
+            new.state if new else None,
+            device_class,
+        )
+
+    @callback
+    def _handle_sensor_change(
+        self,
+        entity_id: str,
+        old_state: str | None,
+        new_state: str | None,
+        device_class: str | None,
+    ) -> None:
+        """Zustandswechsel eines Sensors bewerten – echt oder simuliert."""
         role = sensor_role(entity_id, device_class, self.role_overrides)
         armed = self.ctx.state is not AlarmState.DISARMED
 
