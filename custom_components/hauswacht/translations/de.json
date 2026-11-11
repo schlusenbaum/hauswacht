@@ -272,6 +272,14 @@
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
             }
+          },
+          "event_rule_notify": {
+            "name": "Auslöseregel „nur Benachrichtigung“",
+            "description": "Eine Auslöseregel mit dem Ergebnis „nur Benachrichtigung“ wurde erfüllt. Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
           }
         }
       },
@@ -371,6 +379,7 @@
         "description": "{saved}Eine **Auslöseregel** löst erst bei einer **Abfolge** von Meldern aus – z. B. „Haustür, dann innerhalb von 120 s Keller“. Nur die Tür oder nur der Keller lösen dann nichts aus.\n\nSo ist eine Auslöseregel aufgebaut:\n- Sie besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt erst, wenn Schritt 1 erfüllt ist – und nur innerhalb der Zeit, die bei Schritt 1 steht.\n- In jedem Schritt wählst du Melder und legst fest, wann **dieser Schritt** erfüllt ist: einer davon (ODER), alle davon in beliebiger Reihenfolge (UND) oder mindestens N verschiedene.\n- Ist der letzte Schritt erfüllt, gibt es Alarm – sofort oder nach der Eingangsverzögerung.\n\nIn jedem Alarmprofil wählst du, welche Auslöseregeln gelten. Es reicht, wenn eine erfüllt ist.\n\n**Vorhandene Auslöseregeln:**\n{rules}",
         "menu_options": {
           "rule_add": "Auslöseregel anlegen",
+          "rule_yaml_add": "Neue Auslöseregel als YAML (Expertenmodus)",
           "rule_edit": "Auslöseregel bearbeiten",
           "rule_delete": "Auslöseregel löschen",
           "triggering": "← Zurück"
@@ -423,7 +432,9 @@
           "rule_step_edit": "Schritt bearbeiten",
           "rule_step_remove": "Letzten Schritt entfernen",
           "rule_meta": "Name und Ergebnis ändern",
-          "rule_cancel": "Abbrechen (nicht speichern)"
+          "rule_cancel": "Abbrechen (nicht speichern)",
+          "rule_unless": "Nicht, wenn vorher … (Ausnahme)",
+          "rule_yaml": "Als YAML bearbeiten (Expertenmodus)"
         }
       },
       "rule_step_edit": {
@@ -439,6 +450,22 @@
           "zones": "Meldergruppen – welche Melder zusammengehören",
           "rules": "Auslöseregeln – Abfolgen von Meldern",
           "init": "← Zurück"
+        }
+      },
+      "rule_unless": {
+        "title": "Nicht, wenn vorher …",
+        "description": "**Bisher:** {rule_text}\n\nDie Auslöseregel gilt **nicht**, wenn einer dieser Melder in der angegebenen Zeit **vor Schritt 1** ausgelöst hat – z. B. wer schon drinnen unterwegs war und dann ein Fenster öffnet, ist kein Einbrecher. Wirkt nur auf diese Auslöseregel. Alles abwählen = Ausnahme entfernen.",
+        "data": {
+          "sensors": "Sensoren",
+          "zones": "Meldergruppen (irgendein Melder der Gruppe)",
+          "before": "Zeitraum vor Schritt 1"
+        }
+      },
+      "rule_yaml": {
+        "title": "Auslöseregel als YAML",
+        "description": "Expertenmodus: die ganze Auslöseregel als YAML. Meldergruppen per Name (`group: Keller`), Sensoren per Entitäts-ID (`sensor: binary_sensor.x`).\n\n- Schritte: `any: [...]` (einer davon), `all: [...]` (alle), `count: 2` + `of: [...]` (mindestens N), beliebig verschachtelt; `within:` Zeit bis zum nächsten Schritt.\n- `result:` alarm, entry_delay oder notify (nur Benachrichtigung).\n- `unless:` Ausdruck + `before:` Sekunden – nicht, wenn das in dieser Zeit vor Schritt 1 passiert ist.\n- `conditions:` Liste von Bedingungen: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Nicht auswertbar = erfüllt.\n\nBeispiele stehen in der Anleitung.",
+        "data": {
+          "rule": "Auslöseregel"
         }
       }
     },
@@ -458,7 +485,8 @@
       "zone_overlap": "Diese Sensoren sind schon in einer anderen Meldergruppe: {conflicts}. Ein Sensor kann nur in einer Meldergruppe sein – bitte dort entfernen oder hier abwählen.",
       "rule_name_required": "Bitte einen Namen eingeben.",
       "rule_name_taken": "Eine Auslöseregel mit diesem Namen gibt es schon.",
-      "step_empty": "Bitte mindestens einen Sensor oder eine Meldergruppe wählen."
+      "step_empty": "Bitte mindestens einen Sensor oder eine Meldergruppe wählen.",
+      "rule_yaml_invalid": "So nicht speicherbar: {problem}"
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -546,7 +574,8 @@
     "rule_result": {
       "options": {
         "alarm": "sofort Alarm",
-        "entry_delay": "Eingangsverzögerung, dann Alarm"
+        "entry_delay": "Eingangsverzögerung, dann Alarm",
+        "notify": "nur Benachrichtigung, kein Alarm"
       }
     }
   },

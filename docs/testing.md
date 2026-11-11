@@ -20,7 +20,8 @@ ruff check .    # Lint
 | `tests/integration/test_sensors.py` | Mit Home Assistant: Auslösung je Rolle, Eingangsverzögerung, Profil-Zonen, Bereitschaft, Bestätigung, Labels (auch Label-Entfernung im scharfen Zustand), Rollen-Ausnahmen, Zonen-Optionen |
 | `tests/core/test_infrastructure.py` | Indikatoren und Systemstatus |
 | `tests/integration/test_system.py` | Mit Home Assistant: Systemstatus, Störung verweigert Scharfschalten, Ausfall und Wiederkehr von Zigbee2MQTT ohne Fehlalarm, Simulation nur im Testmodus |
-| `tests/core/test_rules.py` | Regel-Kern: Abfolgen, ODER/UND/mindestens N, Zeitfenster, Fortschritt, Prüfung, Migration |
+| `tests/core/test_rules.py` | Regel-Kern: Abfolgen, ODER/UND/mindestens N, Verschachtelung, Ausnahme, Zeitfenster, Fortschritt, Prüfung, YAML-Umwandlung, alte Speicherform, Migration |
+| `tests/core/test_conditions.py` | Bedingungen: Uhrzeit über Mitternacht, Wochentage, Person/Zone, Zustand, Zahlenwert, Logik, nicht auswertbar = erfüllt, Aufbauprüfung |
 | `tests/integration/test_rules.py` | Mit Home Assistant: Tür allein / Keller allein kein Alarm, Tür → Keller Eingangsverzögerung, Fenster → Keller Alarm, Reihenfolge, Scharfschalten trotz offenem Regelmelder, Migration, Optionen |
 | `tests/integration/test_simulation.py` | Mit Home Assistant: Sensorzustände simulieren (nur Testmodus, Zustand in Home Assistant unverändert, echte Änderungen während der Simulation ignoriert, Zurücksetzen bewertet den echten Wert, Testmodus aus löscht alles, keine Sirene) |
 | `tests/core/test_reactions.py` | Reaktion je Profil, Brand-Indikatoren, Höchstdauer, Texte |

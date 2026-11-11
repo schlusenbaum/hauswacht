@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-11
+
+### Hinzugefügt
+- **Expertenmodus für Auslöseregeln:** ganze Regel als YAML bearbeiten oder neu anlegen, mit
+  Prüfung und Fehlern mit Fundstelle. Meldergruppen per Name, Umbenennen ist folgenlos.
+- **Verschachtelung:** `any` / `all` / `count` beliebig ineinander (z. B. „Keller ODER (Flur UND
+  Büro)“). Eine Meldergruppe steht für ihre einzelnen Melder.
+- **Ausnahme „Nicht, wenn vorher …“** (`unless` + `before`), auch im Assistenten; die Testkarte
+  zeigt „gesperrt durch Ausnahme“.
+- **Bedingungen** (`conditions`): Uhrzeit/Wochentage, Person in Zone, Zustand, Zahlenwert, `and` /
+  `or` / `not`. Nicht auswertbar = erfüllt (sichere Seite).
+- **Ergebnis „nur Benachrichtigung“** (`notify`) mit eigenem Benachrichtigungs-Ereignis.
+
+### Geändert
+- Neue Speicherform der Auslöseregeln; Regeln aus 0.19 werden weiter gelesen und beim nächsten
+  Speichern umgestellt.
+
 ## [0.19.3] - 2026-11-11
 
 ### Geändert

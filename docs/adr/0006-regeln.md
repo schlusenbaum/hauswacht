@@ -42,3 +42,13 @@ sind auch bei einem Bewohner im Keller fast sicher.
 - Bewusst in Kauf genommen: Wer keinen späteren Schritt auslöst, bleibt in einem reinen
   Regel-Profil unbemerkt. Die Anleitung weist darauf hin.
 - Die Testkarte zeigt den Fortschritt jeder Regel; unvollständige Regeln können gemeldet werden.
+
+## Nachtrag 0.20 (Expertenmodus)
+
+- Schritte sind Ausdrücke (`any`/`all`/`count`), beliebig verschachtelt; eine Meldergruppe steht
+  für ihre einzelnen Melder. Gespeichert per Meldergruppen-ID, angezeigt per Name.
+- `unless` (Ausnahme vor Schritt 1) und `conditions` (Uhrzeit, Person/Zone, Zustand, Zahlenwert,
+  Logik) wirken nur auf die eigene Regel – der ODER-Grundsatz bleibt.
+- Nicht auswertbare Bedingungen gelten als erfüllt: Ein ausgefallener Sensor darf eine Regel nicht
+  stilllegen.
+- Ergebnis `notify` für Regeln, die nur informieren sollen.

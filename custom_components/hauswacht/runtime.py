@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import secrets
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import fields
 from datetime import datetime, timedelta
 from enum import Enum
@@ -67,6 +67,7 @@ from .core.code_guard import (
     register_success,
     remaining_lock,
 )
+from .core.conditions import all_met as conditions_met
 from .core.confirmation import FREQUENT_COUNT, LoneTriggerCounter
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
@@ -89,6 +90,7 @@ from .core.reactions import (
     tamper_message,
 )
 from .core.rules import (
+    STRICTNESS,
     Progress,
     Rule,
     RuleEngine,
@@ -97,7 +99,6 @@ from .core.rules import (
     describe_rule,
     parse_rules,
     profile_rule_ids,
-    rule_members,
 )
 from .core.sensors import (
     SensorSnapshot,
@@ -1015,11 +1016,7 @@ class HauswachtRuntime:
     # --- Regeln ("Tür, dann Keller") ----------------------------------------
 
     def _all_rule_sensors(self) -> frozenset[str]:
-        sensors: set[str] = set()
-        for rule in self.rules.values():
-            for members in rule_members(rule, self.zones, self._labels):
-                sensors |= members
-        return frozenset(sensors)
+        return build_engine(self.rules.values(), self.zones, self._labels).watched()
 
     def rule_names(self, entity_id: str) -> list[str]:
         """Regeln des scharfen Profils, in denen der Melder vorkommt."""
@@ -1039,13 +1036,41 @@ class HauswachtRuntime:
         if self.ctx.state not in (AlarmState.ARMED, AlarmState.PENDING, AlarmState.ALARM_HOLD):
             return
         now = dt_util.utcnow().timestamp()
-        fired = self._engine.record(entity_id, now)
+        recorded = self._engine.record(entity_id, now)
+        fired = [r for r in recorded if self._conditions_met(r)]
+        for rule in recorded:
+            if rule not in fired:
+                _LOGGER.info("Regel %s erfüllt, Bedingungen aber nicht – kein Alarm", rule.name)
+                self.hass.bus.async_fire(
+                    EVENT_HAUSWACHT,
+                    {"type": "RuleConditionsNotMet", "rule": rule.rule_id, "sensor_key": entity_id},
+                )
         if not fired:
             self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "RuleStep", "sensor_key": entity_id})
             self._update_partials(now)
             return
         # Bei mehreren erfüllten Regeln gilt das strengere Ergebnis
-        rule = next((r for r in fired if r.result is RuleResult.ALARM), fired[0])
+        rule = max(fired, key=lambda r: STRICTNESS[r.result])
+        if rule.result is RuleResult.NOTIFY:
+            self.hass.bus.async_fire(
+                EVENT_HAUSWACHT,
+                {
+                    "type": "RuleFired",
+                    "rule": rule.rule_id,
+                    "name": rule.name,
+                    "sensor_key": entity_id,
+                },
+            )
+            self.notifier.notify(
+                NotifyEvent.RULE_NOTIFY,
+                "Hauswacht: Auslöseregel erfüllt",
+                f"Auslöseregel „{rule.name}“ erfüllt (durch {display_name(self.hass, entity_id)}) "
+                "– nur Benachrichtigung, kein Alarm.",
+                test_mode=self.ctx.test_mode,
+            )
+            self._reset_rules()
+            self._notify()
+            return
         self._fired_rule = rule.name
         _LOGGER.warning("Regel erfüllt: %s (durch %s)", rule.name, entity_id)
         self.hass.bus.async_fire(
@@ -1057,6 +1082,15 @@ class HauswachtRuntime:
             SensorRole.ENTRY if rule.result is RuleResult.ENTRY_DELAY else SensorRole.INSTANT
         )
         self._dispatch(SensorTriggered(sensor_key=entity_id, role=result_role))
+
+    def _conditions_met(self, rule: Rule) -> bool:
+        """Bedingungen der Regel; nicht auswertbar = erfüllt (sichere Seite)."""
+
+        def get(entity_id: str) -> tuple[str, Mapping[str, Any]] | None:
+            state = self.hass.states.get(entity_id)
+            return (state.state, state.attributes) if state else None
+
+        return conditions_met(rule.conditions, get, dt_util.now())
 
     @callback
     def _update_partials(self, now: float) -> None:
@@ -1118,6 +1152,10 @@ class HauswachtRuntime:
         if not keep_fired:
             self._fired_rule = None
 
+    def _blocked_until(self, rule: Rule) -> str | None:
+        until = self._engine.blocked_until(rule, dt_util.utcnow().timestamp())
+        return dt_util.utc_from_timestamp(until).isoformat() if until else None
+
     def rules_overview(self) -> list[dict[str, Any]]:
         """Regeln des scharfen Profils mit Fortschritt (für die Testkarte)."""
         rows = []
@@ -1132,6 +1170,7 @@ class HauswachtRuntime:
                     if progress
                     else None,
                     "result": rule.result.value,
+                    "blocked_until": self._blocked_until(rule),
                     "text": describe_rule(
                         rule,
                         lambda e: display_name(self.hass, e),
