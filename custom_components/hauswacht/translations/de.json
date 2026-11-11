@@ -74,6 +74,15 @@
               "auto_away_delay": "Handys, die nur über das WLAN erkannt werden, melden im Standby manchmal kurz „weg“. Die Wartezeit verhindert, dass dann versehentlich scharf geschaltet wird.",
               "auto_disarm_on_arrival": "Nur wenn das Profil zuvor automatisch scharf geschaltet wurde. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf."
             }
+          },
+          "arm_on_close": {
+            "name": "Scharf durch Schließen der Tür",
+            "description": "Die Ausgangsverzögerung endet vorzeitig, sobald eine Ausgangstür geschlossen wird und die Beruhigungszeit lang zu bleibt. Ausgangstüren dürfen beim Scharfschalten offen sein; sind sie am Ende der Ausgangsverzögerung noch offen, gilt die normale Prüfung.",
+            "data": {
+              "enabled": "Scharf, sobald die Ausgangstür geschlossen ist",
+              "doors": "Ausgangstüren",
+              "settle": "Beruhigungszeit nach dem Schließen"
+            }
           }
         },
         "data_description": {
@@ -280,6 +289,14 @@
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
             }
+          },
+          "event_always_active": {
+            "name": "Immer aktiver Melder",
+            "description": "Ein immer aktiver Melder hat im unscharfen Zustand ausgelöst (ohne Sirene). Wichtiger Hinweis. Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
           }
         }
       },
@@ -449,6 +466,7 @@
         "menu_options": {
           "zones": "Meldergruppen – welche Melder zusammengehören",
           "rules": "Auslöseregeln – Abfolgen von Meldern",
+          "always_active": "Immer aktiv – Melder, die auch unscharf auslösen",
           "init": "← Zurück"
         }
       },
@@ -466,6 +484,19 @@
         "description": "Expertenmodus: die ganze Auslöseregel als YAML. Meldergruppen per Name (`group: Keller`), Sensoren per Entitäts-ID (`sensor: binary_sensor.x`).\n\n- Schritte: `any: [...]` (einer davon), `all: [...]` (alle), `count: 2` + `of: [...]` (mindestens N), beliebig verschachtelt; `within:` Zeit bis zum nächsten Schritt.\n- `result:` alarm, entry_delay oder notify (nur Benachrichtigung).\n- `unless:` Ausdruck + `before:` Sekunden – nicht, wenn das in dieser Zeit vor Schritt 1 passiert ist.\n- `conditions:` Liste von Bedingungen: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Nicht auswertbar = erfüllt. Pro Bedingung optional `if_unknown: not_met` = im Zweifel nicht erfüllt.\n\nBeispiele stehen in der Anleitung.",
         "data": {
           "rule": "Auslöseregel"
+        }
+      },
+      "always_active": {
+        "title": "Immer aktiv",
+        "description": "Diese Melder lösen **auch im unscharfen Zustand** aus – z. B. Tresor, Waffenschrank, Gartenhaus, Panikknopf.\n\n- **Unscharf:** standardmäßig nur eine wichtige Benachrichtigung (durchbricht „Nicht stören“) und eine Meldung in Home Assistant. Mit „Sirenen verwenden“ gibt es einen Alarm mit den gewählten Sirenen; „Alarm beenden“ führt zurück nach unscharf.\n- **Scharf:** sofortiger Alarm mit der Reaktion des aktiven Alarmprofils.\n\nHardware-Freigabe, Testmodus und Brandsperre gelten wie immer.",
+        "data": {
+          "zones": "Meldergruppen",
+          "sensors": "Sensoren",
+          "sirens_enabled": "Sirenen verwenden (unscharf)",
+          "sirens": "Sirenen",
+          "siren_tone": "Sirenenton",
+          "siren_volume": "Lautstärke",
+          "reaction_time": "Dauer der Alarmreaktion"
         }
       }
     },

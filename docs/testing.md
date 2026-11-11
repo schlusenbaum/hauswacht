@@ -23,6 +23,7 @@ ruff check .    # Lint
 | `tests/core/test_rules.py` | Regel-Kern: Abfolgen, ODER/UND/mindestens N, Verschachtelung, Ausnahme, Zeitfenster, Fortschritt, Prüfung, YAML-Umwandlung, alte Speicherform, Migration |
 | `tests/core/test_conditions.py` | Bedingungen: Uhrzeit über Mitternacht, Wochentage, Person/Zone, Zustand, Zahlenwert, Logik, nicht auswertbar = erfüllt, Aufbauprüfung |
 | `tests/integration/test_rules.py` | Mit Home Assistant: Tür allein / Keller allein kein Alarm, Tür → Keller Eingangsverzögerung, Fenster → Keller Alarm, Reihenfolge, Scharfschalten trotz offenem Regelmelder, Migration, Optionen |
+| `tests/integration/test_always_active.py` | Mit Home Assistant: immer aktive Melder (unscharf nur Benachrichtigung, mit Sirene Alarm und zurück nach unscharf, scharf sofortiger Alarm), Scharf durch Schließen der Tür (Beruhigungszeit, offene Tür am Ende bricht ab) |
 | `tests/integration/test_simulation.py` | Mit Home Assistant: Sensorzustände simulieren (nur Testmodus, Zustand in Home Assistant unverändert, echte Änderungen während der Simulation ignoriert, Zurücksetzen bewertet den echten Wert, Testmodus aus löscht alles, keine Sirene) |
 | `tests/core/test_reactions.py` | Reaktion je Profil, Brand-Indikatoren, Höchstdauer, Texte |
 | `tests/integration/test_reactions.py` | Mit Home Assistant und **Attrappen-Diensten**: Hardware-Sperre, Testmodus, Brand am eigenen/fremden Melder, Brand während Alarm, keine Schreibzugriffe, Push, Freigabe nur mit Bestätigung |

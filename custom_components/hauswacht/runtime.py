@@ -61,6 +61,14 @@ from .const import (
     PUSH_TAG,
     STORAGE_VERSION,
 )
+from .core.always_active import (
+    ALWAYS_PROFILE_ID,
+    ALWAYS_PROFILE_NAME,
+    always_reaction_options,
+    always_runtime,
+    parse_always_active,
+    parse_arm_on_close,
+)
 from .core.code_guard import (
     CodeGuardState,
     register_failure,
@@ -118,6 +126,7 @@ from .core.state_machine import (
     AlarmAcknowledged,
     AlarmContext,
     AlarmState,
+    AlwaysActiveTriggered,
     ArmingAborted,
     ArmRequested,
     CancelTimer,
@@ -238,6 +247,13 @@ class HauswachtRuntime:
         self._lone = LoneTriggerCounter()
         # Allein auslösende Melder des scharfen Profils (Teilmenge von armed_sensors)
         self.single_sensors: frozenset[str] = frozenset()
+        # Immer aktive Melder (auch unscharf)
+        self.always = parse_always_active(entry.options)
+        self.always_sensors: frozenset[str] = frozenset()
+        # Scharf durch Schließen der Tür (für die laufende Scharfschaltung)
+        self._exit_doors: frozenset[str] = frozenset()
+        self._exit_settle = 5
+        self._settle_timer: CALLBACK_TYPE | None = None
         self.delay_ends_at: datetime | None = None
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
@@ -304,6 +320,8 @@ class HauswachtRuntime:
     def profile_name(self, profile_id: str | None) -> str:
         if profile_id is None:
             return "-"
+        if profile_id == ALWAYS_PROFILE_ID:
+            return ALWAYS_PROFILE_NAME
         return profile_info(self.entry.options, profile_id).name
 
     @property
@@ -429,6 +447,7 @@ class HauswachtRuntime:
     def async_stop(self) -> None:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
+        self._cancel_settle()
         self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
@@ -489,10 +508,18 @@ class HauswachtRuntime:
             self.single_sensors = sensors
             self.armed_sensors = sensors | engine.watched()
             self._engine = engine
+            closing = parse_arm_on_close(self.entry.options, profile_id)
+            self._exit_doors = closing.doors if closing.enabled else frozenset()
+            self._exit_settle = closing.settle
         previous = self.changed_by
         self.changed_by = changed_by
         effects = self._dispatch(
-            ArmRequested(profile=profile, readiness=self._readiness(), confirmed=confirmed)
+            ArmRequested(
+                profile=profile,
+                # Ausgangstüren dürfen beim Scharfschalten offen sein (Scharf durch Schließen)
+                readiness=self.readiness_for(self.single_sensors - self._exit_doors),
+                confirmed=confirmed,
+            )
         )
         try:
             self._raise_for_rejection(effects)
@@ -1013,6 +1040,76 @@ class HauswachtRuntime:
         elif not faulty:
             persistent_notification.async_dismiss(self.hass, NOTIFICATION_FAULT)
 
+    # --- Immer aktive Melder --------------------------------------------------
+
+    @callback
+    def _always_triggered(self, entity_id: str) -> None:
+        """Unscharf: Benachrichtigung (oder Alarm mit eigener Sirene), scharf: sofort Alarm."""
+        name = display_name(self.hass, entity_id)
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT, {"type": "AlwaysActiveTriggered", "sensor_key": entity_id}
+        )
+        if self.ctx.state is AlarmState.DISARMED and not self.always.sirens_enabled:
+            prefix = "[TEST] " if self.ctx.test_mode else ""
+            message = f"{name} hat ausgelöst (immer aktiv, Anlage unscharf)."
+            self.notifier.notify(
+                NotifyEvent.ALWAYS_ACTIVE,
+                "Hauswacht: immer aktiver Melder",
+                message,
+                test_mode=self.ctx.test_mode,
+            )
+            persistent_notification.async_create(
+                self.hass,
+                prefix + message,
+                title="Hauswacht: immer aktiver Melder",
+                notification_id=f"{NOTIFICATION_ALARM}_always",
+            )
+            self._notify()
+            return
+        self._dispatch(
+            AlwaysActiveTriggered(sensor_key=entity_id, profile=always_runtime(self.always))
+        )
+
+    # --- Scharf durch Schließen der Tür -------------------------------------
+
+    def _all_exit_doors(self) -> frozenset[str]:
+        doors: set[str] = set()
+        for profile_id in self.profiles:
+            closing = parse_arm_on_close(self.entry.options, profile_id)
+            if closing.enabled:
+                doors |= closing.doors
+        return frozenset(doors)
+
+    @callback
+    def _on_exit_door(self, new_state: str | None) -> None:
+        """Ausgangstür während der Ausgangsverzögerung: zu -> nach Beruhigungszeit scharf."""
+        self._cancel_settle()
+        if new_state != "off":
+            return
+
+        @callback
+        def _settled(_now: datetime) -> None:
+            self._settle_timer = None
+            if self.ctx.state is not AlarmState.ARMING:
+                return
+            states = self.snapshots(self._exit_doors)
+            if any(s.state == "on" for s in states.values()):
+                return
+            _LOGGER.info("Ausgangstür geschlossen – Ausgangsverzögerung endet vorzeitig")
+            self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "ArmedByClosingDoor"})
+            self._cancel_timer()
+            self._dispatch(
+                ExitDelayElapsed(token=self.ctx.timer_token, readiness=self._readiness())
+            )
+
+        self._settle_timer = async_call_later(self.hass, self._exit_settle, _settled)
+
+    @callback
+    def _cancel_settle(self) -> None:
+        if self._settle_timer is not None:
+            self._settle_timer()
+            self._settle_timer = None
+
     # --- Regeln ("Tür, dann Keller") ----------------------------------------
 
     def _all_rule_sensors(self) -> frozenset[str]:
@@ -1029,6 +1126,9 @@ class HauswachtRuntime:
     @callback
     def _sensor_triggered(self, entity_id: str, role: SensorRole) -> None:
         """Allein auslösende Melder direkt weiter, Regelmelder über die Regeln."""
+        if entity_id in self.always_sensors and role is not SensorRole.TAMPER_24H:
+            self._always_triggered(entity_id)
+            return
         if role is SensorRole.TAMPER_24H or entity_id in self.single_sensors:
             self._dispatch(SensorTriggered(sensor_key=entity_id, role=role))
         if role is SensorRole.TAMPER_24H or entity_id not in self._engine.watched():
@@ -1267,6 +1367,8 @@ class HauswachtRuntime:
             if armed and ctx.profile is not None and ctx.profile.tamper_triggers_alarm:
                 return "tamper_alarm"
             return "tamper_message"
+        if entity_id in self.always_sensors:
+            return "always_active"
         if not armed:
             return "disarmed"
         if entity_id in ctx.bypassed_until_closed:
@@ -1305,8 +1407,14 @@ class HauswachtRuntime:
     def _refresh_sensors(self) -> None:
         """Labels neu einlesen und Zustandsabos auf alle konfigurierten Sensoren setzen."""
         self._labels = entities_by_label(self.hass)
+        self.always_sensors = frozenset(self.always.sensors) | resolve_zones(
+            self.always.zones, self.zones, self._labels
+        )
         self.candidates = (
-            all_configured_sensors(self.zones, self._labels) | self._all_rule_sensors()
+            all_configured_sensors(self.zones, self._labels)
+            | self._all_rule_sensors()
+            | self.always_sensors
+            | self._all_exit_doors()
         )
         self._last_seen_entity = self._find_last_seen_entities(self.candidates | self.armed_sensors)
         # Gerade scharf überwachte Sensoren bleiben abonniert, auch wenn ihr Label
@@ -1369,8 +1477,14 @@ class HauswachtRuntime:
         """Zustandswechsel eines Sensors bewerten – echt oder simuliert."""
         role = sensor_role(entity_id, device_class, self.role_overrides)
         armed = self.ctx.state is not AlarmState.DISARMED
+        if self.ctx.state is AlarmState.ARMING and entity_id in self._exit_doors:
+            self._on_exit_door(new_state)
 
-        relevant = role is SensorRole.TAMPER_24H or (armed and entity_id in self.armed_sensors)
+        relevant = (
+            role is SensorRole.TAMPER_24H
+            or entity_id in self.always_sensors
+            or (armed and entity_id in self.armed_sensors)
+        )
         if relevant and is_trigger(old_state, new_state):
             self._sensor_triggered(entity_id, role)
             return
@@ -1438,10 +1552,13 @@ class HauswachtRuntime:
         self.ctx, effects = step(self.ctx, event, time.monotonic())
         for effect in effects:
             self._apply(effect)
+        if self.ctx.state is not AlarmState.ARMING:
+            self._cancel_settle()
         if self.ctx.state is AlarmState.DISARMED:
             self.sirens.reset()
             self._reset_rules()
             self._engine = RuleEngine()
+            self._exit_doors = frozenset()
             self.automation.on_disarmed()
             if self.armed_sensors:
                 self.armed_sensors = frozenset()
@@ -1590,6 +1707,14 @@ class HauswachtRuntime:
             self._hint_open_rule_sensors()
         if effect.new is AlarmState.DISARMED:
             persistent_notification.async_dismiss(self.hass, NOTIFICATION_ARM_HINT)
+        if effect.cause == "always_alarm_ended":
+            by = f" von {self.changed_by}" if self.changed_by else ""
+            self.notifier.notify(
+                NotifyEvent.ALARM_ENDED,
+                "Hauswacht: Alarm beendet",
+                f"Alarm beendet{by}. Die Anlage ist unscharf.",
+                test_mode=self.ctx.test_mode,
+            )
         if (
             effect.new is AlarmState.DISARMED
             and effect.old is not AlarmState.DISARMED
@@ -1636,8 +1761,14 @@ class HauswachtRuntime:
             effect.profile_id,
             effect.cycle,
         )
-        reaction = parse_reaction(self.entry.options, effect.profile_id)
-        profile = self.profiles[effect.profile_id]
+        if effect.profile_id == ALWAYS_PROFILE_ID:
+            reaction = parse_reaction(
+                always_reaction_options(self.entry.options), ALWAYS_PROFILE_ID
+            )
+            profile = always_runtime(self.always)
+        else:
+            reaction = parse_reaction(self.entry.options, effect.profile_id)
+            profile = self.profiles[effect.profile_id]
         decision = self.sirens.activate(
             reaction.siren_targets,
             reaction.tone,

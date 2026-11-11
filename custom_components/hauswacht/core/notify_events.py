@@ -29,6 +29,7 @@ class NotifyEvent(StrEnum):
     FAULT = "fault"
     SYSTEM = "system"
     REMINDER = "reminder"
+    ALWAYS_ACTIVE = "always_active"  # immer aktiver Melder im unscharfen Zustand
     RULE_NOTIFY = "rule_notify"  # Auslöseregel mit Ergebnis "nur Benachrichtigung"
     ARM_HINT = "arm_hint"  # beim Scharfschalten: offene Melder, die nur in Regeln vorkommen
     UNCONFIRMED = "unconfirmed"  # Einzelauslösung ohne Bestätigung, kein Alarm
@@ -46,6 +47,7 @@ DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
     NotifyEvent.FAULT: True,
     NotifyEvent.SYSTEM: True,
     NotifyEvent.REMINDER: True,
+    NotifyEvent.ALWAYS_ACTIVE: True,
     NotifyEvent.RULE_NOTIFY: True,
     NotifyEvent.ARM_HINT: True,
     NotifyEvent.UNCONFIRMED: False,
@@ -53,7 +55,7 @@ DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
 }
 
 # Durchbrechen "Nicht stören" (wenn die Option dafür an ist)
-CRITICAL: frozenset[NotifyEvent] = frozenset({NotifyEvent.ALARM})
+CRITICAL: frozenset[NotifyEvent] = frozenset({NotifyEvent.ALARM, NotifyEvent.ALWAYS_ACTIVE})
 
 PROFILE_FIRST: frozenset[NotifyEvent] = frozenset(
     {NotifyEvent.ALARM, NotifyEvent.ENTRY, NotifyEvent.ALARM_ENDED}

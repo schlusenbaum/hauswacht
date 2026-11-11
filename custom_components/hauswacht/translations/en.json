@@ -74,6 +74,15 @@
               "auto_away_delay": "Phones detected only via Wi-Fi sometimes briefly report \"away\" in standby. The delay prevents accidental arming.",
               "auto_disarm_on_arrival": "Only if the profile was armed automatically. Note: whoever has one of these phones can disarm with it."
             }
+          },
+          "arm_on_close": {
+            "name": "Arm by closing the door",
+            "description": "The exit delay ends early as soon as an exit door is closed and stays closed for the settle time. Exit doors may be open when arming; if still open at the end of the exit delay, the normal check applies.",
+            "data": {
+              "enabled": "Arm as soon as the exit door is closed",
+              "doors": "Exit doors",
+              "settle": "Settle time after closing"
+            }
           }
         },
         "data_description": {
@@ -280,6 +289,14 @@
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
             }
+          },
+          "event_always_active": {
+            "name": "Always-active sensor",
+            "description": "An always-active sensor triggered while disarmed (without siren). Critical. Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
           }
         }
       },
@@ -449,6 +466,7 @@
         "menu_options": {
           "zones": "Sensor groups – which sensors belong together",
           "rules": "Trigger rules – sequences of sensors",
+          "always_active": "Always active – sensors that trigger even when disarmed",
           "init": "← Back"
         }
       },
@@ -466,6 +484,19 @@
         "description": "Expert mode: the whole trigger rule as YAML. Sensor groups by name (`group: Basement`), sensors by entity ID (`sensor: binary_sensor.x`).\n\n- Steps: `any: [...]` (one of), `all: [...]` (all), `count: 2` + `of: [...]` (at least N), nestable; `within:` time until the next step.\n- `result:` alarm, entry_delay or notify (notification only).\n- `unless:` expression + `before:` seconds – not if that happened within this time before step 1.\n- `conditions:` list: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Not evaluable = met. Per condition optionally `if_unknown: not_met` = not met when unknown.\n\nExamples are in the documentation.",
         "data": {
           "rule": "Trigger rule"
+        }
+      },
+      "always_active": {
+        "title": "Always active",
+        "description": "These sensors trigger **even while disarmed** – e.g. safe, gun cabinet, garden shed, panic button.\n\n- **Disarmed:** by default only a critical notification (breaks through Do Not Disturb) and a Home Assistant notification. With “Use sirens” there is an alarm with the chosen sirens; “End alarm” returns to disarmed.\n- **Armed:** immediate alarm with the reaction of the active alarm profile.\n\nHardware release, test mode and fire lock apply as always.",
+        "data": {
+          "zones": "Sensor groups",
+          "sensors": "Sensors",
+          "sirens_enabled": "Use sirens (disarmed)",
+          "sirens": "Sirens",
+          "siren_tone": "Siren tone",
+          "siren_volume": "Volume",
+          "reaction_time": "Alarm reaction duration"
         }
       }
     },

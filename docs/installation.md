@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.20.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.21.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -318,6 +318,40 @@ Die Rolle eines Sensors ergibt sich aus seiner Geräteklasse:
 Abweichungen stellst du unter **Systemeinstellungen → Sensorverhalten** ein (Sensor und Rolle wählen), z. B. ein Fenster, durch das
 man das Haus betritt, als „Eingang“.
 
+## Immer aktive Melder
+
+**Alarmauslösung → Immer aktiv.** Melder, die **auch im unscharfen Zustand** auslösen – z. B.
+Tresor, Waffenschrank, Gartenhaus, Panikknopf. Meldergruppen und/oder einzelne Sensoren.
+
+| Zustand | Reaktion |
+|---|---|
+| unscharf (Standard) | nur eine **wichtige Benachrichtigung** (durchbricht „Nicht stören“, Ereignis „Immer aktiver Melder“) und eine Meldung in Home Assistant – kein Alarm, keine Sirene |
+| unscharf mit „Sirenen verwenden“ | Alarm mit den hier gewählten Sirenen, Ton und Dauer; die Anlage zeigt „Alarm“ (Profil „Immer aktiv“). **„Alarm beenden“ führt zurück nach unscharf.** |
+| scharf | sofortiger Alarm mit der Reaktion des aktiven Alarmprofils |
+
+Hardware-Freigabe, Testmodus und Brandsperre gelten wie immer. In der Testkarte tragen diese
+Melder den Hinweis „immer aktiv“.
+
+## Scharf durch Schließen der Tür
+
+Im Alarmprofil unter **„Scharf durch Schließen der Tür“** (aufklappbar, optional):
+
+| Einstellung | Bedeutung |
+|---|---|
+| Scharf, sobald die Ausgangstür geschlossen ist | an/aus (Standard aus) |
+| Ausgangstüren | z. B. Haustür vorne und hinten |
+| Beruhigungszeit | so lange muss die Tür nach dem Schließen zu bleiben (Standard 5 s, 1–60 s) |
+
+Ablauf: scharf schalten → Ausgangsverzögerung läuft → Tür auf, raus, Tür zu → nach der
+Beruhigungszeit ist die Anlage scharf, ohne die volle Ausgangsverzögerung abzuwarten. Geht die
+Tür in der Beruhigungszeit wieder auf, beginnt sie neu.
+
+- Ist die Option an, dürfen die **Ausgangstüren beim Scharfschalten offen** sein. Andere offene
+  Melder werden wie gewohnt geprüft.
+- Sind die Ausgangstüren am Ende der Ausgangsverzögerung noch offen, gilt die normale Prüfung des
+  Profils (z. B. Scharfschaltung abgebrochen).
+- Ohne die Option ändert sich nichts.
+
 ## Funkstille von Sensoren
 
 **Systemeinstellungen → Sensorverhalten → Maximale Funkstille.**
@@ -410,6 +444,7 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
 | Hinweis beim Scharfschalten (offene Melder, die nur in Auslöseregeln vorkommen) | an | Ereignis, sonst allgemein |
+| Immer aktiver Melder (unscharf, ohne Sirene) | an, **wichtig** | Ereignis, sonst allgemein |
 | Auslöseregel „nur Benachrichtigung“ erfüllt | an | Ereignis, sonst allgemein |
 | Unbestätigte Auslösung (Auslöseregel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
 | Melder löst häufig allein aus (3× in einer Stunde eine Auslöseregel begonnen) | aus | Ereignis, sonst allgemein |
