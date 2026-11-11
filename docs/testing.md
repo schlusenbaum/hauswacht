@@ -40,3 +40,10 @@ ruff check .    # Lint
 | Version | Tests |
 |---|---|
 | 0.2.x | Store-Migration, sobald sich das Speicherformat ändert |
+
+## Release
+
+Ein veröffentlichtes GitHub-Release startet `.github/workflows/release.yml`: Der Workflow prüft,
+dass der Tag (`vX.Y.Z`) zur Version im Manifest passt, packt `custom_components/hauswacht` in
+`hauswacht.zip` und hängt die Datei an das Release. HACS installiert aus dieser ZIP und zählt
+die Downloads (Abzeichen im README).

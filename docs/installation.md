@@ -12,10 +12,13 @@
 
 **Über HACS:** Menü (⋮) → Benutzerdefinierte Repositories →
 `https://github.com/schlusenbaum/hauswacht`, Typ **Integration** → Hauswacht herunterladen →
-Home Assistant neu starten.
+Home Assistant neu starten. HACS installiert die Datei `hauswacht.zip` aus dem jeweiligen
+[Release](https://github.com/schlusenbaum/hauswacht/releases); Updates erscheinen in HACS,
+sobald ein neues Release veröffentlicht ist.
 
-**Manuell:** Den Ordner `custom_components/hauswacht` nach `/config/custom_components/hauswacht`
-kopieren und Home Assistant neu starten.
+**Manuell:** `hauswacht.zip` aus dem neuesten
+[Release](https://github.com/schlusenbaum/hauswacht/releases) laden und nach
+`/config/custom_components/hauswacht` entpacken, dann Home Assistant neu starten.
 
 Danach: **Einstellungen → Geräte & Dienste → Integration hinzufügen → Hauswacht.**
 Hauswacht kann nur einmal eingerichtet werden.
