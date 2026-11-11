@@ -214,37 +214,69 @@ async def _flow(hass: HomeAssistant, entry: MockConfigEntry, *steps: str) -> dic
     return flow  # type: ignore[no-any-return]
 
 
-async def test_rule_options_validate_and_save(hass: HomeAssistant) -> None:
+async def _go(hass: HomeAssistant, flow: dict[str, Any], step: str) -> dict[str, Any]:
+    return await hass.config_entries.options.async_configure(  # type: ignore[no-any-return]
+        flow["flow_id"], {"next_step_id": step}
+    )
+
+
+async def _submit(
+    hass: HomeAssistant, flow: dict[str, Any], data: dict[str, Any]
+) -> dict[str, Any]:
+    return await hass.config_entries.options.async_configure(  # type: ignore[no-any-return]
+        flow["flow_id"], data
+    )
+
+
+async def test_rule_wizard(hass: HomeAssistant) -> None:
     _motion2(hass, "off")
     entry = make_entry({"zones": ZONES})
     await setup_entry(hass, entry)
     flow = await _flow(hass, entry, "rules", "rule_add")
-    assert flow["step_id"] == "rule_settings"
-    bad = {
-        "name": "Kaputt",
-        "result": "alarm",
-        "step_1": {"sensors": [DOOR, MOTION], "within": 60},
-        "step_2": {"sensors": [MOTION]},
-    }
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], bad)
-    assert flow["errors"] == {"base": "rule_invalid"}
-    good = {
-        "name": "Tür, dann Keller",
-        "result": "entry_delay",
-        "step_1": {"sensors": [DOOR], "within": 120},
-        "step_2": {"zones": ["keller"], "mode": "any"},
-    }
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], good)
-    assert flow["type"] is FlowResultType.MENU
+    assert flow["step_id"] == "rule_meta"
+    flow = await _submit(hass, flow, {"name": "Tür, dann Keller", "result": "entry_delay"})
+    assert flow["step_id"] == "rule_step"
+    assert flow["description_placeholders"]["step"] == "1"
+    flow = await _submit(hass, flow, {})  # leerer Schritt
+    assert flow["errors"] == {"base": "step_empty"}
+    flow = await _submit(hass, flow, {"sensors": [DOOR, MOTION], "within": 60})
+    assert flow["step_id"] == "rule_overview"
+    flow = await _go(hass, flow, "rule_step_add")
+    assert flow["description_placeholders"]["step"] == "2"
+    flow = await _submit(hass, flow, {"sensors": [MOTION]})
+    # MOTION steht in Schritt 1 und 2: nicht speicherbar, Grund in der Übersicht
+    assert flow["description_placeholders"]["problems"]
+    flow = await _go(hass, flow, "rule_save")
+    assert flow["step_id"] == "rule_overview"
+    assert not entry.options.get("rules")
+    # Schritt 1 korrigieren
+    flow = await _go(hass, flow, "rule_step_edit")
+    flow = await _submit(hass, flow, {"step": "1"})
+    assert flow["step_id"] == "rule_step"
+    flow = await _submit(hass, flow, {"sensors": [DOOR], "within": 120})
+    assert flow["description_placeholders"]["problems"] == ""
+    assert "→" in flow["description_placeholders"]["rule_text"]
+    flow = await _go(hass, flow, "rule_save")
+    assert flow["step_id"] == "rules"
     rule = next(iter(entry.options["rules"].values()))
+    assert rule["name"] == "Tür, dann Keller"
     assert rule["result"] == "entry_delay"
-    assert rule["steps"][0] == {
-        "sensors": [DOOR],
-        "zones": [],
-        "mode": "any",
-        "count": 2,
-        "within": 120,
-    }
+    assert [s["sensors"] for s in rule["steps"]] == [[DOOR], [MOTION]]
+    assert rule["steps"][0]["within"] == 120
+    assert "Tür, dann Keller" in flow["description_placeholders"]["rules"]
+
+
+async def test_rule_wizard_edit_and_cancel(hass: HomeAssistant) -> None:
+    _motion2(hass, "off")
+    entry = make_entry({"zones": ZONES, "rules": RULES})
+    await setup_entry(hass, entry)
+    flow = await _flow(hass, entry, "rules", "rule_edit")
+    flow = await _submit(hass, flow, {"rule": "tuer_keller"})
+    assert flow["step_id"] == "rule_overview"
+    flow = await _go(hass, flow, "rule_step_remove")
+    flow = await _go(hass, flow, "rule_cancel")
+    assert flow["step_id"] == "rules"
+    assert len(entry.options["rules"]["tuer_keller"]["steps"]) == 2  # nichts gespeichert
 
 
 async def test_profile_rule_hint_when_redundant(hass: HomeAssistant) -> None:

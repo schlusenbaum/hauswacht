@@ -8,6 +8,7 @@ from custom_components.hauswacht.core.rules import (
     Step,
     StepMode,
     build_engine,
+    describe_rule,
     migrate_zone_confirmation,
     parse_rules,
     profile_findings,
@@ -212,3 +213,24 @@ def test_migrate_zone_confirmation() -> None:
     assert new["profiles"]["nacht"]["rules"] == ["bestaetigung_keller"]
     assert "rules" not in new["profiles"]["zuhause"]
     assert migrate_zone_confirmation({"zones": {}})["rules"] == {}
+
+
+def test_describe_rule() -> None:
+    rule = _rule(
+        "r",
+        Step(sensors=frozenset({DOOR, BUERO}), within=120),
+        Step(zones=("keller",)),
+        Step(sensors=frozenset({BW1, PM}), mode=StepMode.ALL, within=30),
+        result=RuleResult.ENTRY_DELAY,
+    )
+    names = {DOOR: "Tür hinten", BUERO: "Tür Büro", BW1: "BW 1", PM: "PM Waschküche"}
+    text = describe_rule(rule, names.__getitem__, lambda z: z.title())
+    assert text == (
+        "eine(r) von Tür Büro / Tür hinten, dann innerhalb von 120 s Zone Keller, "
+        "dann innerhalb von 60 s BW 1 und PM Waschküche (alle, beliebige Reihenfolge) "
+        "→ Eingangsverzögerung, dann Alarm"
+    )
+    count = _rule("c", Step(zones=("keller",), mode=StepMode.COUNT, count=2))
+    assert describe_rule(count, str, str, "en") == (
+        "at least 2 different of zone keller → alarm immediately"
+    )

@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.19.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.19.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -117,13 +117,43 @@ das Haus sei geschützt, obwohl nichts überwacht wird.
 von Meldern aus. Regeln stehen für sich; im Alarmprofil wählst du unter **Regeln**, welche
 gelten. Dieselbe Regel kann in mehreren Profilen stecken.
 
-Jede Regel hat bis zu vier **Schritte**. Pro Schritt:
+**So ist eine Regel aufgebaut:**
 
-| Feld | Bedeutung |
+```
+Schritt 1 erfüllt ──(Zeit von Schritt 1)──▶ Schritt 2 erfüllt ──(Zeit von Schritt 2)──▶ … ──▶ Alarm
+```
+
+- Eine Regel besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt
+  erst, wenn Schritt 1 erfüllt ist – und nur innerhalb der Zeit, die bei Schritt 1 steht.
+  Melder von Schritt 2, die **vor** Schritt 1 auslösen, zählen nicht. So entsteht die
+  Reihenfolge.
+- In jedem Schritt wählst du Melder (Sensoren und/oder Zonen – eine Zone heißt „irgendein Melder
+  der Zone“) und legst fest, wann **dieser Schritt** erfüllt ist. Diese Einstellung gilt nur für
+  diesen Schritt:
+
+| Dieser Schritt ist erfüllt, wenn … | Beispiel mit „Tür vorne“ + „Tür hinten“ |
 |---|---|
-| Sensoren, Zonen | Die Melder des Schritts (einzelne Sensoren und/oder ganze Zonen) |
-| Erfüllt, wenn | **einer davon** auslöst (ODER) · **alle davon** auslösen, Reihenfolge egal (UND) · **mindestens N verschiedene** davon auslösen |
-| Zeit bis zum nächsten Schritt | Der nächste Schritt muss innerhalb dieser Zeit erfüllt sein |
+| **einer davon** auslöst (ODER) | eine der beiden Türen geht auf |
+| **alle davon** auslösen, Reihenfolge egal (UND) | beide Türen gehen auf, egal welche zuerst |
+| **mindestens N verschiedene** auslösen | z. B. mindestens 2 von 4 Kellermeldern |
+
+- **Zeit bis zum nächsten Schritt:** Ab dem Moment, in dem der Schritt erfüllt ist, hat der
+  nächste Schritt so viel Zeit. Verstreicht sie, verfällt alles; der nächste Schritt 1 beginnt
+  von vorn. Jedes neue Auslösen eines Schritt-1-Melders startet die Zeit neu.
+- Was in **beliebiger Reihenfolge** passieren darf, gehört in **einen** Schritt mit „alle davon“;
+  eine **feste Reihenfolge** sind **mehrere** Schritte:
+
+| Wunsch | So einstellen |
+|---|---|
+| erst Tür, dann Keller | Schritt 1: Tür · Schritt 2: Keller |
+| Tür und Keller, Reihenfolge egal | Schritt 1: Tür + Keller, „alle davon“ |
+| eine der Türen, dann Keller **und** Büro (egal welches zuerst) | Schritt 1: beide Türen, „einer davon“ · Schritt 2: Keller + Büro, „alle davon“ |
+
+**Anlegen mit dem Assistenten:** Name und Ergebnis → Schritt 1 → Übersicht mit „Weiteren
+Schritt hinzufügen“, „Schritt bearbeiten“, „Letzten Schritt entfernen“, „Fertig – speichern“
+(bis zu 10 Schritte). Über jedem Schritt und in der Übersicht steht die Regel als Satz, z. B.
+„eine(r) von Tür vorne / Tür hinten, dann innerhalb von 120 s Zone Keller → Eingangsverzögerung,
+dann Alarm“. Gespeichert wird erst mit „Fertig – speichern“; Probleme stehen in der Übersicht.
 
 Ergebnis einer erfüllten Regel: **sofort Alarm** oder **Eingangsverzögerung, dann Alarm**
 (Zeit aus dem Alarmprofil – z. B. damit jemand, der heimkommt und gleich in den Keller geht,
