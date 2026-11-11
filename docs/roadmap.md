@@ -29,10 +29,10 @@
 
 ## Entscheidungen
 
-- **Ideen aus Alarmo (2026-11-10):** Benutzer und Codes, Benachrichtigungen, Sensorgruppen,
-  „immer aktiv“, Scharf durch Türschließen und Bereiche werden nach und nach übernommen – je
-  mit Konzept vorab. Benutzer werden so angelegt, dass sie später auf Bereiche beschränkt
-  werden können. „Aktionen ohne Automation“ (Geräte schalten) bewusst nicht: Hauswacht
+- **Ausbau (2026-11-10):** Benutzer und Codes, Benachrichtigungen, Sensorgruppen,
+  „immer aktiv“, Scharf durch Türschließen und Bereiche kommen nach und nach – je mit Konzept
+  vorab. Benutzer werden so angelegt, dass sie später auf Bereiche beschränkt
+  werden können. Geräte schalten bewusst nicht: Hauswacht
   schaltet keine Geräte.
 
 - **PIN:** optional und einstellbar (2026-11-06).
