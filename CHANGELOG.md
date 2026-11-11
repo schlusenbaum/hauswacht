@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-11-11
+
+### Hinzugefügt
+- Empfänger können jetzt auch **Benachrichtigungs-Entitäten** sein (`notify.…`), z. B. von
+  WhatsApp-, Telegram- oder E-Mail-Integrationen – mit Titel und Text, ohne Knöpfe.
+  Lautsprecher erscheinen dort nicht (sie gehören zur Sprachausgabe).
+
+### Geändert
+- Der Bedrohungsalarm geht nie an Lautsprecher, auch wenn einer als Empfänger eingetragen wäre.
+
 ## [0.23.0] - 2026-11-11
 
 ### Hinzugefügt

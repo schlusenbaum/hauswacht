@@ -188,3 +188,8 @@ def profile_speakers(options: Mapping[str, Any], profile_id: str | None) -> tupl
     profiles = options.get("profiles", {})
     profile = profiles.get(profile_id, {}) if isinstance(profiles, Mapping) else {}
     return _clean(profile.get("speakers")) if isinstance(profile, Mapping) else ()
+
+
+def is_speaker(candidate: Candidate) -> bool:
+    """Durchsage-/Sprechen-Entität eines Lautsprechers (gehört in die Sprachausgabe)."""
+    return _mode_of(candidate) is not None

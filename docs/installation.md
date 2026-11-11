@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.23.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.23.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -462,8 +462,15 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 **Konfigurieren → Benachrichtigungen** mit den Punkten „Empfänger und Ereignisse“, „Eigene
 Texte für Push-Nachrichten“ und zwei Punkten zur [Sprachausgabe](#sprachausgabe-lautsprecher).
 
-- **Allgemeine Empfänger:** notify-Dienste, z. B. `mobile_app_…` der Home-Assistant-App. Sie
-  bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger eingetragen sind.
+- **Allgemeine Empfänger:** notify-Dienste, z. B. `mobile_app_…` der Home-Assistant-App, und
+  **Benachrichtigungs-Entitäten** (`notify.…`), z. B. von WhatsApp-, Telegram- oder
+  E-Mail-Integrationen. Sie bekommen jede Meldung, für die beim Ereignis keine eigenen Empfänger
+  eingetragen sind.
+- **Entitäten bekommen nur Titel und Text** („– nur Text“ in der Auswahl): keine Knöpfe, kein
+  Durchbrechen von „Nicht stören“. Gut als zusätzlicher Kanal (z. B. Familiengruppe), die
+  Home-Assistant-App bleibt das eigentliche Alarmsignal. Lautsprecher (Durchsage/Sprechen)
+  erscheinen hier nicht, sie stehen unter „Sprachausgabe“; der Bedrohungsalarm geht nie an
+  Lautsprecher.
 - **Pro Ereignis** (aufklappbare Bereiche): an/aus und eigene Empfänger.
 
 | Ereignis | Standard | Empfänger |
