@@ -385,6 +385,39 @@ Die Simulation verhält sich genau wie eine echte Auslösung: Eine Tür startet 
 Eingangsverzögerung, ein Fenster löst sofort aus, ein Sensor außerhalb des aktiven Profils wird
 ignoriert. Der echte Sensorzustand bleibt unverändert.
 
+### Karte „Hauswacht Test“
+
+Zum bequemen Durchspielen: Dashboard bearbeiten → **Karte hinzufügen** → **„Hauswacht Test“**
+– oder in YAML:
+
+```yaml
+type: custom:hauswacht-test-card
+title: Test   # optional
+```
+
+Die Karte zeigt **alle Sensoren aus den Hauswacht-Zonen** mit Raum, echtem Zustand und Knöpfen:
+
+| Sensorart | Knöpfe |
+|---|---|
+| Tür, Fenster, Öffnung, Garagentor | **Auf** / **Zu** |
+| Bewegung, Präsenz, Belegung | **Bewegung** / **Ruhe** |
+| Manipulation (Sabotage) | **Manipulation** / **OK** |
+| alle | **Weg** (nicht verfügbar), **Echt** (zurück auf den echten Wert) |
+
+Oben schaltest du den Testmodus ein und aus; **„Alle echt“** setzt alle Sensoren zurück.
+
+- Simulieren geht **nur im Testmodus**. Im Testmodus lösen **keine Sirenen** aus.
+- Der simulierte Zustand gilt **nur für Hauswacht**: Scharfschalten, offene Sensoren,
+  Eingangsverzögerung, Alarm, Manipulation, Ausfall – alles wie echt. Das Gerät und sein
+  Zustand in Home Assistant bleiben unverändert, **andere Automationen merken nichts**.
+- Solange ein Sensor simuliert wird, zählt sein echter Zustand für Hauswacht nicht (er wird
+  in der Karte angezeigt). „Echt“ übernimmt den echten Wert – ist das Fenster in Wirklichkeit
+  offen und die Anlage scharf, gibt es dann einen Testalarm.
+- **Testmodus aus = alles wieder echt.** Nach einem Neustart sind Simulationen ebenfalls weg.
+
+Dasselbe als Aktionen: `hauswacht.simulate_state` (Felder `sensor` und `state`: `on`, `off`,
+`unavailable`, `real`) und `hauswacht.simulate_reset`.
+
 ## Scharfschalten mit Bestätigung
 
 Erlaubt ein Profil offene oder ausgefallene Sensoren nur „nach Bestätigung“, verweigert das

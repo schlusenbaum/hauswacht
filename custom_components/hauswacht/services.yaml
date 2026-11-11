@@ -28,3 +28,31 @@ simulate_trigger:
       selector:
         entity:
           domain: binary_sensor
+
+simulate_state:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    sensor:
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+    state:
+      required: true
+      selector:
+        select:
+          translation_key: simulate_state
+          options:
+            - "on"
+            - "off"
+            - "unavailable"
+            - "real"
+
+simulate_reset:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel

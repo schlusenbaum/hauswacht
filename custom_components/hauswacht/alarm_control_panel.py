@@ -63,6 +63,17 @@ async def async_setup_entry(
         {vol.Required("sensor"): cv.entity_id},
         "async_simulate_trigger",
     )
+    async_get_current_platform().async_register_entity_service(
+        "simulate_state",
+        {
+            vol.Required("sensor"): cv.entity_id,
+            vol.Required("state"): vol.In(["on", "off", "unavailable", "real"]),
+        },
+        "async_simulate_state",
+    )
+    async_get_current_platform().async_register_entity_service(
+        "simulate_reset", {}, "async_simulate_reset"
+    )
 
 
 class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
@@ -165,6 +176,14 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
     async def async_simulate_trigger(self, sensor: str) -> None:
         """Dienst hauswacht.simulate_trigger: Sensorauslösung simulieren (nur Testmodus)."""
         self.runtime.simulate_trigger(sensor)
+
+    async def async_simulate_state(self, sensor: str, state: str) -> None:
+        """Dienst hauswacht.simulate_state: Sensorzustand für Hauswacht vortäuschen (Testmodus)."""
+        self.runtime.simulate_state(sensor, state)
+
+    async def async_simulate_reset(self) -> None:
+        """Dienst hauswacht.simulate_reset: alle Sensoren wieder mit echtem Zustand."""
+        self.runtime.simulate_reset()
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         await self.runtime.async_disarm(code, self._user_id)

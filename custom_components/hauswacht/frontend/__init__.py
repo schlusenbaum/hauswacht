@@ -1,6 +1,6 @@
-"""Dashboard-Karte "Hauswacht Einstellungen": wird beim Start automatisch bereitgestellt.
+"""Dashboard-Karten "Hauswacht Einstellungen" und "Hauswacht Test": beim Start bereitgestellt.
 
-Die Karte liegt als JavaScript-Datei in diesem Ordner. Hauswacht stellt sie unter
+Die Karten liegen als JavaScript-Dateien in diesem Ordner. Hauswacht stellt sie unter
 ``/hauswacht/…`` bereit und meldet sie beim Frontend an – ein Eintrag unter
 "Ressourcen" ist nicht nötig.
 """
@@ -15,6 +15,8 @@ from homeassistant.core import HomeAssistant
 _LOGGER = logging.getLogger(__name__)
 
 CARD_FILE = "hauswacht-einstellungen-card.js"
+TEST_CARD_FILE = "hauswacht-test-card.js"
+CARD_FILES = (CARD_FILE, TEST_CARD_FILE)
 URL_BASE = "/hauswacht"
 DATA_KEY = "hauswacht_frontend_registered"
 
@@ -28,11 +30,15 @@ async def async_register_card(hass: HomeAssistant, version: str) -> None:
     from homeassistant.components.frontend import add_extra_js_url  # noqa: PLC0415
     from homeassistant.components.http import StaticPathConfig  # noqa: PLC0415
 
-    path = Path(__file__).parent / CARD_FILE
+    folder = Path(__file__).parent
     await hass.http.async_register_static_paths(
-        [StaticPathConfig(f"{URL_BASE}/{CARD_FILE}", str(path), cache_headers=False)]
+        [
+            StaticPathConfig(f"{URL_BASE}/{name}", str(folder / name), cache_headers=False)
+            for name in CARD_FILES
+        ]
     )
     # Version im Pfad: Nach einem Update lädt der Browser die neue Karte statt der alten
-    add_extra_js_url(hass, f"{URL_BASE}/{CARD_FILE}?v={version}")
+    for name in CARD_FILES:
+        add_extra_js_url(hass, f"{URL_BASE}/{name}?v={version}")
     hass.data[DATA_KEY] = True
-    _LOGGER.debug("Karte %s bereitgestellt", CARD_FILE)
+    _LOGGER.debug("Karten %s bereitgestellt", ", ".join(CARD_FILES))

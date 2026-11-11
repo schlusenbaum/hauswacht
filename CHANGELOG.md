@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-11-11
+
+### Hinzugefügt
+- **Karte „Hauswacht Test“** (`custom:hauswacht-test-card`): alle Sensoren der Hauswacht-Zonen
+  mit Knöpfen Auf/Zu, Bewegung/Ruhe, Manipulation/OK, Weg (nicht verfügbar) und Echt; Testmodus
+  ein/aus und „Alle echt“ direkt in der Karte.
+- Aktionen `hauswacht.simulate_state` und `hauswacht.simulate_reset`, Sensor „Simulierte
+  Sensoren“.
+- Simulation nur im Testmodus (keine Sirenen) und nur für Hauswacht: Zustände in Home
+  Assistant bleiben unverändert. Testmodus aus oder Neustart = alles wieder echt.
+
 ## [0.17.0] - 2026-11-10
 
 ### Hinzugefügt

@@ -19,7 +19,13 @@ async def async_setup_entry(
     entry: HauswachtConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([HauswachtSystemStatusSensor(entry), HauswachtHomecomingSensor(entry)])
+    async_add_entities(
+        [
+            HauswachtSystemStatusSensor(entry),
+            HauswachtHomecomingSensor(entry),
+            HauswachtSimulationSensor(entry),
+        ]
+    )
 
 
 class HauswachtSystemStatusSensor(HauswachtEntity, SensorEntity):
@@ -62,3 +68,27 @@ class HauswachtHomecomingSensor(HauswachtEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return self.runtime.homecoming.attributes()
+
+
+class HauswachtSimulationSensor(HauswachtEntity, SensorEntity):
+    """Testkarte: Anzahl simulierter Sensoren; alle Hauswacht-Sensoren in den Attributen."""
+
+    _attr_translation_key = "simulation"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:test-tube"
+    # Die Liste ändert sich mit jedem Sensor – nicht in die Historie schreiben
+    _unrecorded_attributes = frozenset({"sensors"})
+
+    def __init__(self, entry: HauswachtConfigEntry) -> None:
+        super().__init__(entry, "simulation")
+
+    @property
+    def native_value(self) -> int:
+        return self.runtime.simulated_count
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "test_mode": self.runtime.ctx.test_mode,
+            "sensors": self.runtime.simulation_overview(),
+        }

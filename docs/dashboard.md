@@ -39,6 +39,15 @@ drückt dann `button.hauswacht_trotzdem_scharf_schalten` für das gewählte Prof
 - Ist für das Scharfschalten ein PIN verlangt, gelingt das über diese Knöpfe nicht; dann die
   Aktion mit `code` aufrufen.
 
+## Karten von Hauswacht
+
+Hauswacht bringt zwei eigene Karten mit (automatisch geladen):
+
+- **Hauswacht Einstellungen** (`custom:hauswacht-einstellungen-card`): Profil-Einstellungen.
+- **Hauswacht Test** (`custom:hauswacht-test-card`): Sensoren im Testmodus simulieren – Tür
+  auf/zu, Bewegung, Manipulation, nicht verfügbar, zurück auf echt. Keine Sirenen, andere
+  Automationen merken nichts. Details: [Installation → Karte „Hauswacht Test“](installation.md#karte-hauswacht-test).
+
 ## Eigene Karten
 
 Nützliche Entitäten und Attribute:
@@ -49,5 +58,6 @@ Nützliche Entitäten und Attribute:
 | `binary_sensor.hauswacht_offene_sensoren` | an, sobald ein Sensor einer Zone offen ist; Attribute `sensors` (Entitäts-IDs), `names` (Anzeigenamen mit Raum) |
 | `sensor.hauswacht_systemstatus` | `ok`, `degraded`, `fault`; Attribute `faulty_infrastructure`, `unavailable_sensors` |
 | `switch.hauswacht_testmodus` | Testmodus |
+| `sensor.hauswacht_simulierte_sensoren` | Anzahl simulierter Sensoren; Attribute `test_mode`, `sensors` (alle Hauswacht-Sensoren mit `real` und `simulated`) – Grundlage der Karte „Hauswacht Test“ |
 | `select.hauswacht_profil` | Gewähltes Profil (im scharfen Zustand: aktives Profil) |
 | `button.hauswacht_scharf_schalten`, `button.hauswacht_trotzdem_scharf_schalten` | Gewähltes Profil scharf schalten (ohne / mit Bestätigung) |
