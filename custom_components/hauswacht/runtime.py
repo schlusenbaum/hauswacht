@@ -38,6 +38,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .automation_runner import AutomationRunner
+from .camera_snapshots import save_alarm_images
 from .const import (
     DOMAIN,
     EVENT_HAUSWACHT,
@@ -110,6 +111,17 @@ from .core.rules import (
     describe_rule,
     parse_rules,
     profile_rule_ids,
+)
+from .core.sensor_types import (
+    MONITORED_DOMAINS,
+    NO_HEARTBEAT_DOMAINS,
+    camera_for,
+    domain_of,
+    event_triggered,
+    normalize,
+    parse_cameras,
+    parse_thresholds,
+    profile_camera,
 )
 from .core.sensors import (
     SensorSnapshot,
@@ -186,17 +198,21 @@ REMINDER_ARM_SECONDS = 2 * 60 * 60  # Erinnerung wird oft erst später gelesen
 type HauswachtConfigEntry = ConfigEntry[HauswachtRuntime]
 
 SENSOR_DOMAIN = "binary_sensor"
+LABEL_DOMAINS = frozenset(d for d in MONITORED_DOMAINS if d != "sensor")
 
 
 def entities_by_label(hass: HomeAssistant) -> dict[str, frozenset[str]]:
-    """Label-ID -> binary_sensor-Entitäten mit diesem Label.
+    """Label-ID -> Melder-Entitäten mit diesem Label (binary_sensor, lock, cover, event, …).
+
+    ``sensor``-Entitäten (Messwerte) zählen nicht: Sie brauchen einen Schwellwert und werden
+    deshalb direkt gewählt.
 
     Bewusst nur Labels direkt an der Entität (nicht am Gerät): Ein Geräte-Label würde sonst
     auch Batterie- oder Verbindungs-Sensoren desselben Geräts in die Zone ziehen.
     """
     index: dict[str, set[str]] = {}
     for entry in er.async_get(hass).entities.values():
-        if entry.domain != SENSOR_DOMAIN or entry.disabled_by is not None:
+        if entry.domain not in LABEL_DOMAINS or entry.disabled_by is not None:
             continue
         for label in entry.labels:
             index.setdefault(label, set()).add(entry.entity_id)
@@ -279,10 +295,13 @@ class HauswachtRuntime:
         self._exit_settle = 5
         self._settle_timer: CALLBACK_TYPE | None = None
         self._speech_repeat: CALLBACK_TYPE | None = None
+        self._snapshot_timers: list[CALLBACK_TYPE] = []
         self.delay_ends_at: datetime | None = None
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
         self._labels: dict[str, frozenset[str]] = {}
+        self.thresholds = parse_thresholds(entry.options)
+        self.sensor_cameras = parse_cameras(entry.options)
         self._last_seen_entity: dict[str, str] = {}
         self._timer_cancel: CALLBACK_TYPE | None = None
         self._unsub_states: CALLBACK_TYPE | None = None
@@ -486,6 +505,9 @@ class HauswachtRuntime:
         self._cancel_timer()
         self._cancel_settle()
         self._cancel_speech_repeat()
+        for cancel in self._snapshot_timers:
+            cancel()
+        self._snapshot_timers.clear()
         self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
@@ -831,6 +853,24 @@ class HauswachtRuntime:
             ],
         }
 
+    def _camera(self, sensor: str | None, profile_id: str | None) -> str | None:
+        camera, _save = profile_camera(self.entry.options, profile_id)
+        return camera_for(sensor, self.sensor_cameras, camera)
+
+    def _with_image(self, data: dict[str, Any], camera: str | None) -> dict[str, Any]:
+        """Aktuelles Kamerabild an die Push-Nachricht hängen (App lädt es über HA)."""
+        if camera is None:
+            return data
+        return {**data, "image": f"/api/camera_proxy/{camera}"}
+
+    @callback
+    def _save_snapshots(self, camera: str | None, profile_id: str, sensor: str) -> None:
+        """Bei Alarm einige Kamerabilder als Beweis unter Medien/hauswacht speichern."""
+        _camera, save = profile_camera(self.entry.options, profile_id)
+        if camera is None or not save:
+            return
+        self._snapshot_timers.extend(save_alarm_images(self.hass, camera, sensor))
+
     def _alarm_targets(self) -> tuple[str, ...]:
         if self.ctx.profile is None:
             return ()
@@ -852,7 +892,13 @@ class HauswachtRuntime:
             values=values,
             profile_targets=self._alarm_targets(),
             profile_speakers=self._profile_speakers(),
-            data=self._push_actions(),
+            data=self._with_image(
+                self._push_actions(),
+                self._camera(
+                    self.ctx.trigger_sensor,
+                    self.ctx.profile.profile_id if self.ctx.profile else None,
+                ),
+            ),
             test_mode=self.ctx.test_mode,
         )
         self._pushed_targets.update(sent)
@@ -983,14 +1029,21 @@ class HauswachtRuntime:
                     last_seen=None,
                 )
                 continue
+            reported = state.last_reported.timestamp() if state else None
+            if state is not None and domain_of(entity_id) in NO_HEARTBEAT_DOMAINS:
+                reported = now  # ohne Lebenszeichen: keine Funkstille-Prüfung
             result[entity_id] = SensorSnapshot(
                 entity_id=entity_id,
-                state=state.state if state else None,
+                state=self.normalized(entity_id, state.state if state else None),
                 device_class=state.attributes.get("device_class") if state else None,
-                last_reported=state.last_reported.timestamp() if state else None,
+                last_reported=reported,
                 last_seen=self._last_seen(entity_id),
             )
         return result
+
+    def normalized(self, entity_id: str, state: str | None) -> str | None:
+        """Rohzustand als "on"/"off"/nicht verfügbar (Schloss, Abdeckung, Schwellwert …)."""
+        return normalize(entity_id, state, self.thresholds)
 
     def _last_seen(self, entity_id: str) -> float | None:
         """Gerätseitiger "Zuletzt gesehen"-Zeitpunkt, falls das Gerät einen solchen Sensor hat."""
@@ -1409,8 +1462,19 @@ class HauswachtRuntime:
             raise ServiceValidationError(f"Unbekannter Zustand: {value}")
         self._require_simulation(entity_id)
         real = self.hass.states.get(entity_id)
-        real_state = real.state if real else None
+        real_state = self.normalized(entity_id, real.state if real else None)
         old = self._simulated.get(entity_id, real_state)
+        device_class = real.attributes.get("device_class") if real else None
+        if domain_of(entity_id) == "event" and value == "on":
+            # Ereignis: eine kurze Auslösung, kein dauerhaft "offener" Zustand
+            self.hass.bus.async_fire(
+                EVENT_HAUSWACHT,
+                {"type": "SensorSimulated", "sensor_key": entity_id, "state": value},
+            )
+            for area in self.areas.values():
+                if entity_id in area.candidates | area.armed_sensors:
+                    area._pulse(entity_id, device_class)
+            return
         if value == SIMULATION_REAL:
             self._simulated.pop(entity_id, None)
             new = real_state
@@ -1421,7 +1485,6 @@ class HauswachtRuntime:
             EVENT_HAUSWACHT,
             {"type": "SensorSimulated", "sensor_key": entity_id, "state": value},
         )
-        device_class = real.attributes.get("device_class") if real else None
         for area in self.areas.values():
             if old != new and entity_id in area.candidates | area.armed_sensors:
                 area._handle_sensor_change(entity_id, old, new, device_class)
@@ -1467,7 +1530,9 @@ class HauswachtRuntime:
                     "name": display_name(self.hass, entity_id),
                     "device_class": device_class,
                     "role": sensor_role(entity_id, device_class, self.role_overrides).value,
-                    "real": state.state if state else None,
+                    "real": self.normalized(entity_id, state.state if state else None),
+                    "raw": state.state if state else None,
+                    "kind": domain_of(entity_id),
                     "simulated": self.simulated(entity_id),
                     "status": status,
                     "rules": owner.rule_names(entity_id),
@@ -1599,12 +1664,23 @@ class HauswachtRuntime:
         old = event.data["old_state"]
         new = event.data["new_state"]
         device_class = new.attributes.get("device_class") if new else None
+        old_raw = old.state if old else None
+        new_raw = new.state if new else None
+        if event_triggered(entity_id, old_raw, new_raw):
+            self._pulse(entity_id, device_class)
+            return
         self._handle_sensor_change(
             entity_id,
-            old.state if old else None,
-            new.state if new else None,
+            self.normalized(entity_id, old_raw),
+            self.normalized(entity_id, new_raw),
             device_class,
         )
+
+    @callback
+    def _pulse(self, entity_id: str, device_class: str | None) -> None:
+        """Ereignis-Entität: kurze Auslösung (an und sofort wieder aus)."""
+        self._handle_sensor_change(entity_id, "off", "on", device_class)
+        self._handle_sensor_change(entity_id, "on", "off", device_class)
 
     @callback
     def _handle_sensor_change(
@@ -1940,6 +2016,8 @@ class HauswachtRuntime:
         if decision.blocked:
             reasons = sorted({b.reason.value for b in decision.blocked})
             message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
+        camera = self._camera(effect.sensor_key, effect.profile_id)
+        self._save_snapshots(camera, effect.profile_id, effect.sensor_key)
         alarm_values = {
             "melder": display_name(self.hass, effect.sensor_key),
             "profil": self.profile_name(effect.profile_id),
@@ -1958,7 +2036,7 @@ class HauswachtRuntime:
             profile_speakers=self._profile_speakers(effect.profile_id),
             values=alarm_values,
             test_mode=effect.test_mode,
-            data=self._push_actions("Alarm beenden"),
+            data=self._with_image(self._push_actions("Alarm beenden"), camera),
             # Stiller Alarm: nichts ansagen (sonst hört es der Eindringling)
             speak=not reaction.silent,
         )

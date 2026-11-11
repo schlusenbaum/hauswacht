@@ -29,6 +29,8 @@ OPT_DURESS_NOTIFY: Final = "duress_notify"
 OPT_USERS: Final = "users"
 OPT_AREAS: Final = "areas"
 OPT_SPEECH: Final = "speech"
+OPT_SENSOR_THRESHOLDS: Final = "sensor_thresholds"
+OPT_SENSOR_CAMERAS: Final = "sensor_cameras"
 # Alarm und Bedrohung durchbrechen "Nicht stören" (kritische Hinweise)
 OPT_CRITICAL_ALERTS: Final = "critical_alerts"
 OPT_EVENTS: Final = "events"

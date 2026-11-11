@@ -58,7 +58,9 @@
           "automation": "Automation",
           "rules": "Trigger rules",
           "area": "Area",
-          "speakers": "Additional speakers"
+          "speakers": "Additional speakers",
+          "camera": "Camera for the alarm image",
+          "save_snapshots": "Save alarm images"
         },
         "sections": {
           "automation": {
@@ -91,7 +93,9 @@
           "zones": "Each sensor of these sensor groups triggers on its own (door with entry delay, window instantly …). Open sensors of these sensor groups prevent arming.",
           "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again.",
           "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area.",
-          "speakers": "For alarm, entry delay and “alarm ended” of this profile instead of the default speakers."
+          "speakers": "For alarm, entry delay and “alarm ended” of this profile instead of the default speakers.",
+          "camera": "Its current image is attached to the alarm message and the entry-delay message (Home Assistant app). A camera on the triggering sensor takes precedence.",
+          "save_snapshots": "On alarm, save 3 images 2 s apart under Media → hauswacht (camera of the sensor or of the profile)."
         }
       },
       "zones": {
@@ -248,11 +252,10 @@
       },
       "sensor_behaviour": {
         "title": "Sensor behaviour",
-        "description": "**Radio silence:** If a sensor has not reported for this long it counts as unavailable when arming (0 = off). Battery sensors sometimes report only every few hours – choose generously.\n\n**Role:** How a sensor triggers follows from its device class: door = entry (with entry delay), window = instant, motion/presence = follower (delays only while an entry delay is running), tamper = always reported. For an exception pick sensor and role; “Automatic” removes it again.\n\nCurrent exceptions: {overrides}",
+        "description": "**Radio silence:** if a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously. Events, helpers and switches are exempt.\n\n**Edit a sensor:** choose a sensor to set its role, threshold (for measurements) and camera for the alarm image. Default roles: door, lock, gate = entry (with entry delay), window and everything else = instant, motion/presence = follower (only delays if an entry delay is already running), tamper = always reported.\n\nCurrent settings: {overrides}",
         "data": {
           "stale_after_hours": "Maximum radio silence",
-          "entity": "Exception for sensor (optional)",
-          "role": "Role"
+          "entity": "Edit sensor (optional)"
         }
       },
       "rules": {
@@ -593,6 +596,16 @@
           "in_quiet": "Also during quiet hours",
           "text": "Text"
         }
+      },
+      "sensor_detail": {
+        "title": "Sensor: {sensor}",
+        "description": "Current state: {state} {unit}\n\n**Role:** “Automatic” = by type and device class.\n\n**Threshold** (measurements only, e.g. vibration or power): the sensor triggers when the value is **above** “Trigger above” or **below** “Trigger below”. Without a threshold a measurement never triggers.\n\n**Camera:** its current image is attached to the alarm message when this sensor triggers (takes precedence over the profile's camera).",
+        "data": {
+          "role": "Role",
+          "above": "Trigger above",
+          "below": "Trigger below",
+          "camera": "Camera for the alarm image"
+        }
       }
     },
     "error": {
@@ -616,7 +629,8 @@
       "area_has_profiles": "Alarm profiles still belong to this area – delete them or move them to another area first.",
       "area_name_required": "Please enter a name.",
       "area_name_taken": "Another area already has this name.",
-      "invalid_template": "Invalid text"
+      "invalid_template": "Invalid text",
+      "threshold_range": "“Trigger below” must be lower than “Trigger above” (or set only one)."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

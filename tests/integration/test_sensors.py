@@ -367,8 +367,10 @@ async def test_options_flow_role_override(hass: HomeAssistant) -> None:
         flow["flow_id"], {"next_step_id": "sensor_behaviour"}
     )
     flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"stale_after_hours": 0, "entity": WINDOW, "role": "entry"}
+        flow["flow_id"], {"stale_after_hours": 0, "entity": WINDOW}
     )
+    assert flow["step_id"] == "sensor_detail"
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"role": "entry"})
     assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert entry.options["sensor_roles"] == {WINDOW: "entry"}
