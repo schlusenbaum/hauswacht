@@ -352,10 +352,13 @@ async def test_options_flow_role_override(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "roles"}
+        flow["flow_id"], {"next_step_id": "system"}
     )
     flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"entity": WINDOW, "role": "entry"}
+        flow["flow_id"], {"next_step_id": "sensor_behaviour"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"stale_after_hours": 0, "entity": WINDOW, "role": "entry"}
     )
     assert flow["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
@@ -367,7 +370,10 @@ async def test_options_flow_monitoring(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "monitoring"}
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "sensor_behaviour"}
     )
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"stale_after_hours": 26}
@@ -430,3 +436,35 @@ async def test_stale_check_uses_device_last_seen(
         assert _attr(hass, "unavailable_sensors") == [contact]
         with pytest.raises(ServiceValidationError):
             await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
+
+
+async def test_options_menu_structure(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    assert flow["menu_options"] == ["zones", "profiles", "sirens", "notifications", "system"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    assert flow["menu_options"] == ["users", "sensor_behaviour", "infrastructure", "homecoming"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "users"}
+    )
+    assert "code" in flow["menu_options"]
+
+
+async def test_sensor_behaviour_keeps_roles_without_entity(hass: HomeAssistant) -> None:
+    entry = make_entry({"sensor_roles": {WINDOW: "entry"}})
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "sensor_behaviour"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"stale_after_hours": 12}
+    )
+    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.options["sensor_roles"] == {WINDOW: "entry"}
+    assert entry.options["stale_after_hours"] == 12

@@ -16,15 +16,10 @@
         "title": "Hauswacht options",
         "menu_options": {
           "zones": "Zones – which sensors are monitored",
-          "profiles": "Profiles",
-          "users": "Users and PINs",
-          "sirens": "Sirens",
+          "profiles": "Alarm profiles",
+          "sirens": "Alarm devices – sirens",
           "notifications": "Notifications",
-          "homecoming": "Homecoming observation",
-          "roles": "Sensor roles – exceptions (door, window, motion …)",
-          "monitoring": "Sensor radio silence",
-          "infrastructure": "System monitoring (Zigbee, MQTT …)",
-          "code": "PIN rules"
+          "system": "System settings"
         }
       },
       "code": {
@@ -39,7 +34,7 @@
         }
       },
       "profile_settings": {
-        "title": "Profile {profile}",
+        "title": "Alarm profile {profile}",
         "description": "Name, icon and optionally a button on the alarm panel. Each button can belong to one profile only; profiles without a button are armed via the \"Profile\" select and the \"Arm\" buttons.",
         "data": {
           "name": "Name",
@@ -130,30 +125,15 @@
           "zone": "Zone"
         }
       },
-      "roles": {
-        "title": "Sensor roles",
-        "description": "The role is derived from the device class (door: entry delay, window: instant, motion/presence: follower, tamper: 24h). Set exceptions here. Current exceptions: {overrides}",
-        "data": {
-          "entity": "Sensor",
-          "role": "Role"
-        }
-      },
-      "monitoring": {
-        "title": "Sensor monitoring",
-        "description": "A sensor that has not reported for this long counts as unavailable when arming. 0 = off. Battery sensors may report only every few hours, so choose generously.",
-        "data": {
-          "stale_after_hours": "Maximum silence"
-        }
-      },
       "infrastructure": {
-        "title": "System monitoring",
-        "description": "Binary sensors reporting the state of a system, e.g. the Zigbee2MQTT bridge connection state. For \"problem\" sensors \"on\" means fault; for all others \"on\" means OK. On a fault, Hauswacht reports it and treats arming as with unavailable sensors.",
+        "title": "Monitor radio networks and gateways",
+        "description": "Select sensors that report whether a radio network or gateway is running – e.g. the connection state of the Zigbee2MQTT bridge or an MQTT broker. If such a system fails, all sensors behind it can no longer report. Hauswacht reports the fault and treats arming as with unavailable sensors.\n\nFor sensors of type “problem”, “on” means fault; for all others “on” means OK.",
         "data": {
-          "infrastructure": "Indicators"
+          "infrastructure": "Status sensors of radio networks and gateways"
         }
       },
       "sirens": {
-        "title": "Sirens",
+        "title": "Alarm devices – sirens",
         "description": "Register the sirens Hauswacht may use for intrusion alarms. Fire safety: Hauswacht never switches a siren on or off while any smoke detector reports fire, or while the fire state of a registered siren is unknown. Siren control stays LOCKED until you enable it here and confirm.",
         "data": {
           "sirens": "Sirens",
@@ -267,11 +247,11 @@
         }
       },
       "profiles": {
-        "title": "Profiles",
+        "title": "Alarm profiles",
         "menu_options": {
-          "profile_add": "Add profile",
-          "profile_edit": "Edit profile",
-          "profile_delete": "Delete profile"
+          "profile_add": "Add alarm profile",
+          "profile_edit": "Edit alarm profile",
+          "profile_delete": "Delete alarm profile"
         }
       },
       "profile_edit": {
@@ -295,12 +275,13 @@
         }
       },
       "users": {
-        "title": "Users",
-        "description": "Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it. The PIN under “PIN” remains the “main user”.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
+        "title": "Users and PINs",
+        "description": "Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
         "menu_options": {
           "user_add": "Add user",
           "user_edit": "Edit user",
-          "user_delete": "Delete user"
+          "user_delete": "Delete user",
+          "code": "PIN rules (master PIN, PIN for arming …)"
         }
       },
       "user_edit": {
@@ -331,6 +312,24 @@
           "ha_user": "Home Assistant account (for push and dashboard buttons)",
           "valid_from": "Valid from",
           "valid_until": "Valid until"
+        }
+      },
+      "system": {
+        "title": "System settings",
+        "menu_options": {
+          "users": "Users and PINs",
+          "sensor_behaviour": "Sensor behaviour – roles and radio silence",
+          "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
+          "homecoming": "Homecoming observation"
+        }
+      },
+      "sensor_behaviour": {
+        "title": "Sensor behaviour",
+        "description": "**Radio silence:** If a sensor has not reported for this long it counts as unavailable when arming (0 = off). Battery sensors sometimes report only every few hours – choose generously.\n\n**Role:** How a sensor triggers follows from its device class: door = entry (with entry delay), window = instant, motion/presence = follower (delays only while an entry delay is running), tamper = always reported. For an exception pick sensor and role; “Automatic” removes it again.\n\nCurrent exceptions: {overrides}",
+        "data": {
+          "stale_after_hours": "Maximum radio silence",
+          "entity": "Exception for sensor (optional)",
+          "role": "Role"
         }
       }
     },
@@ -580,7 +579,7 @@
       "message": "The profile can only be changed while disarmed."
     },
     "no_profiles": {
-      "message": "There is no profile yet. Create one under Hauswacht → Configure → Profiles."
+      "message": "There is no profile yet. Create one under Hauswacht → Configure → Alarm profiles."
     },
     "no_profile_for_mode": {
       "message": "No profile is assigned to this button."
@@ -652,7 +651,7 @@
   "issues": {
     "users_without_pin": {
       "title": "Hauswacht: not everyone has a PIN",
-      "description": "As soon as a PIN exists, the panel (and Alexa) require it **from everyone** to disarm. These people have no PIN and cannot disarm there: **{people}**.\n\nOptions:\n- Give them a PIN under Hauswacht → Configure → Users and PINs (a shared family PIN is allowed), or\n- enable “Allow dashboard buttons despite PIN” under PIN rules (currently: {buttons}) – dashboard buttons and the push button then keep working without a PIN.\n\nScheduled profiles and presence automation are not affected."
+      "description": "As soon as a PIN exists, the panel (and Alexa) require it **from everyone** to disarm. These people have no PIN and cannot disarm there: **{people}**.\n\nOptions:\n- Give them a PIN under Hauswacht → Configure → System settings → Users and PINs (a shared family PIN is allowed), or\n- enable “Allow dashboard buttons despite PIN” under PIN rules (currently: {buttons}) – dashboard buttons and the push button then keep working without a PIN.\n\nScheduled profiles and presence automation are not affected."
     }
   }
 }

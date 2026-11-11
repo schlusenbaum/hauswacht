@@ -176,6 +176,9 @@ async def test_options_flow_infrastructure(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "infrastructure"}
     )
     flow = await hass.config_entries.options.async_configure(

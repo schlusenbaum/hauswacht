@@ -231,6 +231,12 @@ async def test_options_flow_pin_rules(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.MENU
     result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "system"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "users"}
+    )
+    result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"next_step_id": "code"}
     )
     assert "new_pin" not in result["data_schema"].schema  # PINs gehören zu den Benutzern

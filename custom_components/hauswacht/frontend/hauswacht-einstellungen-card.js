@@ -22,7 +22,7 @@ const TEXT = {
     arming: "Beim Scharfschalten",
     automation: "Automatik",
     locked: "Nur im unscharfen Zustand änderbar.",
-    more: "Zonen, Sirenen, Namen und Wochentage: Einstellungen → Geräte & Dienste → Hauswacht → Konfigurieren.",
+    more: "Zonen, Sirenen, Namen und Wochentage: Einstellungen → Geräte & Dienste → Hauswacht → Konfigurieren → Alarmprofile.",
     missing: "Keine Hauswacht-Einstellungen gefunden (Hauswacht 0.14.0 oder neuer nötig).",
     off: "aus",
   },

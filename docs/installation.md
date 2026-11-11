@@ -37,7 +37,18 @@ Eine fertige Bedienkarte steht in [docs/dashboard.md](dashboard.md).
 ## Einrichtung in drei Schritten
 
 Alle Einstellungen liegen unter **Einstellungen → Geräte & Dienste → Hauswacht →
-Konfigurieren** und lassen sich nur im **unscharfen** Zustand ändern.
+Konfigurieren** und lassen sich nur im **unscharfen** Zustand ändern. Das Menü:
+
+| Menüpunkt | Inhalt |
+|---|---|
+| Zonen – welche Sensoren überwacht werden | Sensoren zu Gruppen zusammenfassen |
+| Alarmprofile | Welche Zonen scharf sind, Verzögerungen, Reaktion |
+| Alarmgeber – Sirenen | Welche Sirenen Hauswacht verwenden darf, Hardware-Freigabe |
+| Benachrichtigungen | Empfänger und Ereignisse |
+| **Systemeinstellungen** → Benutzer und PINs (mit PIN-Regeln) | Personen, PINs, Rechte, Master-PIN |
+| **Systemeinstellungen** → Sensorverhalten – Rollen und Funkstille | Ausnahmen bei Sensorrollen, maximale Funkstille |
+| **Systemeinstellungen** → Funknetz und Gateways überwachen | Zigbee2MQTT-Bridge, MQTT … |
+| **Systemeinstellungen** → Heimkehr-Beobachtung | Auswertung, schaltet nichts |
 
 ### 1. Zonen anlegen
 
@@ -68,7 +79,7 @@ Welche Sensoren eine Zone am Ende umfasst, zeigt das Attribut `zones` am Bedienf
 
 ### 2. Profile anlegen
 
-**Profile → Profil anlegen.** Es gibt keine vorgegebenen Profile – du legst jedes selbst an,
+**Alarmprofile → Alarmprofil anlegen.** Es gibt keine vorgegebenen Profile – du legst jedes selbst an,
 so viele du brauchst. Pro Profil:
 
 | Einstellung | Bedeutung |
@@ -134,13 +145,16 @@ Die Rolle eines Sensors ergibt sich aus seiner Geräteklasse:
 | Manipulation | Manipulation (24 h) | Wird immer gemeldet, auch unscharf |
 | ohne / andere | Sofort | Sicherheitshalber sofortiger Alarm |
 
-Abweichungen stellst du unter **Sensorrollen – Ausnahmen** ein, z. B. ein Fenster, durch das
+Abweichungen stellst du unter **Systemeinstellungen → Sensorverhalten** ein (Sensor und Rolle wählen), z. B. ein Fenster, durch das
 man das Haus betritt, als „Eingang“.
 
 ## Funkstille von Sensoren
 
+**Systemeinstellungen → Sensorverhalten → Maximale Funkstille.**
+
+
 - Ein Sensor ist **nicht verfügbar**, wenn er fehlt oder `unavailable` bzw. `unknown` meldet.
-- Optional (**Funkstille von Sensoren → Maximale Funkstille**) gilt ein Sensor auch dann als
+- Optional gilt ein Sensor auch dann als
   ausgefallen, wenn er sich so viele Stunden nicht gemeldet hat. Batteriesensoren melden sich
   teils nur alle paar Stunden, der Wert sollte deshalb großzügig sein. Standard: aus.
 - Als „letzter Kontakt“ zählt der „Zuletzt gesehen“-Sensor desselben Geräts (bei Zigbee2MQTT
@@ -152,10 +166,11 @@ man das Haus betritt, als „Eingang“.
 - Die überwachten Sensoren werden beim Scharfschalten festgehalten. Wird während des scharfen
   Zustands ein Label entfernt, bleibt der Sensor bis zum Unscharfschalten überwacht.
 
-## Systemüberwachung
+## Funknetz und Gateways überwachen
 
-Unter **Konfigurieren → Systemüberwachung** wählst du Binärsensoren, die den Zustand eines
-Systems melden. Bei Sensoren der Geräteklasse „Problem“ bedeutet „an“ Störung, bei allen
+Unter **Konfigurieren → Systemeinstellungen → Funknetz und Gateways überwachen** wählst du
+Binärsensoren, die melden, ob ein Funknetz oder Gateway läuft. Fällt so ein System aus, können
+alle Sensoren dahinter nichts mehr melden. Bei Sensoren der Geräteklasse „Problem“ bedeutet „an“ Störung, bei allen
 anderen (z. B. „Verbindung“) bedeutet „an“ in Ordnung. Für Zigbee2MQTT ist das
 `binary_sensor.zigbee2mqtt_bridge_connection_state`. Fällt MQTT aus, wird dieser Sensor
 ebenfalls „nicht verfügbar“, deckt also beides ab.
@@ -170,7 +185,7 @@ ebenfalls „nicht verfügbar“, deckt also beides ab.
 
 ## Sirenen
 
-**Konfigurieren → Sirenen.**
+**Konfigurieren → Alarmgeber – Sirenen.**
 
 > Getestet ist bisher nur der Rauchwarnmelder Develco SMSZB-120 über Zigbee2MQTT. Andere
 > Sirenen werden nach ihren Fähigkeiten angesteuert, siehe
@@ -304,7 +319,7 @@ Für Dashboards gibt es zusätzlich zwei Knöpfe (Entitäten):
 
 Knöpfe können keinen PIN abfragen. Ist ein PIN eingestellt, ist „Unscharf schalten“ **nicht
 verfügbar** – dann über das Bedienfeld bedienen. „Alarm beenden“ bleibt mit PIN verfügbar, wenn
-unter **Konfigurieren → PIN-Regeln** die Option **„Alarm ohne PIN beenden“** an ist (standardmäßig aus).
+unter **Konfigurieren → Systemeinstellungen → Benutzer und PINs → PIN-Regeln** die Option **„Alarm ohne PIN beenden“** an ist (standardmäßig aus).
 
 > Abwägung: Mit der Option kann jeder, der ein entsperrtes Dashboard in der Hand hat, die
 > Sirenen abstellen. Die Anlage bleibt aber scharf, die Alarm-Nachricht ist schon verschickt,
@@ -349,7 +364,7 @@ Seite neu laden (in der App: Einstellungen → Frontend-Cache zurücksetzen).
 
 ## Heimkehr-Beobachtung
 
-**Konfigurieren → Heimkehr-Beobachtung.** Personen auswählen und „Heimkehr beobachten“
+**Konfigurieren → Systemeinstellungen → Heimkehr-Beobachtung.** Personen auswählen und „Heimkehr beobachten“
 einschalten.
 
 Hauswacht zeichnet dann auf, wann eine **Eingangstür** (Sensoren mit der Rolle „entry“)
@@ -477,7 +492,7 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 
 ## PIN-Regeln
 
-PINs gehören zu den Benutzern (siehe „Benutzer und PINs“). Unter **Konfigurieren → PIN-Regeln**:
+PINs gehören zu den Benutzern (siehe „Benutzer und PINs“). Unter **Konfigurieren → Systemeinstellungen → Benutzer und PINs → PIN-Regeln**:
 
 - **Master-PIN** (optional): ein einfacher PIN ohne eigene Benutzer, z. B. damit
   Sprachassistenten wie Alexa nur mit PIN unscharf schalten. Erscheint in der Benutzerliste als
@@ -510,7 +525,7 @@ Allgemein:
 > Hinweis „Nicht alle Personen haben einen PIN“ mit den Namen.
 > Zeitgesteuerte Profile und die Anwesenheits-Automatik brauchen keinen PIN.
 
-**Konfigurieren → Benutzer und PINs.** Jede Person bekommt einen Benutzer:
+**Konfigurieren → Systemeinstellungen → Benutzer und PINs.** Jede Person bekommt einen Benutzer:
 
 | Feld | Bedeutung |
 |---|---|

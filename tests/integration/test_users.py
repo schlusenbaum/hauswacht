@@ -159,6 +159,9 @@ async def test_user_management_in_options(hass: HomeAssistant) -> None:
     async def flow_to_user_settings(step: str) -> dict:
         flow = await hass.config_entries.options.async_init(entry.entry_id)
         flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": "system"}
+        )
+        flow = await hass.config_entries.options.async_configure(
             flow["flow_id"], {"next_step_id": "users"}
         )
         return await hass.config_entries.options.async_configure(
@@ -209,6 +212,9 @@ async def test_name_suggests_ha_users_and_links(
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "users"}
     )
     flow = await hass.config_entries.options.async_configure(
@@ -228,6 +234,12 @@ async def test_name_suggests_ha_users_and_links(
 
 async def _pin_rules(hass: HomeAssistant, entry: Any, data: dict) -> None:
     flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "users"}
+    )
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "code"}
     )
