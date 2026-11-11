@@ -17,6 +17,7 @@
         "menu_options": {
           "zones": "Zones – which sensors are monitored",
           "profiles": "Alarm profiles",
+          "rules": "Rules – sequences of sensors",
           "sirens": "Alarm devices – sirens",
           "notifications": "Notifications",
           "system": "System settings",
@@ -42,7 +43,7 @@
           "name": "Name",
           "icon": "Icon",
           "panel_mode": "Alarm panel button",
-          "zones": "Monitored zones",
+          "zones": "Zones that trigger alone",
           "exit_delay": "Exit delay",
           "entry_delay": "Entry delay",
           "reaction_time": "Alarm reaction time",
@@ -55,7 +56,8 @@
           "siren_volume": "Volume",
           "silent": "Silent alarm (notifications only)",
           "notify": "Notify (alarm)",
-          "automation": "Automation"
+          "automation": "Automation",
+          "rules": "Rules"
         },
         "sections": {
           "automation": {
@@ -76,7 +78,8 @@
           }
         },
         "data_description": {
-          "zones": "Which zones are armed in this profile. Sensors of other zones are ignored (tamper is always reported)."
+          "zones": "Each sensor of these zones triggers on its own (door with entry delay, window instantly …). Open sensors of these zones prevent arming.",
+          "rules": "These rules apply in addition. Sensors that only appear in rules do not prevent arming; an open window only counts once it closes and opens again."
         }
       },
       "zones": {
@@ -95,15 +98,11 @@
         "data": {
           "name": "Zone name (e.g. Perimeter, Inside, Basement)",
           "entities": "Sensors in this zone",
-          "label": "Additionally all sensors with this label (optional)",
-          "confirm": "Alarm only when a second sensor of this zone confirms",
-          "confirm_window": "Confirmation window"
+          "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically.",
-          "confirm": "Against false alarms from single motion or presence sensors: one sensor alone does not trigger; only when another sensor of this zone also triggers within the window. The same sensor twice does not count. Doors still start the entry delay, tamper is always reported. If no second sensor is available, Hauswacht triggers immediately to be safe.",
-          "confirm_window": "How long after the first trigger a second sensor can confirm (10–600 s)."
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
         }
       },
       "zone_edit": {
@@ -118,15 +117,11 @@
         "data": {
           "name": "Zone name (e.g. Perimeter, Inside, Basement)",
           "entities": "Sensors in this zone",
-          "label": "Additionally all sensors with this label (optional)",
-          "confirm": "Alarm only when a second sensor of this zone confirms",
-          "confirm_window": "Confirmation window"
+          "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically.",
-          "confirm": "Against false alarms from single motion or presence sensors: one sensor alone does not trigger; only when another sensor of this zone also triggers within the window. The same sensor twice does not count. Doors still start the entry delay, tamper is always reported. If no second sensor is available, Hauswacht triggers immediately to be safe.",
-          "confirm_window": "How long after the first trigger a second sensor can confirm (10–600 s)."
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
         }
       },
       "zone_delete": {
@@ -257,7 +252,7 @@
           },
           "event_unconfirmed": {
             "name": "Unconfirmed trigger",
-            "description": "A sensor of a zone with confirmation triggered alone and no second sensor confirmed – there was no alarm. Default: off.",
+            "description": "A rule was started but not fulfilled in time (e.g. only the door) – there was no alarm. Default: off.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -265,7 +260,7 @@
           },
           "event_unconfirmed_frequent": {
             "name": "Sensor often triggers alone",
-            "description": "A sensor triggered alone (unconfirmed) three times within an hour – a hint to check it. Default: off.",
+            "description": "The same sensor started a rule three times within an hour that was not fulfilled – a hint to check it. Default: off.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -363,6 +358,98 @@
           "entity": "Exception for sensor (optional)",
           "role": "Role"
         }
+      },
+      "rules": {
+        "title": "Rules",
+        "description": "{saved}A **rule** triggers only on a sequence of sensors, e.g. “front door, then basement within 120 s” – door alone or basement alone then trigger nothing. Rules stand on their own; each alarm profile chooses which apply. Rules are OR-combined: a rule can only trigger an alarm, never prevent another rule's alarm.",
+        "menu_options": {
+          "rule_add": "Add rule",
+          "rule_edit": "Edit rule",
+          "rule_delete": "Delete rule",
+          "init": "← Back"
+        }
+      },
+      "rule_edit": {
+        "title": "Edit rule",
+        "data": {
+          "rule": "Rule"
+        }
+      },
+      "rule_delete": {
+        "title": "Delete rule",
+        "description": "The rule is also removed from all alarm profiles.",
+        "data": {
+          "rule": "Rule"
+        }
+      },
+      "rule_settings": {
+        "title": "Rule",
+        "description": "Steps in order: step 2 must be fulfilled within the time of step 1, step 3 within the time of step 2 and so on. Empty steps are ignored. Sensors can be single entities and/or whole zones.",
+        "data": {
+          "name": "Name",
+          "result": "When the rule is fulfilled"
+        },
+        "data_description": {
+          "result": "“Entry delay” gives time to disarm (time from the alarm profile), then alarm."
+        },
+        "sections": {
+          "step_1": {
+            "name": "Step 1",
+            "description": "Sensors of this step and how many of them must trigger.",
+            "data": {
+              "sensors": "Sensors",
+              "zones": "Zones",
+              "mode": "Fulfilled when",
+              "count": "Number (for “at least N”)",
+              "within": "Time until the next step"
+            },
+            "data_description": {
+              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
+            }
+          },
+          "step_2": {
+            "name": "Step 2",
+            "description": "Sensors of this step and how many of them must trigger.",
+            "data": {
+              "sensors": "Sensors",
+              "zones": "Zones",
+              "mode": "Fulfilled when",
+              "count": "Number (for “at least N”)",
+              "within": "Time until the next step"
+            },
+            "data_description": {
+              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
+            }
+          },
+          "step_3": {
+            "name": "Step 3",
+            "description": "Sensors of this step and how many of them must trigger.",
+            "data": {
+              "sensors": "Sensors",
+              "zones": "Zones",
+              "mode": "Fulfilled when",
+              "count": "Number (for “at least N”)",
+              "within": "Time until the next step"
+            },
+            "data_description": {
+              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
+            }
+          },
+          "step_4": {
+            "name": "Step 4",
+            "description": "Sensors of this step and how many of them must trigger.",
+            "data": {
+              "sensors": "Sensors",
+              "zones": "Zones",
+              "mode": "Fulfilled when",
+              "count": "Number (for “at least N”)",
+              "within": "Time until the next step"
+            },
+            "data_description": {
+              "within": "The next step must be fulfilled within this time after this step. For a first step with “all” or “at least N” also: how close its sensors must be."
+            }
+          }
+        }
       }
     },
     "error": {
@@ -379,13 +466,16 @@
       "pin_is_duress": "This PIN is already a duress PIN ({conflict}).",
       "duress_conflict": "This duress PIN is already in use ({conflict}).",
       "zone_overlap": "These sensors are already in another zone: {conflicts}. A sensor can only be in one zone – remove it there or deselect it here.",
-      "confirm_needs_two": "Confirmation needs at least two motion, presence or window sensors in the zone."
+      "rule_name_required": "Please enter a name.",
+      "rule_name_taken": "A rule with this name already exists.",
+      "rule_invalid": "The rule cannot trigger like this: {problems}"
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
       "no_zones": "No zones have been created yet.",
       "no_profiles": "No profiles have been created yet.",
-      "no_users": "There are no users yet."
+      "no_users": "There are no users yet.",
+      "no_rules": "There is no rule yet."
     }
   },
   "selector": {
@@ -454,6 +544,19 @@
         "off": "Closed / idle",
         "unavailable": "Unavailable",
         "real": "Real (reset)"
+      }
+    },
+    "step_mode": {
+      "options": {
+        "any": "one of them triggers (OR)",
+        "all": "all of them trigger, any order (AND)",
+        "count": "at least N different ones trigger"
+      }
+    },
+    "rule_result": {
+      "options": {
+        "alarm": "alarm immediately",
+        "entry_delay": "entry delay, then alarm"
       }
     }
   },

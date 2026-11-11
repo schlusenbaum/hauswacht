@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-11
+
+### Hinzugefügt
+- **Regeln – Abfolgen von Meldern** (neuer Menüpunkt): z. B. „Haustür, dann innerhalb von
+  120 s Keller“. Bis zu vier Schritte, je Schritt „einer davon“ (ODER), „alle davon“ (UND) oder
+  „mindestens N verschiedene“; Zeit bis zum nächsten Schritt; Ergebnis sofort Alarm oder
+  Eingangsverzögerung. Regeln stehen für sich und werden im Alarmprofil ausgewählt.
+- Prüfung beim Speichern: Regeln, die nie auslösen können, werden abgelehnt; Hinweise, wenn eine
+  Regel in einem Profil nichts bewirkt.
+- Testkarte: Fortschritt jeder Regel des aktiven Profils mit Countdown; Melder „nur in Regeln“.
+- Die Alarmmeldung nennt die erfüllte Regel.
+
+### Geändert
+- Im Alarmprofil heißen die Zonen jetzt „Allein auslösende Zonen“. Melder, die nur in Regeln
+  vorkommen, verhindern das Scharfschalten nicht.
+- „Unbestätigte Auslösung“ und „Melder löst häufig allein aus“ beziehen sich auf Regeln, die
+  begonnen, aber nicht erfüllt wurden.
+
+### Entfernt
+- Die Zonen-Option „Alarm erst, wenn ein zweiter Melder bestätigt“ (0.18.0). Eine eingeschaltete
+  Option wird beim Update automatisch zur Regel „Bestätigung <Zone>“.
+
 ## [0.18.0] - 2026-11-11
 
 ### Hinzugefügt

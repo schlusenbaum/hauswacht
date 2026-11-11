@@ -22,15 +22,21 @@
 | **0.17.0** ✅ | Benachrichtigungen pro Ereignis, wichtige Hinweise, Knöpfe „Trotzdem scharf“ / „Erneut versuchen“, Erinnerung „Alle weg“ | Push ja |
 | 0.17.1–0.17.6 ✅ | Testkarte (Sensoren simulieren), Zonen verständlicher und ohne Mehrfachzuordnung, Optionen neu gegliedert mit Zurück, klarere Entitäten | nein |
 | **0.18.0** ✅ | Bestätigung durch einen zweiten Melder (Zonen-Option), Meldung unbestätigter und häufiger Einzelauslösungen | nein |
-| 0.19.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |
-| 0.20.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
-| 0.21.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
+| **0.19.0** ✅ | Regeln: Abfolgen von Meldern (einer/alle/mindestens N, Zeit bis zum nächsten Schritt), Regelsammlung, pro Profil wählbar, Prüfung beim Speichern, Fortschritt in der Testkarte | nein |
+| 0.20.0 | Expertenmodus für Regeln: YAML-Editor mit Prüfung, zusätzliche Bausteine (z. B. „nicht, wenn vorher …“, Verschachtelung) | nein |
+| 0.21.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |
+| 0.22.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
+| 0.23.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, eigene Benachrichtigungstexte | – |
 
 ## Entscheidungen
 
-- **Sensorgruppen (2026-11-11):** als Option der Zone („Alarm erst, wenn ein zweiter Melder
+- **Regeln (2026-11-11):** Statt Zonen-Bestätigung eine Regelsammlung mit Abfolgen von
+  Meldern; Profile wählen Regeln aus. Einfacher Modus (Formular) in 0.19, Expertenmodus (YAML)
+  in 0.20 – beide auf demselben Regel-Kern. Regeln sind ODER-verknüpft und können sich nicht
+  gegenseitig aushebeln. Siehe [ADR 0006](adr/0006-regeln.md).
+- **Sensorgruppen (2026-11-11, ersetzt durch Regeln):** als Option der Zone („Alarm erst, wenn ein zweiter Melder
   dieser Zone bestätigt“) statt eigener Gruppen quer zu den Zonen. Nur verschiedene Melder
   zählen; ohne verfügbaren zweiten Melder sofortiger Alarm. Eigene Gruppen lassen sich später
   ergänzen.

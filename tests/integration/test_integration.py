@@ -257,7 +257,7 @@ async def test_migration_turns_old_pin_into_user(hass: HomeAssistant) -> None:
         domain=old.domain, title=old.title, data={}, options=dict(old.options), version=2
     )
     await setup_entry(hass, entry)
-    assert entry.version == 3
+    assert entry.version == 4
     assert "pin_salt" not in entry.options
     assert entry.options["users"]["hauptbenutzer"]["name"] == "Hauptbenutzer"
     state = hass.states.get(PANEL)

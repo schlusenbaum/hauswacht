@@ -11,8 +11,8 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus.
 
-> **Status: 0.18.0 – Entwicklungsversion.**
-> Alle Grundfunktionen sind enthalten: Zonen, Alarmprofile, Benutzer und PINs (auch Gäste und
+> **Status: 0.19.0 – Entwicklungsversion.**
+> Alle Grundfunktionen sind enthalten: Zonen, Alarmprofile, Regeln („Tür, dann Keller“), Benutzer und PINs (auch Gäste und
 > Bedrohungs-PIN), Benachrichtigungen pro Ereignis mit Knöpfen, Überwachung von Funknetz und
 > Gateways, Testmodus mit Testkarte und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
@@ -44,7 +44,7 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 
 > **Getestet ist bisher nur ein Sirenenmodell:** Rauchwarnmelder **Develco SMSZB-120**
 > („Smoke detector with siren“) über **Zigbee2MQTT**. Auch damit ist der echte Sirenentest
-> noch offen (geplant für 0.21.0); bis dahin ist nur die Logik mit nachgebildeten Geräten
+> noch offen (geplant für 0.23.0); bis dahin ist nur die Logik mit nachgebildeten Geräten
 > geprüft.
 
 **Sensoren** (Tür-, Fenster-, Bewegungs- und Präsenzmelder, Sabotagekontakte) sind

@@ -45,8 +45,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
-    """Version 1 (feste Profile) -> 2 (frei definierbare Profile) -> 3 (PIN als Benutzer)."""
+    """Version 1 (feste Profile) -> 2 (frei definierbare Profile) -> 3 (PIN als Benutzer)
+    -> 4 (Bestätigung durch zweiten Melder als Regel)."""
     from .core.profiles import migrate_v1_options  # noqa: PLC0415
+    from .core.rules import migrate_zone_confirmation  # noqa: PLC0415
     from .core.users import migrate_legacy_pin  # noqa: PLC0415
 
     if entry.version == 1:
@@ -57,7 +59,11 @@ async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) 
         hass.config_entries.async_update_entry(
             entry, options=migrate_legacy_pin(entry.options), version=3
         )
-    return entry.version == 3
+    if entry.version == 3:
+        hass.config_entries.async_update_entry(
+            entry, options=migrate_zone_confirmation(entry.options), version=4
+        )
+    return entry.version == 4
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
