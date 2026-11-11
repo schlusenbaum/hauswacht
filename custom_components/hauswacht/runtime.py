@@ -66,12 +66,7 @@ from .core.code_guard import (
     register_success,
     remaining_lock,
 )
-from .core.confirmation import (
-    CONFIRMABLE_ROLES,
-    FREQUENT_COUNT,
-    ConfirmationTracker,
-    LoneTriggerCounter,
-)
+from .core.confirmation import FREQUENT_COUNT, LoneTriggerCounter
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
 from .core.profile_settings import SettingError
@@ -92,10 +87,18 @@ from .core.reactions import (
     sensor_lost_message,
     tamper_message,
 )
+from .core.rules import (
+    Progress,
+    Rule,
+    RuleEngine,
+    RuleResult,
+    build_engine,
+    parse_rules,
+    profile_rule_ids,
+    rule_members,
+)
 from .core.sensors import (
-    UNAVAILABLE_STATES,
     SensorSnapshot,
-    Zone,
     all_configured_sensors,
     became_unavailable,
     evaluate_readiness,
@@ -223,10 +226,15 @@ class HauswachtRuntime:
         self._infra_faulty: frozenset[str] = frozenset()
         # Simulierte Sensorzustände (nur Testmodus, nur für Hauswacht, nie in Home Assistant)
         self._simulated: dict[str, str] = {}
-        # Bestätigung durch einen zweiten Melder (Zonen-Option)
-        self._confirm = ConfirmationTracker()
+        # Regeln ("Tür, dann Keller"): Sammlung, Auswertung für das scharfe Profil
+        self.rules: dict[str, Rule] = parse_rules(entry.options)
+        self._engine = RuleEngine()
+        self._partials: dict[str, Progress] = {}
+        self._partial_timer: CALLBACK_TYPE | None = None
+        self._fired_rule: str | None = None
         self._lone = LoneTriggerCounter()
-        self._confirm_timers: dict[str, CALLBACK_TYPE] = {}
+        # Allein auslösende Melder des scharfen Profils (Teilmenge von armed_sensors)
+        self.single_sensors: frozenset[str] = frozenset()
         self.delay_ends_at: datetime | None = None
         self.armed_sensors: frozenset[str] = frozenset()
         self.candidates: frozenset[str] = frozenset()
@@ -418,7 +426,7 @@ class HauswachtRuntime:
     def async_stop(self) -> None:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
         self._cancel_timer()
-        self._reset_confirmation()
+        self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
         self.sirens.cancel_retry()
@@ -459,14 +467,25 @@ class HauswachtRuntime:
                 translation_placeholders={"profile": profile_ref},
             )
         sensors = self.profile_sensors(profile_id)
-        if not sensors:
+        engine = build_engine(
+            [
+                self.rules[r]
+                for r in profile_rule_ids(self.entry.options, profile_id)
+                if r in self.rules
+            ],
+            self.zones,
+            self._labels,
+        )
+        if not sensors and not engine.watched():
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="profile_has_no_sensors",
                 translation_placeholders={"profile": self.profile_name(profile_id)},
             )
         if self.ctx.state is AlarmState.DISARMED:
-            self.armed_sensors = sensors
+            self.single_sensors = sensors
+            self.armed_sensors = sensors | engine.watched()
+            self._engine = engine
         previous = self.changed_by
         self.changed_by = changed_by
         effects = self._dispatch(
@@ -991,109 +1010,129 @@ class HauswachtRuntime:
         elif not faulty:
             persistent_notification.async_dismiss(self.hass, NOTIFICATION_FAULT)
 
-    # --- Bestätigung durch einen zweiten Melder -----------------------------
+    # --- Regeln ("Tür, dann Keller") ----------------------------------------
 
-    def _confirm_zone(self, entity_id: str) -> Zone | None:
-        """Bestätigungspflichtige Zone des aktiven Profils, in der der Melder steckt."""
-        profile = self.ctx.profile
-        if profile is None:
-            return None
-        for zone_id in profile_behaviour(self.entry.options, profile.profile_id).zones:
-            zone = self.zones.get(zone_id)
-            if zone is not None and zone.confirm and entity_id in resolve_zone(zone, self._labels):
-                return zone
-        return None
+    def _all_rule_sensors(self) -> frozenset[str]:
+        sensors: set[str] = set()
+        for rule in self.rules.values():
+            for members in rule_members(rule, self.zones, self._labels):
+                sensors |= members
+        return frozenset(sensors)
 
-    def _available_confirmers(self, zone: Zone, entity_id: str) -> int:
-        """Andere überwachte, verfügbare Melder der Zone, die bestätigen könnten."""
-        others = (resolve_zone(zone, self._labels) & self.armed_sensors) - {entity_id}
-        others -= self.ctx.bypassed
-        count = 0
-        for other, snap in self.snapshots(frozenset(others)).items():
-            if snap.state is None or snap.state in UNAVAILABLE_STATES:
-                continue
-            if sensor_role(other, snap.device_class, self.role_overrides) in CONFIRMABLE_ROLES:
-                count += 1
-        return count
+    def rule_names(self, entity_id: str) -> list[str]:
+        """Regeln des scharfen Profils, in denen der Melder vorkommt."""
+        return [
+            rule.name
+            for rule in self._engine.rules
+            if any(entity_id in m for m in self._engine.members.get(rule.rule_id, []))
+        ]
 
     @callback
     def _sensor_triggered(self, entity_id: str, role: SensorRole) -> None:
-        """Auslösung weitergeben – in bestätigungspflichtigen Zonen erst nach dem zweiten Melder."""
-        waiting_states = (AlarmState.ARMED, AlarmState.PENDING, AlarmState.ALARM_HOLD)
-        zone = (
-            self._confirm_zone(entity_id)
-            if role in CONFIRMABLE_ROLES
-            and self.ctx.state in waiting_states
-            and entity_id not in self.ctx.bypassed
-            else None
-        )
-        if zone is not None:
-            now = dt_util.utcnow().timestamp()
-            confirmed = self._confirm.check(
-                entity_id,
-                zone.zone_id,
-                zone.confirm_window,
-                now,
-                others_available=self._available_confirmers(zone, entity_id),
-            )
-            if not confirmed:
-                self.hass.bus.async_fire(
-                    EVENT_HAUSWACHT,
-                    {"type": "TriggerUnconfirmed", "sensor_key": entity_id, "zone": zone.zone_id},
-                )
-                self._schedule_confirm_timeout(entity_id, zone.confirm_window)
-                self._notify()
-                return
-            self._cancel_confirm_timers()
-        self._dispatch(SensorTriggered(sensor_key=entity_id, role=role))
-
-    @callback
-    def _schedule_confirm_timeout(self, entity_id: str, window: int) -> None:
-        if (unsub := self._confirm_timers.pop(entity_id, None)) is not None:
-            unsub()
-
-        @callback
-        def _timeout(_now: datetime) -> None:
-            self._confirm_timers.pop(entity_id, None)
-            self._on_confirm_timeout()
-
-        self._confirm_timers[entity_id] = async_call_later(self.hass, window, _timeout)
-
-    @callback
-    def _on_confirm_timeout(self) -> None:
+        """Allein auslösende Melder direkt weiter, Regelmelder über die Regeln."""
+        if role is SensorRole.TAMPER_24H or entity_id in self.single_sensors:
+            self._dispatch(SensorTriggered(sensor_key=entity_id, role=role))
+        if role is SensorRole.TAMPER_24H or entity_id not in self._engine.watched():
+            return
+        if self.ctx.state not in (AlarmState.ARMED, AlarmState.PENDING, AlarmState.ALARM_HOLD):
+            return
         now = dt_util.utcnow().timestamp()
-        for sensor in self._confirm.expire(now):
-            name = display_name(self.hass, sensor)
-            _LOGGER.info("Unbestätigte Einzelauslösung: %s", sensor)
-            self.hass.bus.async_fire(
-                EVENT_HAUSWACHT, {"type": "TriggerUnconfirmedExpired", "sensor_key": sensor}
-            )
-            self.notifier.notify(
-                NotifyEvent.UNCONFIRMED,
-                "Hauswacht: unbestätigte Auslösung",
-                f"{name} hat allein ausgelöst, kein zweiter Melder hat bestätigt – kein Alarm.",
-                test_mode=self.ctx.test_mode,
-            )
-            if self._lone.record(sensor, now):
-                self.notifier.notify(
-                    NotifyEvent.UNCONFIRMED_FREQUENT,
-                    "Hauswacht: Melder löst häufig allein aus",
-                    f"{name} hat innerhalb einer Stunde {FREQUENT_COUNT}-mal allein ausgelöst. "
-                    "Bitte Melder prüfen (Empfindlichkeit, Ausrichtung, Batterie).",
-                    test_mode=self.ctx.test_mode,
-                )
+        fired = self._engine.record(entity_id, now)
+        if not fired:
+            self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "RuleStep", "sensor_key": entity_id})
+            self._update_partials(now)
+            return
+        # Bei mehreren erfüllten Regeln gilt das strengere Ergebnis
+        rule = next((r for r in fired if r.result is RuleResult.ALARM), fired[0])
+        self._fired_rule = rule.name
+        _LOGGER.warning("Regel erfüllt: %s (durch %s)", rule.name, entity_id)
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {"type": "RuleFired", "rule": rule.rule_id, "name": rule.name, "sensor_key": entity_id},
+        )
+        self._reset_rules(keep_fired=True)
+        result_role = (
+            SensorRole.ENTRY if rule.result is RuleResult.ENTRY_DELAY else SensorRole.INSTANT
+        )
+        self._dispatch(SensorTriggered(sensor_key=entity_id, role=result_role))
+
+    @callback
+    def _update_partials(self, now: float) -> None:
+        """Teilweise erfüllte Regeln verfolgen; abgelaufene ggf. melden."""
+        current = self._engine.progress(now)
+        for rule_id, old in self._partials.items():
+            if rule_id not in current:
+                self._on_rule_expired(old, now)
+        self._partials = current
+        if self._partial_timer is not None:
+            self._partial_timer()
+            self._partial_timer = None
+        if current:
+            delay = max(0.0, min(p.deadline for p in current.values()) - now) + 0.01
+
+            @callback
+            def _check(_now: datetime) -> None:
+                self._partial_timer = None
+                self._update_partials(dt_util.utcnow().timestamp())
+
+            self._partial_timer = async_call_later(self.hass, delay, _check)
         self._notify()
 
     @callback
-    def _cancel_confirm_timers(self) -> None:
-        for unsub in self._confirm_timers.values():
-            unsub()
-        self._confirm_timers.clear()
+    def _on_rule_expired(self, progress: Progress, now: float) -> None:
+        rule = self.rules.get(progress.rule_id)
+        name = rule.name if rule else progress.rule_id
+        first = display_name(self.hass, progress.first_sensor)
+        _LOGGER.info("Regel %s nur teilweise erfüllt (%s)", name, progress.first_sensor)
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {"type": "RuleExpired", "rule": progress.rule_id, "sensor_key": progress.first_sensor},
+        )
+        self.notifier.notify(
+            NotifyEvent.UNCONFIRMED,
+            "Hauswacht: unbestätigte Auslösung",
+            f"Regel „{name}“ nur teilweise erfüllt ({progress.done} von {progress.total} "
+            f"Schritten, begonnen mit {first}) – kein Alarm.",
+            test_mode=self.ctx.test_mode,
+        )
+        if self._lone.record(progress.first_sensor, now):
+            self.notifier.notify(
+                NotifyEvent.UNCONFIRMED_FREQUENT,
+                "Hauswacht: Melder löst häufig allein aus",
+                f"{first} hat innerhalb einer Stunde {FREQUENT_COUNT}-mal eine Regel begonnen, "
+                "die nicht erfüllt wurde. Bitte Melder prüfen (Empfindlichkeit, Ausrichtung, "
+                "Batterie).",
+                test_mode=self.ctx.test_mode,
+            )
 
     @callback
-    def _reset_confirmation(self) -> None:
-        self._confirm.reset()
-        self._cancel_confirm_timers()
+    def _reset_rules(self, *, keep_fired: bool = False) -> None:
+        """Verlauf und Teilfortschritte verwerfen (ohne "unbestätigt"-Meldung)."""
+        self._engine.reset()
+        self._partials = {}
+        if self._partial_timer is not None:
+            self._partial_timer()
+            self._partial_timer = None
+        if not keep_fired:
+            self._fired_rule = None
+
+    def rules_overview(self) -> list[dict[str, Any]]:
+        """Regeln des scharfen Profils mit Fortschritt (für die Testkarte)."""
+        rows = []
+        for rule in self._engine.rules:
+            progress = self._partials.get(rule.rule_id)
+            rows.append(
+                {
+                    "name": rule.name,
+                    "steps": len(rule.steps),
+                    "done": progress.done if progress else 0,
+                    "deadline": dt_util.utc_from_timestamp(progress.deadline).isoformat()
+                    if progress
+                    else None,
+                    "result": rule.result.value,
+                }
+            )
+        return rows
 
     # --- Simulation (nur Testmodus) -----------------------------------------
 
@@ -1167,7 +1206,7 @@ class HauswachtRuntime:
                     "real": state.state if state else None,
                     "simulated": self.simulated(entity_id),
                     "status": self._sensor_status(entity_id, device_class),
-                    "confirm_until": self._confirm_until(entity_id),
+                    "rules": self.rule_names(entity_id),
                 }
             )
         return sorted(rows, key=lambda r: str(r["name"]).casefold())
@@ -1187,19 +1226,11 @@ class HauswachtRuntime:
             return "bypassed_until_closed"
         if entity_id in ctx.bypassed:
             return "bypassed"
-        if entity_id not in self.armed_sensors:
-            return "not_monitored"
-        if entity_id in self._confirm.pending:
-            return "awaiting_confirmation"
-        if role in CONFIRMABLE_ROLES and self._confirm_zone(entity_id) is not None:
-            return "monitored_confirm"
-        return "monitored"
-
-    def _confirm_until(self, entity_id: str) -> str | None:
-        pending = self._confirm.pending.get(entity_id)
-        if pending is None:
-            return None
-        return dt_util.utc_from_timestamp(pending.until).isoformat()
+        if entity_id in self.single_sensors:
+            return "monitored"
+        if entity_id in self._engine.watched():
+            return "in_rule"
+        return "not_monitored"
 
     @property
     def simulated_count(self) -> int:
@@ -1220,13 +1251,16 @@ class HauswachtRuntime:
             self._sensor_triggered(entity_id, role)
 
     def _readiness(self) -> Readiness:
-        return self.readiness_for(self.armed_sensors)
+        # Melder, die nur in Regeln vorkommen, blockieren das Scharfschalten nicht
+        return self.readiness_for(self.single_sensors)
 
     @callback
     def _refresh_sensors(self) -> None:
         """Labels neu einlesen und Zustandsabos auf alle konfigurierten Sensoren setzen."""
         self._labels = entities_by_label(self.hass)
-        self.candidates = all_configured_sensors(self.zones, self._labels)
+        self.candidates = (
+            all_configured_sensors(self.zones, self._labels) | self._all_rule_sensors()
+        )
         self._last_seen_entity = self._find_last_seen_entities(self.candidates | self.armed_sensors)
         # Gerade scharf überwachte Sensoren bleiben abonniert, auch wenn ihr Label
         # inzwischen entfernt wurde – sonst würden sie unbemerkt nicht mehr überwacht.
@@ -1359,10 +1393,12 @@ class HauswachtRuntime:
             self._apply(effect)
         if self.ctx.state is AlarmState.DISARMED:
             self.sirens.reset()
-            self._reset_confirmation()
+            self._reset_rules()
+            self._engine = RuleEngine()
             self.automation.on_disarmed()
             if self.armed_sensors:
                 self.armed_sensors = frozenset()
+                self.single_sensors = frozenset()
                 self._refresh_sensors()
         if (old_ctx.state, old_ctx.profile, old_ctx.test_mode) != (
             self.ctx.state,
@@ -1434,6 +1470,7 @@ class HauswachtRuntime:
                     notification_id=NOTIFICATION_RESTART,
                 )
             case AlarmAcknowledged():
+                self._reset_rules()
                 self._on_acknowledged(effect)
             case SensorsRestored():
                 _LOGGER.info("Wieder überwacht: %s", sorted(effect.sensors))
@@ -1526,6 +1563,9 @@ class HauswachtRuntime:
         if decision.blocked:
             reasons = sorted({b.reason.value for b in decision.blocked})
             message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
+        if self._fired_rule:
+            message += f" Regel: {self._fired_rule}."
+            self._fired_rule = None
         if reaction.silent:
             message += " Stiller Alarm."
         sent = self.notifier.notify(

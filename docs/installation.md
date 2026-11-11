@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.18.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.19.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -79,25 +79,6 @@ schalten ganze Zonen scharf, nicht einzelne Sensoren. Typisch:
 - Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation),
   ergibt sich aus der Geräteklasse – siehe [Rollen prüfen](#3-rollen-prüfen-meist-nicht-nötig).
 
-#### Bestätigung durch einen zweiten Melder
-
-Gegen Fehlalarme einzelner Bewegungs- oder Präsenzmelder hat jede Zone die Option
-**„Alarm erst, wenn ein zweiter Melder dieser Zone bestätigt“** mit einem Zeitfenster
-(Standard 120 s, 10–600 s).
-
-- Ein Melder allein löst dann **keinen Alarm** aus. Erst wenn ein **anderer** Melder derselben
-  Zone innerhalb des Zeitfensters ebenfalls auslöst, gibt es Alarm. Derselbe Melder zweimal
-  zählt nicht – ein flatternder Melder ist genau das, was die Option abfangen soll.
-- Gilt für die Rollen „sofort“ und „Mitläufer“ (Bewegung, Präsenz, Fenster). **Türen** starten
-  weiter sofort die Eingangsverzögerung, **Manipulation** wird immer gemeldet.
-- **Sichere Seite:** Ist in der Zone gerade kein anderer bestätigungsfähiger Melder verfügbar
-  (ausgefallen, überbrückt), löst der Melder sofort aus.
-- Die Option lässt sich nur einschalten, wenn die Zone mindestens zwei solche Melder hat.
-- Sinnvoll für eine Zone wie „Keller“ mit mehreren Bewegungs- und Präsenzmeldern; Türen und
-  Fenster der Außenhaut besser in einer eigenen Zone ohne Bestätigung.
-- Unbestätigte Einzelauslösungen meldet Hauswacht auf Wunsch (Benachrichtigungen:
-  „Unbestätigte Auslösung“ und „Melder löst häufig allein aus“, beide standardmäßig aus).
-
 Sensoren kommen auf zwei Wegen in eine Zone, beide lassen sich kombinieren:
 
 - **Direkt auswählen:** Im Feld „Sensoren“ mehrere Binärsensoren anhaken.
@@ -116,7 +97,8 @@ so viele du brauchst. Pro Profil:
 |---|---|
 | Name, Symbol | Wie das Profil in Auswahlliste, Meldungen und am Bedienfeld erscheint |
 | Knopf am Bedienfeld | Optional: Zuhause, Nacht, Abwesend, Urlaub oder Benutzerdefiniert. Jeder Knopf gehört höchstens einem Profil |
-| Überwachte Zonen | Welche Zonen in diesem Profil scharf sind |
+| Allein auslösende Zonen | Jeder Melder dieser Zonen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …) |
+| Regeln | Zusätzlich: Abfolgen von Meldern, siehe [Regeln](#regeln) |
 | Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten (Standard je 30 s) |
 | Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert (Standard 180 s) |
 | Offene Sensoren beim Scharfschalten | Verweigern · nach Bestätigung erlauben · automatisch überbrücken |
@@ -126,8 +108,61 @@ so viele du brauchst. Pro Profil:
 | Sirenen, Ton, Lautstärke, stiller Alarm | Reaktion bei Alarm (siehe [Sirenen](#sirenen)) |
 | Benachrichtigen (Alarm) | Wer bei einem Alarm eine Push-Nachricht bekommt |
 
-Ein Profil ohne Zonen lässt sich **nicht** scharf schalten. So entsteht nie der Eindruck,
+Ein Profil ohne Zonen und ohne Regeln lässt sich **nicht** scharf schalten. So entsteht nie der Eindruck,
 das Haus sei geschützt, obwohl nichts überwacht wird.
+
+### Regeln
+
+**Konfigurieren → Regeln – Abfolgen von Meldern.** Eine Regel löst erst bei einer **Abfolge**
+von Meldern aus. Regeln stehen für sich; im Alarmprofil wählst du unter **Regeln**, welche
+gelten. Dieselbe Regel kann in mehreren Profilen stecken.
+
+Jede Regel hat bis zu vier **Schritte**. Pro Schritt:
+
+| Feld | Bedeutung |
+|---|---|
+| Sensoren, Zonen | Die Melder des Schritts (einzelne Sensoren und/oder ganze Zonen) |
+| Erfüllt, wenn | **einer davon** auslöst (ODER) · **alle davon** auslösen, Reihenfolge egal (UND) · **mindestens N verschiedene** davon auslösen |
+| Zeit bis zum nächsten Schritt | Der nächste Schritt muss innerhalb dieser Zeit erfüllt sein |
+
+Ergebnis einer erfüllten Regel: **sofort Alarm** oder **Eingangsverzögerung, dann Alarm**
+(Zeit aus dem Alarmprofil – z. B. damit jemand, der heimkommt und gleich in den Keller geht,
+noch unscharf schalten kann).
+
+Beispiel Profil „Nacht“ (allein auslösend: nichts):
+
+| Regel | Schritte | Ergebnis |
+|---|---|---|
+| Tür, dann Keller | Haustür → (120 s) → Keller-Melder | Eingangsverzögerung |
+| Fenster, dann Keller | Fenster → (60 s) → Keller-Melder | sofort Alarm |
+
+| Ablauf | Ergebnis |
+|---|---|
+| Tür auf, dann nach oben | kein Alarm |
+| später in den Keller (zwei Melder reagieren) | kein Alarm |
+| Tür auf, dann Keller | Eingangsverzögerung, dann Alarm |
+| Fenster auf (lüften) | kein Alarm |
+| Fenster auf, dann Keller | Alarm |
+| erst Keller, dann Fenster auf | kein Alarm – die Reihenfolge zählt |
+
+- **Regeln sind mit ODER verknüpft.** Eine Regel kann einen Alarm nur auslösen, nie den Alarm
+  einer anderen Regel verhindern. Lösen zwei Regeln gleichzeitig aus, gilt das strengere
+  Ergebnis (sofort Alarm).
+- **Derselbe Melder zählt nicht doppelt:** „mindestens 2 verschiedene“ heißt zwei verschiedene
+  Melder; ein Melder darf nicht in zwei aufeinanderfolgenden Schritten stehen.
+- **Scharfschalten:** Melder, die im Profil nur in Regeln vorkommen, verhindern das
+  Scharfschalten nicht. Ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.
+- **Prüfung beim Speichern:** Regeln, die nie auslösen können, lassen sich nicht speichern.
+  Hinweise erscheinen, wenn eine Regel in einem Profil nichts bewirkt – etwa weil ihr erster
+  Melder dort schon allein auslöst oder weil eine kürzere Regel immer vorher auslöst.
+- **Schwachstelle bewusst bedenken:** Wer keinen weiteren Schritt auslöst, bleibt unbemerkt
+  (Tür auf, dann nur nach oben). Abhilfe: mehr Melder in den späteren Schritten.
+- Manipulation wird immer gemeldet; Brandsperre, Testmodus und Sirenenfreigabe gelten für jede
+  Regel. In der Testkarte siehst du, wie weit jede Regel des aktiven Profils ist.
+- Unvollständige Regeln meldet Hauswacht auf Wunsch („Unbestätigte Auslösung“, „Melder löst
+  häufig allein aus“ – beide standardmäßig aus).
+- Die Zonen-Option „zweiter Melder bestätigt“ aus 0.18.0 wurde beim Update automatisch zu
+  einer Regel „Bestätigung <Zone>“ (Schritt: mindestens 2 verschiedene Melder der Zone).
 
 **Bedienen:** Profile mit Knopf über das Bedienfeld; jedes Profil – auch ohne Knopf – über die
 Auswahlliste **Profil** und den Knopf **Scharf schalten**, oder per Aktion
@@ -269,8 +304,8 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 | Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
-| Unbestätigte Auslösung (Melder allein, kein Alarm) | aus | Ereignis, sonst allgemein |
-| Melder löst häufig allein aus (3× in einer Stunde) | aus | Ereignis, sonst allgemein |
+| Unbestätigte Auslösung (Regel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
+| Melder löst häufig allein aus (3× in einer Stunde eine Regel begonnen) | aus | Ereignis, sonst allgemein |
 
 - **Bedrohungsalarm** ist kein Ereignis zum Abschalten: immer an, eigene Empfänger
   („Empfänger Bedrohungsalarm“).
@@ -473,8 +508,10 @@ Countdown. Unter jedem Sensor steht, was Hauswacht gerade mit ihm macht:
 |---|---|
 | überwacht | löst im aktiven Profil aus |
 | nicht im aktiven Profil | wird ignoriert (z. B. Keller beim Profil „Zuhause“) |
-| überwacht – Alarm erst, wenn ein zweiter Melder bestätigt | Zone mit Bestätigung |
-| ausgelöst – wartet auf zweiten Melder · 85 s | erste Auslösung, Countdown bis zum Ablauf des Zeitfensters |
+| nur in Regeln: … | gehört im aktiven Profil nur zu diesen Regeln |
+
+Darüber zeigt die Karte die **Regeln des aktiven Profils**: „nicht begonnen“ oder „Schritt 1
+von 2 erfüllt · 85 s“.
 | überbrückt bis zum Schließen | war beim Beenden eines Alarms offen; erst nach **Zu** wieder überwacht – ein zweites **Auf** ändert an einer offenen Tür nichts |
 | Manipulation löst Alarm aus / nur Meldung | je nach Profil-Einstellung „Manipulation löst Alarm aus“; unscharf immer nur Meldung |
 

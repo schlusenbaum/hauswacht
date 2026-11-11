@@ -17,6 +17,7 @@
         "menu_options": {
           "zones": "Zonen – welche Sensoren überwacht werden",
           "profiles": "Alarmprofile",
+          "rules": "Regeln – Abfolgen von Meldern",
           "sirens": "Alarmgeber – Sirenen",
           "notifications": "Benachrichtigungen",
           "system": "Systemeinstellungen",
@@ -42,7 +43,7 @@
           "name": "Name",
           "icon": "Symbol",
           "panel_mode": "Knopf am Bedienfeld",
-          "zones": "Überwachte Zonen",
+          "zones": "Allein auslösende Zonen",
           "exit_delay": "Ausgangsverzögerung",
           "entry_delay": "Eingangsverzögerung",
           "reaction_time": "Dauer der Alarmreaktion",
@@ -55,7 +56,8 @@
           "siren_volume": "Lautstärke",
           "silent": "Stiller Alarm (nur Benachrichtigungen)",
           "notify": "Benachrichtigen (Alarm)",
-          "automation": "Automatik"
+          "automation": "Automatik",
+          "rules": "Regeln"
         },
         "sections": {
           "automation": {
@@ -76,7 +78,8 @@
           }
         },
         "data_description": {
-          "zones": "Welche Zonen in diesem Profil scharf sind. Sensoren anderer Zonen werden ignoriert (Manipulation wird immer gemeldet)."
+          "zones": "Jeder Melder dieser Zonen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …). Offene Melder dieser Zonen verhindern das Scharfschalten.",
+          "rules": "Zusätzlich gelten diese Regeln. Melder, die nur in Regeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht."
         }
       },
       "zones": {
@@ -95,15 +98,11 @@
         "data": {
           "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
           "entities": "Sensoren dieser Zone",
-          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)",
-          "confirm": "Alarm erst, wenn ein zweiter Melder dieser Zone bestätigt",
-          "confirm_window": "Zeitfenster für die Bestätigung"
+          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
         },
         "data_description": {
           "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
-          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu.",
-          "confirm": "Gegen Fehlalarme einzelner Bewegungs- oder Präsenzmelder: Ein Melder allein löst keinen Alarm aus, erst wenn ein anderer Melder dieser Zone innerhalb des Zeitfensters ebenfalls auslöst. Derselbe Melder zweimal zählt nicht. Türen starten weiter sofort die Eingangsverzögerung, Manipulation wird immer gemeldet. Ist kein zweiter Melder verfügbar, löst Hauswacht sicherheitshalber sofort aus.",
-          "confirm_window": "Wie lange nach der ersten Auslösung ein zweiter Melder bestätigen kann (10–600 s)."
+          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
         }
       },
       "zone_edit": {
@@ -118,15 +117,11 @@
         "data": {
           "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
           "entities": "Sensoren dieser Zone",
-          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)",
-          "confirm": "Alarm erst, wenn ein zweiter Melder dieser Zone bestätigt",
-          "confirm_window": "Zeitfenster für die Bestätigung"
+          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
         },
         "data_description": {
           "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
-          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu.",
-          "confirm": "Gegen Fehlalarme einzelner Bewegungs- oder Präsenzmelder: Ein Melder allein löst keinen Alarm aus, erst wenn ein anderer Melder dieser Zone innerhalb des Zeitfensters ebenfalls auslöst. Derselbe Melder zweimal zählt nicht. Türen starten weiter sofort die Eingangsverzögerung, Manipulation wird immer gemeldet. Ist kein zweiter Melder verfügbar, löst Hauswacht sicherheitshalber sofort aus.",
-          "confirm_window": "Wie lange nach der ersten Auslösung ein zweiter Melder bestätigen kann (10–600 s)."
+          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
         }
       },
       "zone_delete": {
@@ -257,7 +252,7 @@
           },
           "event_unconfirmed": {
             "name": "Unbestätigte Auslösung",
-            "description": "Ein Melder einer Zone mit Bestätigung hat allein ausgelöst, kein zweiter Melder hat bestätigt – es gab keinen Alarm. Standard: aus.",
+            "description": "Eine Regel wurde begonnen, aber nicht rechtzeitig erfüllt (z. B. nur die Tür) – es gab keinen Alarm. Standard: aus.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -265,7 +260,7 @@
           },
           "event_unconfirmed_frequent": {
             "name": "Melder löst häufig allein aus",
-            "description": "Ein Melder hat innerhalb einer Stunde dreimal allein (unbestätigt) ausgelöst – Hinweis, ihn zu prüfen. Standard: aus.",
+            "description": "Derselbe Melder hat innerhalb einer Stunde dreimal eine Regel begonnen, die nicht erfüllt wurde – Hinweis, ihn zu prüfen. Standard: aus.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -363,6 +358,98 @@
           "entity": "Ausnahme für Sensor (optional)",
           "role": "Rolle"
         }
+      },
+      "rules": {
+        "title": "Regeln",
+        "description": "{saved}Eine **Regel** löst erst bei einer Abfolge von Meldern aus, z. B. „Haustür, dann innerhalb von 120 s Keller“ – nur Tür oder nur Keller lösen dann nichts aus. Regeln stehen für sich; in jedem Alarmprofil wählst du, welche gelten. Regeln sind mit ODER verknüpft: Eine Regel kann einen Alarm nur auslösen, nie den einer anderen verhindern.",
+        "menu_options": {
+          "rule_add": "Regel anlegen",
+          "rule_edit": "Regel bearbeiten",
+          "rule_delete": "Regel löschen",
+          "init": "← Zurück"
+        }
+      },
+      "rule_edit": {
+        "title": "Regel bearbeiten",
+        "data": {
+          "rule": "Regel"
+        }
+      },
+      "rule_delete": {
+        "title": "Regel löschen",
+        "description": "Die Regel wird auch aus allen Alarmprofilen entfernt.",
+        "data": {
+          "rule": "Regel"
+        }
+      },
+      "rule_settings": {
+        "title": "Regel",
+        "description": "Schritte nacheinander: Schritt 2 muss innerhalb der Zeit von Schritt 1 erfüllt sein, Schritt 3 innerhalb der Zeit von Schritt 2 usw. Leere Schritte werden ignoriert. Melder können einzelne Sensoren und/oder ganze Zonen sein.",
+        "data": {
+          "name": "Name",
+          "result": "Wenn die Regel erfüllt ist"
+        },
+        "data_description": {
+          "result": "„Eingangsverzögerung“ gibt Zeit zum Unscharfschalten (Zeit aus dem Alarmprofil), danach Alarm."
+        },
+        "sections": {
+          "step_1": {
+            "name": "Schritt 1",
+            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
+            "data": {
+              "sensors": "Sensoren",
+              "zones": "Zonen",
+              "mode": "Erfüllt, wenn",
+              "count": "Anzahl (bei „mindestens N“)",
+              "within": "Zeit bis zum nächsten Schritt"
+            },
+            "data_description": {
+              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
+            }
+          },
+          "step_2": {
+            "name": "Schritt 2",
+            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
+            "data": {
+              "sensors": "Sensoren",
+              "zones": "Zonen",
+              "mode": "Erfüllt, wenn",
+              "count": "Anzahl (bei „mindestens N“)",
+              "within": "Zeit bis zum nächsten Schritt"
+            },
+            "data_description": {
+              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
+            }
+          },
+          "step_3": {
+            "name": "Schritt 3",
+            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
+            "data": {
+              "sensors": "Sensoren",
+              "zones": "Zonen",
+              "mode": "Erfüllt, wenn",
+              "count": "Anzahl (bei „mindestens N“)",
+              "within": "Zeit bis zum nächsten Schritt"
+            },
+            "data_description": {
+              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
+            }
+          },
+          "step_4": {
+            "name": "Schritt 4",
+            "description": "Melder dieses Schritts und wie viele davon auslösen müssen.",
+            "data": {
+              "sensors": "Sensoren",
+              "zones": "Zonen",
+              "mode": "Erfüllt, wenn",
+              "count": "Anzahl (bei „mindestens N“)",
+              "within": "Zeit bis zum nächsten Schritt"
+            },
+            "data_description": {
+              "within": "So lange nach diesem Schritt muss der nächste erfüllt sein. Beim ersten Schritt mit „alle“ oder „mindestens N“ auch: so nah müssen dessen Melder beieinander liegen."
+            }
+          }
+        }
       }
     },
     "error": {
@@ -379,13 +466,16 @@
       "pin_is_duress": "Dieser PIN ist bereits ein Bedrohungs-PIN ({conflict}).",
       "duress_conflict": "Dieser Bedrohungs-PIN ist schon vergeben ({conflict}).",
       "zone_overlap": "Diese Sensoren sind schon in einer anderen Zone: {conflicts}. Ein Sensor kann nur in einer Zone sein – bitte dort entfernen oder hier abwählen.",
-      "confirm_needs_two": "Für die Bestätigung braucht die Zone mindestens zwei Bewegungs-, Präsenz- oder Fenstermelder."
+      "rule_name_required": "Bitte einen Namen eingeben.",
+      "rule_name_taken": "Eine Regel mit diesem Namen gibt es schon.",
+      "rule_invalid": "Die Regel kann so nicht auslösen: {problems}"
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
       "no_zones": "Es wurden noch keine Zonen angelegt.",
       "no_profiles": "Es wurden noch keine Profile angelegt.",
-      "no_users": "Es gibt noch keine Benutzer."
+      "no_users": "Es gibt noch keine Benutzer.",
+      "no_rules": "Es gibt noch keine Regel."
     }
   },
   "selector": {
@@ -454,6 +544,19 @@
         "off": "Zu / ruhig",
         "unavailable": "Nicht verfügbar",
         "real": "Echt (zurücksetzen)"
+      }
+    },
+    "step_mode": {
+      "options": {
+        "any": "einer davon auslöst (ODER)",
+        "all": "alle davon auslösen, Reihenfolge egal (UND)",
+        "count": "mindestens N verschiedene davon auslösen"
+      }
+    },
+    "rule_result": {
+      "options": {
+        "alarm": "sofort Alarm",
+        "entry_delay": "Eingangsverzögerung, dann Alarm"
       }
     }
   },

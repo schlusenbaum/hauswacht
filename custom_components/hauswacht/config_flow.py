@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
@@ -71,7 +72,6 @@ from .core.automation import (
     AutoConfig,
     parse_automation,
 )
-from .core.confirmation import CONFIRMABLE_ROLES
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
@@ -90,15 +90,24 @@ from .core.profiles import (
     stale_after_seconds,
 )
 from .core.reactions import parse_reaction
+from .core.rules import DEFAULT_WITHIN as RULE_DEFAULT_WITHIN
+from .core.rules import MAX_STEPS as RULE_MAX_STEPS
+from .core.rules import MAX_WITHIN as RULE_MAX_WITHIN
+from .core.rules import (
+    Finding,
+    RuleResult,
+    Step,
+    StepMode,
+    parse_rules,
+    profile_findings,
+    profile_rule_ids,
+    rule_members,
+    validate_rule,
+)
 from .core.sensors import (
-    DEFAULT_CONFIRM_WINDOW,
-    MAX_CONFIRM_WINDOW,
-    MIN_CONFIRM_WINDOW,
     Zone,
-    parse_role_overrides,
     parse_zones,
-    resolve_zone,
-    sensor_role,
+    resolve_zones,
     slugify,
     zone_conflicts,
 )
@@ -114,11 +123,33 @@ from .names import display_name
 from .runtime import entities_by_label
 
 SENSOR_DOMAIN = "binary_sensor"
+
+FINDING_TEXTS_DE = {
+    "rule_no_steps": "Regel „{rule}“ hat keinen Schritt mit Meldern.",
+    "rule_step_empty": "Schritt {step} hat keine Melder (Zone leer?).",
+    "rule_count_too_high": "Schritt {step} verlangt mehr Melder, als er hat ({detail}).",
+    "rule_same_sensor_next_step": "Ein Melder steht in Schritt {step} und im Schritt davor.",
+    "rule_redundant_single": "Regel „{rule}“ bewirkt nichts – ihr erster Schritt löst "
+    "hier schon allein aus.",
+    "rule_single_step_any": "Regel „{rule}“ hat nur einen Schritt „einer davon“ – das ist "
+    "dasselbe wie „allein auslösend“.",
+    "rule_contained": "Regel „{rule}“ bewirkt nichts – „{detail}“ löst immer vorher aus.",
+}
+FINDING_TEXTS_EN = {
+    "rule_no_steps": "Rule “{rule}” has no step with sensors.",
+    "rule_step_empty": "Step {step} has no sensors (empty zone?).",
+    "rule_count_too_high": "Step {step} needs more sensors than it has ({detail}).",
+    "rule_same_sensor_next_step": "A sensor is in step {step} and in the step before.",
+    "rule_redundant_single": "Rule “{rule}” has no effect – its first step already "
+    "triggers alone here.",
+    "rule_single_step_any": "Rule “{rule}” has only one “any of” step – same as “triggers alone”.",
+    "rule_contained": "Rule “{rule}” has no effect – “{detail}” always triggers first.",
+}
 SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 
 class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
-    VERSION = 3
+    VERSION = 4
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
@@ -150,6 +181,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._profile_id: str | None = None
         self._zone_id: str | None = None
         self._saved = False
+        self._hints: list[str] = []
+        self._rule_id: str | None = None
 
     async def _save(self, options: dict[str, Any], back: str) -> ConfigFlowResult:
         """Sofort speichern und zurück ins Menü – so lassen sich mehrere Dinge nacheinander
@@ -163,10 +196,34 @@ class HauswachtOptionsFlow(OptionsFlow):
         result: ConfigFlowResult = await step()
         return result
 
+    def _german(self) -> bool:
+        return (self.hass.config.language or "").startswith("de")
+
     def _saved_text(self) -> str:
-        if (self.hass.config.language or "").startswith("de"):
-            return "✅ Gespeichert.\n\n"
-        return "✅ Saved.\n\n"
+        text = "✅ Gespeichert." if self._german() else "✅ Saved."
+        hints, self._hints = self._hints, []
+        if hints:
+            text += "\n\n" + "\n".join(f"⚠️ {h}" for h in hints)
+        return text + "\n\n"
+
+    def _finding_text(self, finding: Finding) -> str:
+        texts = FINDING_TEXTS_DE if self._german() else FINDING_TEXTS_EN
+        return texts.get(finding.code, finding.code).format(
+            rule=finding.rule, step=finding.step or "", detail=finding.detail
+        )
+
+    def _profile_hints(self, options: Mapping[str, Any], profile_id: str) -> list[str]:
+        """Hinweise zu Regeln, die im Profil nichts bewirken."""
+        zones = parse_zones(options)
+        labels = entities_by_label(self.hass)
+        rules = parse_rules(options)
+        chosen = [rules[r] for r in profile_rule_ids(options, profile_id) if r in rules]
+        single = resolve_zones(profile_behaviour(options, profile_id).zones, zones, labels)
+        members = {r.rule_id: rule_members(r, zones, labels) for r in chosen}
+        name = profile_info(options, profile_id).name
+        return [
+            f"{name}: {self._finding_text(f)}" for f in profile_findings(single, chosen, members)
+        ]
 
     def _menu(self, step_id: str, menu_options: list[str]) -> ConfigFlowResult:
         saved, self._saved = self._saved, False
@@ -186,7 +243,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self._is_disarmed():
             return self.async_abort(reason="disarm_first")
         return self._menu(
-            "init", ["zones", "profiles", "sirens", "notifications", "system", "done"]
+            "init", ["zones", "profiles", "rules", "sirens", "notifications", "system", "done"]
         )
 
     async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -351,6 +408,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "entry_delay": int(user_input["entry_delay"]),
                         "reaction_time": int(user_input["reaction_time"]),
                         "zones": [z for z in user_input.get("zones", []) if z in zones],
+                        "rules": [
+                            r for r in user_input.get("rules", []) if r in parse_rules(options)
+                        ],
                         "open_policy": user_input["open_policy"],
                         "unavailable_policy": user_input["unavailable_policy"],
                         "max_alarm_cycles": int(user_input["max_alarm_cycles"]),
@@ -367,6 +427,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 )
                 profiles[profile_id] = data
                 options[OPT_PROFILES] = profiles
+                self._hints = self._profile_hints(options, profile_id)
                 return await self._save(options, "profiles")
 
         pid = self._profile_id or ""
@@ -393,6 +454,12 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     "zones", default=[z for z in behaviour.zones if z in zones]
                 ): _zone_selector(zones, multiple=True),
+                vol.Optional(
+                    "rules",
+                    default=[
+                        r for r in profile_rule_ids(options, pid) if r in parse_rules(options)
+                    ],
+                ): self._rule_selector(multiple=True),
                 vol.Required("exit_delay", default=current["exit_delay"]): _seconds(MAX_DELAY),
                 vol.Required("entry_delay", default=current["entry_delay"]): _seconds(MAX_DELAY),
                 vol.Required("reaction_time", default=current["reaction_time"]): _seconds(
@@ -442,6 +509,153 @@ class HauswachtOptionsFlow(OptionsFlow):
             description_placeholders={"profile": info.name if info else "–"},
         )
 
+    # --- Regeln ------------------------------------------------------------
+
+    async def async_step_rules(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self._menu("rules", ["rule_add", "rule_edit", "rule_delete", "init"])
+
+    def _rule_selector(self, *, multiple: bool = False) -> SelectSelector:
+        rules = parse_rules(self.config_entry.options)
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=[SelectOptionDict(value=r.rule_id, label=r.name) for r in rules.values()],
+                multiple=multiple,
+                mode=SelectSelectorMode.LIST,
+            )
+        )
+
+    async def async_step_rule_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._rule_id = None
+        return await self.async_step_rule_settings()
+
+    async def async_step_rule_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not parse_rules(self.config_entry.options):
+            return self.async_abort(reason="no_rules")
+        if user_input is not None:
+            self._rule_id = user_input["rule"]
+            return await self.async_step_rule_settings()
+        return self.async_show_form(
+            step_id="rule_edit",
+            data_schema=vol.Schema({vol.Required("rule"): self._rule_selector()}),
+        )
+
+    async def async_step_rule_delete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not parse_rules(self.config_entry.options):
+            return self.async_abort(reason="no_rules")
+        if user_input is not None:
+            rule_id = user_input["rule"]
+            options = dict(self.config_entry.options)
+            options["rules"] = {k: v for k, v in options.get("rules", {}).items() if k != rule_id}
+            profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
+            for settings in profiles.values():
+                if "rules" in settings:
+                    settings["rules"] = [r for r in settings["rules"] if r != rule_id]
+            options[OPT_PROFILES] = profiles
+            return await self._save(options, "rules")
+        return self.async_show_form(
+            step_id="rule_delete",
+            data_schema=vol.Schema({vol.Required("rule"): self._rule_selector()}),
+        )
+
+    def _step_schema(self, step: Step | None, zones: dict[str, Zone]) -> vol.Schema:
+        step = step or Step()
+        return vol.Schema(
+            {
+                vol.Optional("sensors", default=sorted(step.sensors)): EntitySelector(
+                    EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+                ),
+                vol.Optional("zones", default=list(step.zones)): _zone_selector(
+                    zones, multiple=True
+                ),
+                vol.Optional("mode", default=step.mode.value): _select(
+                    [m.value for m in StepMode], "step_mode"
+                ),
+                vol.Optional("count", default=step.count): NumberSelector(
+                    NumberSelectorConfig(min=1, max=20, step=1, mode=NumberSelectorMode.BOX)
+                ),
+                vol.Optional("within", default=step.within): _seconds(RULE_MAX_WITHIN, minimum=1),
+            }
+        )
+
+    async def async_step_rule_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        zones = parse_zones(options)
+        rules = parse_rules(options)
+        current = rules.get(self._rule_id) if self._rule_id else None
+        errors: dict[str, str] = {}
+        placeholders = {"problems": ""}
+        if user_input is not None and "name" in user_input:
+            name = str(user_input.get("name") or "").strip()
+            steps = []
+            for number in range(1, RULE_MAX_STEPS + 1):
+                raw = user_input.get(f"step_{number}") or {}
+                if raw.get("sensors") or raw.get("zones"):
+                    steps.append(
+                        {
+                            "sensors": list(raw.get("sensors") or []),
+                            "zones": [z for z in raw.get("zones") or [] if z in zones],
+                            "mode": raw.get("mode", StepMode.ANY.value),
+                            "count": int(raw.get("count") or 2),
+                            "within": int(raw.get("within") or RULE_DEFAULT_WITHIN),
+                        }
+                    )
+            data = {"name": name, "steps": steps, "result": user_input.get("result", "alarm")}
+            rule_id = self._rule_id or slugify(name or "regel", existing=rules.keys())
+            rule = parse_rules({"rules": {rule_id: data}}).get(rule_id)
+            if not name:
+                errors["name"] = "rule_name_required"
+            elif any(r.name == name and r.rule_id != rule_id for r in rules.values()):
+                errors["name"] = "rule_name_taken"
+            elif rule is not None:
+                problems = validate_rule(
+                    rule, rule_members(rule, zones, entities_by_label(self.hass))
+                )
+                if problems:
+                    errors["base"] = "rule_invalid"
+                    placeholders["problems"] = "; ".join(self._finding_text(f) for f in problems)
+            if not errors:
+                stored = {k: dict(v) for k, v in options.get("rules", {}).items()}
+                stored[rule_id] = data
+                options["rules"] = stored
+                self._hints = [
+                    hint
+                    for pid in profile_ids(options)
+                    if rule_id in profile_rule_ids(options, pid)
+                    for hint in self._profile_hints(options, pid)
+                ]
+                return await self._save(options, "rules")
+
+        fields: dict[Any, Any] = {
+            vol.Required(
+                "name", default=(user_input or {}).get("name", current.name if current else "")
+            ): TextSelector(),
+            vol.Required(
+                "result", default=current.result.value if current else RuleResult.ALARM.value
+            ): _select([r.value for r in RuleResult], "rule_result"),
+        }
+        steps = list(current.steps) if current else []
+        for number in range(1, RULE_MAX_STEPS + 1):
+            step = steps[number - 1] if number <= len(steps) else None
+            # Kein default am Bereich (siehe Profile), Felder darin optional mit default
+            fields[vol.Optional(f"step_{number}")] = section(
+                self._step_schema(step, zones),
+                {"collapsed": number > max(2, len(steps))},
+            )
+        return self.async_show_form(
+            step_id="rule_settings",
+            data_schema=vol.Schema(fields),
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
     # --- Zonen ------------------------------------------------------------
 
     async def async_step_zones(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -460,34 +674,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                     EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
                 ),
                 label_key: LabelSelector(),
-                vol.Optional("confirm", default=bool(defaults.get("confirm", False))): (
-                    BooleanSelector()
-                ),
-                vol.Optional(
-                    "confirm_window",
-                    default=int(defaults.get("confirm_window", DEFAULT_CONFIRM_WINDOW)),
-                ): NumberSelector(
-                    NumberSelectorConfig(
-                        min=MIN_CONFIRM_WINDOW,
-                        max=MAX_CONFIRM_WINDOW,
-                        step=10,
-                        unit_of_measurement="s",
-                        mode=NumberSelectorMode.BOX,
-                    )
-                ),
             }
         )
-
-    def _confirmable_count(self, zone: Zone) -> int:
-        """Melder der Zone, die sich gegenseitig bestätigen können (sofort/Mitläufer)."""
-        overrides = parse_role_overrides(self.config_entry.options)
-        count = 0
-        for entity_id in resolve_zone(zone, entities_by_label(self.hass)):
-            state = self.hass.states.get(entity_id)
-            device_class = state.attributes.get("device_class") if state else None
-            if sensor_role(entity_id, device_class, overrides) in CONFIRMABLE_ROLES:
-                count += 1
-        return count
 
     def _save_zone(
         self, zone_id: str | None, user_input: dict[str, Any]
@@ -505,19 +693,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         options = dict(self.config_entry.options)
         zones = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
         new_id = zone_id or slugify(name, existing=zones.keys())
-        confirm = bool(user_input.get("confirm", False))
-        window = int(user_input.get("confirm_window") or DEFAULT_CONFIRM_WINDOW)
-        window = min(max(window, MIN_CONFIRM_WINDOW), MAX_CONFIRM_WINDOW)
-        new_zone = Zone(
-            zone_id=new_id,
-            name=name,
-            entities=frozenset(entities),
-            label=label,
-            confirm=confirm,
-            confirm_window=window,
-        )
-        if confirm and self._confirmable_count(new_zone) < 2:
-            return None, {"confirm": "confirm_needs_two"}, {}
+        new_zone = Zone(zone_id=new_id, name=name, entities=frozenset(entities), label=label)
         conflicts = zone_conflicts(new_zone, parse_zones(options), entities_by_label(self.hass))
         if conflicts:
             text = ", ".join(
@@ -529,8 +705,6 @@ class HauswachtOptionsFlow(OptionsFlow):
             "name": name,
             "entities": sorted(set(entities)),
             "label": label,
-            "confirm": confirm,
-            "confirm_window": window,
         }
         options[OPT_ZONES] = zones
         return options, {}, {}
@@ -582,8 +756,6 @@ class HauswachtOptionsFlow(OptionsFlow):
             "name": zone.name,
             "entities": sorted(zone.entities),
             "label": zone.label,
-            "confirm": zone.confirm,
-            "confirm_window": zone.confirm_window,
         }
         return self.async_show_form(
             step_id="zone_edit_settings",

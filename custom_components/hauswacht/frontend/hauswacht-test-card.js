@@ -42,8 +42,7 @@ const TEXT = {
     status: {
       disarmed: "",
       monitored: "überwacht",
-      monitored_confirm: "überwacht – Alarm erst, wenn ein zweiter Melder der Zone bestätigt",
-      awaiting_confirmation: "ausgelöst – wartet auf zweiten Melder",
+      in_rule: "nur in Regeln:",
       not_monitored: "nicht im aktiven Profil – wird ignoriert",
       bypassed: "überbrückt",
       bypassed_until_closed: "überbrückt bis zum Schließen – erst „Zu“, dann wieder überwacht",
@@ -59,6 +58,10 @@ const TEXT = {
       alarm_hold: "Alarm (Sirenen aus, noch nicht beendet)",
     },
     profile: "Profil",
+    rules: "Regeln im aktiven Profil",
+    ruleIdle: "nicht begonnen",
+    ruleStep: "Schritt {done} von {steps} erfüllt",
+    ruleResult: { alarm: "sofort Alarm", entry_delay: "Eingangsverzögerung" },
   },
   en: {
     title: "Test",
@@ -85,8 +88,7 @@ const TEXT = {
     status: {
       disarmed: "",
       monitored: "monitored",
-      monitored_confirm: "monitored – alarm only when a second sensor of the zone confirms",
-      awaiting_confirmation: "triggered – waiting for a second sensor",
+      in_rule: "only in rules:",
       not_monitored: "not in the active profile – ignored",
       bypassed: "bypassed",
       bypassed_until_closed: "bypassed until closed – press \"Closed\" to monitor again",
@@ -102,6 +104,10 @@ const TEXT = {
       alarm_hold: "alarm (sirens off, not ended yet)",
     },
     profile: "Profile",
+    rules: "Rules in the active profile",
+    ruleIdle: "not started",
+    ruleStep: "step {done} of {steps} fulfilled",
+    ruleResult: { alarm: "alarm immediately", entry_delay: "entry delay" },
   },
 };
 
@@ -145,6 +151,10 @@ const STYLE = `
   .status.warn { color: var(--warning-color); }
   .status.muted { opacity: 0.7; }
   .phase { margin: 0 0 8px; padding: 8px 12px; border-radius: 8px; background: var(--secondary-background-color, rgba(127,127,127,.1)); }
+  .rules { margin: 0 0 8px; font-size: 0.9em; }
+  .rules .head { color: var(--secondary-text-color); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .rules .rule { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+  .rules .rule.active { color: var(--warning-color); }
   .phase.alarm { background: var(--error-color); color: var(--text-primary-color, #fff); }
   .phase.delay { background: var(--warning-color); color: var(--text-primary-color, #fff); }
   .seg { display: flex; flex: none; }
@@ -242,6 +252,9 @@ class HauswachtTestCard extends HTMLElement {
     this._phase = document.createElement("div");
     this._phase.className = "phase";
     card.appendChild(this._phase);
+    this._rulesBox = document.createElement("div");
+    this._rulesBox.className = "rules";
+    card.appendChild(this._rulesBox);
 
     this._rows = [];
     if (!this._ids.simulation) {
@@ -350,6 +363,39 @@ class HauswachtTestCard extends HTMLElement {
     this._delayRunning = Boolean(delay);
   }
 
+  _updateRules() {
+    if (!this._rulesBox) return false;
+    const sim = this._ids.simulation && this._hass.states[this._ids.simulation];
+    const rules = (sim && Array.isArray(sim.attributes.rules) && sim.attributes.rules) || [];
+    this._rulesBox.style.display = rules.length ? "" : "none";
+    this._rulesBox.innerHTML = "";
+    if (!rules.length) return false;
+    const head = document.createElement("div");
+    head.className = "head";
+    head.textContent = this._t("rules");
+    this._rulesBox.appendChild(head);
+    let running = false;
+    for (const rule of rules) {
+      const row = document.createElement("div");
+      row.className = "rule";
+      const name = document.createElement("span");
+      name.textContent = `${rule.name} → ${(this._t("ruleResult") || {})[rule.result] || rule.result}`;
+      const state = document.createElement("span");
+      if (rule.done > 0 && rule.deadline) {
+        const left = Math.max(0, Math.ceil((Date.parse(rule.deadline) - Date.now()) / 1000));
+        state.textContent =
+          this._t("ruleStep").replace("{done}", rule.done).replace("{steps}", rule.steps) + ` · ${left} s`;
+        row.classList.add("active");
+        running = true;
+      } else {
+        state.textContent = this._t("ruleIdle");
+      }
+      row.append(name, state);
+      this._rulesBox.appendChild(row);
+    }
+    return running;
+  }
+
   _setTick(needed) {
     // Countdowns jede Sekunde neu zeichnen, solange etwas läuft
     if (needed && !this._tick) {
@@ -395,7 +441,7 @@ class HauswachtTestCard extends HTMLElement {
     this._toggle.disabled = !this._ids.testMode;
     this._reset.disabled = !testMode;
 
-    let waiting = false;
+    let waiting = this._updateRules();
     const byId = {};
     for (const sensor of this._sensors(this._ids.simulation)) byId[sensor.entity_id] = sensor;
     for (const item of this._rows) {
@@ -408,16 +454,14 @@ class HauswachtTestCard extends HTMLElement {
         ? `${this._t("simulated")}: ${this._stateText(sensor, simulated)} · ${this._t("realValue")}: ${this._stateText(sensor, sensor.real)}`
         : this._stateText(sensor, sensor.real);
       let statusText = (this._t("status") || {})[sensor.status] || "";
-      if (sensor.status === "awaiting_confirmation" && sensor.confirm_until) {
-        const left = Math.max(0, Math.ceil((Date.parse(sensor.confirm_until) - Date.now()) / 1000));
-        statusText += ` · ${left} s`;
-        waiting = true;
+      if (sensor.status === "in_rule" && Array.isArray(sensor.rules)) {
+        statusText += " " + sensor.rules.join(", ");
       }
       item.status.textContent = statusText;
       item.status.style.display = statusText ? "" : "none";
       item.status.className =
         "status" +
-        (["bypassed_until_closed", "bypassed", "tamper_alarm", "awaiting_confirmation"].includes(sensor.status) ? " warn" : "") +
+        (["bypassed_until_closed", "bypassed", "tamper_alarm"].includes(sensor.status) ? " warn" : "") +
         (["not_monitored", "tamper_message"].includes(sensor.status) ? " muted" : "");
       for (const [value, button] of Object.entries(item.buttons)) {
         button.disabled = !testMode || !this._ids.panel;

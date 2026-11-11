@@ -80,7 +80,7 @@ class HauswachtSimulationSensor(HauswachtEntity, SensorEntity):
     # Nur für die Testkarte – auf der Geräteseite standardmäßig ausgeblendet
     _attr_entity_registry_visible_default = False
     # Die Liste ändert sich mit jedem Sensor – nicht in die Historie schreiben
-    _unrecorded_attributes = frozenset({"sensors"})
+    _unrecorded_attributes = frozenset({"sensors", "rules"})
 
     def __init__(self, entry: HauswachtConfigEntry) -> None:
         super().__init__(entry, "simulation")
@@ -95,4 +95,5 @@ class HauswachtSimulationSensor(HauswachtEntity, SensorEntity):
         return {
             "test_mode": self.runtime.ctx.test_mode,
             "sensors": self.runtime.simulation_overview(),
+            "rules": self.runtime.rules_overview(),
         }

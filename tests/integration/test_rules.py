@@ -1,0 +1,266 @@
+"""Integrationstests: Regeln ("Tür, dann Keller") pro Alarmprofil.
+
+Alle Sensoren sind Testzustände, notify-Dienste sind ATTRAPPEN, Sirenen nicht freigegeben.
+"""
+
+from __future__ import annotations
+
+from datetime import timedelta
+from typing import Any
+
+from freezegun.api import FrozenDateTimeFactory
+from homeassistant.components.alarm_control_panel import AlarmControlPanelState
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_fire_time_changed,
+    async_mock_service,
+)
+
+from custom_components.hauswacht.const import DOMAIN
+
+from .conftest import DOOR, MOTION, PANEL, TAMPER, WINDOW, make_entry, set_sensor, setup_entry
+
+MOTION2 = "binary_sensor.bwm_flur"
+PHONE = "mobile_app_testhandy"
+
+ZONES = {
+    "tueren": {"name": "Türen", "entities": [DOOR], "label": None},
+    "fenster": {"name": "Fenster", "entities": [WINDOW, TAMPER], "label": None},
+    "keller": {"name": "Keller", "entities": [MOTION, MOTION2], "label": None},
+}
+RULES = {
+    "tuer_keller": {
+        "name": "Tür, dann Keller",
+        "steps": [{"sensors": [DOOR], "within": 120}, {"zones": ["keller"]}],
+        "result": "entry_delay",
+    },
+    "fenster_keller": {
+        "name": "Fenster, dann Keller",
+        "steps": [{"zones": ["fenster"], "within": 60}, {"zones": ["keller"]}],
+        "result": "alarm",
+    },
+}
+
+
+def _options(**extra: Any) -> dict[str, Any]:
+    night = {"zones": [], "rules": ["tuer_keller", "fenster_keller"], "entry_delay": 30}
+    night["notify"] = [PHONE]
+    return {"zones": ZONES, "rules": RULES, "profiles": {"night": night}, **extra}
+
+
+async def _service(hass: HomeAssistant, domain: str, service: str, **data: Any) -> None:
+    await hass.services.async_call(domain, service, data, blocking=True)
+    await hass.async_block_till_done()
+
+
+def _panel(hass: HomeAssistant) -> str:
+    state = hass.states.get(PANEL)
+    assert state is not None
+    return state.state
+
+
+def _motion2(hass: HomeAssistant, state: str) -> None:
+    hass.states.async_set(MOTION2, state, {"device_class": "motion"})
+
+
+async def _set(hass: HomeAssistant, entity_id: str, state: str) -> None:
+    if entity_id == MOTION2:
+        _motion2(hass, state)
+    else:
+        set_sensor(hass, entity_id, state)
+    await hass.async_block_till_done()
+
+
+async def _setup(hass: HomeAssistant, **extra: Any) -> list[Any]:
+    push = async_mock_service(hass, "notify", PHONE)
+    _motion2(hass, "off")
+    await setup_entry(hass, make_entry(_options(**extra)))
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    return push
+
+
+async def _wait(hass: HomeAssistant, freezer: FrozenDateTimeFactory, seconds: int) -> None:
+    freezer.tick(timedelta(seconds=seconds))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+
+
+async def test_door_alone_and_cellar_alone_do_not_trigger(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    await _setup(hass)
+    await _set(hass, DOOR, "on")
+    await _wait(hass, freezer, 130)  # Niklas geht nach oben
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _set(hass, MOTION, "on")  # später in den Keller: zwei Melder reagieren
+    await _set(hass, MOTION2, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_door_then_cellar_starts_entry_delay(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    await _setup(hass)
+    await _set(hass, DOOR, "on")
+    await _wait(hass, freezer, 40)
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.PENDING
+
+
+async def test_window_then_cellar_alarm_with_rule_name(hass: HomeAssistant) -> None:
+    push = await _setup(hass)
+    await _set(hass, WINDOW, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT  # lüften: kein Alarm
+    await _set(hass, MOTION2, "on")
+    assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+    assert any("Regel: Fenster, dann Keller" in c.data["message"] for c in push)
+
+
+async def test_order_matters(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    await _set(hass, MOTION, "on")  # jemand drinnen …
+    await _set(hass, WINDOW, "on")  # … öffnet das Fenster
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_open_rule_sensor_does_not_block_arming(hass: HomeAssistant) -> None:
+    _motion2(hass, "off")
+    await setup_entry(hass, make_entry(_options()))
+    await _set(hass, WINDOW, "on")
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_disarm_forgets_started_rules(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    await _set(hass, WINDOW, "on")
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    await _set(hass, WINDOW, "off")
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_unconfirmed_notification_when_enabled(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    events = {"unconfirmed": {"enabled": True, "targets": []}}
+    push = await _setup(hass, notify_system=[PHONE], events=events)
+    await _set(hass, DOOR, "on")
+    await _wait(hass, freezer, 125)
+    titles = [c.data["title"] for c in push]
+    assert "Hauswacht: unbestätigte Auslösung" in titles
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_unconfirmed_off_by_default(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    push = await _setup(hass, notify_system=[PHONE])
+    await _set(hass, DOOR, "on")
+    await _wait(hass, freezer, 125)
+    assert push == []
+
+
+async def test_test_card_shows_rule_progress(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    await _set(hass, DOOR, "on")
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    entity_id = er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}_simulation"
+    )
+    assert entity_id is not None
+    state = hass.states.get(entity_id)
+    assert state is not None
+    rules = {r["name"]: r for r in state.attributes["rules"]}
+    assert rules["Tür, dann Keller"]["done"] == 1
+    assert rules["Tür, dann Keller"]["deadline"]
+    assert rules["Fenster, dann Keller"]["done"] == 0
+    rows = {r["entity_id"]: r for r in state.attributes["sensors"]}
+    assert rows[MOTION]["status"] == "in_rule"
+    assert set(rows[MOTION]["rules"]) == {"Tür, dann Keller", "Fenster, dann Keller"}
+
+
+async def test_migration_turns_zone_confirmation_into_rule(hass: HomeAssistant) -> None:
+    options = {
+        "zones": {**ZONES, "keller": {**ZONES["keller"], "confirm": True, "confirm_window": 90}},
+        "profiles": {
+            "night": {"name": "Nacht", "panel_mode": "night", "exit_delay": 0, "zones": ["keller"]}
+        },
+    }
+    entry = MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=options, version=3)
+    _motion2(hass, "off")
+    await setup_entry(hass, entry)
+    assert entry.version == 4
+    assert entry.options["profiles"]["night"]["zones"] == []
+    assert entry.options["profiles"]["night"]["rules"] == ["bestaetigung_keller"]
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _set(hass, MOTION2, "on")
+    assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def _flow(hass: HomeAssistant, entry: MockConfigEntry, *steps: str) -> dict[str, Any]:
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in steps:
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    return flow  # type: ignore[no-any-return]
+
+
+async def test_rule_options_validate_and_save(hass: HomeAssistant) -> None:
+    _motion2(hass, "off")
+    entry = make_entry({"zones": ZONES})
+    await setup_entry(hass, entry)
+    flow = await _flow(hass, entry, "rules", "rule_add")
+    assert flow["step_id"] == "rule_settings"
+    bad = {
+        "name": "Kaputt",
+        "result": "alarm",
+        "step_1": {"sensors": [DOOR, MOTION], "within": 60},
+        "step_2": {"sensors": [MOTION]},
+    }
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], bad)
+    assert flow["errors"] == {"base": "rule_invalid"}
+    good = {
+        "name": "Tür, dann Keller",
+        "result": "entry_delay",
+        "step_1": {"sensors": [DOOR], "within": 120},
+        "step_2": {"zones": ["keller"], "mode": "any"},
+    }
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], good)
+    assert flow["type"] is FlowResultType.MENU
+    rule = next(iter(entry.options["rules"].values()))
+    assert rule["result"] == "entry_delay"
+    assert rule["steps"][0] == {
+        "sensors": [DOOR],
+        "zones": [],
+        "mode": "any",
+        "count": 2,
+        "within": 120,
+    }
+
+
+async def test_profile_rule_hint_when_redundant(hass: HomeAssistant) -> None:
+    _motion2(hass, "off")
+    entry = make_entry({"zones": ZONES, "rules": RULES})
+    await setup_entry(hass, entry)
+    flow = await _flow(hass, entry, "profiles", "profile_edit")
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": "night"})
+    data = {
+        "name": "Nacht",
+        "icon": "mdi:weather-night",
+        "panel_mode": "night",
+        "zones": ["tueren"],
+        "rules": ["tuer_keller"],
+    }
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], data)
+    assert flow["type"] is FlowResultType.MENU
+    assert entry.options["profiles"]["night"]["rules"] == ["tuer_keller"]
+    assert "Tür, dann Keller" in flow["description_placeholders"]["saved"]
