@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-11
+
+### Hinzugefügt
+- **Bestätigung durch einen zweiten Melder** als Zonen-Option: Ein Bewegungs-, Präsenz- oder
+  Fenstermelder allein löst keinen Alarm aus, erst wenn ein anderer Melder derselben Zone im
+  Zeitfenster (Standard 120 s) ebenfalls auslöst. Derselbe Melder zweimal zählt nicht; ist kein
+  zweiter Melder verfügbar, gibt es sofort Alarm. Türen und Manipulation sind nicht betroffen.
+- Benachrichtigungen „Unbestätigte Auslösung“ und „Melder löst häufig allein aus“ (3× in einer
+  Stunde), beide standardmäßig aus.
+- Testkarte: „wartet auf zweiten Melder“ mit Countdown, Hinweis bei Zonen mit Bestätigung.
+
 ## [0.17.6] - 2026-11-11
 
 ### Geändert

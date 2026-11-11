@@ -11,7 +11,7 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus.
 
-> **Status: 0.17.6 – Entwicklungsversion.**
+> **Status: 0.18.0 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Zonen, Alarmprofile, Benutzer und PINs (auch Gäste und
 > Bedrohungs-PIN), Benachrichtigungen pro Ereignis mit Knöpfen, Überwachung von Funknetz und
 > Gateways, Testmodus mit Testkarte und Sirenen. Die **Sirenenansteuerung ist standardmäßig

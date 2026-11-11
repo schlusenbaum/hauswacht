@@ -42,6 +42,8 @@ const TEXT = {
     status: {
       disarmed: "",
       monitored: "überwacht",
+      monitored_confirm: "überwacht – Alarm erst, wenn ein zweiter Melder der Zone bestätigt",
+      awaiting_confirmation: "ausgelöst – wartet auf zweiten Melder",
       not_monitored: "nicht im aktiven Profil – wird ignoriert",
       bypassed: "überbrückt",
       bypassed_until_closed: "überbrückt bis zum Schließen – erst „Zu“, dann wieder überwacht",
@@ -83,6 +85,8 @@ const TEXT = {
     status: {
       disarmed: "",
       monitored: "monitored",
+      monitored_confirm: "monitored – alarm only when a second sensor of the zone confirms",
+      awaiting_confirmation: "triggered – waiting for a second sensor",
       not_monitored: "not in the active profile – ignored",
       bypassed: "bypassed",
       bypassed_until_closed: "bypassed until closed – press \"Closed\" to monitor again",
@@ -343,10 +347,14 @@ class HauswachtTestCard extends HTMLElement {
     this._phase.textContent = text;
     this._phase.classList.toggle("alarm", phase === "triggered" || phase === "alarm_hold");
     this._phase.classList.toggle("delay", Boolean(delay));
-    // Countdown jede Sekunde neu zeichnen, solange eine Verzögerung läuft
-    if (delay && !this._tick) {
-      this._tick = setInterval(() => this._updatePhase(), 1000);
-    } else if (!delay && this._tick) {
+    this._delayRunning = Boolean(delay);
+  }
+
+  _setTick(needed) {
+    // Countdowns jede Sekunde neu zeichnen, solange etwas läuft
+    if (needed && !this._tick) {
+      this._tick = setInterval(() => this._update(), 1000);
+    } else if (!needed && this._tick) {
       clearInterval(this._tick);
       this._tick = null;
     }
@@ -387,6 +395,7 @@ class HauswachtTestCard extends HTMLElement {
     this._toggle.disabled = !this._ids.testMode;
     this._reset.disabled = !testMode;
 
+    let waiting = false;
     const byId = {};
     for (const sensor of this._sensors(this._ids.simulation)) byId[sensor.entity_id] = sensor;
     for (const item of this._rows) {
@@ -398,18 +407,24 @@ class HauswachtTestCard extends HTMLElement {
       item.state.textContent = isSim
         ? `${this._t("simulated")}: ${this._stateText(sensor, simulated)} · ${this._t("realValue")}: ${this._stateText(sensor, sensor.real)}`
         : this._stateText(sensor, sensor.real);
-      const statusText = (this._t("status") || {})[sensor.status] || "";
+      let statusText = (this._t("status") || {})[sensor.status] || "";
+      if (sensor.status === "awaiting_confirmation" && sensor.confirm_until) {
+        const left = Math.max(0, Math.ceil((Date.parse(sensor.confirm_until) - Date.now()) / 1000));
+        statusText += ` · ${left} s`;
+        waiting = true;
+      }
       item.status.textContent = statusText;
       item.status.style.display = statusText ? "" : "none";
       item.status.className =
         "status" +
-        (["bypassed_until_closed", "bypassed", "tamper_alarm"].includes(sensor.status) ? " warn" : "") +
+        (["bypassed_until_closed", "bypassed", "tamper_alarm", "awaiting_confirmation"].includes(sensor.status) ? " warn" : "") +
         (["not_monitored", "tamper_message"].includes(sensor.status) ? " muted" : "");
       for (const [value, button] of Object.entries(item.buttons)) {
         button.disabled = !testMode || !this._ids.panel;
         button.classList.toggle("active", testMode && (isSim ? value === simulated : value === "real"));
       }
     }
+    this._setTick(this._delayRunning || waiting);
   }
 }
 

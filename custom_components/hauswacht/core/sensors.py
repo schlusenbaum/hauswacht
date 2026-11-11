@@ -33,12 +33,20 @@ DEFAULT_ROLE_BY_DEVICE_CLASS: Mapping[str, SensorRole] = {
 }
 
 
+DEFAULT_CONFIRM_WINDOW = 120  # s
+MIN_CONFIRM_WINDOW = 10
+MAX_CONFIRM_WINDOW = 600
+
+
 @dataclass(frozen=True)
 class Zone:
     zone_id: str
     name: str
     entities: frozenset[str] = frozenset()
     label: str | None = None  # Label-ID
+    # Alarm erst, wenn ein zweiter Melder derselben Zone innerhalb des Zeitfensters auslöst
+    confirm: bool = False
+    confirm_window: int = 120
 
 
 @dataclass(frozen=True)
@@ -90,11 +98,17 @@ def parse_zones(options: Mapping[str, Any]) -> dict[str, Zone]:
             continue
         entities = data.get("entities", [])
         label = data.get("label")
+        try:
+            window = int(data.get("confirm_window", DEFAULT_CONFIRM_WINDOW))
+        except (TypeError, ValueError):
+            window = DEFAULT_CONFIRM_WINDOW
         zones[str(zone_id)] = Zone(
             zone_id=str(zone_id),
             name=str(data.get("name") or zone_id),
             entities=frozenset(str(e) for e in entities if isinstance(e, str)),
             label=str(label) if label else None,
+            confirm=bool(data.get("confirm", False)),
+            confirm_window=min(max(window, MIN_CONFIRM_WINDOW), MAX_CONFIRM_WINDOW),
         )
     return zones
 

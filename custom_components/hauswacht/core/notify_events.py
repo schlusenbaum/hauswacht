@@ -29,6 +29,8 @@ class NotifyEvent(StrEnum):
     FAULT = "fault"
     SYSTEM = "system"
     REMINDER = "reminder"
+    UNCONFIRMED = "unconfirmed"  # Einzelauslösung ohne Bestätigung, kein Alarm
+    UNCONFIRMED_FREQUENT = "unconfirmed_frequent"  # Melder löst häufig allein aus
 
 
 DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
@@ -42,6 +44,8 @@ DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
     NotifyEvent.FAULT: True,
     NotifyEvent.SYSTEM: True,
     NotifyEvent.REMINDER: True,
+    NotifyEvent.UNCONFIRMED: False,
+    NotifyEvent.UNCONFIRMED_FREQUENT: False,
 }
 
 # Durchbrechen "Nicht stören" (wenn die Option dafür an ist)
