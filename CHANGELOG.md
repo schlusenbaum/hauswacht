@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-11
+
+### Hinzugefügt
+- **Immer aktive Melder** (Alarmauslösung → Immer aktiv): lösen auch unscharf aus. Standard ist
+  eine wichtige Benachrichtigung ohne Alarm; optional ein Alarm mit eigenen Sirenen, den „Alarm
+  beenden“ nach unscharf zurückführt. Scharf lösen sie sofort mit der Reaktion des Profils aus.
+- **Scharf durch Schließen der Tür** (pro Alarmprofil, optional): Die Ausgangsverzögerung endet,
+  sobald eine Ausgangstür geschlossen ist und die Beruhigungszeit (Standard 5 s) zu bleibt.
+  Ausgangstüren dürfen dann beim Scharfschalten offen sein.
+- Benachrichtigungs-Ereignis „Immer aktiver Melder“ (wichtig, standardmäßig an); Testkarte zeigt
+  „immer aktiv“.
+
 ## [0.20.1] - 2026-11-11
 
 ### Hinzugefügt

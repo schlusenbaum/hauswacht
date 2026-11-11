@@ -67,6 +67,13 @@ from .const import (
     OPT_ZONES,
     ROLE_AUTO,
 )
+from .core.always_active import (
+    DEFAULT_SETTLE,
+    MAX_SETTLE,
+    ArmOnClose,
+    parse_always_active,
+    parse_arm_on_close,
+)
 from .core.automation import (
     DEFAULT_AWAY_DELAY,
     MAX_AWAY_DELAY,
@@ -448,6 +455,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "silent": bool(user_input["silent"]),
                         "notify": list(user_input.get("notify", [])),
                         **_automation_from_input(user_input.get("automation") or {}),
+                        "arm_on_close": _arm_on_close_from_input(
+                            user_input.get("arm_on_close") or {}
+                        ),
                     }
                 )
                 profiles[profile_id] = data
@@ -525,6 +535,10 @@ class HauswachtOptionsFlow(OptionsFlow):
                     _automation_schema(parse_automation(options, pid)),
                     {"collapsed": True},
                 ),
+                vol.Optional("arm_on_close"): section(
+                    _arm_on_close_schema(parse_arm_on_close(options, pid)),
+                    {"collapsed": True},
+                ),
             }
         )
         return self.async_show_form(
@@ -540,7 +554,51 @@ class HauswachtOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Alarmauslösung: Meldergruppen und Auslöseregeln."""
-        return self._menu("triggering", ["zones", "rules", "init"])
+        return self._menu("triggering", ["zones", "rules", "always_active", "init"])
+
+    async def async_step_always_active(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Immer aktive Melder: lösen auch im unscharfen Zustand aus."""
+        options = dict(self.config_entry.options)
+        zones = parse_zones(options)
+        registered = [s for s in options.get(OPT_SIRENS, []) if isinstance(s, str)]
+        current = parse_always_active(options)
+        if user_input is not None:
+            options["always_active"] = {
+                "zones": [z for z in user_input.get("zones") or [] if z in zones],
+                "sensors": list(user_input.get("sensors") or []),
+                "sirens_enabled": bool(user_input.get("sirens_enabled")),
+                "sirens": [s for s in user_input.get("sirens") or [] if s in registered],
+                "siren_tone": user_input.get("siren_tone"),
+                "siren_volume": user_input.get("siren_volume"),
+                "reaction_time": int(user_input.get("reaction_time") or 180),
+            }
+            return await self._save(options, "triggering")
+        schema = vol.Schema(
+            {
+                vol.Optional("zones", default=list(current.zones)): _zone_selector(
+                    zones, multiple=True
+                ),
+                vol.Optional("sensors", default=list(current.sensors)): EntitySelector(
+                    EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+                ),
+                vol.Optional("sirens_enabled", default=current.sirens_enabled): BooleanSelector(),
+                vol.Optional("sirens", default=list(current.sirens)): _list_selector(
+                    registered, multiple=True
+                ),
+                vol.Optional("siren_tone", default=current.tone or "burglar"): _select(
+                    sorted(BURGLAR_TONES), "siren_tone"
+                ),
+                vol.Optional("siren_volume", default=current.volume or "high"): _select(
+                    list(VOLUME_LEVELS), "siren_volume"
+                ),
+                vol.Optional("reaction_time", default=current.reaction_time): _seconds(
+                    MAX_REACTION_TIME, minimum=1
+                ),
+            }
+        )
+        return self.async_show_form(step_id="always_active", data_schema=schema)
 
     async def async_step_rules(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         saved, self._saved = self._saved, False
@@ -1539,6 +1597,27 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
             ): BooleanSelector(),
         }
     )
+
+
+def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:
+    """Scharf durch Schließen der Tür (alles optional)."""
+    return vol.Schema(
+        {
+            vol.Optional("enabled", default=current.enabled): BooleanSelector(),
+            vol.Optional("doors", default=sorted(current.doors)): EntitySelector(
+                EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+            ),
+            vol.Optional("settle", default=current.settle): _seconds(MAX_SETTLE, minimum=1),
+        }
+    )
+
+
+def _arm_on_close_from_input(data: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "enabled": bool(data.get("enabled", False)),
+        "doors": [d for d in data.get("doors") or [] if isinstance(d, str)],
+        "settle": int(data.get("settle") or DEFAULT_SETTLE),
+    }
 
 
 def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:

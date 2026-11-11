@@ -114,6 +114,8 @@ class AlarmContext:
     alarm_cycles: int = 0
     trigger_sensor: str | None = None
     test_mode: bool = False
+    # Alarm durch einen immer aktiven Melder im unscharfen Zustand: "Alarm beenden" -> unscharf
+    return_to_disarmed: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +161,18 @@ class SensorTriggered:
 
 
 @dataclass(frozen=True)
+class AlwaysActiveTriggered:
+    """Ein immer aktiver Melder hat ausgelöst (auch im unscharfen Zustand).
+
+    ``profile`` liefert die Reaktion, wenn die Anlage unscharf ist (eigene Einstellungen für
+    "Immer aktiv"). Ist sie scharf, gilt die Reaktion des aktiven Profils.
+    """
+
+    sensor_key: str
+    profile: ProfileRuntime
+
+
+@dataclass(frozen=True)
 class ExitDelayElapsed:
     token: int
     readiness: Readiness = Readiness()
@@ -184,6 +198,7 @@ Event = (
     | ArmRequested
     | DisarmRequested
     | SensorTriggered
+    | AlwaysActiveTriggered
     | SensorClosed
     | ExitDelayElapsed
     | EntryDelayElapsed
@@ -481,6 +496,8 @@ def _on_disarm(ctx: AlarmContext, event: DisarmRequested) -> Result:
         return ctx, (Rejected(reason="invalid_code"),)
 
     if ctx.state in (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD):
+        if ctx.return_to_disarmed:
+            return _end_always_alarm(ctx)
         return _acknowledge(ctx, event)
     effects: list[Effect] = []
     # Aus TRIGGERED/ALARM_HOLD geht es nur über "Alarm beenden" (bleibt scharf). Ein durch
@@ -497,6 +514,43 @@ def _on_disarm(ctx: AlarmContext, event: DisarmRequested) -> Result:
         alarm_cycles=0,
         trigger_sensor=None,
         bypassed_until_closed=frozenset(),
+    )
+    return ctx, tuple(effects)
+
+
+def _on_always_active(ctx: AlarmContext, event: AlwaysActiveTriggered, now: float) -> Result:
+    """Immer aktiver Melder: unscharf -> Alarm mit eigener Reaktion, scharf -> sofortiger
+    Alarm mit der Reaktion des aktiven Profils."""
+    state = ctx.state
+    if state is AlarmState.TRIGGERED:
+        return ctx, (Ignored(reason="already_triggered"),)
+    if state is AlarmState.DISARMED:
+        ctx = replace(ctx, profile=event.profile, return_to_disarmed=True, alarm_cycles=0)
+        return _trigger(ctx, event.sensor_key, now, "always_active")
+    profile = _profile(ctx)
+    if state is AlarmState.ALARM_HOLD and ctx.alarm_cycles >= profile.max_alarm_cycles:
+        return ctx, (Ignored(reason="max_alarm_cycles_reached"),)
+    return _trigger(ctx, event.sensor_key, now, "always_active")
+
+
+def _end_always_alarm(ctx: AlarmContext) -> Result:
+    """Alarm eines immer aktiven Melders aus dem unscharfen Zustand beenden: wieder unscharf."""
+    profile = _profile(ctx)
+    effects: list[Effect] = []
+    ctx, cancel = _cancel_timer(ctx)
+    effects += cancel
+    ctx, changed = _goto(ctx, AlarmState.DISARMED, "always_alarm_ended")
+    effects.append(changed)
+    effects.append(StopReaction(profile_id=profile.profile_id, test_mode=ctx.test_mode))
+    ctx = replace(
+        ctx,
+        profile=None,
+        bypassed=frozenset(),
+        accepted_unavailable=frozenset(),
+        alarm_cycles=0,
+        trigger_sensor=None,
+        bypassed_until_closed=frozenset(),
+        return_to_disarmed=False,
     )
     return ctx, tuple(effects)
 
@@ -665,6 +719,8 @@ def step(ctx: AlarmContext, event: Event, now: float) -> Result:
             return _on_disarm(ctx, event)
         case SensorTriggered():
             return _on_sensor(ctx, event, now)
+        case AlwaysActiveTriggered():
+            return _on_always_active(ctx, event, now)
         case SensorClosed():
             return _on_sensor_closed(ctx, event)
         case ExitDelayElapsed():

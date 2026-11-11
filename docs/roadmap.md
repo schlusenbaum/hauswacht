@@ -24,7 +24,7 @@
 | **0.18.0** ✅ | Bestätigung durch einen zweiten Melder (Zonen-Option), Meldung unbestätigter und häufiger Einzelauslösungen | nein |
 | **0.19.0** ✅ | Regeln: Abfolgen von Meldern (einer/alle/mindestens N, Zeit bis zum nächsten Schritt), Regelsammlung, pro Profil wählbar, Prüfung beim Speichern, Fortschritt in der Testkarte | nein |
 | **0.20.0** ✅ | Expertenmodus für Auslöseregeln: YAML-Editor mit Prüfung, Verschachtelung, Ausnahme „nicht, wenn vorher …“ (auch im Assistenten), Bedingungen (Uhrzeit, Person/Zone, Zustand, Zahlenwert, und/oder/nicht), Ergebnis „nur Benachrichtigung“ | nein |
-| 0.21.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |
+| **0.21.0** ✅ | Immer aktive Melder (unscharf: Benachrichtigung, optional Sirene), Scharf durch Schließen der Tür (optional, Beruhigungszeit) | nein |
 | 0.22.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
 | 0.23.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |

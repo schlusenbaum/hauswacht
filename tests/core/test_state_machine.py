@@ -11,6 +11,7 @@ from custom_components.hauswacht.core.state_machine import (
     AlarmAcknowledged,
     AlarmContext,
     AlarmState,
+    AlwaysActiveTriggered,
     ArmingAborted,
     ArmRequested,
     CancelTimer,
@@ -558,3 +559,39 @@ def test_test_mode_cannot_change_while_armed(enabled: bool) -> None:
 def test_invalid_profiles_are_rejected(kwargs: dict[str, object]) -> None:
     with pytest.raises(ValueError, match=r"."):
         ProfileRuntime(**kwargs)  # type: ignore[arg-type]
+
+
+# --- Immer aktive Melder -------------------------------------------------------
+
+ALWAYS = ProfileRuntime(profile_id="__always__", reaction_time=60)
+
+
+def test_always_active_from_disarmed_and_back_to_disarmed() -> None:
+    h = Harness()
+    effects = h.send(AlwaysActiveTriggered(sensor_key="binary_sensor.tresor", profile=ALWAYS))
+    assert h.ctx.state is AlarmState.TRIGGERED
+    assert h.ctx.profile == ALWAYS
+    assert any(isinstance(e, ActivateReaction) and e.profile_id == "__always__" for e in effects)
+    effects = h.send(DisarmRequested())
+    assert h.ctx.state is AlarmState.DISARMED
+    assert h.ctx.profile is None
+    assert h.ctx.return_to_disarmed is False
+    assert any(isinstance(e, StopReaction) for e in effects)
+
+
+def test_always_active_while_armed_uses_active_profile() -> None:
+    h = Harness()
+    h.send(ArmRequested(profile=NIGHT))
+    assert h.ctx.state is AlarmState.ARMED
+    effects = h.send(AlwaysActiveTriggered(sensor_key="binary_sensor.tresor", profile=ALWAYS))
+    assert h.ctx.state is AlarmState.TRIGGERED
+    assert any(isinstance(e, ActivateReaction) and e.profile_id == "night" for e in effects)
+    h.send(DisarmRequested())
+    assert h.ctx.state is AlarmState.ARMED  # Alarm beendet, Profil bleibt scharf
+
+
+def test_always_active_ignored_while_triggered() -> None:
+    h = Harness()
+    h.send(AlwaysActiveTriggered(sensor_key="binary_sensor.a", profile=ALWAYS))
+    effects = h.send(AlwaysActiveTriggered(sensor_key="binary_sensor.b", profile=ALWAYS))
+    assert any(isinstance(e, Ignored) for e in effects)

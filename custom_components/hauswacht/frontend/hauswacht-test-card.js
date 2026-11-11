@@ -43,6 +43,7 @@ const TEXT = {
       disarmed: "",
       monitored: "überwacht",
       in_rule: "nur in Auslöseregeln:",
+      always_active: "immer aktiv – löst auch unscharf aus",
       not_monitored: "nicht im aktiven Profil – wird ignoriert",
       bypassed: "überbrückt",
       bypassed_until_closed: "überbrückt bis zum Schließen – erst „Zu“, dann wieder überwacht",
@@ -90,6 +91,7 @@ const TEXT = {
       disarmed: "",
       monitored: "monitored",
       in_rule: "only in trigger rules:",
+      always_active: "always active – triggers even when disarmed",
       not_monitored: "not in the active profile – ignored",
       bypassed: "bypassed",
       bypassed_until_closed: "bypassed until closed – press \"Closed\" to monitor again",
@@ -475,7 +477,7 @@ class HauswachtTestCard extends HTMLElement {
       item.status.style.display = statusText ? "" : "none";
       item.status.className =
         "status" +
-        (["bypassed_until_closed", "bypassed", "tamper_alarm"].includes(sensor.status) ? " warn" : "") +
+        (["bypassed_until_closed", "bypassed", "tamper_alarm", "always_active"].includes(sensor.status) ? " warn" : "") +
         (["not_monitored", "tamper_message"].includes(sensor.status) ? " muted" : "");
       for (const [value, button] of Object.entries(item.buttons)) {
         button.disabled = !testMode || !this._ids.panel;
