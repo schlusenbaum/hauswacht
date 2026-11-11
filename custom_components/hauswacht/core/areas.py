@@ -82,3 +82,22 @@ def area_options(options: Mapping[str, Any], area_id: str) -> dict[str, Any]:
 
 def multi_area(options: Mapping[str, Any]) -> bool:
     return len(parse_areas(options)) > 1
+
+
+ALL_PANEL_KEY = "all_panel"
+
+
+def stale_area_device(identifier: str, entry_id: str, areas: set[str]) -> bool:
+    """Gehört die Geräte-Kennung (``<eintrag>_<bereich>``) zu einem gelöschten Bereich?
+
+    Das Hauswacht-Gerät selbst (Kennung = Eintrags-ID) ist nie veraltet.
+    """
+    prefix = f"{entry_id}_"
+    if not identifier.startswith(prefix):
+        return False
+    return identifier[len(prefix) :] not in areas
+
+
+def stale_all_panel(unique_id: str, entry_id: str, areas: set[str]) -> bool:
+    """Bedienfeld "Alle Bereiche", obwohl es nur noch einen Bereich gibt?"""
+    return unique_id == f"{entry_id}_{ALL_PANEL_KEY}" and len(areas) < 2

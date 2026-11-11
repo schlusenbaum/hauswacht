@@ -20,6 +20,7 @@ from homeassistant.helpers.entity_platform import (
 )
 
 from .const import DOMAIN
+from .core.areas import ALL_PANEL_KEY
 from .core.profiles import (
     find_profile,
     panel_state,
@@ -229,7 +230,7 @@ class HauswachtAllPanel(HauswachtEntity, AlarmControlPanelEntity):
     _platform_domain = "alarm_control_panel"
 
     def __init__(self, entry: HauswachtConfigEntry) -> None:
-        super().__init__(entry, "all_panel")
+        super().__init__(entry, ALL_PANEL_KEY)
         self._keep_object_id("hauswacht_alle", "hauswacht_all")
         features = AlarmControlPanelEntityFeature(0)
         for area in self.runtime.areas.values():

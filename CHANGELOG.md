@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-11-11
+
+### Behoben
+- Gelöschte Bereiche blieben als Gerät „Hauswacht <Name>“ mit Entitäten in der Integration
+  stehen; ebenso „Alle Bereiche“, wenn nur noch ein Bereich übrig war. Beides wird jetzt beim
+  Neuladen entfernt. Verwaiste Bereichsgeräte lassen sich außerdem von Hand löschen.
+
 ## [0.22.0] - 2026-11-11
 
 ### Hinzugefügt

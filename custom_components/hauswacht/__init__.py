@@ -7,7 +7,7 @@ Home Assistant importier- und testbar.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -41,6 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     entry.runtime_data = runtime
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _async_remove_stale_areas(hass, entry)
     from homeassistant.loader import async_get_integration  # noqa: PLC0415
 
     from .frontend import async_register_card  # noqa: PLC0415
@@ -48,6 +49,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     integration = await async_get_integration(hass, entry.domain)
     await async_register_card(hass, str(integration.version or "0"))
     return True
+
+
+def _async_remove_stale_areas(hass: HomeAssistant, entry: HauswachtConfigEntry) -> None:
+    """Geräte gelöschter Bereiche entfernen (ihre Entitäten verschwinden damit auch), ebenso
+    das Bedienfeld "Alle Bereiche", wenn es nur noch einen Bereich gibt."""
+    from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
+    from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+
+    from .const import DOMAIN  # noqa: PLC0415
+    from .core.areas import stale_all_panel, stale_area_device  # noqa: PLC0415
+
+    areas = set(entry.runtime_data.areas)
+    entities = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(entities, entry.entry_id):
+        if stale_all_panel(entity.unique_id, entry.entry_id, areas):
+            entities.async_remove(entity.entity_id)
+    devices = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(devices, entry.entry_id):
+        if any(
+            domain == DOMAIN and stale_area_device(ident, entry.entry_id, areas)
+            for domain, ident in device.identifiers
+        ):
+            devices.async_remove_device(device.id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: HauswachtConfigEntry, device: Any
+) -> bool:
+    """Gerät von Hand löschen erlauben – aber nur für Bereiche, die es nicht mehr gibt."""
+    from .const import DOMAIN  # noqa: PLC0415
+    from .core.areas import stale_area_device  # noqa: PLC0415
+
+    areas = set(entry.runtime_data.areas)
+    return any(
+        domain == DOMAIN and stale_area_device(ident, entry.entry_id, areas)
+        for domain, ident in device.identifiers
+    )
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:

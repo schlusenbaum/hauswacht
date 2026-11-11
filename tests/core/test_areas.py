@@ -8,6 +8,8 @@ from custom_components.hauswacht.core.areas import (
     multi_area,
     parse_areas,
     profile_area,
+    stale_all_panel,
+    stale_area_device,
 )
 
 OPTIONS = {
@@ -43,3 +45,17 @@ def test_profile_area_and_view() -> None:
     assert set(garage["profiles"]) == {"garage_zu"}
     assert "always_active" not in garage
     assert "reminder_persons" not in garage
+
+
+def test_stale_area_device() -> None:
+    areas = {"main", "garage"}
+    assert not stale_area_device("e1", "e1", areas)  # Hauswacht-Gerät selbst
+    assert not stale_area_device("e1_garage", "e1", areas)
+    assert stale_area_device("e1_gartenhaus", "e1", areas)
+    assert not stale_area_device("e2_gartenhaus", "e1", areas)  # anderer Eintrag
+
+
+def test_stale_all_panel() -> None:
+    assert stale_all_panel("e1_all_panel", "e1", {"main"})
+    assert not stale_all_panel("e1_all_panel", "e1", {"main", "garage"})
+    assert not stale_all_panel("e1_panel", "e1", {"main"})

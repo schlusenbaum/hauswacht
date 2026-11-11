@@ -253,3 +253,28 @@ async def test_simulation_reaches_every_area(hass: HomeAssistant) -> None:
     # Testmodus lässt sich nicht ausschalten, solange ein Bereich scharf ist
     with pytest.raises(ServiceValidationError):
         await _service(hass, "switch", "turn_off", entity_id="switch.hauswacht_test_mode")
+
+
+async def test_deleted_area_leaves_no_device(hass: HomeAssistant) -> None:
+    """Gelöschter Bereich: Gerät, Entitäten und "Alle Bereiche" verschwinden."""
+    entry = make_entry({"areas": {"garage": {"name": "Garage"}}})
+    await setup_entry(hass, entry)
+    assert hass.states.get(GARAGE_PANEL) is not None
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "areas", "area_delete"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"area": "garage"})
+    assert flow["step_id"] == "areas"
+    await hass.async_block_till_done()
+    assert "garage" not in entry.options.get("areas", {})
+    registry = er.async_get(hass)
+    assert registry.async_get(GARAGE_PANEL) is None
+    assert (
+        registry.async_get_entity_id("alarm_control_panel", DOMAIN, f"{entry.entry_id}_all_panel")
+        is None
+    )
+    devices = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
+    assert [d.name for d in devices] == ["Hauswacht"]
+    assert hass.states.get(PANEL) is not None
