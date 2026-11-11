@@ -26,8 +26,12 @@ PUSH_DATA: Mapping[str, Any] = NORMAL_DATA
 
 
 class Notifier:
-    def __init__(self, hass: HomeAssistant, options: Mapping[str, Any]) -> None:
+    def __init__(
+        self, hass: HomeAssistant, options: Mapping[str, Any], *, label: str | None = None
+    ) -> None:
         self.hass = hass
+        # Bereichsname im Titel (nur bei mehreren Bereichen gesetzt)
+        self.label = label
         self.system_targets: tuple[str, ...] = tuple(
             dict.fromkeys(t for t in options.get(OPT_NOTIFY_SYSTEM, []) if isinstance(t, str))
         )
@@ -56,6 +60,8 @@ class Notifier:
                 {"type": "NotificationSuppressed", "targets": list(targets), "title": title},
             )
             return []
+        if self.label:
+            title = f"{title} ({self.label})"
         if test_mode:
             title = f"[TEST] {title}"
         sent: list[str] = []

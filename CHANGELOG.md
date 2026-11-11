@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-11-11
+
+### Hinzugefügt
+- **Bereiche** (Systemeinstellungen → Bereiche): frei benannte Teile der Anlage, die unabhängig
+  scharf geschaltet werden (z. B. Garage scharf, Haus unscharf). Jedes Alarmprofil gehört zu
+  einem Bereich; Meldergruppen und Auslöseregeln sind für alle Bereiche nutzbar.
+- Je weiterem Bereich ein eigenes Gerät „Hauswacht <Name>“ mit Bedienfeld, Profilauswahl,
+  Knöpfen und „Offene Sensoren“; dazu das Bedienfeld **„Alle Bereiche“**.
+- Benutzer lassen sich auf Bereiche beschränken (leer = alle).
+- Benachrichtigungen nennen den Bereich; die Testkarte zeigt, welcher Bereich einen Melder
+  gerade überwacht und zu welchem Bereich eine laufende Regel gehört.
+
+### Geändert
+- Bedienfeld-Knöpfe sind nur noch **je Bereich** eindeutig.
+- Optionen und Profil-Einstellungen lassen sich nur ändern, wenn alle Bereiche unscharf sind.
+- Ohne weitere Bereiche bleibt alles wie bisher (gleiche Entitäts-IDs, keine Migration nötig).
+
 ## [0.21.0] - 2026-11-11
 
 ### Hinzugefügt

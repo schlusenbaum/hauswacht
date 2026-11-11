@@ -56,7 +56,8 @@
           "silent": "Stiller Alarm (nur Benachrichtigungen)",
           "notify": "Benachrichtigen (Alarm)",
           "automation": "Automatik",
-          "rules": "Auslöseregeln"
+          "rules": "Auslöseregeln",
+          "area": "Bereich"
         },
         "sections": {
           "automation": {
@@ -87,7 +88,8 @@
         },
         "data_description": {
           "zones": "Jeder Melder dieser Meldergruppen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …). Offene Melder dieser Meldergruppen verhindern das Scharfschalten.",
-          "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht."
+          "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.",
+          "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei."
         }
       },
       "zones": {
@@ -368,12 +370,17 @@
           "can_end_alarm": "Darf Alarm beenden",
           "ha_user": "Home-Assistant-Konto (für Push-Knopf und Dashboard-Knöpfe)",
           "valid_from": "Gültig von",
-          "valid_until": "Gültig bis"
+          "valid_until": "Gültig bis",
+          "areas": "Bereiche"
+        },
+        "data_description": {
+          "areas": "Welche Bereiche der Benutzer bedienen darf. Leer = alle Bereiche."
         }
       },
       "system": {
         "title": "Systemeinstellungen",
         "menu_options": {
+          "areas": "Bereiche (z. B. Haus, Garage, Gartenhaus)",
           "users": "Benutzer und PINs",
           "sensor_behaviour": "Sensorverhalten – Rollen und Funkstille",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
@@ -498,6 +505,37 @@
           "siren_volume": "Lautstärke",
           "reaction_time": "Dauer der Alarmreaktion"
         }
+      },
+      "areas": {
+        "title": "Bereiche",
+        "description": "{saved}Bereiche lassen sich **unabhängig voneinander** scharf schalten – z. B. die Garage, während im Haus jemand ist. Namen sind frei wählbar.\n\nJedes Alarmprofil gehört zu genau einem Bereich (Auswahl im Alarmprofil). Meldergruppen und Auslöseregeln können in allen Bereichen verwendet werden. Ab zwei Bereichen gibt es je Bereich ein eigenes Bedienfeld und zusätzlich **„Alle Bereiche“**.\n\nDer erste Bereich (Standard „Haus“) ist die bisherige Anlage – er lässt sich umbenennen, aber nicht löschen. Immer aktive Melder, Heimkehr-Beobachtung und die Erinnerung „Alle weg“ gehören zu ihm.",
+        "menu_options": {
+          "area_add": "Bereich anlegen",
+          "area_edit": "Bereich bearbeiten / umbenennen",
+          "area_delete": "Bereich löschen",
+          "system": "← Zurück"
+        }
+      },
+      "area_edit": {
+        "title": "Bereich bearbeiten",
+        "data": {
+          "area": "Bereich"
+        }
+      },
+      "area_delete": {
+        "title": "Bereich löschen",
+        "description": "Ein Bereich lässt sich nur löschen, wenn ihm kein Alarmprofil mehr gehört.",
+        "data": {
+          "area": "Bereich"
+        }
+      },
+      "area_settings": {
+        "title": "Bereich: {area}",
+        "description": "Der Name erscheint im Bedienfeld („Hauswacht <Name>“) und in Benachrichtigungen.",
+        "data": {
+          "name": "Name",
+          "icon": "Symbol"
+        }
       }
     },
     "error": {
@@ -517,14 +555,18 @@
       "rule_name_required": "Bitte einen Namen eingeben.",
       "rule_name_taken": "Eine Auslöseregel mit diesem Namen gibt es schon.",
       "step_empty": "Bitte mindestens einen Sensor oder eine Meldergruppe wählen.",
-      "rule_yaml_invalid": "So nicht speicherbar: {problem}"
+      "rule_yaml_invalid": "So nicht speicherbar: {problem}",
+      "area_has_profiles": "Diesem Bereich gehören noch Alarmprofile – erst die Profile löschen oder einem anderen Bereich zuordnen.",
+      "area_name_required": "Bitte einen Namen angeben.",
+      "area_name_taken": "Diesen Namen hat bereits ein anderer Bereich."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
       "no_zones": "Es wurden noch keine Meldergruppen angelegt.",
       "no_profiles": "Es wurden noch keine Profile angelegt.",
       "no_users": "Es gibt noch keine Benutzer.",
-      "no_rules": "Es gibt noch keine Auslöseregel."
+      "no_rules": "Es gibt noch keine Auslöseregel.",
+      "no_areas": "Es gibt nur den ersten Bereich – er lässt sich nicht löschen."
     }
   },
   "selector": {
@@ -733,6 +775,11 @@
       "setting_auto_disarm_time": {
         "name": "Automatisch unscharf um"
       }
+    },
+    "alarm_control_panel": {
+      "all_panel": {
+        "name": "Alle Bereiche"
+      }
     }
   },
   "exceptions": {
@@ -789,6 +836,9 @@
     },
     "action_not_allowed": {
       "message": "{user} darf das nicht."
+    },
+    "areas_failed": {
+      "message": "Nicht alle Bereiche konnten geschaltet werden – {failed}. Erledigt: {done}."
     }
   },
   "services": {

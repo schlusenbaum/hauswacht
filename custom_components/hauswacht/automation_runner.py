@@ -51,7 +51,7 @@ class AutomationRunner:
 
     @callback
     def start(self) -> None:
-        options = self.runtime.entry.options
+        options = self.runtime.options
         self.configs = {
             pid: cfg
             for pid in profile_ids(options)

@@ -463,6 +463,7 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
         flow["flow_id"], {"next_step_id": "system"}
     )
     assert flow["menu_options"] == [
+        "areas",
         "users",
         "sensor_behaviour",
         "infrastructure",

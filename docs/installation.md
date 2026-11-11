@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.21.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.22.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -34,6 +34,7 @@ Hauswacht kann nur einmal eingerichtet werden.
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
 | `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
 | `binary_sensor.hauswacht_offene_sensoren` | „Offene Sensoren in den Meldergruppen“: „Offen“, sobald ein Sensor einer Meldergruppe offen ist (welche: Attribut `names`), sonst „Alles zu“ |
+| `alarm_control_panel.hauswacht_<bereich>` | nur mit [Bereichen](#bereiche): Bedienfeld je weiterem Bereich, dazu `alarm_control_panel.hauswacht_alle` („Alle Bereiche“) |
 | `sensor.hauswacht_simulierte_sensoren` | „Testkarte: simulierte Sensoren“ – Grundlage der Karte „Hauswacht Test“, standardmäßig ausgeblendet |
 
 Eine fertige Bedienkarte steht in [docs/dashboard.md](dashboard.md).
@@ -331,6 +332,38 @@ Tresor, Waffenschrank, Gartenhaus, Panikknopf. Meldergruppen und/oder einzelne S
 
 Hardware-Freigabe, Testmodus und Brandsperre gelten wie immer. In der Testkarte tragen diese
 Melder den Hinweis „immer aktiv“.
+
+## Bereiche
+
+**Systemeinstellungen → Bereiche.** Für Anlagen, deren Teile **unabhängig** scharf geschaltet
+werden – z. B. Garage oder Gartenhaus scharf, während im Haus jemand ist. Die Namen sind frei
+wählbar; ohne weitere Bereiche ändert sich nichts.
+
+- Der **erste Bereich** (Standardname „Haus“) ist die bisherige Anlage. Er lässt sich umbenennen,
+  aber nicht löschen; seine Entitäts-IDs bleiben unverändert. Immer aktive Melder,
+  Heimkehr-Beobachtung und die Erinnerung „Alle weg“ gehören zu ihm.
+- **Jedes Alarmprofil gehört zu genau einem Bereich** (Feld „Bereich“ im Alarmprofil, sobald es
+  zwei Bereiche gibt). Die Bedienfeld-Knöpfe sind je Bereich frei: Haus und Garage dürfen beide
+  einen Knopf „Abwesend“ haben.
+- **Meldergruppen und Auslöseregeln** sind Bausteine für alle Bereiche. Ein Melder darf in
+  mehreren Bereichen vorkommen; es lösen nur die Bereiche aus, die gerade scharf sind.
+- Jeder weitere Bereich bekommt ein eigenes Gerät **„Hauswacht <Name>“** mit Bedienfeld
+  (`alarm_control_panel.hauswacht_garage`), Profilauswahl, Knöpfen „Scharf schalten“,
+  „Trotzdem scharf schalten“, „Unscharf schalten“, „Alarm beenden“ und „Offene Sensoren“.
+- **„Alle Bereiche“** (`alarm_control_panel.hauswacht_alle`): Ein Knopf schaltet jeden Bereich
+  mit dem Profil, das dort diesem Knopf zugeordnet ist; Bereiche ohne ein solches Profil bleiben,
+  wie sie sind. „Unscharf“ schaltet alle Bereiche unscharf (während eines Alarms: Alarm beenden).
+  Scheitert ein Bereich (z. B. Fenster offen), werden die übrigen trotzdem geschaltet, und die
+  Meldung nennt, was nicht ging. Zustand: Alarm > Eingangsverzögerung > Ausgangsverzögerung >
+  unscharf (alle) > gemeinsamer scharfer Zustand; teilweise oder unterschiedlich scharf zeigt
+  „Scharf (benutzerdefiniert)“, Details im Attribut `areas`.
+- **Benutzer** lassen sich auf Bereiche beschränken (Feld „Bereiche“, leer = alle).
+- **PIN-Sperre, Testmodus und Sirenen** gelten gemeinsam: Der Testmodus lässt sich nur umschalten,
+  wenn alle Bereiche unscharf sind; eine Sirene, die zwei Bereiche gleichzeitig nutzen, bleibt an,
+  bis beide ihren Alarm beendet haben.
+- **Benachrichtigungen** tragen den Bereichsnamen im Titel, z. B. „Hauswacht: Alarm (Garage)“.
+- Einstellungen lassen sich nur ändern, wenn **alle** Bereiche unscharf sind.
+- Ein Bereich lässt sich nur löschen, wenn ihm kein Alarmprofil mehr gehört.
 
 ## Scharf durch Schließen der Tür
 

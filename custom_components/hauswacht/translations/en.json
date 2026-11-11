@@ -56,7 +56,8 @@
           "silent": "Silent alarm (notifications only)",
           "notify": "Notify (alarm)",
           "automation": "Automation",
-          "rules": "Trigger rules"
+          "rules": "Trigger rules",
+          "area": "Area"
         },
         "sections": {
           "automation": {
@@ -87,7 +88,8 @@
         },
         "data_description": {
           "zones": "Each sensor of these sensor groups triggers on its own (door with entry delay, window instantly …). Open sensors of these sensor groups prevent arming.",
-          "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again."
+          "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again.",
+          "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area."
         }
       },
       "zones": {
@@ -368,12 +370,17 @@
           "can_end_alarm": "May end alarm",
           "ha_user": "Home Assistant account (for push and dashboard buttons)",
           "valid_from": "Valid from",
-          "valid_until": "Valid until"
+          "valid_until": "Valid until",
+          "areas": "Areas"
+        },
+        "data_description": {
+          "areas": "Which areas the user may operate. Empty = all areas."
         }
       },
       "system": {
         "title": "System settings",
         "menu_options": {
+          "areas": "Areas (e.g. house, garage, garden shed)",
           "users": "Users and PINs",
           "sensor_behaviour": "Sensor behaviour – roles and radio silence",
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
@@ -498,6 +505,37 @@
           "siren_volume": "Volume",
           "reaction_time": "Alarm reaction duration"
         }
+      },
+      "areas": {
+        "title": "Areas",
+        "description": "{saved}Areas can be armed **independently** – e.g. the garage while someone is in the house. Names are free.\n\nEach alarm profile belongs to exactly one area (chosen in the alarm profile). Sensor groups and trigger rules can be used in all areas. With two or more areas, each area gets its own panel plus **“All areas”**.\n\nThe first area (default “Haus”) is the existing system – it can be renamed but not deleted. Always-active sensors, homecoming observation and the “everyone left” reminder belong to it.",
+        "menu_options": {
+          "area_add": "Add area",
+          "area_edit": "Edit / rename area",
+          "area_delete": "Delete area",
+          "system": "← Back"
+        }
+      },
+      "area_edit": {
+        "title": "Edit area",
+        "data": {
+          "area": "Area"
+        }
+      },
+      "area_delete": {
+        "title": "Delete area",
+        "description": "An area can only be deleted when no alarm profile belongs to it.",
+        "data": {
+          "area": "Area"
+        }
+      },
+      "area_settings": {
+        "title": "Area: {area}",
+        "description": "The name appears on the panel (“Hauswacht <name>”) and in notifications.",
+        "data": {
+          "name": "Name",
+          "icon": "Icon"
+        }
       }
     },
     "error": {
@@ -517,14 +555,18 @@
       "rule_name_required": "Please enter a name.",
       "rule_name_taken": "A trigger rule with this name already exists.",
       "step_empty": "Please choose at least one sensor or sensor group.",
-      "rule_yaml_invalid": "Cannot be saved like this: {problem}"
+      "rule_yaml_invalid": "Cannot be saved like this: {problem}",
+      "area_has_profiles": "Alarm profiles still belong to this area – delete them or move them to another area first.",
+      "area_name_required": "Please enter a name.",
+      "area_name_taken": "Another area already has this name."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
       "no_zones": "No sensor groups have been created yet.",
       "no_profiles": "No profiles have been created yet.",
       "no_users": "There are no users yet.",
-      "no_rules": "There is no trigger rule yet."
+      "no_rules": "There is no trigger rule yet.",
+      "no_areas": "There is only the first area – it cannot be deleted."
     }
   },
   "selector": {
@@ -733,6 +775,11 @@
       "setting_auto_disarm_time": {
         "name": "Disarm automatically at"
       }
+    },
+    "alarm_control_panel": {
+      "all_panel": {
+        "name": "All areas"
+      }
     }
   },
   "exceptions": {
@@ -789,6 +836,9 @@
     },
     "action_not_allowed": {
       "message": "{user} is not allowed to do this."
+    },
+    "areas_failed": {
+      "message": "Not all areas could be switched – {failed}. Done: {done}."
     }
   },
   "services": {

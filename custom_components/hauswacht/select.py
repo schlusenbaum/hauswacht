@@ -18,7 +18,7 @@ from .core.profile_settings import SELECTS, read_select
 from .core.profiles import profile_infos
 from .entity import HauswachtEntity
 from .profile_setting_entities import ProfileSettingEntity
-from .runtime import HauswachtConfigEntry
+from .runtime import HauswachtConfigEntry, HauswachtRuntime
 
 
 async def async_setup_entry(
@@ -28,7 +28,7 @@ async def async_setup_entry(
 ) -> None:
     async_add_entities(
         [
-            HauswachtProfileSelect(entry),
+            *(HauswachtProfileSelect(entry, area) for area in entry.runtime_data.areas.values()),
             HauswachtEditProfileSelect(entry),
             *(ProfileSelect(entry, key) for key in SELECTS),
         ]
@@ -38,9 +38,9 @@ async def async_setup_entry(
 class HauswachtProfileSelect(HauswachtEntity, SelectEntity):
     _attr_translation_key = "profile"
 
-    def __init__(self, entry: HauswachtConfigEntry) -> None:
-        super().__init__(entry, "profile")
-        self._attr_options = [info.name for info in profile_infos(entry.options)]
+    def __init__(self, entry: HauswachtConfigEntry, runtime: HauswachtRuntime) -> None:
+        super().__init__(entry, "profile", runtime)
+        self._attr_options = [info.name for info in profile_infos(self.runtime.options)]
 
     @property
     def current_option(self) -> str | None:
@@ -53,11 +53,7 @@ class HauswachtProfileSelect(HauswachtEntity, SelectEntity):
         if profile_id is None:
             return None
         return next(
-            (
-                i.icon
-                for i in profile_infos(self.runtime.entry.options)
-                if i.profile_id == profile_id
-            ),
+            (i.icon for i in profile_infos(self.runtime.options) if i.profile_id == profile_id),
             None,
         )
 
