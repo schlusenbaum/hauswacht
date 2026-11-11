@@ -23,7 +23,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .const import DOMAIN
 from .core.users import Action
 from .entity import HauswachtEntity
-from .runtime import HauswachtConfigEntry
+from .runtime import HauswachtConfigEntry, HauswachtRuntime
 
 
 @dataclass(frozen=True)
@@ -44,14 +44,13 @@ async def async_setup_entry(
     entry: HauswachtConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities(
-        [
-            *(HauswachtArmButton(entry, desc) for desc in BUTTONS),
-            HauswachtDisarmButton(entry),
-            HauswachtEndAlarmButton(entry),
-            HomecomingReportButton(entry),
-        ]
-    )
+    entities: list[ButtonEntity] = []
+    for area in entry.runtime_data.areas.values():
+        entities.extend(HauswachtArmButton(entry, desc, area) for desc in BUTTONS)
+        entities.append(HauswachtDisarmButton(entry, area))
+        entities.append(HauswachtEndAlarmButton(entry, area))
+    entities.append(HomecomingReportButton(entry))
+    async_add_entities(entities)
 
 
 def _user_id(entity: ButtonEntity) -> str | None:
@@ -61,8 +60,10 @@ def _user_id(entity: ButtonEntity) -> str | None:
 
 
 class HauswachtArmButton(HauswachtEntity, ButtonEntity):
-    def __init__(self, entry: HauswachtConfigEntry, description: _ArmButton) -> None:
-        super().__init__(entry, description.key)
+    def __init__(
+        self, entry: HauswachtConfigEntry, description: _ArmButton, runtime: HauswachtRuntime
+    ) -> None:
+        super().__init__(entry, description.key, runtime)
         self._description = description
         self._attr_translation_key = description.key
         self._attr_icon = description.icon
@@ -82,8 +83,8 @@ class HauswachtDisarmButton(HauswachtEntity, ButtonEntity):
     _attr_translation_key = "disarm_now"
     _attr_icon = "mdi:shield-off-outline"
 
-    def __init__(self, entry: HauswachtConfigEntry) -> None:
-        super().__init__(entry, "disarm_now")
+    def __init__(self, entry: HauswachtConfigEntry, runtime: HauswachtRuntime) -> None:
+        super().__init__(entry, "disarm_now", runtime)
 
     @property
     def available(self) -> bool:
@@ -104,8 +105,8 @@ class HauswachtEndAlarmButton(HauswachtEntity, ButtonEntity):
     _attr_translation_key = "end_alarm"
     _attr_icon = "mdi:bell-off-outline"
 
-    def __init__(self, entry: HauswachtConfigEntry) -> None:
-        super().__init__(entry, "end_alarm")
+    def __init__(self, entry: HauswachtConfigEntry, runtime: HauswachtRuntime) -> None:
+        super().__init__(entry, "end_alarm", runtime)
 
     @property
     def available(self) -> bool:

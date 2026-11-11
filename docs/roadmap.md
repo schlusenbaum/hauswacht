@@ -25,12 +25,16 @@
 | **0.19.0** ✅ | Regeln: Abfolgen von Meldern (einer/alle/mindestens N, Zeit bis zum nächsten Schritt), Regelsammlung, pro Profil wählbar, Prüfung beim Speichern, Fortschritt in der Testkarte | nein |
 | **0.20.0** ✅ | Expertenmodus für Auslöseregeln: YAML-Editor mit Prüfung, Verschachtelung, Ausnahme „nicht, wenn vorher …“ (auch im Assistenten), Bedingungen (Uhrzeit, Person/Zone, Zustand, Zahlenwert, und/oder/nicht), Ergebnis „nur Benachrichtigung“ | nein |
 | **0.21.0** ✅ | Immer aktive Melder (unscharf: Benachrichtigung, optional Sirene), Scharf durch Schließen der Tür (optional, Beruhigungszeit) | nein |
-| 0.22.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
+| **0.22.0** ✅ | Bereiche: frei benannte, unabhängig scharf schaltbare Bereiche mit eigenem Bedienfeld plus „Alle Bereiche“; Benutzer je Bereich | nein |
 | 0.23.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, eigene Benachrichtigungstexte | – |
 
 ## Entscheidungen
+
+- **Bereiche (2026-11-11):** frei benannt, eine Zustandsmaschine je Bereich; Alarmprofile
+  gehören zu einem Bereich, Meldergruppen und Regeln sind gemeinsame Bausteine. Siehe
+  [ADR 0007](adr/0007-bereiche.md).
 
 - **Namen (2026-11-11):** „Zonen“ heißen „Meldergruppen“, „Regeln“ heißen „Auslöseregeln“;
   beide im Menüpunkt „Alarmauslösung“. Interne Schlüssel (`zones`, `rules`) bleiben.

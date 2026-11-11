@@ -14,7 +14,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entity import HauswachtEntity
 from .names import display_name
-from .runtime import HauswachtConfigEntry
+from .runtime import HauswachtConfigEntry, HauswachtRuntime
 
 
 async def async_setup_entry(
@@ -22,7 +22,9 @@ async def async_setup_entry(
     entry: HauswachtConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([HauswachtOpenSensorsBinarySensor(entry)])
+    async_add_entities(
+        HauswachtOpenSensorsBinarySensor(entry, area) for area in entry.runtime_data.areas.values()
+    )
 
 
 class HauswachtOpenSensorsBinarySensor(HauswachtEntity, BinarySensorEntity):
@@ -30,8 +32,8 @@ class HauswachtOpenSensorsBinarySensor(HauswachtEntity, BinarySensorEntity):
     _attr_device_class = BinarySensorDeviceClass.OPENING
     _platform_domain = "binary_sensor"
 
-    def __init__(self, entry: HauswachtConfigEntry) -> None:
-        super().__init__(entry, "open_sensors")
+    def __init__(self, entry: HauswachtConfigEntry, runtime: HauswachtRuntime) -> None:
+        super().__init__(entry, "open_sensors", runtime)
         self._keep_object_id("hauswacht_offene_sensoren", "hauswacht_open_sensors")
 
     def _open(self) -> list[str]:

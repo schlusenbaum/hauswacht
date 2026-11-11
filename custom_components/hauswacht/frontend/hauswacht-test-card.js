@@ -384,7 +384,8 @@ class HauswachtTestCard extends HTMLElement {
       const row = document.createElement("div");
       row.className = "rule";
       const name = document.createElement("span");
-      name.textContent = `${rule.name} → ${(this._t("ruleResult") || {})[rule.result] || rule.result}`;
+      const area = rule.area ? ` [${rule.area}]` : "";
+      name.textContent = `${rule.name}${area} → ${(this._t("ruleResult") || {})[rule.result] || rule.result}`;
       const state = document.createElement("span");
       if (rule.done > 0 && rule.deadline) {
         const left = Math.max(0, Math.ceil((Date.parse(rule.deadline) - Date.now()) / 1000));
@@ -473,6 +474,7 @@ class HauswachtTestCard extends HTMLElement {
       if (sensor.status === "in_rule" && Array.isArray(sensor.rules)) {
         statusText += " " + sensor.rules.join(", ");
       }
+      if (statusText && sensor.area) statusText += ` [${sensor.area}]`;
       item.status.textContent = statusText;
       item.status.style.display = statusText ? "" : "none";
       item.status.className =

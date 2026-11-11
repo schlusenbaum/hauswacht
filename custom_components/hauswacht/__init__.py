@@ -27,12 +27,18 @@ PLATFORMS: list[str] = [
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
+    from .core.areas import MAIN_AREA, parse_areas  # noqa: PLC0415
     from .runtime import HauswachtRuntime  # noqa: PLC0415
 
     runtime = HauswachtRuntime(hass, entry)
-    await runtime.async_start()
+    # Weitere Bereiche: je eine eigene Runtime, der Hauptbereich hält sie
+    for area_id in parse_areas(entry.options):
+        if area_id != MAIN_AREA:
+            runtime.areas[area_id] = HauswachtRuntime(hass, entry, area_id, main=runtime)
+    for area in runtime.areas.values():
+        await area.async_start()
+        entry.async_on_unload(area.async_stop)
     entry.runtime_data = runtime
-    entry.async_on_unload(runtime.async_stop)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     from homeassistant.loader import async_get_integration  # noqa: PLC0415

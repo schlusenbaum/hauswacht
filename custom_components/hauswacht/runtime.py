@@ -69,6 +69,7 @@ from .core.always_active import (
     parse_always_active,
     parse_arm_on_close,
 )
+from .core.areas import MAIN_AREA, area_options, parse_areas
 from .core.code_guard import (
     CodeGuardState,
     register_failure,
@@ -86,6 +87,7 @@ from .core.profiles import (
     find_profile,
     profile_behaviour,
     profile_info,
+    profile_infos,
     stale_after_seconds,
 )
 from .core.reactions import (
@@ -155,6 +157,7 @@ from .core.state_machine import (
 )
 from .core.users import (
     Action,
+    User,
     allowed,
     find_by_ha_user,
     has_codes,
@@ -217,29 +220,48 @@ def effect_payload(effect: Effect) -> dict[str, Any]:
 class HauswachtRuntime:
     """Hält den Zustand einer Hauswacht-Instanz und führt Effekte aus."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    def __init__(  # noqa: PLR0915
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        area_id: str = MAIN_AREA,
+        main: HauswachtRuntime | None = None,
+    ) -> None:
         self.hass = hass
         self.entry = entry
+        # Bereiche: jeder Bereich hat eine eigene Runtime; der Hauptbereich hält die übrigen
+        self.area_id = area_id
+        self.main: HauswachtRuntime = main or self
+        self.areas: dict[str, HauswachtRuntime] = {area_id: self} if main is None else {}
+        self.options: dict[str, Any] = area_options(entry.options, area_id)
         self.ctx = AlarmContext()
-        self.profiles = build_profiles(entry.options)
-        self.sirens = SirenExecutor(hass, entry.options)
+        self.profiles = build_profiles(self.options)
+        # Sirenen-Belegung über alle Bereiche: Sirene -> Bereiche, die sie gerade nutzen
+        self.siren_owners: dict[str, set[str]] = self.main.siren_owners if main else {}
+        self.sirens = SirenExecutor(hass, entry.options, owner=area_id, owners=self.siren_owners)
         self._code_guard = CodeGuardState()
         self._selected_profile: str | None = None
         self._edit_profile: str | None = None
         self.automation = AutomationRunner(self)
-        self.notifier = Notifier(hass, entry.options)
+        areas = parse_areas(entry.options)
+        self.notifier = Notifier(
+            hass, entry.options, label=areas[area_id].name if len(areas) > 1 else None
+        )
         self.reminder = ReminderRunner(self)
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
         self.stale_after = stale_after_seconds(entry.options)
+        # Funknetz/Gateways überwacht nur der Hauptbereich (sonst doppelte Meldungen)
         self.infrastructure: frozenset[str] = frozenset(
-            str(e) for e in entry.options.get(OPT_INFRASTRUCTURE, []) if isinstance(e, str)
+            str(e)
+            for e in entry.options.get(OPT_INFRASTRUCTURE, [])
+            if isinstance(e, str) and main is None
         )
         self._infra_faulty: frozenset[str] = frozenset()
         # Simulierte Sensorzustände (nur Testmodus, nur für Hauswacht, nie in Home Assistant)
-        self._simulated: dict[str, str] = {}
+        self._simulated: dict[str, str] = self.main._simulated if main else {}
         # Regeln ("Tür, dann Keller"): Sammlung, Auswertung für das scharfe Profil
-        self.rules: dict[str, Rule] = parse_rules(entry.options)
+        self.rules: dict[str, Rule] = parse_rules(self.options)
         self._engine = RuleEngine()
         self._partials: dict[str, Progress] = {}
         self._partial_timer: CALLBACK_TYPE | None = None
@@ -248,7 +270,7 @@ class HauswachtRuntime:
         # Allein auslösende Melder des scharfen Profils (Teilmenge von armed_sensors)
         self.single_sensors: frozenset[str] = frozenset()
         # Immer aktive Melder (auch unscharf)
-        self.always = parse_always_active(entry.options)
+        self.always = parse_always_active(self.options)
         self.always_sensors: frozenset[str] = frozenset()
         # Scharf durch Schließen der Tür (für die laufende Scharfschaltung)
         self._exit_doors: frozenset[str] = frozenset()
@@ -264,9 +286,10 @@ class HauswachtRuntime:
         self._unsub_registry: CALLBACK_TYPE | None = None
         self._subscribed: frozenset[str] = frozenset()
         self._listeners: list[Callable[[], None]] = []
-        self._store: Store[dict[str, Any]] = Store(
-            hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}"
-        )
+        store_key = f"{DOMAIN}.{entry.entry_id}"
+        if area_id != MAIN_AREA:
+            store_key += f".{area_id}"
+        self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, store_key)
         # Push-Knopf "Unscharf schalten": gilt nur für die laufende Scharfschaltung
         self.push_disarm = bool(entry.options.get(OPT_PUSH_DISARM, False))
         self._session: str | None = None
@@ -280,7 +303,7 @@ class HauswachtRuntime:
         self._via_push = False
         self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
-            hass, entry.entry_id, dict(entry.options), self.entry_doors, self._notify
+            hass, entry.entry_id, dict(self.options), self.entry_doors, self._notify
         )
 
     # --- Konfiguration -----------------------------------------------------
@@ -340,18 +363,28 @@ class HauswachtRuntime:
         return self.ctx.state is AlarmState.DISARMED
 
     @property
+    def all_disarmed(self) -> bool:
+        """Sind alle Bereiche unscharf?"""
+        return all(area.is_disarmed for area in self.main.areas.values())
+
+    def _all_profile_ids(self) -> list[str]:
+        """Alle Alarmprofile, über alle Bereiche (für "Profil bearbeiten")."""
+        return [info.profile_id for info in profile_infos(self.entry.options)]
+
+    @property
     def edit_profile(self) -> str | None:
         """Profil, dessen Einstellungen die Einstellungs-Entitäten zeigen und ändern."""
-        if self._edit_profile in self.profiles:
+        ids = self._all_profile_ids()
+        if self._edit_profile in ids:
             return self._edit_profile
-        return next(iter(self.profiles), None)
+        return next(iter(ids), None)
 
     @callback
     def select_edit_profile(self, profile_ref: str) -> None:
         profile_id = next(
             (
                 pid
-                for pid in self.profiles
+                for pid in self._all_profile_ids()
                 if pid == profile_ref or self.profile_name(pid) == profile_ref
             ),
             None,
@@ -368,7 +401,7 @@ class HauswachtRuntime:
 
     async def async_set_profile_setting(self, key: str, value: Any) -> None:
         """Eine Einstellung des bearbeiteten Profils ändern – nur im unscharfen Zustand."""
-        if self.ctx.state is not AlarmState.DISARMED:
+        if not self.all_disarmed:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="settings_require_disarmed"
             )
@@ -399,7 +432,7 @@ class HauswachtRuntime:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="select_requires_disarmed"
             )
-        profile_id = find_profile(self.entry.options, profile_ref)
+        profile_id = find_profile(self.options, profile_ref)
         if profile_id is None:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
@@ -441,7 +474,8 @@ class HauswachtRuntime:
         )
         self._unsub_push = self.hass.bus.async_listen(PUSH_ACTION_EVENT, self._on_push_action)
         await self.homecoming.async_start()
-        await self._async_check_pin_coverage()
+        if self.main is self:
+            await self._async_check_pin_coverage()
 
     @callback
     def async_stop(self) -> None:
@@ -480,7 +514,7 @@ class HauswachtRuntime:
         self, profile_ref: str, *, confirmed: bool = False, changed_by: str | None = None
     ) -> None:
         """Schaltet ein Profil scharf (Profil-ID oder Name)."""
-        profile_id = find_profile(self.entry.options, profile_ref)
+        profile_id = find_profile(self.options, profile_ref)
         profile = self.profiles.get(profile_id) if profile_id else None
         if profile_id is None or profile is None:
             raise ServiceValidationError(
@@ -599,7 +633,7 @@ class HauswachtRuntime:
         if not self.has_codes:
             return None
         now = time.monotonic()
-        locked = remaining_lock(self._code_guard, now)
+        locked = remaining_lock(self.main._code_guard, now)
         if locked:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
@@ -611,18 +645,18 @@ class HauswachtRuntime:
             match_pin, code, self.users, dt_util.utcnow().timestamp()
         )
         if match.duress:
-            self._code_guard = register_success(self._code_guard)
+            self.main._code_guard = register_success(self.main._code_guard)
             actor = users_label(match.duress)
             self._send_duress_alert(actor, action)
             return actor
         if match.users:
-            if not allowed(match.users, action):
+            if not allowed([u for u in match.users if self._in_area(u)], action):
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,
                     translation_key="action_not_allowed",
                     translation_placeholders={"user": users_label(match.users)},
                 )
-            self._code_guard = register_success(self._code_guard)
+            self.main._code_guard = register_success(self.main._code_guard)
             return users_label(match.users)
         if match.blocked:
             self.notifier.send_system(
@@ -630,8 +664,8 @@ class HauswachtRuntime:
                 "Ein gesperrter oder abgelaufener PIN wurde verwendet: "
                 f"{users_label(match.blocked)}.",
             )
-        result = register_failure(self._code_guard, now)
-        self._code_guard = result.state
+        result = register_failure(self.main._code_guard, now)
+        self.main._code_guard = result.state
         failures = result.state.failures
         self.hass.bus.async_fire(
             EVENT_HAUSWACHT,
@@ -647,12 +681,24 @@ class HauswachtRuntime:
             )
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
 
+    def _in_area(self, user: User) -> bool:
+        """Darf der Benutzer diesen Bereich bedienen? (leer = alle Bereiche)"""
+        return not user.areas or self.area_id in user.areas
+
+    @property
+    def area_name(self) -> str:
+        return parse_areas(self.entry.options)[self.area_id].name
+
     async def async_actor_for_user(self, user_id: str | None, action: Action) -> str | None:
         """Wer bedient ohne PIN (Dashboard-Knopf, Push)? Verknüpfter Benutzer mit Rechten,
         sonst der Name des Home-Assistant-Kontos (dann ist alles erlaubt, wie bisher)."""
         linked = find_by_ha_user(self.users, user_id)
         if linked is not None:
-            if not linked.valid_at(dt_util.utcnow().timestamp()) or not linked.may(action):
+            if (
+                not linked.valid_at(dt_util.utcnow().timestamp())
+                or not linked.may(action)
+                or not self._in_area(linked)
+            ):
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,
                     translation_key="action_not_allowed",
@@ -878,11 +924,19 @@ class HauswachtRuntime:
 
     @callback
     def set_test_mode(self, enabled: bool) -> None:
-        effects = self._dispatch(SetTestMode(enabled=enabled))
-        self._raise_for_rejection(effects)
+        """Testmodus gilt für alle Bereiche; umschalten nur, wenn alle unscharf sind."""
+        if self.main is not self:
+            self.main.set_test_mode(enabled)
+            return
+        for area in self.areas.values():
+            if area.ctx.state is not AlarmState.DISARMED:
+                area._raise_for_rejection(area._dispatch(SetTestMode(enabled=enabled)))
+        for area in self.areas.values():
+            area._raise_for_rejection(area._dispatch(SetTestMode(enabled=enabled)))
         if not self.ctx.test_mode and self._simulated:
             self._simulated.clear()  # ohne Testmodus gelten wieder nur echte Zustände
-            self._notify()
+            for area in self.areas.values():
+                area._notify()
 
     # --- Interna -----------------------------------------------------------
 
@@ -1257,7 +1311,18 @@ class HauswachtRuntime:
         return dt_util.utc_from_timestamp(until).isoformat() if until else None
 
     def rules_overview(self) -> list[dict[str, Any]]:
-        """Regeln des scharfen Profils mit Fortschritt (für die Testkarte)."""
+        """Regeln der scharfen Profile aller Bereiche mit Fortschritt (für die Testkarte)."""
+        if self.main is not self:
+            return self.main.rules_overview()
+        multiple = len(self.areas) > 1
+        rows: list[dict[str, Any]] = []
+        for area in self.areas.values():
+            for row in area._own_rules_overview():
+                row["area"] = area.area_name if multiple else None
+                rows.append(row)
+        return rows
+
+    def _own_rules_overview(self) -> list[dict[str, Any]]:
         rows = []
         for rule in self._engine.rules:
             progress = self._partials.get(rule.rule_id)
@@ -1289,12 +1354,19 @@ class HauswachtRuntime:
             return None
         return self._simulated.get(entity_id)
 
+    def _all_known(self) -> frozenset[str]:
+        """Sensoren aller Bereiche (für Simulation und Testkarte)."""
+        known: set[str] = set()
+        for area in self.main.areas.values():
+            known |= area.candidates | area.armed_sensors
+        return frozenset(known)
+
     def _require_simulation(self, entity_id: str) -> None:
         if not self.ctx.test_mode:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="simulation_requires_test_mode"
             )
-        if entity_id not in self.candidates and entity_id not in self.armed_sensors:
+        if entity_id not in self._all_known():
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="unknown_sensor",
@@ -1306,6 +1378,9 @@ class HauswachtRuntime:
         """Sensorzustand für Hauswacht simulieren ("on", "off", "unavailable") oder mit
         "real" auf den echten Wert zurücksetzen. Das Gerät und sein Zustand in Home
         Assistant bleiben unverändert; andere Automationen merken nichts davon."""
+        if self.main is not self:
+            self.main.simulate_state(entity_id, value)
+            return
         if value not in SIMULATION_VALUES:
             raise ServiceValidationError(f"Unbekannter Zustand: {value}")
         self._require_simulation(entity_id)
@@ -1322,18 +1397,23 @@ class HauswachtRuntime:
             EVENT_HAUSWACHT,
             {"type": "SensorSimulated", "sensor_key": entity_id, "state": value},
         )
-        if old == new:
-            self._notify()
-            return
         device_class = real.attributes.get("device_class") if real else None
-        self._handle_sensor_change(entity_id, old, new, device_class)
+        for area in self.areas.values():
+            if old != new and entity_id in area.candidates | area.armed_sensors:
+                area._handle_sensor_change(entity_id, old, new, device_class)
+            else:
+                area._notify()
 
     @callback
     def simulate_reset(self) -> None:
         """Alle simulierten Zustände auf die echten Werte zurücksetzen."""
+        if self.main is not self:
+            self.main.simulate_reset()
+            return
         if not self.ctx.test_mode:
             self._simulated.clear()
-            self._notify()
+            for area in self.areas.values():
+                area._notify()
             return
         for entity_id in list(self._simulated):
             self.simulate_state(entity_id, SIMULATION_REAL)
@@ -1341,9 +1421,22 @@ class HauswachtRuntime:
     def simulation_overview(self) -> list[dict[str, Any]]:
         """Alle Hauswacht-Sensoren mit echtem und simuliertem Zustand (für die Testkarte)."""
         rows: list[dict[str, Any]] = []
-        for entity_id in self.candidates | self.armed_sensors:
+        areas = list(self.main.areas.values())
+        for entity_id in self._all_known():
             state = self.hass.states.get(entity_id)
             device_class = state.attributes.get("device_class") if state else None
+            # Status aus dem Bereich, der mit dem Melder gerade am meisten tut
+            owner = next(
+                (
+                    a
+                    for a in areas
+                    if a._sensor_status(entity_id, device_class)
+                    not in ("disarmed", "not_monitored")
+                ),
+                self.main,
+            )
+            status = owner._sensor_status(entity_id, device_class)
+            idle = status in ("disarmed", "not_monitored")
             rows.append(
                 {
                     "entity_id": entity_id,
@@ -1352,8 +1445,9 @@ class HauswachtRuntime:
                     "role": sensor_role(entity_id, device_class, self.role_overrides).value,
                     "real": state.state if state else None,
                     "simulated": self.simulated(entity_id),
-                    "status": self._sensor_status(entity_id, device_class),
-                    "rules": self.rule_names(entity_id),
+                    "status": status,
+                    "rules": owner.rule_names(entity_id),
+                    "area": owner.area_name if len(areas) > 1 and not idle else None,
                 }
             )
         return sorted(rows, key=lambda r: str(r["name"]).casefold())
@@ -1383,12 +1477,20 @@ class HauswachtRuntime:
 
     @property
     def simulated_count(self) -> int:
-        return len(self._simulated) if self.ctx.test_mode else 0
+        return len(self._simulated) if self.main.ctx.test_mode else 0
 
     @callback
     def simulate_trigger(self, entity_id: str) -> None:
         """Simuliert das Auslösen eines konfigurierten Sensors. Nur im Testmodus erlaubt."""
+        if self.main is not self:
+            self.main.simulate_trigger(entity_id)
+            return
         self._require_simulation(entity_id)
+        for area in self.areas.values():
+            area._simulate_trigger(entity_id)
+
+    @callback
+    def _simulate_trigger(self, entity_id: str) -> None:
         state = self.hass.states.get(entity_id)
         device_class = state.attributes.get("device_class") if state else None
         role = sensor_role(entity_id, device_class, self.role_overrides)
@@ -1396,8 +1498,22 @@ class HauswachtRuntime:
             EVENT_HAUSWACHT, {"type": "SensorSimulated", "sensor_key": entity_id}
         )
         armed = self.ctx.state is not AlarmState.DISARMED
-        if role is SensorRole.TAMPER_24H or (armed and entity_id in self.armed_sensors):
+        if (role is SensorRole.TAMPER_24H and self._tamper_mine(entity_id)) or (
+            armed and entity_id in self.armed_sensors
+        ):
             self._sensor_triggered(entity_id, role)
+
+    def _tamper_mine(self, entity_id: str) -> bool:
+        """Manipulation meldet genau ein Bereich: der scharfe, der den Melder überwacht –
+        sonst der Hauptbereich (keine doppelten Meldungen bei mehreren Bereichen)."""
+        claimed = [
+            a
+            for a in self.main.areas.values()
+            if a.ctx.state is not AlarmState.DISARMED and entity_id in a.armed_sensors
+        ]
+        if claimed:
+            return self in claimed[:1]
+        return self.main is self
 
     def _readiness(self) -> Readiness:
         # Melder, die nur in Regeln vorkommen, blockieren das Scharfschalten nicht
@@ -1481,7 +1597,7 @@ class HauswachtRuntime:
             self._on_exit_door(new_state)
 
         relevant = (
-            role is SensorRole.TAMPER_24H
+            (role is SensorRole.TAMPER_24H and self._tamper_mine(entity_id))
             or entity_id in self.always_sensors
             or (armed and entity_id in self.armed_sensors)
         )
@@ -1516,7 +1632,7 @@ class HauswachtRuntime:
         self, open_sensors: frozenset[str], unavailable: frozenset[str]
     ) -> dict[str, str]:
         """Klartext für Meldungen: Namen mit Raum, gestörte Infrastruktur getrennt."""
-        faulty = unavailable & self.infrastructure
+        faulty = unavailable & self.main.infrastructure
 
         def names(ids: frozenset[str]) -> str:
             return ", ".join(sorted(display_name(self.hass, e) for e in ids)) or "-"

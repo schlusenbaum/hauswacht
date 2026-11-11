@@ -36,7 +36,7 @@ class ReminderRunner:
     def __init__(self, runtime: HauswachtRuntime) -> None:
         self.runtime = runtime
         self.hass = runtime.hass
-        options = runtime.entry.options
+        options = runtime.options
         persons = options.get(OPT_REMINDER_PERSONS, [])
         self.persons: tuple[str, ...] = (
             tuple(p for p in persons if isinstance(p, str)) if isinstance(persons, list) else ()

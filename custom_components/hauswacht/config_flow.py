@@ -43,6 +43,7 @@ from .const import (
     MASTER_USER_ID,
     MASTER_USER_NAME,
     NAME,
+    OPT_AREAS,
     OPT_BUTTONS_WITHOUT_PIN,
     OPT_CODE_ARM_REQUIRED,
     OPT_CRITICAL_ALERTS,
@@ -74,6 +75,8 @@ from .core.always_active import (
     parse_always_active,
     parse_arm_on_close,
 )
+from .core.areas import DEFAULT_ICON as DEFAULT_AREA_ICON
+from .core.areas import MAIN_AREA, multi_area, parse_areas, profile_area
 from .core.automation import (
     DEFAULT_AWAY_DELAY,
     MAX_AWAY_DELAY,
@@ -91,6 +94,7 @@ from .core.profiles import (
     MAX_STALE_HOURS,
     PANEL_MODE_NONE,
     PANEL_MODES,
+    ProfileInfo,
     profile_behaviour,
     profile_ids,
     profile_info,
@@ -133,7 +137,6 @@ from .core.sensors import (
 )
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
 from .core.state_machine import (
-    AlarmState,
     OpenSensorPolicy,
     SensorRole,
     UnavailableSensorPolicy,
@@ -215,6 +218,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._rule_id: str | None = None
         self._draft: dict[str, Any] | None = None
         self._draft_step = 0
+        self._area_id: str | None = None
 
     async def _save(self, options: dict[str, Any], back: str) -> ConfigFlowResult:
         """Sofort speichern und zurück ins Menü – so lassen sich mehrere Dinge nacheinander
@@ -269,7 +273,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         entry = self.config_entry
         if entry.state is not ConfigEntryState.LOADED:
             return True
-        return bool(entry.runtime_data.ctx.state is AlarmState.DISARMED)
+        # Alle Bereiche müssen unscharf sein (Optionen ändern lädt alles neu)
+        return bool(entry.runtime_data.all_disarmed)
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if not self._is_disarmed():
@@ -284,7 +289,120 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     async def async_step_system(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         return self._menu(
-            "system", ["users", "sensor_behaviour", "infrastructure", "homecoming", "init"]
+            "system",
+            ["areas", "users", "sensor_behaviour", "infrastructure", "homecoming", "init"],
+        )
+
+    # --- Bereiche ------------------------------------------------------------
+
+    async def async_step_areas(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self._menu("areas", ["area_add", "area_edit", "area_delete", "system"])
+
+    def _area_selector(
+        self, *, include_main: bool = True, multiple: bool = False
+    ) -> SelectSelector:
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=a.area_id, label=a.name)
+                    for a in parse_areas(self.config_entry.options).values()
+                    if include_main or a.area_id != MAIN_AREA
+                ],
+                multiple=multiple,
+                mode=SelectSelectorMode.LIST,
+            )
+        )
+
+    async def async_step_area_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._area_id = None
+        return await self.async_step_area_settings()
+
+    async def async_step_area_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._area_id = user_input["area"]
+            return await self.async_step_area_settings()
+        return self.async_show_form(
+            step_id="area_edit",
+            data_schema=vol.Schema({vol.Required("area"): self._area_selector()}),
+        )
+
+    async def async_step_area_delete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        if not multi_area(options):
+            return self.async_abort(reason="no_areas")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            area_id = user_input["area"]
+            used = [
+                i.name
+                for i in profile_infos(options)
+                if profile_area(options, i.profile_id) == area_id
+            ]
+            if used:
+                errors["area"] = "area_has_profiles"
+            else:
+                options[OPT_AREAS] = {
+                    k: v for k, v in options.get(OPT_AREAS, {}).items() if k != area_id
+                }
+                # Benutzer-Zuordnungen zum gelöschten Bereich entfernen
+                users = {k: dict(v) for k, v in options.get(OPT_USERS, {}).items()}
+                for data in users.values():
+                    if isinstance(data.get("areas"), list):
+                        data["areas"] = [a for a in data["areas"] if a != area_id]
+                options[OPT_USERS] = users
+                return await self._save(options, "areas")
+        return self.async_show_form(
+            step_id="area_delete",
+            data_schema=vol.Schema({vol.Required("area"): self._area_selector(include_main=False)}),
+            errors=errors,
+        )
+
+    async def async_step_area_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        areas = parse_areas(options)
+        area_id = getattr(self, "_area_id", None)
+        current = areas.get(area_id) if area_id else None
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            name = str(user_input.get("name") or "").strip()
+            if not name:
+                errors["name"] = "area_name_required"
+            elif any(
+                a.name.casefold() == name.casefold() for a in areas.values() if a.area_id != area_id
+            ):
+                errors["name"] = "area_name_taken"
+            else:
+                stored = {k: dict(v) for k, v in options.get(OPT_AREAS, {}).items()}
+                new_id = area_id or slugify(name, existing=[*stored.keys(), MAIN_AREA])
+                data = stored.get(new_id, {})
+                data.update({"name": name, "icon": user_input.get("icon") or DEFAULT_AREA_ICON})
+                stored[new_id] = data
+                options[OPT_AREAS] = stored
+                return await self._save(options, "areas")
+        source = user_input or {}
+        return self.async_show_form(
+            step_id="area_settings",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        "name", default=source.get("name", current.name if current else "")
+                    ): TextSelector(),
+                    vol.Required(
+                        "icon",
+                        default=source.get("icon", current.icon if current else DEFAULT_AREA_ICON),
+                    ): IconSelector(),
+                }
+            ),
+            errors=errors,
+            description_placeholders={"area": current.name if current else "–"},
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -360,12 +478,19 @@ class HauswachtOptionsFlow(OptionsFlow):
         return SelectSelector(
             SelectSelectorConfig(
                 options=[
-                    SelectOptionDict(value=i.profile_id, label=i.name)
+                    SelectOptionDict(value=i.profile_id, label=self._profile_label(i))
                     for i in profile_infos(self.config_entry.options)
                 ],
                 mode=SelectSelectorMode.LIST,
             )
         )
+
+    def _profile_label(self, info: ProfileInfo) -> str:
+        options = self.config_entry.options
+        if not multi_area(options):
+            return info.name
+        area = parse_areas(options)[profile_area(options, info.profile_id)]
+        return f"{info.name} ({area.name})"
 
     async def async_step_profile_add(
         self, user_input: dict[str, Any] | None = None
@@ -412,7 +537,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         elif any(i.name.casefold() == name.casefold() for i in others):
             errors["name"] = "profile_name_taken"
         mode = user_input.get("panel_mode", PANEL_MODE_NONE)
-        if mode != PANEL_MODE_NONE and any(i.panel_mode == mode for i in others):
+        area = user_input.get("area") or (
+            profile_area(options, self._profile_id) if self._profile_id else MAIN_AREA
+        )
+        same_area = [i for i in others if profile_area(options, i.profile_id) == area]
+        if mode != PANEL_MODE_NONE and any(i.panel_mode == mode for i in same_area):
             errors["panel_mode"] = "panel_mode_taken"
         return errors
 
@@ -431,6 +560,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                 profile_id = self._profile_id or slugify(name, existing=profiles.keys())
                 mode = user_input.get("panel_mode", PANEL_MODE_NONE)
                 data = dict(profiles.get(profile_id, {}))  # unbekannte Schlüssel behalten
+                if "area" in user_input:
+                    data["area"] = user_input["area"]
                 data.update(
                     {
                         "name": name,
@@ -471,11 +602,20 @@ class HauswachtOptionsFlow(OptionsFlow):
         behaviour = profile_behaviour(options, pid)
         reaction = parse_reaction(options, pid)
         source = user_input or {}
+        area_field: dict[Any, Any] = {}
+        if multi_area(options):
+            area_field[
+                vol.Required(
+                    "area",
+                    default=source.get("area", profile_area(options, pid) if pid else MAIN_AREA),
+                )
+            ] = self._area_selector()
         schema = vol.Schema(
             {
                 vol.Required("name", default=source.get("name", info.name if info else "")): (
                     TextSelector()
                 ),
+                **area_field,
                 vol.Required(
                     "icon", default=source.get("icon", info.icon if info else DEFAULT_ICON)
                 ): IconSelector(),
@@ -1383,6 +1523,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "valid_until": _to_iso(user_input.get("valid_until")),
                     }
                 )
+                if "areas" in user_input:
+                    data["areas"] = list(user_input.get("areas") or [])
                 if user_input.get("remove_pin"):
                     data.pop("pin_salt", None)
                     data.pop("pin_digest", None)
@@ -1550,8 +1692,17 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     "valid_until", description=_suggested_local(current.get("valid_until"))
                 ): DateTimeSelector(),
+                **self._user_area_field(current),
             }
         )
+
+    def _user_area_field(self, current: dict[str, Any]) -> dict[Any, Any]:
+        """Bereiche, die der Benutzer bedienen darf (nur bei mehreren Bereichen; leer = alle)."""
+        if not multi_area(self.config_entry.options):
+            return {}
+        stored = current.get("areas")
+        default = [a for a in stored if isinstance(a, str)] if isinstance(stored, list) else []
+        return {vol.Optional("areas", default=default): self._area_selector(multiple=True)}
 
 
 def _automation_schema(auto: AutoConfig) -> vol.Schema:

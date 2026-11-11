@@ -42,8 +42,19 @@ RETRY_STOP_INTERVAL = timedelta(seconds=60)
 
 
 class SirenExecutor:
-    def __init__(self, hass: HomeAssistant, options: Mapping[str, Any]) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        options: Mapping[str, Any],
+        *,
+        owner: str = "main",
+        owners: dict[str, set[str]] | None = None,
+    ) -> None:
         self.hass = hass
+        # Bereiche teilen Sirenen: Wer eine Sirene noch braucht, verhindert das Ausschalten
+        # durch einen anderen Bereich (gilt nur zwischen Bereichen, nie gegen die Brandsperre).
+        self.owner = owner
+        self.owners: dict[str, set[str]] = owners if owners is not None else {}
         self.sirens: tuple[str, ...] = tuple(
             dict.fromkeys(s for s in options.get(OPT_SIRENS, []) if isinstance(s, str))
         )
@@ -148,12 +159,20 @@ class SirenExecutor:
             self._send(command)
             self.activated.add(command.device_key)
             self.pending_stop.discard(command.device_key)
+            self.owners.setdefault(command.device_key, set()).add(self.owner)
         self._report("activate", decision)
         return decision
 
     @callback
     def stop(self, *, test_mode: bool) -> GuardDecision:
+        # Sirenen, die ein anderer Bereich noch braucht, nur freigeben, nicht ausschalten
+        shared = {key for key in self.activated if self.owners.get(key, set()) - {self.owner}}
+        for key in shared:
+            self.owners[key].discard(self.owner)
+            self.activated.discard(key)
         decision = decide_stop(self.guard_context(test_mode=test_mode))
+        for command in decision.commands:
+            self.owners.pop(command.device_key, None)
         for command in decision.commands:
             self._send(command)
             self.activated.discard(command.device_key)
