@@ -15,9 +15,8 @@
       "init": {
         "title": "Hauswacht options",
         "menu_options": {
-          "zones": "Zones – which sensors are monitored",
+          "triggering": "Alarm triggering",
           "profiles": "Alarm profiles",
-          "rules": "Rules – sequences of sensors",
           "sirens": "Alarm devices – sirens",
           "notifications": "Notifications",
           "system": "System settings",
@@ -43,7 +42,7 @@
           "name": "Name",
           "icon": "Icon",
           "panel_mode": "Alarm panel button",
-          "zones": "Zones that trigger alone",
+          "zones": "Sensor groups – each sensor triggers alone",
           "exit_delay": "Exit delay",
           "entry_delay": "Entry delay",
           "reaction_time": "Alarm reaction time",
@@ -57,7 +56,7 @@
           "silent": "Silent alarm (notifications only)",
           "notify": "Notify (alarm)",
           "automation": "Automation",
-          "rules": "Rules"
+          "rules": "Trigger rules"
         },
         "sections": {
           "automation": {
@@ -78,57 +77,57 @@
           }
         },
         "data_description": {
-          "zones": "Each sensor of these zones triggers on its own (door with entry delay, window instantly …). Open sensors of these zones prevent arming.",
-          "rules": "These rules apply in addition. Sensors that only appear in rules do not prevent arming; an open window only counts once it closes and opens again."
+          "zones": "Each sensor of these sensor groups triggers on its own (door with entry delay, window instantly …). Open sensors of these sensor groups prevent arming.",
+          "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again."
         }
       },
       "zones": {
-        "title": "Zones",
+        "title": "Sensor groups",
         "menu_options": {
-          "zone_add": "Add zone",
-          "zone_edit": "Edit zone",
-          "zone_delete": "Delete zone",
-          "init": "← Back"
+          "zone_add": "Add sensor group",
+          "zone_edit": "Edit sensor group",
+          "zone_delete": "Delete sensor group",
+          "triggering": "← Back"
         },
-        "description": "{saved}A **zone** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which zones are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** zone. Hauswacht only monitors sensors that are in a zone."
+        "description": "{saved}A **sensor group** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which sensor groups are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** sensor group. Hauswacht only monitors sensors that are in a sensor group."
       },
       "zone_add": {
-        "title": "Add zone",
-        "description": "Select all sensors that belong to this zone. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under \"Sensor roles\".\n\nEach sensor can only be in **one** zone.",
+        "title": "Add sensor group",
+        "description": "Select all sensors that belong to this sensor group. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under System settings → Sensor behaviour.\n\nEach sensor can only be in **one** sensor group.",
         "data": {
-          "name": "Zone name (e.g. Perimeter, Inside, Basement)",
-          "entities": "Sensors in this zone",
+          "name": "Sensor group name (e.g. Doors, Windows, Basement)",
+          "entities": "Sensors in this sensor group",
           "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the sensor group automatically."
         }
       },
       "zone_edit": {
-        "title": "Edit zone",
+        "title": "Edit sensor group",
         "data": {
-          "zone": "Zone"
+          "zone": "Sensor group"
         }
       },
       "zone_edit_settings": {
-        "title": "Zone {zone}",
-        "description": "Select all sensors that belong to this zone. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under \"Sensor roles\".\n\nEach sensor can only be in **one** zone.",
+        "title": "Sensor group {zone}",
+        "description": "Select all sensors that belong to this sensor group. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under System settings → Sensor behaviour.\n\nEach sensor can only be in **one** sensor group.",
         "data": {
-          "name": "Zone name (e.g. Perimeter, Inside, Basement)",
-          "entities": "Sensors in this zone",
+          "name": "Sensor group name (e.g. Doors, Windows, Basement)",
+          "entities": "Sensors in this sensor group",
           "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the zone automatically."
+          "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the sensor group automatically."
         }
       },
       "zone_delete": {
-        "title": "Delete zone",
-        "description": "The zone is also removed from all profiles.",
+        "title": "Delete sensor group",
+        "description": "The sensor group is also removed from all profiles.",
         "data": {
-          "zone": "Zone"
+          "zone": "Sensor group"
         }
       },
       "infrastructure": {
@@ -252,7 +251,7 @@
           },
           "event_unconfirmed": {
             "name": "Unconfirmed trigger",
-            "description": "A rule was started but not fulfilled in time (e.g. only the door) – there was no alarm. Default: off.",
+            "description": "A trigger rule was started but not fulfilled in time (e.g. only the door) – there was no alarm. Default: off.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -260,7 +259,7 @@
           },
           "event_unconfirmed_frequent": {
             "name": "Sensor often triggers alone",
-            "description": "The same sensor started a rule three times within an hour that was not fulfilled – a hint to check it. Default: off.",
+            "description": "The same sensor started a trigger rule three times within an hour that was not fulfilled – a hint to check it. Default: off.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -268,7 +267,7 @@
           },
           "event_arm_hint": {
             "name": "Hint when arming",
-            "description": "Open sensors that only appear in rules in this profile: they can only start their rule after closing and opening again (e.g. an open window). Default: on.",
+            "description": "Open sensors that only appear in trigger rules in this profile: they can only start their trigger rule after closing and opening again (e.g. an open window). Default: on.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -368,31 +367,31 @@
         }
       },
       "rules": {
-        "title": "Rules",
-        "description": "{saved}A **rule** triggers only on a **sequence** of sensors – e.g. “front door, then basement within 120 s”. The door alone or the basement alone then trigger nothing.\n\nHow a rule works:\n- It consists of **steps** that must happen **one after another**. Step 2 only counts once step 1 is fulfilled – and only within the time set at step 1.\n- In each step you pick sensors and decide when **this step** is fulfilled: one of them (OR), all of them in any order (AND) or at least N different ones.\n- When the last step is fulfilled, there is an alarm – immediately or after the entry delay.\n\nEach alarm profile chooses which rules apply. One fulfilled rule is enough.\n\n**Existing rules:**\n{rules}",
+        "title": "Trigger rules",
+        "description": "{saved}A **trigger rule** triggers only on a **sequence** of sensors – e.g. “front door, then basement within 120 s”. The door alone or the basement alone then trigger nothing.\n\nHow a trigger rule works:\n- It consists of **steps** that must happen **one after another**. Step 2 only counts once step 1 is fulfilled – and only within the time set at step 1.\n- In each step you pick sensors and decide when **this step** is fulfilled: one of them (OR), all of them in any order (AND) or at least N different ones.\n- When the last step is fulfilled, there is an alarm – immediately or after the entry delay.\n\nEach alarm profile chooses which trigger rules apply. One fulfilled trigger rule is enough.\n\n**Existing trigger rules:**\n{rules}",
         "menu_options": {
-          "rule_add": "Add rule",
-          "rule_edit": "Edit rule",
-          "rule_delete": "Delete rule",
-          "init": "← Back"
+          "rule_add": "Add trigger rule",
+          "rule_edit": "Edit trigger rule",
+          "rule_delete": "Delete trigger rule",
+          "triggering": "← Back"
         }
       },
       "rule_edit": {
-        "title": "Edit rule",
+        "title": "Edit trigger rule",
         "data": {
-          "rule": "Rule"
+          "rule": "Trigger rule"
         }
       },
       "rule_delete": {
-        "title": "Delete rule",
-        "description": "The rule is also removed from all alarm profiles.",
+        "title": "Delete trigger rule",
+        "description": "The trigger rule is also removed from all alarm profiles.",
         "data": {
-          "rule": "Rule"
+          "rule": "Trigger rule"
         }
       },
       "rule_meta": {
-        "title": "Rule: name and result",
-        "description": "Name the rule and decide what happens when all steps are fulfilled. You add the steps one by one afterwards.",
+        "title": "Trigger rule: name and result",
+        "description": "Name the trigger rule and decide what happens when all steps are fulfilled. You add the steps one by one afterwards.",
         "data": {
           "name": "Name",
           "result": "When all steps are fulfilled"
@@ -406,7 +405,7 @@
         "description": "**So far:** {rule_text}\n\nPick the sensors of this step and when **this step** is fulfilled. The setting only applies to this step. The next step only counts afterwards – that creates the order. Whatever may happen in any order belongs in **one** step with “all of them”.",
         "data": {
           "sensors": "Sensors",
-          "zones": "Zones (any sensor of the zone)",
+          "zones": "Sensor groups (any sensor of the group)",
           "mode": "This step is fulfilled when",
           "count": "Number N (only for “at least N”)",
           "within": "Time until the next step"
@@ -416,7 +415,7 @@
         }
       },
       "rule_overview": {
-        "title": "Rule “{name}”",
+        "title": "Trigger rule “{name}”",
         "description": "**{steps} step(s):** {rule_text}{problems}",
         "menu_options": {
           "rule_save": "Done – save",
@@ -431,6 +430,15 @@
         "title": "Edit a step",
         "data": {
           "step": "Step"
+        }
+      },
+      "triggering": {
+        "title": "Alarm triggering",
+        "description": "{saved}What triggers an alarm?\n\n- **Sensor groups** bundle sensors that belong together (e.g. doors, windows, basement).\n- **Trigger rules** only trigger on a sequence of sensors (e.g. “door, then basement”).\n\nIn each **alarm profile** you choose which sensor groups trigger alone and which trigger rules apply.",
+        "menu_options": {
+          "zones": "Sensor groups – which sensors belong together",
+          "rules": "Trigger rules – sequences of sensors",
+          "init": "← Back"
         }
       }
     },
@@ -447,17 +455,17 @@
       "duress_equals_pin": "Duress PIN and PIN must differ.",
       "pin_is_duress": "This PIN is already a duress PIN ({conflict}).",
       "duress_conflict": "This duress PIN is already in use ({conflict}).",
-      "zone_overlap": "These sensors are already in another zone: {conflicts}. A sensor can only be in one zone – remove it there or deselect it here.",
+      "zone_overlap": "These sensors are already in another sensor group: {conflicts}. A sensor can only be in one sensor group – remove it there or deselect it here.",
       "rule_name_required": "Please enter a name.",
-      "rule_name_taken": "A rule with this name already exists.",
-      "step_empty": "Please choose at least one sensor or zone."
+      "rule_name_taken": "A trigger rule with this name already exists.",
+      "step_empty": "Please choose at least one sensor or sensor group."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
-      "no_zones": "No zones have been created yet.",
+      "no_zones": "No sensor groups have been created yet.",
       "no_profiles": "No profiles have been created yet.",
       "no_users": "There are no users yet.",
-      "no_rules": "There is no rule yet."
+      "no_rules": "There is no trigger rule yet."
     }
   },
   "selector": {
@@ -576,7 +584,7 @@
     },
     "binary_sensor": {
       "open_sensors": {
-        "name": "Open sensors in zones",
+        "name": "Open sensors in sensor groups",
         "state": {
           "on": "Open",
           "off": "All closed"
@@ -687,13 +695,13 @@
       "message": "Test mode can only be changed while disarmed."
     },
     "profile_has_no_sensors": {
-      "message": "Profile {profile} does not monitor any sensors. Assign zones in the Hauswacht options first."
+      "message": "Profile {profile} does not monitor any sensors. Choose sensor groups or trigger rules in the alarm profile first."
     },
     "simulation_requires_test_mode": {
       "message": "Simulation is only possible while test mode is on."
     },
     "unknown_sensor": {
-      "message": "{sensor} is not part of any Hauswacht zone."
+      "message": "{sensor} is not part of any sensor group or trigger rule."
     },
     "code_locked": {
       "message": "Too many wrong PIN entries. Please wait {seconds} seconds."

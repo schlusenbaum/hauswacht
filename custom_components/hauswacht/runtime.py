@@ -1093,7 +1093,7 @@ class HauswachtRuntime:
         self.notifier.notify(
             NotifyEvent.UNCONFIRMED,
             "Hauswacht: unbestätigte Auslösung",
-            f"Regel „{name}“ nur teilweise erfüllt ({progress.done} von {progress.total} "
+            f"Auslöseregel „{name}“ nur teilweise erfüllt ({progress.done} von {progress.total} "
             f"Schritten, begonnen mit {first}) – kein Alarm.",
             test_mode=self.ctx.test_mode,
         )
@@ -1101,9 +1101,9 @@ class HauswachtRuntime:
             self.notifier.notify(
                 NotifyEvent.UNCONFIRMED_FREQUENT,
                 "Hauswacht: Melder löst häufig allein aus",
-                f"{first} hat innerhalb einer Stunde {FREQUENT_COUNT}-mal eine Regel begonnen, "
-                "die nicht erfüllt wurde. Bitte Melder prüfen (Empfindlichkeit, Ausrichtung, "
-                "Batterie).",
+                f"{first} hat innerhalb einer Stunde {FREQUENT_COUNT}-mal eine Auslöseregel "
+                "begonnen, die nicht erfüllt wurde. Bitte Melder prüfen "
+                "(Empfindlichkeit, Ausrichtung, Batterie).",
                 test_mode=self.ctx.test_mode,
             )
 
@@ -1511,14 +1511,15 @@ class HauswachtRuntime:
         open_sensors = self.open_rule_sensors()
         if not open_sensors or self.ctx.profile is None:
             return
-        lines = [
-            f"{display_name(self.hass, entity_id)} (Regel {', '.join(f'„{n}“' for n in names)})"
-            for entity_id, names in open_sensors.items()
-        ]
+        lines = []
+        for entity_id, names in open_sensors.items():
+            quoted = ", ".join(f"„{n}“" for n in names)
+            lines.append(f"{display_name(self.hass, entity_id)} (Auslöseregel {quoted})")
         message = (
             f"Profil {self.profile_name(self.ctx.profile.profile_id)} ist scharf. Offen: "
             + "; ".join(lines)
-            + ". Diese Melder können ihre Regeln erst auslösen, wenn sie zu und wieder auf gehen."
+            + ". Diese Melder können ihre Auslöseregeln erst auslösen, wenn sie zu und wieder "
+            "auf gehen."
         )
         self.hass.bus.async_fire(
             EVENT_HAUSWACHT, {"type": "OpenRuleSensors", "sensors": list(open_sensors)}
@@ -1616,7 +1617,7 @@ class HauswachtRuntime:
             reasons = sorted({b.reason.value for b in decision.blocked})
             message += " Gesperrte Sirenen (" + ", ".join(reasons) + ")."
         if self._fired_rule:
-            message += f" Regel: {self._fired_rule}."
+            message += f" Auslöseregel: {self._fired_rule}."
             self._fired_rule = None
         if reaction.silent:
             message += " Stiller Alarm."

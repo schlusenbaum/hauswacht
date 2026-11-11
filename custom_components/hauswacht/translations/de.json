@@ -15,9 +15,8 @@
       "init": {
         "title": "Hauswacht-Optionen",
         "menu_options": {
-          "zones": "Zonen – welche Sensoren überwacht werden",
+          "triggering": "Alarmauslösung",
           "profiles": "Alarmprofile",
-          "rules": "Regeln – Abfolgen von Meldern",
           "sirens": "Alarmgeber – Sirenen",
           "notifications": "Benachrichtigungen",
           "system": "Systemeinstellungen",
@@ -43,7 +42,7 @@
           "name": "Name",
           "icon": "Symbol",
           "panel_mode": "Knopf am Bedienfeld",
-          "zones": "Allein auslösende Zonen",
+          "zones": "Meldergruppen – jeder Melder löst allein aus",
           "exit_delay": "Ausgangsverzögerung",
           "entry_delay": "Eingangsverzögerung",
           "reaction_time": "Dauer der Alarmreaktion",
@@ -57,7 +56,7 @@
           "silent": "Stiller Alarm (nur Benachrichtigungen)",
           "notify": "Benachrichtigen (Alarm)",
           "automation": "Automatik",
-          "rules": "Regeln"
+          "rules": "Auslöseregeln"
         },
         "sections": {
           "automation": {
@@ -78,26 +77,26 @@
           }
         },
         "data_description": {
-          "zones": "Jeder Melder dieser Zonen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …). Offene Melder dieser Zonen verhindern das Scharfschalten.",
-          "rules": "Zusätzlich gelten diese Regeln. Melder, die nur in Regeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht."
+          "zones": "Jeder Melder dieser Meldergruppen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …). Offene Melder dieser Meldergruppen verhindern das Scharfschalten.",
+          "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht."
         }
       },
       "zones": {
-        "title": "Zonen",
+        "title": "Meldergruppen",
         "menu_options": {
-          "zone_add": "Zone anlegen",
-          "zone_edit": "Zone bearbeiten",
-          "zone_delete": "Zone löschen",
-          "init": "← Zurück"
+          "zone_add": "Meldergruppe anlegen",
+          "zone_edit": "Meldergruppe bearbeiten",
+          "zone_delete": "Meldergruppe löschen",
+          "triggering": "← Zurück"
         },
-        "description": "{saved}Eine **Zone** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außenhaut**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Zonen scharf sind: „Zuhause“ = nur Außenhaut, „Abwesend“ = Außenhaut und Innen.\n\nJeder Sensor gehört zu **genau einer** Zone. Nur Sensoren in einer Zone überwacht Hauswacht."
+        "description": "{saved}Eine **Meldergruppe** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außenhaut**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Meldergruppen scharf sind: „Zuhause“ = nur Außenhaut, „Abwesend“ = Außenhaut und Innen.\n\nJeder Sensor gehört zu **genau einer** Meldergruppe. Nur Sensoren in einer Meldergruppe überwacht Hauswacht."
       },
       "zone_add": {
-        "title": "Zone anlegen",
-        "description": "Wähle alle Sensoren, die zu dieser Zone gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter „Sensorrollen“.\n\nJeder Sensor kann nur in **einer** Zone sein.",
+        "title": "Meldergruppe anlegen",
+        "description": "Wähle alle Sensoren, die zu dieser Meldergruppe gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter Systemeinstellungen → Sensorverhalten.\n\nJeder Sensor kann nur in **einer** Meldergruppe sein.",
         "data": {
-          "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
-          "entities": "Sensoren dieser Zone",
+          "name": "Name der Meldergruppe (z. B. Türen, Fenster, Keller)",
+          "entities": "Sensoren dieser Meldergruppe",
           "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
         },
         "data_description": {
@@ -106,17 +105,17 @@
         }
       },
       "zone_edit": {
-        "title": "Zone bearbeiten",
+        "title": "Meldergruppe bearbeiten",
         "data": {
-          "zone": "Zone"
+          "zone": "Meldergruppe"
         }
       },
       "zone_edit_settings": {
-        "title": "Zone {zone}",
-        "description": "Wähle alle Sensoren, die zu dieser Zone gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter „Sensorrollen“.\n\nJeder Sensor kann nur in **einer** Zone sein.",
+        "title": "Meldergruppe {zone}",
+        "description": "Wähle alle Sensoren, die zu dieser Meldergruppe gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter Systemeinstellungen → Sensorverhalten.\n\nJeder Sensor kann nur in **einer** Meldergruppe sein.",
         "data": {
-          "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
-          "entities": "Sensoren dieser Zone",
+          "name": "Name der Meldergruppe (z. B. Türen, Fenster, Keller)",
+          "entities": "Sensoren dieser Meldergruppe",
           "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
         },
         "data_description": {
@@ -125,10 +124,10 @@
         }
       },
       "zone_delete": {
-        "title": "Zone löschen",
-        "description": "Die Zone wird auch aus allen Profilen entfernt.",
+        "title": "Meldergruppe löschen",
+        "description": "Die Meldergruppe wird auch aus allen Profilen entfernt.",
         "data": {
-          "zone": "Zone"
+          "zone": "Meldergruppe"
         }
       },
       "infrastructure": {
@@ -252,7 +251,7 @@
           },
           "event_unconfirmed": {
             "name": "Unbestätigte Auslösung",
-            "description": "Eine Regel wurde begonnen, aber nicht rechtzeitig erfüllt (z. B. nur die Tür) – es gab keinen Alarm. Standard: aus.",
+            "description": "Eine Auslöseregel wurde begonnen, aber nicht rechtzeitig erfüllt (z. B. nur die Tür) – es gab keinen Alarm. Standard: aus.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -260,7 +259,7 @@
           },
           "event_unconfirmed_frequent": {
             "name": "Melder löst häufig allein aus",
-            "description": "Derselbe Melder hat innerhalb einer Stunde dreimal eine Regel begonnen, die nicht erfüllt wurde – Hinweis, ihn zu prüfen. Standard: aus.",
+            "description": "Derselbe Melder hat innerhalb einer Stunde dreimal eine Auslöseregel begonnen, die nicht erfüllt wurde – Hinweis, ihn zu prüfen. Standard: aus.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -268,7 +267,7 @@
           },
           "event_arm_hint": {
             "name": "Hinweis beim Scharfschalten",
-            "description": "Offene Melder, die im Profil nur in Regeln vorkommen: Sie können ihre Regel erst auslösen, wenn sie zu und wieder auf gehen (z. B. ein offenes Fenster). Standard: an.",
+            "description": "Offene Melder, die im Profil nur in Auslöseregeln vorkommen: Sie können ihre Auslöseregel erst auslösen, wenn sie zu und wieder auf gehen (z. B. ein offenes Fenster). Standard: an.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -368,31 +367,31 @@
         }
       },
       "rules": {
-        "title": "Regeln",
-        "description": "{saved}Eine **Regel** löst erst bei einer **Abfolge** von Meldern aus – z. B. „Haustür, dann innerhalb von 120 s Keller“. Nur die Tür oder nur der Keller lösen dann nichts aus.\n\nSo ist eine Regel aufgebaut:\n- Sie besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt erst, wenn Schritt 1 erfüllt ist – und nur innerhalb der Zeit, die bei Schritt 1 steht.\n- In jedem Schritt wählst du Melder und legst fest, wann **dieser Schritt** erfüllt ist: einer davon (ODER), alle davon in beliebiger Reihenfolge (UND) oder mindestens N verschiedene.\n- Ist der letzte Schritt erfüllt, gibt es Alarm – sofort oder nach der Eingangsverzögerung.\n\nIn jedem Alarmprofil wählst du, welche Regeln gelten. Es reicht, wenn eine erfüllt ist.\n\n**Vorhandene Regeln:**\n{rules}",
+        "title": "Auslöseregeln",
+        "description": "{saved}Eine **Auslöseregel** löst erst bei einer **Abfolge** von Meldern aus – z. B. „Haustür, dann innerhalb von 120 s Keller“. Nur die Tür oder nur der Keller lösen dann nichts aus.\n\nSo ist eine Auslöseregel aufgebaut:\n- Sie besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt erst, wenn Schritt 1 erfüllt ist – und nur innerhalb der Zeit, die bei Schritt 1 steht.\n- In jedem Schritt wählst du Melder und legst fest, wann **dieser Schritt** erfüllt ist: einer davon (ODER), alle davon in beliebiger Reihenfolge (UND) oder mindestens N verschiedene.\n- Ist der letzte Schritt erfüllt, gibt es Alarm – sofort oder nach der Eingangsverzögerung.\n\nIn jedem Alarmprofil wählst du, welche Auslöseregeln gelten. Es reicht, wenn eine erfüllt ist.\n\n**Vorhandene Auslöseregeln:**\n{rules}",
         "menu_options": {
-          "rule_add": "Regel anlegen",
-          "rule_edit": "Regel bearbeiten",
-          "rule_delete": "Regel löschen",
-          "init": "← Zurück"
+          "rule_add": "Auslöseregel anlegen",
+          "rule_edit": "Auslöseregel bearbeiten",
+          "rule_delete": "Auslöseregel löschen",
+          "triggering": "← Zurück"
         }
       },
       "rule_edit": {
-        "title": "Regel bearbeiten",
+        "title": "Auslöseregel bearbeiten",
         "data": {
-          "rule": "Regel"
+          "rule": "Auslöseregel"
         }
       },
       "rule_delete": {
-        "title": "Regel löschen",
-        "description": "Die Regel wird auch aus allen Alarmprofilen entfernt.",
+        "title": "Auslöseregel löschen",
+        "description": "Die Auslöseregel wird auch aus allen Alarmprofilen entfernt.",
         "data": {
-          "rule": "Regel"
+          "rule": "Auslöseregel"
         }
       },
       "rule_meta": {
-        "title": "Regel: Name und Ergebnis",
-        "description": "Gib der Regel einen Namen und lege fest, was passiert, wenn alle Schritte erfüllt sind. Die Schritte legst du danach einzeln an.",
+        "title": "Auslöseregel: Name und Ergebnis",
+        "description": "Gib der Auslöseregel einen Namen und lege fest, was passiert, wenn alle Schritte erfüllt sind. Die Schritte legst du danach einzeln an.",
         "data": {
           "name": "Name",
           "result": "Wenn alle Schritte erfüllt sind"
@@ -406,7 +405,7 @@
         "description": "**Bisher:** {rule_text}\n\nWähle die Melder dieses Schritts und wann **dieser Schritt** erfüllt ist. Die Einstellung gilt nur für diesen Schritt. Der nächste Schritt zählt erst danach – so entsteht die Reihenfolge. Was in beliebiger Reihenfolge passieren darf, gehört in **einen** Schritt mit „alle davon“.",
         "data": {
           "sensors": "Sensoren",
-          "zones": "Zonen (irgendein Melder der Zone)",
+          "zones": "Meldergruppen (irgendein Melder der Gruppe)",
           "mode": "Dieser Schritt ist erfüllt, wenn",
           "count": "Anzahl N (nur bei „mindestens N“)",
           "within": "Zeit bis zum nächsten Schritt"
@@ -416,7 +415,7 @@
         }
       },
       "rule_overview": {
-        "title": "Regel „{name}“",
+        "title": "Auslöseregel „{name}“",
         "description": "**{steps} Schritt(e):** {rule_text}{problems}",
         "menu_options": {
           "rule_save": "Fertig – speichern",
@@ -431,6 +430,15 @@
         "title": "Schritt bearbeiten",
         "data": {
           "step": "Schritt"
+        }
+      },
+      "triggering": {
+        "title": "Alarmauslösung",
+        "description": "{saved}Was löst Alarm aus?\n\n- **Meldergruppen** fassen Melder zusammen, die zusammengehören (z. B. Türen, Fenster, Keller).\n- **Auslöseregeln** lösen erst bei einer Abfolge von Meldern aus (z. B. „Tür, dann Keller“).\n\nIn jedem **Alarmprofil** wählst du, welche Meldergruppen allein auslösen und welche Auslöseregeln gelten.",
+        "menu_options": {
+          "zones": "Meldergruppen – welche Melder zusammengehören",
+          "rules": "Auslöseregeln – Abfolgen von Meldern",
+          "init": "← Zurück"
         }
       }
     },
@@ -447,17 +455,17 @@
       "duress_equals_pin": "Bedrohungs-PIN und PIN dürfen nicht gleich sein.",
       "pin_is_duress": "Dieser PIN ist bereits ein Bedrohungs-PIN ({conflict}).",
       "duress_conflict": "Dieser Bedrohungs-PIN ist schon vergeben ({conflict}).",
-      "zone_overlap": "Diese Sensoren sind schon in einer anderen Zone: {conflicts}. Ein Sensor kann nur in einer Zone sein – bitte dort entfernen oder hier abwählen.",
+      "zone_overlap": "Diese Sensoren sind schon in einer anderen Meldergruppe: {conflicts}. Ein Sensor kann nur in einer Meldergruppe sein – bitte dort entfernen oder hier abwählen.",
       "rule_name_required": "Bitte einen Namen eingeben.",
-      "rule_name_taken": "Eine Regel mit diesem Namen gibt es schon.",
-      "step_empty": "Bitte mindestens einen Sensor oder eine Zone wählen."
+      "rule_name_taken": "Eine Auslöseregel mit diesem Namen gibt es schon.",
+      "step_empty": "Bitte mindestens einen Sensor oder eine Meldergruppe wählen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
-      "no_zones": "Es wurden noch keine Zonen angelegt.",
+      "no_zones": "Es wurden noch keine Meldergruppen angelegt.",
       "no_profiles": "Es wurden noch keine Profile angelegt.",
       "no_users": "Es gibt noch keine Benutzer.",
-      "no_rules": "Es gibt noch keine Regel."
+      "no_rules": "Es gibt noch keine Auslöseregel."
     }
   },
   "selector": {
@@ -576,7 +584,7 @@
     },
     "binary_sensor": {
       "open_sensors": {
-        "name": "Offene Sensoren in den Zonen",
+        "name": "Offene Sensoren in den Meldergruppen",
         "state": {
           "on": "Offen",
           "off": "Alles zu"
@@ -687,13 +695,13 @@
       "message": "Der Testmodus kann nur im unscharfen Zustand umgeschaltet werden."
     },
     "profile_has_no_sensors": {
-      "message": "Profil {profile} überwacht keine Sensoren. Bitte zuerst in den Hauswacht-Optionen Zonen zuordnen."
+      "message": "Profil {profile} überwacht keine Sensoren. Bitte zuerst im Alarmprofil Meldergruppen oder Auslöseregeln wählen."
     },
     "simulation_requires_test_mode": {
       "message": "Simulation ist nur im Testmodus möglich."
     },
     "unknown_sensor": {
-      "message": "{sensor} gehört zu keiner Hauswacht-Zone."
+      "message": "{sensor} gehört zu keiner Meldergruppe und keiner Auslöseregel."
     },
     "code_locked": {
       "message": "Zu viele falsche PIN-Eingaben. Bitte {seconds} Sekunden warten."

@@ -32,6 +32,9 @@
 
 ## Entscheidungen
 
+- **Namen (2026-11-11):** „Zonen“ heißen „Meldergruppen“, „Regeln“ heißen „Auslöseregeln“;
+  beide im Menüpunkt „Alarmauslösung“. Interne Schlüssel (`zones`, `rules`) bleiben.
+
 - **Regeln (2026-11-11):** Statt Zonen-Bestätigung eine Regelsammlung mit Abfolgen von
   Meldern; Profile wählen Regeln aus. Einfacher Modus (Formular) in 0.19, Expertenmodus (YAML)
   in 0.20 – beide auf demselben Regel-Kern. Regeln sind ODER-verknüpft und können sich nicht

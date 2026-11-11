@@ -286,6 +286,9 @@ async def test_options_flow_add_zone_and_assign(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "triggering"}
+    )
+    flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "zones"}
     )
     flow = await hass.config_entries.options.async_configure(
@@ -314,6 +317,9 @@ async def test_options_flow_edit_zone_keeps_own_sensors(hass: HomeAssistant) -> 
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "triggering"}
+    )
+    flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "zones"}
     )
     flow = await hass.config_entries.options.async_configure(
@@ -334,6 +340,9 @@ async def test_options_flow_delete_zone_removes_it_from_profiles(hass: HomeAssis
     entry = make_entry()
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "triggering"}
+    )
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "zones"}
     )
@@ -443,9 +452,8 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     assert flow["menu_options"] == [
-        "zones",
+        "triggering",
         "profiles",
-        "rules",
         "sirens",
         "notifications",
         "system",
@@ -465,6 +473,20 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
         flow["flow_id"], {"next_step_id": "users"}
     )
     assert "code" in flow["menu_options"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "init"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "triggering"}
+    )
+    assert flow["menu_options"] == ["zones", "rules", "init"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "rules"}
+    )
+    assert flow["menu_options"][-1] == "triggering"
 
 
 async def test_sensor_behaviour_keeps_roles_without_entity(hass: HomeAssistant) -> None:
