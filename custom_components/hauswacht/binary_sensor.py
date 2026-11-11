@@ -28,9 +28,11 @@ async def async_setup_entry(
 class HauswachtOpenSensorsBinarySensor(HauswachtEntity, BinarySensorEntity):
     _attr_translation_key = "open_sensors"
     _attr_device_class = BinarySensorDeviceClass.OPENING
+    _platform_domain = "binary_sensor"
 
     def __init__(self, entry: HauswachtConfigEntry) -> None:
         super().__init__(entry, "open_sensors")
+        self._keep_object_id("hauswacht_offene_sensoren", "hauswacht_open_sensors")
 
     def _open(self) -> list[str]:
         readiness = self.runtime.readiness_for(self.runtime.candidates)

@@ -460,12 +460,17 @@
         "name": "Heimkehr-Beobachtung"
       },
       "simulation": {
-        "name": "Simulierte Sensoren"
+        "name": "Testkarte: simulierte Sensoren",
+        "unit_of_measurement": "Sensoren"
       }
     },
     "binary_sensor": {
       "open_sensors": {
-        "name": "Offene Sensoren"
+        "name": "Offene Sensoren in den Zonen",
+        "state": {
+          "on": "Offen",
+          "off": "Alles zu"
+        }
       }
     },
     "select": {

@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.6] - 2026-11-11
+
+### Geändert
+- „Offene Sensoren“ heißt „Offene Sensoren in den Zonen“ und zeigt „Offen“ / „Alles zu“.
+- „Simulierte Sensoren“ heißt „Testkarte: simulierte Sensoren“, zählt in „Sensoren“ und ist bei
+  Neuinstallationen standardmäßig ausgeblendet (die Testkarte funktioniert trotzdem).
+- Die Entitäts-IDs bleiben unverändert.
+
+### Hinzugefügt
+- Link zur Anleitung auf der Geräteseite von Hauswacht.
+
 ## [0.17.5] - 2026-11-11
 
 ### Geändert

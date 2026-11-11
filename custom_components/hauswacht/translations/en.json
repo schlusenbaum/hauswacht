@@ -460,12 +460,17 @@
         "name": "Homecoming observation"
       },
       "simulation": {
-        "name": "Simulated sensors"
+        "name": "Test card: simulated sensors",
+        "unit_of_measurement": "sensors"
       }
     },
     "binary_sensor": {
       "open_sensors": {
-        "name": "Open sensors"
+        "name": "Open sensors in zones",
+        "state": {
+          "on": "Open",
+          "off": "All closed"
+        }
       }
     },
     "select": {
