@@ -251,8 +251,11 @@ class HauswachtRuntime:
         self.zones = parse_zones(entry.options)
         self.role_overrides = parse_role_overrides(entry.options)
         self.stale_after = stale_after_seconds(entry.options)
+        # Funknetz/Gateways überwacht nur der Hauptbereich (sonst doppelte Meldungen)
         self.infrastructure: frozenset[str] = frozenset(
-            str(e) for e in entry.options.get(OPT_INFRASTRUCTURE, []) if isinstance(e, str)
+            str(e)
+            for e in entry.options.get(OPT_INFRASTRUCTURE, [])
+            if isinstance(e, str) and main is None
         )
         self._infra_faulty: frozenset[str] = frozenset()
         # Simulierte Sensorzustände (nur Testmodus, nur für Hauswacht, nie in Home Assistant)
@@ -1629,7 +1632,7 @@ class HauswachtRuntime:
         self, open_sensors: frozenset[str], unavailable: frozenset[str]
     ) -> dict[str, str]:
         """Klartext für Meldungen: Namen mit Raum, gestörte Infrastruktur getrennt."""
-        faulty = unavailable & self.infrastructure
+        faulty = unavailable & self.main.infrastructure
 
         def names(ids: frozenset[str]) -> str:
             return ", ".join(sorted(display_name(self.hass, e) for e in ids)) or "-"

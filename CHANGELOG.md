@@ -22,6 +22,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - Bedienfeld-Knöpfe sind nur noch **je Bereich** eindeutig.
 - Optionen und Profil-Einstellungen lassen sich nur ändern, wenn alle Bereiche unscharf sind.
 - Ohne weitere Bereiche bleibt alles wie bisher (gleiche Entitäts-IDs, keine Migration nötig).
+- Funknetz- und Gateway-Überwachung meldet nur einmal (im ersten Bereich).
 
 ## [0.21.0] - 2026-11-11
 
