@@ -26,6 +26,7 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    ObjectSelector,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -93,21 +94,28 @@ from .core.profiles import (
 from .core.reactions import parse_reaction
 from .core.rules import DEFAULT_WITHIN as RULE_DEFAULT_WITHIN
 from .core.rules import MAX_STEPS as RULE_MAX_STEPS
+from .core.rules import MAX_UNLESS as RULE_MAX_UNLESS
 from .core.rules import MAX_WITHIN as RULE_MAX_WITHIN
 from .core.rules import (
     Finding,
     Rule,
+    RuleError,
     RuleResult,
-    Step,
     StepMode,
     describe_rule,
     describe_step,
+    from_editable,
+    parse_rule,
     parse_rules,
     parse_step,
     profile_findings,
     profile_rule_ids,
-    rule_members,
+    rule_to_data,
+    step_form,
+    step_from_form,
+    to_editable,
     validate_rule,
+    wizard_editable,
 )
 from .core.sensors import (
     Zone,
@@ -139,6 +147,11 @@ FINDING_TEXTS_DE = {
     "rule_single_step_any": "Auslöseregel „{rule}“ hat nur einen Schritt „einer davon“ – das ist "
     "dasselbe wie „allein auslösend“.",
     "rule_contained": "Auslöseregel „{rule}“ bewirkt nichts – „{detail}“ löst immer vorher aus.",
+    "rule_unless_empty": "„Nicht, wenn vorher …“ hat keine Melder.",
+    "rule_unless_overlaps": "Auslöseregel „{rule}“: „Nicht, wenn vorher …“ enthält Melder aus "
+    "Schritt 1 – ein zweites Auslösen kann die Regel selbst sperren.",
+    "rule_unless_long": "Auslöseregel „{rule}“: „Nicht, wenn vorher …“ wirkt sehr lange "
+    "({detail} s).",
 }
 FINDING_TEXTS_EN = {
     "rule_no_steps": "Trigger rule “{rule}” has no step with sensors.",
@@ -150,6 +163,10 @@ FINDING_TEXTS_EN = {
     "rule_single_step_any": "Trigger rule “{rule}” has only one “any of” step – same as "
     "“triggers alone”.",
     "rule_contained": "Trigger rule “{rule}” has no effect – “{detail}” always triggers first.",
+    "rule_unless_empty": "“Not if before …” has no sensors.",
+    "rule_unless_overlaps": "Trigger rule “{rule}”: “not if before …” contains sensors of step 1 – "
+    "a second trigger can block the rule itself.",
+    "rule_unless_long": "Trigger rule “{rule}”: “not if before …” lasts very long ({detail} s).",
 }
 SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
@@ -227,10 +244,10 @@ class HauswachtOptionsFlow(OptionsFlow):
         rules = parse_rules(options)
         chosen = [rules[r] for r in profile_rule_ids(options, profile_id) if r in rules]
         single = resolve_zones(profile_behaviour(options, profile_id).zones, zones, labels)
-        members = {r.rule_id: rule_members(r, zones, labels) for r in chosen}
         name = profile_info(options, profile_id).name
         return [
-            f"{name}: {self._finding_text(f)}" for f in profile_findings(single, chosen, members)
+            f"{name}: {self._finding_text(f)}"
+            for f in profile_findings(single, chosen, zones, labels)
         ]
 
     def _menu(self, step_id: str, menu_options: list[str]) -> ConfigFlowResult:
@@ -529,7 +546,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         saved, self._saved = self._saved, False
         return self.async_show_menu(
             step_id="rules",
-            menu_options=["rule_add", "rule_edit", "rule_delete", "triggering"],
+            menu_options=["rule_add", "rule_yaml_add", "rule_edit", "rule_delete", "triggering"],
             description_placeholders={
                 "saved": self._saved_text() if saved else "",
                 "rules": self._rules_list_text(),
@@ -562,11 +579,19 @@ class HauswachtOptionsFlow(OptionsFlow):
         parsed = parse_rules({"rules": {"entwurf": draft}})
         return parsed.get("entwurf") or Rule(rule_id="entwurf", name="", steps=())
 
+    def _zone_name(self, zone_id: str) -> str:
+        zones = parse_zones(self.config_entry.options)
+        return zones[zone_id].name if zone_id in zones else zone_id
+
     def _rules_list_text(self) -> str:
         rules = parse_rules(self.config_entry.options)
         if not rules:
             return "–"
         return "\n".join(f"- **{r.name}:** {self._rule_text(r)}" for r in rules.values())
+
+    def _problems(self, rule: Rule) -> list[Finding]:
+        options = self.config_entry.options
+        return validate_rule(rule, parse_zones(options), entities_by_label(self.hass))
 
     async def async_step_rule_add(
         self, user_input: dict[str, Any] | None = None
@@ -574,6 +599,17 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._rule_id = None
         self._draft = {"name": "", "result": RuleResult.ALARM.value, "steps": []}
         return await self.async_step_rule_meta()
+
+    async def async_step_rule_yaml_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._rule_id = None
+        self._draft = {
+            "name": "",
+            "result": RuleResult.ALARM.value,
+            "steps": [{"any": [], "within": RULE_DEFAULT_WITHIN}],
+        }
+        return await self.async_step_rule_yaml()
 
     async def async_step_rule_edit(
         self, user_input: dict[str, Any] | None = None
@@ -584,6 +620,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             self._rule_id = user_input["rule"]
             self._draft = copy.deepcopy(dict(stored[self._rule_id]))
+            if not wizard_editable(self._draft_rule()):
+                return await self.async_step_rule_yaml()
             return await self.async_step_rule_overview()
         return self.async_show_form(
             step_id="rule_edit",
@@ -630,22 +668,18 @@ class HauswachtOptionsFlow(OptionsFlow):
         index = self._draft_step
         errors: dict[str, str] = {}
         if user_input is not None:
-            data = {
-                "sensors": list(user_input.get("sensors") or []),
-                "zones": [z for z in user_input.get("zones") or [] if z in zones],
-                "mode": user_input.get("mode", StepMode.ANY.value),
-                "count": int(user_input.get("count") or 2),
-                "within": int(user_input.get("within") or RULE_DEFAULT_WITHIN),
-            }
-            if not data["sensors"] and not data["zones"]:
+            form = dict(user_input)
+            form["zones"] = [z for z in user_input.get("zones") or [] if z in zones]
+            if not form.get("sensors") and not form["zones"]:
                 errors["base"] = "step_empty"
             else:
+                data = step_from_form(form)
                 if index < len(steps):
                     steps[index] = data
                 else:
                     steps.append(data)
                 return await self.async_step_rule_overview()
-        current = parse_step(steps[index]) if index < len(steps) else Step()
+        current = step_form(parse_step(steps[index])) if index < len(steps) else None
         return self.async_show_form(
             step_id="rule_step",
             data_schema=self._step_schema(current, zones),
@@ -656,6 +690,91 @@ class HauswachtOptionsFlow(OptionsFlow):
             },
         )
 
+    async def async_step_rule_unless(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Assistent: "Nicht, wenn vorher …" (einer der Melder in den X s vor Schritt 1)."""
+        assert self._draft is not None
+        zones = parse_zones(self.config_entry.options)
+        rule = self._draft_rule()
+        if user_input is not None:
+            sensors = list(user_input.get("sensors") or [])
+            groups = [z for z in user_input.get("zones") or [] if z in zones]
+            if sensors or groups:
+                self._draft["unless"] = {
+                    "any": [{"sensor": s} for s in sensors] + [{"group": z} for z in groups],
+                    "before": int(user_input.get("before") or 300),
+                }
+            else:
+                self._draft.pop("unless", None)
+            return await self.async_step_rule_overview()
+        current = step_form(parse_step(dict(self._draft["unless"]))) if rule.unless else None
+        schema = vol.Schema(
+            {
+                vol.Optional("sensors", default=(current or {}).get("sensors", [])): (
+                    EntitySelector(EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True))
+                ),
+                vol.Optional("zones", default=(current or {}).get("zones", [])): _zone_selector(
+                    zones, multiple=True
+                ),
+                vol.Optional(
+                    "before", default=rule.unless.before if rule.unless else 300
+                ): _seconds(RULE_MAX_UNLESS, minimum=1),
+            }
+        )
+        return self.async_show_form(
+            step_id="rule_unless",
+            data_schema=schema,
+            description_placeholders={"rule_text": self._rule_text(rule)},
+        )
+
+    async def async_step_rule_yaml(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Expertenmodus: die ganze Regel als YAML."""
+        assert self._draft is not None
+        zones = parse_zones(self.config_entry.options)
+        errors: dict[str, str] = {}
+        placeholders = {"problem": ""}
+        if user_input is not None:
+            rules = parse_rules(self.config_entry.options)
+            raw = user_input.get("rule")
+            name = str(raw.get("name") or "").strip() if isinstance(raw, Mapping) else ""
+            rule_id = self._rule_id or slugify(name or "regel", existing=rules.keys())
+            try:
+                rule, stored = from_editable(raw, zones, rule_id)
+            except RuleError as err:
+                errors["base"] = "rule_yaml_invalid"
+                placeholders["problem"] = str(err)
+            else:
+                problems = self._problems(rule)
+                if any(r.name == rule.name and r.rule_id != rule_id for r in rules.values()):
+                    errors["base"] = "rule_name_taken"
+                elif problems:
+                    errors["base"] = "rule_yaml_invalid"
+                    placeholders["problem"] = "; ".join(self._finding_text(f) for f in problems)
+                else:
+                    self._rule_id = rule_id
+                    self._draft = stored
+                    return await self.async_step_rule_save()
+        rule = self._draft_rule()
+        shown = (
+            to_editable(rule, self._zone_name)
+            if rule.steps
+            else {
+                "name": self._draft.get("name", ""),
+                "result": "alarm",
+                "steps": [{"any": [{"group": "…"}], "within": RULE_DEFAULT_WITHIN}],
+            }
+        )
+        default = user_input.get("rule") if user_input else shown
+        return self.async_show_form(
+            step_id="rule_yaml",
+            data_schema=vol.Schema({vol.Required("rule", default=default): ObjectSelector()}),
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
     async def async_step_rule_overview(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -664,16 +783,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         rule = self._draft_rule()
         menu = ["rule_save", "rule_step_add"]
         if rule.steps:
-            menu += ["rule_step_edit", "rule_step_remove"]
-        menu += ["rule_meta", "rule_cancel"]
+            menu += ["rule_step_edit", "rule_step_remove", "rule_unless"]
+        menu += ["rule_meta", "rule_yaml", "rule_cancel"]
         if len(rule.steps) >= RULE_MAX_STEPS:
             menu.remove("rule_step_add")
-        problems = validate_rule(
-            rule,
-            rule_members(
-                rule, parse_zones(self.config_entry.options), entities_by_label(self.hass)
-            ),
-        )
+        problems = self._problems(rule)
         problem_text = "\n".join(f"⚠️ {self._finding_text(f)}" for f in problems)
         return self.async_show_menu(
             step_id="rule_overview",
@@ -702,17 +816,13 @@ class HauswachtOptionsFlow(OptionsFlow):
             self._draft_step = int(user_input["step"]) - 1
             return await self.async_step_rule_step()
         rule = self._draft_rule()
-        zones = parse_zones(self.config_entry.options)
         language = "de" if self._german() else "en"
         options = [
             SelectOptionDict(
                 value=str(number),
                 label=f"{number}: "
                 + describe_step(
-                    step,
-                    lambda e: display_name(self.hass, e),
-                    lambda z: zones[z].name if z in zones else z,
-                    language,
+                    step, lambda e: display_name(self.hass, e), self._zone_name, language
                 ),
             )
             for number, step in enumerate(rule.steps[: len(steps)], start=1)
@@ -752,18 +862,15 @@ class HauswachtOptionsFlow(OptionsFlow):
         rule_id = self._rule_id or slugify(
             str(self._draft.get("name") or "regel"), existing=rules.keys()
         )
-        rule = parse_rules({"rules": {rule_id: self._draft}}).get(rule_id)
-        if (
-            rule is None
-            or not rule.steps
-            or validate_rule(
-                rule, rule_members(rule, parse_zones(options), entities_by_label(self.hass))
-            )
-        ):
+        try:
+            rule = parse_rule(rule_id, self._draft)
+        except RuleError:
+            return await self.async_step_rule_overview()
+        if not rule.steps or self._problems(rule):
             # Nicht speicherbar: zurück zur Übersicht, dort stehen die Gründe
             return await self.async_step_rule_overview()
         stored = {k: dict(v) for k, v in options.get("rules", {}).items()}
-        stored[rule_id] = self._draft
+        stored[rule_id] = rule_to_data(rule)
         options["rules"] = stored
         self._hints = [
             hint
@@ -794,23 +901,25 @@ class HauswachtOptionsFlow(OptionsFlow):
             data_schema=vol.Schema({vol.Required("rule"): self._rule_selector()}),
         )
 
-    def _step_schema(self, step: Step | None, zones: dict[str, Zone]) -> vol.Schema:
-        step = step or Step()
+    def _step_schema(self, form: Mapping[str, Any] | None, zones: dict[str, Zone]) -> vol.Schema:
+        form = form or {}
         return vol.Schema(
             {
-                vol.Optional("sensors", default=sorted(step.sensors)): EntitySelector(
+                vol.Optional("sensors", default=list(form.get("sensors", []))): EntitySelector(
                     EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
                 ),
-                vol.Optional("zones", default=list(step.zones)): _zone_selector(
+                vol.Optional("zones", default=list(form.get("zones", []))): _zone_selector(
                     zones, multiple=True
                 ),
-                vol.Optional("mode", default=step.mode.value): _select(
+                vol.Optional("mode", default=form.get("mode", StepMode.ANY.value)): _select(
                     [m.value for m in StepMode], "step_mode"
                 ),
-                vol.Optional("count", default=step.count): NumberSelector(
+                vol.Optional("count", default=form.get("count", 2)): NumberSelector(
                     NumberSelectorConfig(min=1, max=20, step=1, mode=NumberSelectorMode.BOX)
                 ),
-                vol.Optional("within", default=step.within): _seconds(RULE_MAX_WITHIN, minimum=1),
+                vol.Optional("within", default=form.get("within", RULE_DEFAULT_WITHIN)): _seconds(
+                    RULE_MAX_WITHIN, minimum=1
+                ),
             }
         )
 

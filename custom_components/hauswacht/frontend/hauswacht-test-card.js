@@ -61,7 +61,8 @@ const TEXT = {
     rules: "Auslöseregeln im aktiven Profil",
     ruleIdle: "nicht begonnen",
     ruleStep: "Schritt {done} von {steps} erfüllt",
-    ruleResult: { alarm: "sofort Alarm", entry_delay: "Eingangsverzögerung" },
+    ruleResult: { alarm: "sofort Alarm", entry_delay: "Eingangsverzögerung", notify: "nur Benachrichtigung" },
+    ruleBlocked: "gesperrt durch Ausnahme",
   },
   en: {
     title: "Test",
@@ -107,7 +108,8 @@ const TEXT = {
     rules: "Trigger rules in the active profile",
     ruleIdle: "not started",
     ruleStep: "step {done} of {steps} fulfilled",
-    ruleResult: { alarm: "alarm immediately", entry_delay: "entry delay" },
+    ruleResult: { alarm: "alarm immediately", entry_delay: "entry delay", notify: "notification only" },
+    ruleBlocked: "blocked by exception",
   },
 };
 
@@ -387,6 +389,11 @@ class HauswachtTestCard extends HTMLElement {
         state.textContent =
           this._t("ruleStep").replace("{done}", rule.done).replace("{steps}", rule.steps) + ` · ${left} s`;
         row.classList.add("active");
+        running = true;
+      } else if (rule.blocked_until) {
+        const left = Math.max(0, Math.ceil((Date.parse(rule.blocked_until) - Date.now()) / 1000));
+        const mins = Math.floor(left / 60);
+        state.textContent = `${this._t("ruleBlocked")} · ${mins}:${String(left % 60).padStart(2, "0")}`;
         running = true;
       } else {
         state.textContent = this._t("ruleIdle");

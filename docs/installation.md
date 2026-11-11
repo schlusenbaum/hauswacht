@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.19.3:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.20.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -200,6 +200,62 @@ Beispiel Profil „Nacht“ (allein auslösend: nichts):
 - Die Meldergruppen-Option „zweiter Melder bestätigt“ aus 0.18.0 wurde beim Update automatisch zu
   einer Auslöseregel „Bestätigung <Meldergruppe>“ (Schritt: mindestens 2 verschiedene Melder der Meldergruppe).
 
+#### Ausnahme „Nicht, wenn vorher …“
+
+In der Übersicht des Assistenten: **„Nicht, wenn vorher … (Ausnahme)“**. Die Auslöseregel gilt
+nicht, wenn einer der gewählten Melder in der angegebenen Zeit **vor Schritt 1** ausgelöst hat.
+Beispiel: „Fenster, dann Keller“ mit Ausnahme „Flur-Bewegungsmelder, 300 s“ – wer schon drinnen
+unterwegs war und dann ein Fenster öffnet, löst nichts aus. Die Ausnahme wirkt **nur auf diese
+Auslöseregel**. Die Testkarte zeigt „gesperrt durch Ausnahme · 4:10“.
+
+#### Expertenmodus (YAML)
+
+**Auslöseregeln → „Neue Auslöseregel als YAML“** oder in der Übersicht **„Als YAML
+bearbeiten“**. Auslöseregeln mit Verschachtelung oder Bedingungen öffnen beim Bearbeiten direkt
+den YAML-Editor. Beim Speichern prüft Hauswacht die Regel und nennt Fehler mit Fundstelle.
+
+```yaml
+name: Einstieg durchs Fenster
+result: alarm                 # alarm | entry_delay | notify (nur Benachrichtigung)
+steps:
+  - any: [group: Fenster]     # einer davon
+    within: 60                # Zeit bis zum nächsten Schritt
+  - any:                      # Keller ODER (Flur UND Büro)
+      - group: Keller
+      - all: [sensor: binary_sensor.bwm_flur, sensor: binary_sensor.tuer_buero]
+unless:                       # nicht, wenn das in den 300 s vor Schritt 1 passiert ist
+  any: [group: Flur]
+  before: 300
+conditions:                   # nur wenn alle erfüllt sind
+  - time: {after: "22:00", before: "06:00"}
+  - person: {entity: person.niklas, in: not_home}
+```
+
+| Baustein | Bedeutung |
+|---|---|
+| `sensor: binary_sensor.x` | dieser Melder |
+| `group: Keller` | steht für **die einzelnen Melder** der Meldergruppe: `any` = irgendeiner, `all` = alle, `count` = N verschiedene |
+| `any: [...]` / `all: [...]` / `count: N` + `of: [...]` | einer · alle (Reihenfolge egal) · mindestens N – beliebig verschachtelt |
+| `within: 120` | Zeit bis zum nächsten Schritt (Sekunden) |
+| `result:` | `alarm`, `entry_delay` (Eingangsverzögerung, dann Alarm) oder `notify` (nur Benachrichtigung) |
+| `unless:` + `before:` | Ausnahme: nicht, wenn der Ausdruck in dieser Zeit vor Schritt 1 erfüllt war |
+| `conditions:` | Liste; alle müssen erfüllt sein |
+
+Bedingungen:
+
+| Bedingung | Beispiel |
+|---|---|
+| Uhrzeit, Wochentage | `time: {after: "22:00", before: "06:00", weekdays: [mon, tue, wed, thu, fri]}` (auch über Mitternacht) |
+| Person in Zone | `person: {entity: person.niklas, in: home}` – `home`, `not_home` oder `zone.schule` |
+| Zustand | `state: {entity: input_boolean.urlaub, is: "on"}` (auch Liste: `is: [on, auto]`) |
+| Zahlenwert | `numeric: {entity: sensor.temperatur, above: 5, below: 30}` – optional `attribute: temperature` |
+| Logik | `and: [...]`, `or: [...]`, `not: {...}` |
+
+**Sichere Seite:** Lässt sich eine Bedingung nicht auswerten (Entität fehlt, ist nicht verfügbar,
+liefert keine Zahl), gilt sie als **erfüllt** – im Zweifel löst die Regel aus. Bedingungen,
+Ausnahmen und Ergebnis wirken nur auf die eigene Auslöseregel; andere Auslöseregeln und allein
+auslösende Meldergruppen bleiben unberührt.
+
 **Bedienen:** Profile mit Knopf über das Bedienfeld; jedes Profil – auch ohne Knopf – über die
 Auswahlliste **Profil** und den Knopf **Scharf schalten**, oder per Aktion
 `hauswacht.arm` mit dem Profilnamen. Profile ohne eigenen Knopf zeigt das Bedienfeld im
@@ -341,6 +397,7 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
 | Hinweis beim Scharfschalten (offene Melder, die nur in Auslöseregeln vorkommen) | an | Ereignis, sonst allgemein |
+| Auslöseregel „nur Benachrichtigung“ erfüllt | an | Ereignis, sonst allgemein |
 | Unbestätigte Auslösung (Auslöseregel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
 | Melder löst häufig allein aus (3× in einer Stunde eine Auslöseregel begonnen) | aus | Ereignis, sonst allgemein |
 

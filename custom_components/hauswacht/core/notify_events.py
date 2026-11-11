@@ -29,6 +29,7 @@ class NotifyEvent(StrEnum):
     FAULT = "fault"
     SYSTEM = "system"
     REMINDER = "reminder"
+    RULE_NOTIFY = "rule_notify"  # Auslöseregel mit Ergebnis "nur Benachrichtigung"
     ARM_HINT = "arm_hint"  # beim Scharfschalten: offene Melder, die nur in Regeln vorkommen
     UNCONFIRMED = "unconfirmed"  # Einzelauslösung ohne Bestätigung, kein Alarm
     UNCONFIRMED_FREQUENT = "unconfirmed_frequent"  # Melder löst häufig allein aus
@@ -45,6 +46,7 @@ DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
     NotifyEvent.FAULT: True,
     NotifyEvent.SYSTEM: True,
     NotifyEvent.REMINDER: True,
+    NotifyEvent.RULE_NOTIFY: True,
     NotifyEvent.ARM_HINT: True,
     NotifyEvent.UNCONFIRMED: False,
     NotifyEvent.UNCONFIRMED_FREQUENT: False,

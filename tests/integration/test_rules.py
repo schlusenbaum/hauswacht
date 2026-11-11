@@ -261,8 +261,10 @@ async def test_rule_wizard(hass: HomeAssistant) -> None:
     rule = next(iter(entry.options["rules"].values()))
     assert rule["name"] == "Tür, dann Keller"
     assert rule["result"] == "entry_delay"
-    assert [s["sensors"] for s in rule["steps"]] == [[DOOR], [MOTION]]
-    assert rule["steps"][0]["within"] == 120
+    assert rule["steps"] == [
+        {"any": [{"sensor": DOOR}], "within": 120},
+        {"any": [{"sensor": MOTION}], "within": 60},
+    ]
     assert "Tür, dann Keller" in flow["description_placeholders"]["rules"]
 
 
@@ -332,3 +334,120 @@ async def test_hint_for_open_rule_sensor_when_armed(hass: HomeAssistant) -> None
 async def test_no_hint_when_rule_sensors_closed(hass: HomeAssistant) -> None:
     push = await _setup(hass, notify_system=[PHONE])
     assert not [c for c in push if "Hinweis" in c.data["title"]]
+
+
+YAML_RULE = {
+    "name": "Fenster, dann drinnen",
+    "result": "alarm",
+    "steps": [
+        {"any": [{"group": "Fenster"}], "within": 60},
+        {
+            "any": [
+                {"group": "Keller"},
+                {"all": [{"sensor": DOOR}, {"sensor": "binary_sensor.buero"}]},
+            ]
+        },
+    ],
+    "unless": {"any": [{"sensor": MOTION2}], "before": 300},
+    "conditions": [{"state": {"entity": "input_boolean.scharf_erlaubt", "is": "on"}}],
+}
+
+
+async def test_rule_yaml_add_validates_and_saves(hass: HomeAssistant) -> None:
+    _motion2(hass, "off")
+    entry = make_entry({"zones": ZONES})
+    await setup_entry(hass, entry)
+    flow = await _flow(hass, entry, "triggering", "rules", "rule_yaml_add")
+    assert flow["step_id"] == "rule_yaml"
+    bad = {**YAML_RULE, "steps": [{"any": [{"group": "Fensterr"}]}]}
+    flow = await _submit(hass, flow, {"rule": bad})
+    assert flow["errors"] == {"base": "rule_yaml_invalid"}
+    assert "Fensterr" in flow["description_placeholders"]["problem"]
+    flow = await _submit(hass, flow, {"rule": YAML_RULE})
+    assert flow["step_id"] == "rules"
+    stored = entry.options["rules"]["fenster_dann_drinnen"]
+    assert stored["steps"][0] == {"any": [{"group": "fenster"}], "within": 60}
+    assert stored["unless"]["before"] == 300
+    assert stored["conditions"] == YAML_RULE["conditions"]
+    # verschachtelte Regel: Bearbeiten öffnet direkt den YAML-Editor
+    flow = await _flow(hass, entry, "triggering", "rules", "rule_edit")
+    flow = await _submit(hass, flow, {"rule": "fenster_dann_drinnen"})
+    assert flow["step_id"] == "rule_yaml"
+
+
+def _yaml_options(rule: dict[str, Any], **extra: Any) -> dict[str, Any]:
+    night = {"zones": [], "rules": ["r"], "entry_delay": 30, "notify": [PHONE]}
+    return {"zones": ZONES, "rules": {"r": rule}, "profiles": {"night": night}, **extra}
+
+
+async def _arm_with(hass: HomeAssistant, rule: dict[str, Any], **extra: Any) -> list[Any]:
+    push = async_mock_service(hass, "notify", PHONE)
+    _motion2(hass, "off")
+    await setup_entry(hass, make_entry(_yaml_options(rule, **extra)))
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    return push
+
+
+STORED = {
+    "name": "Fenster, dann Keller",
+    "result": "alarm",
+    "steps": [
+        {"any": [{"group": "fenster"}], "within": 60},
+        {"any": [{"group": "keller"}]},
+    ],
+}
+
+
+async def test_condition_not_met_no_alarm(hass: HomeAssistant) -> None:
+    hass.states.async_set("input_boolean.urlaub", "off")
+    rule = {**STORED, "conditions": [{"state": {"entity": "input_boolean.urlaub", "is": "on"}}]}
+    await _arm_with(hass, rule)
+    await _set(hass, WINDOW, "on")
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    hass.states.async_set("input_boolean.urlaub", "on")
+    await _set(hass, WINDOW, "off")
+    await _set(hass, MOTION, "off")
+    await _set(hass, WINDOW, "on")
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_unknown_condition_counts_as_met(hass: HomeAssistant) -> None:
+    rule = {**STORED, "conditions": [{"not": {"state": {"entity": "switch.fehlt", "is": "on"}}}]}
+    await _arm_with(hass, rule)
+    await _set(hass, WINDOW, "on")
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_unless_blocks_rule(hass: HomeAssistant) -> None:
+    rule = {**STORED, "unless": {"any": [{"sensor": MOTION2}], "before": 300}}
+    await _arm_with(hass, rule)
+    await _set(hass, MOTION2, "on")  # jemand drinnen
+    await _set(hass, WINDOW, "on")
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_notify_result_only_notifies(hass: HomeAssistant) -> None:
+    push = await _arm_with(hass, {**STORED, "result": "notify"}, notify_system=[PHONE])
+    await _set(hass, WINDOW, "on")
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert any(c.data["title"] == "Hauswacht: Auslöseregel erfüllt" for c in push)
+
+
+async def test_wizard_unless(hass: HomeAssistant) -> None:
+    _motion2(hass, "off")
+    entry = make_entry({"zones": ZONES, "rules": RULES})
+    await setup_entry(hass, entry)
+    flow = await _flow(hass, entry, "triggering", "rules", "rule_edit")
+    flow = await _submit(hass, flow, {"rule": "fenster_keller"})
+    flow = await _go(hass, flow, "rule_unless")
+    assert flow["step_id"] == "rule_unless"
+    flow = await _submit(hass, flow, {"sensors": [MOTION2], "before": 120})
+    assert "120 s" in flow["description_placeholders"]["rule_text"]
+    flow = await _go(hass, flow, "rule_save")
+    stored = entry.options["rules"]["fenster_keller"]
+    assert stored["unless"] == {"any": [{"sensor": MOTION2}], "before": 120}

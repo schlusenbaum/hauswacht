@@ -272,6 +272,14 @@
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
             }
+          },
+          "event_rule_notify": {
+            "name": "Trigger rule “notification only”",
+            "description": "A trigger rule with the result “notification only” was fulfilled. Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
           }
         }
       },
@@ -371,6 +379,7 @@
         "description": "{saved}A **trigger rule** triggers only on a **sequence** of sensors – e.g. “front door, then basement within 120 s”. The door alone or the basement alone then trigger nothing.\n\nHow a trigger rule works:\n- It consists of **steps** that must happen **one after another**. Step 2 only counts once step 1 is fulfilled – and only within the time set at step 1.\n- In each step you pick sensors and decide when **this step** is fulfilled: one of them (OR), all of them in any order (AND) or at least N different ones.\n- When the last step is fulfilled, there is an alarm – immediately or after the entry delay.\n\nEach alarm profile chooses which trigger rules apply. One fulfilled trigger rule is enough.\n\n**Existing trigger rules:**\n{rules}",
         "menu_options": {
           "rule_add": "Add trigger rule",
+          "rule_yaml_add": "New trigger rule as YAML (expert mode)",
           "rule_edit": "Edit trigger rule",
           "rule_delete": "Delete trigger rule",
           "triggering": "← Back"
@@ -423,7 +432,9 @@
           "rule_step_edit": "Edit a step",
           "rule_step_remove": "Remove last step",
           "rule_meta": "Change name and result",
-          "rule_cancel": "Cancel (do not save)"
+          "rule_cancel": "Cancel (do not save)",
+          "rule_unless": "Not if before … (exception)",
+          "rule_yaml": "Edit as YAML (expert mode)"
         }
       },
       "rule_step_edit": {
@@ -439,6 +450,22 @@
           "zones": "Sensor groups – which sensors belong together",
           "rules": "Trigger rules – sequences of sensors",
           "init": "← Back"
+        }
+      },
+      "rule_unless": {
+        "title": "Not if before …",
+        "description": "**So far:** {rule_text}\n\nThe trigger rule does **not** apply if one of these sensors triggered within the given time **before step 1** – e.g. someone already moving around inside who then opens a window is no burglar. Affects this trigger rule only. Deselect everything = remove the exception.",
+        "data": {
+          "sensors": "Sensors",
+          "zones": "Sensor groups (any sensor of the group)",
+          "before": "Period before step 1"
+        }
+      },
+      "rule_yaml": {
+        "title": "Trigger rule as YAML",
+        "description": "Expert mode: the whole trigger rule as YAML. Sensor groups by name (`group: Basement`), sensors by entity ID (`sensor: binary_sensor.x`).\n\n- Steps: `any: [...]` (one of), `all: [...]` (all), `count: 2` + `of: [...]` (at least N), nestable; `within:` time until the next step.\n- `result:` alarm, entry_delay or notify (notification only).\n- `unless:` expression + `before:` seconds – not if that happened within this time before step 1.\n- `conditions:` list: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Not evaluable = met.\n\nExamples are in the documentation.",
+        "data": {
+          "rule": "Trigger rule"
         }
       }
     },
@@ -458,7 +485,8 @@
       "zone_overlap": "These sensors are already in another sensor group: {conflicts}. A sensor can only be in one sensor group – remove it there or deselect it here.",
       "rule_name_required": "Please enter a name.",
       "rule_name_taken": "A trigger rule with this name already exists.",
-      "step_empty": "Please choose at least one sensor or sensor group."
+      "step_empty": "Please choose at least one sensor or sensor group.",
+      "rule_yaml_invalid": "Cannot be saved like this: {problem}"
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -546,7 +574,8 @@
     "rule_result": {
       "options": {
         "alarm": "alarm immediately",
-        "entry_delay": "entry delay, then alarm"
+        "entry_delay": "entry delay, then alarm",
+        "notify": "notification only, no alarm"
       }
     }
   },
