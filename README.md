@@ -2,13 +2,14 @@
 
 # Hauswacht
 
-**Profilbasierte Einbruchmeldeanlage für Home Assistant** – frei konfigurierbare Profile,
+**Profilbasierte Einbruchmeldeanlage für Home Assistant** – frei konfigurierbare Alarmprofile,
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus.
 
-> **Status: 0.16.3 – Entwicklungsversion.**
-> Alle Grundfunktionen sind enthalten: Profile, Zonen, Sensoren, Systemüberwachung,
-> Simulation, Push-Benachrichtigungen und Sirenen. Die **Sirenenansteuerung ist standardmäßig
+> **Status: 0.17.6 – Entwicklungsversion.**
+> Alle Grundfunktionen sind enthalten: Zonen, Alarmprofile, Benutzer und PINs (auch Gäste und
+> Bedrohungs-PIN), Benachrichtigungen pro Ereignis mit Knöpfen, Überwachung von Funknetz und
+> Gateways, Testmodus mit Testkarte und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
 > [Roadmap](docs/roadmap.md).
 
@@ -38,7 +39,7 @@ geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmel
 
 > **Getestet ist bisher nur ein Sirenenmodell:** Rauchwarnmelder **Develco SMSZB-120**
 > („Smoke detector with siren“) über **Zigbee2MQTT**. Auch damit ist der echte Sirenentest
-> noch offen (geplant für 0.10.0); bis dahin ist nur die Logik mit nachgebildeten Geräten
+> noch offen (geplant für 0.21.0); bis dahin ist nur die Logik mit nachgebildeten Geräten
 > geprüft.
 
 **Sensoren** (Tür-, Fenster-, Bewegungs- und Präsenzmelder, Sabotagekontakte) sind
