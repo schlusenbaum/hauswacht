@@ -169,6 +169,7 @@ class AutomationRunner:
         runtime.notifier.notify(
             NotifyEvent.AUTOMATION,
             *auto_armed_message(name, reason),
+            values={"profil": name, "grund": reason},
             test_mode=runtime.ctx.test_mode,
         )
 
@@ -189,6 +190,7 @@ class AutomationRunner:
         runtime.notifier.notify(
             NotifyEvent.AUTOMATION,
             *auto_disarmed_message(runtime.profile_name(profile_id), reason),
+            values={"profil": runtime.profile_name(profile_id), "grund": reason},
             test_mode=ctx.test_mode,
         )
 

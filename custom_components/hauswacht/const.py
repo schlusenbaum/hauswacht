@@ -28,6 +28,7 @@ OPT_PUSH_DISARM: Final = "push_disarm"
 OPT_DURESS_NOTIFY: Final = "duress_notify"
 OPT_USERS: Final = "users"
 OPT_AREAS: Final = "areas"
+OPT_SPEECH: Final = "speech"
 # Alarm und Bedrohung durchbrechen "Nicht stören" (kritische Hinweise)
 OPT_CRITICAL_ALERTS: Final = "critical_alerts"
 OPT_EVENTS: Final = "events"

@@ -57,7 +57,8 @@
           "notify": "Notify (alarm)",
           "automation": "Automation",
           "rules": "Trigger rules",
-          "area": "Area"
+          "area": "Area",
+          "speakers": "Additional speakers"
         },
         "sections": {
           "automation": {
@@ -89,7 +90,8 @@
         "data_description": {
           "zones": "Each sensor of these sensor groups triggers on its own (door with entry delay, window instantly …). Open sensors of these sensor groups prevent arming.",
           "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again.",
-          "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area."
+          "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area.",
+          "speakers": "For alarm, entry delay and “alarm ended” of this profile instead of the default speakers."
         }
       },
       "zones": {
@@ -155,151 +157,6 @@
           "sirens": "Sirens",
           "sirens_hardware_enabled": "Allow real siren control",
           "confirm_hardware": "I confirm: real sirens may sound during an alarm"
-        }
-      },
-      "notifications": {
-        "title": "Notifications",
-        "description": "General recipients get every message for which the event has no recipients of its own. Alarm, door opened and alarm ended go to the profile's recipients first. Buttons in notifications only work with the Home Assistant app.",
-        "data": {
-          "notify_system": "General recipients",
-          "notify_in_test_mode": "Also notify in test mode",
-          "push_disarm": "Button \"Disarm\" / \"End alarm\" in notifications",
-          "critical_alerts": "Alarm and duress as critical alerts (break through Do Not Disturb)",
-          "duress_notify": "Duress alarm recipients"
-        },
-        "data_description": {
-          "critical_alerts": "iPhone: critical alert (allow once in the app). Android: channel \"alarm_stream\" – rings even when silenced."
-        },
-        "sections": {
-          "event_alarm": {
-            "name": "Alarm",
-            "description": "Burglar alarm triggered. Goes to the profile's recipients first.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_entry": {
-            "name": "Door opened (entry delay)",
-            "description": "When an entry door opens while armed. Default: only with the push button. Profile recipients first.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_armed": {
-            "name": "Armed",
-            "description": "Default: off.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_disarmed": {
-            "name": "Disarmed",
-            "description": "Default: off.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_alarm_ended": {
-            "name": "Alarm ended",
-            "description": "Who ended the alarm. Profile recipients first.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_arm_failed": {
-            "name": "Arming rejected",
-            "description": "With the buttons \"Arm anyway\" (only if open sensors may be bypassed) and \"Try again\".",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_automation": {
-            "name": "Automation",
-            "description": "Armed or disarmed automatically.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_fault": {
-            "name": "Fault",
-            "description": "Sensor lost, tamper, infrastructure fault.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_system": {
-            "name": "System",
-            "description": "Restart, PIN locked, wrong PIN.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_reminder": {
-            "name": "Reminder",
-            "description": "\"Everyone away, system disarmed\" with button \"Arm now\". Set up under \"Reminder\".",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "reminder": {
-            "name": "Reminder \"everyone away\"",
-            "description": "If all selected persons are away and the system is disarmed, a single reminder with the button \"Arm now\" is sent after the delay. Hauswacht does not switch anything by itself. Unknown location does not count as away.",
-            "data": {
-              "reminder_persons": "Persons",
-              "reminder_profile": "Profile for \"Arm now\"",
-              "reminder_delay": "Delay"
-            }
-          },
-          "event_unconfirmed": {
-            "name": "Unconfirmed trigger",
-            "description": "A trigger rule was started but not fulfilled in time (e.g. only the door) – there was no alarm. Default: off.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_unconfirmed_frequent": {
-            "name": "Sensor often triggers alone",
-            "description": "The same sensor started a trigger rule three times within an hour that was not fulfilled – a hint to check it. Default: off.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_arm_hint": {
-            "name": "Hint when arming",
-            "description": "Open sensors that only appear in trigger rules in this profile: they can only start their trigger rule after closing and opening again (e.g. an open window). Default: on.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_rule_notify": {
-            "name": "Trigger rule “notification only”",
-            "description": "A trigger rule with the result “notification only” was fulfilled. Default: on.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          },
-          "event_always_active": {
-            "name": "Always-active sensor",
-            "description": "An always-active sensor triggered while disarmed (without siren). Critical. Default: on.",
-            "data": {
-              "enabled": "Notify",
-              "targets": "Own recipients (empty = general)"
-            }
-          }
         }
       },
       "profiles": {
@@ -536,6 +393,206 @@
           "name": "Name",
           "icon": "Icon"
         }
+      },
+      "notify_settings": {
+        "title": "Recipients and events",
+        "description": "General recipients get every message for which the event has no recipients of its own. Alarm, door opened and alarm ended go to the profile's recipients first. Buttons in notifications only work with the Home Assistant app.",
+        "data": {
+          "notify_system": "General recipients",
+          "notify_in_test_mode": "Also notify in test mode",
+          "push_disarm": "Button \"Disarm\" / \"End alarm\" in notifications",
+          "critical_alerts": "Alarm and duress as critical alerts (break through Do Not Disturb)",
+          "duress_notify": "Duress alarm recipients"
+        },
+        "data_description": {
+          "critical_alerts": "iPhone: critical alert (allow once in the app). Android: channel \"alarm_stream\" – rings even when silenced."
+        },
+        "sections": {
+          "event_alarm": {
+            "name": "Alarm",
+            "description": "Burglar alarm triggered. Goes to the profile's recipients first.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_entry": {
+            "name": "Door opened (entry delay)",
+            "description": "When an entry door opens while armed. Default: only with the push button. Profile recipients first.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_armed": {
+            "name": "Armed",
+            "description": "Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_disarmed": {
+            "name": "Disarmed",
+            "description": "Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_alarm_ended": {
+            "name": "Alarm ended",
+            "description": "Who ended the alarm. Profile recipients first.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_arm_failed": {
+            "name": "Arming rejected",
+            "description": "With the buttons \"Arm anyway\" (only if open sensors may be bypassed) and \"Try again\".",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_automation": {
+            "name": "Automation",
+            "description": "Armed or disarmed automatically.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_fault": {
+            "name": "Fault",
+            "description": "Sensor lost, tamper, infrastructure fault.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_system": {
+            "name": "System",
+            "description": "Restart, PIN locked, wrong PIN.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_reminder": {
+            "name": "Reminder",
+            "description": "\"Everyone away, system disarmed\" with button \"Arm now\". Set up under \"Reminder\".",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "reminder": {
+            "name": "Reminder \"everyone away\"",
+            "description": "If all selected persons are away and the system is disarmed, a single reminder with the button \"Arm now\" is sent after the delay. Hauswacht does not switch anything by itself. Unknown location does not count as away.",
+            "data": {
+              "reminder_persons": "Persons",
+              "reminder_profile": "Profile for \"Arm now\"",
+              "reminder_delay": "Delay"
+            }
+          },
+          "event_unconfirmed": {
+            "name": "Unconfirmed trigger",
+            "description": "A trigger rule was started but not fulfilled in time (e.g. only the door) – there was no alarm. Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_unconfirmed_frequent": {
+            "name": "Sensor often triggers alone",
+            "description": "The same sensor started a trigger rule three times within an hour that was not fulfilled – a hint to check it. Default: off.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_arm_hint": {
+            "name": "Hint when arming",
+            "description": "Open sensors that only appear in trigger rules in this profile: they can only start their trigger rule after closing and opening again (e.g. an open window). Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_rule_notify": {
+            "name": "Trigger rule “notification only”",
+            "description": "A trigger rule with the result “notification only” was fulfilled. Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_always_active": {
+            "name": "Always-active sensor",
+            "description": "An always-active sensor triggered while disarmed (without siren). Critical. Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "{saved}Push messages to the Home Assistant app and speech output on speakers (e.g. Echo devices).",
+        "menu_options": {
+          "notify_settings": "Recipients and events",
+          "notify_texts": "Custom texts for push messages",
+          "speech": "Speech – speakers, repeat, quiet hours",
+          "speech_events": "Speech – events, mode and texts",
+          "init": "← Back"
+        }
+      },
+      "notify_texts": {
+        "title": "Custom texts",
+        "description": "For which event?",
+        "data": {
+          "event": "Event"
+        }
+      },
+      "notify_text_edit": {
+        "title": "Custom text",
+        "description": "Empty = Hauswacht's default text. Placeholders: {placeholders}. The placeholder “text” is the default text, in the title the default title.\n\nCurrent preview: {preview}\n\n{error}",
+        "data": {
+          "title": "Title",
+          "message": "Text"
+        }
+      },
+      "speech": {
+        "title": "Speech output",
+        "description": "Speakers are devices with notify entities, e.g. Echo devices (“Alexa Devices” integration). Announcement or speak is chosen per event.\n\n**Repeat:** the alarm announcement repeats every N seconds until the alarm ends (0 = once).\n\n**Quiet hours:** only events allowed “also during quiet hours” are spoken.\n\nA silent alarm is never spoken, the duress alert never goes to speakers.",
+        "data": {
+          "speakers": "Speakers (default for all events)",
+          "repeat": "Repeat alarm announcement every",
+          "quiet_enabled": "Quiet hours",
+          "quiet_start": "Quiet hours from",
+          "quiet_end": "Quiet hours until"
+        }
+      },
+      "speech_events": {
+        "title": "Speech – event",
+        "description": "For which event?",
+        "data": {
+          "event": "Event"
+        }
+      },
+      "speech_event_edit": {
+        "title": "Speech – event",
+        "description": "Default text: “{default}”\nCurrent preview: “{preview}”\n\nPlaceholders: {placeholders}. Empty = default text. With several areas the area name is put in front of the default text.\n\n{error}",
+        "data": {
+          "enabled": "Speak",
+          "mode": "Mode",
+          "speakers": "Own speakers (empty = default)",
+          "in_quiet": "Also during quiet hours",
+          "text": "Text"
+        }
       }
     },
     "error": {
@@ -558,7 +615,8 @@
       "rule_yaml_invalid": "Cannot be saved like this: {problem}",
       "area_has_profiles": "Alarm profiles still belong to this area – delete them or move them to another area first.",
       "area_name_required": "Please enter a name.",
-      "area_name_taken": "Another area already has this name."
+      "area_name_taken": "Another area already has this name.",
+      "invalid_template": "Invalid text"
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -649,6 +707,31 @@
         "alarm": "alarm immediately",
         "entry_delay": "entry delay, then alarm",
         "notify": "notification only, no alarm"
+      }
+    },
+    "notify_event": {
+      "options": {
+        "alarm": "Alarm",
+        "entry": "Door opened (entry delay)",
+        "armed": "Armed",
+        "disarmed": "Disarmed",
+        "alarm_ended": "Alarm ended",
+        "arm_failed": "Arming rejected",
+        "automation": "Automation",
+        "fault": "Fault",
+        "system": "System",
+        "reminder": "Reminder",
+        "unconfirmed": "Unconfirmed trigger",
+        "unconfirmed_frequent": "Sensor often triggers alone",
+        "arm_hint": "Hint when arming",
+        "rule_notify": "Trigger rule “notification only”",
+        "always_active": "Always-active sensor"
+      }
+    },
+    "speech_mode": {
+      "options": {
+        "announce": "Announcement (with chime)",
+        "speak": "Speak"
       }
     }
   },

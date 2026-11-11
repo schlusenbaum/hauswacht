@@ -11,9 +11,9 @@
 Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
 gesperrter Testmodus.
 
-> **Status: 0.22.1 – Entwicklungsversion.**
+> **Status: 0.23.0 – Entwicklungsversion.**
 > Alle Grundfunktionen sind enthalten: Meldergruppen, Alarmprofile, Auslöseregeln („Tür, dann Keller“), Benutzer und PINs (auch Gäste und
-> Bedrohungs-PIN), Bereiche (z. B. Haus und Garage getrennt scharf), Benachrichtigungen pro Ereignis mit Knöpfen, Überwachung von Funknetz und
+> Bedrohungs-PIN), Bereiche (z. B. Haus und Garage getrennt scharf), Benachrichtigungen pro Ereignis mit Knöpfen und eigenen Texten, Sprachausgabe über Lautsprecher (z. B. Echo), Überwachung von Funknetz und
 > Gateways, Testmodus mit Testkarte und Sirenen. Die **Sirenenansteuerung ist standardmäßig
 > gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
 > [Roadmap](docs/roadmap.md).

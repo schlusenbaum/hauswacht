@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-11
+
+### Hinzugefügt
+- **Sprachausgabe** über Lautsprecher, z. B. Echo-Geräte (Integration „Alexa Devices“): je
+  Ereignis an/aus, **Durchsage** (mit Gong) oder **Sprechen**, eigene Lautsprecher und Text.
+  Hauswacht wählt am Gerät die passende Entität.
+- Alarm-Durchsage **wiederholen** alle N Sekunden, bis der Alarm beendet ist.
+- **Nachtruhe** (von–bis): nur Ereignisse mit „Auch in der Nachtruhe ansagen“.
+- „Zusätzliche Lautsprecher“ pro Alarmprofil für Alarm, Eingangsverzögerung und „Alarm beendet“.
+- **Eigene Texte** für Push-Nachrichten und Sprachausgabe mit Platzhaltern (`{melder}`,
+  `{profil}`, `{bereich}`, `{wer}`, `{sekunden}`, `{uhrzeit}` …), Prüfung beim Speichern und
+  Vorschau.
+
+### Geändert
+- Menü „Benachrichtigungen“ ist jetzt ein Untermenü: Empfänger und Ereignisse, eigene Texte,
+  Sprachausgabe.
+- Stille Alarme werden nie angesagt, der Bedrohungsalarm nie über Lautsprecher.
+
 ## [0.22.1] - 2026-11-11
 
 ### Behoben

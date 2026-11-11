@@ -313,6 +313,10 @@ async def test_notification_options_are_saved(hass: HomeAssistant) -> None:
     )
     assert result["step_id"] == "notifications"
     result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "notify_settings"}
+    )
+    assert result["step_id"] == "notify_settings"
+    result = await hass.config_entries.options.async_configure(
         result["flow_id"],
         {
             "notify_system": [PHONE],
