@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.19.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.19.3:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -33,7 +33,7 @@ Hauswacht kann nur einmal eingerichtet werden.
 | `button.hauswacht_trotzdem_scharf_schalten` | Gewähltes Profil scharf schalten und offene Sensoren überbrücken |
 | `switch.hauswacht_testmodus` | Testmodus (Name je nach Sprache der Instanz) |
 | `sensor.hauswacht_systemstatus` | Systemstatus: OK · Sensoren ausgefallen · Störung |
-| `binary_sensor.hauswacht_offene_sensoren` | „Offene Sensoren in den Zonen“: „Offen“, sobald ein Sensor einer Zone offen ist (welche: Attribut `names`), sonst „Alles zu“ |
+| `binary_sensor.hauswacht_offene_sensoren` | „Offene Sensoren in den Meldergruppen“: „Offen“, sobald ein Sensor einer Meldergruppe offen ist (welche: Attribut `names`), sonst „Alles zu“ |
 | `sensor.hauswacht_simulierte_sensoren` | „Testkarte: simulierte Sensoren“ – Grundlage der Karte „Hauswacht Test“, standardmäßig ausgeblendet |
 
 Eine fertige Bedienkarte steht in [docs/dashboard.md](dashboard.md).
@@ -45,8 +45,9 @@ Konfigurieren** und lassen sich nur im **unscharfen** Zustand ändern. Das Menü
 
 | Menüpunkt | Inhalt |
 |---|---|
-| Zonen – welche Sensoren überwacht werden | Sensoren zu Gruppen zusammenfassen |
-| Alarmprofile | Welche Zonen scharf sind, Verzögerungen, Reaktion |
+| **Alarmauslösung** → Meldergruppen | Melder zusammenfassen, die zusammengehören (Türen, Fenster, Keller …) |
+| **Alarmauslösung** → Auslöseregeln | Abfolgen von Meldern („Tür, dann Keller“) |
+| Alarmprofile | Welche Meldergruppen allein auslösen, welche Auslöseregeln gelten, Verzögerungen, Reaktion |
 | Alarmgeber – Sirenen | Welche Sirenen Hauswacht verwenden darf, Hardware-Freigabe |
 | Benachrichtigungen | Empfänger und Ereignisse |
 | **Systemeinstellungen** → Benutzer und PINs (mit PIN-Regeln) | Personen, PINs, Rechte, Master-PIN |
@@ -61,32 +62,32 @@ ein Formular ohne Änderung verlassen will, bestätigt es unverändert oder schl
 (bereits Gespeichertes bleibt). Wird die Anlage scharf geschaltet, während der Dialog offen
 ist, speichert Hauswacht nichts mehr.
 
-### 1. Zonen anlegen
+### 1. Meldergruppen anlegen
 
-**Zonen – welche Sensoren überwacht werden → Zone anlegen.**
+**Alarmauslösung → Meldergruppen → Meldergruppe anlegen.**
 
-Eine **Zone** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden. Profile
-schalten ganze Zonen scharf, nicht einzelne Sensoren. Typisch:
+Eine **Meldergruppe** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden. Profile
+schalten ganze Meldergruppen scharf, nicht einzelne Sensoren. Typisch:
 
-| Zone | Sensoren | scharf in den Profilen |
+| Meldergruppe | Sensoren | scharf in den Profilen |
 |---|---|---|
 | Außenhaut | alle Tür- und Fensterkontakte, ihre Manipulationssensoren | Zuhause, Nacht, Abwesend |
 | Innen / Keller | Bewegungs- und Präsenzmelder | Nacht (Keller), Abwesend |
 
-- Nur Sensoren in einer Zone überwacht Hauswacht.
-- **Jeder Sensor gehört zu genau einer Zone.** Ist ein Sensor schon in einer anderen Zone,
-  lässt sich die Zone nicht speichern; die Meldung nennt Sensor und Zone.
+- Nur Sensoren in einer Meldergruppe überwacht Hauswacht.
+- **Jeder Sensor gehört zu genau einer Meldergruppe.** Ist ein Sensor schon in einer anderen Meldergruppe,
+  lässt sich die Meldergruppe nicht speichern; die Meldung nennt Sensor und Meldergruppe.
 - Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation),
   ergibt sich aus der Geräteklasse – siehe [Rollen prüfen](#3-rollen-prüfen-meist-nicht-nötig).
 
-Sensoren kommen auf zwei Wegen in eine Zone, beide lassen sich kombinieren:
+Sensoren kommen auf zwei Wegen in eine Meldergruppe, beide lassen sich kombinieren:
 
 - **Direkt auswählen:** Im Feld „Sensoren“ mehrere Binärsensoren anhaken.
 - **Per Label (optional):** Ein Label wählen. Alle Binärsensoren, die dieses Label **direkt an
   der Entität** tragen, gehören dann automatisch dazu. Labels am Gerät zählen bewusst nicht,
-  sonst kämen auch Batterie- oder Verbindungssensoren desselben Geräts mit in die Zone.
+  sonst kämen auch Batterie- oder Verbindungssensoren desselben Geräts mit in die Meldergruppe.
 
-Welche Sensoren eine Zone am Ende umfasst, zeigt das Attribut `zones` am Bedienfeld.
+Welche Sensoren eine Meldergruppe am Ende umfasst, zeigt das Attribut `zones` am Bedienfeld.
 
 ### 2. Profile anlegen
 
@@ -97,8 +98,8 @@ so viele du brauchst. Pro Profil:
 |---|---|
 | Name, Symbol | Wie das Profil in Auswahlliste, Meldungen und am Bedienfeld erscheint |
 | Knopf am Bedienfeld | Optional: Zuhause, Nacht, Abwesend, Urlaub oder Benutzerdefiniert. Jeder Knopf gehört höchstens einem Profil |
-| Allein auslösende Zonen | Jeder Melder dieser Zonen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …) |
-| Regeln | Zusätzlich: Abfolgen von Meldern, siehe [Regeln](#regeln) |
+| Meldergruppen – jeder Melder löst allein aus | Jeder Melder dieser Meldergruppen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …) |
+| Auslöseregeln | Zusätzlich: Abfolgen von Meldern, siehe [Auslöseregeln](#auslöseregeln) |
 | Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten (Standard je 30 s) |
 | Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert (Standard 180 s) |
 | Offene Sensoren beim Scharfschalten | Verweigern · nach Bestätigung erlauben · automatisch überbrücken |
@@ -108,27 +109,27 @@ so viele du brauchst. Pro Profil:
 | Sirenen, Ton, Lautstärke, stiller Alarm | Reaktion bei Alarm (siehe [Sirenen](#sirenen)) |
 | Benachrichtigen (Alarm) | Wer bei einem Alarm eine Push-Nachricht bekommt |
 
-Ein Profil ohne Zonen und ohne Regeln lässt sich **nicht** scharf schalten. So entsteht nie der Eindruck,
+Ein Profil ohne Meldergruppen und ohne Auslöseregeln lässt sich **nicht** scharf schalten. So entsteht nie der Eindruck,
 das Haus sei geschützt, obwohl nichts überwacht wird.
 
-### Regeln
+### Auslöseregeln
 
-**Konfigurieren → Regeln – Abfolgen von Meldern.** Eine Regel löst erst bei einer **Abfolge**
-von Meldern aus. Regeln stehen für sich; im Alarmprofil wählst du unter **Regeln**, welche
-gelten. Dieselbe Regel kann in mehreren Profilen stecken.
+**Konfigurieren → Alarmauslösung → Auslöseregeln.** Eine Auslöseregel löst erst bei einer **Abfolge**
+von Meldern aus. Auslöseregeln stehen für sich; im Alarmprofil wählst du unter **Auslöseregeln**, welche
+gelten. Dieselbe Auslöseregel kann in mehreren Profilen stecken.
 
-**So ist eine Regel aufgebaut:**
+**So ist eine Auslöseregel aufgebaut:**
 
 ```
 Schritt 1 erfüllt ──(Zeit von Schritt 1)──▶ Schritt 2 erfüllt ──(Zeit von Schritt 2)──▶ … ──▶ Alarm
 ```
 
-- Eine Regel besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt
+- Eine Auslöseregel besteht aus **Schritten**, die **nacheinander** passieren müssen. Schritt 2 zählt
   erst, wenn Schritt 1 erfüllt ist – und nur innerhalb der Zeit, die bei Schritt 1 steht.
   Melder von Schritt 2, die **vor** Schritt 1 auslösen, zählen nicht. So entsteht die
   Reihenfolge.
-- In jedem Schritt wählst du Melder (Sensoren und/oder Zonen – eine Zone heißt „irgendein Melder
-  der Zone“) und legst fest, wann **dieser Schritt** erfüllt ist. Diese Einstellung gilt nur für
+- In jedem Schritt wählst du Melder (Sensoren und/oder Meldergruppen – eine Meldergruppe heißt „irgendein Melder
+  der Meldergruppe“) und legst fest, wann **dieser Schritt** erfüllt ist. Diese Einstellung gilt nur für
   diesen Schritt:
 
 | Dieser Schritt ist erfüllt, wenn … | Beispiel mit „Tür vorne“ + „Tür hinten“ |
@@ -151,17 +152,17 @@ Schritt 1 erfüllt ──(Zeit von Schritt 1)──▶ Schritt 2 erfüllt ──
 
 **Anlegen mit dem Assistenten:** Name und Ergebnis → Schritt 1 → Übersicht mit „Weiteren
 Schritt hinzufügen“, „Schritt bearbeiten“, „Letzten Schritt entfernen“, „Fertig – speichern“
-(bis zu 10 Schritte). Über jedem Schritt und in der Übersicht steht die Regel als Satz, z. B.
-„eine(r) von Tür vorne / Tür hinten, dann innerhalb von 120 s Zone Keller → Eingangsverzögerung,
+(bis zu 10 Schritte). Über jedem Schritt und in der Übersicht steht die Auslöseregel als Satz, z. B.
+„eine(r) von Tür vorne / Tür hinten, dann innerhalb von 120 s Meldergruppe Keller → Eingangsverzögerung,
 dann Alarm“. Gespeichert wird erst mit „Fertig – speichern“; Probleme stehen in der Übersicht.
 
-Ergebnis einer erfüllten Regel: **sofort Alarm** oder **Eingangsverzögerung, dann Alarm**
+Ergebnis einer erfüllten Auslöseregel: **sofort Alarm** oder **Eingangsverzögerung, dann Alarm**
 (Zeit aus dem Alarmprofil – z. B. damit jemand, der heimkommt und gleich in den Keller geht,
 noch unscharf schalten kann).
 
 Beispiel Profil „Nacht“ (allein auslösend: nichts):
 
-| Regel | Schritte | Ergebnis |
+| Auslöseregel | Schritte | Ergebnis |
 |---|---|---|
 | Tür, dann Keller | Haustür → (120 s) → Keller-Melder | Eingangsverzögerung |
 | Fenster, dann Keller | Fenster → (60 s) → Keller-Melder | sofort Alarm |
@@ -175,29 +176,29 @@ Beispiel Profil „Nacht“ (allein auslösend: nichts):
 | Fenster auf, dann Keller | Alarm |
 | erst Keller, dann Fenster auf | kein Alarm – die Reihenfolge zählt |
 
-- **Regeln sind mit ODER verknüpft.** Eine Regel kann einen Alarm nur auslösen, nie den Alarm
-  einer anderen Regel verhindern. Lösen zwei Regeln gleichzeitig aus, gilt das strengere
+- **Auslöseregeln sind mit ODER verknüpft.** Eine Auslöseregel kann einen Alarm nur auslösen, nie den Alarm
+  einer anderen Auslöseregel verhindern. Lösen zwei Auslöseregeln gleichzeitig aus, gilt das strengere
   Ergebnis (sofort Alarm).
 - **Derselbe Melder zählt nicht doppelt:** „mindestens 2 verschiedene“ heißt zwei verschiedene
   Melder; ein Melder darf nicht in zwei aufeinanderfolgenden Schritten stehen.
-- **Scharfschalten:** Melder, die im Profil nur in Regeln vorkommen, verhindern das
+- **Scharfschalten:** Melder, die im Profil nur in Auslöseregeln vorkommen, verhindern das
   Scharfschalten nicht. Ein offenes Fenster zählt erst, wenn es zu und wieder auf geht – wird
-  es nachträglich geschlossen, beginnt das nächste Öffnen die Regel ganz normal. Ist beim
+  es nachträglich geschlossen, beginnt das nächste Öffnen die Auslöseregel ganz normal. Ist beim
   Scharfschalten ein solcher Melder offen, kommt ein **Hinweis** (Benachrichtigung „Hinweis
   beim Scharfschalten“, standardmäßig an, und eine Meldung in Home Assistant): Bis zum Schließen
   ist er eine Lücke, z. B. kann jemand durch das offene Fenster einsteigen, ohne Schritt 1
   auszulösen. Das Attribut `open_rule_sensors` am Bedienfeld zeigt, welche es gerade sind.
-- **Prüfung beim Speichern:** Regeln, die nie auslösen können, lassen sich nicht speichern.
-  Hinweise erscheinen, wenn eine Regel in einem Profil nichts bewirkt – etwa weil ihr erster
-  Melder dort schon allein auslöst oder weil eine kürzere Regel immer vorher auslöst.
+- **Prüfung beim Speichern:** Auslöseregeln, die nie auslösen können, lassen sich nicht speichern.
+  Hinweise erscheinen, wenn eine Auslöseregel in einem Profil nichts bewirkt – etwa weil ihr erster
+  Melder dort schon allein auslöst oder weil eine kürzere Auslöseregel immer vorher auslöst.
 - **Schwachstelle bewusst bedenken:** Wer keinen weiteren Schritt auslöst, bleibt unbemerkt
   (Tür auf, dann nur nach oben). Abhilfe: mehr Melder in den späteren Schritten.
 - Manipulation wird immer gemeldet; Brandsperre, Testmodus und Sirenenfreigabe gelten für jede
-  Regel. In der Testkarte siehst du, wie weit jede Regel des aktiven Profils ist.
-- Unvollständige Regeln meldet Hauswacht auf Wunsch („Unbestätigte Auslösung“, „Melder löst
+  Auslöseregel. In der Testkarte siehst du, wie weit jede Auslöseregel des aktiven Profils ist.
+- Unvollständige Auslöseregeln meldet Hauswacht auf Wunsch („Unbestätigte Auslösung“, „Melder löst
   häufig allein aus“ – beide standardmäßig aus).
-- Die Zonen-Option „zweiter Melder bestätigt“ aus 0.18.0 wurde beim Update automatisch zu
-  einer Regel „Bestätigung <Zone>“ (Schritt: mindestens 2 verschiedene Melder der Zone).
+- Die Meldergruppen-Option „zweiter Melder bestätigt“ aus 0.18.0 wurde beim Update automatisch zu
+  einer Auslöseregel „Bestätigung <Meldergruppe>“ (Schritt: mindestens 2 verschiedene Melder der Meldergruppe).
 
 **Bedienen:** Profile mit Knopf über das Bedienfeld; jedes Profil – auch ohne Knopf – über die
 Auswahlliste **Profil** und den Knopf **Scharf schalten**, oder per Aktion
@@ -339,9 +340,9 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 | Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
-| Hinweis beim Scharfschalten (offene Melder, die nur in Regeln vorkommen) | an | Ereignis, sonst allgemein |
-| Unbestätigte Auslösung (Regel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
-| Melder löst häufig allein aus (3× in einer Stunde eine Regel begonnen) | aus | Ereignis, sonst allgemein |
+| Hinweis beim Scharfschalten (offene Melder, die nur in Auslöseregeln vorkommen) | an | Ereignis, sonst allgemein |
+| Unbestätigte Auslösung (Auslöseregel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
+| Melder löst häufig allein aus (3× in einer Stunde eine Auslöseregel begonnen) | aus | Ereignis, sonst allgemein |
 
 - **Bedrohungsalarm** ist kein Ereignis zum Abschalten: immer an, eigene Empfänger
   („Empfänger Bedrohungsalarm“).
@@ -445,7 +446,7 @@ Kleinigkeiten lassen sich ohne die Integration ändern. Die Entitäten stehen am
 - Änderungen sind **nur im unscharfen Zustand** möglich; im scharfen Zustand sind die
   Einstellungen „nicht verfügbar“.
 - Jede Änderung wird sofort gespeichert und im Logbuch mit Benutzer festgehalten.
-- Name, Symbol, Bedienfeld-Knopf, Zonen, Sirenen, Benachrichtigungsziele, Personen und
+- Name, Symbol, Bedienfeld-Knopf, Meldergruppen, Sirenen, Benachrichtigungsziele, Personen und
   Wochentage sowie das **Entfernen** einer Uhrzeit gehen nur in der Integration.
 - Tipp: Eine Dashboard-Seite dafür nur für Administratoren sichtbar machen.
 
@@ -544,9 +545,9 @@ Countdown. Unter jedem Sensor steht, was Hauswacht gerade mit ihm macht:
 |---|---|
 | überwacht | löst im aktiven Profil aus |
 | nicht im aktiven Profil | wird ignoriert (z. B. Keller beim Profil „Zuhause“) |
-| nur in Regeln: … | gehört im aktiven Profil nur zu diesen Regeln |
+| nur in Auslöseregeln: … | gehört im aktiven Profil nur zu diesen Auslöseregeln |
 
-Darüber zeigt die Karte die **Regeln des aktiven Profils**: „nicht begonnen“ oder „Schritt 1
+Darüber zeigt die Karte die **Auslöseregeln des aktiven Profils**: „nicht begonnen“ oder „Schritt 1
 von 2 erfüllt · 85 s“.
 | überbrückt bis zum Schließen | war beim Beenden eines Alarms offen; erst nach **Zu** wieder überwacht – ein zweites **Auf** ändert an einer offenen Tür nichts |
 | Manipulation löst Alarm aus / nur Meldung | je nach Profil-Einstellung „Manipulation löst Alarm aus“; unscharf immer nur Meldung |
@@ -591,9 +592,9 @@ Offene Sensoren werden dabei **überbrückt**, also bis zum Unscharfschalten nic
 | `test_mode` | Testmodus aktiv |
 | `timer`, `timer_ends_at` | Laufende Verzögerung und ihr Ende |
 | `trigger_sensor`, `alarm_cycles` | Auslösender Sensor, Anzahl Alarmzyklen |
-| `zones` | Zonen mit ihren tatsächlichen Sensoren |
+| `zones` | Meldergruppen mit ihren tatsächlichen Sensoren |
 | `monitored_sensors` | Gerade scharf überwachte Sensoren |
-| `open_sensors`, `unavailable_sensors` | Offene bzw. ausgefallene Sensoren aller Zonen |
+| `open_sensors`, `unavailable_sensors` | Offene bzw. ausgefallene Sensoren aller Meldergruppen |
 | `bypassed_sensors` | Überbrückte Sensoren |
 | `last_contact` | Letzter Kontakt je Sensor |
 
@@ -686,5 +687,5 @@ Jede Aktion wird als Ereignis `hauswacht_event` gemeldet. Das Feld `type` nennt 
 - **Von 0.7.x auf 0.8.0:** Die bisherigen fünf festen Profile werden automatisch zu normalen
   Profilen mit gleichem Namen, Knopf und allen Einstellungen. Du kannst sie danach umbenennen,
   ändern oder löschen.
-- **Von 0.2.0:** Lege zuerst Zonen an und ordne sie den Profilen zu, sonst verweigert
+- **Von 0.2.0:** Lege zuerst Meldergruppen an und ordne sie den Profilen zu, sonst verweigert
   Hauswacht das Scharfschalten.

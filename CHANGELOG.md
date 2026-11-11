@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.19.3] - 2026-11-11
+
+### Geändert
+- Neue Namen: **Zonen** heißen jetzt **Meldergruppen**, **Regeln** heißen **Auslöseregeln**.
+  Beide liegen im neuen Menüpunkt **Alarmauslösung**. Im Alarmprofil heißen die Felder
+  „Meldergruppen – jeder Melder löst allein aus“ und „Auslöseregeln“.
+- Texte in Optionen, Meldungen, Testkarte und Anleitung angeglichen. Gespeicherte Einstellungen,
+  Entitäts-IDs und Attributnamen bleiben unverändert.
+
 ## [0.19.2] - 2026-11-11
 
 ### Geändert

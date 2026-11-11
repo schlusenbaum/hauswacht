@@ -226,11 +226,11 @@ def test_describe_rule() -> None:
     names = {DOOR: "Tür hinten", BUERO: "Tür Büro", BW1: "BW 1", PM: "PM Waschküche"}
     text = describe_rule(rule, names.__getitem__, lambda z: z.title())
     assert text == (
-        "eine(r) von Tür Büro / Tür hinten, dann innerhalb von 120 s Zone Keller, "
+        "eine(r) von Tür Büro / Tür hinten, dann innerhalb von 120 s Meldergruppe Keller, "
         "dann innerhalb von 60 s BW 1 und PM Waschküche (alle, beliebige Reihenfolge) "
         "→ Eingangsverzögerung, dann Alarm"
     )
     count = _rule("c", Step(zones=("keller",), mode=StepMode.COUNT, count=2))
     assert describe_rule(count, str, str, "en") == (
-        "at least 2 different of zone keller → alarm immediately"
+        "at least 2 different of group keller → alarm immediately"
     )

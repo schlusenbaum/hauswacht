@@ -55,7 +55,7 @@ Nützliche Entitäten und Attribute:
 | Entität | Inhalt |
 |---|---|
 | `alarm_control_panel.hauswacht` | Zustand; Attribute `profile`, `timer_ends_at`, `open_sensors`, `unavailable_sensors`, `bypassed_sensors`, `zones`, `last_contact`, `last_siren_decision` |
-| `binary_sensor.hauswacht_offene_sensoren` („Offene Sensoren in den Zonen“) | „Offen“, sobald ein Sensor einer Zone offen ist, sonst „Alles zu“; Attribute `sensors` (Entitäts-IDs), `names` (Anzeigenamen mit Raum) |
+| `binary_sensor.hauswacht_offene_sensoren` („Offene Sensoren in den Meldergruppen“) | „Offen“, sobald ein Sensor einer Meldergruppe offen ist, sonst „Alles zu“; Attribute `sensors` (Entitäts-IDs), `names` (Anzeigenamen mit Raum) |
 | `sensor.hauswacht_systemstatus` | `ok`, `degraded`, `fault`; Attribute `faulty_infrastructure`, `unavailable_sensors` |
 | `switch.hauswacht_testmodus` | Testmodus |
 | `sensor.hauswacht_simulierte_sensoren` („Testkarte: simulierte Sensoren“, standardmäßig ausgeblendet) | Anzahl simulierter Sensoren; Attribute `test_mode`, `sensors` (alle Hauswacht-Sensoren mit `real` und `simulated`) – Grundlage der Karte „Hauswacht Test“ |

@@ -117,7 +117,7 @@ async def test_window_then_cellar_alarm_with_rule_name(hass: HomeAssistant) -> N
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT  # lüften: kein Alarm
     await _set(hass, MOTION2, "on")
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
-    assert any("Regel: Fenster, dann Keller" in c.data["message"] for c in push)
+    assert any("Auslöseregel: Fenster, dann Keller" in c.data["message"] for c in push)
 
 
 async def test_order_matters(hass: HomeAssistant) -> None:
@@ -232,7 +232,7 @@ async def test_rule_wizard(hass: HomeAssistant) -> None:
     _motion2(hass, "off")
     entry = make_entry({"zones": ZONES})
     await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "rules", "rule_add")
+    flow = await _flow(hass, entry, "triggering", "rules", "rule_add")
     assert flow["step_id"] == "rule_meta"
     flow = await _submit(hass, flow, {"name": "Tür, dann Keller", "result": "entry_delay"})
     assert flow["step_id"] == "rule_step"
@@ -270,7 +270,7 @@ async def test_rule_wizard_edit_and_cancel(hass: HomeAssistant) -> None:
     _motion2(hass, "off")
     entry = make_entry({"zones": ZONES, "rules": RULES})
     await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "rules", "rule_edit")
+    flow = await _flow(hass, entry, "triggering", "rules", "rule_edit")
     flow = await _submit(hass, flow, {"rule": "tuer_keller"})
     assert flow["step_id"] == "rule_overview"
     flow = await _go(hass, flow, "rule_step_remove")

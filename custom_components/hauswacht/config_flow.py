@@ -130,25 +130,26 @@ from .runtime import entities_by_label
 SENSOR_DOMAIN = "binary_sensor"
 
 FINDING_TEXTS_DE = {
-    "rule_no_steps": "Regel „{rule}“ hat keinen Schritt mit Meldern.",
-    "rule_step_empty": "Schritt {step} hat keine Melder (Zone leer?).",
+    "rule_no_steps": "Auslöseregel „{rule}“ hat keinen Schritt mit Meldern.",
+    "rule_step_empty": "Schritt {step} hat keine Melder (Meldergruppe leer?).",
     "rule_count_too_high": "Schritt {step} verlangt mehr Melder, als er hat ({detail}).",
     "rule_same_sensor_next_step": "Ein Melder steht in Schritt {step} und im Schritt davor.",
-    "rule_redundant_single": "Regel „{rule}“ bewirkt nichts – ihr erster Schritt löst "
+    "rule_redundant_single": "Auslöseregel „{rule}“ bewirkt nichts – ihr erster Schritt löst "
     "hier schon allein aus.",
-    "rule_single_step_any": "Regel „{rule}“ hat nur einen Schritt „einer davon“ – das ist "
+    "rule_single_step_any": "Auslöseregel „{rule}“ hat nur einen Schritt „einer davon“ – das ist "
     "dasselbe wie „allein auslösend“.",
-    "rule_contained": "Regel „{rule}“ bewirkt nichts – „{detail}“ löst immer vorher aus.",
+    "rule_contained": "Auslöseregel „{rule}“ bewirkt nichts – „{detail}“ löst immer vorher aus.",
 }
 FINDING_TEXTS_EN = {
-    "rule_no_steps": "Rule “{rule}” has no step with sensors.",
-    "rule_step_empty": "Step {step} has no sensors (empty zone?).",
+    "rule_no_steps": "Trigger rule “{rule}” has no step with sensors.",
+    "rule_step_empty": "Step {step} has no sensors (empty sensor group?).",
     "rule_count_too_high": "Step {step} needs more sensors than it has ({detail}).",
     "rule_same_sensor_next_step": "A sensor is in step {step} and in the step before.",
-    "rule_redundant_single": "Rule “{rule}” has no effect – its first step already "
+    "rule_redundant_single": "Trigger rule “{rule}” has no effect – its first step already "
     "triggers alone here.",
-    "rule_single_step_any": "Rule “{rule}” has only one “any of” step – same as “triggers alone”.",
-    "rule_contained": "Rule “{rule}” has no effect – “{detail}” always triggers first.",
+    "rule_single_step_any": "Trigger rule “{rule}” has only one “any of” step – same as "
+    "“triggers alone”.",
+    "rule_contained": "Trigger rule “{rule}” has no effect – “{detail}” always triggers first.",
 }
 SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
@@ -250,7 +251,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self._is_disarmed():
             return self.async_abort(reason="disarm_first")
         return self._menu(
-            "init", ["zones", "profiles", "rules", "sirens", "notifications", "system", "done"]
+            "init", ["triggering", "profiles", "sirens", "notifications", "system", "done"]
         )
 
     async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -518,11 +519,17 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     # --- Regeln ------------------------------------------------------------
 
+    async def async_step_triggering(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Alarmauslösung: Meldergruppen und Auslöseregeln."""
+        return self._menu("triggering", ["zones", "rules", "init"])
+
     async def async_step_rules(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         saved, self._saved = self._saved, False
         return self.async_show_menu(
             step_id="rules",
-            menu_options=["rule_add", "rule_edit", "rule_delete", "init"],
+            menu_options=["rule_add", "rule_edit", "rule_delete", "triggering"],
             description_placeholders={
                 "saved": self._saved_text() if saved else "",
                 "rules": self._rules_list_text(),
@@ -810,7 +817,7 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Zonen ------------------------------------------------------------
 
     async def async_step_zones(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self._menu("zones", ["zone_add", "zone_edit", "zone_delete", "init"])
+        return self._menu("zones", ["zone_add", "zone_edit", "zone_delete", "triggering"])
 
     def _zone_schema(self, defaults: dict[str, Any]) -> vol.Schema:
         label_key = (
