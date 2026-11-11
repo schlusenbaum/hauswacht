@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.19.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.19.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -151,7 +151,12 @@ Beispiel Profil „Nacht“ (allein auslösend: nichts):
 - **Derselbe Melder zählt nicht doppelt:** „mindestens 2 verschiedene“ heißt zwei verschiedene
   Melder; ein Melder darf nicht in zwei aufeinanderfolgenden Schritten stehen.
 - **Scharfschalten:** Melder, die im Profil nur in Regeln vorkommen, verhindern das
-  Scharfschalten nicht. Ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.
+  Scharfschalten nicht. Ein offenes Fenster zählt erst, wenn es zu und wieder auf geht – wird
+  es nachträglich geschlossen, beginnt das nächste Öffnen die Regel ganz normal. Ist beim
+  Scharfschalten ein solcher Melder offen, kommt ein **Hinweis** (Benachrichtigung „Hinweis
+  beim Scharfschalten“, standardmäßig an, und eine Meldung in Home Assistant): Bis zum Schließen
+  ist er eine Lücke, z. B. kann jemand durch das offene Fenster einsteigen, ohne Schritt 1
+  auszulösen. Das Attribut `open_rule_sensors` am Bedienfeld zeigt, welche es gerade sind.
 - **Prüfung beim Speichern:** Regeln, die nie auslösen können, lassen sich nicht speichern.
   Hinweise erscheinen, wenn eine Regel in einem Profil nichts bewirkt – etwa weil ihr erster
   Melder dort schon allein auslöst oder weil eine kürzere Regel immer vorher auslöst.
@@ -304,6 +309,7 @@ angesteuert und welche aus welchem Grund gesperrt wurden.
 | Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
+| Hinweis beim Scharfschalten (offene Melder, die nur in Regeln vorkommen) | an | Ereignis, sonst allgemein |
 | Unbestätigte Auslösung (Regel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
 | Melder löst häufig allein aus (3× in einer Stunde eine Regel begonnen) | aus | Ereignis, sonst allgemein |
 

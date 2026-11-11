@@ -43,6 +43,7 @@ from .const import (
     ISSUE_PIN_COVERAGE,
     MASTER_USER_ID,
     NOTIFICATION_ALARM,
+    NOTIFICATION_ARM_HINT,
     NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
     OPT_BUTTONS_WITHOUT_PIN,
@@ -1484,6 +1485,47 @@ class HauswachtRuntime:
                 pass
 
     @callback
+    def open_rule_sensors(self) -> dict[str, list[str]]:
+        """Offene Melder, die im scharfen Profil nur in Regeln vorkommen -> Regelnamen.
+
+        Sie können eine Regel erst wieder beginnen, wenn sie zu und wieder auf gehen.
+        """
+        only_rules = self.armed_sensors - self.single_sensors
+        snapshots = self.snapshots(only_rules)
+        return {
+            entity_id: self.rule_names(entity_id)
+            for entity_id in sorted(only_rules)
+            if snapshots[entity_id].state == "on"
+        }
+
+    @callback
+    def _hint_open_rule_sensors(self) -> None:
+        """Hinweis beim Scharfschalten: offene Regelmelder sind bis zum Schließen eine Lücke."""
+        open_sensors = self.open_rule_sensors()
+        if not open_sensors or self.ctx.profile is None:
+            return
+        lines = [
+            f"{display_name(self.hass, entity_id)} (Regel {', '.join(f'„{n}“' for n in names)})"
+            for entity_id, names in open_sensors.items()
+        ]
+        message = (
+            f"Profil {self.profile_name(self.ctx.profile.profile_id)} ist scharf. Offen: "
+            + "; ".join(lines)
+            + ". Diese Melder können ihre Regeln erst auslösen, wenn sie zu und wieder auf gehen."
+        )
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT, {"type": "OpenRuleSensors", "sensors": list(open_sensors)}
+        )
+        self.notifier.notify(
+            NotifyEvent.ARM_HINT,
+            "Hauswacht: Hinweis beim Scharfschalten",
+            message,
+            test_mode=self.ctx.test_mode,
+        )
+        persistent_notification.async_create(
+            self.hass, message, title="Hauswacht: Hinweis", notification_id=NOTIFICATION_ARM_HINT
+        )
+
     def _notify_state_change(self, effect: StateChanged) -> None:
         """Ereignisse "Scharf geschaltet" und "Unscharf geschaltet" (standardmäßig aus)."""
         by = f" von {self.changed_by}" if self.changed_by else ""
@@ -1498,7 +1540,10 @@ class HauswachtRuntime:
                 f"Profil {self.profile_name(self.ctx.profile.profile_id)} scharf geschaltet{by}.",
                 test_mode=self.ctx.test_mode,
             )
-        elif (
+            self._hint_open_rule_sensors()
+        if effect.new is AlarmState.DISARMED:
+            persistent_notification.async_dismiss(self.hass, NOTIFICATION_ARM_HINT)
+        if (
             effect.new is AlarmState.DISARMED
             and effect.old is not AlarmState.DISARMED
             and not self._via_push  # dort gibt es eine eigene Rückmeldung

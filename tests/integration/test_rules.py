@@ -264,3 +264,39 @@ async def test_profile_rule_hint_when_redundant(hass: HomeAssistant) -> None:
     assert flow["type"] is FlowResultType.MENU
     assert entry.options["profiles"]["night"]["rules"] == ["tuer_keller"]
     assert "Tür, dann Keller" in flow["description_placeholders"]["saved"]
+
+
+async def test_hint_for_open_rule_sensor_when_armed(hass: HomeAssistant) -> None:
+    from homeassistant.components.persistent_notification import (  # noqa: PLC0415
+        _async_get_or_create_notifications,
+    )
+
+    push = async_mock_service(hass, "notify", PHONE)
+    _motion2(hass, "off")
+    await setup_entry(hass, make_entry(_options(notify_system=[PHONE])))
+    await _set(hass, WINDOW, "on")
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    hints = [c for c in push if c.data["title"] == "Hauswacht: Hinweis beim Scharfschalten"]
+    assert len(hints) == 1
+    assert "Fenster, dann Keller" in hints[0].data["message"]
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["open_rule_sensors"] == [WINDOW]
+    assert "hauswacht_arm_hint" in _async_get_or_create_notifications(hass)
+
+    # Nachträglich geschlossen: Öffnen beginnt die Regel wieder
+    await _set(hass, WINDOW, "off")
+    assert hass.states.get(PANEL).attributes["open_rule_sensors"] == []  # type: ignore[union-attr]
+    await _set(hass, WINDOW, "on")
+    await _set(hass, MOTION, "on")
+    assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    assert "hauswacht_arm_hint" not in _async_get_or_create_notifications(hass)
+
+
+async def test_no_hint_when_rule_sensors_closed(hass: HomeAssistant) -> None:
+    push = await _setup(hass, notify_system=[PHONE])
+    assert not [c for c in push if "Hinweis" in c.data["title"]]

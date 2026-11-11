@@ -132,6 +132,7 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
             "bypassed_sensors": sorted(ctx.bypassed),
             "bypassed_until_closed": sorted(ctx.bypassed_until_closed),
             "monitored_sensors": sorted(self.runtime.armed_sensors),
+            "open_rule_sensors": sorted(self.runtime.open_rule_sensors()),
             "open_sensors": sorted(readiness.open_sensors),
             "unavailable_sensors": sorted(readiness.unavailable_sensors),
             "zones": self.runtime.zone_members(),
