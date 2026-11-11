@@ -406,6 +406,16 @@ Die Karte zeigt **alle Sensoren aus den Hauswacht-Zonen** mit Raum, echtem Zusta
 
 Oben schaltest du den Testmodus ein und aus; **„Alle echt“** setzt alle Sensoren zurück.
 
+Oben zeigt die Karte den Zustand der Anlage mit Profil, bei Ein- und Ausgangsverzögerung mit
+Countdown. Unter jedem Sensor steht, was Hauswacht gerade mit ihm macht:
+
+| Hinweis | Bedeutung |
+|---|---|
+| überwacht | löst im aktiven Profil aus |
+| nicht im aktiven Profil | wird ignoriert (z. B. Keller beim Profil „Zuhause“) |
+| überbrückt bis zum Schließen | war beim Beenden eines Alarms offen; erst nach **Zu** wieder überwacht – ein zweites **Auf** ändert an einer offenen Tür nichts |
+| Manipulation löst Alarm aus / nur Meldung | je nach Profil-Einstellung „Manipulation löst Alarm aus“; unscharf immer nur Meldung |
+
 - Simulieren geht **nur im Testmodus**. Im Testmodus lösen **keine Sirenen** aus.
 - Der simulierte Zustand gilt **nur für Hauswacht**: Scharfschalten, offene Sensoren,
   Eingangsverzögerung, Alarm, Manipulation, Ausfall – alles wie echt. Das Gerät und sein

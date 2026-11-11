@@ -1049,9 +1049,29 @@ class HauswachtRuntime:
                     "role": sensor_role(entity_id, device_class, self.role_overrides).value,
                     "real": state.state if state else None,
                     "simulated": self.simulated(entity_id),
+                    "status": self._sensor_status(entity_id, device_class),
                 }
             )
         return sorted(rows, key=lambda r: str(r["name"]).casefold())
+
+    def _sensor_status(self, entity_id: str, device_class: str | None) -> str:
+        """Was Hauswacht gerade mit dem Sensor macht (Anzeige in der Testkarte)."""
+        ctx = self.ctx
+        armed = ctx.state is not AlarmState.DISARMED and ctx.profile is not None
+        role = sensor_role(entity_id, device_class, self.role_overrides)
+        if role is SensorRole.TAMPER_24H:
+            if armed and ctx.profile is not None and ctx.profile.tamper_triggers_alarm:
+                return "tamper_alarm"
+            return "tamper_message"
+        if not armed:
+            return "disarmed"
+        if entity_id in ctx.bypassed_until_closed:
+            return "bypassed_until_closed"
+        if entity_id in ctx.bypassed:
+            return "bypassed"
+        if entity_id not in self.armed_sensors:
+            return "not_monitored"
+        return "monitored"
 
     @property
     def simulated_count(self) -> int:
