@@ -72,6 +72,7 @@ def test_check_and_entities() -> None:
     }
     check(nested)
     assert entities(nested) == {"person.niklas", "zone.schule", "switch.urlaub"}
+    bad: dict[str, Any]
     for bad in (
         {"time": {}},
         {"time": {"after": "25:99x"}},
