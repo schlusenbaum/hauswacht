@@ -6,11 +6,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-### Hinzugefügt
-- Releases: Workflow packt die Integration in `hauswacht.zip` und hängt sie an jedes Release
-  (prüft, dass Tag und Manifest-Version übereinstimmen). HACS installiert aus der ZIP und zählt
-  die Downloads; Abzeichen für Release, Downloads, HACS und CI im README.
-
 ## [0.17.6] - 2026-11-11
 
 ### Geändert
@@ -21,6 +16,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Hinzugefügt
 - Link zur Anleitung auf der Geräteseite von Hauswacht.
+- Erstes offizielles Release: `hauswacht.zip` hängt an jedem Release (HACS installiert daraus
+  und zählt die Downloads); der Tag muss zur Manifest-Version passen. Abzeichen für Release,
+  Downloads, HACS und CI im README.
 
 ## [0.17.5] - 2026-11-11
 
