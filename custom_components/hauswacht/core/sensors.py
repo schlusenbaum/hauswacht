@@ -14,6 +14,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from .sensor_types import default_role_for
 from .state_machine import Readiness, SensorRole
 
 TRIGGER_STATE = "on"
@@ -172,7 +173,11 @@ def default_role(device_class: str | None) -> SensorRole:
 def sensor_role(
     entity_id: str, device_class: str | None, overrides: Mapping[str, SensorRole]
 ) -> SensorRole:
-    return overrides.get(entity_id) or default_role(device_class)
+    return (
+        overrides.get(entity_id)
+        or default_role_for(entity_id, device_class)
+        or default_role(device_class)
+    )
 
 
 # --- Bereitschaft und Auslösung ---------------------------------------------

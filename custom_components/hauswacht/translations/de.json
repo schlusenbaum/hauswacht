@@ -58,7 +58,9 @@
           "automation": "Automatik",
           "rules": "Auslöseregeln",
           "area": "Bereich",
-          "speakers": "Zusätzliche Lautsprecher"
+          "speakers": "Zusätzliche Lautsprecher",
+          "camera": "Kamera für das Alarmbild",
+          "save_snapshots": "Alarmbilder speichern"
         },
         "sections": {
           "automation": {
@@ -91,7 +93,9 @@
           "zones": "Jeder Melder dieser Meldergruppen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …). Offene Melder dieser Meldergruppen verhindern das Scharfschalten.",
           "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.",
           "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei.",
-          "speakers": "Für Alarm, Eingangsverzögerung und „Alarm beendet“ dieses Profils statt der Standard-Lautsprecher."
+          "speakers": "Für Alarm, Eingangsverzögerung und „Alarm beendet“ dieses Profils statt der Standard-Lautsprecher.",
+          "camera": "Ihr aktuelles Bild hängt an der Alarm-Nachricht und der Nachricht zur Eingangsverzögerung (Home-Assistant-App). Eine Kamera am auslösenden Melder hat Vorrang.",
+          "save_snapshots": "Bei Alarm 3 Bilder im Abstand von 2 s unter Medien → hauswacht speichern (Kamera des Melders oder des Profils)."
         }
       },
       "zones": {
@@ -248,11 +252,10 @@
       },
       "sensor_behaviour": {
         "title": "Sensorverhalten",
-        "description": "**Funkstille:** Hat sich ein Sensor so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\n**Rolle:** Wie ein Sensor auslöst, ergibt sich aus der Geräteklasse: Tür = Eingang (mit Eingangsverzögerung), Fenster = sofort, Bewegung/Präsenz = Mitläufer (verzögert nur, wenn schon eine Eingangsverzögerung läuft), Manipulation = immer gemeldet. Für eine Ausnahme Sensor und Rolle wählen; „Automatisch“ hebt sie wieder auf.\n\nAktuelle Ausnahmen: {overrides}",
+        "description": "**Funkstille:** Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen. Ereignisse, Helfer und Schalter sind davon ausgenommen.\n\n**Melder bearbeiten:** Einen Melder wählen, um Rolle, Schwellwert (bei Messwerten) und Kamera für das Alarmbild festzulegen. Standardrollen: Tür, Schloss, Tor = Eingang (mit Eingangsverzögerung), Fenster und alles andere = sofort, Bewegung/Präsenz = Mitläufer (verzögert nur, wenn schon eine Eingangsverzögerung läuft), Manipulation = immer gemeldet.\n\nAktuelle Einstellungen: {overrides}",
         "data": {
           "stale_after_hours": "Maximale Funkstille",
-          "entity": "Ausnahme für Sensor (optional)",
-          "role": "Rolle"
+          "entity": "Melder bearbeiten (optional)"
         }
       },
       "rules": {
@@ -593,6 +596,16 @@
           "in_quiet": "Auch in der Nachtruhe ansagen",
           "text": "Text"
         }
+      },
+      "sensor_detail": {
+        "title": "Melder: {sensor}",
+        "description": "Aktueller Zustand: {state} {unit}\n\n**Rolle:** „Automatisch“ = nach Art und Geräteklasse.\n\n**Schwellwert** (nur Messwerte, z. B. Erschütterung oder Leistung): Der Melder löst aus, wenn der Wert **über** „Auslösen über“ oder **unter** „Auslösen unter“ liegt. Ohne Schwellwert löst ein Messwert nie aus.\n\n**Kamera:** Ihr aktuelles Bild hängt an der Alarm-Nachricht, wenn dieser Melder auslöst (hat Vorrang vor der Kamera des Alarmprofils).",
+        "data": {
+          "role": "Rolle",
+          "above": "Auslösen über",
+          "below": "Auslösen unter",
+          "camera": "Kamera für das Alarmbild"
+        }
       }
     },
     "error": {
@@ -616,7 +629,8 @@
       "area_has_profiles": "Diesem Bereich gehören noch Alarmprofile – erst die Profile löschen oder einem anderen Bereich zuordnen.",
       "area_name_required": "Bitte einen Namen angeben.",
       "area_name_taken": "Diesen Namen hat bereits ein anderer Bereich.",
-      "invalid_template": "Text fehlerhaft"
+      "invalid_template": "Text fehlerhaft",
+      "threshold_range": "„Auslösen unter“ muss kleiner sein als „Auslösen über“ (oder nur eines angeben)."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

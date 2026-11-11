@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.23.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.24.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -83,12 +83,40 @@ schalten ganze Meldergruppen scharf, nicht einzelne Sensoren. Typisch:
 
 Sensoren kommen auf zwei Wegen in eine Meldergruppe, beide lassen sich kombinieren:
 
-- **Direkt auswählen:** Im Feld „Sensoren“ mehrere Binärsensoren anhaken.
-- **Per Label (optional):** Ein Label wählen. Alle Binärsensoren, die dieses Label **direkt an
-  der Entität** tragen, gehören dann automatisch dazu. Labels am Gerät zählen bewusst nicht,
+- **Direkt auswählen:** Im Feld „Sensoren“ mehrere Melder anhaken – siehe
+  [Welche Melder gehen?](#welche-melder-gehen).
+- **Per Label (optional):** Ein Label wählen. Alle Melder, die dieses Label **direkt an
+  der Entität** tragen, gehören dann automatisch dazu (Messwert-Sensoren ausgenommen, die brauchen
+  einen Schwellwert und werden direkt gewählt). Labels am Gerät zählen bewusst nicht,
   sonst kämen auch Batterie- oder Verbindungssensoren desselben Geräts mit in die Meldergruppe.
 
 Welche Sensoren eine Meldergruppe am Ende umfasst, zeigt das Attribut `zones` am Bedienfeld.
+
+#### Welche Melder gehen?
+
+Hauswacht bewertet jeden Melder als „ausgelöst/offen“ oder „ruhig/zu“:
+
+| Art | löst aus bei | Standardrolle |
+|---|---|---|
+| Binärsensor (`binary_sensor`) | an | nach Geräteklasse (siehe [Rollen](#3-rollen-prüfen-meist-nicht-nötig)) |
+| Schloss (`lock`) | entriegelt, öffnet, offen, blockiert | Eingang |
+| Abdeckung (`cover`) | offen, öffnet, schließt | Tor/Tür/Garage: Eingang, sonst sofort |
+| Ereignis (`event`) | jedes neue Ereignis, z. B. Klingel oder Kamera-Erkennung | sofort |
+| Messwert (`sensor`) | Wert über bzw. unter dem eingestellten Schwellwert | sofort |
+| Helfer/Schalter (`input_boolean`, `switch`) | an | sofort |
+
+- **Kameras:** Die meisten Kamera-Integrationen liefern Bewegung, Person oder Fahrzeug als eigene
+  Binärsensoren oder Ereignisse – die direkt als Melder nehmen. Das Kamerabild selbst kann an die
+  Alarm-Nachricht gehängt werden, siehe [Kamerabild](#kamerabild-in-der-alarm-nachricht).
+- **Ereignisse** sind nie „offen“: Jedes neue Ereignis ist eine kurze Auslösung. Nach einem
+  Neustart löst das wiederhergestellte letzte Ereignis nicht aus. Für eine Klingel ist „sofort“
+  meist zu streng – Rolle ändern oder eine Auslöseregel „nur Benachrichtigung“ nehmen.
+- **Messwerte** brauchen einen Schwellwert (Systemeinstellungen → Sensorverhalten → Melder
+  bearbeiten), z. B. Erschütterung „Auslösen über 5“. Ohne Schwellwert lösen sie nie aus.
+  Nicht-Zahlen gelten als nicht verfügbar.
+- Für alles andere hilft ein Vorlagen-Binärsensor (Helfer).
+- Ereignisse, Helfer und Schalter haben keine Lebenszeichen und sind deshalb von der
+  [Funkstille](#funkstille-von-sensoren)-Prüfung ausgenommen.
 
 ### 2. Profile anlegen
 
@@ -316,8 +344,10 @@ Die Rolle eines Sensors ergibt sich aus seiner Geräteklasse:
 | Manipulation | Manipulation (24 h) | Wird immer gemeldet, auch unscharf |
 | ohne / andere | Sofort | Sicherheitshalber sofortiger Alarm |
 
-Abweichungen stellst du unter **Systemeinstellungen → Sensorverhalten** ein (Sensor und Rolle wählen), z. B. ein Fenster, durch das
-man das Haus betritt, als „Eingang“.
+Abweichungen stellst du unter **Systemeinstellungen → Sensorverhalten → Melder bearbeiten** ein
+(Melder wählen, dann Rolle, bei Messwerten Schwellwert, und Kamera), z. B. ein Fenster, durch das
+man das Haus betritt, als „Eingang“. Schlösser, Abdeckungen und andere Arten haben eigene
+Standardrollen, siehe [Welche Melder gehen?](#welche-melder-gehen).
 
 ## Immer aktive Melder
 
@@ -559,6 +589,19 @@ Eingangsverzögerung, immer aktiver Melder.
   vorweg.
 - Ist am Echo „Nicht stören“ an, sagt er unter Umständen nichts an. Die Sprachausgabe ergänzt
   Push und Sirene, sie ersetzt sie nicht.
+
+### Kamerabild in der Alarm-Nachricht
+
+- **Im Alarmprofil:** „Kamera für das Alarmbild“. Ihr aktuelles Bild hängt an der Alarm-Nachricht
+  und an der Nachricht zur Eingangsverzögerung – in der Home-Assistant-App (iPhone und Android)
+  direkt in der Benachrichtigung.
+- **Am Melder** (Sensorverhalten → Melder bearbeiten → Kamera): hat Vorrang, z. B. die
+  Einfahrtskamera für das Garagentor.
+- **Alarmbilder speichern** (im Alarmprofil): Bei Alarm speichert Hauswacht 3 Bilder im Abstand
+  von 2 s unter **Medien → hauswacht** (`/media/hauswacht/`), z. B.
+  `20261111-221503_kuechenfenster_1.jpg`. Dafür ruft Hauswacht `camera.snapshot` auf – das liest
+  nur ein Bild, schaltet nichts.
+- Benachrichtigungs-Entitäten (z. B. WhatsApp) und Lautsprecher bekommen kein Bild.
 
 ### Scharfschaltung abgelehnt: „Trotzdem scharf“ / „Erneut versuchen“
 

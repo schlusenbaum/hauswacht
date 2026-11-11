@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-11
+
+### Hinzugefügt
+- **Weitere Melderarten:** Schlösser (`lock`, entriegelt/blockiert), Abdeckungen (`cover`, z. B.
+  Garagentor offen), Ereignisse (`event`, z. B. Klingel oder Kamera-Erkennung), Messwerte
+  (`sensor` mit Schwellwert, z. B. Erschütterung) und Helfer/Schalter. Jede Art hat eine
+  passende Standardrolle; die Testkarte zeigt und simuliert sie.
+- **Melder bearbeiten** (Sensorverhalten): Rolle, Schwellwert und Kamera je Melder.
+- **Kamerabild in der Alarm-Nachricht:** Kamera je Alarmprofil oder je Melder; das aktuelle Bild
+  hängt an Alarm- und Eingangsverzögerungs-Nachricht.
+- **Alarmbilder speichern:** auf Wunsch 3 Bilder im Abstand von 2 s unter Medien → hauswacht.
+
+### Geändert
+- Funkstille-Prüfung gilt nicht für Ereignisse, Helfer und Schalter (sie haben keine
+  Lebenszeichen).
+
 ## [0.23.1] - 2026-11-11
 
 ### Hinzugefügt

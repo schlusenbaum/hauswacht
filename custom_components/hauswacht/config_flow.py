@@ -63,7 +63,9 @@ from .const import (
     OPT_REMINDER_DELAY,
     OPT_REMINDER_PERSONS,
     OPT_REMINDER_PROFILE,
+    OPT_SENSOR_CAMERAS,
     OPT_SENSOR_ROLES,
+    OPT_SENSOR_THRESHOLDS,
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
     OPT_SPEECH,
@@ -140,6 +142,13 @@ from .core.rules import (
     to_editable,
     validate_rule,
     wizard_editable,
+)
+from .core.sensor_types import (
+    MONITORED_DOMAINS,
+    domain_of,
+    parse_cameras,
+    parse_thresholds,
+    profile_camera,
 )
 from .core.sensors import (
     Zone,
@@ -236,6 +245,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._draft_step = 0
         self._area_id: str | None = None
         self._event: str | None = None
+        self._sensor_entity: str | None = None
+        self._pending_options: dict[str, Any] | None = None
         self._notes: list[str] = []
 
     async def _save(self, options: dict[str, Any], back: str) -> ConfigFlowResult:
@@ -608,6 +619,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "silent": bool(user_input["silent"]),
                         "notify": list(user_input.get("notify", [])),
                         "speakers": list(user_input.get("speakers") or []),
+                        "camera": user_input.get("camera") or None,
+                        "save_snapshots": bool(user_input.get("save_snapshots")),
                         **_automation_from_input(user_input.get("automation") or {}),
                         "arm_on_close": _arm_on_close_from_input(
                             user_input.get("arm_on_close") or {}
@@ -695,6 +708,13 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     "speakers", default=list(profile_speakers(options, pid))
                 ): self._speaker_selector(),
+                vol.Optional(
+                    "camera",
+                    description={"suggested_value": profile_camera(options, pid)[0]},
+                ): EntitySelector(EntitySelectorConfig(domain="camera")),
+                vol.Required(
+                    "save_snapshots", default=profile_camera(options, pid)[1]
+                ): BooleanSelector(),
                 # Kein default am Bereich: Sonst füllt die Oberfläche die Felder darin nicht
                 # vor, und "OK" bleibt ohne Meldung wirkungslos.
                 vol.Optional("automation"): section(
@@ -747,7 +767,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                     zones, multiple=True
                 ),
                 vol.Optional("sensors", default=list(current.sensors)): EntitySelector(
-                    EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
                 ),
                 vol.Optional("sirens_enabled", default=current.sirens_enabled): BooleanSelector(),
                 vol.Optional("sirens", default=list(current.sirens)): _list_selector(
@@ -936,7 +956,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         schema = vol.Schema(
             {
                 vol.Optional("sensors", default=(current or {}).get("sensors", [])): (
-                    EntitySelector(EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True))
+                    EntitySelector(
+                        EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
+                    )
                 ),
                 vol.Optional("zones", default=(current or {}).get("zones", [])): _zone_selector(
                     zones, multiple=True
@@ -1130,7 +1152,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         return vol.Schema(
             {
                 vol.Optional("sensors", default=list(form.get("sensors", []))): EntitySelector(
-                    EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
                 ),
                 vol.Optional("zones", default=list(form.get("zones", []))): _zone_selector(
                     zones, multiple=True
@@ -1162,7 +1184,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             {
                 vol.Required("name", default=defaults.get("name", "")): TextSelector(),
                 vol.Optional("entities", default=defaults.get("entities", [])): EntitySelector(
-                    EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
                 ),
                 label_key: LabelSelector(),
             }
@@ -1290,16 +1312,27 @@ class HauswachtOptionsFlow(OptionsFlow):
             options[OPT_STALE_AFTER_HOURS] = int(user_input.get(OPT_STALE_AFTER_HOURS) or 0)
             entity_id = user_input.get("entity")
             if entity_id:
-                role = user_input.get("role") or ROLE_AUTO
-                if role == ROLE_AUTO:
-                    roles.pop(entity_id, None)
-                else:
-                    roles[entity_id] = role
-            options[OPT_SENSOR_ROLES] = roles
+                # Zuerst Funkstille übernehmen, dann den Melder im Detail bearbeiten
+                self._pending_options = options
+                self._sensor_entity = entity_id
+                return await self.async_step_sensor_detail()
             return await self._save(options, "system")
-        overrides = (
-            ", ".join(f"{display_name(self.hass, e)}: {r}" for e, r in sorted(roles.items())) or "–"
-        )
+        thresholds = parse_thresholds(options)
+        cameras = parse_cameras(options)
+        details = []
+        for entity_id in sorted(set(roles) | set(thresholds) | set(cameras)):
+            parts = []
+            if entity_id in roles:
+                parts.append(str(roles[entity_id]))
+            if (limit := thresholds.get(entity_id)) is not None:
+                if limit.above is not None:
+                    parts.append(f"> {limit.above:g}")
+                if limit.below is not None:
+                    parts.append(f"< {limit.below:g}")
+            if entity_id in cameras:
+                parts.append(f"📷 {display_name(self.hass, cameras[entity_id])}")
+            details.append(f"{display_name(self.hass, entity_id)}: {', '.join(parts)}")
+        overrides = "; ".join(details) or "–"
         current = stale_after_seconds(options)
         schema = vol.Schema(
             {
@@ -1314,9 +1347,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
-                vol.Optional("entity"): EntitySelector(EntitySelectorConfig(domain=SENSOR_DOMAIN)),
-                vol.Optional("role", default=ROLE_AUTO): _select(
-                    [ROLE_AUTO, *[r.value for r in SensorRole]], "role"
+                vol.Optional("entity"): EntitySelector(
+                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS))
                 ),
             }
         )
@@ -1324,6 +1356,69 @@ class HauswachtOptionsFlow(OptionsFlow):
             step_id="sensor_behaviour",
             data_schema=schema,
             description_placeholders={"overrides": overrides},
+        )
+
+    async def async_step_sensor_detail(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ein Melder: Rolle, Schwellwert (Messwerte) und Kamera für das Alarmbild."""
+        options = dict(self._pending_options or self.config_entry.options)
+        entity_id = self._sensor_entity or ""
+        roles = dict(options.get(OPT_SENSOR_ROLES, {}))
+        thresholds = {k: dict(v) for k, v in options.get(OPT_SENSOR_THRESHOLDS, {}).items()}
+        cameras = dict(options.get(OPT_SENSOR_CAMERAS, {}))
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            role = user_input.get("role") or ROLE_AUTO
+            if role == ROLE_AUTO:
+                roles.pop(entity_id, None)
+            else:
+                roles[entity_id] = role
+            above, below = user_input.get("above"), user_input.get("below")
+            if above is not None and below is not None and float(below) > float(above):
+                errors["base"] = "threshold_range"
+            if not errors:
+                if above is None and below is None:
+                    thresholds.pop(entity_id, None)
+                else:
+                    thresholds[entity_id] = {
+                        k: float(v)
+                        for k, v in (("above", above), ("below", below))
+                        if v is not None
+                    }
+                if camera := user_input.get("camera"):
+                    cameras[entity_id] = camera
+                else:
+                    cameras.pop(entity_id, None)
+                options[OPT_SENSOR_ROLES] = roles
+                options[OPT_SENSOR_THRESHOLDS] = thresholds
+                options[OPT_SENSOR_CAMERAS] = cameras
+                self._pending_options = None
+                return await self._save(options, "system")
+        current = thresholds.get(entity_id, {})
+        state = self.hass.states.get(entity_id)
+        fields: dict[Any, Any] = {
+            vol.Required("role", default=roles.get(entity_id, ROLE_AUTO)): _select(
+                [ROLE_AUTO, *[r.value for r in SensorRole]], "role"
+            ),
+        }
+        if domain_of(entity_id) == "sensor":
+            for key in ("above", "below"):
+                fields[vol.Optional(key, description={"suggested_value": current.get(key)})] = (
+                    NumberSelector(NumberSelectorConfig(mode=NumberSelectorMode.BOX, step="any"))
+                )
+        fields[vol.Optional("camera", description={"suggested_value": cameras.get(entity_id)})] = (
+            EntitySelector(EntitySelectorConfig(domain="camera"))
+        )
+        return self.async_show_form(
+            step_id="sensor_detail",
+            data_schema=vol.Schema(fields),
+            errors=errors,
+            description_placeholders={
+                "sensor": display_name(self.hass, entity_id),
+                "state": state.state if state else "–",
+                "unit": str(state.attributes.get("unit_of_measurement", "")) if state else "",
+            },
         )
 
     # --- Sirenen -----------------------------------------------------------
@@ -2000,7 +2095,7 @@ def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:
         {
             vol.Optional("enabled", default=current.enabled): BooleanSelector(),
             vol.Optional("doors", default=sorted(current.doors)): EntitySelector(
-                EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=True)
+                EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
             ),
             vol.Optional("settle", default=current.settle): _seconds(MAX_SETTLE, minimum=1),
         }
