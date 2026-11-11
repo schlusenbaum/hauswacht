@@ -176,7 +176,7 @@ async def test_options_flow_add_profile(hass: HomeAssistant) -> None:
             "zones": ["aussenhaut"],
         },
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     profile = entry.options["profiles"]["nacht_eg"]
     assert profile["name"] == "Nacht EG"
@@ -207,7 +207,7 @@ async def test_options_flow_delete_profile(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"profile": "vacation"}
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert "vacation" not in entry.options["profiles"]
     features = _state(hass).attributes["supported_features"]
@@ -261,4 +261,4 @@ async def test_profile_form_can_be_submitted_unchanged(hass: HomeAssistant, prof
     assert _missing_required(schema, data) == []
 
     flow = await hass.config_entries.options.async_configure(flow["flow_id"], data)
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU

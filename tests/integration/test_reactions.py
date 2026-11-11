@@ -268,7 +268,7 @@ async def test_enabling_hardware_requires_confirmation(hass: HomeAssistant) -> N
         flow["flow_id"],
         {"sirens": [SIREN], "sirens_hardware_enabled": True, "confirm_hardware": True},
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     assert entry.options["sirens_hardware_enabled"] is True
     assert entry.options["sirens"] == [SIREN]
 

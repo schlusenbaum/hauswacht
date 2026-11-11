@@ -243,7 +243,7 @@ async def test_options_flow_pin_rules(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"code_arm_required": True}
     )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert entry.options["code_arm_required"] is True
 
@@ -282,7 +282,7 @@ async def test_options_flow_profile_timings(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"exit_delay": 5, "entry_delay": 20, "reaction_time": 120}
     )
-    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["type"] is FlowResultType.MENU
     away = entry.options["profiles"]["away"]
     assert (away["exit_delay"], away["entry_delay"], away["reaction_time"]) == (5, 20, 120)
     assert away["zones"] == ["aussenhaut", "keller"]  # bisherige Zonen bleiben erhalten

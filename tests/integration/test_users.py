@@ -173,7 +173,7 @@ async def test_user_management_in_options(hass: HomeAssistant) -> None:
         flow["flow_id"], {"name": "Petra", "new_pin": "1357", "new_duress_pin": "7531"}
     )
     await hass.async_block_till_done()
-    assert result["type"] == "create_entry"
+    assert result["type"] == "menu"
     stored = entry.options["users"]["petra"]
     assert stored["name"] == "Petra"
     assert stored["pin_digest"]
@@ -193,7 +193,7 @@ async def test_user_management_in_options(hass: HomeAssistant) -> None:
         result["flow_id"], {"name": "Niklas", "new_pin": "1357"}
     )
     await hass.async_block_till_done()
-    assert result["type"] == "create_entry"
+    assert result["type"] == "menu"
     assert set(entry.options["users"]) == {"petra", "niklas"}
 
 
@@ -227,7 +227,7 @@ async def test_name_suggests_ha_users_and_links(
         flow["flow_id"], {"name": hass_admin_user.name}
     )
     await hass.async_block_till_done()
-    assert result["type"] == "create_entry"
+    assert result["type"] == "menu"
     stored = next(iter(entry.options["users"].values()))
     assert stored["ha_user"] == hass_admin_user.id
 
@@ -245,7 +245,7 @@ async def _pin_rules(hass: HomeAssistant, entry: Any, data: dict) -> None:
     )
     result = await hass.config_entries.options.async_configure(flow["flow_id"], data)
     await hass.async_block_till_done()
-    assert result["type"] == "create_entry"
+    assert result["type"] == "menu"
 
 
 async def test_master_pin(hass: HomeAssistant) -> None:

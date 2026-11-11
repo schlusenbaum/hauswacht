@@ -50,6 +50,13 @@ Konfigurieren** und lassen sich nur im **unscharfen** Zustand ändern. Das Menü
 | **Systemeinstellungen** → Funknetz und Gateways überwachen | Zigbee2MQTT-Bridge, MQTT … |
 | **Systemeinstellungen** → Heimkehr-Beobachtung | Auswertung, schaltet nichts |
 
+Jede Änderung wird beim Bestätigen eines Formulars **sofort gespeichert**, danach geht es
+zurück ins Menü („✅ Gespeichert“). Untermenüs haben **„← Zurück“**, das Hauptmenü
+**„Fertig – schließen“**. Formulare selbst haben in Home Assistant keinen Zurück-Knopf: Wer
+ein Formular ohne Änderung verlassen will, bestätigt es unverändert oder schließt den Dialog
+(bereits Gespeichertes bleibt). Wird die Anlage scharf geschaltet, während der Dialog offen
+ist, speichert Hauswacht nichts mehr.
+
 ### 1. Zonen anlegen
 
 **Zonen – welche Sensoren überwacht werden → Zone anlegen.**

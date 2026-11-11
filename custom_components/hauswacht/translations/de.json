@@ -19,8 +19,10 @@
           "profiles": "Alarmprofile",
           "sirens": "Alarmgeber – Sirenen",
           "notifications": "Benachrichtigungen",
-          "system": "Systemeinstellungen"
-        }
+          "system": "Systemeinstellungen",
+          "done": "Fertig – schließen"
+        },
+        "description": "{saved}Jede Änderung wird beim Bestätigen des Formulars sofort gespeichert; danach geht es zurück ins Menü."
       },
       "code": {
         "title": "PIN-Regeln",
@@ -82,9 +84,10 @@
         "menu_options": {
           "zone_add": "Zone anlegen",
           "zone_edit": "Zone bearbeiten",
-          "zone_delete": "Zone löschen"
+          "zone_delete": "Zone löschen",
+          "init": "← Zurück"
         },
-        "description": "Eine **Zone** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außenhaut**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Zonen scharf sind: „Zuhause“ = nur Außenhaut, „Abwesend“ = Außenhaut und Innen.\n\nJeder Sensor gehört zu **genau einer** Zone. Nur Sensoren in einer Zone überwacht Hauswacht."
+        "description": "{saved}Eine **Zone** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außenhaut**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Zonen scharf sind: „Zuhause“ = nur Außenhaut, „Abwesend“ = Außenhaut und Innen.\n\nJeder Sensor gehört zu **genau einer** Zone. Nur Sensoren in einer Zone überwacht Hauswacht."
       },
       "zone_add": {
         "title": "Zone anlegen",
@@ -251,8 +254,10 @@
         "menu_options": {
           "profile_add": "Alarmprofil anlegen",
           "profile_edit": "Alarmprofil bearbeiten",
-          "profile_delete": "Alarmprofil löschen"
-        }
+          "profile_delete": "Alarmprofil löschen",
+          "init": "← Zurück"
+        },
+        "description": "{saved}"
       },
       "profile_edit": {
         "title": "Profil bearbeiten",
@@ -276,12 +281,13 @@
       },
       "users": {
         "title": "Benutzer und PINs",
-        "description": "Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
+        "description": "{saved}Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
         "menu_options": {
           "user_add": "Benutzer anlegen",
           "user_edit": "Benutzer bearbeiten",
           "user_delete": "Benutzer löschen",
-          "code": "PIN-Regeln (Master-PIN, PIN beim Scharfschalten …)"
+          "code": "PIN-Regeln (Master-PIN, PIN beim Scharfschalten …)",
+          "system": "← Zurück"
         }
       },
       "user_edit": {
@@ -320,8 +326,10 @@
           "users": "Benutzer und PINs",
           "sensor_behaviour": "Sensorverhalten – Rollen und Funkstille",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
-          "homecoming": "Heimkehr-Beobachtung"
-        }
+          "homecoming": "Heimkehr-Beobachtung",
+          "init": "← Zurück"
+        },
+        "description": "{saved}"
       },
       "sensor_behaviour": {
         "title": "Sensorverhalten",
