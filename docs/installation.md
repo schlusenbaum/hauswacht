@@ -41,8 +41,21 @@ Konfigurieren** und lassen sich nur im **unscharfen** Zustand ändern.
 
 ### 1. Zonen anlegen
 
-**Zonen und Sensoren → Zone anlegen.** Eine Zone ist eine Gruppe von Sensoren, z. B.
-„Außenhaut“ (alle Türen und Fenster) oder „Keller“ (Bewegungsmelder).
+**Zonen – welche Sensoren überwacht werden → Zone anlegen.**
+
+Eine **Zone** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden. Profile
+schalten ganze Zonen scharf, nicht einzelne Sensoren. Typisch:
+
+| Zone | Sensoren | scharf in den Profilen |
+|---|---|---|
+| Außenhaut | alle Tür- und Fensterkontakte, ihre Manipulationssensoren | Zuhause, Nacht, Abwesend |
+| Innen / Keller | Bewegungs- und Präsenzmelder | Nacht (Keller), Abwesend |
+
+- Nur Sensoren in einer Zone überwacht Hauswacht.
+- **Jeder Sensor gehört zu genau einer Zone.** Ist ein Sensor schon in einer anderen Zone,
+  lässt sich die Zone nicht speichern; die Meldung nennt Sensor und Zone.
+- Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation),
+  ergibt sich aus der Geräteklasse – siehe [Rollen prüfen](#3-rollen-prüfen-meist-nicht-nötig).
 
 Sensoren kommen auf zwei Wegen in eine Zone, beide lassen sich kombinieren:
 
@@ -121,13 +134,13 @@ Die Rolle eines Sensors ergibt sich aus seiner Geräteklasse:
 | Manipulation | Manipulation (24 h) | Wird immer gemeldet, auch unscharf |
 | ohne / andere | Sofort | Sicherheitshalber sofortiger Alarm |
 
-Abweichungen stellst du unter **Sensorrollen (Ausnahmen)** ein, z. B. ein Fenster, durch das
+Abweichungen stellst du unter **Sensorrollen – Ausnahmen** ein, z. B. ein Fenster, durch das
 man das Haus betritt, als „Eingang“.
 
-## Sensorüberwachung
+## Funkstille von Sensoren
 
 - Ein Sensor ist **nicht verfügbar**, wenn er fehlt oder `unavailable` bzw. `unknown` meldet.
-- Optional (**Sensorüberwachung → Maximale Funkstille**) gilt ein Sensor auch dann als
+- Optional (**Funkstille von Sensoren → Maximale Funkstille**) gilt ein Sensor auch dann als
   ausgefallen, wenn er sich so viele Stunden nicht gemeldet hat. Batteriesensoren melden sich
   teils nur alle paar Stunden, der Wert sollte deshalb großzügig sein. Standard: aus.
 - Als „letzter Kontakt“ zählt der „Zuletzt gesehen“-Sensor desselben Geräts (bei Zigbee2MQTT

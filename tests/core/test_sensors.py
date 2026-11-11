@@ -25,6 +25,7 @@ from custom_components.hauswacht.core.sensors import (
     resolve_zones,
     sensor_role,
     slugify,
+    zone_conflicts,
 )
 from custom_components.hauswacht.core.state_machine import (
     OpenSensorPolicy,
@@ -337,3 +338,20 @@ def test_without_last_seen_falls_back_to_last_reported() -> None:
 )
 def test_is_last_seen_entity(kwargs: dict[str, str | None], expected: bool) -> None:
     assert is_last_seen_entity(**kwargs) is expected  # type: ignore[arg-type]
+
+
+def test_zone_conflicts_direct_and_label() -> None:
+    zones = {
+        "aussen": Zone("aussen", "Außenhaut", frozenset({"binary_sensor.tuer"}), "lbl"),
+        "innen": Zone("innen", "Innen", frozenset({"binary_sensor.bwm"})),
+    }
+    labels = {"lbl": frozenset({"binary_sensor.fenster"})}
+    new = Zone(
+        "neu", "Neu", frozenset({"binary_sensor.fenster", "binary_sensor.bwm", "binary_sensor.x"})
+    )
+    assert zone_conflicts(new, zones, labels) == {
+        "binary_sensor.bwm": "Innen",
+        "binary_sensor.fenster": "Außenhaut",
+    }
+    # Die eigene Zone zählt nicht
+    assert zone_conflicts(zones["aussen"], zones, labels) == {}

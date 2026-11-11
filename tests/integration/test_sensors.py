@@ -36,6 +36,8 @@ from .conftest import (
     setup_entry,
 )
 
+OG_WINDOW = "binary_sensor.fenster_og"
+
 
 async def _service(hass: HomeAssistant, domain: str, service: str, **data: Any) -> None:
     await hass.services.async_call(domain, service, data, blocking=True)
@@ -293,12 +295,39 @@ async def test_options_flow_add_zone_and_assign(hass: HomeAssistant) -> None:
         flow["flow_id"], {"name": "Leer", "entities": []}
     )
     assert flow["errors"] == {"base": "zone_empty"}
+    # Ein Sensor darf nur in einer Zone sein: das Küchenfenster steckt schon in "Außenhaut"
     flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Obergeschoss", "entities": [WINDOW]}
+        flow["flow_id"], {"name": "Obergeschoss", "entities": [WINDOW, OG_WINDOW]}
+    )
+    assert flow["errors"] == {"base": "zone_overlap"}
+    assert "Außenhaut" in flow["description_placeholders"]["conflicts"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Obergeschoss", "entities": [OG_WINDOW]}
     )
     assert flow["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert entry.options["zones"]["obergeschoss"]["entities"] == [WINDOW]
+    assert entry.options["zones"]["obergeschoss"]["entities"] == [OG_WINDOW]
+
+
+async def test_options_flow_edit_zone_keeps_own_sensors(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "zones"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "zone_edit"}
+    )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"zone": "keller"})
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Keller", "entities": [MOTION, DOOR]}
+    )
+    assert flow["errors"] == {"base": "zone_overlap"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Keller", "entities": [MOTION]}
+    )
+    assert flow["type"] is FlowResultType.CREATE_ENTRY
 
 
 async def test_options_flow_delete_zone_removes_it_from_profiles(hass: HomeAssistant) -> None:

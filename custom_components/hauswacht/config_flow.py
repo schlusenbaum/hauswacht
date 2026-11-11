@@ -89,7 +89,7 @@ from .core.profiles import (
     stale_after_seconds,
 )
 from .core.reactions import parse_reaction
-from .core.sensors import Zone, parse_zones, slugify
+from .core.sensors import Zone, parse_zones, slugify, zone_conflicts
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
 from .core.state_machine import (
     AlarmState,
@@ -98,6 +98,8 @@ from .core.state_machine import (
     UnavailableSensorPolicy,
 )
 from .core.users import parse_users, pin_conflicts
+from .names import display_name
+from .runtime import entities_by_label
 
 SENSOR_DOMAIN = "binary_sensor"
 SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
@@ -432,7 +434,7 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     def _save_zone(
         self, zone_id: str | None, user_input: dict[str, Any]
-    ) -> tuple[dict[str, Any] | None, dict[str, str]]:
+    ) -> tuple[dict[str, Any] | None, dict[str, str], dict[str, str]]:
         name = str(user_input.get("name") or "").strip()
         entities = [str(e) for e in user_input.get("entities") or []]
         label = user_input.get("label") or None
@@ -442,24 +444,40 @@ class HauswachtOptionsFlow(OptionsFlow):
         elif not entities and not label:
             errors["base"] = "zone_empty"
         if errors:
-            return None, errors
+            return None, errors, {}
         options = dict(self.config_entry.options)
         zones = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
         new_id = zone_id or slugify(name, existing=zones.keys())
+        conflicts = zone_conflicts(
+            Zone(zone_id=new_id, name=name, entities=frozenset(entities), label=label),
+            parse_zones(options),
+            entities_by_label(self.hass),
+        )
+        if conflicts:
+            text = ", ".join(
+                f"{display_name(self.hass, entity_id)} ({zone})"
+                for entity_id, zone in conflicts.items()
+            )
+            return None, {"base": "zone_overlap"}, {"conflicts": text}
         zones[new_id] = {"name": name, "entities": sorted(set(entities)), "label": label}
         options[OPT_ZONES] = zones
-        return options, {}
+        return options, {}, {}
 
     async def async_step_zone_add(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
+        placeholders: dict[str, str] = {"conflicts": ""}
         if user_input is not None:
-            options, errors = self._save_zone(None, user_input)
+            options, errors, extra = self._save_zone(None, user_input)
             if options is not None:
                 return self.async_create_entry(data=options)
+            placeholders.update(extra)
         return self.async_show_form(
-            step_id="zone_add", data_schema=self._zone_schema(user_input or {}), errors=errors
+            step_id="zone_add",
+            data_schema=self._zone_schema(user_input or {}),
+            errors=errors,
+            description_placeholders=placeholders,
         )
 
     async def async_step_zone_edit(
@@ -481,10 +499,12 @@ class HauswachtOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         assert self._zone_id is not None
         errors: dict[str, str] = {}
+        placeholders: dict[str, str] = {"conflicts": ""}
         if user_input is not None and "name" in user_input:
-            options, errors = self._save_zone(self._zone_id, user_input)
+            options, errors, extra = self._save_zone(self._zone_id, user_input)
             if options is not None:
                 return self.async_create_entry(data=options)
+            placeholders.update(extra)
         zone = parse_zones(self.config_entry.options)[self._zone_id]
         defaults = user_input or {
             "name": zone.name,
@@ -495,7 +515,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             step_id="zone_edit_settings",
             data_schema=self._zone_schema(defaults),
             errors=errors,
-            description_placeholders={"zone": zone.name},
+            description_placeholders={"zone": zone.name, **placeholders},
         )
 
     async def async_step_zone_delete(

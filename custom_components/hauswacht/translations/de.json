@@ -15,15 +15,15 @@
       "init": {
         "title": "Hauswacht-Optionen",
         "menu_options": {
-          "zones": "Zonen und Sensoren",
+          "zones": "Zonen – welche Sensoren überwacht werden",
           "profiles": "Profile",
           "users": "Benutzer und PINs",
           "sirens": "Sirenen",
           "notifications": "Benachrichtigungen",
           "homecoming": "Heimkehr-Beobachtung",
-          "roles": "Sensorrollen (Ausnahmen)",
-          "monitoring": "Sensorüberwachung",
-          "infrastructure": "Systemüberwachung",
+          "roles": "Sensorrollen – Ausnahmen (Tür, Fenster, Bewegung …)",
+          "monitoring": "Funkstille von Sensoren",
+          "infrastructure": "Systemüberwachung (Zigbee, MQTT …)",
           "code": "PIN-Regeln"
         }
       },
@@ -77,6 +77,9 @@
               "auto_disarm_on_arrival": "Nur wenn das Profil zuvor automatisch scharf geschaltet wurde. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf."
             }
           }
+        },
+        "data_description": {
+          "zones": "Welche Zonen in diesem Profil scharf sind. Sensoren anderer Zonen werden ignoriert (Manipulation wird immer gemeldet)."
         }
       },
       "zones": {
@@ -85,15 +88,20 @@
           "zone_add": "Zone anlegen",
           "zone_edit": "Zone bearbeiten",
           "zone_delete": "Zone löschen"
-        }
+        },
+        "description": "Eine **Zone** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außenhaut**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Zonen scharf sind: „Zuhause“ = nur Außenhaut, „Abwesend“ = Außenhaut und Innen.\n\nJeder Sensor gehört zu **genau einer** Zone. Nur Sensoren in einer Zone überwacht Hauswacht."
       },
       "zone_add": {
         "title": "Zone anlegen",
-        "description": "Eine Zone umfasst die ausgewählten Sensoren und zusätzlich alle Binärsensoren mit dem gewählten Label (Label direkt an der Entität).",
+        "description": "Wähle alle Sensoren, die zu dieser Zone gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter „Sensorrollen“.\n\nJeder Sensor kann nur in **einer** Zone sein.",
         "data": {
-          "name": "Name",
-          "entities": "Sensoren",
-          "label": "Label (optional)"
+          "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
+          "entities": "Sensoren dieser Zone",
+          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
+        },
+        "data_description": {
+          "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
+          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
         }
       },
       "zone_edit": {
@@ -104,11 +112,15 @@
       },
       "zone_edit_settings": {
         "title": "Zone {zone}",
-        "description": "Eine Zone umfasst die ausgewählten Sensoren und zusätzlich alle Binärsensoren mit dem gewählten Label (Label direkt an der Entität).",
+        "description": "Wähle alle Sensoren, die zu dieser Zone gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter „Sensorrollen“.\n\nJeder Sensor kann nur in **einer** Zone sein.",
         "data": {
-          "name": "Name",
-          "entities": "Sensoren",
-          "label": "Label (optional)"
+          "name": "Name der Zone (z. B. Außenhaut, Innen, Keller)",
+          "entities": "Sensoren dieser Zone",
+          "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
+        },
+        "data_description": {
+          "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
+          "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
         }
       },
       "zone_delete": {
@@ -334,7 +346,8 @@
       "user_name_taken": "Diesen Namen gibt es schon.",
       "duress_equals_pin": "Bedrohungs-PIN und PIN dürfen nicht gleich sein.",
       "pin_is_duress": "Dieser PIN ist bereits ein Bedrohungs-PIN ({conflict}).",
-      "duress_conflict": "Dieser Bedrohungs-PIN ist schon vergeben ({conflict})."
+      "duress_conflict": "Dieser Bedrohungs-PIN ist schon vergeben ({conflict}).",
+      "zone_overlap": "Diese Sensoren sind schon in einer anderen Zone: {conflicts}. Ein Sensor kann nur in einer Zone sein – bitte dort entfernen oder hier abwählen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.3] - 2026-11-11
+
+### Geändert
+- Optionen verständlicher: „Zonen – welche Sensoren überwacht werden“ mit Erklärung und
+  Beispielen (Außenhaut, Innen/Keller), klarere Feldnamen; „Sensorrollen – Ausnahmen“,
+  „Funkstille von Sensoren“, „Systemüberwachung (Zigbee, MQTT …)“. Im Profil erklärt
+  „Überwachte Zonen“, was scharf ist.
+
+### Hinzugefügt
+- Ein Sensor kann nur noch in **einer** Zone sein (auch über Labels). Beim Speichern einer
+  Zone nennt die Meldung Sensor und bisherige Zone.
+
 ## [0.17.2] - 2026-11-11
 
 ### Hinzugefügt
