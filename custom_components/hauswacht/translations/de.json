@@ -16,15 +16,10 @@
         "title": "Hauswacht-Optionen",
         "menu_options": {
           "zones": "Zonen – welche Sensoren überwacht werden",
-          "profiles": "Profile",
-          "users": "Benutzer und PINs",
-          "sirens": "Sirenen",
+          "profiles": "Alarmprofile",
+          "sirens": "Alarmgeber – Sirenen",
           "notifications": "Benachrichtigungen",
-          "homecoming": "Heimkehr-Beobachtung",
-          "roles": "Sensorrollen – Ausnahmen (Tür, Fenster, Bewegung …)",
-          "monitoring": "Funkstille von Sensoren",
-          "infrastructure": "Systemüberwachung (Zigbee, MQTT …)",
-          "code": "PIN-Regeln"
+          "system": "Systemeinstellungen"
         }
       },
       "code": {
@@ -39,7 +34,7 @@
         }
       },
       "profile_settings": {
-        "title": "Profil {profile}",
+        "title": "Alarmprofil {profile}",
         "description": "Name, Symbol und optional ein Knopf am Bedienfeld. Jeder Knopf kann nur einem Profil zugeordnet sein; Profile ohne Knopf schaltest du über die Auswahlliste „Profil“ und die Knöpfe „Scharf schalten“ scharf.",
         "data": {
           "name": "Name",
@@ -130,30 +125,15 @@
           "zone": "Zone"
         }
       },
-      "roles": {
-        "title": "Sensorrollen",
-        "description": "Die Rolle ergibt sich aus der Geräteklasse (Tür: Eingang mit Verzögerung, Fenster: sofort, Bewegung/Präsenz: Mitläufer, Manipulation: 24 h). Hier legst du Ausnahmen fest. Aktuelle Ausnahmen: {overrides}",
-        "data": {
-          "entity": "Sensor",
-          "role": "Rolle"
-        }
-      },
-      "monitoring": {
-        "title": "Sensorüberwachung",
-        "description": "Ein Sensor, der sich so lange nicht gemeldet hat, gilt beim Scharfschalten als ausgefallen. 0 = aus. Batteriesensoren melden sich teils nur alle paar Stunden, deshalb großzügig wählen.",
-        "data": {
-          "stale_after_hours": "Maximale Funkstille"
-        }
-      },
       "infrastructure": {
-        "title": "Systemüberwachung",
-        "description": "Binärsensoren, die den Zustand eines Systems melden, z. B. der Verbindungsstatus der Zigbee2MQTT-Bridge. Bei Sensoren der Art „Problem“ bedeutet „an“ Störung, bei allen anderen bedeutet „an“ in Ordnung. Bei einer Störung meldet Hauswacht das und behandelt das Scharfschalten wie bei ausgefallenen Sensoren.",
+        "title": "Funknetz und Gateways überwachen",
+        "description": "Hier wählst du Sensoren, die melden, ob ein Funknetz oder Gateway läuft – z. B. der Verbindungsstatus der Zigbee2MQTT-Bridge oder eines MQTT-Brokers. Fällt so ein System aus, können alle Sensoren dahinter nichts mehr melden. Hauswacht meldet die Störung und behandelt das Scharfschalten wie bei ausgefallenen Sensoren.\n\nBei Sensoren der Art „Problem“ bedeutet „an“ Störung, bei allen anderen bedeutet „an“ in Ordnung.",
         "data": {
-          "infrastructure": "Indikatoren"
+          "infrastructure": "Statussensoren der Funknetze und Gateways"
         }
       },
       "sirens": {
-        "title": "Sirenen",
+        "title": "Alarmgeber – Sirenen",
         "description": "Hier legst du fest, welche Sirenen Hauswacht für Einbruchalarme verwenden darf. Brandschutz: Hauswacht schaltet niemals eine Sirene ein oder aus, solange irgendein Rauchmelder Brand meldet oder der Brandzustand einer registrierten Sirene unklar ist. Die Ansteuerung bleibt GESPERRT, bis du sie hier freigibst und bestätigst.",
         "data": {
           "sirens": "Sirenen",
@@ -267,11 +247,11 @@
         }
       },
       "profiles": {
-        "title": "Profile",
+        "title": "Alarmprofile",
         "menu_options": {
-          "profile_add": "Profil anlegen",
-          "profile_edit": "Profil bearbeiten",
-          "profile_delete": "Profil löschen"
+          "profile_add": "Alarmprofil anlegen",
+          "profile_edit": "Alarmprofil bearbeiten",
+          "profile_delete": "Alarmprofil löschen"
         }
       },
       "profile_edit": {
@@ -295,12 +275,13 @@
         }
       },
       "users": {
-        "title": "Benutzer",
-        "description": "Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf. Der PIN unter „PIN“ gilt weiter als „Hauptbenutzer“.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
+        "title": "Benutzer und PINs",
+        "description": "Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
         "menu_options": {
           "user_add": "Benutzer anlegen",
           "user_edit": "Benutzer bearbeiten",
-          "user_delete": "Benutzer löschen"
+          "user_delete": "Benutzer löschen",
+          "code": "PIN-Regeln (Master-PIN, PIN beim Scharfschalten …)"
         }
       },
       "user_edit": {
@@ -331,6 +312,24 @@
           "ha_user": "Home-Assistant-Konto (für Push-Knopf und Dashboard-Knöpfe)",
           "valid_from": "Gültig von",
           "valid_until": "Gültig bis"
+        }
+      },
+      "system": {
+        "title": "Systemeinstellungen",
+        "menu_options": {
+          "users": "Benutzer und PINs",
+          "sensor_behaviour": "Sensorverhalten – Rollen und Funkstille",
+          "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
+          "homecoming": "Heimkehr-Beobachtung"
+        }
+      },
+      "sensor_behaviour": {
+        "title": "Sensorverhalten",
+        "description": "**Funkstille:** Hat sich ein Sensor so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\n**Rolle:** Wie ein Sensor auslöst, ergibt sich aus der Geräteklasse: Tür = Eingang (mit Eingangsverzögerung), Fenster = sofort, Bewegung/Präsenz = Mitläufer (verzögert nur, wenn schon eine Eingangsverzögerung läuft), Manipulation = immer gemeldet. Für eine Ausnahme Sensor und Rolle wählen; „Automatisch“ hebt sie wieder auf.\n\nAktuelle Ausnahmen: {overrides}",
+        "data": {
+          "stale_after_hours": "Maximale Funkstille",
+          "entity": "Ausnahme für Sensor (optional)",
+          "role": "Rolle"
         }
       }
     },
@@ -580,7 +579,7 @@
       "message": "Das Profil kann nur im unscharfen Zustand gewechselt werden."
     },
     "no_profiles": {
-      "message": "Es gibt noch kein Profil. Bitte zuerst unter Hauswacht → Konfigurieren → Profile eines anlegen."
+      "message": "Es gibt noch kein Profil. Bitte zuerst unter Hauswacht → Konfigurieren → Alarmprofile eines anlegen."
     },
     "no_profile_for_mode": {
       "message": "Diesem Knopf ist kein Profil zugeordnet."
@@ -652,7 +651,7 @@
   "issues": {
     "users_without_pin": {
       "title": "Hauswacht: nicht alle Personen haben einen PIN",
-      "description": "Sobald es einen PIN gibt, verlangt das Bedienfeld (und Alexa) ihn **von allen** zum Unscharfschalten. Ohne eigenen PIN können diese Personen dort nicht unscharf schalten: **{people}**.\n\nAuswege:\n- Ihnen unter Hauswacht → Konfigurieren → Benutzer und PINs einen PIN geben (gemeinsamer Familien-PIN ist erlaubt), oder\n- unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ einschalten (derzeit: {buttons}) – dann bleiben Dashboard-Knöpfe und Push-Knopf ohne PIN nutzbar.\n\nZeitgesteuerte Profile und die Anwesenheits-Automatik sind davon nicht betroffen."
+      "description": "Sobald es einen PIN gibt, verlangt das Bedienfeld (und Alexa) ihn **von allen** zum Unscharfschalten. Ohne eigenen PIN können diese Personen dort nicht unscharf schalten: **{people}**.\n\nAuswege:\n- Ihnen unter Hauswacht → Konfigurieren → Systemeinstellungen → Benutzer und PINs einen PIN geben (gemeinsamer Familien-PIN ist erlaubt), oder\n- unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ einschalten (derzeit: {buttons}) – dann bleiben Dashboard-Knöpfe und Push-Knopf ohne PIN nutzbar.\n\nZeitgesteuerte Profile und die Anwesenheits-Automatik sind davon nicht betroffen."
     }
   }
 }

@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.4] - 2026-11-11
+
+### Geändert
+- Optionen neu gegliedert: **Zonen**, **Alarmprofile**, **Alarmgeber – Sirenen**,
+  **Benachrichtigungen** und **Systemeinstellungen**. Unter Systemeinstellungen: Benutzer und
+  PINs (mit den PIN-Regeln), Sensorverhalten (Rollen-Ausnahmen und Funkstille in einem
+  Formular), Funknetz und Gateways überwachen (bisher „Systemüberwachung“),
+  Heimkehr-Beobachtung.
+
 ## [0.17.3] - 2026-11-11
 
 ### Geändert

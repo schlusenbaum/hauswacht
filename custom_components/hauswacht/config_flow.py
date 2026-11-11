@@ -149,18 +149,13 @@ class HauswachtOptionsFlow(OptionsFlow):
             return self.async_abort(reason="disarm_first")
         return self.async_show_menu(
             step_id="init",
-            menu_options=[
-                "zones",
-                "profiles",
-                "users",
-                "sirens",
-                "notifications",
-                "homecoming",
-                "roles",
-                "monitoring",
-                "infrastructure",
-                "code",
-            ],
+            menu_options=["zones", "profiles", "sirens", "notifications", "system"],
+        )
+
+    async def async_step_system(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="system",
+            menu_options=["users", "sensor_behaviour", "infrastructure", "homecoming"],
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -543,42 +538,26 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     # --- Rollen -----------------------------------------------------------
 
-    async def async_step_roles(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+    async def async_step_sensor_behaviour(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Sensorverhalten: Rollen-Ausnahmen und maximale Funkstille in einem Formular."""
         options = dict(self.config_entry.options)
         roles = dict(options.get(OPT_SENSOR_ROLES, {}))
         if user_input is not None:
-            entity_id = user_input["entity"]
-            role = user_input["role"]
-            if role == ROLE_AUTO:
-                roles.pop(entity_id, None)
-            else:
-                roles[entity_id] = role
+            options[OPT_STALE_AFTER_HOURS] = int(user_input.get(OPT_STALE_AFTER_HOURS) or 0)
+            entity_id = user_input.get("entity")
+            if entity_id:
+                role = user_input.get("role") or ROLE_AUTO
+                if role == ROLE_AUTO:
+                    roles.pop(entity_id, None)
+                else:
+                    roles[entity_id] = role
             options[OPT_SENSOR_ROLES] = roles
             return self.async_create_entry(data=options)
-        overrides = ", ".join(f"{e}: {r}" for e, r in sorted(roles.items())) or "–"
-        schema = vol.Schema(
-            {
-                vol.Required("entity"): EntitySelector(EntitySelectorConfig(domain=SENSOR_DOMAIN)),
-                vol.Required("role", default=ROLE_AUTO): _select(
-                    [ROLE_AUTO, *[r.value for r in SensorRole]], "role"
-                ),
-            }
+        overrides = (
+            ", ".join(f"{display_name(self.hass, e)}: {r}" for e, r in sorted(roles.items())) or "–"
         )
-        return self.async_show_form(
-            step_id="roles",
-            data_schema=schema,
-            description_placeholders={"overrides": overrides},
-        )
-
-    # --- Überwachung ------------------------------------------------------
-
-    async def async_step_monitoring(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        options = dict(self.config_entry.options)
-        if user_input is not None:
-            options[OPT_STALE_AFTER_HOURS] = int(user_input[OPT_STALE_AFTER_HOURS])
-            return self.async_create_entry(data=options)
         current = stale_after_seconds(options)
         schema = vol.Schema(
             {
@@ -592,10 +571,18 @@ class HauswachtOptionsFlow(OptionsFlow):
                         unit_of_measurement="h",
                         mode=NumberSelectorMode.BOX,
                     )
-                )
+                ),
+                vol.Optional("entity"): EntitySelector(EntitySelectorConfig(domain=SENSOR_DOMAIN)),
+                vol.Optional("role", default=ROLE_AUTO): _select(
+                    [ROLE_AUTO, *[r.value for r in SensorRole]], "role"
+                ),
             }
         )
-        return self.async_show_form(step_id="monitoring", data_schema=schema)
+        return self.async_show_form(
+            step_id="sensor_behaviour",
+            data_schema=schema,
+            description_placeholders={"overrides": overrides},
+        )
 
     # --- Sirenen -----------------------------------------------------------
 
@@ -726,7 +713,7 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     async def async_step_users(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="users", menu_options=["user_add", "user_edit", "user_delete"]
+            step_id="users", menu_options=["user_add", "user_edit", "user_delete", "code"]
         )
 
     def _user_selector(self) -> SelectSelector:

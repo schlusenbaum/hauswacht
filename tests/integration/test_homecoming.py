@@ -212,7 +212,10 @@ async def test_homecoming_options(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "homecoming"}
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "homecoming"}
     )
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"homecoming_observe": True, "homecoming_persons": [PERSON]}
