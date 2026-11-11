@@ -265,6 +265,14 @@
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
             }
+          },
+          "event_arm_hint": {
+            "name": "Hint when arming",
+            "description": "Open sensors that only appear in rules in this profile: they can only start their rule after closing and opening again (e.g. an open window). Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
           }
         }
       },

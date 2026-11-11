@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-11-11
+
+### Hinzugefügt
+- Hinweis beim Scharfschalten, wenn Melder offen sind, die im Profil nur in Regeln vorkommen
+  (z. B. ein offenes Fenster): Sie können ihre Regel erst auslösen, wenn sie zu und wieder auf
+  gehen. Als Benachrichtigung (neues Ereignis „Hinweis beim Scharfschalten“, standardmäßig an)
+  und als Meldung in Home Assistant, die beim Unscharfschalten verschwindet. Attribut
+  `open_rule_sensors` am Bedienfeld.
+
 ## [0.19.0] - 2026-11-11
 
 ### Hinzugefügt

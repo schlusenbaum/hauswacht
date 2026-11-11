@@ -265,6 +265,14 @@
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
             }
+          },
+          "event_arm_hint": {
+            "name": "Hinweis beim Scharfschalten",
+            "description": "Offene Melder, die im Profil nur in Regeln vorkommen: Sie können ihre Regel erst auslösen, wenn sie zu und wieder auf gehen (z. B. ein offenes Fenster). Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
           }
         }
       },
