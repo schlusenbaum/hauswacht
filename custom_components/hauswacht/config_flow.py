@@ -137,6 +137,32 @@ class HauswachtOptionsFlow(OptionsFlow):
     def __init__(self) -> None:
         self._profile_id: str | None = None
         self._zone_id: str | None = None
+        self._saved = False
+
+    async def _save(self, options: dict[str, Any], back: str) -> ConfigFlowResult:
+        """Sofort speichern und zurück ins Menü – so lassen sich mehrere Dinge nacheinander
+        ändern, ohne dass sich der Dialog schließt."""
+        if not self._is_disarmed():
+            # Die Anlage wurde scharf geschaltet, während der Dialog offen war: nichts speichern
+            return self.async_abort(reason="disarm_first")
+        self.hass.config_entries.async_update_entry(self.config_entry, options=options)
+        self._saved = True
+        step = getattr(self, f"async_step_{back}")
+        result: ConfigFlowResult = await step()
+        return result
+
+    def _saved_text(self) -> str:
+        if (self.hass.config.language or "").startswith("de"):
+            return "✅ Gespeichert.\n\n"
+        return "✅ Saved.\n\n"
+
+    def _menu(self, step_id: str, menu_options: list[str]) -> ConfigFlowResult:
+        saved, self._saved = self._saved, False
+        return self.async_show_menu(
+            step_id=step_id,
+            menu_options=menu_options,
+            description_placeholders={"saved": self._saved_text() if saved else ""},
+        )
 
     def _is_disarmed(self) -> bool:
         entry = self.config_entry
@@ -147,15 +173,17 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if not self._is_disarmed():
             return self.async_abort(reason="disarm_first")
-        return self.async_show_menu(
-            step_id="init",
-            menu_options=["zones", "profiles", "sirens", "notifications", "system"],
+        return self._menu(
+            "init", ["zones", "profiles", "sirens", "notifications", "system", "done"]
         )
 
+    async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Schließen. Gespeichert wurde bereits nach jedem Formular."""
+        return self.async_create_entry(data=dict(self.config_entry.options))
+
     async def async_step_system(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(
-            step_id="system",
-            menu_options=["users", "sensor_behaviour", "infrastructure", "homecoming"],
+        return self._menu(
+            "system", ["users", "sensor_behaviour", "infrastructure", "homecoming", "init"]
         )
 
     async def async_step_code(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
@@ -192,7 +220,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 for key in (OPT_CODE_ARM_REQUIRED, OPT_END_ALARM_WITHOUT_PIN):
                     options[key] = bool(user_input.get(key, False))
                 options[OPT_BUTTONS_WITHOUT_PIN] = bool(user_input.get(OPT_BUTTONS_WITHOUT_PIN))
-                return self.async_create_entry(data=options)
+                return await self._save(options, "users")
         users = parse_users(options)
         with_pin = sorted(u.name for u in users if u.pin is not None)
         placeholders["pin_users"] = ", ".join(with_pin) or "–"
@@ -225,9 +253,7 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def async_step_profiles(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        return self.async_show_menu(
-            step_id="profiles", menu_options=["profile_add", "profile_edit", "profile_delete"]
-        )
+        return self._menu("profiles", ["profile_add", "profile_edit", "profile_delete", "init"])
 
     def _profile_selector(self) -> SelectSelector:
         return SelectSelector(
@@ -269,7 +295,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             options[OPT_PROFILES] = {
                 k: v for k, v in options.get(OPT_PROFILES, {}).items() if k != user_input["profile"]
             }
-            return self.async_create_entry(data=options)
+            return await self._save(options, "profiles")
         return self.async_show_form(
             step_id="profile_delete",
             data_schema=vol.Schema({vol.Required("profile"): self._profile_selector()}),
@@ -329,7 +355,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 )
                 profiles[profile_id] = data
                 options[OPT_PROFILES] = profiles
-                return self.async_create_entry(data=options)
+                return await self._save(options, "profiles")
 
         pid = self._profile_id or ""
         info = profile_info(options, pid) if self._profile_id else None
@@ -407,9 +433,7 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Zonen ------------------------------------------------------------
 
     async def async_step_zones(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(
-            step_id="zones", menu_options=["zone_add", "zone_edit", "zone_delete"]
-        )
+        return self._menu("zones", ["zone_add", "zone_edit", "zone_delete", "init"])
 
     def _zone_schema(self, defaults: dict[str, Any]) -> vol.Schema:
         label_key = (
@@ -466,7 +490,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             options, errors, extra = self._save_zone(None, user_input)
             if options is not None:
-                return self.async_create_entry(data=options)
+                return await self._save(options, "zones")
             placeholders.update(extra)
         return self.async_show_form(
             step_id="zone_add",
@@ -498,7 +522,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None and "name" in user_input:
             options, errors, extra = self._save_zone(self._zone_id, user_input)
             if options is not None:
-                return self.async_create_entry(data=options)
+                return await self._save(options, "zones")
             placeholders.update(extra)
         zone = parse_zones(self.config_entry.options)[self._zone_id]
         defaults = user_input or {
@@ -530,7 +554,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 if "zones" in settings:
                     settings["zones"] = [z for z in settings["zones"] if z != zone_id]
             options[OPT_PROFILES] = profiles
-            return self.async_create_entry(data=options)
+            return await self._save(options, "zones")
         return self.async_show_form(
             step_id="zone_delete",
             data_schema=vol.Schema({vol.Required("zone"): _zone_selector(zones)}),
@@ -554,7 +578,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 else:
                     roles[entity_id] = role
             options[OPT_SENSOR_ROLES] = roles
-            return self.async_create_entry(data=options)
+            return await self._save(options, "system")
         overrides = (
             ", ".join(f"{display_name(self.hass, e)}: {r}" for e, r in sorted(roles.items())) or "–"
         )
@@ -604,7 +628,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                     if "sirens" in settings:
                         settings["sirens"] = [s for s in settings["sirens"] if s in sirens]
                 options[OPT_PROFILES] = profiles
-                return self.async_create_entry(data=options)
+                return await self._save(options, "init")
         schema = vol.Schema(
             {
                 vol.Optional(OPT_SIRENS, default=list(options.get(OPT_SIRENS, []))): EntitySelector(
@@ -652,7 +676,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 else:
                     options.pop(OPT_REMINDER_PROFILE, None)
                 options[OPT_REMINDER_DELAY] = int(reminder.get(OPT_REMINDER_DELAY) or 15)
-            return self.async_create_entry(data=options)
+            return await self._save(options, "init")
 
         services = self._notify_services()
         push_disarm = bool(options.get(OPT_PUSH_DISARM, False))
@@ -712,9 +736,7 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Benutzer ------------------------------------------------------------
 
     async def async_step_users(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(
-            step_id="users", menu_options=["user_add", "user_edit", "user_delete", "code"]
-        )
+        return self._menu("users", ["user_add", "user_edit", "user_delete", "code", "system"])
 
     def _user_selector(self) -> SelectSelector:
         stored = self.config_entry.options.get(OPT_USERS, {})
@@ -757,7 +779,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             options[OPT_USERS] = {
                 k: v for k, v in options.get(OPT_USERS, {}).items() if k != user_input["user"]
             }
-            return self.async_create_entry(data=options)
+            return await self._save(options, "users")
         return self.async_show_form(
             step_id="user_delete",
             data_schema=vol.Schema({vol.Required("user"): self._user_selector()}),
@@ -825,7 +847,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 stored_all[new_id] = data
                 new_options = dict(options)
                 new_options[OPT_USERS] = stored_all
-                return self.async_create_entry(data=new_options)
+                return await self._save(new_options, "users")
 
         status = []
         if current.get("pin_digest"):
@@ -850,7 +872,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             options[OPT_HOMECOMING_OBSERVE] = bool(user_input.get(OPT_HOMECOMING_OBSERVE))
             options[OPT_HOMECOMING_PERSONS] = list(user_input.get(OPT_HOMECOMING_PERSONS) or [])
-            return self.async_create_entry(data=options)
+            return await self._save(options, "system")
         schema = vol.Schema(
             {
                 vol.Required(
@@ -873,7 +895,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         options = dict(self.config_entry.options)
         if user_input is not None:
             options[OPT_INFRASTRUCTURE] = sorted(set(user_input.get(OPT_INFRASTRUCTURE) or []))
-            return self.async_create_entry(data=options)
+            return await self._save(options, "system")
         schema = vol.Schema(
             {
                 vol.Optional(

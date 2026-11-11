@@ -304,7 +304,7 @@ async def test_options_flow_add_zone_and_assign(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"name": "Obergeschoss", "entities": [OG_WINDOW]}
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert entry.options["zones"]["obergeschoss"]["entities"] == [OG_WINDOW]
 
@@ -327,7 +327,7 @@ async def test_options_flow_edit_zone_keeps_own_sensors(hass: HomeAssistant) -> 
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"name": "Keller", "entities": [MOTION]}
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
 
 
 async def test_options_flow_delete_zone_removes_it_from_profiles(hass: HomeAssistant) -> None:
@@ -341,7 +341,7 @@ async def test_options_flow_delete_zone_removes_it_from_profiles(hass: HomeAssis
         flow["flow_id"], {"next_step_id": "zone_delete"}
     )
     flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"zone": "keller"})
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert "keller" not in entry.options["zones"]
     assert entry.options["profiles"]["night"]["zones"] == ["aussenhaut"]
@@ -360,7 +360,7 @@ async def test_options_flow_role_override(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"stale_after_hours": 0, "entity": WINDOW, "role": "entry"}
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert entry.options["sensor_roles"] == {WINDOW: "entry"}
 
@@ -378,7 +378,7 @@ async def test_options_flow_monitoring(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"stale_after_hours": 26}
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     assert entry.options["stale_after_hours"] == 26
 
 
@@ -442,11 +442,24 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
     entry = make_entry()
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
-    assert flow["menu_options"] == ["zones", "profiles", "sirens", "notifications", "system"]
+    assert flow["menu_options"] == [
+        "zones",
+        "profiles",
+        "sirens",
+        "notifications",
+        "system",
+        "done",
+    ]
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "system"}
     )
-    assert flow["menu_options"] == ["users", "sensor_behaviour", "infrastructure", "homecoming"]
+    assert flow["menu_options"] == [
+        "users",
+        "sensor_behaviour",
+        "infrastructure",
+        "homecoming",
+        "init",
+    ]
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "users"}
     )
@@ -464,7 +477,66 @@ async def test_sensor_behaviour_keeps_roles_without_entity(hass: HomeAssistant) 
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"stale_after_hours": 12}
     )
-    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert entry.options["sensor_roles"] == {WINDOW: "entry"}
     assert entry.options["stale_after_hours"] == 12
+
+
+async def test_options_back_save_and_done(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    # Untermenü und wieder zurück
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "system"}
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "init"}
+    )
+    assert flow["step_id"] == "init"
+    assert flow["description_placeholders"]["saved"] == ""
+    # Formular speichern: sofort gespeichert, Dialog bleibt offen im Untermenü
+    for step in ("system", "sensor_behaviour"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"stale_after_hours": 5}
+    )
+    assert flow["type"] is FlowResultType.MENU
+    assert flow["step_id"] == "system"
+    assert flow["description_placeholders"]["saved"]
+    assert entry.options["stale_after_hours"] == 5
+    await hass.async_block_till_done()
+    # Weiter zur nächsten Änderung, dann schließen
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "init"}
+    )
+    assert flow["description_placeholders"]["saved"] == ""
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "done"}
+    )
+    assert flow["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.options["stale_after_hours"] == 5
+
+
+async def test_options_not_saved_when_armed_meanwhile(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "sensor_behaviour"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"stale_after_hours": 7}
+    )
+    assert flow["type"] is FlowResultType.ABORT
+    assert flow["reason"] == "disarm_first"
+    assert entry.options.get("stale_after_hours") != 7
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.state == "armed_night"

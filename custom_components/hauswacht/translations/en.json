@@ -19,8 +19,10 @@
           "profiles": "Alarm profiles",
           "sirens": "Alarm devices – sirens",
           "notifications": "Notifications",
-          "system": "System settings"
-        }
+          "system": "System settings",
+          "done": "Done – close"
+        },
+        "description": "{saved}Every change is saved as soon as you submit the form; you then return to the menu."
       },
       "code": {
         "title": "PIN rules",
@@ -82,9 +84,10 @@
         "menu_options": {
           "zone_add": "Add zone",
           "zone_edit": "Edit zone",
-          "zone_delete": "Delete zone"
+          "zone_delete": "Delete zone",
+          "init": "← Back"
         },
-        "description": "A **zone** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which zones are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** zone. Hauswacht only monitors sensors that are in a zone."
+        "description": "{saved}A **zone** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which zones are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** zone. Hauswacht only monitors sensors that are in a zone."
       },
       "zone_add": {
         "title": "Add zone",
@@ -251,8 +254,10 @@
         "menu_options": {
           "profile_add": "Add alarm profile",
           "profile_edit": "Edit alarm profile",
-          "profile_delete": "Delete alarm profile"
-        }
+          "profile_delete": "Delete alarm profile",
+          "init": "← Back"
+        },
+        "description": "{saved}"
       },
       "profile_edit": {
         "title": "Edit profile",
@@ -276,12 +281,13 @@
       },
       "users": {
         "title": "Users and PINs",
-        "description": "Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
+        "description": "{saved}Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
         "menu_options": {
           "user_add": "Add user",
           "user_edit": "Edit user",
           "user_delete": "Delete user",
-          "code": "PIN rules (master PIN, PIN for arming …)"
+          "code": "PIN rules (master PIN, PIN for arming …)",
+          "system": "← Back"
         }
       },
       "user_edit": {
@@ -320,8 +326,10 @@
           "users": "Users and PINs",
           "sensor_behaviour": "Sensor behaviour – roles and radio silence",
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
-          "homecoming": "Homecoming observation"
-        }
+          "homecoming": "Homecoming observation",
+          "init": "← Back"
+        },
+        "description": "{saved}"
       },
       "sensor_behaviour": {
         "title": "Sensor behaviour",

@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.17.5] - 2026-11-11
+
+### Geändert
+- Optionen: Nach dem Speichern eines Formulars bleibt der Dialog offen und kehrt ins Menü
+  zurück („✅ Gespeichert“). Untermenüs haben „← Zurück“, das Hauptmenü „Fertig – schließen“.
+- Wird die Anlage scharf geschaltet, während der Optionsdialog offen ist, wird nichts mehr
+  gespeichert (vorher hätte das Speichern die Integration im scharfen Zustand neu geladen).
+
 ## [0.17.4] - 2026-11-11
 
 ### Geändert
