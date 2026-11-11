@@ -463,7 +463,7 @@
       },
       "rule_yaml": {
         "title": "Auslöseregel als YAML",
-        "description": "Expertenmodus: die ganze Auslöseregel als YAML. Meldergruppen per Name (`group: Keller`), Sensoren per Entitäts-ID (`sensor: binary_sensor.x`).\n\n- Schritte: `any: [...]` (einer davon), `all: [...]` (alle), `count: 2` + `of: [...]` (mindestens N), beliebig verschachtelt; `within:` Zeit bis zum nächsten Schritt.\n- `result:` alarm, entry_delay oder notify (nur Benachrichtigung).\n- `unless:` Ausdruck + `before:` Sekunden – nicht, wenn das in dieser Zeit vor Schritt 1 passiert ist.\n- `conditions:` Liste von Bedingungen: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Nicht auswertbar = erfüllt.\n\nBeispiele stehen in der Anleitung.",
+        "description": "Expertenmodus: die ganze Auslöseregel als YAML. Meldergruppen per Name (`group: Keller`), Sensoren per Entitäts-ID (`sensor: binary_sensor.x`).\n\n- Schritte: `any: [...]` (einer davon), `all: [...]` (alle), `count: 2` + `of: [...]` (mindestens N), beliebig verschachtelt; `within:` Zeit bis zum nächsten Schritt.\n- `result:` alarm, entry_delay oder notify (nur Benachrichtigung).\n- `unless:` Ausdruck + `before:` Sekunden – nicht, wenn das in dieser Zeit vor Schritt 1 passiert ist.\n- `conditions:` Liste von Bedingungen: `time` (after/before/weekdays), `person` (entity, in: home/not_home/zone.x), `state` (entity, is), `numeric` (entity, above/below, attribute), `and`/`or`/`not`. Nicht auswertbar = erfüllt. Pro Bedingung optional `if_unknown: not_met` = im Zweifel nicht erfüllt.\n\nBeispiele stehen in der Anleitung.",
         "data": {
           "rule": "Auslöseregel"
         }

@@ -15,6 +15,9 @@ Formate (wie im YAML-Editor):
 - ``numeric: {entity: sensor.t, above: 5, below: 30, attribute: temperature}``
 - ``person:  {entity: person.niklas, in: home}``      (``home``, ``not_home`` oder ``zone.xyz``)
 - ``and: [...]``, ``or: [...]``, ``not: {...}``
+
+Jede Bedingung kann zusätzlich ``if_unknown: not_met`` tragen: Lässt sie sich nicht auswerten,
+gilt sie dann als **nicht** erfüllt ("im Zweifel kein Alarm"). Standard ist ``met``.
 """
 
 from __future__ import annotations
@@ -26,6 +29,8 @@ from typing import Any
 UNKNOWN_STATES = frozenset({"unavailable", "unknown", ""})
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 KINDS = ("time", "state", "numeric", "person", "and", "or", "not")
+IF_UNKNOWN = "if_unknown"
+UNKNOWN_CHOICES = ("met", "not_met")
 
 StateGetter = Callable[[str], tuple[str, Mapping[str, Any]] | None]
 
@@ -58,11 +63,20 @@ def _entity(data: Mapping[str, Any], where: str, domain: str | None = None) -> s
     return entity
 
 
+def _split(condition: Mapping[str, Any]) -> tuple[str, Any]:
+    """Art und Inhalt einer Bedingung (ohne ``if_unknown``)."""
+    kind = next(k for k in condition if k != IF_UNKNOWN)
+    return kind, condition[kind]
+
+
 def check(condition: Any, where: str = "Bedingung") -> None:
     """Aufbau prüfen; wirft ConditionError mit Fundstelle."""
-    if not isinstance(condition, Mapping) or len(condition) != 1:
+    keys = [k for k in condition if k != IF_UNKNOWN] if isinstance(condition, Mapping) else []
+    if not isinstance(condition, Mapping) or len(keys) != 1:
         raise ConditionError(f"{where}: genau eine Art erwartet ({', '.join(KINDS)})")
-    kind, body = next(iter(condition.items()))
+    if IF_UNKNOWN in condition and condition[IF_UNKNOWN] not in UNKNOWN_CHOICES:
+        raise ConditionError(f"{where}: if_unknown muss met oder not_met sein")
+    kind, body = _split(condition)
     here = f"{where} ({kind})"
     if kind in ("and", "or"):
         if not isinstance(body, list) or not body:
@@ -117,7 +131,7 @@ def check(condition: Any, where: str = "Bedingung") -> None:
 
 def entities(condition: Mapping[str, Any]) -> set[str]:
     """Alle Entitäten, die eine Bedingung liest."""
-    kind, body = next(iter(condition.items()))
+    kind, body = _split(condition)
     if kind in ("and", "or"):
         return set().union(*(entities(c) for c in body))
     if kind == "not":
@@ -147,8 +161,15 @@ def _time_ok(body: Mapping[str, Any], now: datetime) -> bool:
 
 
 def evaluate(condition: Mapping[str, Any], get: StateGetter, now: datetime) -> bool | None:
-    """True/False, oder None = lässt sich nicht auswerten."""
-    kind, body = next(iter(condition.items()))
+    """True/False, oder None = lässt sich nicht auswerten (sofern kein ``if_unknown``)."""
+    result = _evaluate(condition, get, now)
+    if result is None and IF_UNKNOWN in condition:
+        return bool(condition[IF_UNKNOWN] == "met")
+    return result
+
+
+def _evaluate(condition: Mapping[str, Any], get: StateGetter, now: datetime) -> bool | None:
+    kind, body = _split(condition)
     if kind == "and":
         results = [evaluate(c, get, now) for c in body]
         if False in results:
@@ -200,7 +221,14 @@ def all_met(conditions: Sequence[Mapping[str, Any]], get: StateGetter, now: date
 
 
 def describe(condition: Mapping[str, Any], name: Callable[[str], str], german: bool = True) -> str:
-    kind, body = next(iter(condition.items()))
+    text = _describe(condition, name, german)
+    if condition.get(IF_UNKNOWN) == "not_met":
+        text += " (unbekannt = nicht erfüllt)" if german else " (unknown = not met)"
+    return text
+
+
+def _describe(condition: Mapping[str, Any], name: Callable[[str], str], german: bool) -> str:
+    kind, body = _split(condition)
     word = {"and": " und " if german else " and ", "or": " oder " if german else " or "}
     if kind in word:
         return "(" + word[kind].join(describe(c, name, german) for c in body) + ")"

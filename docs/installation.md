@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.20.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.20.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -252,7 +252,20 @@ Bedingungen:
 | Logik | `and: [...]`, `or: [...]`, `not: {...}` |
 
 **Sichere Seite:** Lässt sich eine Bedingung nicht auswerten (Entität fehlt, ist nicht verfügbar,
-liefert keine Zahl), gilt sie als **erfüllt** – im Zweifel löst die Regel aus. Bedingungen,
+liefert keine Zahl), gilt sie als **erfüllt** – im Zweifel löst die Regel aus. Bedingungen werden
+erst geprüft, wenn alle Schritte passiert sind; ein ausgefallener Sensor löst also nie selbst
+etwas aus, er kann nur keinen Alarm mehr verhindern.
+
+Soll eine Bedingung im Zweifel **keinen** Alarm erlauben, ergänze `if_unknown: not_met`:
+
+```yaml
+conditions:
+  - numeric: {entity: sensor.temperatur_wohnzimmer, below: 30}
+    if_unknown: not_met      # Sensor ausgefallen = Bedingung nicht erfüllt = kein Alarm
+```
+
+`if_unknown` geht an jeder Bedingung, auch an `and`/`or`/`not`. Vorsicht: Mit `not_met` legt ein
+ausgefallener Sensor die Regel still. Bedingungen,
 Ausnahmen und Ergebnis wirken nur auf die eigene Auslöseregel; andere Auslöseregeln und allein
 auslösende Meldergruppen bleiben unberührt.
 
