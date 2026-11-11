@@ -188,7 +188,9 @@ async def test_test_card_shows_rule_progress(hass: HomeAssistant) -> None:
 async def test_migration_turns_zone_confirmation_into_rule(hass: HomeAssistant) -> None:
     options = {
         "zones": {**ZONES, "keller": {**ZONES["keller"], "confirm": True, "confirm_window": 90}},
-        "profiles": {"night": {"name": "Nacht", "panel_mode": "night", "zones": ["keller"]}},
+        "profiles": {
+            "night": {"name": "Nacht", "panel_mode": "night", "exit_delay": 0, "zones": ["keller"]}
+        },
     }
     entry = MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=options, version=3)
     _motion2(hass, "off")
