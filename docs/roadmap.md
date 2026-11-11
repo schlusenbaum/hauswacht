@@ -20,6 +20,7 @@
 | **0.15.0** ✅ | Karte „Hauswacht Einstellungen“ | nein |
 | **0.16.0** ✅ | Benutzer und Codes: mehrere Personen mit eigenem PIN, einzeln sperrbar, „geändert von“ | nein |
 | **0.17.0** ✅ | Benachrichtigungen pro Ereignis, wichtige Hinweise, Knöpfe „Trotzdem scharf“ / „Erneut versuchen“, Erinnerung „Alle weg“ | Push ja |
+| 0.17.1–0.17.6 ✅ | Testkarte (Sensoren simulieren), Zonen verständlicher und ohne Mehrfachzuordnung, Optionen neu gegliedert mit Zurück, klarere Entitäten | nein |
 | 0.18.0 | Sensorgruppen: Alarm erst bei zwei Meldern einer Gruppe kurz nacheinander | nein |
 | 0.19.0 | Optional: weitere „immer aktive“ Sensoren, Scharf durch Schließen der Tür | nein |
 | 0.20.0 | Bereiche: mehrere unabhängig scharf schaltbare Bereiche plus „Alle“ | nein |
