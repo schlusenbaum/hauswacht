@@ -16,6 +16,7 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.selector import (
     BooleanSelector,
     DateTimeSelector,
@@ -150,7 +151,7 @@ from .core.sensors import (
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
 from .core.speech import MAX_REPEAT as SPEECH_MAX_REPEAT
 from .core.speech import MODES as SPEECH_MODES
-from .core.speech import parse_speech, profile_speakers
+from .core.speech import Candidate, is_speaker, parse_speech, profile_speakers
 from .core.state_machine import (
     OpenSensorPolicy,
     SensorRole,
@@ -1359,9 +1360,34 @@ class HauswachtOptionsFlow(OptionsFlow):
 
     # --- Benachrichtigungen --------------------------------------------------
 
-    def _notify_services(self) -> list[str]:
+    def _notify_services(self) -> list[SelectOptionDict]:
+        """Empfänger: notify-Dienste (z. B. App mit Knöpfen) und Benachrichtigungs-Entitäten
+        (z. B. WhatsApp, Telegram, E-Mail – nur Titel und Text)."""
         services = self.hass.services.async_services_for_domain("notify")
-        return sorted(s for s in services if s not in {"send_message", "notify"})
+        options = [
+            SelectOptionDict(value=s, label=s)
+            for s in sorted(services)
+            if s not in {"send_message", "notify", "persistent_notification"}
+        ]
+        text_only = " – nur Text" if self._german() else " – text only"
+        registry = er.async_get(self.hass)
+        for state in sorted(
+            self.hass.states.async_all("notify"), key=lambda st: st.name.casefold()
+        ):
+            entry = registry.async_get(state.entity_id)
+            candidate = Candidate(
+                state.entity_id,
+                entry.unique_id if entry else "",
+                entry.translation_key if entry else None,
+            )
+            if is_speaker(candidate):
+                continue  # Lautsprecher stehen unter "Sprachausgabe"
+            options.append(
+                SelectOptionDict(
+                    value=state.entity_id, label=f"{state.name} ({state.entity_id}){text_only}"
+                )
+            )
+        return options
 
     async def async_step_notifications(
         self, user_input: dict[str, Any] | None = None
@@ -2009,7 +2035,7 @@ def _select(options: list[str], translation_key: str) -> SelectSelector:
 
 
 def _list_selector(
-    values: list[str], *, multiple: bool = False, custom: bool = False
+    values: list[str] | list[SelectOptionDict], *, multiple: bool = False, custom: bool = False
 ) -> SelectSelector:
     return SelectSelector(
         SelectSelectorConfig(

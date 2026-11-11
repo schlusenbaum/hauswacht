@@ -19,7 +19,7 @@ from .const import (
 )
 from .core.messages import default_speech, render
 from .core.notify_events import NORMAL_DATA, NotifyEvent, push_data, route
-from .core.speech import Candidate, parse_speech, pick_entity, speakers_for
+from .core.speech import Candidate, is_speaker, parse_speech, pick_entity, speakers_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,6 +70,16 @@ class Notifier:
             title = f"[TEST] {title}"
         sent: list[str] = []
         for target in targets:
+            if target.startswith(f"{NOTIFY_DOMAIN}."):
+                # Benachrichtigungs-Entität (z. B. WhatsApp, Telegram): nur Titel und Text
+                if self.hass.states.get(target) is None:
+                    _LOGGER.warning("Benachrichtigungs-Entität %s existiert nicht", target)
+                    continue
+                self.hass.async_create_task(
+                    self._call_entity(target, title, message), f"hauswacht_notify_{target}"
+                )
+                sent.append(target)
+                continue
             if not self.hass.services.has_service(NOTIFY_DOMAIN, target):
                 _LOGGER.warning("Benachrichtigungsdienst notify.%s existiert nicht", target)
                 continue
@@ -176,6 +186,15 @@ class Notifier:
         self.hass.async_create_task(self._speak(entities, text), f"hauswacht_speak_{event.value}")
         return entities
 
+    def is_speaker_entity(self, entity_id: str) -> bool:
+        """Ist das eine Lautsprecher-Entität (Durchsage/Sprechen)?"""
+        if not entity_id.startswith(f"{NOTIFY_DOMAIN}."):
+            return False
+        entry = er.async_get(self.hass).async_get(entity_id)
+        if entry is None:
+            return is_speaker(Candidate(entity_id))
+        return is_speaker(Candidate(entity_id, entry.unique_id, entry.translation_key))
+
     def speaker_entities(self, devices: Iterable[str], mode: str) -> list[str]:
         """Benachrichtigungs-Entität je Gerät, passend zur Art (Durchsage/Sprechen)."""
         registry = er.async_get(self.hass)
@@ -209,6 +228,8 @@ class Notifier:
         self, targets: Iterable[str], title: str, message: str, *, test_mode: bool = False
     ) -> list[str]:
         """Bedrohungsalarm: eigene Empfänger, wichtig (durchbricht "Nicht stören")."""
+        # Nie über Lautsprecher: der Notruf muss heimlich bleiben
+        targets = [t for t in targets if not self.is_speaker_entity(t)]
         return self.send(
             targets,
             title,
@@ -221,11 +242,24 @@ class Notifier:
     def clear(self, targets: Iterable[str], tag: str) -> None:
         """Entfernt eine frühere Benachrichtigung (Home-Assistant-App, per ``tag``)."""
         for target in dict.fromkeys(targets):
+            if "." in target:
+                continue  # Entitäten kennen kein Zurückziehen
             if self.hass.services.has_service(NOTIFY_DOMAIN, target):
                 self.hass.async_create_task(
                     self._call(target, None, "clear_notification", {"tag": tag}),
                     f"hauswacht_clear_{target}",
                 )
+
+    async def _call_entity(self, entity_id: str, title: str, message: str) -> None:
+        try:
+            await self.hass.services.async_call(
+                NOTIFY_DOMAIN,
+                "send_message",
+                {"entity_id": entity_id, "title": title, "message": message},
+                blocking=True,
+            )
+        except Exception:
+            _LOGGER.exception("Benachrichtigung an %s fehlgeschlagen", entity_id)
 
     async def _call(
         self, target: str, title: str | None, message: str, data: Mapping[str, Any]
