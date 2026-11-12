@@ -10,6 +10,7 @@ import json
 from typing import Any
 
 import pytest
+from homeassistant.auth.const import GROUP_ID_USER
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import Context, HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
@@ -294,9 +295,11 @@ async def test_reset_failed_attempts_admin_only(
     hass: HomeAssistant,
     mqtt_mock: MqttMockHAClient,
     hass_admin_user: MockUser,
-    hass_read_only_user: MockUser,
 ) -> None:
     await _setup(hass)
+    await hass.auth.async_create_user("Besitzer")  # der erste Benutzer ist Eigentümer
+    guest = await hass.auth.async_create_user("Gast", group_ids=[GROUP_ID_USER])
+    assert not guest.is_admin
     for transaction in (20, 21, 22):
         await _press(hass, "disarm", "0000", transaction)
     state = hass.states.get(PANEL)
@@ -308,7 +311,7 @@ async def test_reset_failed_attempts_admin_only(
             "reset_code_lock",
             {"entity_id": PANEL},
             blocking=True,
-            context=Context(user_id=hass_read_only_user.id),
+            context=Context(user_id=guest.id),
         )
     events = async_capture_events(hass, EVENT_HAUSWACHT)
     await hass.services.async_call(
