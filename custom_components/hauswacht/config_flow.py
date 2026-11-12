@@ -2217,11 +2217,10 @@ class HauswachtOptionsFlow(OptionsFlow):
                 name, (new_pin, new_duress), user_id, stored_all
             )
             placeholders["conflict"] = conflict
-            tags = {normalize_tag(t) for t in str(user_input.get("tags") or "").split(",")} - {""}
-            for other_id, other in stored_all.items():
-                if other_id != user_id and tags & set(other.get("tags", []) or []):
-                    errors["tags"] = "tag_taken"
-                    placeholders["conflict"] = str(other.get("name", other_id))
+            tag_list = _tag_input(user_input.get("tags"))
+            if (owner := _tag_owner(tag_list, user_id, stored_all)) is not None:
+                errors["tags"] = "tag_taken"
+                placeholders["conflict"] = owner
             if not errors:
                 data = dict(current)
                 data.update(
@@ -2241,11 +2240,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                     data["rights"] = RIGHTS_ALL
                     data.pop("areas", None)
                     data.pop("area_rights", None)
-                data["tags"] = [
-                    normalize_tag(t)
-                    for t in str(user_input.get("tags") or "").split(",")
-                    if normalize_tag(t)
-                ]
+                data["tags"] = tag_list
                 if user_input.get("remove_pin"):
                     data.pop("pin_salt", None)
                     data.pop("pin_digest", None)
@@ -2661,9 +2656,39 @@ class HauswachtOptionsFlow(OptionsFlow):
         return errors, conflict
 
     def _tags_field(self, current: dict[str, Any]) -> dict[Any, Any]:
-        tags = current.get("tags", [])
-        shown = ", ".join(tags) if isinstance(tags, list) else ""
-        return {vol.Optional("tags", description={"suggested_value": shown}): TextSelector()}
+        """Beliebig viele Karten/Chips: eigene plus zuletzt gelesene unbekannte zum Anlernen."""
+        stored = current.get("tags", [])
+        tags = [t for t in stored if isinstance(t, str)] if isinstance(stored, list) else []
+        options = [SelectOptionDict(value=t, label=t) for t in tags]
+        unknown = self._unknown_cards()
+        de = self._german()
+        for tag, (source, when) in unknown.items():
+            if tag in tags:
+                continue
+            time_text = dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%H:%M")
+            hint = (
+                f"neu, gelesen an {source} um {time_text}"
+                if de
+                else f"new, read at {source} at {time_text}"
+            )
+            options.append(SelectOptionDict(value=tag, label=f"{tag} ({hint})"))
+        return {
+            vol.Optional("tags", default=tags): SelectSelector(
+                SelectSelectorConfig(
+                    options=options,
+                    multiple=True,
+                    custom_value=True,
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            )
+        }
+
+    def _unknown_cards(self) -> dict[str, tuple[str, float]]:
+        """Zuletzt an Keypads/Lesern gelesene unbekannte Karten (nur wenn geladen)."""
+        if not self._loaded():
+            return {}
+        controls = getattr(self.config_entry.runtime_data, "controls", None)
+        return dict(controls.unknown_cards) if controls is not None else {}
 
     async def _user_schema(self, current: dict[str, Any]) -> vol.Schema:
         ha_user = current.get("ha_user")
@@ -2815,6 +2840,20 @@ def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:
 
 
 RIGHT_VALUES = (Action.ARM.value, Action.DISARM.value, Action.END_ALARM.value)
+
+
+def _tag_input(value: Any) -> list[str]:
+    """Karten aus der Auswahl (Liste) oder – wie früher – als Text mit Komma."""
+    items = value if isinstance(value, list) else str(value or "").split(",")
+    return list(dict.fromkeys(t for t in (normalize_tag(i) for i in items) if t))
+
+
+def _tag_owner(tags: list[str], user_id: str | None, stored: Mapping[str, Any]) -> str | None:
+    """Gehört eine dieser Karten schon einem anderen Benutzer? Dann dessen Name."""
+    for other_id, other in stored.items():
+        if other_id != user_id and set(tags) & set(other.get("tags", []) or []):
+            return str(other.get("name", other_id))
+    return None
 
 
 def _rights_scope(current: Mapping[str, Any]) -> str:

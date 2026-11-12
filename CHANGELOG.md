@@ -6,6 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-11-12
+
+### Hinzugefügt
+- **Karten anlernen:** Eine unbekannte Karte einmal an ein Keypad oder einen Leser halten – sie
+  erscheint dann beim Benutzer unter „RFID-Karten/-Anhänger“ als „neu“ zur Auswahl. Codes mit
+  4–8 Ziffern (mögliche PINs) werden nie angezeigt.
+
+### Geändert
+- „RFID-Karten/-Anhänger“ ist jetzt eine Auswahl mit beliebig vielen Einträgen statt eines
+  Textfelds (eigene IDs lassen sich weiter eintippen).
+- Dokumentiert und getestet: Karten sind unabhängig vom PIN. Benutzer ohne PIN schalten mit
+  ihrer Karte am Keypad; das Bedienfeld bleibt ohne PINs PIN-frei.
+
 ## [0.29.0] - 2026-11-12
 
 ### Hinzugefügt
