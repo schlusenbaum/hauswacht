@@ -147,3 +147,23 @@ def test_only_threshold_helpers_are_created() -> None:
     assert isinstance(first, ast.Name)
     assert first.id == "THRESHOLD_DOMAIN"
     assert 'THRESHOLD_DOMAIN = "threshold"' in text
+
+
+def test_controls_only_send_keypad_state() -> None:
+    """Bedienteile: einzige Sendung an Geräte ist arm_mode an <keypad-topic>/set."""
+    text = (SOURCE_ROOT / "controls.py").read_text(encoding="utf-8")
+    tree = ast.parse(text)
+    publishes = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "async_publish"
+    ]
+    assert len(publishes) == 1
+    assert "f'{keypad.topic}/set'" in ast.unparse(publishes[0])
+    assert "json.dumps({'arm_mode': arm_mode})" in ast.unparse(publishes[0])
+    assert "async_call(" not in text
+    for path in SOURCE_ROOT.rglob("*.py"):
+        if path.name != "controls.py":
+            assert "async_publish" not in path.read_text(encoding="utf-8"), path.name

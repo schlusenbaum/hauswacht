@@ -222,10 +222,12 @@
           "ha_user": "Home-Assistant-Konto (für Push-Knopf und Dashboard-Knöpfe)",
           "valid_from": "Gültig von",
           "valid_until": "Gültig bis",
-          "areas": "Bereiche"
+          "areas": "Bereiche",
+          "tags": "RFID-Karten/-Anhänger"
         },
         "data_description": {
-          "areas": "Welche Bereiche der Benutzer bedienen darf. Leer = alle Bereiche."
+          "areas": "Welche Bereiche der Benutzer bedienen darf. Leer = alle Bereiche.",
+          "tags": "IDs durch Komma getrennt. Gelten an Keypads (statt PIN) und an RFID-Lesern."
         }
       },
       "system": {
@@ -233,6 +235,7 @@
         "menu_options": {
           "areas": "Bereiche (z. B. Haus, Garage, Gartenhaus)",
           "users": "Benutzer und PINs",
+          "controls": "Bedienteile (Keypads, NFC-Aufkleber, RFID-Leser)",
           "sensor_behaviour": "Funkstille von Sensoren",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Heimkehr-Beobachtung",
@@ -662,6 +665,75 @@
       "homecoming_signals": {
         "title": "Heimkehr: zusätzliche Signale je Person",
         "description": "Je Person weitere Signale, die „zuhause“ melden können – nur zur Beobachtung, es wird nichts geschaltet:\n\n- **WLAN-Sensor** der Companion App (`sensor.…_wifi_connection` bzw. `sensor.…_ssid`): zuhause, wenn mit einem Heim-WLAN verbunden\n- **Bluetooth** (z. B. Bermuda) oder **FRITZ!Box**-Tracker: `device_tracker.…`\n- **Annäherung** (Integration „Nähe“): Richtungs-Sensor `sensor.…_direction_of_travel` – nähert sich/angekommen = zuhause\n- **Binärsensoren**: an = zuhause\n\nZusätzlich wertet Hauswacht je Person das **früheste Signal** aus (irgendeine Quelle meldet zuhause)."
+      },
+      "controls": {
+        "title": "Bedienteile",
+        "description": "{saved}Bedienteile sind Keypads, NFC-Aufkleber und RFID-Leser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN oder RFID-Karte/-Anhänger (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld.",
+        "menu_options": {
+          "control_add_keypad": "Keypad hinzufügen (Zigbee2MQTT)",
+          "control_add_sticker": "NFC-Aufkleber hinzufügen (Companion App)",
+          "control_add_reader": "RFID-/NFC-Leser hinzufügen (z. B. ESPHome)",
+          "control_edit": "Bedienteil bearbeiten",
+          "control_delete": "Bedienteil löschen",
+          "system": "← Zurück"
+        }
+      },
+      "control_edit": {
+        "title": "Bedienteil bearbeiten",
+        "data": {
+          "control": "Bedienteil"
+        }
+      },
+      "control_delete": {
+        "title": "Bedienteil löschen",
+        "data": {
+          "control": "Bedienteil"
+        }
+      },
+      "control_keypad": {
+        "title": "Keypad (Zigbee2MQTT)",
+        "description": "Für Alarm-Keypads nach Zigbee-Standard (z. B. frient/Develco KEPZB-110/KEYZB-110, Linkind, Centralite, Heiman). Hauswacht empfängt Taste, PIN bzw. Karte und **bestätigt** jede Eingabe (gültig, ungültiger Ausweis, nicht bereit); danach zeigt das Keypad den Zustand (Verzögerungen, scharf, Alarm). Dafür sendet Hauswacht an `<Topic>/set` – nur Zustandsanzeigen.\n\nDer Sabotage-Kontakt des Keypads ist ein eigener Binärsensor in Home Assistant – in eine Meldergruppe aufnehmen (Typ Manipulation).",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "topic": "MQTT-Topic des Keypads",
+          "arm_day_zones": "Taste „Tag“ → Alarmprofil",
+          "arm_night_zones": "Taste „Nacht“ → Alarmprofil",
+          "arm_all_zones": "Taste „Alle“ → Alarmprofil",
+          "login": "Anmeldung",
+          "emergency": "Notruf-Taste"
+        },
+        "data_description": {
+          "topic": "Z. B. `zigbee2mqtt/Keypad Flur` (Basis-Topic + Name des Geräts in Zigbee2MQTT).",
+          "login": "**Karte und PIN:** Beide Ausweise desselben Benutzers innerhalb von 30 s (erste Eingabe quittiert das Keypad mit „nicht bereit“).",
+          "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils."
+        }
+      },
+      "control_sticker": {
+        "title": "NFC-Aufkleber (Companion App)",
+        "description": "Ein NFC-Aufkleber an der Tür, gescannt mit der Home-Assistant-App. Der Aufkleber sagt nur **wo und was** – ausgewiesen wird mit dem **Handy**: Das angemeldete Home-Assistant-Konto muss einem berechtigten Hauswacht-Benutzer zugeordnet sein (Benutzer und PINs → Home-Assistant-Benutzer).\n\nDie ID findest du unter Einstellungen → Bereiche, Labels & Zonen → Tags (nach dem ersten Scannen).",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "tag": "Aufkleber-ID",
+          "action": "Aktion",
+          "profile": "Alarmprofil (für scharf/umschalten)"
+        }
+      },
+      "control_reader": {
+        "title": "RFID-/NFC-Leser",
+        "description": "Ein fester Leser, der in Home Assistant das Ereignis „Tag gescannt“ auslöst (z. B. ESPHome mit PN532/RC522). Ausgewiesen wird mit den **RFID-Karten der Benutzer** (Benutzer und PINs → RFID-Karten).",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "device": "Lesegerät",
+          "action": "Aktion",
+          "profile": "Alarmprofil (für scharf/umschalten)",
+          "login": "Anmeldung"
+        },
+        "data_description": {
+          "login": "**Karte und PIN:** Nach der Karte innerhalb von 30 s denselben Benutzer per PIN an einem Keypad im selben Bereich bestätigen."
+        }
       }
     },
     "error": {
@@ -693,7 +765,13 @@
       "siren_test_confirm": "Bitte bestätigen, dass du vor Ort bist.",
       "siren_test_none": "Bitte mindestens eine Sirene wählen.",
       "siren_test_running": "Ein Sirenentest läuft gerade.",
-      "siren_test_armed": "Nur möglich, wenn alle Bereiche unscharf sind."
+      "siren_test_armed": "Nur möglich, wenn alle Bereiche unscharf sind.",
+      "tag_taken": "Diese Karte gehört schon {conflict}.",
+      "control_topic": "Bitte das MQTT-Topic des Keypads angeben.",
+      "control_profile_required": "Für „scharf“ bzw. „umschalten“ ein Alarmprofil wählen.",
+      "control_tag": "Bitte die Aufkleber-ID angeben.",
+      "control_device": "Bitte das Lesegerät wählen.",
+      "control_profile_area": "Das Alarmprofil gehört zu einem anderen Bereich als das Bedienteil."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -702,7 +780,8 @@
       "no_users": "Es gibt noch keine Benutzer.",
       "no_rules": "Es gibt noch keine Auslöseregel.",
       "no_areas": "Es gibt nur den ersten Bereich – er lässt sich nicht löschen.",
-      "no_sirens": "Es sind keine Sirenen eingerichtet (Alarmgeber – Sirenen → Sirenen und Freigabe)."
+      "no_sirens": "Es sind keine Sirenen eingerichtet (Alarmgeber – Sirenen → Sirenen und Freigabe).",
+      "no_controls": "Es gibt noch keine Bedienteile."
     }
   },
   "selector": {
@@ -819,6 +898,27 @@
         "3": "Alle 3 Monate",
         "6": "Alle 6 Monate",
         "12": "Jährlich"
+      }
+    },
+    "control_login": {
+      "options": {
+        "pin_or_card": "PIN oder Karte",
+        "card": "Karte",
+        "card_and_pin": "Karte und PIN"
+      }
+    },
+    "control_emergency": {
+      "options": {
+        "off": "Aus",
+        "silent": "Stiller Notruf (Push)",
+        "alarm": "Alarm"
+      }
+    },
+    "control_action": {
+      "options": {
+        "disarm": "Unscharf schalten",
+        "arm": "Scharf schalten",
+        "toggle": "Umschalten (scharf ↔ unscharf)"
       }
     }
   },

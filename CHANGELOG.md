@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-11-12
+
+### Hinzugefügt
+- **Bedienteile** (Systemeinstellungen → Bedienteile), beliebig viele, je Bereich oder für
+  alle Bereiche:
+  - **Keypads über Zigbee2MQTT** (Zigbee-Standard für Alarm-Bedienteile, z. B. frient
+    KEPZB-110): Tasten je Alarmprofil, Bestätigung jeder Eingabe, laufende Zustandsanzeige,
+    Anmeldung „PIN oder Karte“ bzw. „Karte und PIN“, Notruf-Taste (aus, still, Alarm).
+  - **NFC-Aufkleber** mit der Companion App: nur mit dem Handy eines berechtigten Benutzers;
+    Aktion je Aufkleber (unscharf, scharf, umschalten).
+  - **RFID-/NFC-Leser** (Ereignis „Tag gescannt“, z. B. ESPHome): Karte oder Karte und PIN.
+- **RFID-Karten/-Anhänger** als Ausweis am Benutzer, mit gemeinsamem Schutz gegen
+  Durchprobieren.
+
+### Geändert
+- Rückmeldung an Keypads per MQTT ist die einzige Sendung an Geräte außer Sirenen und
+  Benachrichtigungen (statisch geprüft).
+
 ## [0.27.0] - 2026-11-12
 
 ### Hinzugefügt

@@ -3,7 +3,8 @@
   "name": "Hauswacht",
   "after_dependencies": [
     "frontend",
-    "http"
+    "http",
+    "mqtt"
   ],
   "codeowners": [
     "@schlusenbaum"
@@ -18,5 +19,5 @@
   "issue_tracker": "https://github.com/schlusenbaum/hauswacht/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.27.0"
+  "version": "0.28.0"
 }

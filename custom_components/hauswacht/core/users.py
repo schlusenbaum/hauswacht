@@ -45,6 +45,7 @@ class User:
     valid_from: float | None = None  # Zeitstempel (UTC)
     valid_until: float | None = None
     areas: tuple[str, ...] = ()  # vorbereitet für Bereiche; leer = alle
+    tags: tuple[str, ...] = ()  # RFID-Karten/-Anhänger (normalisierte IDs)
 
     def may(self, action: Action) -> bool:
         return {
@@ -89,6 +90,25 @@ def _timestamp(value: Any) -> float | None:
         return None
 
 
+def _tags(value: Any) -> tuple[str, ...]:
+    items = value if isinstance(value, list) else str(value or "").split(",")
+    normalized = ("".join(ch for ch in str(i).upper() if ch.isalnum()) for i in items)
+    return tuple(dict.fromkeys(t for t in normalized if t))
+
+
+def match_tag(tag: str | None, users: Iterable[User], now: float) -> PinMatch:
+    """Welche Benutzer haben diese RFID-Karte? (Gleiche Struktur wie beim PIN.)"""
+    wanted = "".join(ch for ch in str(tag or "").upper() if ch.isalnum())
+    if not wanted:
+        return PinMatch()
+    valid: list[User] = []
+    blocked: list[User] = []
+    for user in users:
+        if wanted in user.tags:
+            (valid if user.valid_at(now) else blocked).append(user)
+    return PinMatch(users=tuple(valid), blocked=tuple(blocked))
+
+
 def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
     users: list[User] = []
     legacy = _pin(options, "pin")
@@ -117,6 +137,7 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
                 areas=tuple(a for a in areas if isinstance(a, str))
                 if isinstance(areas, list)
                 else (),
+                tags=_tags(data.get("tags")),
             )
         )
     return tuple(users)
@@ -125,6 +146,15 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
 def has_codes(users: Iterable[User]) -> bool:
     """Gibt es mindestens einen PIN? Dann verlangt das Bedienfeld einen PIN."""
     return any(u.pin is not None or u.duress_pin is not None for u in users)
+
+
+def tag_conflicts(users: Iterable[User]) -> dict[str, list[str]]:
+    """Karten, die mehreren Benutzern zugeordnet sind (Karte -> Namen)."""
+    owners: dict[str, list[str]] = {}
+    for user in users:
+        for tag in user.tags:
+            owners.setdefault(tag, []).append(user.name)
+    return {tag: names for tag, names in owners.items() if len(names) > 1}
 
 
 def match_pin(
