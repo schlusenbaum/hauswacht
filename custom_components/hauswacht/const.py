@@ -31,6 +31,8 @@ OPT_AREAS: Final = "areas"
 OPT_SPEECH: Final = "speech"
 OPT_SENSOR_TYPES: Final = "sensor_types"
 OPT_SIREN_TEST: Final = "siren_test"
+OPT_HOMECOMING_SIGNALS: Final = "homecoming_signals"
+OPT_HOMECOMING_SSIDS: Final = "homecoming_ssids"
 # Alarm und Bedrohung durchbrechen "Nicht stören" (kritische Hinweise)
 OPT_CRITICAL_ALERTS: Final = "critical_alerts"
 OPT_EVENTS: Final = "events"

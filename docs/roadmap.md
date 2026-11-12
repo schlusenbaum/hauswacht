@@ -30,10 +30,11 @@
 | 0.24.0 | Weitere Melderarten und Kamerabild – in 0.25.0 zurückgenommen bzw. vereinfacht | nein |
 | **0.25.0** ✅ | Nur Melder mit offen/zu (Binärsensor, Schloss, Abdeckung); Melder-Typen in der Meldergruppe (Tür, Fenster, Bewegung, Manipulation, Technik, Sonstiges); Ausnahmen im Alarmprofil; Assistent „Melder aus anderem Sensor erstellen“ (Schwellenwert-Helfer) | nein |
 | **0.26.0** ✅ | Sirenentest: je Sirene einzeln mit Bestätigung und Vorabprüfung, kurz und leise, Ergebnis „gehört?“, Erinnerung und Vorwarnung wählbar; auch eingeklappt in der Testkarte | Funktion fertig; erster echter Ton nach Freigabe, bei Anwesenheit |
-| 0.27.0 | Kamera-Erkennung als eigene Rolle (z. B. „Person draußen“ → Vorwarnung statt Alarm) | nein |
-| 0.28.0 | Kameras (Bild in der Nachricht, Zuordnung über den Raum) – in Ruhe neu konzipieren | nein |
-| 0.29.0 | Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nur lesen |
+| **0.27.0** ✅ | Funkstille-Beobachtung mit Empfehlung; Heimkehr-Beobachtung mit zusätzlichen Signalen je Person (WLAN, Bluetooth, Router, Annäherung), „frühestes Signal“, Zeit „Tür auf bis unscharf“ | nur lesen |
+| 0.28.0 | Zigbee-Bedienteil (frient KEPZB-110 über Zigbee2MQTT) – Konzept vorab | nach Freigabe |
+| später | Entscheidung über eine Heimkehr-Automatik (mit Belegen) anhand der Beobachtung | nur lesen |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
+| irgendwann | Kameras: Bild in der Nachricht (Zuordnung über den Raum), Kamera-Erkennung als eigene Rolle (z. B. „Person draußen“ → Vorwarnung) – in Ruhe neu konzipieren | – |
 | 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, weitere Platzhalter | – |
 
 ## Entscheidungen

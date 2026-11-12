@@ -17,19 +17,33 @@ from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, OPT_HOMECOMING_OBSERVE, OPT_HOMECOMING_PERSONS
+from .const import (
+    DOMAIN,
+    OPT_HOMECOMING_OBSERVE,
+    OPT_HOMECOMING_PERSONS,
+    OPT_HOMECOMING_SIGNALS,
+    OPT_HOMECOMING_SSIDS,
+)
 from .core.homecoming import (
+    APPROACH_WINDOW,
+    DIRECTION_AWAY,
+    DIRECTION_HOME,
+    DIRECTION_NEUTRAL,
+    EARLIEST,
     Arrival,
     DoorOpening,
+    EntryTiming,
     PresenceState,
     SourceStats,
     describe,
     doors_without_arrival,
+    entry_stats,
     evaluate,
     judge,
     prune,
     report_markdown,
     track,
+    track_value,
 )
 from .names import display_name, plain_name
 
@@ -54,6 +68,15 @@ class HomecomingObserver:
         self.persons: tuple[str, ...] = tuple(
             dict.fromkeys(p for p in options.get(OPT_HOMECOMING_PERSONS, []) if isinstance(p, str))
         )
+        raw_signals = options.get(OPT_HOMECOMING_SIGNALS, {})
+        self.signals: dict[str, tuple[str, ...]] = {
+            str(person): tuple(e for e in entities if isinstance(e, str))
+            for person, entities in (raw_signals.items() if isinstance(raw_signals, dict) else [])
+            if isinstance(entities, list)
+        }
+        self.ssids: frozenset[str] = frozenset(
+            s.strip() for s in options.get(OPT_HOMECOMING_SSIDS, []) if isinstance(s, str) and s
+        )
         self._door_provider = doors
         self._on_change = on_change
         self._store: Store[dict[str, Any]] = Store(
@@ -62,6 +85,10 @@ class HomecomingObserver:
         self.doors: list[dict[str, Any]] = []
         self.arrivals: list[dict[str, Any]] = []
         self.since: float | None = None
+        self.entries: list[dict[str, Any]] = []
+        self._entry_open: dict[str, Any] | None = None
+        self._combined: dict[str, PresenceState] = {}
+        self._directions: set[str] = set()
         self._door_entities: frozenset[str] = frozenset()
         self._owners: dict[str, tuple[str, ...]] = {}  # Quelle -> Personen
         self._presence: dict[str, PresenceState] = {}
@@ -73,6 +100,7 @@ class HomecomingObserver:
         stored = await self._store.async_load() or {}
         self.doors = list(stored.get("doors", []))
         self.arrivals = list(stored.get("arrivals", []))
+        self.entries = list(stored.get("entries", []))
         self.since = stored.get("since")
         if not self.enabled:
             return
@@ -99,6 +127,8 @@ class HomecomingObserver:
             for tracker in trackers if isinstance(trackers, list) else []:
                 if isinstance(tracker, str):
                     owners.setdefault(tracker, []).append(person)
+            for signal in self.signals.get(person, ()):
+                owners.setdefault(signal, []).append(person)
         new_owners = {k: tuple(v) for k, v in owners.items()}
         doors = self._door_provider()
         if new_owners == self._owners and doors == self._door_entities and self._unsub:
@@ -108,6 +138,9 @@ class HomecomingObserver:
         for source in self._owners:
             if source not in self._presence:
                 self._presence[source] = self._initial_presence(source)
+        for person in self.persons:
+            if person not in self._combined:
+                self._combined[person] = PresenceState(home=self._person_home(person))
         self.async_stop()
         wanted = sorted(set(self._owners) | doors)
         if wanted:
@@ -117,8 +150,26 @@ class HomecomingObserver:
         state = self.hass.states.get(source)
         if state is None:
             return PresenceState()
-        initial, _ = track(PresenceState(), state.state, state.last_changed.timestamp())
+        self._note_direction(source, state.state)
+        initial, _ = track(PresenceState(), state.state, state.last_changed.timestamp(), self.ssids)
         return initial
+
+    def _note_direction(self, source: str, state: str | None) -> None:
+        """Richtungs-Sensoren (Nähe) bekommen ein größeres Zeitfenster."""
+        if state in DIRECTION_HOME | DIRECTION_AWAY | DIRECTION_NEUTRAL:
+            self._directions.add(source)
+
+    def _person_sources(self, person: str) -> list[str]:
+        return [s for s, persons in self._owners.items() if person in persons]
+
+    def _person_home(self, person: str) -> bool | None:
+        """Kombination: irgendeine Quelle zuhause -> zuhause; alle bekannt weg -> weg."""
+        values = [self._presence.get(s, PresenceState()).home for s in self._person_sources(person)]
+        if any(v is True for v in values):
+            return True
+        if values and all(v is False for v in values):
+            return False
+        return None
 
     # --- Aufzeichnung --------------------------------------------------------
 
@@ -141,7 +192,10 @@ class HomecomingObserver:
             )
             if trackers_changed:
                 self.hass.loop.call_soon(self.refresh)
-            state, away = track(self._presence.get(entity_id, PresenceState()), new.state, now)
+            self._note_direction(entity_id, new.state)
+            state, away = track(
+                self._presence.get(entity_id, PresenceState()), new.state, now, self.ssids
+            )
             self._presence[entity_id] = state
             if away is not None:
                 for person in self._owners[entity_id]:
@@ -149,6 +203,16 @@ class HomecomingObserver:
                         {"at": now, "person": person, "source": entity_id, "away": away}
                     )
                 changed = True
+            for person in self._owners[entity_id]:
+                combined, away = track_value(
+                    self._combined.get(person, PresenceState()), self._person_home(person), now
+                )
+                self._combined[person] = combined
+                if away is not None:
+                    self.arrivals.append(
+                        {"at": now, "person": person, "source": person + EARLIEST, "away": away}
+                    )
+                    changed = True
         if changed:
             self.doors = prune(self.doors, now)
             self.arrivals = prune(self.arrivals, now)
@@ -156,7 +220,51 @@ class HomecomingObserver:
             self._on_change()
 
     def _data(self) -> dict[str, Any]:
-        return {"doors": self.doors, "arrivals": self.arrivals, "since": self.since}
+        return {
+            "doors": self.doors,
+            "arrivals": self.arrivals,
+            "since": self.since,
+            "entries": self.entries,
+        }
+
+    # --- Eingangsverzögerung: Tür auf bis unscharf ----------------------------
+
+    @callback
+    def entry_started(self, door: str | None, delay: int) -> None:
+        """Eingangsverzögerung läuft (von der Laufzeit gemeldet)."""
+        if not self.enabled:
+            return
+        self._entry_open = {
+            "at": dt_util.utcnow().timestamp(),
+            "door": door or "?",
+            "delay": int(delay),
+        }
+
+    @callback
+    def entry_finished(self, *, in_time: bool) -> None:
+        """Eingangsverzögerung beendet: unscharf (rechtzeitig) oder Alarm (zu spät)."""
+        started, self._entry_open = self._entry_open, None
+        if started is None or not self.enabled:
+            return
+        now = dt_util.utcnow().timestamp()
+        self.entries.append(
+            {**started, "seconds": round(now - float(started["at"]), 1), "in_time": in_time}
+        )
+        self.entries = prune(self.entries, now)
+        self._store.async_delay_save(self._data, 10)
+        self._on_change()
+
+    def entry_timings(self) -> list[EntryTiming]:
+        return [
+            EntryTiming(
+                at=float(e["at"]),
+                door=str(e["door"]),
+                seconds=float(e["seconds"]),
+                in_time=bool(e["in_time"]),
+                delay=int(e.get("delay", 0)),
+            )
+            for e in self.entries
+        ]
 
     # --- Auswertung ----------------------------------------------------------
 
@@ -180,15 +288,24 @@ class HomecomingObserver:
             person = plain_name(self.hass, arrival.person)
             if arrival.source == arrival.person:
                 names[arrival.source] = f"{person} (gesamt)"
+            elif arrival.source.endswith(EARLIEST):
+                names[arrival.source] = f"{person} (frühestes Signal)"
             else:
                 names[arrival.source] = f"{person} – {plain_name(self.hass, arrival.source)}"
         for door in doors:
             names[door.sensor] = display_name(self.hass, door.sensor)
         return names
 
+    def _windows(self, arrivals: list[Arrival]) -> dict[str, int]:
+        return {
+            a.source: APPROACH_WINDOW
+            for a in arrivals
+            if a.source in self._directions or a.source.endswith(EARLIEST)
+        }
+
     def stats(self) -> dict[str, SourceStats]:
         arrivals, doors = self._parsed()
-        return evaluate(arrivals, doors)
+        return evaluate(arrivals, doors, windows=self._windows(arrivals))
 
     def days(self) -> float:
         if self.since is None:
@@ -214,6 +331,10 @@ class HomecomingObserver:
             "door_openings": len(self.doors),
             "sources": {names.get(k, k): v.as_dict() for k, v in sorted(self.stats().items())},
             "recent": self.recent(),
+            "entry_times": {
+                display_name(self.hass, door): values
+                for door, values in entry_stats(self.entry_timings()).items()
+            },
         }
 
     def summary(self) -> int | None:
@@ -232,6 +353,22 @@ class HomecomingObserver:
             door_only=doors_without_arrival(arrivals, doors, sources=overall),
             days=self.days(),
         )
+        timings = entry_stats(self.entry_timings())
+        if timings:
+            lines = [
+                "\n\n**Tür auf bis unscharf** (Eingangsverzögerung):\n",
+                "| Tür | Eingänge | rechtzeitig | zu spät | typisch | längste | Empfehlung |",
+                "|---|---|---|---|---|---|---|",
+            ]
+            for door, v in timings.items():
+                lines.append(
+                    f"| {display_name(self.hass, door)} | {v['entries']} | "
+                    f"{v['in_time']} | {v['too_late']} | "
+                    f"{v['median_seconds'] if v['median_seconds'] is not None else '–'} s | "
+                    f"{v['max_seconds'] if v['max_seconds'] is not None else '–'} s | "
+                    f"{v['recommended_entry_delay'] or '–'} s |"
+                )
+            text += "\n".join(lines)
         if not self.enabled:
             text = "Die Heimkehr-Beobachtung ist ausgeschaltet.\n\n" + text
         persistent_notification.async_create(

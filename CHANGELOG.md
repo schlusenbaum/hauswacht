@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-11-12
+
+### Hinzugefügt
+- **Funkstille-Beobachtung:** längste Pause zwischen Lebenszeichen je Melder, Empfehlung für
+  „Maximale Funkstille“ im Formular und als Diagnose-Sensor. Schaltet nichts.
+- **Heimkehr-Beobachtung:** zusätzliche Signale je Person (WLAN-Sensor der Companion App mit
+  Heim-WLANs, Bluetooth/Bermuda, Router, Annäherung über „Nähe“, Binärsensoren), Auswertung
+  „frühestes Signal“ je Person, größeres Zeitfenster für Annäherung.
+- **Tür auf bis unscharf:** gemessene Zeiten je Tür mit Empfehlung für die
+  Eingangsverzögerung (Attribut `entry_times`, Bericht).
+
+### Geändert
+- Roadmap: Zigbee-Bedienteil als 0.28.0; Kameras für „irgendwann“.
+- Entitäten ohne offen/zu (z. B. Messwerte aus 0.24 in alten Auslöseregeln) werden nicht mehr
+  beobachtet; das Protokoll nennt sie.
+
 ## [0.26.0] - 2026-11-12
 
 ### Hinzugefügt

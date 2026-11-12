@@ -26,6 +26,7 @@ async def async_setup_entry(
             HauswachtHomecomingSensor(entry),
             HauswachtSimulationSensor(entry),
             HauswachtSirenTestSensor(entry),
+            HauswachtSilenceSensor(entry),
         ]
     )
 
@@ -121,3 +122,25 @@ class HauswachtSirenTestSensor(HauswachtEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         tester = self.runtime.siren_tester
         return tester.attributes() if tester else {}
+
+
+class HauswachtSilenceSensor(HauswachtEntity, SensorEntity):
+    """Funkstille-Beobachtung: empfohlene maximale Funkstille, Pausen je Melder in Attributen."""
+
+    _attr_translation_key = "silence"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_native_unit_of_measurement = "h"
+    _attr_icon = "mdi:timer-sand"
+
+    def __init__(self, entry: HauswachtConfigEntry) -> None:
+        super().__init__(entry, "silence")
+
+    @property
+    def native_value(self) -> int | None:
+        silence = self.runtime.silence
+        return silence.advice_hours() if silence else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        silence = self.runtime.silence
+        return silence.attributes() if silence else {}

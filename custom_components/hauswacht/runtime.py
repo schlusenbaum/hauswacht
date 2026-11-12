@@ -181,6 +181,7 @@ from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
 from .reminder import ReminderRunner
+from .silence_observer import SilenceObserver
 from .siren_executor import SirenExecutor
 from .siren_test import SirenTester
 
@@ -265,6 +266,8 @@ class HauswachtRuntime:
         self.sirens = SirenExecutor(hass, entry.options, owner=area_id, owners=self.siren_owners)
         # Sirenentest: nur im Hauptbereich (gilt für alle Bereiche)
         self.siren_tester: SirenTester | None = SirenTester(hass, self) if main is None else None
+        # Funkstille-Beobachtung: ebenfalls nur im Hauptbereich (beobachtet alle Bereiche)
+        self.silence: SilenceObserver | None = SilenceObserver(hass, self) if main is None else None
         self._code_guard = CodeGuardState()
         self._selected_profile: str | None = None
         self._edit_profile: str | None = None
@@ -500,6 +503,8 @@ class HauswachtRuntime:
         self.reminder.start()
         if self.siren_tester is not None:
             await self.siren_tester.async_start()
+        if self.silence is not None:
+            await self.silence.async_start()
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
@@ -519,6 +524,8 @@ class HauswachtRuntime:
         self.reminder.stop()
         if self.siren_tester is not None:
             self.siren_tester.async_stop()
+        if self.silence is not None:
+            self.silence.async_stop()
         self.sirens.cancel_retry()
         self.homecoming.async_stop()
         if self._unsub_push is not None:
@@ -1501,13 +1508,12 @@ class HauswachtRuntime:
                 (
                     a
                     for a in areas
-                    if a._sensor_status(entity_id, device_class)
-                    not in ("disarmed", "not_monitored")
+                    if a._sensor_status(entity_id, device_class) not in ("in_time", "not_monitored")
                 ),
                 self.main,
             )
             status = owner._sensor_status(entity_id, device_class)
-            idle = status in ("disarmed", "not_monitored")
+            idle = status in ("in_time", "not_monitored")
             rows.append(
                 {
                     "entity_id": entity_id,
@@ -1538,7 +1544,7 @@ class HauswachtRuntime:
         if entity_id in self.always_sensors:
             return "always_active"
         if not armed:
-            return "disarmed"
+            return "in_time"
         if entity_id in ctx.bypassed_until_closed:
             return "bypassed_until_closed"
         if entity_id in ctx.bypassed:
@@ -1608,12 +1614,19 @@ class HauswachtRuntime:
             | resolve_zones(self.always.zones, self.zones, self._labels)
             | self.technical_sensors
         )
-        self.candidates = (
+        configured = (
             all_configured_sensors(self.zones, self._labels)
             | self._all_rule_sensors()
             | self.always_sensors
             | self._all_exit_doors()
         )
+        # Nur Melder mit offen/zu (z. B. Messwerte aus 0.24 in alten Auslöseregeln ignorieren)
+        self.candidates = frozenset(e for e in configured if domain_of(e) in MONITORED_DOMAINS)
+        if ignored := sorted(configured - self.candidates):
+            _LOGGER.warning(
+                "Hauswacht ignoriert Entitäten ohne offen/zu (Auslöseregeln prüfen): %s",
+                ", ".join(ignored),
+            )
         self._last_seen_entity = self._find_last_seen_entities(self.candidates | self.armed_sensors)
         # Gerade scharf überwachte Sensoren bleiben abonniert, auch wenn ihr Label
         # inzwischen entfernt wurde – sonst würden sie unbemerkt nicht mehr überwacht.
@@ -1797,6 +1810,7 @@ class HauswachtRuntime:
             case StateChanged():
                 if effect.new is not AlarmState.TRIGGERED:
                     self._cancel_speech_repeat()
+                self._observe_entry(effect)
                 _LOGGER.info(
                     "Zustand %s -> %s (%s)", effect.old.value, effect.new.value, effect.cause
                 )
@@ -2054,6 +2068,17 @@ class HauswachtRuntime:
         self._speech_repeat = async_track_time_interval(
             self.hass, _again, timedelta(seconds=seconds)
         )
+
+    @callback
+    def _observe_entry(self, effect: StateChanged) -> None:
+        """Heimkehr-Beobachtung: Zeit von "Tür auf" bis "unscharf" messen (schaltet nichts)."""
+        if effect.new is AlarmState.PENDING and effect.old is not AlarmState.PENDING:
+            profile = self.ctx.profile
+            self.homecoming.entry_started(
+                self.ctx.trigger_sensor, profile.entry_delay if profile else 0
+            )
+        elif effect.old is AlarmState.PENDING and effect.new is not AlarmState.PENDING:
+            self.homecoming.entry_finished(in_time=effect.new is AlarmState.DISARMED)
 
     @callback
     def _cancel_speech_repeat(self) -> None:

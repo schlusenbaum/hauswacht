@@ -4,6 +4,12 @@ Rein und ohne Home Assistant. Die Beobachtung SCHALTET NICHTS: Sie sammelt nur T
 und Ankünfte (pro Person und pro Ortungsquelle) und rechnet aus, was eine Automatik getan
 hätte. So lässt sich vor jeder echten Automatik mit echten Daten entscheiden.
 
+Ortungsquellen sind die Geräte-Tracker der Person und – ab 0.27 – zusätzliche Signale je
+Person: Binärsensoren (an = zuhause), WLAN-Sensoren der Companion App (verbunden mit einem der
+Heim-WLANs = zuhause) und die Richtung aus der Integration "Nähe" (nähert sich/angekommen =
+zuhause, entfernt sich = weg). Je Person gibt es außerdem die Kombination "frühestes Signal"
+(irgendeine Quelle meldet zuhause).
+
 Bewertet wird pro Ankunft:
 
 - **mit Tür:** Innerhalb des Zeitfensters wurde eine Eingangstür geöffnet. Die Verzögerung
@@ -31,11 +37,28 @@ MAX_AGE = 60 * 86400  # s: ältere Daten werden verworfen
 MAX_RECORDS = 5000
 
 
-def presence(state: str | None) -> bool | None:
-    """True = zuhause, False = weg, None = unbekannt (zählt weder noch)."""
-    if state is None or state in IGNORED_STATES:
+DIRECTION_HOME = frozenset({"towards", "arrived"})
+DIRECTION_AWAY = frozenset({"away_from"})
+DIRECTION_NEUTRAL = frozenset({"stationary"})
+APPROACH_WINDOW = 900  # s: Annäherung kommt oft Minuten vor der Tür
+EARLIEST = "#frühestes"  # Kennung der Kombination je Person: "<person>#frühestes"
+
+
+def presence(state: str | None, ssids: frozenset[str] = frozenset()) -> bool | None:
+    """True = zuhause, False = weg, None = unbekannt (zählt weder noch).
+
+    - Tracker/Person: ``home`` = zuhause, alles andere (``not_home``, andere Zone) = weg
+    - Binärsensor: ``on`` = zuhause, ``off`` = weg
+    - Richtung (Nähe): nähert sich/angekommen = zuhause, entfernt sich = weg, steht = unbekannt
+    - WLAN-Sensor: Name eines Heim-WLANs = zuhause, sonst weg
+    """
+    if state is None or state in IGNORED_STATES or state in DIRECTION_NEUTRAL:
         return None
-    return state == HOME
+    if state in (HOME, "on") or state in DIRECTION_HOME:
+        return True
+    if state in ("off", "not_home") or state in DIRECTION_AWAY:
+        return False
+    return state in ssids
 
 
 @dataclass(frozen=True)
@@ -102,12 +125,13 @@ def judge(
     *,
     min_away: int = DEFAULT_MIN_AWAY,
     window: int = DEFAULT_WINDOW,
+    windows: Mapping[str, int] | None = None,
 ) -> list[Verdict]:
     verdicts: list[Verdict] = []
     for arrival in arrivals:
         if arrival.away_seconds < min_away:
             continue
-        door = nearest_door(arrival, doors, window)
+        door = nearest_door(arrival, doors, (windows or {}).get(arrival.source, window))
         delay = arrival.at - door.at if door else None
         verdicts.append(Verdict(arrival=arrival, door=door, delay=delay))
     return verdicts
@@ -119,10 +143,11 @@ def evaluate(
     *,
     min_away: int = DEFAULT_MIN_AWAY,
     window: int = DEFAULT_WINDOW,
+    windows: Mapping[str, int] | None = None,
 ) -> dict[str, SourceStats]:
     """Statistik pro Ortungsquelle (Schlüssel = ``source``)."""
     stats: dict[str, SourceStats] = {}
-    for verdict in judge(arrivals, doors, min_away=min_away, window=window):
+    for verdict in judge(arrivals, doors, min_away=min_away, window=window, windows=windows):
         entry = stats.setdefault(verdict.arrival.source, SourceStats())
         entry.arrivals += 1
         if verdict.delay is None:
@@ -200,16 +225,64 @@ class PresenceState:
     away_since: float | None = None
 
 
-def track(prev: PresenceState, state: str | None, now: float) -> tuple[PresenceState, float | None]:
+def track(
+    prev: PresenceState, state: str | None, now: float, ssids: frozenset[str] = frozenset()
+) -> tuple[PresenceState, float | None]:
     """Neuer Anwesenheitszustand; zweiter Wert = Dauer der Abwesenheit bei einer Heimkehr.
 
     Unbekannte Zustände ändern nichts. Eine Heimkehr zählt nur, wenn vorher eine Abwesenheit
     mit bekanntem Beginn beobachtet wurde.
     """
-    value = presence(state)
+    value = presence(state, ssids)
+    return track_value(prev, value, now)
+
+
+def track_value(
+    prev: PresenceState, value: bool | None, now: float
+) -> tuple[PresenceState, float | None]:
+    """Wie ``track``, mit bereits bewertetem Zustand (für Kombinationen)."""
     if value is None or value == prev.home:
         return prev, None
     if value:
         away = now - prev.away_since if prev.home is False and prev.away_since else None
         return PresenceState(home=True), away
     return PresenceState(home=False, away_since=now), None
+
+
+# --- Zeit von "Tür auf" bis "unscharf" -------------------------------------------------
+
+
+@dataclass(frozen=True)
+class EntryTiming:
+    """Eine Eingangsverzögerung: wie lange bis zum Unscharfschalten (oder Alarm)."""
+
+    at: float
+    door: str
+    seconds: float
+    in_time: bool  # False = Zeit abgelaufen, Alarm
+    delay: int  # eingestellte Eingangsverzögerung
+
+
+def recommended_entry_delay(longest: float) -> int:
+    """Längste gemessene Zeit plus Puffer (25 %, mindestens 5 s), auf 5 s aufgerundet."""
+    padded = longest + max(5.0, longest * 0.25)
+    return int(-(-padded // 5) * 5)
+
+
+def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
+    """Je Tür: Anzahl, rechtzeitig, zu spät, typische und längste Zeit, Empfehlung."""
+    by_door: dict[str, list[EntryTiming]] = {}
+    for timing in timings:
+        by_door.setdefault(timing.door, []).append(timing)
+    result: dict[str, dict[str, Any]] = {}
+    for door, items in by_door.items():
+        done = [t.seconds for t in items if t.in_time]
+        result[door] = {
+            "entries": len(items),
+            "in_time": len(done),
+            "too_late": len(items) - len(done),
+            "median_seconds": round(statistics.median(done)) if done else None,
+            "max_seconds": round(max(done)) if done else None,
+            "recommended_entry_delay": recommended_entry_delay(max(done)) if done else None,
+        }
+    return result

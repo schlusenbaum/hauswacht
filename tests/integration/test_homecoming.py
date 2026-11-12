@@ -25,6 +25,8 @@ PERSON = "person.anna"
 ROUTER = "device_tracker.anna_router"
 OBSERVER = "sensor.hauswacht_homecoming_observation"
 REPORT = "button.hauswacht_homecoming_report"
+WIFI = "sensor.anna_handy_wifi_connection"
+DIRECTION = "sensor.home_anna_direction_of_travel"
 
 
 def _night(**extra: Any) -> dict[str, Any]:
@@ -217,9 +219,90 @@ async def test_homecoming_options(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"next_step_id": "homecoming"}
     )
+    hass.states.async_set(PERSON, "home", {"friendly_name": "Anna"})
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"homecoming_observe": True, "homecoming_persons": [PERSON]}
+        result["flow_id"],
+        {
+            "homecoming_observe": True,
+            "homecoming_persons": [PERSON],
+            "homecoming_ssids": "Heimnetz, Gast",
+        },
     )
+    assert result["step_id"] == "homecoming_signals"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"Anna": [WIFI]})
     await hass.async_block_till_done()
     assert entry.options["homecoming_observe"] is True
     assert entry.options["homecoming_persons"] == [PERSON]
+    assert entry.options["homecoming_ssids"] == ["Heimnetz", "Gast"]
+    assert entry.options["homecoming_signals"] == {PERSON: [WIFI]}
+
+
+async def test_wifi_signal_and_earliest_signal(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    _person(hass, "not_home", "not_home")
+    hass.states.async_set(WIFI, "<not connected>")
+    options = {
+        "homecoming_observe": True,
+        "homecoming_persons": [PERSON],
+        "homecoming_ssids": ["Heimnetz"],
+        "homecoming_signals": {PERSON: [WIFI]},
+    }
+    await setup_entry(hass, make_entry(options))
+    freezer.tick(timedelta(minutes=20))
+    hass.states.async_set(WIFI, "Heimnetz")  # 5 s VOR der Tür
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=5))
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=50))
+    _person(hass, "home", "home")
+    await hass.async_block_till_done()
+    sources = hass.states.get(OBSERVER).attributes["sources"]  # type: ignore[union-attr]
+    wifi = next(v for k, v in sources.items() if "wifi" in k.casefold())
+    assert wifi["median_delay"] == -5
+    assert sources["Anna (frühestes Signal)"]["median_delay"] == -5
+    assert sources["Anna (gesamt)"]["median_delay"] == 50
+
+
+async def test_approach_counts_minutes_before_door(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    _person(hass, "not_home", "not_home")
+    hass.states.async_set(DIRECTION, "away_from")
+    options = {
+        "homecoming_observe": True,
+        "homecoming_persons": [PERSON],
+        "homecoming_signals": {PERSON: [DIRECTION]},
+    }
+    await setup_entry(hass, make_entry(options))
+    freezer.tick(timedelta(minutes=30))
+    hass.states.async_set(DIRECTION, "towards")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=8))  # länger als das normale Fenster von 5 min
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    sources = hass.states.get(OBSERVER).attributes["sources"]  # type: ignore[union-attr]
+    approach = next(v for k, v in sources.items() if "direction" in k.casefold())
+    assert approach["with_door"] == 1
+    assert approach["median_delay"] == -480
+
+
+async def test_entry_time_door_to_disarm(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    options = _night(homecoming_observe=True, homecoming_persons=[PERSON])
+    _person(hass, "home", "home")
+    await setup_entry(hass, make_entry(options))
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.PENDING
+    freezer.tick(timedelta(seconds=12))
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    times = hass.states.get(OBSERVER).attributes["entry_times"]  # type: ignore[union-attr]
+    (door,) = times.values()
+    assert door["entries"] == 1
+    assert door["in_time"] == 1
+    assert door["max_seconds"] == 12
+    assert door["recommended_entry_delay"] == 20

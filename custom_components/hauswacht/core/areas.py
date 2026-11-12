@@ -24,6 +24,8 @@ MAIN_ONLY_KEYS = (
     "always_active",
     "homecoming_observe",
     "homecoming_persons",
+    "homecoming_signals",
+    "homecoming_ssids",
     "reminder_persons",
     "reminder_profile",
 )
