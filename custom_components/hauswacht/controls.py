@@ -32,8 +32,10 @@ from .core.controls import (
     Emergency,
     Login,
     PendingLogin,
+    fresh_cards,
     keypad_for_topic,
     keypad_mode,
+    learn_minutes,
     looks_like_card,
     normalize_tag,
     parse_controls,
@@ -167,12 +169,7 @@ class ControlManager:
         try:
             identity = await self.runtime.async_identify(code, action)
         except HomeAssistantError:
-            if looks_like_card(code) and not any(
-                normalize_tag(code) in u.tags for u in self.runtime.users
-            ):
-                self.unknown_cards = remember_card(
-                    self.unknown_cards, code, control.name, dt_util.utcnow().timestamp()
-                )
+            self._learn(code, control)
             return None
         if control.login is not Login.CARD_AND_PIN or identity.duress:
             return identity
@@ -183,6 +180,24 @@ class ControlManager:
             return identity
         self._pending[control.area] = PendingLogin(user_ids, identity.kind, now)
         return "pending"
+
+    def _learn(self, code: str, control: Control) -> None:
+        """Unbekannte Karte zum Anlernen merken – nur unscharf und nur, wenn Anlernen an ist."""
+        minutes = learn_minutes(self.runtime.entry.options)
+        if not minutes or not self.runtime.all_disarmed or not looks_like_card(code):
+            return
+        if any(normalize_tag(code) in u.tags for u in self.runtime.users):
+            return  # Karte gehört schon jemandem (z. B. gesperrter Gast)
+        now = dt_util.utcnow().timestamp()
+        self.unknown_cards = remember_card(
+            fresh_cards(self.unknown_cards, now, minutes), code, control.name, now
+        )
+
+    def learnable_cards(self) -> dict[str, tuple[str, float]]:
+        """Unbekannte Karten, die noch angelernt werden dürfen (abgelaufene fallen weg)."""
+        minutes = learn_minutes(self.runtime.entry.options)
+        self.unknown_cards = fresh_cards(self.unknown_cards, dt_util.utcnow().timestamp(), minutes)
+        return dict(self.unknown_cards) if minutes else {}
 
     def _execute(
         self,

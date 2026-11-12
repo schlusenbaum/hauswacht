@@ -31,6 +31,7 @@
 | **0.25.0** ✅ | Nur Melder mit offen/zu (Binärsensor, Schloss, Abdeckung); Melder-Typen in der Meldergruppe (Tür, Fenster, Bewegung, Manipulation, Technik, Sonstiges); Ausnahmen im Alarmprofil; Assistent „Melder aus anderem Sensor erstellen“ (Schwellenwert-Helfer) | nein |
 | **0.26.0** ✅ | Sirenentest: je Sirene einzeln mit Bestätigung und Vorabprüfung, kurz und leise, Ergebnis „gehört?“, Erinnerung und Vorwarnung wählbar; auch eingeklappt in der Testkarte | Funktion fertig; erster echter Ton nach Freigabe, bei Anwesenheit |
 | **0.27.0** ✅ | Funkstille-Beobachtung mit Empfehlung; Heimkehr-Beobachtung mit zusätzlichen Signalen je Person (WLAN, Bluetooth, Router, Annäherung), „frühestes Signal“, Zeit „Tür auf bis unscharf“ | nur lesen |
+| **0.32.0** ✅ | Karten anlernen nur unscharf und innerhalb einer einstellbaren Anlernzeit | nein |
 | **0.31.0** ✅ | Falscheingaben zurücksetzen (Administratoren), unbekannte Karten zählen nicht als Fehleingabe | nein |
 | **0.30.0** ✅ | RFID-Karten unabhängig vom PIN, beliebig viele je Benutzer, Anlernen über Keypad/Leser | nein |
 | **0.29.0** ✅ | Benutzer-Rechte je Bereich: wahlweise für alle Bereiche gleich oder je Bereich einzeln (scharf, unscharf, Alarm beenden) | nein |

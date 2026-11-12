@@ -51,6 +51,7 @@ from .const import (
     NAME,
     OPT_AREAS,
     OPT_BUTTONS_WITHOUT_PIN,
+    OPT_CARD_LEARN_MINUTES,
     OPT_CODE_ARM_REQUIRED,
     OPT_CONTROLS,
     OPT_CRITICAL_ALERTS,
@@ -96,7 +97,13 @@ from .core.automation import (
 )
 from .core.controls import ALL_AREAS as CONTROL_ALL_AREAS
 from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
-from .core.controls import ControlKind, normalize_tag, parse_controls
+from .core.controls import (
+    MAX_LEARN_MINUTES,
+    ControlKind,
+    learn_minutes,
+    normalize_tag,
+    parse_controls,
+)
 from .core.messages import (
     EXAMPLE_VALUES_DE,
     EXAMPLE_VALUES_EN,
@@ -272,6 +279,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._control_id: str | None = None
         self._control_kind: ControlKind = ControlKind.KEYPAD
         self._user_pending: tuple[str, dict[str, Any]] | None = None
+        self._offered_new: set[str] = set()
         self._siren_params: dict[str, Any] = {}
         self._siren_prewarned = False
         self._siren_summary: list[str] = []
@@ -2218,9 +2226,8 @@ class HauswachtOptionsFlow(OptionsFlow):
             )
             placeholders["conflict"] = conflict
             tag_list = _tag_input(user_input.get("tags"))
-            if (owner := _tag_owner(tag_list, user_id, stored_all)) is not None:
-                errors["tags"] = "tag_taken"
-                placeholders["conflict"] = owner
+            if (tag_error := self._tag_error(tag_list, user_id, stored_all, current)) is not None:
+                errors["tags"], placeholders["conflict"] = tag_error
             if not errors:
                 data = dict(current)
                 data.update(
@@ -2328,8 +2335,35 @@ class HauswachtOptionsFlow(OptionsFlow):
                 "control_add_reader",
                 "control_edit",
                 "control_delete",
+                "control_learn",
                 "system",
             ],
+        )
+
+    async def async_step_control_learn(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Anlernzeit für neue Karten (0 = Anlernen aus)."""
+        if user_input is not None:
+            options = dict(self.config_entry.options)
+            options[OPT_CARD_LEARN_MINUTES] = int(user_input[OPT_CARD_LEARN_MINUTES])
+            return await self._save(options, "controls")
+        current = learn_minutes(self.config_entry.options)
+        return self.async_show_form(
+            step_id="control_learn",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(OPT_CARD_LEARN_MINUTES, default=current): NumberSelector(
+                        NumberSelectorConfig(
+                            min=0,
+                            max=MAX_LEARN_MINUTES,
+                            step=1,
+                            unit_of_measurement="min",
+                            mode=NumberSelectorMode.BOX,
+                        )
+                    )
+                }
+            ),
         )
 
     async def async_step_control_add_keypad(
@@ -2661,6 +2695,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         tags = [t for t in stored if isinstance(t, str)] if isinstance(stored, list) else []
         options = [SelectOptionDict(value=t, label=t) for t in tags]
         unknown = self._unknown_cards()
+        self._offered_new = set(unknown) - set(tags)
         de = self._german()
         for tag, (source, when) in unknown.items():
             if tag in tags:
@@ -2683,12 +2718,28 @@ class HauswachtOptionsFlow(OptionsFlow):
             )
         }
 
+    def _tag_error(
+        self,
+        tags: list[str],
+        user_id: str | None,
+        stored: Mapping[str, Any],
+        current: Mapping[str, Any],
+    ) -> tuple[str, str] | None:
+        """Karte gehört schon jemand anderem, oder eine angebotene neue Karte ist abgelaufen."""
+        if (owner := _tag_owner(tags, user_id, stored)) is not None:
+            return "tag_taken", owner
+        own = set(current.get("tags", []) or [])
+        expired = (set(tags) - own) & self._offered_new - set(self._unknown_cards())
+        if expired:
+            return "card_expired", ", ".join(sorted(expired))
+        return None
+
     def _unknown_cards(self) -> dict[str, tuple[str, float]]:
         """Zuletzt an Keypads/Lesern gelesene unbekannte Karten (nur wenn geladen)."""
         if not self._loaded():
             return {}
         controls = getattr(self.config_entry.runtime_data, "controls", None)
-        return dict(controls.unknown_cards) if controls is not None else {}
+        return controls.learnable_cards() if controls is not None else {}
 
     async def _user_schema(self, current: dict[str, Any]) -> vol.Schema:
         ha_user = current.get("ha_user")

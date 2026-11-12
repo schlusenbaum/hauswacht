@@ -679,7 +679,18 @@
           "control_add_reader": "RFID-/NFC-Leser hinzufügen (z. B. ESPHome)",
           "control_edit": "Bedienteil bearbeiten",
           "control_delete": "Bedienteil löschen",
+          "control_learn": "Anlernen neuer Karten",
           "system": "← Zurück"
+        }
+      },
+      "control_learn": {
+        "title": "Anlernen neuer Karten",
+        "description": "Eine unbekannte Karte, die an ein Keypad oder einen Leser gehalten wird, erscheint beim Benutzer unter „RFID-Karten/-Anhänger“ als „neu“ – aber nur, wenn **alle Bereiche unscharf** sind, und nur so lange wie hier eingestellt. Danach wird sie vergessen und muss neu gelesen werden.",
+        "data": {
+          "card_learn_minutes": "Anlernzeit"
+        },
+        "data_description": {
+          "card_learn_minutes": "Minuten (1–60). 0 = Anlernen aus; Karten-IDs lassen sich dann nur eintippen."
         }
       },
       "control_edit": {
@@ -775,7 +786,8 @@
       "control_profile_required": "Für „scharf“ bzw. „umschalten“ ein Alarmprofil wählen.",
       "control_tag": "Bitte die Aufkleber-ID angeben.",
       "control_device": "Bitte das Lesegerät wählen.",
-      "control_profile_area": "Das Alarmprofil gehört zu einem anderen Bereich als das Bedienteil."
+      "control_profile_area": "Das Alarmprofil gehört zu einem anderen Bereich als das Bedienteil.",
+      "card_expired": "Die neue Karte {conflict} wurde vor zu langer Zeit gelesen und ist nicht mehr zum Anlernen freigegeben. Bitte erneut an das Keypad bzw. den Leser halten."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
