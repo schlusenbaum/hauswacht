@@ -9,8 +9,10 @@ from custom_components.hauswacht.core.controls import (
     Login,
     PendingLogin,
     TagAction,
+    fresh_cards,
     keypad_for_topic,
     keypad_mode,
+    learn_minutes,
     looks_like_card,
     normalize_tag,
     parse_controls,
@@ -116,3 +118,17 @@ def test_remember_card_newest_first_and_limited() -> None:
     seen = remember_card(seen, "card05", "Leser", 99.0)
     assert next(iter(seen)) == "CARD05"
     assert seen["CARD05"] == ("Leser", 99.0)
+
+
+def test_learn_minutes_default_and_limits() -> None:
+    assert learn_minutes({}) == 5
+    assert learn_minutes({"card_learn_minutes": 0}) == 0
+    assert learn_minutes({"card_learn_minutes": 999}) == 60
+    assert learn_minutes({"card_learn_minutes": "x"}) == 5
+
+
+def test_fresh_cards_drop_old_ones() -> None:
+    seen = {"NEW": ("Keypad", 1000.0), "OLD": ("Keypad", 800.0)}
+    assert list(fresh_cards(seen, 1000.0, 5)) == ["NEW", "OLD"]
+    assert list(fresh_cards(seen, 1150.0, 5)) == ["NEW"]
+    assert fresh_cards(seen, 1000.0, 0) == {"NEW": ("Keypad", 1000.0)}

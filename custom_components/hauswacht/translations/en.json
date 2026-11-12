@@ -679,7 +679,18 @@
           "control_add_reader": "Add RFID/NFC reader (e.g. ESPHome)",
           "control_edit": "Edit control device",
           "control_delete": "Delete control device",
+          "control_learn": "Learning new cards",
           "system": "← Back"
+        }
+      },
+      "control_learn": {
+        "title": "Learning new cards",
+        "description": "An unknown card held to a keypad or reader shows up at the user under “RFID cards/tags” as “new” – but only while **all areas are disarmed**, and only for the time set here. After that it is forgotten and must be read again.",
+        "data": {
+          "card_learn_minutes": "Learning time"
+        },
+        "data_description": {
+          "card_learn_minutes": "Minutes (1–60). 0 = learning off; card IDs can then only be typed."
         }
       },
       "control_edit": {
@@ -775,7 +786,8 @@
       "control_profile_required": "Choose an alarm profile for “arm” or “toggle”.",
       "control_tag": "Please enter the sticker ID.",
       "control_device": "Please choose the reader device.",
-      "control_profile_area": "The alarm profile belongs to a different area than the control device."
+      "control_profile_area": "The alarm profile belongs to a different area than the control device.",
+      "card_expired": "The new card {conflict} was read too long ago and may no longer be learned. Please hold it to the keypad or reader again."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

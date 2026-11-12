@@ -32,6 +32,7 @@ OPT_SPEECH: Final = "speech"
 OPT_SENSOR_TYPES: Final = "sensor_types"
 OPT_SIREN_TEST: Final = "siren_test"
 OPT_CONTROLS: Final = "controls"
+OPT_CARD_LEARN_MINUTES: Final = "card_learn_minutes"
 OPT_HOMECOMING_SIGNALS: Final = "homecoming_signals"
 OPT_HOMECOMING_SSIDS: Final = "homecoming_ssids"
 # Alarm und Bedrohung durchbrechen "Nicht stören" (kritische Hinweise)

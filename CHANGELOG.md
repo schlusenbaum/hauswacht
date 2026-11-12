@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-11-12
+
+### Hinzugefügt
+- **Anlernzeit für neue Karten** (Bedienteile → Anlernen neuer Karten): Standard 5 Minuten,
+  1–60 Minuten oder 0 = Anlernen aus.
+
+### Geändert
+- Unbekannte Karten werden nur gemerkt, wenn alle Bereiche unscharf sind, und nach Ablauf der
+  Anlernzeit vergessen. Wird eine angebotene neue Karte erst danach gespeichert, lehnt der
+  Dialog das ab („erneut an das Keypad halten“). Eingetippte Karten-IDs sind davon nicht
+  betroffen.
+
 ## [0.31.0] - 2026-11-12
 
 ### Hinzugefügt

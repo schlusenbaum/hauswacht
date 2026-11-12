@@ -112,6 +112,24 @@ def looks_like_card(code: Any) -> bool:
 
 
 UNKNOWN_CARDS_KEPT = 10
+DEFAULT_LEARN_MINUTES = 5
+MAX_LEARN_MINUTES = 60
+
+
+def learn_minutes(options: Mapping[str, Any]) -> int:
+    """Wie lange eine unbekannte Karte zum Anlernen angeboten wird (0 = Anlernen aus)."""
+    try:
+        value = int(options.get("card_learn_minutes", DEFAULT_LEARN_MINUTES))
+    except (TypeError, ValueError):
+        return DEFAULT_LEARN_MINUTES
+    return max(0, min(MAX_LEARN_MINUTES, value))
+
+
+def fresh_cards(
+    seen: Mapping[str, tuple[str, float]], now: float, minutes: int
+) -> dict[str, tuple[str, float]]:
+    """Nur Karten, die vor höchstens ``minutes`` Minuten gelesen wurden."""
+    return {tag: info for tag, info in seen.items() if now - info[1] <= minutes * 60}
 
 
 def remember_card(

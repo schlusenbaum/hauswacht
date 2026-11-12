@@ -328,3 +328,66 @@ async def test_reset_failed_attempts_admin_only(
     assert state.attributes["code_locked_until"] is None
     assert [e.data["type"] for e in events] == ["CodeLockReset"]
     assert events[0].data["failures"] == 3
+
+
+async def _user_form(hass: HomeAssistant, entry: Any, user: str) -> Any:
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "users", "user_edit"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    return await hass.config_entries.options.async_configure(flow["flow_id"], {"user": user})
+
+
+def _offered(flow: Any) -> list[str]:
+    key = next(k for k in flow["data_schema"].schema if str(k) == "tags")
+    return [o["value"] for o in flow["data_schema"].schema[key].config["options"]]
+
+
+async def test_learning_only_while_disarmed(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    entry = await _setup_without_pin(hass)
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    await _press(hass, "disarm", "a1b2c3d4e5", 1)
+    assert entry.runtime_data.controls.unknown_cards == {}
+
+
+async def test_learned_card_expires(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    entry = await _setup_without_pin(hass)
+    await _press(hass, "disarm", "a1b2c3d4e5", 1)
+    flow = await _user_form(hass, entry, "niklas")
+    assert "A1B2C3D4E5" in _offered(flow)
+    # Formular zu lange offen: Karte ist inzwischen abgelaufen
+    controls = entry.runtime_data.controls
+    source, when = controls.unknown_cards["A1B2C3D4E5"]
+    controls.unknown_cards["A1B2C3D4E5"] = (source, when - 6 * 60)
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Niklas", "tags": [CARD, "0011223344", "A1B2C3D4E5"]}
+    )
+    assert flow["errors"] == {"tags": "card_expired"}
+    assert "A1B2C3D4E5" not in _offered(flow)
+    assert "A1B2C3D4E5" not in entry.options["users"]["niklas"]["tags"]
+
+
+async def test_learning_time_setting(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    entry = await _setup_without_pin(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "controls", "control_learn"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"card_learn_minutes": 0}
+    )
+    assert flow["step_id"] == "controls"
+    assert entry.options["card_learn_minutes"] == 0
+    await hass.async_block_till_done()
+    await _press(hass, "disarm", "a1b2c3d4e5", 1)
+    assert (
+        hass.config_entries.async_get_entry(entry.entry_id).runtime_data.controls.unknown_cards
+        == {}
+    )
