@@ -1,6 +1,7 @@
 # ADR 0005: Ausweise – PIN heute, RFID/NFC und Fingerabdruck später
 
-- Status: angenommen (Umsetzung von RFID/NFC und Fingerabdruck offen, Roadmap 1.x)
+- Status: angenommen; RFID-Karten, NFC-Aufkleber und Zigbee-Keypads umgesetzt in 0.28.0,
+  Fingerabdruck offen
 - Datum: 2026-11-10
 
 ## Entscheidung
@@ -28,6 +29,17 @@ scharf schalten“). Optional zwei Faktoren (Ausweis + PIN) je Lesegerät.
   gesperrt.
 - Hauswacht bindet keine Hardware direkt an, sondern nur, was Home Assistant ohnehin meldet –
   damit funktioniert jedes Gerät, das Home Assistant kennt.
+
+## Umsetzung 0.28.0
+
+- **Bedienteile** (Keypad, NFC-Aufkleber, RFID-Leser) sind getrennt von den Ausweisen. Ein
+  **NFC-Aufkleber ist kein Ausweis**: Er bestimmt Ort und Aktion; ausgewiesen wird mit dem Handy
+  (Home-Assistant-Konto eines Hauswacht-Benutzers).
+- RFID-Kennungen werden normalisiert im Klartext gespeichert, weil Leser und Keypads sie offen
+  übertragen (siehe Regel unten).
+- Keypads (Zigbee2MQTT) brauchen eine Rückmeldung. Das ist die einzige Sendung an ein Gerät
+  außer Sirenen und Benachrichtigungen: `arm_mode` an `<topic>/set`, nur an eingerichtete
+  Keypads (statischer Test).
 
 ## Sicherheitsregeln für die Umsetzung
 

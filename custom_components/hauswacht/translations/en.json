@@ -222,10 +222,12 @@
           "ha_user": "Home Assistant account (for push and dashboard buttons)",
           "valid_from": "Valid from",
           "valid_until": "Valid until",
-          "areas": "Areas"
+          "areas": "Areas",
+          "tags": "RFID cards/fobs"
         },
         "data_description": {
-          "areas": "Which areas the user may operate. Empty = all areas."
+          "areas": "Which areas the user may operate. Empty = all areas.",
+          "tags": "IDs separated by commas. Valid at keypads (instead of a PIN) and RFID readers."
         }
       },
       "system": {
@@ -233,6 +235,7 @@
         "menu_options": {
           "areas": "Areas (e.g. house, garage, garden shed)",
           "users": "Users and PINs",
+          "controls": "Control devices (keypads, NFC stickers, RFID readers)",
           "sensor_behaviour": "Sensor radio silence",
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Homecoming observation",
@@ -662,6 +665,75 @@
       "homecoming_signals": {
         "title": "Homecoming: additional signals per person",
         "description": "Further signals per person that can report “home” – observation only, nothing is switched:\n\n- **Wi-Fi sensor** of the companion app (`sensor.…_wifi_connection` or `sensor.…_ssid`): home when connected to a home Wi-Fi\n- **Bluetooth** (e.g. Bermuda) or **FRITZ!Box** tracker: `device_tracker.…`\n- **Approach** (“Proximity” integration): direction sensor `sensor.…_direction_of_travel` – towards/arrived = home\n- **Binary sensors**: on = home\n\nHauswacht also evaluates the **earliest signal** per person (any source reports home)."
+      },
+      "controls": {
+        "title": "Control devices",
+        "description": "{saved}Control devices are keypads, NFC stickers and RFID readers. Identification uses the **users' credentials**: PIN or RFID card/fob (under Users and PINs). Rights, validity, lock after wrong entries and duress PIN apply as on the panel.",
+        "menu_options": {
+          "control_add_keypad": "Add keypad (Zigbee2MQTT)",
+          "control_add_sticker": "Add NFC sticker (companion app)",
+          "control_add_reader": "Add RFID/NFC reader (e.g. ESPHome)",
+          "control_edit": "Edit control device",
+          "control_delete": "Delete control device",
+          "system": "← Back"
+        }
+      },
+      "control_edit": {
+        "title": "Edit control device",
+        "data": {
+          "control": "Control device"
+        }
+      },
+      "control_delete": {
+        "title": "Delete control device",
+        "data": {
+          "control": "Control device"
+        }
+      },
+      "control_keypad": {
+        "title": "Keypad (Zigbee2MQTT)",
+        "description": "For alarm keypads following the Zigbee standard (e.g. frient/Develco KEPZB-110/KEYZB-110, Linkind, Centralite, Heiman). Hauswacht receives key, PIN or card and **confirms** each entry (valid, invalid credential, not ready); then the keypad shows the state (delays, armed, alarm). For this Hauswacht sends to `<topic>/set` – state display only.\n\nThe keypad's tamper contact is a separate binary sensor in Home Assistant – add it to a sensor group (type tamper).",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "topic": "MQTT topic of the keypad",
+          "arm_day_zones": "Key “day” → alarm profile",
+          "arm_night_zones": "Key “night” → alarm profile",
+          "arm_all_zones": "Key “all” → alarm profile",
+          "login": "Login",
+          "emergency": "Emergency key"
+        },
+        "data_description": {
+          "topic": "E.g. `zigbee2mqtt/Keypad hall` (base topic + device name in Zigbee2MQTT).",
+          "login": "**Card and PIN:** both credentials of the same user within 30 s (the keypad answers the first one with “not ready”).",
+          "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile."
+        }
+      },
+      "control_sticker": {
+        "title": "NFC sticker (companion app)",
+        "description": "An NFC sticker at the door, scanned with the Home Assistant app. The sticker only says **where and what** – identification is the **phone**: the logged-in Home Assistant account must be linked to an authorized Hauswacht user (Users and PINs → Home Assistant user).\n\nFind the ID under Settings → Areas, labels & zones → Tags (after the first scan).",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "tag": "Sticker ID",
+          "action": "Action",
+          "profile": "Alarm profile (for arm/toggle)"
+        }
+      },
+      "control_reader": {
+        "title": "RFID/NFC reader",
+        "description": "A fixed reader that fires the “tag scanned” event in Home Assistant (e.g. ESPHome with PN532/RC522). Identification uses the **users' RFID cards** (Users and PINs → RFID cards).",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "device": "Reader device",
+          "action": "Action",
+          "profile": "Alarm profile (for arm/toggle)",
+          "login": "Login"
+        },
+        "data_description": {
+          "login": "**Card and PIN:** after the card, confirm the same user by PIN at a keypad in the same area within 30 s."
+        }
       }
     },
     "error": {
@@ -693,7 +765,13 @@
       "siren_test_confirm": "Please confirm that you are on site.",
       "siren_test_none": "Please choose at least one siren.",
       "siren_test_running": "A siren test is running.",
-      "siren_test_armed": "Only possible when all areas are disarmed."
+      "siren_test_armed": "Only possible when all areas are disarmed.",
+      "tag_taken": "This card already belongs to {conflict}.",
+      "control_topic": "Please enter the keypad's MQTT topic.",
+      "control_profile_required": "Choose an alarm profile for “arm” or “toggle”.",
+      "control_tag": "Please enter the sticker ID.",
+      "control_device": "Please choose the reader device.",
+      "control_profile_area": "The alarm profile belongs to a different area than the control device."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -702,7 +780,8 @@
       "no_users": "There are no users yet.",
       "no_rules": "There is no trigger rule yet.",
       "no_areas": "There is only the first area – it cannot be deleted.",
-      "no_sirens": "No sirens are set up (Alarm devices – sirens → Sirens and enabling)."
+      "no_sirens": "No sirens are set up (Alarm devices – sirens → Sirens and enabling).",
+      "no_controls": "There are no control devices yet."
     }
   },
   "selector": {
@@ -819,6 +898,27 @@
         "3": "Every 3 months",
         "6": "Every 6 months",
         "12": "Yearly"
+      }
+    },
+    "control_login": {
+      "options": {
+        "pin_or_card": "PIN or card",
+        "card": "Card",
+        "card_and_pin": "Card and PIN"
+      }
+    },
+    "control_emergency": {
+      "options": {
+        "off": "Off",
+        "silent": "Silent emergency (push)",
+        "alarm": "Alarm"
+      }
+    },
+    "control_action": {
+      "options": {
+        "disarm": "Disarm",
+        "arm": "Arm",
+        "toggle": "Toggle (armed ↔ disarmed)"
       }
     }
   },

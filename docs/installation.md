@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.27.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.28.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -999,6 +999,7 @@ Allgemein:
 | Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte |
 | Home-Assistant-Konto | ordnet Push-Knopf und Dashboard-Knöpfe diesem Benutzer zu (mit seinen Rechten). Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit ist der PIN gesperrt |
+| RFID-Karten/-Anhänger | IDs durch Komma getrennt; gelten an Keypads (statt PIN) und an RFID-Lesern, siehe [Bedienteile](#bedienteile-keypads-nfc-aufkleber-rfid-leser) |
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben. Dann steht dort
   „gemeinsamer PIN (Christian, Petra)“. Eine Aktion ist erlaubt, wenn **mindestens einer**
@@ -1023,6 +1024,55 @@ Wer gezwungen wird, die Anlage auszuschalten, gibt seinen **Bedrohungs-PIN** ein
   Speichern geprüft.
 - **Unbedingt Empfänger eintragen** – ohne Empfänger hat der Bedrohungs-PIN keine Wirkung außer
   dem normalen Schalten.
+
+## Bedienteile: Keypads, NFC-Aufkleber, RFID-Leser
+
+**Systemeinstellungen → Bedienteile.** Beliebig viele, jedes für einen **Bereich** oder für
+**alle Bereiche**. Ausgewiesen wird immer mit den **Ausweisen der Benutzer** (PIN, RFID-Karte):
+Rechte, Gültigkeit, Bereiche, Sperre nach falschen Eingaben (gemeinsam über alle Bedienteile)
+und Bedrohungs-PIN gelten wie am Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
+
+### Keypad (Zigbee2MQTT)
+
+Für Alarm-Keypads nach dem Zigbee-Standard für Bedienteile – z. B. frient/Develco KEPZB-110 und
+KEYZB-110, Linkind, Centralite, Heiman. Voraussetzung: Zigbee2MQTT und die MQTT-Integration.
+
+| Einstellung | Bedeutung |
+|---|---|
+| MQTT-Topic | z. B. `zigbee2mqtt/Keypad Flur` (Basis-Topic + Gerätename in Zigbee2MQTT) |
+| Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil; Tasten ohne Profil antworten „nicht bereit“ |
+| Anmeldung | **PIN oder Karte** oder **Karte und PIN** (beide Ausweise desselben Benutzers innerhalb von 30 s; der erste wird mit „nicht bereit“ quittiert) |
+| Notruf-Taste | **aus**, **still** (wichtige Push-Nachricht) oder **Alarm** (zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils) |
+
+So läuft es: Taste + PIN oder Karte → Hauswacht prüft → Antwort an das Keypad (gültig,
+ungültiger Ausweis, nicht bereit – z. B. Fenster offen, schon unscharf). Danach zeigt das
+Keypad laufend den Zustand: Ausgangs- und Eingangsverzögerung, scharf (Tag/Nacht/alle), Alarm.
+Dafür sendet Hauswacht an `<Topic>/set` (`arm_mode`) – **nur** Zustandsanzeigen an
+eingerichtete Keypads; ein Test stellt sicher, dass Hauswacht sonst nirgends hin sendet.
+
+Der **Sabotage-Kontakt** des Keypads ist ein eigener Binärsensor in Home Assistant: in eine
+Meldergruppe aufnehmen (Typ Manipulation). Den richtigen Platz an der Wand hilft die Messung
+„Tür auf bis unscharf“ der [Heimkehr-Beobachtung](#tür-auf-bis-unscharf) zu finden.
+
+### NFC-Aufkleber (Companion App)
+
+Ein NFC-Aufkleber an der Tür, gescannt mit der Home-Assistant-App. Der Aufkleber sagt nur
+**wo und was** – ausgewiesen wird mit dem **Handy**: Das angemeldete Home-Assistant-Konto muss
+einem berechtigten Hauswacht-Benutzer zugeordnet sein. Ein kopierter Aufkleber allein nützt
+also nichts.
+
+| Einstellung | Bedeutung |
+|---|---|
+| Aufkleber-ID | unter Einstellungen → Bereiche, Labels & Zonen → Tags (nach dem ersten Scannen) |
+| Aktion | unscharf schalten, scharf schalten (Profil) oder umschalten (scharf ↔ unscharf) |
+
+### RFID-/NFC-Leser
+
+Ein fester Leser, der das Ereignis „Tag gescannt“ auslöst (z. B. ESPHome mit PN532/RC522).
+Ausgewiesen wird mit den **RFID-Karten der Benutzer**. Anmeldung: **Karte** oder **Karte und
+PIN** (danach innerhalb von 30 s PIN desselben Benutzers an einem Keypad im selben Bereich).
+Aktion wie beim Aufkleber. Einfache 125-kHz-Karten sind leicht kopierbar – besser
+13,56-MHz-Karten (z. B. MIFARE DESFire) oder NFC per Handy.
 
 ## Verhalten nach einem Neustart
 

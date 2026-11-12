@@ -15,7 +15,7 @@ import logging
 import secrets
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import fields
+from dataclasses import dataclass, fields
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
@@ -62,6 +62,7 @@ from .const import (
     PUSH_TAG,
     STORAGE_VERSION,
 )
+from .controls import ControlManager
 from .core.always_active import (
     ALWAYS_PROFILE_ID,
     ALWAYS_PROFILE_NAME,
@@ -173,6 +174,7 @@ from .core.users import (
     find_by_ha_user,
     has_codes,
     match_pin,
+    match_tag,
     parse_users,
     people_without_pin,
 )
@@ -242,6 +244,15 @@ def effect_payload(effect: Effect) -> dict[str, Any]:
     return payload
 
 
+@dataclass(frozen=True)
+class Identity:
+    """Ergebnis einer Ausweisprüfung."""
+
+    kind: str  # "card" | "pin"
+    users: tuple[User, ...]
+    duress: bool = False
+
+
 class HauswachtRuntime:
     """Hält den Zustand einer Hauswacht-Instanz und führt Effekte aus."""
 
@@ -266,6 +277,8 @@ class HauswachtRuntime:
         self.sirens = SirenExecutor(hass, entry.options, owner=area_id, owners=self.siren_owners)
         # Sirenentest: nur im Hauptbereich (gilt für alle Bereiche)
         self.siren_tester: SirenTester | None = SirenTester(hass, self) if main is None else None
+        # Bedienteile (Keypads, NFC, RFID): nur im Hauptbereich, bedienen je nach Einstellung
+        self.controls: ControlManager | None = ControlManager(hass, self) if main is None else None
         # Funkstille-Beobachtung: ebenfalls nur im Hauptbereich (beobachtet alle Bereiche)
         self.silence: SilenceObserver | None = SilenceObserver(hass, self) if main is None else None
         self._code_guard = CodeGuardState()
@@ -505,6 +518,8 @@ class HauswachtRuntime:
             await self.siren_tester.async_start()
         if self.silence is not None:
             await self.silence.async_start()
+        if self.controls is not None:
+            await self.controls.async_start()
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
@@ -526,6 +541,8 @@ class HauswachtRuntime:
             self.siren_tester.async_stop()
         if self.silence is not None:
             self.silence.async_stop()
+        if self.controls is not None:
+            self.controls.async_stop()
         self.sirens.cancel_retry()
         self.homecoming.async_stop()
         if self._unsub_push is not None:
@@ -680,6 +697,25 @@ class HauswachtRuntime:
         """
         if not self.has_codes:
             return None
+        identity = await self.async_identify(code, action)
+        if not identity.duress:
+            self.check_allowed(identity.users, action)
+        return users_label(identity.users)
+
+    def check_allowed(self, users: tuple[User, ...], action: Action) -> None:
+        """Darf mindestens einer dieser Benutzer die Aktion in diesem Bereich?"""
+        if not allowed([u for u in users if self._in_area(u)], action):
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="action_not_allowed",
+                translation_placeholders={"user": users_label(users)},
+            )
+
+    async def async_identify(self, code: str | None, action: Action) -> Identity:
+        """Ausweis prüfen: RFID-Karte oder PIN, mit gemeinsamem Schutz gegen Durchprobieren.
+
+        Ungültig -> ServiceValidationError (``invalid_code`` oder ``code_locked``).
+        """
         now = time.monotonic()
         locked = remaining_lock(self.main._code_guard, now)
         if locked:
@@ -688,29 +724,26 @@ class HauswachtRuntime:
                 translation_key="code_locked",
                 translation_placeholders={"seconds": str(locked)},
             )
+        timestamp = dt_util.utcnow().timestamp()
+        card = match_tag(code, self.users, timestamp)
+        if card.users:
+            self.main._code_guard = register_success(self.main._code_guard)
+            return Identity(kind="card", users=card.users)
         # PBKDF2 ist absichtlich langsam: im Hintergrund, damit Home Assistant nicht hängt
-        match = await self.hass.async_add_executor_job(
-            match_pin, code, self.users, dt_util.utcnow().timestamp()
-        )
+        match = await self.hass.async_add_executor_job(match_pin, code, self.users, timestamp)
         if match.duress:
             self.main._code_guard = register_success(self.main._code_guard)
-            actor = users_label(match.duress)
-            self._send_duress_alert(actor, action)
-            return actor
+            self._send_duress_alert(users_label(match.duress), action)
+            return Identity(kind="pin", users=match.duress, duress=True)
         if match.users:
-            if not allowed([u for u in match.users if self._in_area(u)], action):
-                raise ServiceValidationError(
-                    translation_domain=DOMAIN,
-                    translation_key="action_not_allowed",
-                    translation_placeholders={"user": users_label(match.users)},
-                )
             self.main._code_guard = register_success(self.main._code_guard)
-            return users_label(match.users)
-        if match.blocked:
+            return Identity(kind="pin", users=match.users)
+        blocked = match.blocked + card.blocked
+        if blocked:
             self.notifier.send_system(
-                "Hauswacht: gesperrter PIN",
-                "Ein gesperrter oder abgelaufener PIN wurde verwendet: "
-                f"{users_label(match.blocked)}.",
+                "Hauswacht: gesperrter Ausweis",
+                "Ein gesperrter oder abgelaufener PIN bzw. eine solche Karte wurde verwendet: "
+                f"{users_label(blocked)}.",
             )
         result = register_failure(self.main._code_guard, now)
         self.main._code_guard = result.state
@@ -1198,6 +1231,13 @@ class HauswachtRuntime:
         self._dispatch(
             AlwaysActiveTriggered(sensor_key=entity_id, profile=always_runtime(self.always))
         )
+
+    @callback
+    def panic(self, key: str, name: str) -> None:
+        """Notruf-Taste mit Alarm: sofortiger Alarm (unscharf mit der Reaktion "immer aktiv",
+        scharf mit der des aktiven Profils). Sirenen nur über den Guard."""
+        self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "Panic", "control": name})
+        self._dispatch(AlwaysActiveTriggered(sensor_key=key, profile=always_runtime(self.always)))
 
     # --- Scharf durch Schließen der Tür -------------------------------------
 
