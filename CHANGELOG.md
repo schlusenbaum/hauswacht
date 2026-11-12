@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.32.2] - 2026-11-12
+
+### Dokumentation
+- Neuer Abschnitt **„Sperre nach falschen Eingaben“** in der Installationsanleitung: Stufen als
+  Tabelle, was zählt und was nicht, Zurücksetzen, Verhalten während der Sperre und bei
+  laufendem Alarm. Kurzfassung auch im Dialog „PIN-Regeln“.
+
 ## [0.32.1] - 2026-11-12
 
 ### Behoben
