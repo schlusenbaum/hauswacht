@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.28.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.29.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -421,7 +421,8 @@ wählbar; ohne weitere Bereiche ändert sich nichts.
   Meldung nennt, was nicht ging. Zustand: Alarm > Eingangsverzögerung > Ausgangsverzögerung >
   unscharf (alle) > gemeinsamer scharfer Zustand; teilweise oder unterschiedlich scharf zeigt
   „Scharf (benutzerdefiniert)“, Details im Attribut `areas`.
-- **Benutzer** lassen sich auf Bereiche beschränken (Feld „Bereiche“, leer = alle).
+- **Benutzer-Rechte** gelten wahlweise für alle Bereiche gleich oder **je Bereich einzeln**
+  (Feld „Rechte gelten für“ beim Benutzer, siehe [Benutzer](#benutzer-und-pins)).
 - **PIN-Sperre, Testmodus und Sirenen** gelten gemeinsam: Der Testmodus lässt sich nur umschalten,
   wenn alle Bereiche unscharf sind; eine Sirene, die zwei Bereiche gleichzeitig nutzen, bleibt an,
   bis beide ihren Alarm beendet haben.
@@ -996,7 +997,8 @@ Allgemein:
 | PIN | 4–8 Ziffern, nur als Hash gespeichert |
 | Bedrohungs-PIN | siehe unten |
 | Aktiv | aus = PIN gesperrt, ohne ihn zu löschen |
-| Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte |
+| Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte (bei „alle Bereiche gleich“) |
+| Rechte gelten für | nur bei mehreren Bereichen: **alle Bereiche gleich** (die Häkchen gelten überall) oder **je Bereich einzeln** – dann folgt eine Seite, auf der du für jeden Bereich wählst: scharf, unscharf, Alarm beenden. Ein Bereich ohne Auswahl ist für den Benutzer gesperrt. Eine frühere Beschränkung auf Bereiche wird dabei übernommen |
 | Home-Assistant-Konto | ordnet Push-Knopf und Dashboard-Knöpfe diesem Benutzer zu (mit seinen Rechten). Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit ist der PIN gesperrt |
 | RFID-Karten/-Anhänger | IDs durch Komma getrennt; gelten an Keypads (statt PIN) und an RFID-Lesern, siehe [Bedienteile](#bedienteile-keypads-nfc-aufkleber-rfid-leser) |

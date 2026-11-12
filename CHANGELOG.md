@@ -6,6 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-11-12
+
+### Hinzugefügt
+- **Rechte je Bereich:** Beim Benutzer wählbar, ob die Rechte für alle Bereiche gleich gelten
+  oder je Bereich einzeln (scharf, unscharf, Alarm beenden). Ein Bereich ohne Auswahl ist für
+  den Benutzer gesperrt. Eine bisherige Beschränkung auf Bereiche wird als Vorbelegung
+  übernommen und gilt unverändert weiter, bis der Benutzer neu gespeichert wird.
+
+### Geändert
+- Unscharf schalten über ein Bedienteil für mehrere Bereiche schaltet nur die Bereiche, in
+  denen der Benutzer unscharf schalten darf (vorher: Abbruch beim ersten gesperrten Bereich).
+- NFC-Aufkleber prüfen die Rechte des Handy-Besitzers je Bereich.
+
 ## [0.28.0] - 2026-11-12
 
 ### Hinzugefügt

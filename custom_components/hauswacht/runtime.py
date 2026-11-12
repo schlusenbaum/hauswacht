@@ -15,7 +15,7 @@ import logging
 import secrets
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, fields
+from dataclasses import fields
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
@@ -169,8 +169,9 @@ from .core.state_machine import (
 )
 from .core.users import (
     Action,
+    Identity,
     User,
-    allowed,
+    allowed_in,
     find_by_ha_user,
     has_codes,
     match_pin,
@@ -242,15 +243,6 @@ def effect_payload(effect: Effect) -> dict[str, Any]:
     for field in fields(effect):
         payload[field.name] = _jsonable(getattr(effect, field.name))
     return payload
-
-
-@dataclass(frozen=True)
-class Identity:
-    """Ergebnis einer Ausweisprüfung."""
-
-    kind: str  # "card" | "pin"
-    users: tuple[User, ...]
-    duress: bool = False
 
 
 class HauswachtRuntime:
@@ -704,7 +696,7 @@ class HauswachtRuntime:
 
     def check_allowed(self, users: tuple[User, ...], action: Action) -> None:
         """Darf mindestens einer dieser Benutzer die Aktion in diesem Bereich?"""
-        if not allowed([u for u in users if self._in_area(u)], action):
+        if not self.permits(users, action):
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="action_not_allowed",
@@ -762,9 +754,9 @@ class HauswachtRuntime:
             )
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
 
-    def _in_area(self, user: User) -> bool:
-        """Darf der Benutzer diesen Bereich bedienen? (leer = alle Bereiche)"""
-        return not user.areas or self.area_id in user.areas
+    def permits(self, users: tuple[User, ...], action: Action) -> bool:
+        """Darf mindestens einer dieser Benutzer die Aktion in diesem Bereich?"""
+        return allowed_in(users, action, self.area_id)
 
     @property
     def area_name(self) -> str:
@@ -775,10 +767,8 @@ class HauswachtRuntime:
         sonst der Name des Home-Assistant-Kontos (dann ist alles erlaubt, wie bisher)."""
         linked = find_by_ha_user(self.users, user_id)
         if linked is not None:
-            if (
-                not linked.valid_at(dt_util.utcnow().timestamp())
-                or not linked.may(action)
-                or not self._in_area(linked)
+            if not linked.valid_at(dt_util.utcnow().timestamp()) or not linked.may_in(
+                action, self.area_id
             ):
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,

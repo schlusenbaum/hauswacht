@@ -31,6 +31,7 @@
 | **0.25.0** ✅ | Nur Melder mit offen/zu (Binärsensor, Schloss, Abdeckung); Melder-Typen in der Meldergruppe (Tür, Fenster, Bewegung, Manipulation, Technik, Sonstiges); Ausnahmen im Alarmprofil; Assistent „Melder aus anderem Sensor erstellen“ (Schwellenwert-Helfer) | nein |
 | **0.26.0** ✅ | Sirenentest: je Sirene einzeln mit Bestätigung und Vorabprüfung, kurz und leise, Ergebnis „gehört?“, Erinnerung und Vorwarnung wählbar; auch eingeklappt in der Testkarte | Funktion fertig; erster echter Ton nach Freigabe, bei Anwesenheit |
 | **0.27.0** ✅ | Funkstille-Beobachtung mit Empfehlung; Heimkehr-Beobachtung mit zusätzlichen Signalen je Person (WLAN, Bluetooth, Router, Annäherung), „frühestes Signal“, Zeit „Tür auf bis unscharf“ | nur lesen |
+| **0.29.0** ✅ | Benutzer-Rechte je Bereich: wahlweise für alle Bereiche gleich oder je Bereich einzeln (scharf, unscharf, Alarm beenden) | nein |
 | **0.28.0** ✅ | Bedienteile: Zigbee2MQTT-Keypads (beliebig viele, mit Rückmeldung), NFC-Aufkleber mit der Companion App, RFID-/NFC-Leser; RFID-Karten als Ausweis am Benutzer; Karte und PIN; Notruf-Taste | Keypad-Rückmeldung nach Freigabe |
 | später | ZHA- und Z-Wave-Keypads | – |
 | später | Entscheidung über eine Heimkehr-Automatik (mit Belegen) anhand der Beobachtung | nur lesen |

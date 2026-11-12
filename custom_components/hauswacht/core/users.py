@@ -5,6 +5,10 @@ Rein und ohne Home Assistant.
 - Mehrere Benutzer dürfen denselben PIN haben. Dann zeigt Hauswacht "gemeinsamer PIN (A, B)".
 - Rechte: Eine Aktion ist erlaubt, wenn MINDESTENS EINER der zum PIN passenden Benutzer sie
   darf (sonst sperrt man sich mit einem gemeinsamen PIN leicht selbst aus).
+- Rechte gelten wahlweise für alle Bereiche gleich (``rights: all``) oder je Bereich einzeln
+  (``rights: per_area`` mit ``area_rights: {bereich: [arm, disarm, end_alarm]}``). Ein Bereich
+  ohne Eintrag ist dann gesperrt. Ältere Einträge mit ``areas: [...]`` gelten weiter: die
+  allgemeinen Rechte, aber nur in diesen Bereichen.
 - Gäste: Außerhalb von "gültig von … bis …" gilt ein Benutzer als gesperrt.
 - Bedrohungs-PIN: führt die Aktion ganz normal aus und löst heimlich einen Notruf aus.
   Er darf keinem normalen PIN gleichen (das prüft der Options-Dialog beim Speichern).
@@ -31,6 +35,10 @@ class Action(StrEnum):
     END_ALARM = "end_alarm"
 
 
+RIGHTS_ALL = "all"
+RIGHTS_PER_AREA = "per_area"
+
+
 @dataclass(frozen=True)
 class User:
     user_id: str
@@ -46,6 +54,8 @@ class User:
     valid_until: float | None = None
     areas: tuple[str, ...] = ()  # vorbereitet für Bereiche; leer = alle
     tags: tuple[str, ...] = ()  # RFID-Karten/-Anhänger (normalisierte IDs)
+    # Rechte je Bereich (Bereich -> erlaubte Aktionen); None = allgemeine Rechte für alle
+    area_rights: tuple[tuple[str, frozenset[Action]], ...] | None = None
 
     def may(self, action: Action) -> bool:
         return {
@@ -54,12 +64,27 @@ class User:
             Action.END_ALARM: self.can_end_alarm,
         }[action]
 
+    def may_in(self, action: Action, area_id: str) -> bool:
+        """Darf der Benutzer die Aktion in diesem Bereich?"""
+        if self.area_rights is not None:
+            return action in dict(self.area_rights).get(area_id, frozenset())
+        return (not self.areas or area_id in self.areas) and self.may(action)
+
     def valid_at(self, now: float) -> bool:
         if not self.active:
             return False
         if self.valid_from is not None and now < self.valid_from:
             return False
         return not (self.valid_until is not None and now > self.valid_until)
+
+
+@dataclass(frozen=True)
+class Identity:
+    """Ergebnis einer Ausweisprüfung (bzw. Handy eines bekannten Benutzers)."""
+
+    kind: str  # "card" | "pin" | "phone"
+    users: tuple[User, ...]
+    duress: bool = False
 
 
 @dataclass(frozen=True)
@@ -88,6 +113,21 @@ def _timestamp(value: Any) -> float | None:
         return datetime.fromisoformat(value).timestamp()
     except ValueError:
         return None
+
+
+def _area_rights(data: Mapping[str, Any]) -> tuple[tuple[str, frozenset[Action]], ...] | None:
+    if data.get("rights") != RIGHTS_PER_AREA:
+        return None
+    raw = data.get("area_rights")
+    if not isinstance(raw, Mapping):
+        return ()
+    result: list[tuple[str, frozenset[Action]]] = []
+    for area_id, actions in raw.items():
+        if not isinstance(actions, list):
+            continue
+        valid = frozenset(Action(a) for a in actions if a in {x.value for x in Action})
+        result.append((str(area_id), valid))
+    return tuple(result)
 
 
 def _tags(value: Any) -> tuple[str, ...]:
@@ -138,6 +178,7 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
                 if isinstance(areas, list)
                 else (),
                 tags=_tags(data.get("tags")),
+                area_rights=_area_rights(data),
             )
         )
     return tuple(users)
@@ -180,6 +221,11 @@ def match_pin(
 def allowed(users: Iterable[User], action: Action) -> bool:
     """Erlaubt, wenn mindestens einer der Benutzer die Aktion darf."""
     return any(u.may(action) for u in users)
+
+
+def allowed_in(users: Iterable[User], action: Action, area_id: str) -> bool:
+    """Erlaubt in diesem Bereich, wenn mindestens einer der Benutzer die Aktion dort darf."""
+    return any(u.may_in(action, area_id) for u in users)
 
 
 def label(users: Iterable[User]) -> str:

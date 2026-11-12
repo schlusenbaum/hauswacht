@@ -183,7 +183,7 @@ from .core.state_machine import (
     OpenSensorPolicy,
     UnavailableSensorPolicy,
 )
-from .core.users import parse_users, pin_conflicts
+from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, Action, parse_users, pin_conflicts
 from .names import display_name, plain_name
 from .runtime import device_class_of, entities_by_label
 from .siren_test import SirenTester
@@ -271,6 +271,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._siren_queue: list[str] = []
         self._control_id: str | None = None
         self._control_kind: ControlKind = ControlKind.KEYPAD
+        self._user_pending: tuple[str, dict[str, Any]] | None = None
         self._siren_params: dict[str, Any] = {}
         self._siren_prewarned = False
         self._siren_summary: list[str] = []
@@ -2235,8 +2236,11 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "valid_until": _to_iso(user_input.get("valid_until")),
                     }
                 )
-                if "areas" in user_input:
-                    data["areas"] = list(user_input.get("areas") or [])
+                scope = user_input.get("rights", RIGHTS_ALL)
+                if scope == RIGHTS_ALL:
+                    data["rights"] = RIGHTS_ALL
+                    data.pop("areas", None)
+                    data.pop("area_rights", None)
                 data["tags"] = [
                     normalize_tag(t)
                     for t in str(user_input.get("tags") or "").split(",")
@@ -2258,6 +2262,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                 stored_all[new_id] = data
                 new_options = dict(options)
                 new_options[OPT_USERS] = stored_all
+                if scope == RIGHTS_PER_AREA:
+                    self._user_pending = (new_id, new_options)
+                    return await self.async_step_user_area_rights()
                 return await self._save(new_options, "users")
 
         status = []
@@ -2272,6 +2279,45 @@ class HauswachtOptionsFlow(OptionsFlow):
             data_schema=schema,
             errors=errors,
             description_placeholders=placeholders,
+        )
+
+    async def async_step_user_area_rights(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Rechte je Bereich: für jeden Bereich, was der Benutzer dort darf."""
+        assert self._user_pending is not None
+        user_id, options = self._user_pending
+        users = dict(options[OPT_USERS])
+        data = dict(users[user_id])
+        areas = parse_areas(options)
+        if user_input is not None:
+            data["rights"] = RIGHTS_PER_AREA
+            data["area_rights"] = {
+                area.area_id: [a for a in user_input.get(area.name, []) if a in RIGHT_VALUES]
+                for area in areas.values()
+            }
+            data.pop("areas", None)
+            users[user_id] = data
+            new_options = dict(options)
+            new_options[OPT_USERS] = users
+            self._user_pending = None
+            return await self._save(new_options, "users")
+        current = _area_rights_defaults(data, list(areas))
+        fields: dict[Any, Any] = {
+            vol.Optional(area.name, default=current[area.area_id]): SelectSelector(
+                SelectSelectorConfig(
+                    options=list(RIGHT_VALUES),
+                    multiple=True,
+                    translation_key="user_right",
+                    mode=SelectSelectorMode.LIST,
+                )
+            )
+            for area in areas.values()
+        }
+        return self.async_show_form(
+            step_id="user_area_rights",
+            data_schema=vol.Schema(fields),
+            description_placeholders={"name": str(data.get("name", user_id))},
         )
 
     # --- Bedienteile ---------------------------------------------------------
@@ -2681,12 +2727,14 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
 
     def _user_area_field(self, current: dict[str, Any]) -> dict[Any, Any]:
-        """Bereiche, die der Benutzer bedienen darf (nur bei mehreren Bereichen; leer = alle)."""
+        """Rechte für alle Bereiche gleich oder je Bereich (nur bei mehreren Bereichen)."""
         if not multi_area(self.config_entry.options):
             return {}
-        stored = current.get("areas")
-        default = [a for a in stored if isinstance(a, str)] if isinstance(stored, list) else []
-        return {vol.Optional("areas", default=default): self._area_selector(multiple=True)}
+        return {
+            vol.Required("rights", default=_rights_scope(current)): _select(
+                [RIGHTS_ALL, RIGHTS_PER_AREA], "user_rights_scope"
+            )
+        }
 
 
 def _automation_schema(auto: AutoConfig) -> vol.Schema:
@@ -2764,6 +2812,35 @@ def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:
         "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
         "auto_disarm_on_arrival": bool(data.get("auto_disarm_on_arrival", False)),
     }
+
+
+RIGHT_VALUES = (Action.ARM.value, Action.DISARM.value, Action.END_ALARM.value)
+
+
+def _rights_scope(current: Mapping[str, Any]) -> str:
+    """Bisherige Einschränkung auf Bereiche (vor 0.29) zählt als "je Bereich"."""
+    if current.get("rights") in (RIGHTS_ALL, RIGHTS_PER_AREA):
+        return str(current["rights"])
+    return RIGHTS_PER_AREA if current.get("areas") else RIGHTS_ALL
+
+
+def _area_rights_defaults(data: Mapping[str, Any], area_ids: list[str]) -> dict[str, list[str]]:
+    """Vorbelegung je Bereich: gespeicherte Rechte, sonst die allgemeinen Rechte."""
+    stored = data.get("area_rights")
+    if isinstance(stored, Mapping) and data.get("rights") == RIGHTS_PER_AREA:
+        return {
+            a: [r for r in stored.get(a, []) if r in RIGHT_VALUES]
+            if isinstance(stored.get(a), list)
+            else []
+            for a in area_ids
+        }
+    general = [
+        right
+        for right, key in zip(RIGHT_VALUES, ("can_arm", "can_disarm", "can_end_alarm"), strict=True)
+        if data.get(key, True)
+    ]
+    limited = data.get("areas") if isinstance(data.get("areas"), list) else []
+    return {a: list(general) if not limited or a in limited else [] for a in area_ids}
 
 
 def _select(options: list[str], translation_key: str) -> SelectSelector:

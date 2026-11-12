@@ -41,11 +41,11 @@ from .core.controls import (
 )
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
-from .core.users import Action, find_by_ha_user
+from .core.users import Action, Identity, find_by_ha_user
 from .core.users import label as users_label
 
 if TYPE_CHECKING:
-    from .runtime import HauswachtRuntime, Identity
+    from .runtime import HauswachtRuntime
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -188,12 +188,12 @@ class ControlManager:
             targets = [a for a in self._areas(control) if not a.is_disarmed]
             if not targets:
                 return REPLY_ALREADY_DISARMED
+            if identity is not None and not identity.duress:
+                # Nur die Bereiche, in denen der Benutzer unscharf schalten darf
+                targets = [a for a in targets if a.permits(identity.users, action)]
+                if not targets:
+                    return REPLY_INVALID_CODE
             for area in targets:
-                if identity is not None and not identity.duress:
-                    try:
-                        area.check_allowed(identity.users, action)
-                    except HomeAssistantError:
-                        return REPLY_INVALID_CODE
                 area.disarm_trusted(changed_by=changed_by)
             return "ok"
         area = self._area_of_profile(control, profile) if profile else None
@@ -295,14 +295,14 @@ class ControlManager:
         user = find_by_ha_user(self.runtime.users, user_id)
         intent = tag_intent(sticker.action, self._armed(sticker))
         action = Action.DISARM if intent == "disarm" else Action.ARM
-        if user is None or not user.may(action):
+        if user is None or not any(user.may_in(action, a.area_id) for a in self._areas(sticker)):
             self.runtime.notifier.send_system(
                 "Hauswacht: Aufkleber abgelehnt",
                 f"NFC-Aufkleber {sticker.name}: Das Handy gehört keinem berechtigten "
                 "Hauswacht-Benutzer.",
             )
             return "rejected"
-        result = self._execute(sticker, action, sticker.profile, None, actor=user.name)
+        result = self._execute(sticker, action, sticker.profile, Identity("phone", (user,)))
         self._confirm(sticker, action, result, user.name)
         return result
 

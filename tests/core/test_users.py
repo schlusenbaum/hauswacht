@@ -8,6 +8,7 @@ from custom_components.hauswacht.core.users import (
     Action,
     User,
     allowed,
+    allowed_in,
     find_by_ha_user,
     has_codes,
     label,
@@ -157,3 +158,56 @@ def test_people_without_pin() -> None:
     # Master-PIN zählt nicht als Person
     master = [User("master", "Master-PIN", pin=ph("9999"))]
     assert people_without_pin(master, {"ha-c": "Christian"}) == ["Christian"]
+
+
+# --- Rechte je Bereich -------------------------------------------------------
+
+
+def test_general_rights_apply_to_all_areas() -> None:
+    assert CHRISTIAN.may_in(Action.DISARM, "main")
+    assert CHRISTIAN.may_in(Action.DISARM, "garage")
+    assert not PETRA.may_in(Action.DISARM, "garage")
+
+
+def test_legacy_area_list_limits_general_rights() -> None:
+    user = User("a", "Anna", areas=("garage",), can_end_alarm=False)
+    assert user.may_in(Action.DISARM, "garage")
+    assert not user.may_in(Action.END_ALARM, "garage")
+    assert not user.may_in(Action.ARM, "main")
+
+
+def test_per_area_rights_parsed_and_checked() -> None:
+    users = parse_users(
+        {
+            "users": {
+                "anna": {
+                    "name": "Anna",
+                    "can_disarm": False,  # gilt bei "je Bereich" nicht
+                    "rights": "per_area",
+                    "area_rights": {"main": ["arm"], "garage": ["arm", "disarm", "bogus"]},
+                }
+            }
+        }
+    )
+    anna = users[0]
+    assert anna.may_in(Action.ARM, "main")
+    assert not anna.may_in(Action.DISARM, "main")
+    assert anna.may_in(Action.DISARM, "garage")
+    assert not anna.may_in(Action.ARM, "gartenhaus")  # nicht eingetragen = gesperrt
+    assert allowed_in(users, Action.DISARM, "garage")
+    assert not allowed_in(users, Action.DISARM, "main")
+
+
+def test_rights_all_ignores_old_area_rights() -> None:
+    users = parse_users(
+        {"users": {"anna": {"name": "Anna", "rights": "all", "area_rights": {"main": []}}}}
+    )
+    assert users[0].area_rights is None
+    assert users[0].may_in(Action.DISARM, "main")
+
+
+def test_shared_pin_combines_per_area_rights() -> None:
+    a = User("a", "A", area_rights=(("main", frozenset({Action.ARM})),))
+    b = User("b", "B", area_rights=(("garage", frozenset({Action.DISARM})),))
+    assert allowed_in((a, b), Action.DISARM, "garage")
+    assert not allowed_in((a, b), Action.DISARM, "main")
