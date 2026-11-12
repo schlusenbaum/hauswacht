@@ -15,6 +15,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.hauswacht.const import DOMAIN
+from custom_components.hauswacht.core.pin import hash_pin
 
 from .conftest import PANEL, WINDOW, ZONE_OPTIONS, make_entry, set_sensor, setup_entry
 
@@ -278,3 +279,66 @@ async def test_deleted_area_leaves_no_device(hass: HomeAssistant) -> None:
     devices = dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
     assert [d.name for d in devices] == ["Hauswacht"]
     assert hass.states.get(PANEL) is not None
+
+
+def _anna(**rights: Any) -> dict[str, Any]:
+    hashed = hash_pin("1357")
+    return {"name": "Anna", "pin_salt": hashed.salt, "pin_digest": hashed.digest, **rights}
+
+
+async def test_user_rights_per_area(hass: HomeAssistant) -> None:
+    hass.states.async_set(GATE, "off", {"device_class": "window"})
+    rights = {"rights": "per_area", "area_rights": {"main": ["arm"], "garage": ["arm", "disarm"]}}
+    await setup_entry(hass, make_entry({**AREA_OPTIONS, "users": {"anna": _anna(**rights)}}))
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL, code="1357")
+    assert _state(hass, PANEL) == AlarmControlPanelState.ARMED_NIGHT
+    with pytest.raises(ServiceValidationError):
+        await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code="1357")
+    assert _state(hass, PANEL) == AlarmControlPanelState.ARMED_NIGHT
+    await _service(
+        hass, "alarm_control_panel", "alarm_arm_away", entity_id=GARAGE_PANEL, code="1357"
+    )
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=GARAGE_PANEL, code="1357")
+    assert _state(hass, GARAGE_PANEL) == AlarmControlPanelState.DISARMED
+
+
+async def test_options_user_rights_per_area(hass: HomeAssistant) -> None:
+    hass.states.async_set(GATE, "off", {"device_class": "window"})
+    entry = make_entry({**AREA_OPTIONS, "users": {"anna": _anna(areas=["garage"])}})
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "users", "user_edit"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
+    assert flow["step_id"] == "user_settings"
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Anna", "rights": "per_area"}
+    )
+    assert flow["step_id"] == "user_area_rights"
+    # Vorbelegung aus der alten Bereichsliste: Garage alles, Haus nichts
+    defaults = {str(k): k.default() for k in flow["data_schema"].schema}
+    assert defaults == {"Haus": [], "Garage": ["arm", "disarm", "end_alarm"]}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"Haus": ["arm"], "Garage": ["disarm"]}
+    )
+    assert flow["type"] == "menu"
+    stored = entry.options["users"]["anna"]
+    assert stored["rights"] == "per_area"
+    assert stored["area_rights"] == {"main": ["arm"], "garage": ["disarm"]}
+    assert "areas" not in stored
+    assert stored["pin_digest"]  # PIN bleibt erhalten
+
+    # Zurück auf "alle Bereiche gleich"
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "user_edit"}
+    )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Anna", "rights": "all"}
+    )
+    assert flow["type"] == "menu"
+    stored = entry.options["users"]["anna"]
+    assert stored["rights"] == "all"
+    assert "area_rights" not in stored

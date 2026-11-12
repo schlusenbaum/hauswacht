@@ -222,13 +222,17 @@
           "ha_user": "Home Assistant account (for push and dashboard buttons)",
           "valid_from": "Valid from",
           "valid_until": "Valid until",
-          "areas": "Areas",
+          "rights": "Rights apply to",
           "tags": "RFID cards/fobs"
         },
         "data_description": {
-          "areas": "Which areas the user may operate. Empty = all areas.",
+          "rights": "**All areas alike:** the checkboxes above apply everywhere. **Per area:** after saving you choose for each area what the user may do there (the checkboxes above are then ignored).",
           "tags": "IDs separated by commas. Valid at keypads (instead of a PIN) and RFID readers."
         }
+      },
+      "user_area_rights": {
+        "title": "Rights per area",
+        "description": "What may **{name}** do in which area? An area without a selection is locked for this user."
       },
       "system": {
         "title": "System settings",
@@ -919,6 +923,19 @@
         "disarm": "Disarm",
         "arm": "Arm",
         "toggle": "Toggle (armed ↔ disarmed)"
+      }
+    },
+    "user_rights_scope": {
+      "options": {
+        "all": "All areas alike",
+        "per_area": "Per area"
+      }
+    },
+    "user_right": {
+      "options": {
+        "arm": "Arm",
+        "disarm": "Disarm",
+        "end_alarm": "End alarm"
       }
     }
   },

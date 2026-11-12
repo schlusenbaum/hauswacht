@@ -222,13 +222,17 @@
           "ha_user": "Home-Assistant-Konto (für Push-Knopf und Dashboard-Knöpfe)",
           "valid_from": "Gültig von",
           "valid_until": "Gültig bis",
-          "areas": "Bereiche",
+          "rights": "Rechte gelten für",
           "tags": "RFID-Karten/-Anhänger"
         },
         "data_description": {
-          "areas": "Welche Bereiche der Benutzer bedienen darf. Leer = alle Bereiche.",
+          "rights": "**Alle Bereiche gleich:** die Häkchen oben gelten überall. **Je Bereich einzeln:** nach dem Speichern legst du für jeden Bereich fest, was der Benutzer dort darf (die Häkchen oben gelten dann nicht).",
           "tags": "IDs durch Komma getrennt. Gelten an Keypads (statt PIN) und an RFID-Lesern."
         }
+      },
+      "user_area_rights": {
+        "title": "Rechte je Bereich",
+        "description": "Was darf **{name}** in welchem Bereich? Ein Bereich ohne Auswahl ist für diesen Benutzer gesperrt."
       },
       "system": {
         "title": "Systemeinstellungen",
@@ -919,6 +923,19 @@
         "disarm": "Unscharf schalten",
         "arm": "Scharf schalten",
         "toggle": "Umschalten (scharf ↔ unscharf)"
+      }
+    },
+    "user_rights_scope": {
+      "options": {
+        "all": "Alle Bereiche gleich",
+        "per_area": "Je Bereich einzeln"
+      }
+    },
+    "user_right": {
+      "options": {
+        "arm": "Scharf schalten",
+        "disarm": "Unscharf schalten",
+        "end_alarm": "Alarm beenden"
       }
     }
   },
