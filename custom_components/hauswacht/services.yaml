@@ -27,7 +27,10 @@ simulate_trigger:
       required: true
       selector:
         entity:
-          domain: binary_sensor
+          domain:
+            - binary_sensor
+            - lock
+            - cover
 
 simulate_state:
   target:
@@ -39,7 +42,10 @@ simulate_state:
       required: true
       selector:
         entity:
-          domain: binary_sensor
+          domain:
+            - binary_sensor
+            - lock
+            - cover
     state:
       required: true
       selector:
@@ -52,6 +58,67 @@ simulate_state:
             - "real"
 
 simulate_reset:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+
+siren_test:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    siren:
+      required: true
+      selector:
+        entity:
+          domain: siren
+    duration:
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 10
+          unit_of_measurement: s
+    volume:
+      default: low
+      selector:
+        select:
+          translation_key: siren_volume
+          options:
+            - low
+            - medium
+            - high
+            - very_high
+    tone:
+      default: burglar
+      selector:
+        select:
+          translation_key: siren_tone
+          options:
+            - burglar
+            - emergency
+            - police_panic
+            - emergency_panic
+
+siren_test_result:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    siren:
+      required: true
+      selector:
+        entity:
+          domain: siren
+    heard:
+      required: true
+      selector:
+        boolean:
+
+siren_test_stop:
   target:
     entity:
       integration: hauswacht

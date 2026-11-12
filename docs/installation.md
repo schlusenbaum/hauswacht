@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.25.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.26.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -51,7 +51,7 @@ Konfigurieren** und lassen sich nur im **unscharfen** Zustand ändern. Das Menü
 | **Alarmauslösung** → Immer aktiv | Melder, die auch unscharf auslösen |
 | **Alarmauslösung** → Melder aus anderem Sensor erstellen | Assistent: Messwert → Schwellenwert-Helfer → Melder |
 | Alarmprofile | Welche Meldergruppen allein auslösen, welche Auslöseregeln gelten, Verzögerungen, Reaktion |
-| Alarmgeber – Sirenen | Welche Sirenen Hauswacht verwenden darf, Hardware-Freigabe |
+| Alarmgeber – Sirenen | Welche Sirenen Hauswacht verwenden darf, Hardware-Freigabe, Sirenentest |
 | Benachrichtigungen | Empfänger und Ereignisse |
 | **Systemeinstellungen** → Benutzer und PINs (mit PIN-Regeln) | Personen, PINs, Rechte, Master-PIN |
 | **Systemeinstellungen** → Funkstille von Sensoren | maximale Funkstille |
@@ -504,6 +504,46 @@ für Sirenen wichtig, die nur Ein und Aus kennen. Sirenen mit eigener Laufzeit (
 mit Höchstdauer) bekommen die Dauer zusätzlich mitgeschickt, höchstens aber die Höchstdauer
 des Geräts. Diese Höchstdauer wird nur gelesen, nie verändert.
 
+### Sirenentest
+
+**Alarmgeber – Sirenen → Sirenentest (echte Sirene!).** Prüft jede Sirene einzeln, kurz und
+leise – über denselben sicheren Weg wie ein echter Alarm.
+
+1. Sirenen wählen (mehrere werden **nacheinander** getestet), Ton (nur Einbruchtöne),
+   Lautstärke (Standard **leise**) und Dauer (Standard **3 s**, höchstens **10 s**); anhaken
+   „Ich bin vor Ort, Mitbewohner sind informiert“.
+2. Für jede Sirene fragt Hauswacht „Sirene … testen?“ und zeigt eine **Vorabprüfung ohne Ton**:
+   was gesendet würde (Ton, Lautstärke, Dauer) oder warum es nicht geht. Antwort: testen,
+   überspringen oder beenden.
+3. Nach dem Ton: „Hast du die Sirene gehört?“ – das Ergebnis wird mit Datum gespeichert
+   (Diagnose-Sensor „Letzter Sirenentest“, je Sirene in den Attributen).
+
+Voraussetzungen – der Sirenen-Guard prüft sie wie bei einem Alarm, ohne Ausnahme:
+
+- alle Bereiche **unscharf**, kein Alarm
+- **Hardware-Freigabe an**
+- **Testmodus aus** – der Testmodus sperrt Sirenen grundsätzlich; der Sirenentest ist bewusst
+  kein Testmodus, sondern ein echtes, kurzes Einschalten
+- **keine Brandsperre** (kein Rauchmelder aktiv oder unklar), nur Einbruchtöne
+- Sirene ist für Einbruch freigegeben und kann begrenzt werden
+
+Die Dauer wird dreifach begrenzt: als Dauer an das Gerät (wenn es das kann), durch einen eigenen
+Ausschaltbefehl nach Ablauf und durch die feste Obergrenze von 10 s. Während des Tests ist
+**Scharfschalten gesperrt**; **Unscharf schalten** bricht den Test ab. Bei Brand greift Hauswacht
+nicht ein – dann gilt die Brandsperre.
+
+**Alarmgeber – Sirenen → Sirenentest – Erinnerung und Vorwarnung:**
+
+| Einstellung | Bedeutung |
+|---|---|
+| Erinnerung | aus, alle 3 oder 6 Monate, jährlich: meldet „Sirenentest fällig“ (höchstens einmal pro Woche), wenn eine Sirene so lange nicht erfolgreich getestet wurde |
+| Vorwarnung vor dem Test | schickt vor dem ersten Ton „Sirenentest … in 10 Sekunden“ an die allgemeinen Empfänger |
+
+Dasselbe als Aktionen (nur für Administratoren): `hauswacht.siren_test` (Felder `siren`,
+`duration`, `volume`, `tone`), `hauswacht.siren_test_result` (`siren`, `heard`) und
+`hauswacht.siren_test_stop`. In der Testkarte gibt es den Sirenentest eingeklappt mit
+Sicherheitsabfrage, siehe [Karte „Hauswacht Test“](#karte-hauswacht-test).
+
 ### Brandschutz
 
 Sind die Sirenen zugleich Rauchmelder, erkennt Hauswacht deren Rauch- und
@@ -834,6 +874,12 @@ von 2 erfüllt · 85 s“.
 
 Dasselbe als Aktionen: `hauswacht.simulate_state` (Felder `sensor` und `state`: `on`, `off`,
 `unavailable`, `real`) und `hauswacht.simulate_reset`.
+
+**Sirenentest in der Karte:** Ganz unten, **eingeklappt**, steht „🔊 Sirenentest (echte
+Sirene!)“. Aufgeklappt zeigt er jede Sirene mit dem letzten Test. „Testen …“ fragt erst nach
+(„Sirene ertönt jetzt 3 s. Wirklich starten?“), danach „Gehört? Ja/Nein“. Das ist **keine
+Simulation**: Es ertönt die echte Sirene (3 s, leise) – deshalb im Testmodus gesperrt und nur
+für Administratoren. Alles Weitere wie unter [Sirenentest](#sirenentest).
 
 ## Scharfschalten mit Bestätigung
 

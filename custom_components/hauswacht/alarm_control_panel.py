@@ -28,10 +28,12 @@ from .core.profiles import (
     profile_info,
     used_panel_modes,
 )
+from .core.siren_test import DEFAULT_SECONDS, DEFAULT_TONE, DEFAULT_VOLUME, TONES, VOLUMES
 from .core.state_machine import AlarmState
 from .core.users import Action
 from .entity import HauswachtEntity
 from .runtime import HauswachtConfigEntry, HauswachtRuntime
+from .siren_test import SirenTester
 
 _FEATURE_BY_MODE: dict[str, AlarmControlPanelEntityFeature] = {
     "home": AlarmControlPanelEntityFeature.ARM_HOME,
@@ -87,9 +89,73 @@ async def async_setup_entry(
     async_get_current_platform().async_register_entity_service(
         "simulate_reset", {}, "async_simulate_reset"
     )
+    async_get_current_platform().async_register_entity_service(
+        "siren_test",
+        {
+            vol.Required("siren"): cv.entity_id,
+            vol.Optional("duration", default=DEFAULT_SECONDS): vol.Coerce(float),
+            vol.Optional("volume", default=DEFAULT_VOLUME): vol.In(VOLUMES),
+            vol.Optional("tone", default=DEFAULT_TONE): vol.In(TONES),
+        },
+        "async_siren_test",
+    )
+    async_get_current_platform().async_register_entity_service(
+        "siren_test_result",
+        {vol.Required("siren"): cv.entity_id, vol.Required("heard"): cv.boolean},
+        "async_siren_test_result",
+    )
+    async_get_current_platform().async_register_entity_service(
+        "siren_test_stop", {}, "async_siren_test_stop"
+    )
 
 
-class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
+class _SirenTestMixin(HauswachtEntity):
+    """Dienste für den Sirenentest (an jedem Bedienfeld, wirken immer über den Hauptbereich)."""
+
+    async def _admin_name(self) -> str | None:
+        """Sirenentest nur für Administratoren (oder ohne Benutzer, z. B. Automationen)."""
+        if self._context is None or self._context.user_id is None:
+            return None
+        user = await self.hass.auth.async_get_user(self._context.user_id)
+        if user is None or not user.is_admin:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="siren_test_admin_only"
+            )
+        return user.name
+
+    def _tester(self) -> SirenTester:
+        tester = self.runtime.main.siren_tester
+        assert tester is not None  # Hauptbereich hat immer einen
+        return tester
+
+    async def async_siren_test(self, siren: str, duration: float, volume: str, tone: str) -> None:
+        """Dienst hauswacht.siren_test: eine Sirene kurz prüfen (echter Ton!)."""
+        by = await self._admin_name()
+        tester = self._tester()
+        result = await tester.async_run(
+            siren,
+            tone=tone,
+            volume=volume,
+            seconds=duration,
+            by=by,
+            prewarn=tester.settings.prewarn,
+        )
+        if not result["started"]:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="siren_test_blocked",
+                translation_placeholders={"reason": str(result["reason"])},
+            )
+
+    async def async_siren_test_result(self, siren: str, heard: bool) -> None:
+        by = await self._admin_name()
+        self._tester().record(siren, heard, by=by)
+
+    async def async_siren_test_stop(self) -> None:
+        self._tester().stop()
+
+
+class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
     _attr_name = None  # Entität heißt wie das Gerät: "Hauswacht"
     _attr_translation_key = "panel"
 
@@ -218,7 +284,7 @@ class HauswachtAlarmPanel(HauswachtEntity, AlarmControlPanelEntity):
         await self._arm_mode("custom", code)
 
 
-class HauswachtAllPanel(HauswachtEntity, AlarmControlPanelEntity):
+class HauswachtAllPanel(_SirenTestMixin, AlarmControlPanelEntity):
     """Bedienfeld "Alle Bereiche": schaltet jeden Bereich mit dem Profil seines Knopfs.
 
     Bereiche ohne Profil für den gedrückten Knopf bleiben, wie sie sind. Unscharf schaltet alle.

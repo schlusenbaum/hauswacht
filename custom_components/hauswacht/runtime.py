@@ -182,6 +182,7 @@ from .names import display_name
 from .notifier import Notifier
 from .reminder import ReminderRunner
 from .siren_executor import SirenExecutor
+from .siren_test import SirenTester
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -262,6 +263,8 @@ class HauswachtRuntime:
         # Sirenen-Belegung über alle Bereiche: Sirene -> Bereiche, die sie gerade nutzen
         self.siren_owners: dict[str, set[str]] = self.main.siren_owners if main else {}
         self.sirens = SirenExecutor(hass, entry.options, owner=area_id, owners=self.siren_owners)
+        # Sirenentest: nur im Hauptbereich (gilt für alle Bereiche)
+        self.siren_tester: SirenTester | None = SirenTester(hass, self) if main is None else None
         self._code_guard = CodeGuardState()
         self._selected_profile: str | None = None
         self._edit_profile: str | None = None
@@ -495,6 +498,8 @@ class HauswachtRuntime:
         self._infra_faulty = self.faulty_infrastructure()
         self.automation.start()
         self.reminder.start()
+        if self.siren_tester is not None:
+            await self.siren_tester.async_start()
         self._unsub_registry = self.hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
         )
@@ -512,6 +517,8 @@ class HauswachtRuntime:
         self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
+        if self.siren_tester is not None:
+            self.siren_tester.async_stop()
         self.sirens.cancel_retry()
         self.homecoming.async_stop()
         if self._unsub_push is not None:
@@ -541,6 +548,11 @@ class HauswachtRuntime:
         self, profile_ref: str, *, confirmed: bool = False, changed_by: str | None = None
     ) -> None:
         """Schaltet ein Profil scharf (Profil-ID oder Name)."""
+        tester = self.main.siren_tester
+        if tester is not None and tester.running is not None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="siren_test_running"
+            )
         profile_id = find_profile(self.options, profile_ref)
         profile = self.profiles.get(profile_id) if profile_id else None
         if profile_id is None or profile is None:
@@ -801,6 +813,9 @@ class HauswachtRuntime:
     @callback
     def disarm_trusted(self, changed_by: str | None = None) -> None:
         """Wie ``async_disarm`` ohne PIN – für eigene Automatik und bereits Geprüftes."""
+        tester = self.main.siren_tester
+        if tester is not None and tester.running is not None:
+            tester.stop()  # Unscharf schalten bricht einen Sirenentest ab
         self.changed_by = changed_by
         self._dispatch(self._disarm_request())
 

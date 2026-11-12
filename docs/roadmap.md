@@ -29,9 +29,10 @@
 | **0.23.0** ✅ | Sprachausgabe über Lautsprecher (z. B. Echo): Durchsage oder Sprechen, Wiederholung, Nachtruhe, Lautsprecher je Profil; eigene Texte mit Platzhaltern für Sprache und Push | nein |
 | 0.24.0 | Weitere Melderarten und Kamerabild – in 0.25.0 zurückgenommen bzw. vereinfacht | nein |
 | **0.25.0** ✅ | Nur Melder mit offen/zu (Binärsensor, Schloss, Abdeckung); Melder-Typen in der Meldergruppe (Tür, Fenster, Bewegung, Manipulation, Technik, Sonstiges); Ausnahmen im Alarmprofil; Assistent „Melder aus anderem Sensor erstellen“ (Schwellenwert-Helfer) | nein |
-| 0.26.0 | Kamera-Erkennung als eigene Rolle (z. B. „Person draußen“ → Vorwarnung statt Alarm) | nein |
-| 0.27.0 | Kameras (Bild in der Nachricht, Zuordnung über den Raum) – in Ruhe neu konzipieren | nein |
-| 0.28.0 | Kontrollierter Sirenentest, Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nach Freigabe, bei Anwesenheit |
+| **0.26.0** ✅ | Sirenentest: je Sirene einzeln mit Bestätigung und Vorabprüfung, kurz und leise, Ergebnis „gehört?“, Erinnerung und Vorwarnung wählbar; auch eingeklappt in der Testkarte | Funktion fertig; erster echter Ton nach Freigabe, bei Anwesenheit |
+| 0.27.0 | Kamera-Erkennung als eigene Rolle (z. B. „Person draußen“ → Vorwarnung statt Alarm) | nein |
+| 0.28.0 | Kameras (Bild in der Nachricht, Zuordnung über den Raum) – in Ruhe neu konzipieren | nein |
+| 0.29.0 | Funkstille-Wert aus echten Daten; Entscheidung über eine Heimkehr-Automatik anhand der Beobachtung | nur lesen |
 | 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
 | 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, weitere Platzhalter | – |
 

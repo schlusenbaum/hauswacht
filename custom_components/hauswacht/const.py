@@ -30,6 +30,7 @@ OPT_USERS: Final = "users"
 OPT_AREAS: Final = "areas"
 OPT_SPEECH: Final = "speech"
 OPT_SENSOR_TYPES: Final = "sensor_types"
+OPT_SIREN_TEST: Final = "siren_test"
 # Alarm und Bedrohung durchbrechen "Nicht stören" (kritische Hinweise)
 OPT_CRITICAL_ALERTS: Final = "critical_alerts"
 OPT_EVENTS: Final = "events"

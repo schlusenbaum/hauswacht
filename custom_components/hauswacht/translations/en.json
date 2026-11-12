@@ -152,15 +152,6 @@
           "infrastructure": "Status sensors of radio networks and gateways"
         }
       },
-      "sirens": {
-        "title": "Alarm devices – sirens",
-        "description": "Register the sirens Hauswacht may use for intrusion alarms. Fire safety: Hauswacht never switches a siren on or off while any smoke detector reports fire, or while the fire state of a registered siren is unknown. Siren control stays LOCKED until you enable it here and confirm.",
-        "data": {
-          "sirens": "Sirens",
-          "sirens_hardware_enabled": "Allow real siren control",
-          "confirm_hardware": "I confirm: real sirens may sound during an alarm"
-        }
-      },
       "profiles": {
         "title": "Alarm profiles",
         "menu_options": {
@@ -611,6 +602,61 @@
           "type": "Type",
           "target": "Use in"
         }
+      },
+      "siren_settings": {
+        "title": "Alarm devices – sirens",
+        "description": "Register the sirens Hauswacht may use for intrusion alarms. Fire safety: Hauswacht never switches a siren on or off while any smoke detector reports fire, or while the fire state of a registered siren is unknown. Siren control stays LOCKED until you enable it here and confirm.",
+        "data": {
+          "sirens": "Sirens",
+          "sirens_hardware_enabled": "Allow real siren control",
+          "confirm_hardware": "I confirm: real sirens may sound during an alarm"
+        }
+      },
+      "sirens": {
+        "title": "Alarm devices – sirens",
+        "description": "{saved}Choose and enable sirens, test sirens.",
+        "menu_options": {
+          "siren_settings": "Sirens and enabling",
+          "siren_test": "Siren test (real siren!)",
+          "siren_test_settings": "Siren test – reminder and pre-warning",
+          "init": "← Back"
+        }
+      },
+      "siren_test": {
+        "title": "Siren test",
+        "description": "⚠️ **Real sirens sound here** – one at a time, short, with confirmation before each sound.\n\nRequirements (checked by the siren guard): all areas disarmed, hardware enabled, **test mode off**, no smoke detector active, burglar tones only. Arming is blocked during the test; disarming cancels it.\n\nLast tested: {last}",
+        "data": {
+          "sirens": "Sirens (one after another)",
+          "tone": "Tone",
+          "volume": "Volume",
+          "duration": "Duration per siren",
+          "confirm": "I am on site, housemates are informed"
+        }
+      },
+      "siren_test_next": {
+        "title": "Test siren {siren}?",
+        "description": "Pre-check (no sound): {preview}\n\n{left} siren(s) left in this round.",
+        "menu_options": {
+          "siren_test_go": "🔊 Yes, test this siren now",
+          "siren_test_skip": "Skip this siren",
+          "siren_test_cancel": "End test"
+        }
+      },
+      "siren_test_heard": {
+        "title": "Heard it?",
+        "description": "Did you hear siren {siren}?",
+        "menu_options": {
+          "siren_test_yes": "✅ Yes, heard",
+          "siren_test_no": "❌ No, not heard"
+        }
+      },
+      "siren_test_settings": {
+        "title": "Siren test – reminder and pre-warning",
+        "description": "**Reminder:** reports “siren test due” when a siren has not been (successfully) tested for longer than chosen – at most once a week.\n\n**Pre-warning:** sends a notification “siren test in 10 seconds” to the general recipients before the first sound.",
+        "data": {
+          "reminder_months": "Reminder",
+          "prewarn": "Pre-warning before the test"
+        }
       }
     },
     "error": {
@@ -638,7 +684,11 @@
       "excluded_not_in_groups": "Excluded sensors must come from the selected sensor groups.",
       "helper_no_limit": "Please enter an upper and/or lower limit.",
       "helper_range": "The lower limit must be below the upper limit.",
-      "helper_failed": "The helper could not be created (see log)."
+      "helper_failed": "The helper could not be created (see log).",
+      "siren_test_confirm": "Please confirm that you are on site.",
+      "siren_test_none": "Please choose at least one siren.",
+      "siren_test_running": "A siren test is running.",
+      "siren_test_armed": "Only possible when all areas are disarmed."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -646,7 +696,8 @@
       "no_profiles": "No profiles have been created yet.",
       "no_users": "There are no users yet.",
       "no_rules": "There is no trigger rule yet.",
-      "no_areas": "There is only the first area – it cannot be deleted."
+      "no_areas": "There is only the first area – it cannot be deleted.",
+      "no_sirens": "No sirens are set up (Alarm devices – sirens → Sirens and enabling)."
     }
   },
   "selector": {
@@ -756,6 +807,14 @@
         "technical": "Technical (water, gas, frost …) – always active",
         "other": "Other – instant"
       }
+    },
+    "siren_test_reminder": {
+      "options": {
+        "0": "Off",
+        "3": "Every 3 months",
+        "6": "Every 6 months",
+        "12": "Yearly"
+      }
     }
   },
   "entity": {
@@ -788,6 +847,9 @@
       "simulation": {
         "name": "Test card: simulated sensors",
         "unit_of_measurement": "sensors"
+      },
+      "siren_test": {
+        "name": "Last siren test"
       }
     },
     "binary_sensor": {
@@ -945,6 +1007,15 @@
     },
     "areas_failed": {
       "message": "Not all areas could be switched – {failed}. Done: {done}."
+    },
+    "siren_test_running": {
+      "message": "Cannot arm during a siren test."
+    },
+    "siren_test_admin_only": {
+      "message": "Only administrators may start the siren test."
+    },
+    "siren_test_blocked": {
+      "message": "Siren test not possible: {reason}"
     }
   },
   "services": {
@@ -993,6 +1064,46 @@
     "simulate_reset": {
       "name": "Reset simulation",
       "description": "All simulated sensors back to their real state."
+    },
+    "siren_test": {
+      "name": "Siren test",
+      "description": "Sounds ONE siren briefly (real sound, at most 10 s). Only disarmed, with hardware enabled, not in test mode, never during fire; administrators only.",
+      "fields": {
+        "siren": {
+          "name": "Siren",
+          "description": "One of Hauswacht's sirens."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Seconds (1–10)."
+        },
+        "volume": {
+          "name": "Volume",
+          "description": "Default: low."
+        },
+        "tone": {
+          "name": "Tone",
+          "description": "Burglar tones only."
+        }
+      }
+    },
+    "siren_test_result": {
+      "name": "Siren test: result",
+      "description": "Stores whether the siren was heard.",
+      "fields": {
+        "siren": {
+          "name": "Siren",
+          "description": "Tested siren."
+        },
+        "heard": {
+          "name": "Heard",
+          "description": "Was the siren heard?"
+        }
+      }
+    },
+    "siren_test_stop": {
+      "name": "Stop siren test",
+      "description": "Cancels a running siren test."
     }
   },
   "issues": {

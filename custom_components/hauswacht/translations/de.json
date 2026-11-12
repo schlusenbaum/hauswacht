@@ -152,15 +152,6 @@
           "infrastructure": "Statussensoren der Funknetze und Gateways"
         }
       },
-      "sirens": {
-        "title": "Alarmgeber – Sirenen",
-        "description": "Hier legst du fest, welche Sirenen Hauswacht für Einbruchalarme verwenden darf. Brandschutz: Hauswacht schaltet niemals eine Sirene ein oder aus, solange irgendein Rauchmelder Brand meldet oder der Brandzustand einer registrierten Sirene unklar ist. Die Ansteuerung bleibt GESPERRT, bis du sie hier freigibst und bestätigst.",
-        "data": {
-          "sirens": "Sirenen",
-          "sirens_hardware_enabled": "Echte Sirenenansteuerung erlauben",
-          "confirm_hardware": "Ich bestätige: Bei einem Alarm dürfen echte Sirenen ertönen"
-        }
-      },
       "profiles": {
         "title": "Alarmprofile",
         "menu_options": {
@@ -611,6 +602,61 @@
           "type": "Typ",
           "target": "Einsetzen in"
         }
+      },
+      "siren_settings": {
+        "title": "Alarmgeber – Sirenen",
+        "description": "Hier legst du fest, welche Sirenen Hauswacht für Einbruchalarme verwenden darf. Brandschutz: Hauswacht schaltet niemals eine Sirene ein oder aus, solange irgendein Rauchmelder Brand meldet oder der Brandzustand einer registrierten Sirene unklar ist. Die Ansteuerung bleibt GESPERRT, bis du sie hier freigibst und bestätigst.",
+        "data": {
+          "sirens": "Sirenen",
+          "sirens_hardware_enabled": "Echte Sirenenansteuerung erlauben",
+          "confirm_hardware": "Ich bestätige: Bei einem Alarm dürfen echte Sirenen ertönen"
+        }
+      },
+      "sirens": {
+        "title": "Alarmgeber – Sirenen",
+        "description": "{saved}Sirenen auswählen und freigeben, Sirenen prüfen.",
+        "menu_options": {
+          "siren_settings": "Sirenen und Freigabe",
+          "siren_test": "Sirenentest (echte Sirene!)",
+          "siren_test_settings": "Sirenentest – Erinnerung und Vorwarnung",
+          "init": "← Zurück"
+        }
+      },
+      "siren_test": {
+        "title": "Sirenentest",
+        "description": "⚠️ **Hier ertönen echte Sirenen** – je Sirene einzeln, kurz und mit Bestätigung vor jedem Ton.\n\nVoraussetzungen (prüft der Sirenen-Guard): alle Bereiche unscharf, Hardware-Freigabe an, **Testmodus aus**, kein Rauchmelder aktiv, nur Einbruchtöne. Während des Tests ist Scharfschalten gesperrt; Unscharf schalten bricht ihn ab.\n\nZuletzt getestet: {last}",
+        "data": {
+          "sirens": "Sirenen (nacheinander)",
+          "tone": "Ton",
+          "volume": "Lautstärke",
+          "duration": "Dauer je Sirene",
+          "confirm": "Ich bin vor Ort, Mitbewohner sind informiert"
+        }
+      },
+      "siren_test_next": {
+        "title": "Sirene {siren} testen?",
+        "description": "Vorabprüfung (ohne Ton): {preview}\n\nNoch {left} Sirene(n) in dieser Runde.",
+        "menu_options": {
+          "siren_test_go": "🔊 Ja, Sirene jetzt testen",
+          "siren_test_skip": "Diese Sirene überspringen",
+          "siren_test_cancel": "Test beenden"
+        }
+      },
+      "siren_test_heard": {
+        "title": "Gehört?",
+        "description": "Hast du die Sirene {siren} gehört?",
+        "menu_options": {
+          "siren_test_yes": "✅ Ja, gehört",
+          "siren_test_no": "❌ Nein, nicht gehört"
+        }
+      },
+      "siren_test_settings": {
+        "title": "Sirenentest – Erinnerung und Vorwarnung",
+        "description": "**Erinnerung:** meldet „Sirenentest fällig“, wenn eine Sirene länger als gewählt nicht (erfolgreich) getestet wurde – höchstens einmal pro Woche.\n\n**Vorwarnung:** schickt vor dem ersten Ton eine Benachrichtigung „Sirenentest in 10 Sekunden“ an die allgemeinen Empfänger.",
+        "data": {
+          "reminder_months": "Erinnerung",
+          "prewarn": "Vorwarnung vor dem Test"
+        }
       }
     },
     "error": {
@@ -638,7 +684,11 @@
       "excluded_not_in_groups": "Ausgenommene Melder müssen aus den gewählten Meldergruppen stammen.",
       "helper_no_limit": "Bitte einen oberen und/oder unteren Grenzwert angeben.",
       "helper_range": "Der untere Grenzwert muss kleiner sein als der obere.",
-      "helper_failed": "Der Helfer konnte nicht angelegt werden (siehe Protokoll)."
+      "helper_failed": "Der Helfer konnte nicht angelegt werden (siehe Protokoll).",
+      "siren_test_confirm": "Bitte bestätigen, dass du vor Ort bist.",
+      "siren_test_none": "Bitte mindestens eine Sirene wählen.",
+      "siren_test_running": "Ein Sirenentest läuft gerade.",
+      "siren_test_armed": "Nur möglich, wenn alle Bereiche unscharf sind."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -646,7 +696,8 @@
       "no_profiles": "Es wurden noch keine Profile angelegt.",
       "no_users": "Es gibt noch keine Benutzer.",
       "no_rules": "Es gibt noch keine Auslöseregel.",
-      "no_areas": "Es gibt nur den ersten Bereich – er lässt sich nicht löschen."
+      "no_areas": "Es gibt nur den ersten Bereich – er lässt sich nicht löschen.",
+      "no_sirens": "Es sind keine Sirenen eingerichtet (Alarmgeber – Sirenen → Sirenen und Freigabe)."
     }
   },
   "selector": {
@@ -756,6 +807,14 @@
         "technical": "Technik (Wasser, Gas, Frost …) – immer aktiv",
         "other": "Sonstiges – sofort"
       }
+    },
+    "siren_test_reminder": {
+      "options": {
+        "0": "Aus",
+        "3": "Alle 3 Monate",
+        "6": "Alle 6 Monate",
+        "12": "Jährlich"
+      }
     }
   },
   "entity": {
@@ -788,6 +847,9 @@
       "simulation": {
         "name": "Testkarte: simulierte Sensoren",
         "unit_of_measurement": "Sensoren"
+      },
+      "siren_test": {
+        "name": "Letzter Sirenentest"
       }
     },
     "binary_sensor": {
@@ -945,6 +1007,15 @@
     },
     "areas_failed": {
       "message": "Nicht alle Bereiche konnten geschaltet werden – {failed}. Erledigt: {done}."
+    },
+    "siren_test_running": {
+      "message": "Während eines Sirenentests kann nicht scharf geschaltet werden."
+    },
+    "siren_test_admin_only": {
+      "message": "Den Sirenentest dürfen nur Administratoren starten."
+    },
+    "siren_test_blocked": {
+      "message": "Sirenentest nicht möglich: {reason}"
     }
   },
   "services": {
@@ -993,6 +1064,46 @@
     "simulate_reset": {
       "name": "Simulation zurücksetzen",
       "description": "Alle simulierten Sensoren wieder mit ihrem echten Zustand."
+    },
+    "siren_test": {
+      "name": "Sirenentest",
+      "description": "Lässt EINE Sirene kurz ertönen (echter Ton, höchstens 10 s). Nur unscharf, mit Hardware-Freigabe, nicht im Testmodus, nie bei Brand; nur für Administratoren.",
+      "fields": {
+        "siren": {
+          "name": "Sirene",
+          "description": "Eine der Sirenen von Hauswacht."
+        },
+        "duration": {
+          "name": "Dauer",
+          "description": "Sekunden (1–10)."
+        },
+        "volume": {
+          "name": "Lautstärke",
+          "description": "Standard: leise."
+        },
+        "tone": {
+          "name": "Ton",
+          "description": "Nur Einbruchtöne."
+        }
+      }
+    },
+    "siren_test_result": {
+      "name": "Sirenentest: Ergebnis",
+      "description": "Speichert, ob die Sirene gehört wurde.",
+      "fields": {
+        "siren": {
+          "name": "Sirene",
+          "description": "Getestete Sirene."
+        },
+        "heard": {
+          "name": "Gehört",
+          "description": "Wurde die Sirene gehört?"
+        }
+      }
+    },
+    "siren_test_stop": {
+      "name": "Sirenentest stoppen",
+      "description": "Bricht einen laufenden Sirenentest ab."
     }
   },
   "issues": {

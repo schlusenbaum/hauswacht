@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-12
+
+### Hinzugefügt
+- **Sirenentest** (Alarmgeber – Sirenen): Sirenen wählen, je Sirene „testen?“ mit
+  Vorabprüfung ohne Ton, kurzer leiser Ton (Standard 3 s, höchstens 10 s), danach „gehört?“.
+  Gleicher sicherer Weg wie ein Alarm (Hardware-Freigabe, kein Testmodus, Brandsperre,
+  Einbruchtöne); nur unscharf und nur für Administratoren; Scharfschalten währenddessen
+  gesperrt, Unscharf schalten bricht ab.
+- Erinnerung „Sirenentest fällig“ (aus, 3, 6, 12 Monate) und optionale Vorwarnung.
+- Diagnose-Sensor „Letzter Sirenentest“ mit Ergebnis je Sirene.
+- Testkarte: Sirenentest eingeklappt mit Sicherheitsabfrage.
+- Aktionen `hauswacht.siren_test`, `siren_test_result`, `siren_test_stop`.
+
+### Geändert
+- „Alarmgeber – Sirenen“ ist ein Untermenü (Sirenen und Freigabe, Sirenentest, Erinnerung).
+- Simulations-Aktionen akzeptieren auch Schlösser und Abdeckungen.
+
 ## [0.25.0] - 2026-11-12
 
 ### Hinzugefügt

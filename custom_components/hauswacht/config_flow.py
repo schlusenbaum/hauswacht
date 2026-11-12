@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 from collections.abc import Mapping
@@ -66,6 +67,7 @@ from .const import (
     OPT_REMINDER_PERSONS,
     OPT_REMINDER_PROFILE,
     OPT_SENSOR_TYPES,
+    OPT_SIREN_TEST,
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
     OPT_SPEECH,
@@ -159,6 +161,15 @@ from .core.sensors import (
     zone_conflicts,
 )
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
+from .core.siren_test import DEFAULT_SECONDS as SIREN_DEFAULT_SECONDS
+from .core.siren_test import DEFAULT_TONE as SIREN_DEFAULT_TONE
+from .core.siren_test import DEFAULT_VOLUME as SIREN_DEFAULT_VOLUME
+from .core.siren_test import MAX_SECONDS as SIREN_MAX_SECONDS
+from .core.siren_test import REMINDER_CHOICES as SIREN_TEST_REMINDERS
+from .core.siren_test import TONES as SIREN_TONES
+from .core.siren_test import VOLUMES as SIREN_VOLUMES
+from .core.siren_test import clamp_seconds as clamp_siren_seconds
+from .core.siren_test import parse_settings as parse_siren_test
 from .core.speech import MAX_REPEAT as SPEECH_MAX_REPEAT
 from .core.speech import MODES as SPEECH_MODES
 from .core.speech import Candidate, is_speaker, parse_speech, profile_speakers
@@ -169,6 +180,7 @@ from .core.state_machine import (
 from .core.users import parse_users, pin_conflicts
 from .names import display_name
 from .runtime import device_class_of, entities_by_label
+from .siren_test import SirenTester
 
 SENSOR_DOMAIN = "binary_sensor"
 THRESHOLD_DOMAIN = "threshold"
@@ -250,6 +262,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._event: str | None = None
         self._infos: list[str] = []
         self._type_fields: dict[str, str] = {}
+        self._siren_queue: list[str] = []
+        self._siren_params: dict[str, Any] = {}
+        self._siren_prewarned = False
+        self._siren_summary: list[str] = []
+        self._siren_by: str | None = None
         self._pending: dict[str, Any] | None = None
         self._notes: list[str] = []
 
@@ -1536,6 +1553,11 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Sirenen -----------------------------------------------------------
 
     async def async_step_sirens(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self._menu("sirens", ["siren_settings", "siren_test", "siren_test_settings", "init"])
+
+    async def async_step_siren_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         options = dict(self.config_entry.options)
         was_enabled = bool(options.get(OPT_SIRENS_HARDWARE_ENABLED, False))
         errors: dict[str, str] = {}
@@ -1553,7 +1575,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                     if "sirens" in settings:
                         settings["sirens"] = [s for s in settings["sirens"] if s in sirens]
                 options[OPT_PROFILES] = profiles
-                return await self._save(options, "init")
+                return await self._save(options, "sirens")
         schema = vol.Schema(
             {
                 vol.Optional(OPT_SIRENS, default=list(options.get(OPT_SIRENS, []))): EntitySelector(
@@ -1563,7 +1585,211 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional("confirm_hardware", default=False): BooleanSelector(),
             }
         )
-        return self.async_show_form(step_id="sirens", data_schema=schema, errors=errors)
+        return self.async_show_form(step_id="siren_settings", data_schema=schema, errors=errors)
+
+    # --- Sirenentest ---------------------------------------------------------
+
+    def _tester(self) -> SirenTester | None:
+        entry = self.config_entry
+        if entry.state is not ConfigEntryState.LOADED:
+            return None
+        tester: SirenTester | None = entry.runtime_data.siren_tester
+        return tester
+
+    async def async_step_siren_test_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        current = parse_siren_test(options)
+        if user_input is not None:
+            options[OPT_SIREN_TEST] = {
+                "reminder_months": int(user_input.get("reminder_months") or 0),
+                "prewarn": bool(user_input.get("prewarn")),
+            }
+            return await self._save(options, "sirens")
+        return self.async_show_form(
+            step_id="siren_test_settings",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("reminder_months", default=str(current.reminder_months)): _select(
+                        [str(m) for m in SIREN_TEST_REMINDERS], "siren_test_reminder"
+                    ),
+                    vol.Required("prewarn", default=current.prewarn): BooleanSelector(),
+                }
+            ),
+        )
+
+    async def async_step_siren_test(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Sirenentest: Sirenen und Werte wählen, dann je Sirene einzeln bestätigen."""
+        tester = self._tester()
+        if tester is None or not tester.sirens:
+            return self.async_abort(reason="no_sirens")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if not user_input.get("confirm"):
+                errors["confirm"] = "siren_test_confirm"
+            elif (blocker := tester.blocker()) is not None:
+                errors["base"] = blocker
+            elif not user_input.get("sirens"):
+                errors["sirens"] = "siren_test_none"
+            else:
+                self._siren_queue = list(user_input["sirens"])
+                self._siren_params = {
+                    "tone": user_input["tone"],
+                    "volume": user_input["volume"],
+                    "seconds": clamp_siren_seconds(user_input["duration"]),
+                }
+                self._siren_prewarned = False
+                self._siren_summary = []
+                return await self.async_step_siren_test_next()
+        return self.async_show_form(
+            step_id="siren_test",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("sirens", default=list(tester.sirens)): _list_selector(
+                        [
+                            SelectOptionDict(value=s, label=display_name(self.hass, s))
+                            for s in tester.sirens
+                        ],
+                        multiple=True,
+                    ),
+                    vol.Required("tone", default=SIREN_DEFAULT_TONE): _select(
+                        list(SIREN_TONES), "siren_tone"
+                    ),
+                    vol.Required("volume", default=SIREN_DEFAULT_VOLUME): _select(
+                        list(SIREN_VOLUMES), "siren_volume"
+                    ),
+                    vol.Required("duration", default=SIREN_DEFAULT_SECONDS): NumberSelector(
+                        NumberSelectorConfig(
+                            min=1,
+                            max=SIREN_MAX_SECONDS,
+                            step=1,
+                            unit_of_measurement="s",
+                            mode=NumberSelectorMode.SLIDER,
+                        )
+                    ),
+                    vol.Required("confirm", default=False): BooleanSelector(),
+                }
+            ),
+            errors=errors,
+            description_placeholders={"last": self._siren_last_text(tester)},
+        )
+
+    def _siren_last_text(self, tester: SirenTester) -> str:
+        lines = []
+        for row in tester.attributes()["sirens"]:
+            when = row["last_test"][:16].replace("T", " ") if row["last_test"] else "–"
+            heard = {True: "✅", False: "❌", None: ""}[row["heard"]]
+            lines.append(f"{row['name']}: {when} {heard}".strip())
+        return "; ".join(lines) or "–"
+
+    def _siren_preview(self, tester: SirenTester, siren: str) -> str:
+        params = self._siren_params
+        decision = tester.preview(siren, params["tone"], params["volume"], params["seconds"])
+        if decision.commands:
+            command = decision.commands[0]
+            parts = [f"Ton {command.tone or 'Standard'}"]
+            if command.volume_level is not None:
+                parts.append(f"Lautstärke {int(command.volume_level * 100)} %")
+            parts.append(f"{params['seconds']} s")
+            return "✅ " + ", ".join(parts)
+        reason = decision.blocked[0].reason.value if decision.blocked else "blocked"
+        return f"⛔ {reason}"
+
+    async def async_step_siren_test_next(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        tester = self._tester()
+        if tester is None or not self._siren_queue:
+            self._infos = self._siren_summary or ["–"]
+            self._saved = True
+            return await self.async_step_sirens()
+        siren = self._siren_queue[0]
+        return self.async_show_menu(
+            step_id="siren_test_next",
+            menu_options=["siren_test_go", "siren_test_skip", "siren_test_cancel"],
+            description_placeholders={
+                "siren": display_name(self.hass, siren),
+                "preview": self._siren_preview(tester, siren),
+                "left": str(len(self._siren_queue)),
+            },
+        )
+
+    async def async_step_siren_test_go(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        tester = self._tester()
+        if tester is None or not self._siren_queue:
+            return await self.async_step_siren_test_next()
+        siren = self._siren_queue[0]
+        params = self._siren_params
+        by = None
+        if self.context.get("user_id"):
+            user = await self.hass.auth.async_get_user(self.context["user_id"])
+            by = user.name if user else None
+        result = await tester.async_run(
+            siren,
+            tone=params["tone"],
+            volume=params["volume"],
+            seconds=params["seconds"],
+            by=by,
+            prewarn=tester.settings.prewarn and not self._siren_prewarned,
+        )
+        self._siren_prewarned = True
+        name = display_name(self.hass, siren)
+        if not result["started"]:
+            self._siren_summary.append(f"{name}: ⛔ {result['reason']}")
+            self._siren_queue.pop(0)
+            return await self.async_step_siren_test_next()
+        await asyncio.sleep(result["seconds"] + 1)
+        self._siren_by = by
+        return self.async_show_menu(
+            step_id="siren_test_heard",
+            menu_options=["siren_test_yes", "siren_test_no"],
+            description_placeholders={"siren": name},
+        )
+
+    async def _siren_answer(self, heard: bool) -> ConfigFlowResult:
+        tester = self._tester()
+        if tester is not None and self._siren_queue:
+            siren = self._siren_queue.pop(0)
+            tester.record(
+                siren,
+                heard,
+                by=self._siren_by,
+                seconds=self._siren_params["seconds"],
+                volume=self._siren_params["volume"],
+            )
+            mark = "✅" if heard else "❌"
+            self._siren_summary.append(f"{display_name(self.hass, siren)}: {mark}")
+        return await self.async_step_siren_test_next()
+
+    async def async_step_siren_test_yes(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self._siren_answer(True)
+
+    async def async_step_siren_test_no(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self._siren_answer(False)
+
+    async def async_step_siren_test_skip(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if self._siren_queue:
+            skipped = self._siren_queue.pop(0)
+            label = "übersprungen" if self._german() else "skipped"
+            self._siren_summary.append(f"{display_name(self.hass, skipped)}: {label}")
+        return await self.async_step_siren_test_next()
+
+    async def async_step_siren_test_cancel(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._siren_queue = []
+        return await self.async_step_siren_test_next()
 
     # --- Benachrichtigungen --------------------------------------------------
 

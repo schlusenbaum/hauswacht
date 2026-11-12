@@ -257,9 +257,10 @@ async def test_enabling_hardware_requires_confirmation(hass: HomeAssistant) -> N
     entry = make_entry()
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "sirens"}
-    )
+    for step in ("sirens", "siren_settings"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"sirens": [SIREN], "sirens_hardware_enabled": True}
     )
