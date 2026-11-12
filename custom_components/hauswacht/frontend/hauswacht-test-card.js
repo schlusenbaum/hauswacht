@@ -2,7 +2,7 @@
  * Hauswacht Test – Dashboard-Karte zum Simulieren der Hauswacht-Sensoren.
  *
  * Wird von der Integration Hauswacht automatisch geladen. Zeigt alle Sensoren aus den
- * Hauswacht-Zonen mit Knöpfen "Auf/Zu", "Bewegung/Ruhe", "Manipulation/OK",
+ * Hauswacht-Meldergruppen mit Knöpfen "Auf/Zu", "Bewegung/Ruhe", "Manipulation/OK",
  * "Weg" (nicht verfügbar) und "Echt" (zurück auf den echten Wert).
  *
  * Sicherheit: Simulieren geht nur im Testmodus. Im Testmodus lösen keine Sirenen aus.
@@ -27,7 +27,7 @@ const TEXT = {
     codeReset: "Falscheingaben zurücksetzen",
     codeLocked: "gesperrt",
     missing: "Hauswacht-Testsensor nicht gefunden (Hauswacht 0.17.1 oder neuer nötig).",
-    empty: "Keine Sensoren in den Hauswacht-Zonen.",
+    empty: "Keine Melder in den Hauswacht-Meldergruppen.",
     real: "Echt",
     sirenTitle: "🔊 Sirenentest (echte Sirene!)",
     sirenWarn: "Hier ertönt eine echte Sirene – kurz und leise (3 s). Nur testen, wenn du vor Ort bist und Mitbewohner informiert sind. Im Testmodus ist der Sirenentest gesperrt.",
@@ -96,7 +96,7 @@ const TEXT = {
     codeReset: "Reset failed attempts",
     codeLocked: "locked",
     missing: "Hauswacht test sensor not found (Hauswacht 0.17.1 or newer required).",
-    empty: "No sensors in the Hauswacht zones.",
+    empty: "No sensors in the Hauswacht sensor groups.",
     real: "Real",
     sirenTitle: "🔊 Siren test (real siren!)",
     sirenWarn: "A real siren sounds here – short and quiet (3 s). Only test when you are on site and housemates are informed. The siren test is blocked in test mode.",
@@ -707,6 +707,6 @@ if (!customElements.get("hauswacht-test-card")) {
     name: "Hauswacht Test",
     description: "Sensoren der Hauswacht im Testmodus simulieren (Tür auf/zu, Bewegung, Manipulation …)",
     preview: false,
-    documentationURL: "https://github.com/schlusenbaum/hauswacht/blob/main/docs/dashboard.md",
+    documentationURL: "https://github.com/schlusenbaum/hauswacht/blob/main/docs/testmodus.md",
   });
 }

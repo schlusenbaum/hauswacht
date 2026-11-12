@@ -263,6 +263,8 @@ class HauswachtRuntime:
         self.area_id = area_id
         self.main: HauswachtRuntime = main or self
         self.areas: dict[str, HauswachtRuntime] = {area_id: self} if main is None else {}
+        # Geräte-ID des Hauswacht-Geräts (vom Setup gesetzt; Bereichsgeräte hängen darunter)
+        self.device_id: str | None = None
         self.options: dict[str, Any] = area_options(entry.options, area_id)
         self.ctx = AlarmContext()
         self.profiles = build_profiles(self.options)

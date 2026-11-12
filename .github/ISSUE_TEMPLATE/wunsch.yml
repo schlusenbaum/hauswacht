@@ -1,0 +1,20 @@
+name: Wunsch oder Idee
+description: Eine neue Funktion oder Verbesserung vorschlagen
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Was möchtest du erreichen?
+      description: Beschreibe die Situation im Alltag – nicht nur die Lösung.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Wie könnte es aussehen?
+  - type: textarea
+    id: devices
+    attributes:
+      label: Geräte
+      description: Falls es um ein bestimmtes Gerät geht (Sirene, Keypad …) – Hersteller und Modell

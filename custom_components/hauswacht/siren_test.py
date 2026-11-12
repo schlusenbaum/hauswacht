@@ -244,14 +244,5 @@ class SirenTester:
             "blocked": self.blocker(),
         }
 
-    def _siren_row(self, siren: str) -> dict[str, Any]:
-        record = self.records.get(siren)
-        return {
-            "entity_id": siren,
-            "name": display_name(self.hass, siren),
-            "last_test": record.at.isoformat() if record else None,
-            "heard": record.heard if record else None,
-        }
-
     def last_test(self) -> datetime | None:
         return max((r.at for r in self.records.values()), default=None)

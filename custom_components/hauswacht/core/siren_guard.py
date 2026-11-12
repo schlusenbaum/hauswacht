@@ -4,7 +4,7 @@ Dieses Modul entscheidet – rein und ohne Home Assistant –, welche Sirenenbef
 tatsächlich gesendet werden dürfen. Der spätere Siren Executor ruft Sirenen-Services
 ausschließlich mit den hier freigegebenen Befehlen auf.
 
-Verbindliche Regeln (siehe docs/safety.md):
+Verbindliche Regeln (siehe docs/entwicklung/safety.md):
 
 1. Testmodus aktiv            -> keinerlei Sirenenbefehle.
 2. Hardware-Freigabe aus      -> keinerlei Sirenenbefehle (Standard nach Installation).

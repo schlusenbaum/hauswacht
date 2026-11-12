@@ -1,80 +1,61 @@
 # Roadmap
 
-| Version | Inhalt | Echte Geräte |
-|---|---|---|
-| 0.1.0 ✅ | Repo, CI, Zustandsmaschine und Sirenen-Guard als reine Logik mit Tests | nein |
-| 0.2.0 ✅ | Integrationsgerüst (manifest, Config Flow), `alarm_control_panel`, Scharf/Unscharf, Store, Neustartverhalten | nein |
-| 0.3.0 ✅ | Datenmodell: Sensor-Register, Zonen, Profile; Bereitschaftsprüfung; Verfügbarkeit und veraltete Werte | nur lesen |
-| 0.4.0 ✅ | Testmodus komplett, Simulation, Infrastruktur-Überwachung (MQTT, Z2M, BLE) | nur lesen |
-| 0.5.0 ✅ | Reaktionen, Benachrichtigungen, Siren Executor (Hardware-Freigabe aus) | Push ja, Sirenen nein |
-| 0.6.0 ✅ | Beispiel-Dashboard (Standardkarten, Smartphone) | – |
-| 0.7.0 ✅ | Profil „Individuell“, Schutz gegen PIN-Raten | nein |
-| 0.8.0 ✅ | Frei definierbare Profile (Name, Symbol, Bedienfeld-Knopf), Auswahlliste und Knöpfe | nein |
-| 0.9.0 ✅ | Automatik pro Profil (Uhrzeit, Anwesenheit), Integrationssymbol | nein |
-| 0.9.1–0.9.3 ✅ | Raumnamen, Sirenen nach Fähigkeiten, Sirenen-Ende nach Reaktionszeit | nein |
-| 0.10.0 ✅ | Heimkehr-Beobachtung (schaltet nichts), Push-Knopf „Unscharf schalten“ | Push ja |
-| 0.11.0 ✅ | Alarm beenden, Profil bleibt scharf | nein |
-| 0.12.0 ✅ | Knöpfe „Unscharf schalten“ und „Alarm beenden“ | nein |
-| 0.13.0 ✅ | Option „Alarm ohne PIN beenden“ | nein |
-| 0.14.0 ✅ | Profil-Einstellungen als Entitäten (Dashboard) | nein |
-| **0.15.0** ✅ | Karte „Hauswacht Einstellungen“ | nein |
-| **0.16.0** ✅ | Benutzer und Codes: mehrere Personen mit eigenem PIN, einzeln sperrbar, „geändert von“ | nein |
-| **0.17.0** ✅ | Benachrichtigungen pro Ereignis, wichtige Hinweise, Knöpfe „Trotzdem scharf“ / „Erneut versuchen“, Erinnerung „Alle weg“ | Push ja |
-| 0.17.1–0.17.6 ✅ | Testkarte (Sensoren simulieren), Zonen verständlicher und ohne Mehrfachzuordnung, Optionen neu gegliedert mit Zurück, klarere Entitäten | nein |
-| **0.18.0** ✅ | Bestätigung durch einen zweiten Melder (Zonen-Option), Meldung unbestätigter und häufiger Einzelauslösungen | nein |
-| **0.19.0** ✅ | Regeln: Abfolgen von Meldern (einer/alle/mindestens N, Zeit bis zum nächsten Schritt), Regelsammlung, pro Profil wählbar, Prüfung beim Speichern, Fortschritt in der Testkarte | nein |
-| **0.20.0** ✅ | Expertenmodus für Auslöseregeln: YAML-Editor mit Prüfung, Verschachtelung, Ausnahme „nicht, wenn vorher …“ (auch im Assistenten), Bedingungen (Uhrzeit, Person/Zone, Zustand, Zahlenwert, und/oder/nicht), Ergebnis „nur Benachrichtigung“ | nein |
-| **0.21.0** ✅ | Immer aktive Melder (unscharf: Benachrichtigung, optional Sirene), Scharf durch Schließen der Tür (optional, Beruhigungszeit) | nein |
-| **0.22.0** ✅ | Bereiche: frei benannte, unabhängig scharf schaltbare Bereiche mit eigenem Bedienfeld plus „Alle Bereiche“; Benutzer je Bereich | nein |
-| **0.23.0** ✅ | Sprachausgabe über Lautsprecher (z. B. Echo): Durchsage oder Sprechen, Wiederholung, Nachtruhe, Lautsprecher je Profil; eigene Texte mit Platzhaltern für Sprache und Push | nein |
-| 0.24.0 | Weitere Melderarten und Kamerabild – in 0.25.0 zurückgenommen bzw. vereinfacht | nein |
-| **0.25.0** ✅ | Nur Melder mit offen/zu (Binärsensor, Schloss, Abdeckung); Melder-Typen in der Meldergruppe (Tür, Fenster, Bewegung, Manipulation, Technik, Sonstiges); Ausnahmen im Alarmprofil; Assistent „Melder aus anderem Sensor erstellen“ (Schwellenwert-Helfer) | nein |
-| **0.26.0** ✅ | Sirenentest: je Sirene einzeln mit Bestätigung und Vorabprüfung, kurz und leise, Ergebnis „gehört?“, Erinnerung und Vorwarnung wählbar; auch eingeklappt in der Testkarte | Funktion fertig; erster echter Ton nach Freigabe, bei Anwesenheit |
-| **0.27.0** ✅ | Funkstille-Beobachtung mit Empfehlung; Heimkehr-Beobachtung mit zusätzlichen Signalen je Person (WLAN, Bluetooth, Router, Annäherung), „frühestes Signal“, Zeit „Tür auf bis unscharf“ | nur lesen |
-| **0.32.0** ✅ | Karten anlernen nur unscharf und innerhalb einer einstellbaren Anlernzeit | nein |
-| **0.31.0** ✅ | Falscheingaben zurücksetzen (Administratoren), unbekannte Karten zählen nicht als Fehleingabe | nein |
-| **0.30.0** ✅ | RFID-Karten unabhängig vom PIN, beliebig viele je Benutzer, Anlernen über Keypad/Leser | nein |
-| **0.29.0** ✅ | Benutzer-Rechte je Bereich: wahlweise für alle Bereiche gleich oder je Bereich einzeln (scharf, unscharf, Alarm beenden) | nein |
-| **0.28.0** ✅ | Bedienteile: Zigbee2MQTT-Keypads (beliebig viele, mit Rückmeldung), NFC-Aufkleber mit der Companion App, RFID-/NFC-Leser; RFID-Karten als Ausweis am Benutzer; Karte und PIN; Notruf-Taste | Keypad-Rückmeldung nach Freigabe |
-| später | ZHA- und Z-Wave-Keypads | – |
-| später | Entscheidung über eine Heimkehr-Automatik (mit Belegen) anhand der Beobachtung | nur lesen |
-| 1.0.0 | Stabil, Doku vollständig, HACS-tauglich, Veröffentlichung | – |
-| irgendwann | Kameras: Bild in der Nachricht (Zuordnung über den Raum), Kamera-Erkennung als eigene Rolle (z. B. „Person draußen“ → Vorwarnung) – in Ruhe neu konzipieren | – |
-| 1.x | Weitere Ausweise am Benutzer: RFID/NFC und Fingerabdruck (siehe ADR 0005), Zigbee-Tastenfelder, weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten, weitere Platzhalter | – |
+## Erreicht
 
-## Entscheidungen
+| Version | Inhalt |
+|---|---|
+| 0.1–0.5 | Zustandsmaschine und Sirenen-Guard als reine Logik, Integrationsgerüst, Melder und Profile, Testmodus und Simulation, Überwachung von Funknetz und Gateways, Benachrichtigungen, Sirenen (Freigabe standardmäßig aus) |
+| 0.6–0.9 | Beispiel-Dashboard, Schutz gegen PIN-Raten, frei definierbare Profile, Automatik (Uhrzeit, Anwesenheit) |
+| 0.10–0.15 | Heimkehr-Beobachtung, Push-Knopf „Unscharf schalten“, Alarm beenden (Profil bleibt scharf), Profil-Einstellungen als Entitäten, Karte „Hauswacht Einstellungen“ |
+| 0.16–0.18 | Benutzer mit eigenem PIN, Bedrohungs-PIN, Benachrichtigungen pro Ereignis, Testkarte |
+| 0.19–0.21 | Auslöseregeln (Assistent und YAML, Ausnahmen, Bedingungen), immer aktive Melder, Scharf durch Schließen der Tür |
+| 0.22 | Bereiche mit eigenem Bedienfeld und „Alle Bereiche“ |
+| 0.23 | Sprachausgabe über Lautsprecher, eigene Texte mit Platzhaltern |
+| 0.25 | Nur Melder mit offen/zu, Melder-Typen, Ausnahmen im Profil, Assistent „Melder aus anderem Sensor“ |
+| 0.26 | Sirenentest (einzeln, kurz, leise, mit Bestätigung) – erfolgreich mit echten Sirenen erprobt |
+| 0.27 | Funkstille-Beobachtung, zusätzliche Heimkehr-Signale, „Tür auf bis unscharf“ |
+| 0.28 | Bedienteile: Zigbee2MQTT-Keypads mit Rückmeldung, NFC-Aufkleber, RFID-Leser, Notruf-Taste |
+| 0.29 | Benutzer-Rechte je Bereich |
+| 0.30–0.32 | RFID-Karten unabhängig vom PIN, Anlernen über Keypad (nur unscharf, Anlernzeit), Zufallsnummern erkannt, Falscheingaben zurücksetzen, Fehlversuche verfallen nach 24 h |
+| 0.33 | Aufgeräumte Dokumentation, Screenshots, Issue-Vorlagen |
 
-- **Bereiche (2026-11-11):** frei benannt, eine Zustandsmaschine je Bereich; Alarmprofile
-  gehören zu einem Bereich, Meldergruppen und Regeln sind gemeinsame Bausteine. Siehe
-  [ADR 0007](adr/0007-bereiche.md).
+Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
-- **Namen (2026-11-11):** „Zonen“ heißen „Meldergruppen“, „Regeln“ heißen „Auslöseregeln“;
-  beide im Menüpunkt „Alarmauslösung“. Interne Schlüssel (`zones`, `rules`) bleiben.
+## Geplant
 
-- **Regeln (2026-11-11):** Statt Zonen-Bestätigung eine Regelsammlung mit Abfolgen von
-  Meldern; Profile wählen Regeln aus. Einfacher Modus (Formular) in 0.19, Expertenmodus (YAML)
-  in 0.20 – beide auf demselben Regel-Kern. Regeln sind ODER-verknüpft und können sich nicht
-  gegenseitig aushebeln. Siehe [ADR 0006](adr/0006-regeln.md).
-- **Sensorgruppen (2026-11-11, ersetzt durch Regeln):** als Option der Zone („Alarm erst, wenn ein zweiter Melder
-  dieser Zone bestätigt“) statt eigener Gruppen quer zu den Zonen. Nur verschiedene Melder
-  zählen; ohne verfügbaren zweiten Melder sofortiger Alarm. Eigene Gruppen lassen sich später
-  ergänzen.
+| Wann | Inhalt |
+|---|---|
+| später | ZHA- und Z-Wave-Keypads |
+| später | Entscheidung über eine Heimkehr-Automatik (mit Belegen) anhand der Heimkehr-Beobachtung |
+| 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
+| irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
+| 1.x | Weitere Ausweise (z. B. Fingerabdruck), weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten |
 
-- **Ausbau (2026-11-10):** Benutzer und Codes, Benachrichtigungen, Sensorgruppen,
-  „immer aktiv“, Scharf durch Türschließen und Bereiche kommen nach und nach – je mit Konzept
-  vorab. Benutzer werden so angelegt, dass sie später auf Bereiche beschränkt
-  werden können. Geräte schalten bewusst nicht: Hauswacht
-  schaltet keine Geräte.
+## Grundsätze
 
-- **PIN:** optional und einstellbar (2026-11-06).
-- **Sprachassistenten:** standardmäßig nicht freigegeben. Eine spätere Freigabe (z. B. Alexa
-  über Home Assistant Cloud) muss ohne Codeänderung möglich sein: Sie erfolgt über die normale
-  Entitätsfreigabe von Home Assistant. Unscharfschalten per Sprache nur mit PIN.
+- **Hauswacht schaltet keine Geräte** – außer Sirenen (nach Freigabe) und den Zustandsanzeigen
+  eingerichteter Keypads.
+- **Brandalarm hat Vorrang**, Testmodus sperrt Sirenen technisch, nach einem Neustart unscharf.
+- **PIN optional**, Sprachassistenten nur mit PIN. Freigabe für Alexa & Co. über die normale
+  Entitätsfreigabe von Home Assistant.
+- Größere Bausteine erst mit Konzept, dann umsetzen. Entscheidungen mit Begründung stehen in den
+  [ADRs](entwicklung/adr/README.md).
+
+## Wichtige Entscheidungen
+
+- **Bereiche:** frei benannt, eine Zustandsmaschine je Bereich; Alarmprofile gehören zu einem
+  Bereich, Meldergruppen und Regeln sind gemeinsame Bausteine
+  ([ADR 0007](entwicklung/adr/0007-bereiche.md)).
+- **Auslöseregeln** statt Zonen-Bestätigung: ODER-verknüpft, können sich nicht gegenseitig
+  aushebeln ([ADR 0006](entwicklung/adr/0006-regeln.md)).
+- **Namen:** „Zonen“ heißen „Meldergruppen“, „Regeln“ heißen „Auslöseregeln“; interne
+  Schlüssel (`zones`, `rules`) bleiben.
+- **Ausweise:** PIN und RFID-Karte gehören zum Benutzer, Aufkleber und Leser zu den
+  Bedienteilen ([ADR 0005](entwicklung/adr/0005-ausweise.md)).
 
 ## Versionierung und Releases
 
-- Semantic Versioning. 0.x: Schnittstellen dürfen sich ändern. Ab 1.0.0 Breaking Changes nur
-  in Major-Versionen, immer mit Store-Migration.
-- Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`).
-- `main` ist immer grün. Größere Änderungen über Feature-Branches und Pull Requests.
+- Semantic Versioning. 0.x: Schnittstellen dürfen sich ändern. Ab 1.0.0 Breaking Changes nur in
+  Major-Versionen, immer mit Migration der Einstellungen.
+- `main` ist immer grün; Änderungen über Pull Requests.
 - Releases als Git-Tag + GitHub-Release; HACS liest die Releases.

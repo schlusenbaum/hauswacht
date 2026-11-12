@@ -342,3 +342,15 @@ async def test_options_user_rights_per_area(hass: HomeAssistant) -> None:
     stored = entry.options["users"]["anna"]
     assert stored["rights"] == "all"
     assert "area_rights" not in stored
+
+
+async def test_area_device_hangs_below_main_device(hass: HomeAssistant) -> None:
+    hass.states.async_set(GATE, "off", {"device_class": "window"})
+    entry = make_entry(AREA_OPTIONS)
+    await setup_entry(hass, entry)
+    devices = dr.async_get(hass)
+    main = devices.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
+    area = devices.async_get_device(identifiers={(DOMAIN, f"{entry.entry_id}_garage")})
+    assert main is not None
+    assert area is not None
+    assert area.via_device_id == main.id

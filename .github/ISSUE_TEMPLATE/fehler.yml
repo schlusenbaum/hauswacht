@@ -1,0 +1,45 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie beschrieben
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für die Meldung! Bitte vorher in die [Fehlersuche](https://github.com/schlusenbaum/hauswacht/blob/main/docs/fehlersuche.md) schauen.
+        **Keine persönlichen Daten:** Namen, Adressen, IP-Adressen, Tokens und Kartennummern bitte aus Logs entfernen.
+  - type: input
+    id: version
+    attributes:
+      label: Hauswacht-Version
+      placeholder: z. B. 0.33.0
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home-Assistant-Version
+      placeholder: z. B. 2026.11.1
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Was ist passiert, was hast du erwartet?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Nachstellen
+      placeholder: "1. Profil „Nacht“ scharf\n2. Tür öffnen\n3. …"
+  - type: textarea
+    id: devices
+    attributes:
+      label: Beteiligte Geräte
+      description: z. B. Sirene, Keypad, Melder – Hersteller und Modell, Zigbee2MQTT/ZHA
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log-Auszug
+      description: Einstellungen → System → Protokolle, nach „hauswacht“ filtern. Attribut `last_siren_decision` hilft bei Sirenenfragen.
+      render: text
