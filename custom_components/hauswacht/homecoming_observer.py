@@ -140,7 +140,7 @@ class HomecomingObserver:
                 self._presence[source] = self._initial_presence(source)
         for person in self.persons:
             if person not in self._combined:
-                self._combined[person] = PresenceState(home=self._person_home(person))
+                self._combined[person] = self._initial_combined(person)
         self.async_stop()
         wanted = sorted(set(self._owners) | doors)
         if wanted:
@@ -158,6 +158,20 @@ class HomecomingObserver:
         """Richtungs-Sensoren (Nähe) bekommen ein größeres Zeitfenster."""
         if state in DIRECTION_HOME | DIRECTION_AWAY | DIRECTION_NEUTRAL:
             self._directions.add(source)
+
+    def _initial_combined(self, person: str) -> PresenceState:
+        """Kombination beim Start; "weg seit" = spätester Abschied der Quellen."""
+        home = self._person_home(person)
+        if home is not False:
+            return PresenceState(home=home)
+        since = [
+            state.away_since
+            for source in self._person_sources(person)
+            if (state := self._presence.get(source)) is not None and state.away_since
+        ]
+        return PresenceState(
+            home=False, away_since=max(since) if since else dt_util.utcnow().timestamp()
+        )
 
     def _person_sources(self, person: str) -> list[str]:
         return [s for s, persons in self._owners.items() if person in persons]

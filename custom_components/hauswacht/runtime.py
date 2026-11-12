@@ -1508,12 +1508,13 @@ class HauswachtRuntime:
                 (
                     a
                     for a in areas
-                    if a._sensor_status(entity_id, device_class) not in ("in_time", "not_monitored")
+                    if a._sensor_status(entity_id, device_class)
+                    not in ("disarmed", "not_monitored")
                 ),
                 self.main,
             )
             status = owner._sensor_status(entity_id, device_class)
-            idle = status in ("in_time", "not_monitored")
+            idle = status in ("disarmed", "not_monitored")
             rows.append(
                 {
                     "entity_id": entity_id,
@@ -1544,7 +1545,7 @@ class HauswachtRuntime:
         if entity_id in self.always_sensors:
             return "always_active"
         if not armed:
-            return "in_time"
+            return "disarmed"
         if entity_id in ctx.bypassed_until_closed:
             return "bypassed_until_closed"
         if entity_id in ctx.bypassed:
