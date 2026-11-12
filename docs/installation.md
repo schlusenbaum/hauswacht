@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.32.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.32.3:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -1003,9 +1003,12 @@ Wichtig zu wissen:
   - den Knopf **„Falscheingaben zurücksetzen“** in der Karte „Hauswacht Test“ (zeigt die
     Anzahl; nur Administratoren) oder den Dienst `hauswacht.reset_code_lock` (nur
     Administratoren),
-  - einen Neustart von Home Assistant oder ein Neuladen von Hauswacht.
-- **Kein automatisches Vergessen:** Fehlversuche verfallen nicht mit der Zeit. Zwei falsche
-  Eingaben heute und drei nächste Woche ergeben ohne richtige Eingabe dazwischen eine Sperre.
+  - einen Neustart von Home Assistant oder ein Neuladen von Hauswacht,
+  - **Zeitablauf:** Fehlversuche verfallen **24 Stunden nach dem letzten Fehlversuch**. Zwei
+    falsche Eingaben heute und drei übermorgen ergeben also keine Sperre. Die Frist läuft
+    gleitend ab dem letzten Fehlversuch – nicht um Mitternacht, sonst könnte man kurz vor und
+    kurz nach Mitternacht doppelt so viele Versuche machen. Eine laufende Sperre endet davon
+    unabhängig nach ihrer Dauer.
 - **Was nicht zählt:** unbekannte Karten (Codes, die kein PIN sein können – so lassen sich
   Karten anlernen) und Eingaben ohne Code (z. B. Keypad-Taste ohne PIN/Karte).
 - **Was gesondert gemeldet wird:** ein gesperrter oder abgelaufener PIN bzw. eine solche Karte
@@ -1017,9 +1020,10 @@ Wichtig zu wissen:
 - **Stand anzeigen:** Attribute `code_failures` (Anzahl) und `code_locked_until` (Ende der
   Sperre) am Bedienfeld; jeder Fehlversuch löst das Ereignis `hauswacht_event` mit
   `type: InvalidCode` aus.
-- **Rechenbeispiel:** Ein 4-stelliger PIN hat 10 000 Möglichkeiten. Mit der Sperre bräuchte
-  man zum Durchprobieren im Schnitt mehrere Wochen – und du bekommst ab dem 3. Versuch eine
-  Meldung.
+- **Rechenbeispiel:** Ein 4-stelliger PIN hat 10 000 Möglichkeiten. Wer am Stück probiert,
+  bleibt bei 15 Minuten Sperre je Versuch und bräuchte im Schnitt mehrere Wochen. Wer immer
+  einen Tag wartet, um den Zähler verfallen zu lassen, schafft nur 4 Versuche pro Tag ohne
+  Sperre – also Jahre. Und ab dem 3. Versuch kommt jedes Mal eine Meldung.
 
 ## Benutzer und PINs
 

@@ -5,8 +5,10 @@ from __future__ import annotations
 import pytest
 
 from custom_components.hauswacht.core.code_guard import (
+    FORGET_AFTER_SECONDS,
     MAX_LOCK_SECONDS,
     CodeGuardState,
+    current_failures,
     lock_duration,
     register_failure,
     register_success,
@@ -47,3 +49,23 @@ def test_fifth_failure_locks_for_a_minute() -> None:
 def test_success_resets() -> None:
     state = CodeGuardState(failures=7, locked_until=999.0)
     assert register_success(state) == CodeGuardState()
+
+
+def test_failures_expire_after_a_day() -> None:
+    state = CodeGuardState()
+    for _ in range(4):
+        state = register_failure(state, 1000.0).state
+    assert current_failures(state, 1000.0 + FORGET_AFTER_SECONDS) == 4
+    later = 1000.0 + FORGET_AFTER_SECONDS + 1
+    assert current_failures(state, later) == 0
+    # Der nächste Fehlversuch zählt wieder als erster – keine Sperre, keine Warnung
+    result = register_failure(state, later)
+    assert result.state.failures == 1
+    assert result.lock_seconds is None
+    assert not result.warn
+
+
+def test_expiry_window_slides_with_each_failure() -> None:
+    state = register_failure(CodeGuardState(), 0.0).state
+    state = register_failure(state, FORGET_AFTER_SECONDS - 10).state  # vor Ablauf: zählt weiter
+    assert current_failures(state, 2 * FORGET_AFTER_SECONDS - 20) == 2

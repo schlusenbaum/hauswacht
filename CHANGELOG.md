@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.32.3] - 2026-11-12
+
+### Geändert
+- **Fehlversuche verfallen:** 24 Stunden nach dem letzten Fehlversuch beginnt die Zählung
+  wieder bei null (gleitend, nicht um Mitternacht). Bisher galten sie bis zur nächsten
+  richtigen Eingabe oder bis zum Neustart. Eine laufende Sperre endet unverändert nach ihrer
+  Dauer.
+
 ## [0.32.2] - 2026-11-12
 
 ### Dokumentation
