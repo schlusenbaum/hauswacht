@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
@@ -24,6 +25,7 @@ async def async_setup_entry(
             HauswachtSystemStatusSensor(entry),
             HauswachtHomecomingSensor(entry),
             HauswachtSimulationSensor(entry),
+            HauswachtSirenTestSensor(entry),
         ]
     )
 
@@ -97,3 +99,25 @@ class HauswachtSimulationSensor(HauswachtEntity, SensorEntity):
             "sensors": self.runtime.simulation_overview(),
             "rules": self.runtime.rules_overview(),
         }
+
+
+class HauswachtSirenTestSensor(HauswachtEntity, SensorEntity):
+    """Letzter Sirenentest; je Sirene Datum und Ergebnis in den Attributen (für die Testkarte)."""
+
+    _attr_translation_key = "siren_test"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:bullhorn-variant-outline"
+
+    def __init__(self, entry: HauswachtConfigEntry) -> None:
+        super().__init__(entry, "siren_test")
+
+    @property
+    def native_value(self) -> datetime | None:
+        tester = self.runtime.siren_tester
+        return tester.last_test() if tester else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        tester = self.runtime.siren_tester
+        return tester.attributes() if tester else {}

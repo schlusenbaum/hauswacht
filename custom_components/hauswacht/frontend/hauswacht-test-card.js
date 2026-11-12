@@ -27,6 +27,23 @@ const TEXT = {
     missing: "Hauswacht-Testsensor nicht gefunden (Hauswacht 0.17.1 oder neuer nötig).",
     empty: "Keine Sensoren in den Hauswacht-Zonen.",
     real: "Echt",
+    sirenTitle: "🔊 Sirenentest (echte Sirene!)",
+    sirenWarn: "Hier ertönt eine echte Sirene – kurz und leise (3 s). Nur testen, wenn du vor Ort bist und Mitbewohner informiert sind. Im Testmodus ist der Sirenentest gesperrt.",
+    sirenNone: "Keine Sirenen eingerichtet.",
+    sirenLast: "Zuletzt getestet:",
+    sirenNever: "Noch nie getestet",
+    sirenTest: "Testen …",
+    sirenConfirm: "Sirene ertönt jetzt 3 s. Wirklich starten?",
+    sirenYesStart: "Ja, starten",
+    sirenCancel: "Abbrechen",
+    sirenHeard: "Hast du die Sirene gehört?",
+    sirenStop: "Stopp",
+    yes: "Ja",
+    no: "Nein",
+    sirenBlocked: {
+      siren_test_running: "Ein Sirenentest läuft gerade.",
+      siren_test_armed: "Nur möglich, wenn alle Bereiche unscharf sind.",
+    },
     gone: "Weg",
     realValue: "echt",
     simulated: "simuliert",
@@ -77,6 +94,23 @@ const TEXT = {
     missing: "Hauswacht test sensor not found (Hauswacht 0.17.1 or newer required).",
     empty: "No sensors in the Hauswacht zones.",
     real: "Real",
+    sirenTitle: "🔊 Siren test (real siren!)",
+    sirenWarn: "A real siren sounds here – short and quiet (3 s). Only test when you are on site and housemates are informed. The siren test is blocked in test mode.",
+    sirenNone: "No sirens set up.",
+    sirenLast: "Last tested:",
+    sirenNever: "Never tested",
+    sirenTest: "Test …",
+    sirenConfirm: "The siren will sound for 3 s. Really start?",
+    sirenYesStart: "Yes, start",
+    sirenCancel: "Cancel",
+    sirenHeard: "Did you hear the siren?",
+    sirenStop: "Stop",
+    yes: "Yes",
+    no: "No",
+    sirenBlocked: {
+      siren_test_running: "A siren test is running.",
+      siren_test_armed: "Only possible when all areas are disarmed.",
+    },
     gone: "Gone",
     realValue: "real",
     simulated: "simulated",
@@ -168,6 +202,8 @@ const STYLE = `
   .rules .rule-text { color: var(--secondary-text-color); font-size: 0.85em; margin: 0 0 4px; }
   .phase.alarm { background: var(--error-color); color: var(--text-primary-color, #fff); }
   .phase.delay { background: var(--warning-color); color: var(--text-primary-color, #fff); }
+  .sirens { margin-top: 12px; border-top: 1px solid var(--divider-color); padding-top: 8px; }
+  .sirens summary { cursor: pointer; font-weight: 500; color: var(--error-color); }
   .seg { display: flex; flex: none; }
   .seg button { border-radius: 0; margin-left: -1px; padding: 6px 8px; }
   .seg button:first-child { border-radius: 8px 0 0 8px; margin-left: 0; }
@@ -197,7 +233,7 @@ class HauswachtTestCard extends HTMLElement {
     this._hass = hass;
     const ids = this._findEntities();
     const sensors = this._sensors(ids.simulation);
-    const signature = [ids.simulation, ids.panel, ids.testMode, ...sensors.map((s) => s.entity_id)].join(",");
+    const signature = [ids.simulation, ids.panel, ids.testMode, ids.sirenTest, ...sensors.map((s) => s.entity_id)].join(",");
     if (!this._built || signature !== this._signature) {
       this._signature = signature;
       this._ids = ids;
@@ -218,7 +254,8 @@ class HauswachtTestCard extends HTMLElement {
       if (entry.platform !== DOMAIN) continue;
       if (entityId.startsWith("sensor.") && entry.translation_key === "simulation") found.simulation = entityId;
       if (entityId.startsWith("switch.") && entry.translation_key === "test_mode") found.testMode = entityId;
-      if (entityId.startsWith("alarm_control_panel.")) found.panel = entityId;
+      if (entityId.startsWith("alarm_control_panel.") && !found.panel) found.panel = entityId;
+      if (entityId.startsWith("sensor.") && entry.translation_key === "siren_test") found.sirenTest = entityId;
     }
     return found;
   }
@@ -259,6 +296,7 @@ class HauswachtTestCard extends HTMLElement {
 
   _build(sensors) {
     this._built = true;
+    this._sirenKey = null;
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     const root = this.shadowRoot;
     root.innerHTML = "";
@@ -286,6 +324,7 @@ class HauswachtTestCard extends HTMLElement {
       hint.className = "hint";
       hint.textContent = this._t("missing");
       card.appendChild(hint);
+      this._appendSirens(card);
       return;
     }
 
@@ -315,10 +354,134 @@ class HauswachtTestCard extends HTMLElement {
       empty.className = "hint";
       empty.textContent = this._t("empty");
       card.appendChild(empty);
+      this._appendSirens(card);
       return;
     }
     for (const sensor of sensors) card.appendChild(this._row(sensor));
+    this._appendSirens(card);
   }
+
+  // --- Sirenentest: echte Sirene, eingeklappt und nur mit Sicherheitsabfrage ---------------
+
+  _appendSirens(card) {
+    this._sirenBox = null;
+    if (!this._ids.sirenTest) return;
+    const box = document.createElement("details");
+    box.className = "sirens";
+    box.open = Boolean(this._sirenOpen);
+    box.addEventListener("toggle", () => {
+      this._sirenOpen = box.open;
+    });
+    const summary = document.createElement("summary");
+    summary.textContent = this._t("sirenTitle");
+    const body = document.createElement("div");
+    box.append(summary, body);
+    card.appendChild(box);
+    this._sirenBox = body;
+    this._sirenAsk = this._sirenAsk || null; // { siren, step: "confirm" | "heard" }
+  }
+
+  _sirenInfo() {
+    const state = this._ids.sirenTest && this._hass.states[this._ids.sirenTest];
+    return (state && state.attributes) || {};
+  }
+
+  _updateSirens() {
+    const body = this._sirenBox;
+    if (!body) return;
+    const info = this._sirenInfo();
+    const sirens = Array.isArray(info.sirens) ? info.sirens : [];
+    const key = JSON.stringify([info, this._sirenAsk]);
+    if (key === this._sirenKey) return;
+    this._sirenKey = key;
+    body.innerHTML = "";
+    const warn = document.createElement("div");
+    warn.className = "hint on";
+    warn.textContent = this._t("sirenWarn");
+    body.appendChild(warn);
+    if (info.blocked) {
+      const blocked = document.createElement("div");
+      blocked.className = "hint";
+      blocked.textContent = (this._t("sirenBlocked") || {})[info.blocked] || info.blocked;
+      body.appendChild(blocked);
+    }
+    if (!sirens.length) {
+      const none = document.createElement("div");
+      none.className = "hint";
+      none.textContent = this._t("sirenNone");
+      body.appendChild(none);
+      return;
+    }
+    for (const unit of sirens) {
+      const row = document.createElement("div");
+      row.className = "row";
+      const text = document.createElement("div");
+      text.className = "info";
+      const name = document.createElement("div");
+      name.className = "name";
+      name.textContent = unit.name || unit.entity_id;
+      const last = document.createElement("div");
+      last.className = "state";
+      const mark = unit.heard === true ? " ✅" : unit.heard === false ? " ❌" : "";
+      last.textContent = unit.last_test
+        ? `${this._t("sirenLast")} ${new Date(unit.last_test).toLocaleString(this._hass.language)}${mark}`
+        : this._t("sirenNever");
+      text.append(name, last);
+      const actions = document.createElement("div");
+      actions.className = "seg";
+      const ask = this._sirenAsk && this._sirenAsk.siren === unit.entity_id ? this._sirenAsk : null;
+      const button = (label, handler, primary) => {
+        const b = document.createElement("button");
+        b.textContent = label;
+        if (primary) b.className = "primary";
+        b.addEventListener("click", handler);
+        actions.appendChild(b);
+        return b;
+      };
+      if (info.running === unit.entity_id) {
+        button(this._t("sirenStop"), () => this._call(DOMAIN, "siren_test_stop", { entity_id: this._ids.panel }), true);
+      } else if (ask && ask.step === "confirm") {
+        last.textContent = this._t("sirenConfirm");
+        button(this._t("sirenYesStart"), () => {
+          this._sirenAsk = { siren: unit.entity_id, step: "heard" };
+          this._sirenKey = null;
+          this._call(DOMAIN, "siren_test", { entity_id: this._ids.panel, siren: unit.entity_id }, () => {
+            this._sirenAsk = null; // abgelehnt (z. B. Testmodus): keine Rückfrage
+            this._sirenKey = null;
+            this._updateSirens();
+          });
+        }, true);
+        button(this._t("sirenCancel"), () => {
+          this._sirenAsk = null;
+          this._sirenKey = null;
+          this._updateSirens();
+        });
+      } else if (ask && ask.step === "heard") {
+        last.textContent = this._t("sirenHeard");
+        const answer = (heard) => () => {
+          this._sirenAsk = null;
+          this._sirenKey = null;
+          this._call(DOMAIN, "siren_test_result", {
+            entity_id: this._ids.panel,
+            siren: unit.entity_id,
+            heard,
+          });
+        };
+        button(this._t("yes"), answer(true), true);
+        button(this._t("no"), answer(false));
+      } else {
+        const start = button(this._t("sirenTest"), () => {
+          this._sirenAsk = { siren: unit.entity_id, step: "confirm" };
+          this._sirenKey = null;
+          this._updateSirens();
+        });
+        start.disabled = Boolean(info.blocked) || Boolean(this._sirenAsk);
+      }
+      row.append(text, actions);
+      body.appendChild(row);
+    }
+  }
+
 
   _row(sensor) {
     const row = document.createElement("div");
@@ -457,8 +620,9 @@ class HauswachtTestCard extends HTMLElement {
     return Boolean(sim && sim.attributes.test_mode);
   }
 
-  _call(domain, service, data) {
+  _call(domain, service, data, onError) {
     this._hass.callService(domain, service, data).catch((err) => {
+      if (onError) onError();
       this.dispatchEvent(
         new CustomEvent("hass-notification", {
           detail: { message: (err && err.message) || String(err) },
@@ -472,6 +636,7 @@ class HauswachtTestCard extends HTMLElement {
   _update() {
     if (!this._hass || !this._ids) return;
     this._updatePhase();
+    this._updateSirens();
     if (!this._hint) return;
     const testMode = this._testMode();
     this._hint.textContent = testMode ? this._t("testOn") : this._t("testOff");
