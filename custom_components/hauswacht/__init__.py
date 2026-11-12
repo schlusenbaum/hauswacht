@@ -39,6 +39,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
         await area.async_start()
         entry.async_on_unload(area.async_stop)
     entry.runtime_data = runtime
+    # Hauswacht-Gerät zuerst anlegen: Geräte weiterer Bereiche verweisen per ID darauf
+    from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
+
+    from .entity import main_device_info  # noqa: PLC0415
+
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id, **main_device_info(entry)
+    )
+    runtime.device_id = device.id
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     _async_remove_stale_areas(hass, entry)

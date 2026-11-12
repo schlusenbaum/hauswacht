@@ -13,6 +13,19 @@ from .runtime import HauswachtConfigEntry, HauswachtRuntime
 DOCS_URL = "https://github.com/schlusenbaum/hauswacht/blob/main/docs/installation.md"
 
 
+def main_device_info(entry: HauswachtConfigEntry) -> DeviceInfo:
+    """Das Hauswacht-Gerät (Hauptbereich); weitere Bereiche hängen darunter."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, entry.entry_id)},
+        name=NAME,
+        manufacturer="Hauswacht",
+        model="Einbruchmeldeanlage",
+        entry_type=DeviceEntryType.SERVICE,
+        # Auf der Geräteseite: Link zur Anleitung (erklärt alle Entitäten)
+        configuration_url=DOCS_URL,
+    )
+
+
 class HauswachtEntity(Entity):
     """Basis: gehört zum Hauptbereich oder – mit ``runtime`` – zu einem weiteren Bereich.
 
@@ -30,15 +43,7 @@ class HauswachtEntity(Entity):
         area_id = self.runtime.area_id
         if area_id == MAIN_AREA:
             self._attr_unique_id = f"{entry.entry_id}_{key}"
-            self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, entry.entry_id)},
-                name=NAME,
-                manufacturer="Hauswacht",
-                model="Einbruchmeldeanlage",
-                entry_type=DeviceEntryType.SERVICE,
-                # Auf der Geräteseite: Link zur Anleitung (erklärt alle Entitäten)
-                configuration_url=DOCS_URL,
-            )
+            self._attr_device_info = main_device_info(entry)
         else:
             self._attr_unique_id = f"{entry.entry_id}_{area_id}_{key}"
             self._attr_device_info = DeviceInfo(
@@ -47,7 +52,8 @@ class HauswachtEntity(Entity):
                 manufacturer="Hauswacht",
                 model="Bereich",
                 entry_type=DeviceEntryType.SERVICE,
-                via_device=(DOMAIN, entry.entry_id),
+                # Registriert in async_setup_entry, bevor die Plattformen laden
+                via_device_id=entry.runtime_data.device_id,
                 configuration_url=DOCS_URL,
             )
 

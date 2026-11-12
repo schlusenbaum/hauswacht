@@ -7,102 +7,110 @@
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
 [![CI](https://github.com/schlusenbaum/hauswacht/actions/workflows/ci.yml/badge.svg)](https://github.com/schlusenbaum/hauswacht/actions/workflows/ci.yml)
 
-**Profilbasierte Einbruchmeldeanlage für Home Assistant** – frei konfigurierbare Alarmprofile,
-Sensor- und Sirenenauswahl pro Profil, strikte Trennung vom Brandalarm und ein technisch
-gesperrter Testmodus.
+**Einbruchmeldeanlage für Home Assistant** – frei definierbare Alarmprofile, Auslöseregeln wie
+„Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
+und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.32.3 – Entwicklungsversion.**
-> Alle Grundfunktionen sind enthalten: Meldergruppen, Alarmprofile, Auslöseregeln („Tür, dann Keller“), Benutzer und PINs (auch Gäste und
-> Bedrohungs-PIN), Bereiche (z. B. Haus und Garage getrennt scharf), Benachrichtigungen pro Ereignis mit Knöpfen und eigenen Texten, Sprachausgabe über Lautsprecher (z. B. Echo), Überwachung von Funknetz und
-> Gateways, Testmodus mit Testkarte und Sirenen. Die **Sirenenansteuerung ist standardmäßig
-> gesperrt** und muss bewusst freigegeben werden. Siehe [Installation](docs/installation.md) und
-> [Roadmap](docs/roadmap.md).
+> **Status: 0.33.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
+> Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst freigegeben werden.
 
-## Ziele
+<p align="center">
+  <img src="https://raw.githubusercontent.com/schlusenbaum/hauswacht/main/docs/images/test-karte.png" alt="Karte Hauswacht Test" width="420">
+  <img src="https://raw.githubusercontent.com/schlusenbaum/hauswacht/main/docs/images/einstellungen-karte.png" alt="Karte Hauswacht Einstellungen" width="380">
+</p>
 
-- **Profile statt fester Modi:** beliebig viele, frei benannte Profile mit eigenem Symbol.
-  Jedes Profil legt Sensoren, Verzögerungen und Alarmreaktionen selbst fest und kann einem
-  Knopf des Home-Assistant-Bedienfelds zugeordnet werden.
-- **Datengetrieben:** Neue Profile, Sensoren und Reaktionen sind Konfiguration, kein Code.
-- **Eine maßgebliche Zustandsmaschine:** Kein Geflecht aus Automationen, die sich gegenseitig
-  beeinflussen.
-- **Brandalarm hat immer Vorrang:** Hauswacht schaltet niemals eine Sirene ab, solange ein
-  Rauchmelder Brand meldet oder sein Zustand unklar ist.
-- **Sicherer Testmodus:** Im Testmodus können keine echten Sirenen ausgelöst werden – technisch
-  erzwungen, nicht nur angezeigt.
-- **Ehrlich bei Störungen:** Nicht verfügbare Sensoren und Infrastrukturausfälle (MQTT,
-  Zigbee2MQTT, Bluetooth) werden sichtbar gemacht statt verschwiegen.
-- **Nach Neustart unscharf:** Ein früherer Alarm wird nie unkontrolliert wieder aufgenommen.
+## Was Hauswacht kann
 
-## Wichtiger Hinweis
+- **Alarmprofile statt fester Modi** – „Zuhause“, „Nacht“, „Urlaub“ … beliebig viele, jedes mit
+  eigenen Meldergruppen, Verzögerungen, Sirenen und Empfängern. Automatisch scharf nach Uhrzeit
+  oder wenn alle weg sind.
+- **Auslöseregeln** – Alarm erst bei einer Abfolge („Tür, dann Keller innerhalb von 2 Minuten“),
+  mit Ausnahmen und Bedingungen; im Assistenten oder als YAML.
+- **Bereiche** – Haus und Garage unabhängig scharf, mit eigenem Bedienfeld und „Alle Bereiche“.
+- **Benutzer und Ausweise** – PIN und beliebig viele RFID-Karten je Person, Rechte je Bereich,
+  Gäste mit Gültigkeit, Bedrohungs-PIN mit stillem Notruf, Sperre gegen Durchprobieren.
+- **Bedienteile** – Zigbee-Keypads über Zigbee2MQTT mit Rückmeldung am Gerät, Karten direkt am
+  Keypad anlernen, NFC-Aufkleber mit der Home-Assistant-App, RFID-Leser.
+- **Benachrichtigungen** – pro Ereignis mit eigenen Empfängern und Texten, wichtige Hinweise
+  durchbrechen „Nicht stören“, Knöpfe „Unscharf schalten“ und „Trotzdem scharf“ in der
+  Push-Nachricht, Ansagen über Lautsprecher (z. B. Echo).
+- **Sirenen mit Verstand** – angesteuert nur nach ihren Fähigkeiten, nie mit Brandton, nie
+  während eines Brandes; Sirenentest einzeln, kurz und leise.
+- **Ehrlich bei Störungen** – ausgefallene Melder, Funkstille und Ausfälle von Zigbee2MQTT oder
+  MQTT werden sichtbar statt verschwiegen.
+- **Testmodus und Testkarte** – alles gefahrlos durchspielen, ohne Sirene, ohne dass andere
+  Automationen etwas merken.
+- **Beobachten statt raten** – Heimkehr- und Funkstille-Beobachtung liefern Zahlen, bevor man
+  etwas automatisiert.
 
-Hauswacht ist ein Hobbyprojekt und **kein zertifiziertes Sicherheitssystem** (keine VdS- oder
-EN-50131-Zertifizierung). Es ersetzt weder eine professionelle Einbruchmeldeanlage noch
-geprüfte Rauchwarnmelder. Die Rauchmelder behalten ihre eigenständige Brandmeldefunktion.
+## Schnellstart
 
-## Geräte und Kompatibilität
+1. **HACS** → ⋮ → Benutzerdefinierte Repositories → `https://github.com/schlusenbaum/hauswacht`
+   (Typ Integration) → Hauswacht herunterladen → Home Assistant neu starten.
+2. Einstellungen → Geräte & Dienste → **Integration hinzufügen → Hauswacht**.
+3. **Konfigurieren:** eine Meldergruppe mit den Tür- und Fensterkontakten anlegen, ein
+   Alarmprofil (z. B. „Nacht“) anlegen, das Handy als Empfänger eintragen.
+4. Karte **„Hauswacht Test“** aufs Dashboard, Testmodus an, durchspielen.
+5. Testmodus aus – fertig. Sirenen erst freigeben, wenn alles passt.
 
-> **Getestet ist bisher nur ein Sirenenmodell:** Rauchwarnmelder **Develco SMSZB-120**
-> („Smoke detector with siren“) über **Zigbee2MQTT**. Auch damit ist der echte Sirenentest
-> noch offen (geplant für 0.23.0); bis dahin ist nur die Logik mit nachgebildeten Geräten
-> geprüft.
-
-**Sensoren** (Tür-, Fenster-, Bewegungs- und Präsenzmelder, Sabotagekontakte) sind
-herstellerunabhängig: Hauswacht nutzt jeden `binary_sensor` mit passender Geräteklasse.
-
-**Sirenen** sind Home-Assistant-Entitäten der Domain `siren`, auch reine Innen- oder
-Außensirenen ohne Rauchmelder. Hauswacht liest vor jedem Alarm, was eine Sirene kann
-(`supported_features`, `available_tones`), und sendet nur das:
-
-| Fähigkeit der Sirene | Verhalten |
-|---|---|
-| Tonauswahl mit Einbruchton | Gewählter Ton; fehlt er, ein anderer Einbruchton (`burglar`, `emergency`, `police_panic`, `emergency_panic`) – **nie ein Brandton** |
-| Tonauswahl nur mit Brandtönen | Sirene wird für Einbruch **nicht** verwendet |
-| Keine Tonauswahl | Einfache Sirene: ohne Tonangabe. **Rauchmelder** ohne Tonauswahl werden nicht verwendet, weil ihr Standardton meist der Brandton ist |
-| Lautstärke, Dauer | Nur gesendet, wenn unterstützt |
-| Nur Ein und Aus | Hauswacht schaltet sie nach der Reaktionszeit und beim Unscharfschalten selbst aus |
-| Weder Dauer noch Ausschalten | Sirene wird nicht verwendet – Hauswacht könnte sie nicht beenden |
-| Höchstdauer (`number.<sirene>_max_duration`, Zigbee2MQTT) | Dauer wird darauf begrenzt; fehlt sie, gelten 240 Sekunden |
-| Brandsensor am selben Gerät | Gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt immer |
-
-Warum eine Sirene nicht angesteuert wurde, steht nach jedem Alarm im Attribut
-`last_siren_decision` am Bedienfeld. Andere Modelle als das getestete vorher mit Testmodus und
-Simulation prüfen und die Sirene dann bei Anwesenheit einmal bewusst auslösen. Rückmeldungen
-zu weiteren Modellen sind willkommen.
+Ausführlich: [Installation und erste Schritte](docs/installation.md).
 
 ## Dokumentation
 
-| Dokument | Inhalt |
+| | |
 |---|---|
-| [docs/installation.md](docs/installation.md) | Installation, Einstellungen, Bedienung |
-| [docs/dashboard.md](docs/dashboard.md) | Beispielkarte und nützliche Entitäten |
-| [docs/architecture.md](docs/architecture.md) | Gesamtarchitektur und Module |
-| [docs/state-model.md](docs/state-model.md) | Zustände, Ereignisse, Übergänge |
-| [docs/safety.md](docs/safety.md) | Sicherheitsregeln für Sirenen und Brandalarm |
-| [docs/testing.md](docs/testing.md) | Teststrategie und Testliste |
-| [docs/roadmap.md](docs/roadmap.md) | Meilensteine und Versionsplanung |
-| [docs/adr/](docs/adr/) | Architekturentscheidungen mit Begründung |
+| [Installation und erste Schritte](docs/installation.md) | Installation, Menü, die ersten fünf Schritte |
+| [Melder und Meldergruppen](docs/melder.md) | Welche Sensoren, Typen, immer aktiv, Funkstille |
+| [Alarmprofile und Bereiche](docs/profile.md) | Profile, Automatik, Scharf durch Türschließen, Bereiche |
+| [Auslöseregeln](docs/ausloeseregeln.md) | Abfolgen, Ausnahmen, Bedingungen, YAML |
+| [Bedienung und Dashboard](docs/dashboard.md) | Scharf/unscharf, Alarm beenden, Karten |
+| [Benutzer, PINs und Sperre](docs/benutzer.md) | Benutzer, Rechte, PIN-Regeln, Bedrohungs-PIN |
+| [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser |
+| [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Sirenentest, Brandschutz |
+| [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
+| [Testmodus](docs/testmodus.md) · [Beobachtungen](docs/beobachtung.md) · [Referenz](docs/referenz.md) · [Fehlersuche](docs/fehlersuche.md) | |
+
+Alles auf einen Blick: [docs/](docs/README.md).
 
 ## Voraussetzungen
 
-- Home Assistant 2026.10 oder neuer
-- Installation über HACS (benutzerdefiniertes Repository)
-- Keine weiteren Abhängigkeiten von Drittanbieter-Integrationen
+- Home Assistant **2026.10** oder neuer
+- Melder mit offen/zu (Tür-, Fenster-, Bewegungsmelder …) – herstellerunabhängig
+- Optional: Sirenen (`siren`), Home-Assistant-App, Zigbee2MQTT für Keypads
+- Keine Cloud, keine weiteren Integrationen nötig
 
-## Entwicklung
+## Sicherheit
+
+- **Brandalarm hat immer Vorrang:** Solange ein Rauchmelder Brand meldet oder sein Zustand unklar
+  ist, schaltet Hauswacht keine Sirene ein und keine aus.
+- **Testmodus sperrt Sirenen technisch**, nicht nur in der Anzeige. Die Sirenenfreigabe ist nach
+  der Installation aus.
+- **Nach einem Neustart unscharf** – ein früherer Alarm wird nie unkontrolliert wieder
+  aufgenommen.
+- **Hauswacht schaltet keine Geräte** außer Sirenen und der Anzeige eingerichteter Keypads – ein
+  Test stellt das sicher.
+
+Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
+
+> **Hinweis:** Hauswacht ist ein Hobbyprojekt und **kein zertifiziertes Sicherheitssystem**
+> (keine VdS- oder EN-50131-Zertifizierung). Es ersetzt weder eine professionelle
+> Einbruchmeldeanlage noch geprüfte Rauchwarnmelder.
+
+## Mitmachen
+
+Fehler und Wünsche gern als [Issue](https://github.com/schlusenbaum/hauswacht/issues) –
+Rückmeldungen zu weiteren Sirenen- und Keypad-Modellen sind besonders willkommen.
 
 ```bash
 pip install ruff mypy pytest
-ruff check . && ruff format --check .
-mypy
-pytest tests/core
+ruff check . && ruff format --check . && mypy && pytest tests/core
 
 # Integrationstests (installiert Home Assistant als Testumgebung)
 pip install pytest-homeassistant-custom-component
 pytest tests/integration -o asyncio_mode=auto
 ```
 
-Kein Test braucht echte Geräte. Die Kerntests laufen sogar ohne Home Assistant.
+Kein Test braucht echte Geräte. Mehr unter [Entwicklung](docs/README.md#für-entwickler).
 
 ## Unterstützen
 

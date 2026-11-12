@@ -6,6 +6,30 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-11-12
+
+### Dokumentation
+- **Neu gegliedert:** Statt einer langen Anleitung jetzt einzelne Seiten unter `docs/` –
+  Installation, Melder, Alarmprofile und Bereiche, Auslöseregeln, Bedienung und Dashboard,
+  Benutzer und PINs, Bedienteile, Sirenen, Benachrichtigungen, Testmodus, Beobachtungen,
+  Referenz (alle Entitäten, Attribute, Aktionen, Ereignisse) und **Fehlersuche**.
+- **README** neu: Überblick, Funktionen, Schnellstart, Sicherheit; mit Bildern der Karten.
+- Entwicklerdoku nach `docs/entwicklung/` verschoben, ADR-Übersicht, Roadmap gestrafft.
+- Neue Seite **Bedienteile** mit Karten anlernen, Zufallsnummern, Reihenfolge am Keypad.
+- Test prüft, dass alle Links und Anker in der Doku stimmen.
+
+### Hinzugefügt
+- Issue-Vorlagen für Fehler und Wünsche (mit Hinweis, keine persönlichen Daten zu posten).
+
+### Geändert
+- Karten: „Zonen“ heißen auch dort „Meldergruppen“; die Testkarte verlinkt auf die Seite
+  Testmodus.
+- Geräte weiterer Bereiche hängen über `via_device_id` am Hauswacht-Gerät (die alte Angabe
+  `via_device` entfällt ab Home Assistant 2027.8).
+
+### Entfernt
+- Ungenutzter Code im Sirenentest.
+
 ## [0.32.3] - 2026-11-12
 
 ### Geändert

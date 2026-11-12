@@ -1,7 +1,7 @@
 """Siren Executor – die EINZIGE Stelle in Hauswacht, die Sirenen-Dienste aufruft.
 
 Jeder Befehl geht vorher durch den Sirenen-Guard (core/siren_guard.py). Der Guard sperrt
-Sirenen im Testmodus, ohne Hardware-Freigabe und bei Brand (siehe docs/safety.md).
+Sirenen im Testmodus, ohne Hardware-Freigabe und bei Brand (siehe docs/entwicklung/safety.md).
 Gerätewerte wie die Höchstdauer werden nur gelesen, nie geschrieben.
 """
 

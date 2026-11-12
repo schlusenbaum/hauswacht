@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Dokumentation
+    url: https://github.com/schlusenbaum/hauswacht/blob/main/docs/README.md
+    about: Einrichtung, Bedienung und Fehlersuche
