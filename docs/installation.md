@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.29.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.30.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -1001,7 +1001,7 @@ Allgemein:
 | Rechte gelten für | nur bei mehreren Bereichen: **alle Bereiche gleich** (die Häkchen gelten überall) oder **je Bereich einzeln** – dann folgt eine Seite, auf der du für jeden Bereich wählst: scharf, unscharf, Alarm beenden. Ein Bereich ohne Auswahl ist für den Benutzer gesperrt. Eine frühere Beschränkung auf Bereiche wird dabei übernommen |
 | Home-Assistant-Konto | ordnet Push-Knopf und Dashboard-Knöpfe diesem Benutzer zu (mit seinen Rechten). Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit ist der PIN gesperrt |
-| RFID-Karten/-Anhänger | IDs durch Komma getrennt; gelten an Keypads (statt PIN) und an RFID-Lesern, siehe [Bedienteile](#bedienteile-keypads-nfc-aufkleber-rfid-leser) |
+| RFID-Karten/-Anhänger | beliebig viele je Benutzer; gelten an Keypads und an RFID-Lesern, siehe [Bedienteile](#bedienteile-keypads-nfc-aufkleber-rfid-leser). **Unabhängig vom PIN:** Ein Benutzer braucht keinen PIN, um mit seiner Karte am Keypad zu schalten, und Karten machen das Bedienfeld nicht PIN-pflichtig. **Anlernen:** neue Karte einmal an ein Keypad oder einen Leser halten (wird abgelehnt) – sie erscheint dann hier als „neu“ zur Auswahl. Codes mit 4–8 Ziffern könnten PINs sein und werden nie angezeigt; solche Karten-IDs bitte eintippen |
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben. Dann steht dort
   „gemeinsamer PIN (Christian, Petra)“. Eine Aktion ist erlaubt, wenn **mindestens einer**

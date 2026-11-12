@@ -11,9 +11,11 @@ from custom_components.hauswacht.core.controls import (
     TagAction,
     keypad_for_topic,
     keypad_mode,
+    looks_like_card,
     normalize_tag,
     parse_controls,
     reader_for,
+    remember_card,
     second_factor_ok,
     sticker_for,
     tag_intent,
@@ -95,3 +97,22 @@ def test_user_tags() -> None:
     assert [u.name for u in match.blocked] == ["Ben"]
     assert not match_tag("", users, now=0).ok
     assert tag_conflicts(users) == {"04A1B2": ["Anna", "Ben"]}
+
+
+def test_pins_never_look_like_cards() -> None:
+    for pin in ("1234", "13579", "12345678"):
+        assert not looks_like_card(pin)
+    assert looks_like_card("123456789")  # 9 Ziffern: kein PIN möglich
+    assert looks_like_card("04:A1:B2")
+    assert not looks_like_card("")
+
+
+def test_remember_card_newest_first_and_limited() -> None:
+    seen: dict[str, tuple[str, float]] = {}
+    for i in range(12):
+        seen = remember_card(seen, f"CARD{i:02d}", "Keypad", float(i))
+    assert len(seen) == 10
+    assert next(iter(seen)) == "CARD11"
+    seen = remember_card(seen, "card05", "Leser", 99.0)
+    assert next(iter(seen)) == "CARD05"
+    assert seen["CARD05"] == ("Leser", 99.0)

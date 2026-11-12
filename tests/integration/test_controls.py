@@ -228,3 +228,57 @@ async def test_options_add_keypad(hass: HomeAssistant, mqtt_mock: MqttMockHAClie
     stored = entry.options["controls"]["keypad_flur"]
     assert stored["topic"] == TOPIC
     assert stored["buttons"] == {"arm_night_zones": "night"}
+
+
+async def _setup_without_pin(hass: HomeAssistant) -> Any:
+    options = {
+        "users": {"niklas": {"name": "Niklas", "tags": [CARD, "0011223344"]}},
+        "controls": _controls(),
+    }
+    entry = make_entry(options)
+    await setup_entry(hass, entry)
+    return entry
+
+
+async def test_card_works_without_any_pin(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    await _setup_without_pin(hass)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["code_format"] is None  # Dashboard bleibt ohne PIN
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _press(hass, "disarm", None, 1)  # ohne Karte: abgelehnt
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert {"mode": "invalid_code", "transaction": 1} in _sent(mqtt_mock)
+    await _press(hass, "disarm", "00-11-22-33-44", 2)  # zweite Karte von Niklas
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["changed_by"] == "Niklas (Keypad Flur)"
+
+
+async def test_unknown_card_offered_in_user_form(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    entry = await _setup_without_pin(hass)
+    await _press(hass, "disarm", "a1b2c3d4e5", 1)  # neue Karte
+    await _press(hass, "disarm", "1234", 2)  # falscher PIN: wird nie angezeigt
+    assert list(entry.runtime_data.controls.unknown_cards) == ["A1B2C3D4E5"]
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "users", "user_edit"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "niklas"})
+    key = next(k for k in flow["data_schema"].schema if str(k) == "tags")
+    offered = [o["value"] for o in flow["data_schema"].schema[key].config["options"]]
+    assert offered == [CARD, "0011223344", "A1B2C3D4E5"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Niklas", "tags": [CARD, "0011223344", "A1B2C3D4E5"]}
+    )
+    assert flow["type"] == "menu"
+    assert entry.options["users"]["niklas"]["tags"] == [CARD, "0011223344", "A1B2C3D4E5"]
+    assert "pin_digest" not in entry.options["users"]["niklas"]

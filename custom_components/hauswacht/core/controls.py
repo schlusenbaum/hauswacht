@@ -101,6 +101,29 @@ def _enum(cls: type[StrEnum], value: Any, default: StrEnum) -> Any:
         return default
 
 
+def looks_like_card(code: Any) -> bool:
+    """Karten-ID statt PIN? PINs haben 4–8 Ziffern – alles andere ist sicher kein PIN.
+
+    Nur solche Codes merkt sich Hauswacht als "unbekannte Karte" zum Anlernen; ein falsch
+    eingetippter PIN wird so nie angezeigt.
+    """
+    tag = normalize_tag(code)
+    return bool(tag) and (len(tag) > 8 or not tag.isdigit())
+
+
+UNKNOWN_CARDS_KEPT = 10
+
+
+def remember_card(
+    seen: dict[str, tuple[str, float]], tag: str, source: str, now: float
+) -> dict[str, tuple[str, float]]:
+    """Zuletzt gelesene unbekannte Karten (ID -> (Bedienteil, Zeitpunkt)), neueste zuerst."""
+    tag = normalize_tag(tag)
+    rest = {k: v for k, v in seen.items() if k != tag}
+    newest = {tag: (source, now), **rest}
+    return dict(list(newest.items())[:UNKNOWN_CARDS_KEPT])
+
+
 def parse_controls(options: Mapping[str, Any]) -> dict[str, Control]:
     raw = options.get("controls", {})
     result: dict[str, Control] = {}

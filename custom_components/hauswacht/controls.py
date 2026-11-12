@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.util import dt as dt_util
 
 from .const import EVENT_HAUSWACHT
 from .core.alarm_states import panel_value
@@ -33,8 +34,11 @@ from .core.controls import (
     PendingLogin,
     keypad_for_topic,
     keypad_mode,
+    looks_like_card,
+    normalize_tag,
     parse_controls,
     reader_for,
+    remember_card,
     second_factor_ok,
     sticker_for,
     tag_intent,
@@ -62,6 +66,8 @@ class ControlManager:
         self._transactions: dict[str, Any] = {}
         self._pending: dict[str, PendingLogin] = {}
         self._shown: dict[str, str] = {}
+        # Zuletzt gelesene unbekannte Karten (zum Anlernen beim Benutzer): ID -> (wo, wann)
+        self.unknown_cards: dict[str, tuple[str, float]] = {}
 
     # --- Start/Stopp ----------------------------------------------------------
 
@@ -161,6 +167,12 @@ class ControlManager:
         try:
             identity = await self.runtime.async_identify(code, action)
         except HomeAssistantError:
+            if looks_like_card(code) and not any(
+                normalize_tag(code) in u.tags for u in self.runtime.users
+            ):
+                self.unknown_cards = remember_card(
+                    self.unknown_cards, code, control.name, dt_util.utcnow().timestamp()
+                )
             return None
         if control.login is not Login.CARD_AND_PIN or identity.duress:
             return identity
