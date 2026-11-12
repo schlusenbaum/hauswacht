@@ -14,7 +14,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from .sensor_types import default_role_for
+from .sensor_types import TYPE_ROLE, default_type
 from .state_machine import Readiness, SensorRole
 
 TRIGGER_STATE = "on"
@@ -67,7 +67,7 @@ class SensorSnapshot:
 
 
 def slugify(name: str, existing: Iterable[str] = ()) -> str:
-    """Erzeugt eine stabile, eindeutige ID aus einem Namen ("Außenhaut" -> "aussenhaut")."""
+    """Erzeugt eine stabile, eindeutige ID aus einem Namen ("Außen" -> "aussen")."""
     text = name.strip().lower().replace("ß", "ss")
     for umlaut, repl in (("ä", "ae"), ("ö", "oe"), ("ü", "ue")):
         text = text.replace(umlaut, repl)
@@ -173,11 +173,7 @@ def default_role(device_class: str | None) -> SensorRole:
 def sensor_role(
     entity_id: str, device_class: str | None, overrides: Mapping[str, SensorRole]
 ) -> SensorRole:
-    return (
-        overrides.get(entity_id)
-        or default_role_for(entity_id, device_class)
-        or default_role(device_class)
-    )
+    return overrides.get(entity_id) or TYPE_ROLE[default_type(entity_id, device_class)]
 
 
 # --- Bereitschaft und Auslösung ---------------------------------------------

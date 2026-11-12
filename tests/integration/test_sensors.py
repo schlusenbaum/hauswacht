@@ -271,8 +271,8 @@ async def test_label_change_does_not_drop_armed_sensor(hass: HomeAssistant) -> N
 # --- Rollen-Ausnahmen -------------------------------------------------------
 
 
-async def test_role_override_makes_window_delayed(hass: HomeAssistant) -> None:
-    await setup_entry(hass, make_entry({"sensor_roles": {WINDOW: "entry"}}))
+async def test_type_door_makes_window_delayed(hass: HomeAssistant) -> None:
+    await setup_entry(hass, make_entry({"sensor_types": {WINDOW: "door"}}))
     await _arm_night(hass)
     await _sensor(hass, WINDOW, "on")
     assert _state(hass) == AlarmControlPanelState.PENDING
@@ -298,15 +298,17 @@ async def test_options_flow_add_zone_and_assign(hass: HomeAssistant) -> None:
         flow["flow_id"], {"name": "Leer", "entities": []}
     )
     assert flow["errors"] == {"base": "zone_empty"}
-    # Ein Sensor darf nur in einer Zone sein: das Küchenfenster steckt schon in "Außenhaut"
+    # Ein Sensor darf nur in einer Zone sein: das Küchenfenster steckt schon in "Außen"
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"name": "Obergeschoss", "entities": [WINDOW, OG_WINDOW]}
     )
     assert flow["errors"] == {"base": "zone_overlap"}
-    assert "Außenhaut" in flow["description_placeholders"]["conflicts"]
+    assert "Außen" in flow["description_placeholders"]["conflicts"]
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"name": "Obergeschoss", "entities": [OG_WINDOW]}
     )
+    assert flow["step_id"] == "zone_types"
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {})
     assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert entry.options["zones"]["obergeschoss"]["entities"] == [OG_WINDOW]
@@ -333,6 +335,8 @@ async def test_options_flow_edit_zone_keeps_own_sensors(hass: HomeAssistant) -> 
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"name": "Keller", "entities": [MOTION]}
     )
+    assert flow["step_id"] == "zone_types"
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {})
     assert flow["type"] is FlowResultType.MENU
 
 
@@ -353,27 +357,7 @@ async def test_options_flow_delete_zone_removes_it_from_profiles(hass: HomeAssis
     assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
     assert "keller" not in entry.options["zones"]
-    assert entry.options["profiles"]["night"]["zones"] == ["aussenhaut"]
-
-
-async def test_options_flow_role_override(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "system"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "sensor_behaviour"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"stale_after_hours": 0, "entity": WINDOW}
-    )
-    assert flow["step_id"] == "sensor_detail"
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"role": "entry"})
-    assert flow["type"] is FlowResultType.MENU
-    await hass.async_block_till_done()
-    assert entry.options["sensor_roles"] == {WINDOW: "entry"}
+    assert entry.options["profiles"]["night"]["zones"] == ["aussen"]
 
 
 async def test_options_flow_monitoring(hass: HomeAssistant) -> None:
@@ -492,8 +476,8 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
     assert flow["menu_options"][-1] == "triggering"
 
 
-async def test_sensor_behaviour_keeps_roles_without_entity(hass: HomeAssistant) -> None:
-    entry = make_entry({"sensor_roles": {WINDOW: "entry"}})
+async def test_sensor_behaviour_keeps_types(hass: HomeAssistant) -> None:
+    entry = make_entry({"sensor_types": {WINDOW: "door"}})
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     for step in ("system", "sensor_behaviour"):
@@ -505,7 +489,7 @@ async def test_sensor_behaviour_keeps_roles_without_entity(hass: HomeAssistant) 
     )
     assert flow["type"] is FlowResultType.MENU
     await hass.async_block_till_done()
-    assert entry.options["sensor_roles"] == {WINDOW: "entry"}
+    assert entry.options["sensor_types"] == {WINDOW: "door"}
     assert entry.options["stale_after_hours"] == 12
 
 

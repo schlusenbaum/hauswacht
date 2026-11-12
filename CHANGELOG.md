@@ -6,6 +6,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-12
+
+### Hinzugefügt
+- **Melder-Typen** (Tür, Fenster, Bewegung, Manipulation, Technik, Sonstiges): nach dem Speichern
+  einer Meldergruppe zeigt Hauswacht alle Melder mit vorgeschlagenem Typ, direkt dort änderbar.
+- **Technik-Melder** (Wasser, Gas, Frost …) sind automatisch immer aktiv, nie Teil der
+  Scharfschaltung und lösen keinen Einbruchalarm aus.
+- **Ausgenommene Melder** im Alarmprofil; das Profil zeigt, welche Melder scharf werden.
+- Assistent **„Melder aus anderem Sensor erstellen“**: legt aus einem Messwert einen
+  Schwellenwert-Helfer (mit Hysterese) an und setzt ihn gleich als Melder ein.
+
+### Geändert
+- Nur noch Melder mit „offen/zu“: Binärsensoren, Schlösser und Abdeckungen. Messwerte,
+  Ereignisse, Helfer und Schalter aus 0.24.0 entfallen (Umweg über Home-Assistant-Helfer).
+- „Sensorverhalten“ heißt jetzt „Funkstille von Sensoren“; Rollen-Ausnahmen werden zu Typen
+  (automatische Übernahme).
+- Beispiele und Doku: „Außen“ statt „Außenhaut“.
+
+### Entfernt
+- Kamerabild in der Alarm-Nachricht und „Alarmbilder speichern“ (kommt später neu konzipiert).
+
 ## [0.24.0] - 2026-11-11
 
 ### Hinzugefügt

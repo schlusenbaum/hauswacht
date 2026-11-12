@@ -35,8 +35,8 @@ from custom_components.hauswacht.core.state_machine import (
 
 OPTIONS = {
     "zones": {
-        "aussenhaut": {
-            "name": "Außenhaut",
+        "aussen": {
+            "name": "Außen",
             "entities": ["binary_sensor.haustuer", "binary_sensor.kuechenfenster"],
             "label": "label_aussen",
         },
@@ -52,7 +52,7 @@ LABELS = {"label_aussen": frozenset({"binary_sensor.hintertuer"})}
 @pytest.mark.parametrize(
     ("name", "expected"),
     [
-        ("Außenhaut", "aussenhaut"),
+        ("Außen", "aussen"),
         ("Keller / Süd", "keller_sued"),
         ("  ", "zone"),
         ("Ñandú", "nandu"),
@@ -68,9 +68,9 @@ def test_slugify_avoids_duplicates() -> None:
 
 def test_parse_zones() -> None:
     zones = parse_zones(OPTIONS)
-    assert set(zones) == {"aussenhaut", "keller"}
-    assert zones["aussenhaut"].name == "Außenhaut"
-    assert zones["aussenhaut"].label == "label_aussen"
+    assert set(zones) == {"aussen", "keller"}
+    assert zones["aussen"].name == "Außen"
+    assert zones["aussen"].label == "label_aussen"
     assert zones["keller"].label is None
 
 
@@ -90,7 +90,7 @@ def test_parse_role_overrides_ignores_invalid_roles() -> None:
 
 
 def test_zone_combines_direct_entities_and_label() -> None:
-    zone = parse_zones(OPTIONS)["aussenhaut"]
+    zone = parse_zones(OPTIONS)["aussen"]
     assert resolve_zone(zone, LABELS) == {
         "binary_sensor.haustuer",
         "binary_sensor.kuechenfenster",
@@ -110,7 +110,7 @@ def test_label_only_zone() -> None:
 
 def test_resolve_multiple_zones_and_unknown_zone() -> None:
     zones = parse_zones(OPTIONS)
-    members = resolve_zones(["aussenhaut", "keller", "gibt_es_nicht"], zones, LABELS)
+    members = resolve_zones(["aussen", "keller", "gibt_es_nicht"], zones, LABELS)
     assert len(members) == 4
 
 
@@ -233,7 +233,7 @@ def test_profile_behaviour_from_options() -> None:
     options = {
         "profiles": {
             "away": {
-                "zones": ["aussenhaut", "keller"],
+                "zones": ["aussen", "keller"],
                 "open_policy": "confirm",
                 "unavailable_policy": "confirm",
                 "max_alarm_cycles": 5,
@@ -242,7 +242,7 @@ def test_profile_behaviour_from_options() -> None:
         }
     }
     behaviour = profile_behaviour(options, "away")
-    assert behaviour.zones == ("aussenhaut", "keller")
+    assert behaviour.zones == ("aussen", "keller")
     assert behaviour.open_policy is OpenSensorPolicy.CONFIRM
     assert behaviour.max_alarm_cycles == 5
     away = build_profiles(options)["away"]
@@ -342,7 +342,7 @@ def test_is_last_seen_entity(kwargs: dict[str, str | None], expected: bool) -> N
 
 def test_zone_conflicts_direct_and_label() -> None:
     zones = {
-        "aussen": Zone("aussen", "Außenhaut", frozenset({"binary_sensor.tuer"}), "lbl"),
+        "aussen": Zone("aussen", "Außen", frozenset({"binary_sensor.tuer"}), "lbl"),
         "innen": Zone("innen", "Innen", frozenset({"binary_sensor.bwm"})),
     }
     labels = {"lbl": frozenset({"binary_sensor.fenster"})}
@@ -351,7 +351,7 @@ def test_zone_conflicts_direct_and_label() -> None:
     )
     assert zone_conflicts(new, zones, labels) == {
         "binary_sensor.bwm": "Innen",
-        "binary_sensor.fenster": "Außenhaut",
+        "binary_sensor.fenster": "Außen",
     }
     # Die eigene Zone zählt nicht
     assert zone_conflicts(zones["aussen"], zones, labels) == {}

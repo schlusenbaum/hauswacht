@@ -257,7 +257,7 @@ async def test_migration_turns_old_pin_into_user(hass: HomeAssistant) -> None:
         domain=old.domain, title=old.title, data={}, options=dict(old.options), version=2
     )
     await setup_entry(hass, entry)
-    assert entry.version == 4
+    assert entry.version == 5
     assert "pin_salt" not in entry.options
     assert entry.options["users"]["hauptbenutzer"]["name"] == "Hauptbenutzer"
     state = hass.states.get(PANEL)
@@ -285,7 +285,7 @@ async def test_options_flow_profile_timings(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.MENU
     away = entry.options["profiles"]["away"]
     assert (away["exit_delay"], away["entry_delay"], away["reaction_time"]) == (5, 20, 120)
-    assert away["zones"] == ["aussenhaut", "keller"]  # bisherige Zonen bleiben erhalten
+    assert away["zones"] == ["aussen", "keller"]  # bisherige Zonen bleiben erhalten
 
 
 async def test_options_flow_blocked_while_armed(hass: HomeAssistant) -> None:

@@ -93,8 +93,8 @@ def test_reaction_time_zero_falls_back() -> None:
 
 def test_migration_creates_former_fixed_profiles() -> None:
     old = {
-        "zones": {"aussenhaut": {"name": "Außenhaut", "entities": ["binary_sensor.t"]}},
-        "profiles": {"night": {"zones": ["aussenhaut"], "entry_delay": 15}},
+        "zones": {"aussen": {"name": "Außen", "entities": ["binary_sensor.t"]}},
+        "profiles": {"night": {"zones": ["aussen"], "entry_delay": 15}},
         "pin_salt": "aa",
     }
     new = migrate_v1_options(old)
@@ -102,7 +102,7 @@ def test_migration_creates_former_fixed_profiles() -> None:
     night = new["profiles"]["night"]
     assert night["name"] == "Nacht"
     assert night["panel_mode"] == "night"
-    assert night["zones"] == ["aussenhaut"]
+    assert night["zones"] == ["aussen"]
     assert night["entry_delay"] == 15  # geänderter Wert bleibt
     assert new["profiles"]["away"]["exit_delay"] == 60  # alter Standard festgeschrieben
     assert new["pin_salt"] == "aa"  # andere Optionen bleiben unverändert

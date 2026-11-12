@@ -37,7 +37,7 @@
       },
       "profile_settings": {
         "title": "Alarmprofil {profile}",
-        "description": "Name, Symbol und optional ein Knopf am Bedienfeld. Jeder Knopf kann nur einem Profil zugeordnet sein; Profile ohne Knopf schaltest du über die Auswahlliste „Profil“ und die Knöpfe „Scharf schalten“ scharf.",
+        "description": "Name, Symbol und optional ein Knopf am Bedienfeld. Jeder Knopf kann nur einem Profil zugeordnet sein; Profile ohne Knopf schaltest du über die Auswahlliste „Profil“ und die Knöpfe „Scharf schalten“ scharf.\n\n**Scharf werden derzeit:** {armed}",
         "data": {
           "name": "Name",
           "icon": "Symbol",
@@ -59,8 +59,7 @@
           "rules": "Auslöseregeln",
           "area": "Bereich",
           "speakers": "Zusätzliche Lautsprecher",
-          "camera": "Kamera für das Alarmbild",
-          "save_snapshots": "Alarmbilder speichern"
+          "excluded": "Ausgenommene Melder"
         },
         "sections": {
           "automation": {
@@ -94,8 +93,7 @@
           "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.",
           "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei.",
           "speakers": "Für Alarm, Eingangsverzögerung und „Alarm beendet“ dieses Profils statt der Standard-Lautsprecher.",
-          "camera": "Ihr aktuelles Bild hängt an der Alarm-Nachricht und der Nachricht zur Eingangsverzögerung (Home-Assistant-App). Eine Kamera am auslösenden Melder hat Vorrang.",
-          "save_snapshots": "Bei Alarm 3 Bilder im Abstand von 2 s unter Medien → hauswacht speichern (Kamera des Melders oder des Profils)."
+          "excluded": "Melder aus den gewählten Meldergruppen, die in diesem Profil **nicht** einzeln auslösen (z. B. der Bewegungsmelder im Flur in „Nacht“). In Auslöseregeln zählen sie weiter."
         }
       },
       "zones": {
@@ -106,11 +104,11 @@
           "zone_delete": "Meldergruppe löschen",
           "triggering": "← Zurück"
         },
-        "description": "{saved}Eine **Meldergruppe** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außenhaut**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Meldergruppen scharf sind: „Zuhause“ = nur Außenhaut, „Abwesend“ = Außenhaut und Innen.\n\nJeder Sensor gehört zu **genau einer** Meldergruppe. Nur Sensoren in einer Meldergruppe überwacht Hauswacht."
+        "description": "{saved}Eine **Meldergruppe** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außen**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Meldergruppen scharf sind: „Zuhause“ = nur Außen, „Abwesend“ = Außen und Innen.\n\nJeder Sensor gehört zu **genau einer** Meldergruppe. Nur Sensoren in einer Meldergruppe überwacht Hauswacht."
       },
       "zone_add": {
         "title": "Meldergruppe anlegen",
-        "description": "Wähle alle Sensoren, die zu dieser Meldergruppe gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter Systemeinstellungen → Sensorverhalten.\n\nJeder Sensor kann nur in **einer** Meldergruppe sein.",
+        "description": "Wähle alle Sensoren, die zu dieser Meldergruppe gehören. Melder: Binärsensoren, Schlösser und Abdeckungen. Nach dem Speichern zeigt Hauswacht alle Melder mit ihrem **Typ** (Tür, Fenster, Bewegung …) – dort lässt er sich ändern.\n\nJeder Sensor kann nur in **einer** Meldergruppe sein.",
         "data": {
           "name": "Name der Meldergruppe (z. B. Türen, Fenster, Keller)",
           "entities": "Sensoren dieser Meldergruppe",
@@ -129,7 +127,7 @@
       },
       "zone_edit_settings": {
         "title": "Meldergruppe {zone}",
-        "description": "Wähle alle Sensoren, die zu dieser Meldergruppe gehören. Wie ein Sensor auslöst (Tür mit Eingangsverzögerung, Fenster sofort, Bewegung, Manipulation), erkennt Hauswacht an der Geräteklasse – Ausnahmen unter Systemeinstellungen → Sensorverhalten.\n\nJeder Sensor kann nur in **einer** Meldergruppe sein.",
+        "description": "Wähle alle Sensoren, die zu dieser Meldergruppe gehören. Melder: Binärsensoren, Schlösser und Abdeckungen. Nach dem Speichern zeigt Hauswacht alle Melder mit ihrem **Typ** (Tür, Fenster, Bewegung …) – dort lässt er sich ändern.\n\nJeder Sensor kann nur in **einer** Meldergruppe sein.",
         "data": {
           "name": "Name der Meldergruppe (z. B. Türen, Fenster, Keller)",
           "entities": "Sensoren dieser Meldergruppe",
@@ -243,7 +241,7 @@
         "menu_options": {
           "areas": "Bereiche (z. B. Haus, Garage, Gartenhaus)",
           "users": "Benutzer und PINs",
-          "sensor_behaviour": "Sensorverhalten – Rollen und Funkstille",
+          "sensor_behaviour": "Funkstille von Sensoren",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Heimkehr-Beobachtung",
           "init": "← Zurück"
@@ -251,11 +249,10 @@
         "description": "{saved}"
       },
       "sensor_behaviour": {
-        "title": "Sensorverhalten",
-        "description": "**Funkstille:** Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen. Ereignisse, Helfer und Schalter sind davon ausgenommen.\n\n**Melder bearbeiten:** Einen Melder wählen, um Rolle, Schwellwert (bei Messwerten) und Kamera für das Alarmbild festzulegen. Standardrollen: Tür, Schloss, Tor = Eingang (mit Eingangsverzögerung), Fenster und alles andere = sofort, Bewegung/Präsenz = Mitläufer (verzögert nur, wenn schon eine Eingangsverzögerung läuft), Manipulation = immer gemeldet.\n\nAktuelle Einstellungen: {overrides}",
+        "title": "Funkstille von Sensoren",
+        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.",
         "data": {
-          "stale_after_hours": "Maximale Funkstille",
-          "entity": "Melder bearbeiten (optional)"
+          "stale_after_hours": "Maximale Funkstille"
         }
       },
       "rules": {
@@ -334,6 +331,7 @@
           "zones": "Meldergruppen – welche Melder zusammengehören",
           "rules": "Auslöseregeln – Abfolgen von Meldern",
           "always_active": "Immer aktiv – Melder, die auch unscharf auslösen",
+          "helper_create": "Melder aus anderem Sensor erstellen (z. B. Temperatur → Frostwarnung)",
           "init": "← Zurück"
         }
       },
@@ -597,14 +595,21 @@
           "text": "Text"
         }
       },
-      "sensor_detail": {
-        "title": "Melder: {sensor}",
-        "description": "Aktueller Zustand: {state} {unit}\n\n**Rolle:** „Automatisch“ = nach Art und Geräteklasse.\n\n**Schwellwert** (nur Messwerte, z. B. Erschütterung oder Leistung): Der Melder löst aus, wenn der Wert **über** „Auslösen über“ oder **unter** „Auslösen unter“ liegt. Ohne Schwellwert löst ein Messwert nie aus.\n\n**Kamera:** Ihr aktuelles Bild hängt an der Alarm-Nachricht, wenn dieser Melder auslöst (hat Vorrang vor der Kamera des Alarmprofils).",
+      "zone_types": {
+        "title": "Melder und ihre Typen",
+        "description": "Der Typ legt fest, **wie** ein Melder reagiert. Vorgeschlagen wird er aus der Geräteklasse; ändern nur, wenn es nicht passt (z. B. ein Fenster, durch das man das Haus betritt, als **Tür**).\n\n- **Tür:** Eingangsverzögerung, kann Ausgangstür für „Scharf durch Schließen“ sein\n- **Fenster:** sofort Alarm\n- **Bewegung:** wartet während der Eingangsverzögerung, sonst sofort\n- **Manipulation:** wird immer gemeldet, auch unscharf\n- **Technik (Wasser, Gas, Frost …):** immer aktiv, auch unscharf – nie Teil der Scharfschaltung, standardmäßig nur Benachrichtigung\n- **Sonstiges:** sofort Alarm (sicherheitshalber)"
+      },
+      "helper_create": {
+        "title": "Melder aus anderem Sensor erstellen",
+        "description": "Macht aus einem Messwert (z. B. Temperatur, Feuchte, Leistung) einen Melder: Hauswacht legt dafür einen **Schwellenwert-Helfer** in Home Assistant an (danach unter Einstellungen → Geräte & Dienste → Helfer, dort änderbar und löschbar) und setzt ihn gleich als Melder ein.\n\n- **Oberer Grenzwert:** löst aus, wenn der Wert darüber liegt\n- **Unterer Grenzwert:** löst aus, wenn der Wert darunter liegt\n- **Hysterese:** Abstand, ab dem wieder „normal“ gilt – verhindert ständiges Hin und Her (z. B. 1 bei Temperatur)\n\nEs wird nur ein neuer Helfer angelegt; Bestehendes bleibt unverändert.",
         "data": {
-          "role": "Rolle",
-          "above": "Auslösen über",
-          "below": "Auslösen unter",
-          "camera": "Kamera für das Alarmbild"
+          "source": "Messwert",
+          "name": "Name des neuen Melders",
+          "upper": "Oberer Grenzwert",
+          "lower": "Unterer Grenzwert",
+          "hysteresis": "Hysterese",
+          "type": "Typ",
+          "target": "Einsetzen in"
         }
       }
     },
@@ -630,7 +635,10 @@
       "area_name_required": "Bitte einen Namen angeben.",
       "area_name_taken": "Diesen Namen hat bereits ein anderer Bereich.",
       "invalid_template": "Text fehlerhaft",
-      "threshold_range": "„Auslösen unter“ muss kleiner sein als „Auslösen über“ (oder nur eines angeben)."
+      "excluded_not_in_groups": "Ausgenommene Melder müssen aus den gewählten Meldergruppen stammen.",
+      "helper_no_limit": "Bitte einen oberen und/oder unteren Grenzwert angeben.",
+      "helper_range": "Der untere Grenzwert muss kleiner sein als der obere.",
+      "helper_failed": "Der Helfer konnte nicht angelegt werden (siehe Protokoll)."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -653,15 +661,6 @@
       "options": {
         "refuse": "Scharfschalten verweigern",
         "confirm": "Nach Bestätigung erlauben"
-      }
-    },
-    "role": {
-      "options": {
-        "auto": "Automatisch (Geräteklasse)",
-        "entry": "Eingang (verzögert)",
-        "instant": "Sofort",
-        "follower": "Mitläufer",
-        "tamper_24h": "Manipulation (24 h)"
       }
     },
     "siren_tone": {
@@ -746,6 +745,16 @@
       "options": {
         "announce": "Durchsage (mit Gong)",
         "speak": "Sprechen"
+      }
+    },
+    "sensor_type": {
+      "options": {
+        "door": "Tür – Eingangsverzögerung",
+        "window": "Fenster – sofort",
+        "motion": "Bewegung – wartet während Eingangsverzögerung",
+        "tamper": "Manipulation – immer gemeldet",
+        "technical": "Technik (Wasser, Gas, Frost …) – immer aktiv",
+        "other": "Sonstiges – sofort"
       }
     }
   },
