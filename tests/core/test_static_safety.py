@@ -127,22 +127,23 @@ def test_only_siren_and_notify_services(path: Path) -> None:
     """Hauswacht ruft keine anderen Dienste auf – also schaltet und schreibt es keine Geräte
     (z. B. keine number-Dienste, die die Höchstdauer der Rauchmelder ändern könnten)."""
     calls = _service_call_domains(ast.parse(path.read_text(encoding="utf-8")))
-    allowed = set(ALLOWED_SERVICE_DOMAINS)
-    if path.name == "camera_snapshots.py":
-        allowed.add("camera")  # nur camera.snapshot, siehe nächster Test
-    bad = [(line, domain) for line, domain in calls if domain not in allowed]
+    bad = [(line, domain) for line, domain in calls if domain not in ALLOWED_SERVICE_DOMAINS]
     assert not bad, f"{path.name}: unerlaubte Dienstaufrufe {bad}"
 
 
-def test_camera_module_only_takes_snapshots() -> None:
-    """Alarmbilder: ausschließlich camera.snapshot (liest ein Bild, schaltet nichts)."""
-    tree = ast.parse((SOURCE_ROOT / "camera_snapshots.py").read_text(encoding="utf-8"))
-    services = []
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == "async_call"
-        ):
-            services.append(tuple(getattr(a, "value", None) for a in node.args[:2]))
-    assert services == [("camera", "snapshot")]
+def test_only_threshold_helpers_are_created() -> None:
+    """Der Helfer-Assistent legt ausschließlich Schwellenwert-Helfer an."""
+    text = (SOURCE_ROOT / "config_flow.py").read_text(encoding="utf-8")
+    tree = ast.parse(text)
+    inits = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "async_init"
+    ]
+    assert len(inits) == 1
+    first = inits[0].args[0]
+    assert isinstance(first, ast.Name)
+    assert first.id == "THRESHOLD_DOMAIN"
+    assert 'THRESHOLD_DOMAIN = "threshold"' in text

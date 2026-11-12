@@ -37,7 +37,7 @@
       },
       "profile_settings": {
         "title": "Alarm profile {profile}",
-        "description": "Name, icon and optionally a button on the alarm panel. Each button can belong to one profile only; profiles without a button are armed via the \"Profile\" select and the \"Arm\" buttons.",
+        "description": "Name, icon and optionally a button on the alarm panel. Each button can belong to one profile only; profiles without a button are armed via the \"Profile\" select and the \"Arm\" buttons.\n\n**Currently armed:** {armed}",
         "data": {
           "name": "Name",
           "icon": "Icon",
@@ -59,8 +59,7 @@
           "rules": "Trigger rules",
           "area": "Area",
           "speakers": "Additional speakers",
-          "camera": "Camera for the alarm image",
-          "save_snapshots": "Save alarm images"
+          "excluded": "Excluded sensors"
         },
         "sections": {
           "automation": {
@@ -94,8 +93,7 @@
           "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again.",
           "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area.",
           "speakers": "For alarm, entry delay and “alarm ended” of this profile instead of the default speakers.",
-          "camera": "Its current image is attached to the alarm message and the entry-delay message (Home Assistant app). A camera on the triggering sensor takes precedence.",
-          "save_snapshots": "On alarm, save 3 images 2 s apart under Media → hauswacht (camera of the sensor or of the profile)."
+          "excluded": "Sensors from the selected groups that do **not** trigger on their own in this profile (e.g. the hallway motion sensor in “Night”). They still count in trigger rules."
         }
       },
       "zones": {
@@ -110,7 +108,7 @@
       },
       "zone_add": {
         "title": "Add sensor group",
-        "description": "Select all sensors that belong to this sensor group. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under System settings → Sensor behaviour.\n\nEach sensor can only be in **one** sensor group.",
+        "description": "Select all sensors that belong to this sensor group. Sensors: binary sensors, locks and covers. After saving, Hauswacht shows every sensor with its **type** (door, window, motion …) – change it there.\n\nEach sensor can only be in **one** sensor group.",
         "data": {
           "name": "Sensor group name (e.g. Doors, Windows, Basement)",
           "entities": "Sensors in this sensor group",
@@ -129,7 +127,7 @@
       },
       "zone_edit_settings": {
         "title": "Sensor group {zone}",
-        "description": "Select all sensors that belong to this sensor group. How a sensor triggers (door with entry delay, window instantly, motion, tamper) is derived from its device class – exceptions under System settings → Sensor behaviour.\n\nEach sensor can only be in **one** sensor group.",
+        "description": "Select all sensors that belong to this sensor group. Sensors: binary sensors, locks and covers. After saving, Hauswacht shows every sensor with its **type** (door, window, motion …) – change it there.\n\nEach sensor can only be in **one** sensor group.",
         "data": {
           "name": "Sensor group name (e.g. Doors, Windows, Basement)",
           "entities": "Sensors in this sensor group",
@@ -243,7 +241,7 @@
         "menu_options": {
           "areas": "Areas (e.g. house, garage, garden shed)",
           "users": "Users and PINs",
-          "sensor_behaviour": "Sensor behaviour – roles and radio silence",
+          "sensor_behaviour": "Sensor radio silence",
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Homecoming observation",
           "init": "← Back"
@@ -251,11 +249,10 @@
         "description": "{saved}"
       },
       "sensor_behaviour": {
-        "title": "Sensor behaviour",
-        "description": "**Radio silence:** if a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously. Events, helpers and switches are exempt.\n\n**Edit a sensor:** choose a sensor to set its role, threshold (for measurements) and camera for the alarm image. Default roles: door, lock, gate = entry (with entry delay), window and everything else = instant, motion/presence = follower (only delays if an entry delay is already running), tamper = always reported.\n\nCurrent settings: {overrides}",
+        "title": "Sensor radio silence",
+        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.",
         "data": {
-          "stale_after_hours": "Maximum radio silence",
-          "entity": "Edit sensor (optional)"
+          "stale_after_hours": "Maximum radio silence"
         }
       },
       "rules": {
@@ -334,6 +331,7 @@
           "zones": "Sensor groups – which sensors belong together",
           "rules": "Trigger rules – sequences of sensors",
           "always_active": "Always active – sensors that trigger even when disarmed",
+          "helper_create": "Create a sensor from another sensor (e.g. temperature → frost warning)",
           "init": "← Back"
         }
       },
@@ -597,14 +595,21 @@
           "text": "Text"
         }
       },
-      "sensor_detail": {
-        "title": "Sensor: {sensor}",
-        "description": "Current state: {state} {unit}\n\n**Role:** “Automatic” = by type and device class.\n\n**Threshold** (measurements only, e.g. vibration or power): the sensor triggers when the value is **above** “Trigger above” or **below** “Trigger below”. Without a threshold a measurement never triggers.\n\n**Camera:** its current image is attached to the alarm message when this sensor triggers (takes precedence over the profile's camera).",
+      "zone_types": {
+        "title": "Sensors and their types",
+        "description": "The type decides **how** a sensor reacts. It is proposed from the device class; only change it if it does not fit (e.g. a window used to enter the house as **Door**).\n\n- **Door:** entry delay, can be an exit door for “arm on close”\n- **Window:** instant alarm\n- **Motion:** waits during the entry delay, otherwise instant\n- **Tamper:** always reported, even disarmed\n- **Technical (water, gas, frost …):** always active, even disarmed – never part of arming, notification only by default\n- **Other:** instant alarm (to be safe)"
+      },
+      "helper_create": {
+        "title": "Create a sensor from another sensor",
+        "description": "Turns a measurement (e.g. temperature, humidity, power) into a sensor: Hauswacht creates a **threshold helper** in Home Assistant (afterwards under Settings → Devices & services → Helpers, editable and deletable there) and uses it right away.\n\n- **Upper limit:** triggers when the value is above\n- **Lower limit:** triggers when the value is below\n- **Hysteresis:** margin before it counts as normal again – prevents flapping (e.g. 1 for temperature)\n\nOnly a new helper is created; nothing existing is changed.",
         "data": {
-          "role": "Role",
-          "above": "Trigger above",
-          "below": "Trigger below",
-          "camera": "Camera for the alarm image"
+          "source": "Measurement",
+          "name": "Name of the new sensor",
+          "upper": "Upper limit",
+          "lower": "Lower limit",
+          "hysteresis": "Hysteresis",
+          "type": "Type",
+          "target": "Use in"
         }
       }
     },
@@ -630,7 +635,10 @@
       "area_name_required": "Please enter a name.",
       "area_name_taken": "Another area already has this name.",
       "invalid_template": "Invalid text",
-      "threshold_range": "“Trigger below” must be lower than “Trigger above” (or set only one)."
+      "excluded_not_in_groups": "Excluded sensors must come from the selected sensor groups.",
+      "helper_no_limit": "Please enter an upper and/or lower limit.",
+      "helper_range": "The lower limit must be below the upper limit.",
+      "helper_failed": "The helper could not be created (see log)."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -653,15 +661,6 @@
       "options": {
         "refuse": "Refuse arming",
         "confirm": "Allow after confirmation"
-      }
-    },
-    "role": {
-      "options": {
-        "auto": "Automatic (device class)",
-        "entry": "Entry (delayed)",
-        "instant": "Instant",
-        "follower": "Follower",
-        "tamper_24h": "Tamper (24 h)"
       }
     },
     "siren_tone": {
@@ -746,6 +745,16 @@
       "options": {
         "announce": "Announcement (with chime)",
         "speak": "Speak"
+      }
+    },
+    "sensor_type": {
+      "options": {
+        "door": "Door – entry delay",
+        "window": "Window – instant",
+        "motion": "Motion – waits during entry delay",
+        "tamper": "Tamper – always reported",
+        "technical": "Technical (water, gas, frost …) – always active",
+        "other": "Other – instant"
       }
     }
   },

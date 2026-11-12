@@ -201,4 +201,4 @@ async def test_options_flow_saves_automation(hass: HomeAssistant) -> None:
     assert night["auto_arm_time"] == "22:45:00"
     assert night["auto_weekdays"] == ["fri", "sat"]
     assert night["auto_away_delay"] == 20
-    assert night["zones"] == ["aussenhaut", "keller"]
+    assert night["zones"] == ["aussen", "keller"]

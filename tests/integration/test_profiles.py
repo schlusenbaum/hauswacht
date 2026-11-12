@@ -23,7 +23,7 @@ SELECT = "select.hauswacht_profile"
 ARM = "button.hauswacht_arm"
 ARM_ANYWAY = "button.hauswacht_arm_anyway"
 
-ZONES = {"aussenhaut": {"name": "Außenhaut", "entities": [DOOR, WINDOW], "label": None}}
+ZONES = {"aussen": {"name": "Außen", "entities": [DOOR, WINDOW], "label": None}}
 
 
 async def _service(hass: HomeAssistant, domain: str, service: str, **data: Any) -> None:
@@ -69,12 +69,12 @@ async def test_migration_from_fixed_profiles(hass: HomeAssistant) -> None:
         title="Hauswacht",
         data={},
         version=1,
-        options={"zones": ZONES, "profiles": {"night": {"zones": ["aussenhaut"]}}},
+        options={"zones": ZONES, "profiles": {"night": {"zones": ["aussen"]}}},
     )
     old.add_to_hass(hass)
     assert await hass.config_entries.async_setup(old.entry_id)
     await hass.async_block_till_done()
-    assert old.version == 4
+    assert old.version == 5
     assert list(old.options["profiles"]) == ["home", "night", "away", "vacation", "custom"]
     assert old.options["profiles"]["night"]["name"] == "Nacht"
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
@@ -92,7 +92,7 @@ async def test_profile_without_button(hass: HomeAssistant) -> None:
                 "name": "Garten",
                 "icon": "mdi:flower",
                 "exit_delay": 0,
-                "zones": ["aussenhaut"],
+                "zones": ["aussen"],
             },
         },
     }
@@ -114,7 +114,7 @@ async def test_only_assigned_buttons_are_offered(hass: HomeAssistant) -> None:
                 "name": "Nacht EG",
                 "panel_mode": "night",
                 "exit_delay": 0,
-                "zones": ["aussenhaut"],
+                "zones": ["aussen"],
             },
         },
     }
@@ -173,7 +173,7 @@ async def test_options_flow_add_profile(hass: HomeAssistant) -> None:
             "name": "Nacht EG",
             "icon": "mdi:weather-night",
             "panel_mode": "night",
-            "zones": ["aussenhaut"],
+            "zones": ["aussen"],
         },
     )
     assert flow["type"] is FlowResultType.MENU
@@ -181,7 +181,7 @@ async def test_options_flow_add_profile(hass: HomeAssistant) -> None:
     profile = entry.options["profiles"]["nacht_eg"]
     assert profile["name"] == "Nacht EG"
     assert profile["panel_mode"] == "night"
-    assert profile["zones"] == ["aussenhaut"]
+    assert profile["zones"] == ["aussen"]
 
 
 async def test_options_flow_rejects_duplicate_name_and_button(hass: HomeAssistant) -> None:

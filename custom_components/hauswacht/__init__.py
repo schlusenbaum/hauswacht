@@ -90,9 +90,10 @@ async def async_remove_config_entry_device(
 
 async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
     """Version 1 (feste Profile) -> 2 (frei definierbare Profile) -> 3 (PIN als Benutzer)
-    -> 4 (Bestätigung durch zweiten Melder als Regel)."""
+    -> 4 (Bestätigung durch zweiten Melder als Regel) -> 5 (Melder-Typen statt Rollen)."""
     from .core.profiles import migrate_v1_options  # noqa: PLC0415
     from .core.rules import migrate_zone_confirmation  # noqa: PLC0415
+    from .core.sensor_types import migrate_roles_to_types  # noqa: PLC0415
     from .core.users import migrate_legacy_pin  # noqa: PLC0415
 
     if entry.version == 1:
@@ -107,7 +108,11 @@ async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) 
         hass.config_entries.async_update_entry(
             entry, options=migrate_zone_confirmation(entry.options), version=4
         )
-    return entry.version == 4
+    if entry.version == 4:
+        hass.config_entries.async_update_entry(
+            entry, options=migrate_roles_to_types(entry.options), version=5
+        )
+    return entry.version == 5
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:

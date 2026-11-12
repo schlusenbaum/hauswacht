@@ -41,10 +41,6 @@ const TEXT = {
     tamperStates: { on: "Manipulation", off: "OK" },
     lock: ["Entriegelt", "Verriegelt"],
     lockStates: { on: "entriegelt", off: "verriegelt" },
-    event: ["Ereignis", "–"],
-    eventStates: { on: "Ereignis", off: "ruhig" },
-    threshold: ["Über Schwelle", "Normal"],
-    thresholdStates: { on: "Schwelle überschritten", off: "normal" },
     status: {
       disarmed: "",
       monitored: "überwacht",
@@ -95,10 +91,6 @@ const TEXT = {
     tamperStates: { on: "tamper", off: "OK" },
     lock: ["Unlocked", "Locked"],
     lockStates: { on: "unlocked", off: "locked" },
-    event: ["Event", "–"],
-    eventStates: { on: "event", off: "quiet" },
-    threshold: ["Above threshold", "Normal"],
-    thresholdStates: { on: "threshold exceeded", off: "normal" },
     status: {
       disarmed: "",
       monitored: "monitored",
@@ -142,10 +134,6 @@ const ICONS = {
   tamper: "mdi:shield-alert-outline",
   lock: "mdi:lock-outline",
   cover: "mdi:garage-variant",
-  event: "mdi:bell-ring-outline",
-  sensor: "mdi:gauge",
-  input_boolean: "mdi:toggle-switch-outline",
-  switch: "mdi:toggle-switch-outline",
 };
 
 const STYLE = `
@@ -243,8 +231,6 @@ class HauswachtTestCard extends HTMLElement {
 
   _kind(sensor) {
     if (sensor.kind === "lock") return "lock";
-    if (sensor.kind === "event") return "event";
-    if (sensor.kind === "sensor") return "threshold";
     if (sensor.kind === "cover") return "open";
     if (sensor.role === "tamper_24h" || sensor.device_class === "tamper") return "tamper";
     if (MOTION_CLASSES.includes(sensor.device_class)) return "motion";
@@ -260,16 +246,14 @@ class HauswachtTestCard extends HTMLElement {
       motion: "motionStates",
       tamper: "tamperStates",
       lock: "lockStates",
-      event: "eventStates",
-      threshold: "thresholdStates",
     }[kind];
     const map = (specific && this._t(specific)) || {};
     return map[value] || this._t("states")[value] || value;
   }
 
   _rawText(sensor) {
-    // Messwert, Schloss- oder Torzustand zusätzlich zur Bewertung zeigen
-    if (!sensor.raw || ["binary_sensor", "event", "input_boolean", "switch"].includes(sensor.kind)) return "";
+    // Schloss- bzw. Torzustand zusätzlich zur Bewertung zeigen
+    if (!sensor.raw || !["lock", "cover"].includes(sensor.kind)) return "";
     return ` (${sensor.raw})`;
   }
 
@@ -360,15 +344,12 @@ class HauswachtTestCard extends HTMLElement {
     const seg = document.createElement("div");
     seg.className = "seg";
     const buttons = {};
-    const choices = sensor.kind === "event"
-      ? [["on", labels[0]]] // Ereignis: nur eine kurze Auslösung
-      : [
-          ["on", labels[0]],
-          ["off", labels[1]],
-          ["unavailable", this._t("gone")],
-          ["real", this._t("real")],
-        ];
-    for (const [value, label] of choices) {
+    for (const [value, label] of [
+      ["on", labels[0]],
+      ["off", labels[1]],
+      ["unavailable", this._t("gone")],
+      ["real", this._t("real")],
+    ]) {
       const button = document.createElement("button");
       button.textContent = label;
       button.addEventListener("click", () =>

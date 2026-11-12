@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import copy
+import logging
 from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
 from homeassistant.config_entries import (
+    SOURCE_USER,
     ConfigEntry,
     ConfigEntryState,
     ConfigFlow,
@@ -63,16 +65,13 @@ from .const import (
     OPT_REMINDER_DELAY,
     OPT_REMINDER_PERSONS,
     OPT_REMINDER_PROFILE,
-    OPT_SENSOR_CAMERAS,
-    OPT_SENSOR_ROLES,
-    OPT_SENSOR_THRESHOLDS,
+    OPT_SENSOR_TYPES,
     OPT_SIRENS,
     OPT_SIRENS_HARDWARE_ENABLED,
     OPT_SPEECH,
     OPT_STALE_AFTER_HOURS,
     OPT_USERS,
     OPT_ZONES,
-    ROLE_AUTO,
 )
 from .core.always_active import (
     DEFAULT_SETTLE,
@@ -145,13 +144,15 @@ from .core.rules import (
 )
 from .core.sensor_types import (
     MONITORED_DOMAINS,
-    domain_of,
-    parse_cameras,
-    parse_thresholds,
-    profile_camera,
+    SensorType,
+    default_type,
+    excluded_sensors,
+    parse_types,
+    sensor_type,
 )
 from .core.sensors import (
     Zone,
+    all_configured_sensors,
     parse_zones,
     resolve_zones,
     slugify,
@@ -163,14 +164,16 @@ from .core.speech import MODES as SPEECH_MODES
 from .core.speech import Candidate, is_speaker, parse_speech, profile_speakers
 from .core.state_machine import (
     OpenSensorPolicy,
-    SensorRole,
     UnavailableSensorPolicy,
 )
 from .core.users import parse_users, pin_conflicts
 from .names import display_name
-from .runtime import entities_by_label
+from .runtime import device_class_of, entities_by_label
 
 SENSOR_DOMAIN = "binary_sensor"
+THRESHOLD_DOMAIN = "threshold"
+_LOGGER = logging.getLogger(__name__)
+TARGET_ALWAYS = "__always__"
 
 FINDING_TEXTS_DE = {
     "rule_no_steps": "Auslöseregel „{rule}“ hat keinen Schritt mit Meldern.",
@@ -207,7 +210,7 @@ SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 
 class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
-    VERSION = 4
+    VERSION = 5
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
@@ -245,8 +248,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._draft_step = 0
         self._area_id: str | None = None
         self._event: str | None = None
-        self._sensor_entity: str | None = None
-        self._pending_options: dict[str, Any] | None = None
+        self._infos: list[str] = []
+        self._type_fields: dict[str, str] = {}
+        self._pending: dict[str, Any] | None = None
         self._notes: list[str] = []
 
     async def _save(self, options: dict[str, Any], back: str) -> ConfigFlowResult:
@@ -269,6 +273,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         hints, self._hints = self._hints, []
         if hints:
             text += "\n\n" + "\n".join(f"⚠️ {h}" for h in hints)
+        infos, self._infos = self._infos, []
+        if infos:
+            text += "\n\n" + "\n".join(f"ℹ️ {i}" for i in infos)
         notes, self._notes = self._notes, []
         if notes:
             label = "Vorschau" if self._german() else "Preview"
@@ -280,6 +287,30 @@ class HauswachtOptionsFlow(OptionsFlow):
         return texts.get(finding.code, finding.code).format(
             rule=finding.rule, step=finding.step or "", detail=finding.detail
         )
+
+    def _type_of(self, options: Mapping[str, Any], entity_id: str) -> SensorType:
+        return sensor_type(entity_id, device_class_of(self.hass, entity_id), parse_types(options))
+
+    def _profile_armed(self, options: Mapping[str, Any], profile_id: str) -> list[str]:
+        """Melder, die im Profil einzeln auslösen (Gruppen ohne Technik, ohne Ausnahmen)."""
+        sensors = resolve_zones(
+            profile_behaviour(options, profile_id).zones,
+            parse_zones(options),
+            entities_by_label(self.hass),
+        )
+        excluded = excluded_sensors(options, profile_id)
+        return sorted(
+            (
+                display_name(self.hass, e)
+                for e in sensors
+                if e not in excluded and self._type_of(options, e) is not SensorType.TECHNICAL
+            ),
+            key=str.casefold,
+        )
+
+    def _armed_text(self, options: Mapping[str, Any], profile_id: str) -> str:
+        armed = self._profile_armed(options, profile_id)
+        return ", ".join(armed) if armed else "–"
 
     def _profile_hints(self, options: Mapping[str, Any], profile_id: str) -> list[str]:
         """Hinweise zu Regeln, die im Profil nichts bewirken."""
@@ -576,6 +607,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         same_area = [i for i in others if profile_area(options, i.profile_id) == area]
         if mode != PANEL_MODE_NONE and any(i.panel_mode == mode for i in same_area):
             errors["panel_mode"] = "panel_mode_taken"
+        chosen = resolve_zones(
+            user_input.get("zones") or [], parse_zones(options), entities_by_label(self.hass)
+        )
+        if set(user_input.get("excluded") or []) - chosen:
+            errors["excluded"] = "excluded_not_in_groups"
         return errors
 
     async def async_step_profile_settings(
@@ -604,6 +640,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "entry_delay": int(user_input["entry_delay"]),
                         "reaction_time": int(user_input["reaction_time"]),
                         "zones": [z for z in user_input.get("zones", []) if z in zones],
+                        "excluded": sorted(set(user_input.get("excluded") or [])),
                         "rules": [
                             r for r in user_input.get("rules", []) if r in parse_rules(options)
                         ],
@@ -619,8 +656,6 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "silent": bool(user_input["silent"]),
                         "notify": list(user_input.get("notify", [])),
                         "speakers": list(user_input.get("speakers") or []),
-                        "camera": user_input.get("camera") or None,
-                        "save_snapshots": bool(user_input.get("save_snapshots")),
                         **_automation_from_input(user_input.get("automation") or {}),
                         "arm_on_close": _arm_on_close_from_input(
                             user_input.get("arm_on_close") or {}
@@ -630,6 +665,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                 profiles[profile_id] = data
                 options[OPT_PROFILES] = profiles
                 self._hints = self._profile_hints(options, profile_id)
+                armed_label = "Scharf in" if self._german() else "Armed in"
+                self._infos = [f"{armed_label} {name}: {self._armed_text(options, profile_id)}"]
                 return await self._save(options, "profiles")
 
         pid = self._profile_id or ""
@@ -665,6 +702,16 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     "zones", default=[z for z in behaviour.zones if z in zones]
                 ): _zone_selector(zones, multiple=True),
+                vol.Optional(
+                    "excluded", default=sorted(excluded_sensors(options, pid))
+                ): EntitySelector(
+                    EntitySelectorConfig(
+                        include_entities=sorted(
+                            all_configured_sensors(zones, entities_by_label(self.hass))
+                        ),
+                        multiple=True,
+                    )
+                ),
                 vol.Optional(
                     "rules",
                     default=[
@@ -708,13 +755,6 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     "speakers", default=list(profile_speakers(options, pid))
                 ): self._speaker_selector(),
-                vol.Optional(
-                    "camera",
-                    description={"suggested_value": profile_camera(options, pid)[0]},
-                ): EntitySelector(EntitySelectorConfig(domain="camera")),
-                vol.Required(
-                    "save_snapshots", default=profile_camera(options, pid)[1]
-                ): BooleanSelector(),
                 # Kein default am Bereich: Sonst füllt die Oberfläche die Felder darin nicht
                 # vor, und "OK" bleibt ohne Meldung wirkungslos.
                 vol.Optional("automation"): section(
@@ -731,7 +771,10 @@ class HauswachtOptionsFlow(OptionsFlow):
             step_id="profile_settings",
             data_schema=schema,
             errors=errors,
-            description_placeholders={"profile": info.name if info else "–"},
+            description_placeholders={
+                "profile": info.name if info else "–",
+                "armed": self._armed_text(options, pid) if pid else "–",
+            },
         )
 
     # --- Regeln ------------------------------------------------------------
@@ -740,7 +783,126 @@ class HauswachtOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Alarmauslösung: Meldergruppen und Auslöseregeln."""
-        return self._menu("triggering", ["zones", "rules", "always_active", "init"])
+        return self._menu(
+            "triggering", ["zones", "rules", "always_active", "helper_create", "init"]
+        )
+
+    async def async_step_helper_create(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Assistent: aus einem Messwert einen Schwellenwert-Helfer (Binärsensor) anlegen
+        und gleich als Melder einsetzen. Legt nur einen neuen Helfer an, ändert nichts
+        Bestehendes."""
+        options = dict(self.config_entry.options)
+        zones = parse_zones(options)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            upper, lower = user_input.get("upper"), user_input.get("lower")
+            if upper is None and lower is None:
+                errors["base"] = "helper_no_limit"
+            elif upper is not None and lower is not None and float(lower) > float(upper):
+                errors["base"] = "helper_range"
+            if not errors:
+                entity_id = await self._create_threshold_helper(user_input)
+                if entity_id is None:
+                    errors["base"] = "helper_failed"
+                else:
+                    self._place_new_sensor(options, entity_id, user_input)
+                    created = "Angelegt" if self._german() else "Created"
+                    self._infos = [f"{created}: {entity_id}"]
+                    return await self._save(options, "triggering")
+        targets = [TARGET_ALWAYS, *zones]
+        source = user_input or {}
+        schema = vol.Schema(
+            {
+                vol.Required("source", default=source.get("source", vol.UNDEFINED)): (
+                    EntitySelector(EntitySelectorConfig(domain="sensor"))
+                ),
+                vol.Required("name", default=source.get("name", "")): TextSelector(),
+                vol.Optional(
+                    "upper", description={"suggested_value": source.get("upper")}
+                ): NumberSelector(NumberSelectorConfig(mode=NumberSelectorMode.BOX, step="any")),
+                vol.Optional(
+                    "lower", description={"suggested_value": source.get("lower")}
+                ): NumberSelector(NumberSelectorConfig(mode=NumberSelectorMode.BOX, step="any")),
+                vol.Required("hysteresis", default=source.get("hysteresis", 0)): NumberSelector(
+                    NumberSelectorConfig(min=0, mode=NumberSelectorMode.BOX, step="any")
+                ),
+                vol.Required(
+                    "type", default=source.get("type", SensorType.TECHNICAL.value)
+                ): _select([t.value for t in SensorType], "sensor_type"),
+                vol.Required("target", default=source.get("target", TARGET_ALWAYS)): (
+                    SelectSelector(
+                        SelectSelectorConfig(
+                            options=[
+                                SelectOptionDict(
+                                    value=t,
+                                    label=(
+                                        ("Immer aktiv" if self._german() else "Always active")
+                                        if t == TARGET_ALWAYS
+                                        else zones[t].name
+                                    ),
+                                )
+                                for t in targets
+                            ],
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(step_id="helper_create", data_schema=schema, errors=errors)
+
+    async def _create_threshold_helper(self, user_input: Mapping[str, Any]) -> str | None:
+        """Schwellenwert-Helfer über den Home-Assistant-Assistenten anlegen.
+
+        Die Entität wird vorab im Register angelegt, damit ihre ID sofort feststeht.
+        """
+        data: dict[str, Any] = {
+            "name": str(user_input["name"]).strip() or "Hauswacht Schwelle",
+            "entity_id": user_input["source"],
+            "hysteresis": float(user_input.get("hysteresis") or 0),
+        }
+        for key in ("upper", "lower"):
+            if user_input.get(key) is not None:
+                data[key] = float(user_input[key])
+        try:
+            flow = await self.hass.config_entries.flow.async_init(
+                THRESHOLD_DOMAIN, context={"source": SOURCE_USER}
+            )
+            result = await self.hass.config_entries.flow.async_configure(flow["flow_id"], data)
+        except Exception:
+            _LOGGER.exception("Schwellenwert-Helfer konnte nicht angelegt werden")
+            return None
+        entry = result.get("result")
+        if result.get("type") != "create_entry" or entry is None:
+            return None
+        registered = er.async_get(self.hass).async_get_or_create(
+            "binary_sensor",
+            THRESHOLD_DOMAIN,
+            entry.entry_id,
+            suggested_object_id=data["name"],
+            config_entry=entry,
+        )
+        return registered.entity_id
+
+    def _place_new_sensor(
+        self, options: dict[str, Any], entity_id: str, user_input: Mapping[str, Any]
+    ) -> None:
+        """Neuen Melder mit Typ in eine Meldergruppe oder "immer aktiv" eintragen."""
+        types = dict(options.get(OPT_SENSOR_TYPES, {}))
+        types[entity_id] = user_input["type"]
+        options[OPT_SENSOR_TYPES] = types
+        target = user_input["target"]
+        if target == TARGET_ALWAYS:
+            always = dict(options.get("always_active", {}))
+            always["sensors"] = sorted({*always.get("sensors", []), entity_id})
+            options["always_active"] = always
+            return
+        zones = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
+        if target in zones:
+            zones[target]["entities"] = sorted({*zones[target].get("entities", []), entity_id})
+            options[OPT_ZONES] = zones
 
     async def async_step_always_active(
         self, user_input: dict[str, Any] | None = None
@@ -1230,7 +1392,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             options, errors, extra = self._save_zone(None, user_input)
             if options is not None:
-                return await self._save(options, "zones")
+                return await self._zone_types_start(options, user_input)
             placeholders.update(extra)
         return self.async_show_form(
             step_id="zone_add",
@@ -1262,7 +1424,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None and "name" in user_input:
             options, errors, extra = self._save_zone(self._zone_id, user_input)
             if options is not None:
-                return await self._save(options, "zones")
+                return await self._zone_types_start(options, user_input)
             placeholders.update(extra)
         zone = parse_zones(self.config_entry.options)[self._zone_id]
         defaults = user_input or {
@@ -1276,6 +1438,49 @@ class HauswachtOptionsFlow(OptionsFlow):
             errors=errors,
             description_placeholders={"zone": zone.name, **placeholders},
         )
+
+    async def _zone_types_start(
+        self, options: dict[str, Any], user_input: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Nach dem Speichern der Gruppe: Typ jedes Melders zeigen und ändern lassen."""
+        label = user_input.get("label") or None
+        members = set(user_input.get("entities") or [])
+        if label:
+            members |= entities_by_label(self.hass).get(label, frozenset())
+        self._pending = options
+        self._type_fields = {}
+        for entity_id in sorted(members, key=lambda e: display_name(self.hass, e).casefold()):
+            name = display_name(self.hass, entity_id)
+            key = name if name not in self._type_fields else f"{name} ({entity_id})"
+            self._type_fields[key] = entity_id
+        if not self._type_fields:
+            return await self._save(options, "zones")
+        return await self.async_step_zone_types()
+
+    async def async_step_zone_types(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Typ je Melder: Vorschlag aus der Geräteklasse, Abweichungen werden gespeichert."""
+        options = dict(self._pending or self.config_entry.options)
+        stored = {k: v for k, v in options.get(OPT_SENSOR_TYPES, {}).items()}
+        if user_input is not None:
+            for key, entity_id in self._type_fields.items():
+                chosen = user_input.get(key)
+                proposal = default_type(entity_id, device_class_of(self.hass, entity_id))
+                if chosen and chosen != proposal.value:
+                    stored[entity_id] = chosen
+                else:
+                    stored.pop(entity_id, None)
+            options[OPT_SENSOR_TYPES] = stored
+            self._pending = None
+            return await self._save(options, "zones")
+        fields: dict[Any, Any] = {}
+        for key, entity_id in self._type_fields.items():
+            current = self._type_of(options, entity_id)
+            fields[vol.Required(key, default=current.value)] = _select(
+                [t.value for t in SensorType], "sensor_type"
+            )
+        return self.async_show_form(step_id="zone_types", data_schema=vol.Schema(fields))
 
     async def async_step_zone_delete(
         self, user_input: dict[str, Any] | None = None
@@ -1305,34 +1510,11 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def async_step_sensor_behaviour(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Sensorverhalten: Rollen-Ausnahmen und maximale Funkstille in einem Formular."""
+        """Funkstille: wie lange ein Melder schweigen darf. Typen stehen in den Meldergruppen."""
         options = dict(self.config_entry.options)
-        roles = dict(options.get(OPT_SENSOR_ROLES, {}))
         if user_input is not None:
             options[OPT_STALE_AFTER_HOURS] = int(user_input.get(OPT_STALE_AFTER_HOURS) or 0)
-            entity_id = user_input.get("entity")
-            if entity_id:
-                # Zuerst Funkstille übernehmen, dann den Melder im Detail bearbeiten
-                self._pending_options = options
-                self._sensor_entity = entity_id
-                return await self.async_step_sensor_detail()
             return await self._save(options, "system")
-        thresholds = parse_thresholds(options)
-        cameras = parse_cameras(options)
-        details = []
-        for entity_id in sorted(set(roles) | set(thresholds) | set(cameras)):
-            parts = []
-            if entity_id in roles:
-                parts.append(str(roles[entity_id]))
-            if (limit := thresholds.get(entity_id)) is not None:
-                if limit.above is not None:
-                    parts.append(f"> {limit.above:g}")
-                if limit.below is not None:
-                    parts.append(f"< {limit.below:g}")
-            if entity_id in cameras:
-                parts.append(f"📷 {display_name(self.hass, cameras[entity_id])}")
-            details.append(f"{display_name(self.hass, entity_id)}: {', '.join(parts)}")
-        overrides = "; ".join(details) or "–"
         current = stale_after_seconds(options)
         schema = vol.Schema(
             {
@@ -1347,79 +1529,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
-                vol.Optional("entity"): EntitySelector(
-                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS))
-                ),
             }
         )
-        return self.async_show_form(
-            step_id="sensor_behaviour",
-            data_schema=schema,
-            description_placeholders={"overrides": overrides},
-        )
-
-    async def async_step_sensor_detail(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Ein Melder: Rolle, Schwellwert (Messwerte) und Kamera für das Alarmbild."""
-        options = dict(self._pending_options or self.config_entry.options)
-        entity_id = self._sensor_entity or ""
-        roles = dict(options.get(OPT_SENSOR_ROLES, {}))
-        thresholds = {k: dict(v) for k, v in options.get(OPT_SENSOR_THRESHOLDS, {}).items()}
-        cameras = dict(options.get(OPT_SENSOR_CAMERAS, {}))
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            role = user_input.get("role") or ROLE_AUTO
-            if role == ROLE_AUTO:
-                roles.pop(entity_id, None)
-            else:
-                roles[entity_id] = role
-            above, below = user_input.get("above"), user_input.get("below")
-            if above is not None and below is not None and float(below) > float(above):
-                errors["base"] = "threshold_range"
-            if not errors:
-                if above is None and below is None:
-                    thresholds.pop(entity_id, None)
-                else:
-                    thresholds[entity_id] = {
-                        k: float(v)
-                        for k, v in (("above", above), ("below", below))
-                        if v is not None
-                    }
-                if camera := user_input.get("camera"):
-                    cameras[entity_id] = camera
-                else:
-                    cameras.pop(entity_id, None)
-                options[OPT_SENSOR_ROLES] = roles
-                options[OPT_SENSOR_THRESHOLDS] = thresholds
-                options[OPT_SENSOR_CAMERAS] = cameras
-                self._pending_options = None
-                return await self._save(options, "system")
-        current = thresholds.get(entity_id, {})
-        state = self.hass.states.get(entity_id)
-        fields: dict[Any, Any] = {
-            vol.Required("role", default=roles.get(entity_id, ROLE_AUTO)): _select(
-                [ROLE_AUTO, *[r.value for r in SensorRole]], "role"
-            ),
-        }
-        if domain_of(entity_id) == "sensor":
-            for key in ("above", "below"):
-                fields[vol.Optional(key, description={"suggested_value": current.get(key)})] = (
-                    NumberSelector(NumberSelectorConfig(mode=NumberSelectorMode.BOX, step="any"))
-                )
-        fields[vol.Optional("camera", description={"suggested_value": cameras.get(entity_id)})] = (
-            EntitySelector(EntitySelectorConfig(domain="camera"))
-        )
-        return self.async_show_form(
-            step_id="sensor_detail",
-            data_schema=vol.Schema(fields),
-            errors=errors,
-            description_placeholders={
-                "sensor": display_name(self.hass, entity_id),
-                "state": state.state if state else "–",
-                "unit": str(state.attributes.get("unit_of_measurement", "")) if state else "",
-            },
-        )
+        return self.async_show_form(step_id="sensor_behaviour", data_schema=schema)
 
     # --- Sirenen -----------------------------------------------------------
 

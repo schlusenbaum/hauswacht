@@ -25,28 +25,28 @@ DEVICE_CLASSES = {DOOR: "door", WINDOW: "window", MOTION: "occupancy", TAMPER: "
 
 ZONE_OPTIONS: dict[str, Any] = {
     "zones": {
-        "aussenhaut": {"name": "Außenhaut", "entities": [DOOR, WINDOW, TAMPER], "label": None},
+        "aussen": {"name": "Außen", "entities": [DOOR, WINDOW, TAMPER], "label": None},
         "keller": {"name": "Keller", "entities": [MOTION], "label": None},
     },
     "profiles": {
-        "home": {"name": "Zuhause", "panel_mode": "home", "exit_delay": 0, "zones": ["aussenhaut"]},
+        "home": {"name": "Zuhause", "panel_mode": "home", "exit_delay": 0, "zones": ["aussen"]},
         "night": {
             "name": "Nacht",
             "panel_mode": "night",
             "exit_delay": 0,
-            "zones": ["aussenhaut", "keller"],
+            "zones": ["aussen", "keller"],
         },
         "away": {
             "name": "Abwesend",
             "panel_mode": "away",
             "exit_delay": 60,
-            "zones": ["aussenhaut", "keller"],
+            "zones": ["aussen", "keller"],
         },
         "vacation": {
             "name": "Urlaub",
             "panel_mode": "vacation",
             "exit_delay": 60,
-            "zones": ["aussenhaut", "keller"],
+            "zones": ["aussen", "keller"],
         },
         "custom": {
             "name": "Individuell",
@@ -79,7 +79,7 @@ else:
                 merged["profiles"] = profiles
             else:
                 merged[key] = value
-        return MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=merged, version=4)
+        return MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=merged, version=5)
 
     def set_sensor(hass: HomeAssistant, entity_id: str, state: str) -> None:
         hass.states.async_set(entity_id, state, {"device_class": DEVICE_CLASSES.get(entity_id)})

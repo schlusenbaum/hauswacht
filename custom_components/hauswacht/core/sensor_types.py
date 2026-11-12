@@ -1,26 +1,30 @@
-"""Weitere Sensorarten als Melder: Zustände auf "on"/"off" abbilden.
+"""Melderarten und Melder-Typen.
 
-Rein und ohne Home Assistant. Hauswacht rechnet intern nur mit "on" (offen/ausgelöst) und
-"off" (zu/ruhig); alles andere (``unavailable``, ``unknown``, fehlt) gilt als nicht verfügbar.
-Diese Abbildung passiert an einer Stelle, bevor Zustände bewertet werden.
+Rein und ohne Home Assistant.
 
-| Art | "on" (löst aus) | Standardrolle |
-|---|---|---|
-| ``binary_sensor`` | ``on`` | nach Geräteklasse |
-| ``input_boolean``, ``switch`` | ``on`` | sofort |
-| ``lock`` | entriegelt, öffnet, offen, blockiert | Eingangsverzögerung |
-| ``cover`` | offen, öffnet, schließt | Tor/Tür: Eingangsverzögerung, sonst sofort |
-| ``sensor`` | Wert über/unter dem eingestellten Schwellwert | sofort |
-| ``event`` | jedes neue Ereignis (Klingel, Kamera-Erkennung …) | sofort |
+**Arten:** Hauswacht nimmt nur Melder, die "offen/zu" kennen: Binärsensoren, Schlösser und
+Abdeckungen. Intern wird alles auf "on" (offen/ausgelöst) und "off" (zu/ruhig) abgebildet;
+``unavailable``/``unknown`` gilt als nicht verfügbar. Messwerte, Ereignisse usw. werden über
+einen Home-Assistant-Helfer (z. B. Schwellenwert) zu einem Binärsensor.
 
-``event``-Entitäten sind nie "offen": Jedes neue Ereignis ist eine kurze Auslösung.
-Ein ``sensor`` ohne Schwellwert löst nie aus.
+**Typen:** Jeder Melder hat einen Typ, der festlegt, *wie* er reagiert. Vorschlag aus der
+Geräteklasse, änderbar in der Meldergruppe (``options["sensor_types"]``). *Wann* er scharf ist,
+legen Meldergruppen und Alarmprofile fest.
+
+| Typ | Rolle |
+|---|---|
+| Tür | Eingang (Eingangsverzögerung) |
+| Fenster | sofort |
+| Bewegung | Mitläufer |
+| Manipulation | immer gemeldet |
+| Technik (Wasser, Gas, Frost …) | immer aktiv, nie Teil der Scharfschaltung |
+| Sonstiges | sofort (sicherheitshalber) |
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any
 
 from .state_machine import SensorRole
@@ -29,24 +33,58 @@ ON, OFF = "on", "off"
 UNAVAILABLE = "unavailable"
 NOT_AVAILABLE_STATES = frozenset({"unavailable", "unknown", ""})
 
-MONITORED_DOMAINS: tuple[str, ...] = (
-    "binary_sensor",
-    "lock",
-    "cover",
-    "event",
-    "sensor",
-    "input_boolean",
-    "switch",
-)
+MONITORED_DOMAINS: tuple[str, ...] = ("binary_sensor", "lock", "cover")
 
 LOCK_ON = frozenset({"unlocked", "unlocking", "open", "opening", "jammed"})
 LOCK_OFF = frozenset({"locked", "locking"})
 COVER_ON = frozenset({"open", "opening", "closing"})
 COVER_OFF = frozenset({"closed"})
-COVER_ENTRY_CLASSES = frozenset({"door", "garage", "gate"})
+COVER_DOOR_CLASSES = frozenset({"door", "garage", "gate"})
 
-# Arten ohne regelmäßige Lebenszeichen: keine Funkstille-Prüfung
-NO_HEARTBEAT_DOMAINS = frozenset({"event", "input_boolean", "switch"})
+
+class SensorType(StrEnum):
+    DOOR = "door"
+    WINDOW = "window"
+    MOTION = "motion"
+    TAMPER = "tamper"
+    TECHNICAL = "technical"
+    OTHER = "other"
+
+
+TYPE_ROLE: Mapping[SensorType, SensorRole] = {
+    SensorType.DOOR: SensorRole.ENTRY,
+    SensorType.WINDOW: SensorRole.INSTANT,
+    SensorType.MOTION: SensorRole.FOLLOWER,
+    SensorType.TAMPER: SensorRole.TAMPER_24H,
+    SensorType.TECHNICAL: SensorRole.INSTANT,
+    SensorType.OTHER: SensorRole.INSTANT,
+}
+
+# Bisherige Rollen-Abweichungen -> Typ (Migration)
+ROLE_TYPE: Mapping[SensorRole, SensorType] = {
+    SensorRole.ENTRY: SensorType.DOOR,
+    SensorRole.INSTANT: SensorType.WINDOW,
+    SensorRole.FOLLOWER: SensorType.MOTION,
+    SensorRole.TAMPER_24H: SensorType.TAMPER,
+}
+
+TYPE_BY_DEVICE_CLASS: Mapping[str, SensorType] = {
+    "door": SensorType.DOOR,
+    "garage_door": SensorType.DOOR,
+    "opening": SensorType.DOOR,
+    "lock": SensorType.DOOR,
+    "window": SensorType.WINDOW,
+    "motion": SensorType.MOTION,
+    "occupancy": SensorType.MOTION,
+    "presence": SensorType.MOTION,
+    "moving": SensorType.MOTION,
+    "tamper": SensorType.TAMPER,
+    "moisture": SensorType.TECHNICAL,
+    "gas": SensorType.TECHNICAL,
+    "cold": SensorType.TECHNICAL,
+    "heat": SensorType.TECHNICAL,
+    "carbon_monoxide": SensorType.TECHNICAL,
+}
 
 
 def domain_of(entity_id: str) -> str:
@@ -57,55 +95,8 @@ def is_monitorable(entity_id: str) -> bool:
     return domain_of(entity_id) in MONITORED_DOMAINS
 
 
-@dataclass(frozen=True)
-class Threshold:
-    above: float | None = None
-    below: float | None = None
-
-    @property
-    def configured(self) -> bool:
-        return self.above is not None or self.below is not None
-
-
-def _number(value: Any) -> float | None:
-    if value is None or value == "":
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def parse_thresholds(options: Mapping[str, Any]) -> dict[str, Threshold]:
-    raw = options.get("sensor_thresholds", {})
-    result: dict[str, Threshold] = {}
-    if not isinstance(raw, Mapping):
-        return result
-    for entity_id, data in raw.items():
-        if not isinstance(data, Mapping):
-            continue
-        threshold = Threshold(above=_number(data.get("above")), below=_number(data.get("below")))
-        if threshold.configured:
-            result[str(entity_id)] = threshold
-    return result
-
-
-def parse_cameras(options: Mapping[str, Any]) -> dict[str, str]:
-    """Kamera je Melder (für das Bild in der Alarm-Nachricht)."""
-    raw = options.get("sensor_cameras", {})
-    if not isinstance(raw, Mapping):
-        return {}
-    return {
-        str(entity_id): camera
-        for entity_id, camera in raw.items()
-        if isinstance(camera, str) and camera.startswith("camera.")
-    }
-
-
-def normalize(
-    entity_id: str, state: str | None, thresholds: Mapping[str, Threshold] | None = None
-) -> str | None:
-    """Rohzustand -> "on", "off", "unavailable" oder None (Entität fehlt)."""
+def normalize(entity_id: str, state: str | None) -> str | None:
+    """Rohzustand -> "on", "off", "unavailable"/"unknown" oder None (Entität fehlt)."""
     if state is None:
         return None
     if state in NOT_AVAILABLE_STATES:
@@ -119,67 +110,95 @@ def normalize(
         if state in COVER_ON:
             return ON
         return OFF if state in COVER_OFF else UNAVAILABLE
-    if domain == "event":
-        return OFF  # nie "offen"; Auslösung über event_triggered()
-    if domain == "sensor":
-        threshold = (thresholds or {}).get(entity_id)
-        value = _number(state)
-        if value is None:
-            return UNAVAILABLE
-        if threshold is None:
-            return OFF
-        above = threshold.above is not None and value > threshold.above
-        below = threshold.below is not None and value < threshold.below
-        return ON if above or below else OFF
-    return state  # binary_sensor, input_boolean, switch: on/off
+    return state
 
 
-def event_triggered(entity_id: str, old: str | None, new: str | None) -> bool:
-    """Neues Ereignis einer ``event``-Entität?
-
-    Der Zustand ist der Zeitpunkt des letzten Ereignisses. Ein Wechsel aus ``unavailable`` zählt
-    nicht (das ist der Neustart, der den alten Zeitpunkt wiederherstellt).
-    """
-    if domain_of(entity_id) != "event" or new is None or new in NOT_AVAILABLE_STATES:
-        return False
-    if old is None or old == "unavailable":
-        return False
-    return old != new
-
-
-def default_role_for(entity_id: str, device_class: str | None) -> SensorRole | None:
-    """Standardrolle für andere Arten als ``binary_sensor`` (None = nach Geräteklasse)."""
+def default_type(entity_id: str, device_class: str | None) -> SensorType:
+    """Vorschlag aus Art und Geräteklasse. Unbekanntes: Sonstiges (löst sofort aus)."""
     domain = domain_of(entity_id)
     if domain == "lock":
-        return SensorRole.ENTRY
+        return SensorType.DOOR
     if domain == "cover":
-        return SensorRole.ENTRY if device_class in COVER_ENTRY_CLASSES else SensorRole.INSTANT
-    if domain in ("event", "sensor", "input_boolean", "switch"):
-        return SensorRole.INSTANT
-    return None
+        return SensorType.DOOR if device_class in COVER_DOOR_CLASSES else SensorType.OTHER
+    if device_class is None:
+        return SensorType.OTHER
+    return TYPE_BY_DEVICE_CLASS.get(device_class, SensorType.OTHER)
 
 
-def profile_camera(options: Mapping[str, Any], profile_id: str | None) -> tuple[str | None, bool]:
-    """Kamera eines Alarmprofils (Standard für das Alarmbild) und ob Bilder gespeichert werden."""
+def parse_types(options: Mapping[str, Any]) -> dict[str, SensorType]:
+    """Gewählte Typen (Abweichungen vom Vorschlag)."""
+    raw = options.get("sensor_types", {})
+    result: dict[str, SensorType] = {}
+    if not isinstance(raw, Mapping):
+        return result
+    for entity_id, value in raw.items():
+        try:
+            result[str(entity_id)] = SensorType(value)
+        except ValueError:
+            continue
+    return result
+
+
+def sensor_type(
+    entity_id: str, device_class: str | None, types: Mapping[str, SensorType]
+) -> SensorType:
+    return types.get(entity_id) or default_type(entity_id, device_class)
+
+
+def role_overrides(types: Mapping[str, SensorType]) -> dict[str, SensorRole]:
+    """Rollen aus den gewählten Typen (für die Zustandsmaschine)."""
+    return {entity_id: TYPE_ROLE[kind] for entity_id, kind in types.items()}
+
+
+def migrate_roles_to_types(options: Mapping[str, Any]) -> dict[str, Any]:
+    """Bisherige Rollen-Abweichungen (``sensor_roles``) in Typen umwandeln; Reste aus 0.24
+    (Schwellwerte, Kameras) entfernen und nicht mehr unterstützte Melderarten aussortieren."""
+    new = dict(options)
+    types = dict(new.get("sensor_types", {}) or {})
+    roles = new.pop("sensor_roles", {}) or {}
+    if isinstance(roles, Mapping):
+        for entity_id, role in roles.items():
+            try:
+                types.setdefault(str(entity_id), ROLE_TYPE[SensorRole(role)].value)
+            except (ValueError, KeyError):
+                continue
+    new["sensor_types"] = {k: v for k, v in types.items() if is_monitorable(k)}
+    for key in ("sensor_thresholds", "sensor_cameras"):
+        new.pop(key, None)
+    zones = new.get("zones", {})
+    if isinstance(zones, Mapping):
+        new["zones"] = {
+            zid: (
+                {**zone, "entities": [e for e in zone.get("entities", []) if is_monitorable(e)]}
+                if isinstance(zone, Mapping) and isinstance(zone.get("entities"), list)
+                else zone
+            )
+            for zid, zone in zones.items()
+        }
+    always = new.get("always_active")
+    if isinstance(always, Mapping) and isinstance(always.get("sensors"), list):
+        new["always_active"] = {
+            **always,
+            "sensors": [e for e in always["sensors"] if is_monitorable(e)],
+        }
+    profiles = new.get("profiles", {})
+    if isinstance(profiles, Mapping):
+        new["profiles"] = {
+            pid: (
+                {k: v for k, v in data.items() if k not in ("camera", "save_snapshots")}
+                if isinstance(data, Mapping)
+                else data
+            )
+            for pid, data in profiles.items()
+        }
+    return new
+
+
+def excluded_sensors(options: Mapping[str, Any], profile_id: str) -> frozenset[str]:
+    """Ausgenommene Melder eines Alarmprofils (lösen einzeln nicht aus)."""
     profiles = options.get("profiles", {})
-    profile = profiles.get(profile_id, {}) if isinstance(profiles, Mapping) and profile_id else {}
-    if not isinstance(profile, Mapping):
-        return None, False
-    camera = profile.get("camera")
-    camera = camera if isinstance(camera, str) and camera.startswith("camera.") else None
-    return camera, bool(profile.get("save_snapshots", False))
-
-
-def camera_for(
-    sensor: str | None,
-    sensor_cameras: Mapping[str, str],
-    profile_camera_id: str | None,
-) -> str | None:
-    """Kamera des auslösenden Melders hat Vorrang vor der des Profils."""
-    if sensor and sensor in sensor_cameras:
-        return sensor_cameras[sensor]
-    return profile_camera_id
-
-
-SNAPSHOT_COUNT = 3
-SNAPSHOT_INTERVAL = 2.0  # Sekunden
+    stored = profiles.get(profile_id, {}) if isinstance(profiles, Mapping) else {}
+    raw = stored.get("excluded", []) if isinstance(stored, Mapping) else []
+    if not isinstance(raw, list):
+        return frozenset()
+    return frozenset(e for e in raw if isinstance(e, str))

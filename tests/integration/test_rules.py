@@ -195,7 +195,7 @@ async def test_migration_turns_zone_confirmation_into_rule(hass: HomeAssistant) 
     entry = MockConfigEntry(domain=DOMAIN, title="Hauswacht", data={}, options=options, version=3)
     _motion2(hass, "off")
     await setup_entry(hass, entry)
-    assert entry.version == 4
+    assert entry.version == 5
     assert entry.options["profiles"]["night"]["zones"] == []
     assert entry.options["profiles"]["night"]["rules"] == ["bestaetigung_keller"]
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
