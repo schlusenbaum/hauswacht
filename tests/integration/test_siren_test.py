@@ -139,6 +139,7 @@ async def test_stop_service(hass: HomeAssistant) -> None:
 
 async def test_only_admins(hass: HomeAssistant) -> None:
     mocks = await _setup(hass)
+    await hass.auth.async_create_user("Besitzer")  # der erste Benutzer ist Eigentümer
     guest = await hass.auth.async_create_user("Gast", group_ids=[GROUP_ID_USER])
     assert not guest.is_admin
     with pytest.raises(ServiceValidationError):
