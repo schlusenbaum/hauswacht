@@ -176,10 +176,11 @@
       },
       "homecoming": {
         "title": "Homecoming observation",
-        "description": "Hauswacht records when entry doors open and people are detected as home – per location source – and calculates whether automatic homecoming would be reliable. The observation switches NOTHING: no disarm, no alarm. Press “Homecoming report” for the report.",
+        "description": "Hauswacht records when entry doors open and people are detected as home – per location source – and calculates whether automatic homecoming would be reliable. The observation switches NOTHING: no disarm, no alarm. Press “Homecoming report” for the report.\n\n**Home Wi-Fi(s):** names of your Wi-Fi networks, comma separated (e.g. for the companion app's Wi-Fi sensor). In the next step you choose additional signals per person.\n\nThe observation also measures how long it takes from “door opened” to “disarmed” – which gives a recommendation for the entry delay.",
         "data": {
           "homecoming_observe": "Observe homecoming",
-          "homecoming_persons": "People"
+          "homecoming_persons": "People",
+          "homecoming_ssids": "Home Wi-Fi(s)"
         }
       },
       "users": {
@@ -241,7 +242,7 @@
       },
       "sensor_behaviour": {
         "title": "Sensor radio silence",
-        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.",
+        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.\n\n**Observation:** {observation}",
         "data": {
           "stale_after_hours": "Maximum radio silence"
         }
@@ -657,6 +658,10 @@
           "reminder_months": "Reminder",
           "prewarn": "Pre-warning before the test"
         }
+      },
+      "homecoming_signals": {
+        "title": "Homecoming: additional signals per person",
+        "description": "Further signals per person that can report “home” – observation only, nothing is switched:\n\n- **Wi-Fi sensor** of the companion app (`sensor.…_wifi_connection` or `sensor.…_ssid`): home when connected to a home Wi-Fi\n- **Bluetooth** (e.g. Bermuda) or **FRITZ!Box** tracker: `device_tracker.…`\n- **Approach** (“Proximity” integration): direction sensor `sensor.…_direction_of_travel` – towards/arrived = home\n- **Binary sensors**: on = home\n\nHauswacht also evaluates the **earliest signal** per person (any source reports home)."
       }
     },
     "error": {
@@ -850,6 +855,9 @@
       },
       "siren_test": {
         "name": "Last siren test"
+      },
+      "silence": {
+        "name": "Radio silence observation"
       }
     },
     "binary_sensor": {

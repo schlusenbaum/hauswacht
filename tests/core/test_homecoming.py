@@ -5,13 +5,16 @@ from __future__ import annotations
 from custom_components.hauswacht.core.homecoming import (
     Arrival,
     DoorOpening,
+    EntryTiming,
     PresenceState,
     describe,
     doors_without_arrival,
+    entry_stats,
     evaluate,
     judge,
     presence,
     prune,
+    recommended_entry_delay,
     report_markdown,
     track,
 )
@@ -100,3 +103,44 @@ def test_report() -> None:
     text = report_markdown(stats, {"person.a": "Anna"}, door_only=3, days=2)
     assert "| Anna | 1 | 1 | 0 | 40 s |" in text
     assert report_markdown({}, {}, door_only=0, days=0) == "Noch keine Heimkehr aufgezeichnet."
+
+
+# --- 0.27: weitere Signale, Fenster je Quelle, Tür bis unscharf -----------------------
+
+
+def test_presence_for_more_signal_kinds() -> None:
+    ssids = frozenset({"Heimnetz"})
+    assert presence("on") is True
+    assert presence("off") is False
+    assert presence("Heimnetz", ssids) is True
+    assert presence("<not connected>", ssids) is False
+    assert presence("Nachbar", ssids) is False
+    assert presence("towards") is True
+    assert presence("arrived") is True
+    assert presence("away_from") is False
+    assert presence("stationary") is None
+    assert presence("home") is True
+    assert presence("Arbeit") is False
+
+
+def test_window_per_source() -> None:
+    doors = [DoorOpening(at=1000.0, sensor="binary_sensor.tuer")]
+    arrivals = [Arrival(at=500.0, person="p", source="s", away_seconds=3600)]
+    assert evaluate(arrivals, doors)["s"].without_door == 1
+    wide = evaluate(arrivals, doors, windows={"s": 900})
+    assert wide["s"].with_door == 1
+    assert wide["s"].delays == [-500.0]
+
+
+def test_entry_stats() -> None:
+    timings = [
+        EntryTiming(at=1, door="d", seconds=12, in_time=True, delay=30),
+        EntryTiming(at=2, door="d", seconds=20, in_time=True, delay=30),
+        EntryTiming(at=3, door="d", seconds=30, in_time=False, delay=30),
+    ]
+    stats = entry_stats(timings)["d"]
+    assert stats["entries"] == 3
+    assert stats["too_late"] == 1
+    assert stats["max_seconds"] == 20
+    assert stats["recommended_entry_delay"] == 25
+    assert recommended_entry_delay(40) == 50

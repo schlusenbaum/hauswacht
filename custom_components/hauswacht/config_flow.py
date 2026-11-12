@@ -58,6 +58,8 @@ from .const import (
     OPT_EVENTS,
     OPT_HOMECOMING_OBSERVE,
     OPT_HOMECOMING_PERSONS,
+    OPT_HOMECOMING_SIGNALS,
+    OPT_HOMECOMING_SSIDS,
     OPT_INFRASTRUCTURE,
     OPT_NOTIFY_IN_TEST_MODE,
     OPT_NOTIFY_SYSTEM,
@@ -178,7 +180,7 @@ from .core.state_machine import (
     UnavailableSensorPolicy,
 )
 from .core.users import parse_users, pin_conflicts
-from .names import display_name
+from .names import display_name, plain_name
 from .runtime import device_class_of, entities_by_label
 from .siren_test import SirenTester
 
@@ -349,6 +351,9 @@ class HauswachtOptionsFlow(OptionsFlow):
             menu_options=menu_options,
             description_placeholders={"saved": self._saved_text() if saved else ""},
         )
+
+    def _loaded(self) -> bool:
+        return self.config_entry.state is ConfigEntryState.LOADED
 
     def _is_disarmed(self) -> bool:
         entry = self.config_entry
@@ -1548,7 +1553,13 @@ class HauswachtOptionsFlow(OptionsFlow):
                 ),
             }
         )
-        return self.async_show_form(step_id="sensor_behaviour", data_schema=schema)
+        silence = self.config_entry.runtime_data.silence if self._loaded() else None
+        observed = silence.summary_text(self._german()) if silence else "–"
+        return self.async_show_form(
+            step_id="sensor_behaviour",
+            data_schema=schema,
+            description_placeholders={"observation": observed},
+        )
 
     # --- Sirenen -----------------------------------------------------------
 
@@ -2248,7 +2259,15 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             options[OPT_HOMECOMING_OBSERVE] = bool(user_input.get(OPT_HOMECOMING_OBSERVE))
             options[OPT_HOMECOMING_PERSONS] = list(user_input.get(OPT_HOMECOMING_PERSONS) or [])
-            return await self._save(options, "system")
+            options[OPT_HOMECOMING_SSIDS] = [
+                part.strip()
+                for part in str(user_input.get(OPT_HOMECOMING_SSIDS) or "").split(",")
+                if part.strip()
+            ]
+            if not options[OPT_HOMECOMING_PERSONS]:
+                return await self._save(options, "system")
+            self._pending = options
+            return await self.async_step_homecoming_signals()
         schema = vol.Schema(
             {
                 vol.Required(
@@ -2259,9 +2278,46 @@ class HauswachtOptionsFlow(OptionsFlow):
                     OPT_HOMECOMING_PERSONS,
                     default=list(options.get(OPT_HOMECOMING_PERSONS, [])),
                 ): EntitySelector(EntitySelectorConfig(domain="person", multiple=True)),
+                vol.Optional(
+                    OPT_HOMECOMING_SSIDS,
+                    description={
+                        "suggested_value": ", ".join(options.get(OPT_HOMECOMING_SSIDS, []))
+                    },
+                ): TextSelector(),
             }
         )
         return self.async_show_form(step_id="homecoming", data_schema=schema)
+
+    async def async_step_homecoming_signals(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Zusätzliche Signale je Person (WLAN, Bluetooth, Annäherung …) – nur Beobachtung."""
+        options = dict(self._pending or self.config_entry.options)
+        persons = list(options.get(OPT_HOMECOMING_PERSONS, []))
+        fields: dict[str, str] = {}
+        for person in persons:
+            name = plain_name(self.hass, person)
+            fields[name if name not in fields else f"{name} ({person})"] = person
+        stored = dict(options.get(OPT_HOMECOMING_SIGNALS, {}))
+        if user_input is not None:
+            options[OPT_HOMECOMING_SIGNALS] = {
+                person: sorted(set(user_input.get(key) or []))
+                for key, person in fields.items()
+                if user_input.get(key)
+            }
+            self._pending = None
+            return await self._save(options, "system")
+        schema = vol.Schema(
+            {
+                vol.Optional(key, default=list(stored.get(person, []))): EntitySelector(
+                    EntitySelectorConfig(
+                        domain=["device_tracker", "binary_sensor", "sensor"], multiple=True
+                    )
+                )
+                for key, person in fields.items()
+            }
+        )
+        return self.async_show_form(step_id="homecoming_signals", data_schema=schema)
 
     # --- Infrastruktur ------------------------------------------------------
 

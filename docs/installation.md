@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.26.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.27.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -467,6 +467,19 @@ Tür in der Beruhigungszeit wieder auf, beginnt sie neu.
 - Die überwachten Sensoren werden beim Scharfschalten festgehalten. Wird während des scharfen
   Zustands ein Label entfernt, bleibt der Sensor bis zum Unscharfschalten überwacht.
 
+### Funkstille-Beobachtung: der richtige Wert aus euren Daten
+
+Hauswacht merkt sich je Melder die **längste Pause zwischen zwei Lebenszeichen** (geprüft
+jede Minute, über Neustarts hinweg gespeichert; Pausen über einen Neustart zählen nicht). Im
+Formular „Funkstille von Sensoren“ steht dann z. B.:
+
+> Beobachtet seit 14 Tagen. Längste Pause: Türkontakt vorne 1 h 52 min. **Empfehlung: 3 h.**
+
+Die Empfehlung ist die längste Pause mal 1,5, auf volle Stunden aufgerundet – frühestens nach
+3 Tagen Beobachtung. Den Wert trägst du selbst ein; die Beobachtung ändert nichts. Der
+Diagnose-Sensor **„Funkstille-Beobachtung“** zeigt die Empfehlung und je Melder die längste
+Pause.
+
 ## Funknetz und Gateways überwachen
 
 Unter **Konfigurieren → Systemeinstellungen → Funknetz und Gateways überwachen** wählst du
@@ -800,12 +813,37 @@ Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
 | Fehlalarme bei X s | So oft wäre die Heimkehr erst nach einer Eingangsverzögerung von X Sekunden erkannt worden |
 
 - **Sensor „Heimkehr-Beobachtung“**: Anzahl ausgewerteter Heimkehrten; die Zahlen pro Quelle
-  stehen im Attribut `sources`, die letzten zehn Heimkehrten im Attribut `recent`.
+  stehen im Attribut `sources`, die letzten zehn Heimkehrten im Attribut `recent`, die Zeiten
+  „Tür auf bis unscharf“ im Attribut `entry_times`.
 - **Knopf „Heimkehr-Bericht“**: erstellt eine Übersicht als Benachrichtigung in Home Assistant.
 - Gespeichert werden nur Zeitpunkte, höchstens 60 Tage lang.
 
 Nach zwei bis vier Wochen zeigt der Bericht, ob eine Heimkehr-Automatik bei euch zuverlässig
 wäre, für welche Personen und Ortungsquellen, und mit welcher Eingangsverzögerung.
+
+### Zusätzliche Signale je Person
+
+Im zweiten Schritt des Formulars wählst du je Person weitere Signale. Je früher und
+zuverlässiger ein Signal, desto besser:
+
+| Signal | Woher | gilt als „zuhause“ |
+|---|---|---|
+| WLAN-Sensor | Companion App: Android „WLAN-Verbindung“ (`sensor.<handy>_wifi_connection`, unter Einstellungen → Companion App → Sensoren verwalten aktivieren), iPhone „SSID“ (`sensor.<handy>_ssid`, Standort „Immer“ + „Genauer Standort“) | verbunden mit einem der **Heim-WLANs** (Feld im ersten Schritt, durch Komma getrennt) |
+| Bluetooth | z. B. Bermuda mit dem BLE-Sender der Android-App | `device_tracker` = zuhause |
+| Router | z. B. FRITZ!Box Tools (ohne App, aber träge) | `device_tracker` = zuhause |
+| Annäherung | Integration **„Nähe“** (Einstellungen → Geräte & Dienste → Integration hinzufügen → Nähe; Zone Zuhause, Personen): Sensor `sensor.<nähe>_<person>_direction_of_travel` | nähert sich oder angekommen; Fenster 15 min statt 5 min, weil die Annäherung oft Minuten vor der Tür kommt |
+| Binärsensor | beliebig | an |
+
+Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: zuhause, sobald
+irgendeine Quelle zuhause meldet. So siehst du, ob eine ODER-Kombination früh genug wäre –
+eine UND-Kombination (zwei Belege) wäre sicherer, aber langsamer.
+
+### Tür auf bis unscharf
+
+Läuft eine Eingangsverzögerung, misst Hauswacht, wie lange es bis zum Unscharfschalten dauert
+(oder ob es zu spät war). Je Tür: Anzahl, rechtzeitig, zu spät, typische und längste Zeit und
+eine **Empfehlung für die Eingangsverzögerung** (längste Zeit plus 25 %, mindestens 5 s, auf
+5 s aufgerundet). Hilfreich z. B., um den Platz für ein Bedienteil an der Wand zu prüfen.
 
 ## Testmodus und Simulation
 

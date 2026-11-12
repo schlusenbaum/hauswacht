@@ -176,10 +176,11 @@
       },
       "homecoming": {
         "title": "Heimkehr-Beobachtung",
-        "description": "Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS: kein Unscharf, kein Alarm. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.",
+        "description": "Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS: kein Unscharf, kein Alarm. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.\n\n**Heim-WLAN(s):** Namen eurer WLANs, durch Komma getrennt (z. B. für den WLAN-Sensor der Companion App). Im nächsten Schritt wählst du je Person zusätzliche Signale.\n\nAußerdem misst die Beobachtung, wie lange es von „Tür auf“ bis „unscharf“ dauert – daraus ergibt sich eine Empfehlung für die Eingangsverzögerung.",
         "data": {
           "homecoming_observe": "Heimkehr beobachten",
-          "homecoming_persons": "Personen"
+          "homecoming_persons": "Personen",
+          "homecoming_ssids": "Heim-WLAN(s)"
         }
       },
       "users": {
@@ -241,7 +242,7 @@
       },
       "sensor_behaviour": {
         "title": "Funkstille von Sensoren",
-        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.",
+        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.\n\n**Beobachtung:** {observation}",
         "data": {
           "stale_after_hours": "Maximale Funkstille"
         }
@@ -657,6 +658,10 @@
           "reminder_months": "Erinnerung",
           "prewarn": "Vorwarnung vor dem Test"
         }
+      },
+      "homecoming_signals": {
+        "title": "Heimkehr: zusätzliche Signale je Person",
+        "description": "Je Person weitere Signale, die „zuhause“ melden können – nur zur Beobachtung, es wird nichts geschaltet:\n\n- **WLAN-Sensor** der Companion App (`sensor.…_wifi_connection` bzw. `sensor.…_ssid`): zuhause, wenn mit einem Heim-WLAN verbunden\n- **Bluetooth** (z. B. Bermuda) oder **FRITZ!Box**-Tracker: `device_tracker.…`\n- **Annäherung** (Integration „Nähe“): Richtungs-Sensor `sensor.…_direction_of_travel` – nähert sich/angekommen = zuhause\n- **Binärsensoren**: an = zuhause\n\nZusätzlich wertet Hauswacht je Person das **früheste Signal** aus (irgendeine Quelle meldet zuhause)."
       }
     },
     "error": {
@@ -850,6 +855,9 @@
       },
       "siren_test": {
         "name": "Letzter Sirenentest"
+      },
+      "silence": {
+        "name": "Funkstille-Beobachtung"
       }
     },
     "binary_sensor": {
