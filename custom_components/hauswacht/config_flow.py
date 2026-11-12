@@ -100,6 +100,7 @@ from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
 from .core.controls import (
     MAX_LEARN_MINUTES,
     ControlKind,
+    is_random_uid,
     learn_minutes,
     normalize_tag,
     parse_controls,
@@ -2216,7 +2217,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         user_id = getattr(self, "_user_id", None)
         current: dict[str, Any] = dict(stored_all.get(user_id, {})) if user_id else {}
         errors: dict[str, str] = {}
-        placeholders = {"conflict": ""}
+        placeholders = {"conflict": "", "random": self._random_hint()}
         if user_input is not None:
             name = str(user_input.get("name") or "").strip()
             new_pin = str(user_input.get("new_pin") or "").strip()
@@ -2728,11 +2729,36 @@ class HauswachtOptionsFlow(OptionsFlow):
         """Karte gehört schon jemand anderem, oder eine angebotene neue Karte ist abgelaufen."""
         if (owner := _tag_owner(tags, user_id, stored)) is not None:
             return "tag_taken", owner
+        if random := [t for t in tags if is_random_uid(t)]:
+            return "tag_random", ", ".join(random)
         own = set(current.get("tags", []) or [])
         expired = (set(tags) - own) & self._offered_new - set(self._unknown_cards())
         if expired:
             return "card_expired", ", ".join(sorted(expired))
         return None
+
+    def _random_hint(self) -> str:
+        """Hinweis, wenn kürzlich eine Zufallsnummer (z. B. Handy) gelesen wurde."""
+        controls = (
+            getattr(self.config_entry.runtime_data, "controls", None) if self._loaded() else None
+        )
+        seen = controls.recent_random() if controls is not None else None
+        if seen is None:
+            return ""
+        source, when = seen
+        time_text = dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%H:%M")
+        if self._german():
+            return (
+                f"\n\n⚠️ An {source} wurde um {time_text} eine **Zufallsnummer** gelesen "
+                "(z. B. ein Handy oder ein Ausweis mit Datenschutz-Modus). Sie ändert sich bei "
+                "jedem Lesen und taugt nicht als Ausweis – deshalb wird sie nicht zum Anlernen "
+                "angeboten."
+            )
+        return (
+            f"\n\n⚠️ A **random ID** was read at {source} at {time_text} (e.g. a phone or a "
+            "privacy-mode badge). It changes on every read and cannot be used as a credential – "
+            "so it is not offered for learning."
+        )
 
     def _unknown_cards(self) -> dict[str, tuple[str, float]]:
         """Zuletzt an Keypads/Lesern gelesene unbekannte Karten (nur wenn geladen)."""

@@ -208,7 +208,7 @@
       },
       "user_settings": {
         "title": "User",
-        "description": "Status: {status}. Leave PIN fields empty to keep them.\n\n**Duress PIN:** works normally but silently sends an emergency message to the recipients under “Notifications → Duress recipients”. It must not equal any normal PIN.\n\n**Valid from/until:** for guests – outside this time the PIN is blocked.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one. RFID cards do not count as PINs: without PINs the panel stays PIN-free, and cards still work at keypads and readers.",
+        "description": "Status: {status}. Leave PIN fields empty to keep them.\n\n**Duress PIN:** works normally but silently sends an emergency message to the recipients under “Notifications → Duress recipients”. It must not equal any normal PIN.\n\n**Valid from/until:** for guests – outside this time the PIN is blocked.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one. RFID cards do not count as PINs: without PINs the panel stays PIN-free, and cards still work at keypads and readers.{random}",
         "data": {
           "name": "Name",
           "new_pin": "New PIN (4–8 digits)",
@@ -787,7 +787,8 @@
       "control_tag": "Please enter the sticker ID.",
       "control_device": "Please choose the reader device.",
       "control_profile_area": "The alarm profile belongs to a different area than the control device.",
-      "card_expired": "The new card {conflict} was read too long ago and may no longer be learned. Please hold it to the keypad or reader again."
+      "card_expired": "The new card {conflict} was read too long ago and may no longer be learned. Please hold it to the keypad or reader again.",
+      "tag_random": "{conflict} is a random ID (e.g. from a phone). It changes on every read and cannot be used as a credential – please remove it."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

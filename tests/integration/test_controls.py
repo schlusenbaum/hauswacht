@@ -391,3 +391,18 @@ async def test_learning_time_setting(hass: HomeAssistant, mqtt_mock: MqttMockHAC
         hass.config_entries.async_get_entry(entry.entry_id).runtime_data.controls.unknown_cards
         == {}
     )
+
+
+async def test_random_uid_not_learnable(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    entry = await _setup_without_pin(hass)
+    await _press(hass, "disarm", "+08837CF0", 1)  # Handy: Zufallsnummer
+    assert entry.runtime_data.controls.unknown_cards == {}
+    flow = await _user_form(hass, entry, "niklas")
+    assert "08837CF0" not in _offered(flow)
+    assert "Zufallsnummer" in flow["description_placeholders"]["random"] or (
+        "random ID" in flow["description_placeholders"]["random"]
+    )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Niklas", "tags": [CARD, "08ECA2B8"]}
+    )
+    assert flow["errors"] == {"tags": "tag_random"}
