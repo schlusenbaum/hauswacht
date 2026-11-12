@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.32.1:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.32.2:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -971,18 +971,55 @@ Allgemein:
 
 - 4 bis 8 Ziffern, wird nur als Hash gespeichert.
 - Sobald es einen PIN gibt, ist er zum Unscharfschalten am Bedienfeld immer nötig.
-- Nach 5 falschen Eingaben in Folge ist die Eingabe 1 Minute gesperrt, bei weiteren
-  Fehlversuchen jeweils doppelt so lange (höchstens 15 Minuten). Ab der 3. falschen Eingabe
-  geht eine Systemmeldung an die eingetragenen Empfänger.
-- Unbekannte Karten (Codes, die kein PIN sein können) zählen nicht als Fehleingabe – so lassen
-  sich Karten anlernen, ohne die Sperre auszulösen.
-- **Zurücksetzen:** Administratoren setzen Zähler und Sperre mit dem Knopf
-  „Falscheingaben zurücksetzen“ in der Karte „Hauswacht Test“ zurück (zeigt die Anzahl) oder
-  mit dem Dienst `hauswacht.reset_code_lock`. Für andere Benutzer ist das gesperrt. Die
-  Attribute `code_failures` und `code_locked_until` am Bedienfeld zeigen den Stand.
+- Falsche Eingaben führen zu einer Sperre – siehe
+  [Sperre nach falschen Eingaben](#sperre-nach-falschen-eingaben).
 - Ohne PIN darf die Anlage nicht für Sprachassistenten (z. B. Alexa) freigegeben werden.
 - Ein PIN aus Versionen vor 0.16.1 wurde beim Update automatisch zum Benutzer
   „Hauptbenutzer“.
+
+### Sperre nach falschen Eingaben
+
+Schutz gegen Durchprobieren. Die Regeln sind fest eingebaut (nicht einstellbar):
+
+| Falsche Eingaben in Folge | Folge |
+| --- | --- |
+| 1–2 | nichts (nur gezählt) |
+| 3–4 | Systemmeldung an die eingetragenen Empfänger, bei jedem weiteren Fehlversuch erneut |
+| 5 | Eingabe **1 Minute** gesperrt |
+| 6 | 2 Minuten |
+| 7 | 4 Minuten |
+| 8 | 8 Minuten |
+| ab 9 | **15 Minuten** (Höchstwert) |
+
+Wichtig zu wissen:
+
+- **Gemeinsam für alles:** Ein Zähler für alle Bereiche und alle Eingabewege – Bedienfeld im
+  Dashboard, Keypads, RFID-Leser, Alexa. Wer am Keypad falsch tippt, sperrt auch das Bedienfeld.
+- **Während der Sperre wird jede Eingabe abgelehnt** – auch ein richtiger PIN und eine
+  richtige Karte. Das Keypad zeigt „ungültig“, das Bedienfeld „Zu viele falsche PIN-Eingaben.
+  Bitte … Sekunden warten.“
+- **Zurückgesetzt** wird der Zähler durch
+  - eine richtige Eingabe (PIN oder Karte) außerhalb der Sperre,
+  - den Knopf **„Falscheingaben zurücksetzen“** in der Karte „Hauswacht Test“ (zeigt die
+    Anzahl; nur Administratoren) oder den Dienst `hauswacht.reset_code_lock` (nur
+    Administratoren),
+  - einen Neustart von Home Assistant oder ein Neuladen von Hauswacht.
+- **Kein automatisches Vergessen:** Fehlversuche verfallen nicht mit der Zeit. Zwei falsche
+  Eingaben heute und drei nächste Woche ergeben ohne richtige Eingabe dazwischen eine Sperre.
+- **Was nicht zählt:** unbekannte Karten (Codes, die kein PIN sein können – so lassen sich
+  Karten anlernen) und Eingaben ohne Code (z. B. Keypad-Taste ohne PIN/Karte).
+- **Was gesondert gemeldet wird:** ein gesperrter oder abgelaufener PIN bzw. eine solche Karte
+  (z. B. Gast außerhalb seiner Gültigkeit) – Systemmeldung „gesperrter Ausweis“; zählt zusätzlich
+  als Fehlversuch.
+- **Wenn man selbst gesperrt ist und der Alarm läuft:** Unscharf geht weiterhin über den Knopf
+  „Unscharf schalten“ im Dashboard bzw. den Push-Knopf, sofern „Dashboard-Knöpfe trotz PIN
+  erlauben“ an ist oder kein PIN existiert. Die Sperre betrifft nur die Code-Eingabe.
+- **Stand anzeigen:** Attribute `code_failures` (Anzahl) und `code_locked_until` (Ende der
+  Sperre) am Bedienfeld; jeder Fehlversuch löst das Ereignis `hauswacht_event` mit
+  `type: InvalidCode` aus.
+- **Rechenbeispiel:** Ein 4-stelliger PIN hat 10 000 Möglichkeiten. Mit der Sperre bräuchte
+  man zum Durchprobieren im Schnitt mehrere Wochen – und du bekommst ab dem 3. Versuch eine
+  Meldung.
 
 ## Benutzer und PINs
 
