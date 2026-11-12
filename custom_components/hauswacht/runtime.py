@@ -74,6 +74,7 @@ from .core.always_active import (
 from .core.areas import MAIN_AREA, area_options, parse_areas
 from .core.code_guard import (
     CodeGuardState,
+    current_failures,
     register_failure,
     register_success,
     remaining_lock,
@@ -765,7 +766,7 @@ class HauswachtRuntime:
         guard = self.main._code_guard
         left = remaining_lock(guard, time.monotonic())
         return {
-            "code_failures": guard.failures,
+            "code_failures": current_failures(guard, time.monotonic()),
             "code_locked_until": (dt_util.utcnow() + timedelta(seconds=left)).isoformat()
             if left
             else None,
@@ -773,7 +774,7 @@ class HauswachtRuntime:
 
     def reset_code_guard(self, by: str | None) -> None:
         """Falscheingabezähler und Sperre zurücksetzen (nur Administratoren)."""
-        failures = self.main._code_guard.failures
+        failures = current_failures(self.main._code_guard, time.monotonic())
         self.main._code_guard = CodeGuardState()
         self.hass.bus.async_fire(
             EVENT_HAUSWACHT, {"type": "CodeLockReset", "by": by, "failures": failures}
