@@ -469,7 +469,13 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "triggering"}
     )
-    assert flow["menu_options"] == ["zones", "rules", "always_active", "init"]
+    assert flow["menu_options"] == [
+        "zones",
+        "rules",
+        "always_active",
+        "helper_create",
+        "init",
+    ]
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"next_step_id": "rules"}
     )

@@ -142,7 +142,7 @@ async def test_profile_exclusion_must_be_from_groups(hass: HomeAssistant) -> Non
         )
     flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": "home"})
     assert flow["step_id"] == "profile_settings"
-    assert "Haust" in flow["description_placeholders"]["armed"]
+    assert "haustuer" in flow["description_placeholders"]["armed"].casefold()
     defaults = {str(k): k.default() for k in flow["data_schema"].schema if callable(k.default)}
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {**defaults, "excluded": [MOTION]}
