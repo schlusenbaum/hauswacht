@@ -107,20 +107,21 @@ async def async_setup_entry(
     async_get_current_platform().async_register_entity_service(
         "siren_test_stop", {}, "async_siren_test_stop"
     )
+    async_get_current_platform().async_register_entity_service(
+        "reset_code_lock", {}, "async_reset_code_lock"
+    )
 
 
 class _SirenTestMixin(HauswachtEntity):
     """Dienste für den Sirenentest (an jedem Bedienfeld, wirken immer über den Hauptbereich)."""
 
-    async def _admin_name(self) -> str | None:
-        """Sirenentest nur für Administratoren (oder ohne Benutzer, z. B. Automationen)."""
+    async def _admin_name(self, error: str = "siren_test_admin_only") -> str | None:
+        """Nur für Administratoren (oder ohne Benutzer, z. B. Automationen)."""
         if self._context is None or self._context.user_id is None:
             return None
         user = await self.hass.auth.async_get_user(self._context.user_id)
         if user is None or not user.is_admin:
-            raise ServiceValidationError(
-                translation_domain=DOMAIN, translation_key="siren_test_admin_only"
-            )
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key=error)
         return user.name
 
     def _tester(self) -> SirenTester:
@@ -153,6 +154,10 @@ class _SirenTestMixin(HauswachtEntity):
 
     async def async_siren_test_stop(self) -> None:
         self._tester().stop()
+
+    async def async_reset_code_lock(self) -> None:
+        """Dienst hauswacht.reset_code_lock: Falscheingaben und PIN-Sperre zurücksetzen."""
+        self.runtime.reset_code_guard(await self._admin_name("admin_only"))
 
 
 class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
@@ -218,6 +223,7 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
             "last_contact": self.runtime.last_contacts(),
             "sirens_hardware_enabled": self.runtime.sirens.hardware_enabled,
             "last_siren_decision": self.runtime.sirens.last_result or None,
+            **self.runtime.code_guard_info(),
         }
 
     @property

@@ -1136,6 +1136,9 @@
     "siren_test_running": {
       "message": "Während eines Sirenentests kann nicht scharf geschaltet werden."
     },
+    "admin_only": {
+      "message": "Diese Aktion dürfen nur Administratoren ausführen."
+    },
     "siren_test_admin_only": {
       "message": "Den Sirenentest dürfen nur Administratoren starten."
     },
@@ -1229,6 +1232,10 @@
     "siren_test_stop": {
       "name": "Sirenentest stoppen",
       "description": "Bricht einen laufenden Sirenentest ab."
+    },
+    "reset_code_lock": {
+      "name": "Falscheingaben zurücksetzen",
+      "description": "Setzt den Zähler falscher PIN-/Karteneingaben und eine laufende PIN-Sperre zurück. Nur für Administratoren."
     }
   },
   "issues": {

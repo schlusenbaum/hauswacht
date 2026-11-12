@@ -80,6 +80,7 @@ from .core.code_guard import (
 )
 from .core.conditions import all_met as conditions_met
 from .core.confirmation import FREQUENT_COUNT, LoneTriggerCounter
+from .core.controls import looks_like_card
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
 from .core.profile_settings import SettingError
@@ -737,8 +738,13 @@ class HauswachtRuntime:
                 "Ein gesperrter oder abgelaufener PIN bzw. eine solche Karte wurde verwendet: "
                 f"{users_label(blocked)}.",
             )
+        if looks_like_card(code) and not blocked:
+            # Unbekannte Karte (z. B. zum Anlernen): kann kein PIN sein und ist nicht zu erraten,
+            # zählt daher nicht als Fehleingabe.
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
         result = register_failure(self.main._code_guard, now)
         self.main._code_guard = result.state
+        self.main._notify()
         failures = result.state.failures
         self.hass.bus.async_fire(
             EVENT_HAUSWACHT,
@@ -753,6 +759,28 @@ class HauswachtRuntime:
                 translation_placeholders={"seconds": str(result.lock_seconds)},
             )
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
+
+    def code_guard_info(self) -> dict[str, Any]:
+        """Falscheingaben und Sperre (gemeinsam für alle Bereiche) für die Anzeige."""
+        guard = self.main._code_guard
+        left = remaining_lock(guard, time.monotonic())
+        return {
+            "code_failures": guard.failures,
+            "code_locked_until": (dt_util.utcnow() + timedelta(seconds=left)).isoformat()
+            if left
+            else None,
+        }
+
+    def reset_code_guard(self, by: str | None) -> None:
+        """Falscheingabezähler und Sperre zurücksetzen (nur Administratoren)."""
+        failures = self.main._code_guard.failures
+        self.main._code_guard = CodeGuardState()
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT, {"type": "CodeLockReset", "by": by, "failures": failures}
+        )
+        _LOGGER.info("Falscheingaben zurückgesetzt (%s Fehlversuche) von %s", failures, by)
+        for area in self.main.areas.values():
+            area._notify()
 
     def permits(self, users: tuple[User, ...], action: Action) -> bool:
         """Darf mindestens einer dieser Benutzer die Aktion in diesem Bereich?"""

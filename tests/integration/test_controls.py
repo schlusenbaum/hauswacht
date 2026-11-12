@@ -12,13 +12,16 @@ from typing import Any
 import pytest
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import (
     MockUser,
+    async_capture_events,
     async_fire_mqtt_message,
     async_mock_service,
 )
 from pytest_homeassistant_custom_component.typing import MqttMockHAClient
 
+from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
 from custom_components.hauswacht.core.pin import hash_pin
 
 from .conftest import PANEL, WINDOW, make_entry, set_sensor, setup_entry
@@ -267,6 +270,9 @@ async def test_unknown_card_offered_in_user_form(
     await _press(hass, "disarm", "a1b2c3d4e5", 1)  # neue Karte
     await _press(hass, "disarm", "1234", 2)  # falscher PIN: wird nie angezeigt
     assert list(entry.runtime_data.controls.unknown_cards) == ["A1B2C3D4E5"]
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["code_failures"] == 1  # nur der PIN zählt, die Karte nicht
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     for step in ("system", "users", "user_edit"):
         flow = await hass.config_entries.options.async_configure(
@@ -282,3 +288,40 @@ async def test_unknown_card_offered_in_user_form(
     assert flow["type"] == "menu"
     assert entry.options["users"]["niklas"]["tags"] == [CARD, "0011223344", "A1B2C3D4E5"]
     assert "pin_digest" not in entry.options["users"]["niklas"]
+
+
+async def test_reset_failed_attempts_admin_only(
+    hass: HomeAssistant,
+    mqtt_mock: MqttMockHAClient,
+    hass_admin_user: MockUser,
+    hass_read_only_user: MockUser,
+) -> None:
+    await _setup(hass)
+    for transaction in (20, 21, 22):
+        await _press(hass, "disarm", "0000", transaction)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["code_failures"] == 3
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN,
+            "reset_code_lock",
+            {"entity_id": PANEL},
+            blocking=True,
+            context=Context(user_id=hass_read_only_user.id),
+        )
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await hass.services.async_call(
+        DOMAIN,
+        "reset_code_lock",
+        {"entity_id": PANEL},
+        blocking=True,
+        context=Context(user_id=hass_admin_user.id),
+    )
+    await hass.async_block_till_done()
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["code_failures"] == 0
+    assert state.attributes["code_locked_until"] is None
+    assert [e.data["type"] for e in events] == ["CodeLockReset"]
+    assert events[0].data["failures"] == 3
