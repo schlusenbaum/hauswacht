@@ -111,6 +111,16 @@ def looks_like_card(code: Any) -> bool:
     return bool(tag) and (len(tag) > 8 or not tag.isdigit())
 
 
+def is_random_uid(code: Any) -> bool:
+    """Zufalls-UID nach ISO 14443-3: 4 Byte, erstes Byte 0x08 (z. B. Handys, manche Ausweise).
+
+    Solche Nummern ändern sich bei jedem Lesen und taugen nicht als Ausweis. Eine feste 4-Byte-UID
+    darf laut Norm nicht mit 0x08 beginnen.
+    """
+    tag = normalize_tag(code)
+    return len(tag) == 8 and tag.startswith("08") and all(c in "0123456789ABCDEF" for c in tag)
+
+
 UNKNOWN_CARDS_KEPT = 10
 DEFAULT_LEARN_MINUTES = 5
 MAX_LEARN_MINUTES = 60

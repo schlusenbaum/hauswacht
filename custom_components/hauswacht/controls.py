@@ -33,6 +33,7 @@ from .core.controls import (
     Login,
     PendingLogin,
     fresh_cards,
+    is_random_uid,
     keypad_for_topic,
     keypad_mode,
     learn_minutes,
@@ -70,6 +71,8 @@ class ControlManager:
         self._shown: dict[str, str] = {}
         # Zuletzt gelesene unbekannte Karten (zum Anlernen beim Benutzer): ID -> (wo, wann)
         self.unknown_cards: dict[str, tuple[str, float]] = {}
+        # Zuletzt gelesene Zufallsnummer (z. B. Handy): (wo, wann) – nur für einen Hinweis
+        self.random_seen: tuple[str, float] | None = None
 
     # --- Start/Stopp ----------------------------------------------------------
 
@@ -189,6 +192,9 @@ class ControlManager:
         if any(normalize_tag(code) in u.tags for u in self.runtime.users):
             return  # Karte gehört schon jemandem (z. B. gesperrter Gast)
         now = dt_util.utcnow().timestamp()
+        if is_random_uid(code):
+            self.random_seen = (control.name, now)  # nicht anlernbar, nur Hinweis
+            return
         self.unknown_cards = remember_card(
             fresh_cards(self.unknown_cards, now, minutes), code, control.name, now
         )
@@ -198,6 +204,15 @@ class ControlManager:
         minutes = learn_minutes(self.runtime.entry.options)
         self.unknown_cards = fresh_cards(self.unknown_cards, dt_util.utcnow().timestamp(), minutes)
         return dict(self.unknown_cards) if minutes else {}
+
+    def recent_random(self) -> tuple[str, float] | None:
+        """Zufallsnummer innerhalb der Anlernzeit gelesen? Dann (wo, wann) für den Hinweis."""
+        minutes = learn_minutes(self.runtime.entry.options)
+        if self.random_seen is None or not minutes:
+            return None
+        if dt_util.utcnow().timestamp() - self.random_seen[1] > minutes * 60:
+            return None
+        return self.random_seen
 
     def _execute(
         self,

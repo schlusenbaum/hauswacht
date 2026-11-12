@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.32.1] - 2026-11-12
+
+### Behoben
+- **Zufallsnummern** (4-Byte-UID mit `08` am Anfang, z. B. Handys oder Ausweise im
+  Datenschutz-Modus) werden nicht mehr zum Anlernen angeboten – sie ändern sich bei jedem
+  Lesen. Der Benutzer-Dialog zeigt stattdessen einen Hinweis und lehnt das Speichern solcher
+  Nummern ab.
+
 ## [0.32.0] - 2026-11-12
 
 ### Hinzugefügt

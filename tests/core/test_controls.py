@@ -10,6 +10,7 @@ from custom_components.hauswacht.core.controls import (
     PendingLogin,
     TagAction,
     fresh_cards,
+    is_random_uid,
     keypad_for_topic,
     keypad_mode,
     learn_minutes,
@@ -132,3 +133,11 @@ def test_fresh_cards_drop_old_ones() -> None:
     assert list(fresh_cards(seen, 1000.0, 5)) == ["NEW", "OLD"]
     assert list(fresh_cards(seen, 1150.0, 5)) == ["NEW"]
     assert fresh_cards(seen, 1000.0, 0) == {"NEW": ("Keypad", 1000.0)}
+
+
+def test_random_uids_are_detected() -> None:
+    assert is_random_uid("+08837CF0")  # Handy
+    assert is_random_uid("08ecA2b8")
+    assert not is_random_uid("+041B4932E82880")  # feste 7-Byte-UID
+    assert not is_random_uid("40CC995C")
+    assert not is_random_uid("08837CF0AA")  # länger als 4 Byte
