@@ -692,7 +692,7 @@
       },
       "control_keypad": {
         "title": "Keypad (Zigbee2MQTT)",
-        "description": "For alarm keypads following the Zigbee standard (e.g. frient/Develco KEPZB-110/KEYZB-110, Linkind, Centralite, Heiman). Hauswacht receives key, PIN or card and **confirms** each entry (valid, invalid credential, not ready); then the keypad shows the state (delays, armed, alarm). For this Hauswacht sends to `<topic>/set` – state display only.\n\nThe keypad's tamper contact is a separate binary sensor in Home Assistant – add it to a sensor group (type tamper).",
+        "description": "For alarm keypads following the Zigbee standard (e.g. frient/Develco KEPZB-110/KEYZB-110, Linkind, Centralite, Heiman). Hauswacht receives key, PIN or card and **confirms** each entry (valid, invalid credential, not ready); then the keypad shows the state (delays, armed, alarm). For this Hauswacht sends to `TOPIC/set` – state display only.\n\nThe keypad's tamper contact is a separate binary sensor in Home Assistant – add it to a sensor group (type tamper).",
         "data": {
           "name": "Name",
           "area": "Area",

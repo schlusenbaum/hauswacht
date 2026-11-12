@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import pytest
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import Context, HomeAssistant
 from pytest_homeassistant_custom_component.common import (
@@ -27,6 +28,9 @@ PHONE = "mobile_app_testhandy"
 PIN = "1357"
 CARD = "04A1B2C3"
 STICKER = "AA-BB-CC"
+
+# Der MQTT-Mock startet einen periodischen Timer, der nach dem Test noch läuft.
+pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
 
 
 def _users(ha_user: str | None = None) -> dict[str, Any]:
