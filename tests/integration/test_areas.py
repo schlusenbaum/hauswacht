@@ -348,9 +348,13 @@ async def test_area_device_hangs_below_main_device(hass: HomeAssistant) -> None:
     hass.states.async_set(GATE, "off", {"device_class": "window"})
     entry = make_entry(AREA_OPTIONS)
     await setup_entry(hass, entry)
-    devices = dr.async_get(hass)
-    main = devices.async_get_device(identifiers={(DOMAIN, entry.entry_id)})
-    area = devices.async_get_device(identifiers={(DOMAIN, f"{entry.entry_id}_garage")})
+    by_identifier = {
+        identifier: device
+        for device in dr.async_entries_for_config_entry(dr.async_get(hass), entry.entry_id)
+        for identifier in device.identifiers
+    }
+    main = by_identifier.get((DOMAIN, entry.entry_id))
+    area = by_identifier.get((DOMAIN, f"{entry.entry_id}_garage"))
     assert main is not None
     assert area is not None
     assert area.via_device_id == main.id
