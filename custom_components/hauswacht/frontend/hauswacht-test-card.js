@@ -412,24 +412,24 @@ class HauswachtTestCard extends HTMLElement {
       body.appendChild(none);
       return;
     }
-    for (const siren of sirens) {
+    for (const unit of sirens) {
       const row = document.createElement("div");
       row.className = "row";
       const text = document.createElement("div");
       text.className = "info";
       const name = document.createElement("div");
       name.className = "name";
-      name.textContent = siren.name || siren.entity_id;
+      name.textContent = unit.name || unit.entity_id;
       const last = document.createElement("div");
       last.className = "state";
-      const mark = siren.heard === true ? " ✅" : siren.heard === false ? " ❌" : "";
-      last.textContent = siren.last_test
-        ? `${this._t("sirenLast")} ${new Date(siren.last_test).toLocaleString(this._hass.language)}${mark}`
+      const mark = unit.heard === true ? " ✅" : unit.heard === false ? " ❌" : "";
+      last.textContent = unit.last_test
+        ? `${this._t("sirenLast")} ${new Date(unit.last_test).toLocaleString(this._hass.language)}${mark}`
         : this._t("sirenNever");
       text.append(name, last);
       const actions = document.createElement("div");
       actions.className = "seg";
-      const ask = this._sirenAsk && this._sirenAsk.siren === siren.entity_id ? this._sirenAsk : null;
+      const ask = this._sirenAsk && this._sirenAsk.siren === unit.entity_id ? this._sirenAsk : null;
       const button = (label, handler, primary) => {
         const b = document.createElement("button");
         b.textContent = label;
@@ -438,14 +438,14 @@ class HauswachtTestCard extends HTMLElement {
         actions.appendChild(b);
         return b;
       };
-      if (info.running === siren.entity_id) {
+      if (info.running === unit.entity_id) {
         button(this._t("sirenStop"), () => this._call(DOMAIN, "siren_test_stop", { entity_id: this._ids.panel }), true);
       } else if (ask && ask.step === "confirm") {
         last.textContent = this._t("sirenConfirm");
         button(this._t("sirenYesStart"), () => {
-          this._sirenAsk = { siren: siren.entity_id, step: "heard" };
+          this._sirenAsk = { siren: unit.entity_id, step: "heard" };
           this._sirenKey = null;
-          this._call(DOMAIN, "siren_test", { entity_id: this._ids.panel, siren: siren.entity_id }, () => {
+          this._call(DOMAIN, "siren_test", { entity_id: this._ids.panel, siren: unit.entity_id }, () => {
             this._sirenAsk = null; // abgelehnt (z. B. Testmodus): keine Rückfrage
             this._sirenKey = null;
             this._updateSirens();
@@ -463,7 +463,7 @@ class HauswachtTestCard extends HTMLElement {
           this._sirenKey = null;
           this._call(DOMAIN, "siren_test_result", {
             entity_id: this._ids.panel,
-            siren: siren.entity_id,
+            siren: unit.entity_id,
             heard,
           });
         };
@@ -471,7 +471,7 @@ class HauswachtTestCard extends HTMLElement {
         button(this._t("no"), answer(false));
       } else {
         const start = button(this._t("sirenTest"), () => {
-          this._sirenAsk = { siren: siren.entity_id, step: "confirm" };
+          this._sirenAsk = { siren: unit.entity_id, step: "confirm" };
           this._sirenKey = null;
           this._updateSirens();
         });

@@ -49,7 +49,8 @@ def _source(name: str) -> str:
 def test_test_card_only_simulates() -> None:
     source = _source(TEST_CARD_FILE)
     assert 'customElements.define("hauswacht-test-card"' in source
-    # Die Testkarte ruft nur Hauswacht-Simulation und den Testmodus-Schalter auf – nie Sirenen
+    # Die Testkarte ruft nur Hauswacht-Dienste und den Testmodus-Schalter auf – nie direkt
+    # Sirenen. Der Sirenentest läuft über hauswacht.siren_test (Guard, nur Administratoren).
     assert '"siren"' not in source
     assert "siren." not in source
     assert "formatEntityName(" not in source

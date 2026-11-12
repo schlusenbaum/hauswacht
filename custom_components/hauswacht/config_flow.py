@@ -1738,17 +1738,22 @@ class HauswachtOptionsFlow(OptionsFlow):
             prewarn=tester.settings.prewarn and not self._siren_prewarned,
         )
         self._siren_prewarned = True
-        name = display_name(self.hass, siren)
         if not result["started"]:
-            self._siren_summary.append(f"{name}: ⛔ {result['reason']}")
+            self._siren_summary.append(f"{display_name(self.hass, siren)}: ⛔ {result['reason']}")
             self._siren_queue.pop(0)
             return await self.async_step_siren_test_next()
         await asyncio.sleep(result["seconds"] + 1)
         self._siren_by = by
+        return await self.async_step_siren_test_heard()
+
+    async def async_step_siren_test_heard(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        siren = self._siren_queue[0] if self._siren_queue else ""
         return self.async_show_menu(
             step_id="siren_test_heard",
             menu_options=["siren_test_yes", "siren_test_no"],
-            description_placeholders={"siren": name},
+            description_placeholders={"siren": display_name(self.hass, siren) if siren else "–"},
         )
 
     async def _siren_answer(self, heard: bool) -> ConfigFlowResult:

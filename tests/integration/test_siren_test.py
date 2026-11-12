@@ -10,6 +10,7 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from homeassistant.auth.const import GROUP_ID_USER
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import Context, HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
@@ -138,7 +139,8 @@ async def test_stop_service(hass: HomeAssistant) -> None:
 
 async def test_only_admins(hass: HomeAssistant) -> None:
     mocks = await _setup(hass)
-    guest = await hass.auth.async_create_user("Gast")
+    guest = await hass.auth.async_create_user("Gast", group_ids=[GROUP_ID_USER])
+    assert not guest.is_admin
     with pytest.raises(ServiceValidationError):
         await _test(hass, context=Context(user_id=guest.id))
     assert mocks.on == []
