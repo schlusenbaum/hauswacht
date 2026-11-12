@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-11-12
+
+### Hinzugefügt
+- **Falscheingaben zurücksetzen:** Knopf in der Karte „Hauswacht Test“ (mit Anzahl) und Dienst
+  `hauswacht.reset_code_lock` – setzt Zähler und PIN-Sperre zurück. Nur für Administratoren.
+- Attribute `code_failures` und `code_locked_until` am Bedienfeld.
+
+### Geändert
+- Unbekannte Karten (Codes, die kein PIN sein können) zählen nicht mehr als Fehleingabe –
+  Anlernen löst keine Sperre mehr aus.
+
 ## [0.30.0] - 2026-11-12
 
 ### Hinzugefügt

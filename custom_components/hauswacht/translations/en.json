@@ -1136,6 +1136,9 @@
     "siren_test_running": {
       "message": "Cannot arm during a siren test."
     },
+    "admin_only": {
+      "message": "Only administrators may do this."
+    },
     "siren_test_admin_only": {
       "message": "Only administrators may start the siren test."
     },
@@ -1229,6 +1232,10 @@
     "siren_test_stop": {
       "name": "Stop siren test",
       "description": "Cancels a running siren test."
+    },
+    "reset_code_lock": {
+      "name": "Reset failed attempts",
+      "description": "Resets the counter of wrong PIN/card entries and a running PIN lock. Administrators only."
     }
   },
   "issues": {

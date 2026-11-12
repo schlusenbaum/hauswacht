@@ -24,6 +24,8 @@ const TEXT = {
     enable: "Testmodus einschalten",
     disable: "Testmodus ausschalten",
     reset: "Alle echt",
+    codeReset: "Falscheingaben zurücksetzen",
+    codeLocked: "gesperrt",
     missing: "Hauswacht-Testsensor nicht gefunden (Hauswacht 0.17.1 oder neuer nötig).",
     empty: "Keine Sensoren in den Hauswacht-Zonen.",
     real: "Echt",
@@ -91,6 +93,8 @@ const TEXT = {
     enable: "Turn on test mode",
     disable: "Turn off test mode",
     reset: "All real",
+    codeReset: "Reset failed attempts",
+    codeLocked: "locked",
     missing: "Hauswacht test sensor not found (Hauswacht 0.17.1 or newer required).",
     empty: "No sensors in the Hauswacht zones.",
     real: "Real",
@@ -346,7 +350,12 @@ class HauswachtTestCard extends HTMLElement {
     this._reset.addEventListener("click", () =>
       this._call(DOMAIN, "simulate_reset", { entity_id: this._ids.panel })
     );
-    actions.append(this._toggle, this._reset);
+    // Falscheingaben (PIN/Karte) zurücksetzen – nur Administratoren, sonst Fehlermeldung
+    this._codeReset = document.createElement("button");
+    this._codeReset.addEventListener("click", () =>
+      this._call(DOMAIN, "reset_code_lock", { entity_id: this._ids.panel })
+    );
+    actions.append(this._toggle, this._reset, this._codeReset);
     card.appendChild(actions);
 
     if (!sensors.length) {
@@ -615,6 +624,18 @@ class HauswachtTestCard extends HTMLElement {
     }
   }
 
+  _updateCodeReset() {
+    if (!this._codeReset) return;
+    const panel = this._ids.panel && this._hass.states[this._ids.panel];
+    const failures = (panel && panel.attributes.code_failures) || 0;
+    const until = panel && panel.attributes.code_locked_until;
+    const locked = until && new Date(until) > new Date();
+    let text = `${this._t("codeReset")} (${failures})`;
+    if (locked) text += ` · ${this._t("codeLocked")}`;
+    this._codeReset.textContent = text;
+    this._codeReset.disabled = !failures;
+  }
+
   _testMode() {
     const sim = this._ids.simulation && this._hass.states[this._ids.simulation];
     return Boolean(sim && sim.attributes.test_mode);
@@ -644,6 +665,7 @@ class HauswachtTestCard extends HTMLElement {
     this._toggle.textContent = testMode ? this._t("disable") : this._t("enable");
     this._toggle.disabled = !this._ids.testMode;
     this._reset.disabled = !testMode;
+    this._updateCodeReset();
 
     let waiting = this._updateRules();
     const byId = {};

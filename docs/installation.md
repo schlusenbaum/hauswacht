@@ -1,6 +1,6 @@
 # Installation und Bedienung
 
-> **Stand 0.30.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
+> **Stand 0.31.0:** Alle Grundfunktionen sind enthalten. Die echte Sirenenansteuerung ist
 > **standardmäßig gesperrt** und muss bewusst freigegeben werden.
 
 ## Voraussetzungen
@@ -974,6 +974,12 @@ Allgemein:
 - Nach 5 falschen Eingaben in Folge ist die Eingabe 1 Minute gesperrt, bei weiteren
   Fehlversuchen jeweils doppelt so lange (höchstens 15 Minuten). Ab der 3. falschen Eingabe
   geht eine Systemmeldung an die eingetragenen Empfänger.
+- Unbekannte Karten (Codes, die kein PIN sein können) zählen nicht als Fehleingabe – so lassen
+  sich Karten anlernen, ohne die Sperre auszulösen.
+- **Zurücksetzen:** Administratoren setzen Zähler und Sperre mit dem Knopf
+  „Falscheingaben zurücksetzen“ in der Karte „Hauswacht Test“ zurück (zeigt die Anzahl) oder
+  mit dem Dienst `hauswacht.reset_code_lock`. Für andere Benutzer ist das gesperrt. Die
+  Attribute `code_failures` und `code_locked_until` am Bedienfeld zeigen den Stand.
 - Ohne PIN darf die Anlage nicht für Sprachassistenten (z. B. Alexa) freigegeben werden.
 - Ein PIN aus Versionen vor 0.16.1 wurde beim Update automatisch zum Benutzer
   „Hauptbenutzer“.

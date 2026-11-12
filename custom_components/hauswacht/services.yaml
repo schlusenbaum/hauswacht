@@ -123,3 +123,9 @@ siren_test_stop:
     entity:
       integration: hauswacht
       domain: alarm_control_panel
+
+reset_code_lock:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
