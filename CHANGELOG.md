@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 
 ### Dokumentation
+- README schlanker: die Befehle für Entwickler stehen jetzt nur noch unter
+  [Tests](docs/entwicklung/testing.md).
 - Installation über den Marketplace (ab Home Assistant 2026.11) und HACS beschrieben, mit Knopf
   „Integration einrichten“ (My Home Assistant) in README und Installationsanleitung.
 

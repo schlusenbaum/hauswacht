@@ -118,18 +118,8 @@ Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 ## Mitmachen
 
 Fehler und Wünsche gern als [Issue](https://github.com/schlusenbaum/hauswacht/issues) –
-Rückmeldungen zu weiteren Sirenen- und Keypad-Modellen sind besonders willkommen.
-
-```bash
-pip install ruff mypy pytest
-ruff check . && ruff format --check . && mypy && pytest tests/core
-
-# Integrationstests (installiert Home Assistant als Testumgebung)
-pip install pytest-homeassistant-custom-component
-pytest tests/integration -o asyncio_mode=auto
-```
-
-Kein Test braucht echte Geräte. Mehr unter [Entwicklung](docs/README.md#für-entwickler).
+Rückmeldungen zu weiteren Sirenen- und Keypad-Modellen sind besonders willkommen. Wer am Code
+mitarbeiten möchte: [Entwicklung](docs/README.md#für-entwickler) und [Tests](docs/entwicklung/testing.md).
 
 ## Unterstützen
 

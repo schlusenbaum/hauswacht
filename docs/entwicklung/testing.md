@@ -1,12 +1,18 @@
 # Tests
 
-Alle Tests laufen **ohne Home Assistant, ohne Geräte und ohne Sirenen**.
+Kein Test braucht echte Geräte oder Sirenen. Die Kernlogik wird ohne Home Assistant getestet,
+die Integrationstests mit einer Home-Assistant-Testumgebung.
 
 ```bash
-pytest          # Tests
-mypy            # Typprüfung (strict)
-ruff check .    # Lint
+pip install ruff mypy pytest
+ruff check . && ruff format --check . && mypy && pytest tests/core
+
+# Integrationstests (installiert Home Assistant als Testumgebung)
+pip install pytest-homeassistant-custom-component
+pytest tests/integration -o asyncio_mode=auto
 ```
+
+Dieselben Prüfungen laufen bei jedem Pull Request in der CI, dazu Hassfest.
 
 ## Vorhanden
 
