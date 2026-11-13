@@ -145,7 +145,7 @@ async def test_arm_failed_push_with_force_button(
     actions = _actions(push[0])
     assert set(actions) == {"Arm anyway", "Try again"}
     assert actions["Arm anyway"].startswith(PUSH_ARM_FORCE_PREFIX)
-    assert actions["Erneut versuchen"].startswith(PUSH_ARM_RETRY_PREFIX)
+    assert actions["Try again"].startswith(PUSH_ARM_RETRY_PREFIX)
 
     await _press(hass, actions["Arm anyway"], hass_admin_user.id)
     state = hass.states.get(PANEL)
@@ -162,16 +162,16 @@ async def test_arm_failed_retry_button(hass: HomeAssistant, hass_admin_user: Moc
     with pytest.raises(ServiceValidationError):
         await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     actions = _actions(push[0])
-    assert set(actions) == {"Erneut versuchen"}  # Überbrücken ist nicht erlaubt
+    assert set(actions) == {"Try again"}  # Überbrücken ist nicht erlaubt
 
     # Fenster noch offen: erneut abgelehnt, neue Nachricht mit neuem Knopf
-    await _press(hass, actions["Erneut versuchen"], hass_admin_user.id)
+    await _press(hass, actions["Try again"], hass_admin_user.id)
     assert _panel(hass) == AlarmControlPanelState.DISARMED
     assert len(push) == 2
 
     set_sensor(hass, WINDOW, "off")
     await hass.async_block_till_done()
-    await _press(hass, _actions(push[1])["Erneut versuchen"], hass_admin_user.id)
+    await _press(hass, _actions(push[1])["Try again"], hass_admin_user.id)
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
 
 
@@ -184,7 +184,7 @@ async def test_arm_button_needs_user_and_is_single_use(
     await hass.async_block_till_done()
     with pytest.raises(ServiceValidationError):
         await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
-    retry = _actions(push[0])["Erneut versuchen"]
+    retry = _actions(push[0])["Try again"]
     set_sensor(hass, DOOR, "off")
     await hass.async_block_till_done()
 

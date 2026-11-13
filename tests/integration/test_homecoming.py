@@ -46,7 +46,7 @@ def _panel(hass: HomeAssistant) -> str:
     return state.state
 
 
-def _action(call: ServiceCall, title: str = "Unscharf schalten") -> str:
+def _action(call: ServiceCall, title: str = "Disarm") -> str:
     actions = call.data["data"]["actions"]
     assert actions[0]["title"] == title
     assert actions[0]["authenticationRequired"] is True
@@ -94,7 +94,7 @@ async def test_push_button_also_on_alarm(hass: HomeAssistant, hass_admin_user: M
     set_sensor(hass, "binary_sensor.kuechenfenster", "on")
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
-    await _press(hass, _action(push[0], "Alarm beenden"), hass_admin_user.id)
+    await _press(hass, _action(push[0], "End alarm"), hass_admin_user.id)
     # Während eines Alarms beendet der Knopf nur den Alarm, das Profil bleibt scharf
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
 
@@ -169,7 +169,7 @@ async def test_observation_records_and_switches_nothing(
     assert sources["Anna (overall)"]["median_delay"] == 40
     assert sources["Anna – Router"]["median_delay"] == 10
     assert sources["Anna (overall)"]["false_alarms_at"]["30"] == 1
-    assert "40 s nach dem Öffnen" in state.attributes["recent"][0]
+    assert "40 s after opening" in state.attributes["recent"][0]
 
 
 async def test_arrival_without_door_is_counted(
