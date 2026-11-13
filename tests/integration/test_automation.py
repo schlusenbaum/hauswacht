@@ -73,9 +73,7 @@ async def _setup(hass: HomeAssistant, **auto: Any) -> None:
 # --- Uhrzeit ----------------------------------------------------------------
 
 
-async def test_arm_and_disarm_by_time(
-    hass: HomeAssistant, freezer: FrozenDateTimeFactory
-) -> None:
+async def test_arm_and_disarm_by_time(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
     # Die Uhr wirklich vorstellen: Home Assistant plant den nächsten Zeitpunkt ab der aktuellen
     # Uhrzeit. Nur Zeitereignisse zu feuern hängt sonst von der Tageszeit des Testlaufs ab.
