@@ -52,6 +52,7 @@ from .const import (
     OPT_AREAS,
     OPT_BUTTONS_WITHOUT_PIN,
     OPT_CARD_LEARN_MINUTES,
+    OPT_CARD_PIN_UNLINKED,
     OPT_CODE_ARM_REQUIRED,
     OPT_CONTROLS,
     OPT_CRITICAL_ALERTS,
@@ -549,6 +550,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 for key in (OPT_CODE_ARM_REQUIRED, OPT_END_ALARM_WITHOUT_PIN):
                     options[key] = bool(user_input.get(key, False))
                 options[OPT_BUTTONS_WITHOUT_PIN] = bool(user_input.get(OPT_BUTTONS_WITHOUT_PIN))
+                options[OPT_CARD_PIN_UNLINKED] = bool(user_input.get(OPT_CARD_PIN_UNLINKED, True))
                 return await self._save(options, "users")
         users = parse_users(options)
         with_pin = sorted(u.name for u in users if u.pin is not None)
@@ -570,6 +572,10 @@ class HauswachtOptionsFlow(OptionsFlow):
                 vol.Optional(
                     OPT_BUTTONS_WITHOUT_PIN,
                     default=bool(options.get(OPT_BUTTONS_WITHOUT_PIN, False)),
+                ): BooleanSelector(),
+                vol.Optional(
+                    OPT_CARD_PIN_UNLINKED,
+                    default=bool(options.get(OPT_CARD_PIN_UNLINKED, True)),
                 ): BooleanSelector(),
             }
         )
@@ -2239,6 +2245,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "can_disarm": bool(user_input.get("can_disarm", True)),
                         "can_end_alarm": bool(user_input.get("can_end_alarm", True)),
                         "ha_user": user_input.get("ha_user") or await self._ha_user_by_name(name),
+                        "card_pin": bool(user_input.get("card_pin", False)),
                         "valid_from": _to_iso(user_input.get("valid_from")),
                         "valid_until": _to_iso(user_input.get("valid_until")),
                     }
@@ -2816,6 +2823,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                     SelectSelectorConfig(
                         options=await self._ha_user_options(), mode=SelectSelectorMode.DROPDOWN
                     )
+                ),
+                vol.Optional("card_pin", default=bool(current.get("card_pin", False))): (
+                    BooleanSelector()
                 ),
                 vol.Optional(
                     "valid_from", description=_suggested_local(current.get("valid_from"))

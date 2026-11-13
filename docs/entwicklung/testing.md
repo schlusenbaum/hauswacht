@@ -38,6 +38,7 @@ ruff check .    # Lint
 | `tests/integration/test_profile_settings.py` | Mit Home Assistant: Profil bearbeiten, Werte ändern, Sperre im scharfen Zustand |
 | `tests/core/test_users.py` | Benutzer, gemeinsame PINs, Rechte, Gäste-Zeitraum, Bedrohungs-PIN, Konflikte |
 | `tests/core/test_checks.py` | Prüfhinweise: Lücken, Vergessenes, Widersprüche; Bedrohungs-PIN ohne Namen |
+| `tests/integration/test_alarm_card.py` | Alarmkarte: ohne PINs frei, zugeordnetes Konto ohne PIN mit Namen und Rechten, fremdes Konto bzw. Tablet mit PIN, falscher PIN, „Trotzdem scharf“, kein Zugriff für Nur-Lesen-Konten |
 | `tests/integration/test_overview.py` | Übersicht per WebSocket (nur Admins, nichts Geheimes), Reparaturen kommen und gehen, Diagnose geschwärzt |
 | `tests/core/test_docs.py` | Dokumentation: keine toten Links oder Anker, jede Seite im Inhaltsverzeichnis |
 | `tests/core/test_versions.py` | Versionsangaben in README, Anleitung, pyproject und CHANGELOG passen zum Manifest |

@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-11-13
+
+### Hinzugefügt
+- **Karte „Hauswacht Alarm“** zum Scharf- und Unscharfschalten, groß fürs Tablet: Zustand in
+  Farbe mit Countdown und ablaufendem Balken, ein Knopf je Alarmprofil, „Unscharf schalten“,
+  im Alarm zusätzlich „Alarm beenden“ und der auslösende Melder. Offene Melder stehen vor dem
+  Scharfschalten da; verlangt das Profil eine Bestätigung, gibt es „Trotzdem scharf schalten“.
+  Mehrere Bereiche untereinander mit „Alle Bereiche unscharf“.
+- **Ohne PIN-Zwang:** Die Karte nimmt das angemeldete Home-Assistant-Konto als Ausweis.
+  Zugeordnete Konten schalten ohne PIN mit den Rechten ihres Benutzers, auch wenn es PINs
+  (z. B. fürs Keypad) gibt. Einen PIN verlangt sie nur
+  - beim Benutzer mit „In der Alarmkarte PIN verlangen“ (z. B. Wandtablet) und
+  - für Konten ohne Hauswacht-Benutzer (PIN-Regel, Standard an).
+  Mit PIN gelten Sperre, Bedrohungs-PIN und Rechte wie am Bedienfeld.
+- Übersicht zeigt die neuen Einstellungen; WebSocket-Befehle `hauswacht/alarm/info` und
+  `hauswacht/alarm/action`.
+
 ## [0.34.0] - 2026-11-13
 
 ### Hinzugefügt

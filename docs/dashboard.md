@@ -4,7 +4,8 @@
 
 | Weg | Scharf | Unscharf |
 |---|---|---|
-| **Bedienfeld** (`alarm_control_panel.hauswacht`, z. B. als Kachel oder Alarmkarte) | Knöpfe der Profile, denen ein Knopf zugeordnet ist | „Unscharf“ – mit PIN, sobald irgendein PIN existiert |
+| **[Karte „Hauswacht Alarm“](#karte-hauswacht-alarm)** | ein Knopf je Profil | „Unscharf schalten“ – ohne PIN für zugeordnete Konten, siehe unten |
+| **Bedienfeld** (`alarm_control_panel.hauswacht`, z. B. als Kachel oder Alarm-Karte von Home Assistant) | Knöpfe der Profile, denen ein Knopf zugeordnet ist | „Unscharf“ – mit PIN, sobald irgendein PIN existiert |
 | **Auswahlliste + Knopf** (`select.hauswacht_profil`, `button.hauswacht_scharf_schalten`) | jedes Profil, auch ohne Knopf | – |
 | **Knopf „Unscharf schalten“** (`button.hauswacht_unscharf_schalten`) | – | sofort, ohne PIN-Abfrage (siehe unten) |
 | **Push-Nachricht** | „Jetzt scharf“ (Erinnerung), „Trotzdem scharf“ / „Erneut versuchen“ | Knopf „Unscharf schalten“ bzw. „Alarm beenden“, siehe [Benachrichtigungen](benachrichtigungen.md#push-knopf-unscharf-schalten) |
@@ -81,6 +82,60 @@ englischen stehen oben in der Datei.
 
 Die Symbolleiste mit allen Bedienfeld-Knöpfen (`alarm-modes`) ist weiter möglich, doppelt aber
 die Profilauswahl.
+
+## Karte „Hauswacht Alarm“
+
+![Karte Hauswacht Alarm: unscharf, wird scharf, PIN-Eingabe, Alarm](images/alarm-karte.png)
+
+Die Karte zum Bedienen – gemacht fürs Tablet an der Wand, passt sich aber auch dem Handy an.
+Dashboard bearbeiten → **Karte hinzufügen** → **„Hauswacht Alarm“** – oder in YAML:
+
+```yaml
+type: custom:hauswacht-alarm-card
+bereich: garage   # optional: nur diesen Bereich zeigen (Kennung oder Name)
+title: Alarm      # optional
+```
+
+| Zustand | Anzeige | Knöpfe |
+|---|---|---|
+| Unscharf | grün; offene Melder darunter | ein Knopf je Alarmprofil (mit dessen Symbol) |
+| Wird scharf / Eingangsverzögerung | orange, Restzeit groß und als ablaufender Balken | „Unscharf schalten“ |
+| Scharf | rot, mit Profil | „Unscharf schalten“ |
+| Alarm | leuchtend rot, blinkt langsam; auslösender Melder | „Alarm beenden“ (bleibt scharf) und „Unscharf schalten“ (ganz aus) |
+
+Dazu: wer zuletzt geschaltet hat und wann, Testmodus, nicht erreichbare Melder und eine laufende
+PIN-Sperre. Mit mehreren Bereichen steht jeder Bereich untereinander, dazu „Alle Bereiche
+unscharf“.
+
+Verlangt ein Profil bei offenen Meldern eine Bestätigung, nennt die Karte die Melder und bietet
+**„Trotzdem scharf schalten“** an – statt nur eine Fehlermeldung zu zeigen.
+
+### Ohne PIN-Zwang
+
+Die Alarm-Karte von Home Assistant verlangt einen PIN von **allen**, sobald irgendein PIN
+existiert – etwa für das Keypad. Die Karte „Hauswacht Alarm“ schaltet stattdessen über Hauswacht
+selbst, und **der Ausweis ist das angemeldete Home-Assistant-Konto**:
+
+| Angemeldetes Konto | In der Karte |
+|---|---|
+| einem Hauswacht-Benutzer zugeordnet (Normalfall) | **ohne PIN**, mit den Rechten dieses Benutzers je Bereich; im Logbuch steht sein Name |
+| zugeordnet, beim Benutzer „In der Alarmkarte PIN verlangen“ an | mit PIN – z. B. für ein Wandtablet |
+| keinem Benutzer zugeordnet | mit PIN, solange unter [PIN-Regeln](benutzer.md#pin-regeln) „Alarmkarte: PIN für Konten ohne Hauswacht-Benutzer“ an ist (Standard) |
+| es gibt gar keinen PIN | nie ein PIN |
+
+- Wer einen PIN eingeben muss, bekommt eine große Zifferntastatur (auch die Tastatur des Geräts
+  funktioniert). Es gilt dieselbe Prüfung wie am Bedienfeld: [Sperre nach falschen
+  Eingaben](benutzer.md#sperre-nach-falschen-eingaben), Bedrohungs-PIN, Rechte des Benutzers
+  mit diesem PIN. Scharfschalten fragt nur nach dem PIN, wenn „PIN auch zum Scharfschalten
+  verlangen“ an ist; „Alarm beenden“ nicht, wenn „Alarm ohne PIN beenden“ an ist.
+- Ein Benutzer ohne ein Recht sieht den Knopf ausgegraut.
+- Das Konto braucht außerdem in Home Assistant das Recht, das Bedienfeld zu steuern.
+- Keypads, Alexa und das Bedienfeld selbst bleiben wie bisher mit PIN.
+
+> **Wandtablet:** Ein dauerhaft angemeldetes Tablet im Flur kann jeder bedienen, der davorsteht.
+> Am besten bekommt es ein **eigenes Home-Assistant-Konto** (z. B. „Tablet Flur“), das keinem
+> Benutzer zugeordnet ist – dann fragt die Karte dort nach dem PIN, auf den Handys der Familie
+> nicht.
 
 ## Karte „Hauswacht Einstellungen“
 

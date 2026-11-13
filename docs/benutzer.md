@@ -16,7 +16,8 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
 | Ziel | So einrichten |
 |---|---|
 | Dashboard ohne PIN, Keypad mit Karte | keine PINs, Karten bei den Benutzern |
-| Keypad auch mit Zahlencode, Dashboard trotzdem ohne PIN | PINs bzw. Master-PIN + „Dashboard-Knöpfe trotz PIN erlauben“, im Dashboard die Hauswacht-Knöpfe statt der Alarmkarte |
+| Keypad auch mit Zahlencode, Dashboard trotzdem ohne PIN | PINs bzw. Master-PIN, im Dashboard die Karte [„Hauswacht Alarm“](dashboard.md#karte-hauswacht-alarm) – sie schaltet für zugeordnete Konten ohne PIN |
+| … und ein Wandtablet nur mit PIN | dem Tablet ein eigenes Home-Assistant-Konto ohne Hauswacht-Benutzer geben (oder beim Benutzer „In der Alarmkarte PIN verlangen“) |
 | Alles mit PIN | PIN für jede Person (gemeinsam erlaubt) |
 
 ## Benutzer
@@ -32,6 +33,7 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
 | Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte (bei „alle Bereiche gleich“) |
 | Rechte gelten für | nur bei mehreren Bereichen, siehe [Rechte](#rechte) |
 | Home-Assistant-Konto | ordnet Push-Knopf, Dashboard-Knöpfe und NFC-Aufkleber diesem Benutzer zu. Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
+| In der Alarmkarte PIN verlangen | für das Home-Assistant-Konto dieses Benutzers in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang), z. B. bei einem Tablet-Konto. Standard aus |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit sind die Ausweise gesperrt |
 | RFID-Karten/-Anhänger | beliebig viele, siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen) |
 
@@ -66,6 +68,7 @@ Benutzer das darf.
 | **Master-PIN** | ein PIN ohne eigenen Benutzer, mit allen Rechten in allen Bereichen (z. B. für Alexa oder als Familien-Code am Keypad). Erscheint in der Benutzerliste als „Master-PIN“; im Logbuch steht dann nur „Master-PIN“, nicht wer es war |
 | **PIN auch zum Scharfschalten verlangen** | Standard aus |
 | **Alarm ohne PIN beenden** | Knopf „Alarm beenden“ auch mit PIN (Standard aus) |
+| **Alarmkarte: PIN für Konten ohne Hauswacht-Benutzer verlangen** | Standard an. Gilt nur in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang); zugeordnete Konten schalten dort ohne PIN |
 | **Dashboard-Knöpfe trotz PIN erlauben** | „Unscharf schalten“, „Alarm beenden“ und die Scharf-Knöpfe funktionieren weiter. Der PIN schützt dann nur Bedienfeld, Keypads und Sprachassistenten – an die Knöpfe kommen ohnehin nur angemeldete Home-Assistant-Benutzer |
 
 - PINs haben 4–8 Ziffern und werden nur als Hash gespeichert.

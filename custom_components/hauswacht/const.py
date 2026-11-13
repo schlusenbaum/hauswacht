@@ -52,6 +52,8 @@ ISSUE_PIN_COVERAGE: Final = "users_without_pin"
 MASTER_USER_NAME: Final = "Master-PIN"
 # "Alarm beenden" (Sirene aus, bleibt scharf) auch bei eingestelltem PIN ohne PIN erlauben
 OPT_END_ALARM_WITHOUT_PIN: Final = "end_alarm_without_pin"
+# Alarmkarte: Home-Assistant-Konten ohne Hauswacht-Benutzer müssen dort einen PIN eingeben
+OPT_CARD_PIN_UNLINKED: Final = "card_pin_unlinked"
 OPT_HOMECOMING_OBSERVE: Final = "homecoming_observe"
 OPT_HOMECOMING_PERSONS: Final = "homecoming_persons"
 

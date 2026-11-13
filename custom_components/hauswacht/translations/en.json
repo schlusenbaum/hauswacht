@@ -32,7 +32,11 @@
           "remove_master_pin": "Remove master PIN",
           "code_arm_required": "Require PIN to arm",
           "end_alarm_without_pin": "End alarm without PIN (sirens off, system stays armed)",
-          "buttons_without_pin": "Allow dashboard buttons despite PIN (PIN then only protects the panel and voice assistants)"
+          "buttons_without_pin": "Allow dashboard buttons despite PIN (PIN then only protects the panel and voice assistants)",
+          "card_pin_unlinked": "Alarm card: require PIN for Home Assistant accounts without a Hauswacht user"
+        },
+        "data_description": {
+          "card_pin_unlinked": "The “Hauswacht Alarm” card works without a PIN if the logged-in account belongs to a Hauswacht user (configurable per user). Other accounts – e.g. a separate account for a wall tablet – get a PIN keypad with this switch."
         }
       },
       "profile_settings": {
@@ -220,6 +224,7 @@
           "can_disarm": "May disarm",
           "can_end_alarm": "May end alarm",
           "ha_user": "Home Assistant account (for push and dashboard buttons)",
+          "card_pin": "Require PIN in the alarm card",
           "valid_from": "Valid from",
           "valid_until": "Valid until",
           "rights": "Rights apply to",
@@ -227,7 +232,8 @@
         },
         "data_description": {
           "rights": "**All areas alike:** the checkboxes above apply everywhere. **Per area:** after saving you choose for each area what the user may do there (the checkboxes above are then ignored).",
-          "tags": "Any number, independent of the PIN (a user needs no PIN to use a card at a keypad). Hold a new card once to a keypad or reader – it then shows up here as “new”. Or type the ID."
+          "tags": "Any number, independent of the PIN (a user needs no PIN to use a card at a keypad). Hold a new card once to a keypad or reader – it then shows up here as “new”. Or type the ID.",
+          "card_pin": "For this user's Home Assistant account in the “Hauswacht Alarm” card. Off: arms and disarms there without a PIN, with this user's rights. On: e.g. for a wall tablet that is always logged in. Only applies if any PIN exists."
         }
       },
       "user_area_rights": {
@@ -1157,6 +1163,12 @@
     },
     "siren_test_blocked": {
       "message": "Siren test not possible: {reason}"
+    },
+    "card_pin_required": {
+      "message": "Please enter the PIN."
+    },
+    "card_no_access": {
+      "message": "This account may not control the panel of this area."
     }
   },
   "services": {

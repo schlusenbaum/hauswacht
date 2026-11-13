@@ -289,6 +289,7 @@ def _users(main: HauswachtRuntime) -> list[dict[str, Any]]:
                 "valid_until": _iso(user.valid_until),
                 "expired": user.valid_until is not None and user.valid_until < now,
                 "ha_account": user.ha_user is not None,
+                "card_pin": user.card_pin,
                 "rights": rights,
             }
         )
@@ -409,6 +410,7 @@ def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
             "any_pin": main.has_codes,
             "arm_requires_code": main.code_arm_required,
             "buttons_without_pin": main.buttons_without_pin,
+            "card_pin_unlinked": main.card_unlinked_pin,
         },
         "controls": _controls(main),
         "notifications": _notifications(main),
