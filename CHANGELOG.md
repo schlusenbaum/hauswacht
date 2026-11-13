@@ -6,6 +6,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.41.1] - 2026-11-13
+
 ### Dokumentation
 - Sirenen-Seite überarbeitet: Überblick über das Sirenen-Menü, Einrichtung Schritt für Schritt,
   Beispiele (Homematic IP Alarmsirene, Außensirene mit Ton „fire“, Sirene am Schaltaktor) und
