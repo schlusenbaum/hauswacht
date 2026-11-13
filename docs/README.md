@@ -14,7 +14,7 @@ erklären Einrichtung und Bedienung – von der Installation bis zum Keypad an d
 | [Bedienung und Dashboard](dashboard.md) | Scharf und unscharf schalten, Alarm beenden, Beispielkarte, Karten „Hauswacht Einstellungen“ und „Hauswacht Test“ |
 | [Benutzer, PINs und Sperre](benutzer.md) | Benutzer, Rechte je Bereich, PIN-Regeln, Master-PIN, Sperre nach falschen Eingaben, Bedrohungs-PIN |
 | [Bedienteile](bedienteile.md) | Zigbee-Keypads, RFID-Karten anlernen, NFC-Aufkleber, RFID-Leser |
-| [Sirenen](sirenen.md) | Welche Sirenen gehen, Freigabe, Sirenentest, Brandschutz |
+| [Sirenen](sirenen.md) | Welche Sirenen gehen, Freigabe, Ton je Sirene, Sirene aus Schalter, Sirenentest, Gründe bei stummer Sirene, Brandschutz |
 | [Benachrichtigungen und Sprachausgabe](benachrichtigungen.md) | Empfänger je Ereignis, eigene Texte, Ansagen über Lautsprecher, Push-Knöpfe |
 | [Testmodus und Testkarte](testmodus.md) | Alles gefahrlos durchspielen: Sensoren simulieren, ohne Sirene |
 | [Beobachtungen](beobachtung.md) | Heimkehr-Beobachtung und „Tür auf bis unscharf“ – messen, bevor man automatisiert |

@@ -69,7 +69,7 @@ Konfigurieren**. Sie lassen sich nur ändern, wenn **alle Bereiche unscharf** si
 | **Alarmauslösung** → Immer aktiv | Melder, die auch unscharf melden | [Melder](melder.md#immer-aktive-melder) |
 | **Alarmauslösung** → Melder aus anderem Sensor erstellen | Assistent: Messwert → Schwellenwert-Helfer → Melder | [Melder](melder.md#melder-aus-anderem-sensor-erstellen) |
 | **Alarmprofile** | Profile anlegen und bearbeiten | [Profile](profile.md) |
-| **Alarmgeber – Sirenen** | Sirenen, Freigabe, Sirenentest | [Sirenen](sirenen.md) |
+| **Alarmgeber – Sirenen** | Sirenen und Freigabe, Sirene aus Schalter erstellen, Ton je Sirene, Sirenentest | [Sirenen](sirenen.md) |
 | **Benachrichtigungen** | Empfänger, Ereignisse, eigene Texte, Sprachausgabe | [Benachrichtigungen](benachrichtigungen.md) |
 | **Systemeinstellungen** → Bereiche | Haus, Garage … | [Bereiche](profile.md#bereiche) |
 | **Systemeinstellungen** → Benutzer und PINs | Personen, Ausweise, Rechte, PIN-Regeln | [Benutzer](benutzer.md) |
