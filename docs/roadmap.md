@@ -18,6 +18,7 @@
 | 0.29 | Benutzer-Rechte je Bereich |
 | 0.30–0.32 | RFID-Karten unabhängig vom PIN, Anlernen über Keypad (nur unscharf, Anlernzeit), Zufallsnummern erkannt, Falscheingaben zurücksetzen, Fehlversuche verfallen nach 24 h |
 | 0.33 | Aufgeräumte Dokumentation, Screenshots, Issue-Vorlagen |
+| 0.34 | Anlagenübersicht (Karte, Druck, Notfallblatt), Prüfhinweise mit Reparaturen, Diagnose-Datei |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 

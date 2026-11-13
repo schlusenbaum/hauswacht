@@ -186,6 +186,7 @@ from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
 from .reminder import ReminderRunner
+from .review import IssueReporter
 from .silence_observer import SilenceObserver
 from .siren_executor import SirenExecutor
 from .siren_test import SirenTester
@@ -277,6 +278,7 @@ class HauswachtRuntime:
         self.controls: ControlManager | None = ControlManager(hass, self) if main is None else None
         # Funkstille-Beobachtung: ebenfalls nur im Hauptbereich (beobachtet alle Bereiche)
         self.silence: SilenceObserver | None = SilenceObserver(hass, self) if main is None else None
+        self.reviewer: IssueReporter | None = IssueReporter(hass, self) if main is None else None
         self._code_guard = CodeGuardState()
         self._selected_profile: str | None = None
         self._edit_profile: str | None = None
@@ -514,6 +516,8 @@ class HauswachtRuntime:
             await self.siren_tester.async_start()
         if self.silence is not None:
             await self.silence.async_start()
+        if self.reviewer is not None:
+            self.reviewer.async_start()
         if self.controls is not None:
             await self.controls.async_start()
         self._unsub_registry = self.hass.bus.async_listen(
@@ -537,6 +541,8 @@ class HauswachtRuntime:
             self.siren_tester.async_stop()
         if self.silence is not None:
             self.silence.async_stop()
+        if self.reviewer is not None:
+            self.reviewer.async_stop()
         if self.controls is not None:
             self.controls.async_stop()
         self.sirens.cancel_retry()

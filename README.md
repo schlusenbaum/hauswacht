@@ -11,7 +11,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.33.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
+> **Status: 0.34.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
 > Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst freigegeben werden.
 
 <p align="center">
@@ -40,6 +40,8 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
   MQTT werden sichtbar statt verschwiegen.
 - **Testmodus und Testkarte** – alles gefahrlos durchspielen, ohne Sirene, ohne dass andere
   Automationen etwas merken.
+- **Anlagenübersicht** – die ganze Konfiguration auf einen Blick, zum Drucken, mit Notfallblatt
+  für die Familie und Prüfhinweisen, die Lücken und Vergessenes finden.
 - **Beobachten statt raten** – Heimkehr- und Funkstille-Beobachtung liefern Zahlen, bevor man
   etwas automatisiert.
 
@@ -68,6 +70,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser |
 | [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Sirenentest, Brandschutz |
 | [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
+| [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |
 | [Testmodus](docs/testmodus.md) · [Beobachtungen](docs/beobachtung.md) · [Referenz](docs/referenz.md) · [Fehlersuche](docs/fehlersuche.md) | |
 
 Alles auf einen Blick: [docs/](docs/README.md).

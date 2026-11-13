@@ -18,6 +18,7 @@ erklären Einrichtung und Bedienung – von der Installation bis zum Keypad an d
 | [Benachrichtigungen und Sprachausgabe](benachrichtigungen.md) | Empfänger je Ereignis, eigene Texte, Ansagen über Lautsprecher, Push-Knöpfe |
 | [Testmodus und Testkarte](testmodus.md) | Alles gefahrlos durchspielen: Sensoren simulieren, ohne Sirene |
 | [Beobachtungen](beobachtung.md) | Heimkehr-Beobachtung und „Tür auf bis unscharf“ – messen, bevor man automatisiert |
+| [Anlagenübersicht](uebersicht.md) | Karte mit der ganzen Konfiguration, Drucken, Notfallblatt, Prüfhinweise, Diagnose-Datei |
 | [Referenz](referenz.md) | Alle Entitäten, Attribute, Aktionen und Ereignisse |
 | [Fehlersuche](fehlersuche.md) | Häufige Fragen und Probleme |
 

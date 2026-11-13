@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-11-13
+
+### Hinzugefügt
+- **Karte „Hauswacht Übersicht“** (nur Administratoren): die ganze Konfiguration auf einen
+  Blick – Zustand, Alarmprofile, Melder × Profil (einzeln scharf / nur in Regeln /
+  ausgenommen) mit Batterie, Auslöseregeln im Klartext, Sirenen mit letztem Test, Benutzer
+  (ohne PINs, Karten gekürzt), Bedienteile, Benachrichtigungen, Überwachung.
+- **Drucken** als A4 (volles Programm) und **Notfallblatt** für Familie und Gäste.
+- **Prüfhinweise:** Hauswacht findet Lücken (Melder in keinem Profil scharf, Profil erreicht
+  niemanden), Vergessenes (Sirene nie getestet, Bedrohungs-PIN ohne Empfänger, abgelaufene
+  Gäste) und Widersprüche (Funkstille knapper als empfohlen, Benutzer ohne PIN). Wichtige
+  Hinweise erscheinen zusätzlich unter Einstellungen → Reparaturen und verschwinden von selbst,
+  wenn sie behoben sind.
+- **Diagnose-Datei** für Fehlerberichte, ohne PINs, Karten, Personen und Empfänger.
+- WebSocket-Befehl `hauswacht/overview` (nur Administratoren).
+
 ## [0.33.0] - 2026-11-12
 
 ### Dokumentation
