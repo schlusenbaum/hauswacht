@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .siren_guard import BURGLAR_TONES, VOLUME_LEVELS, FireIndicator
+from .texts import DE, tr
 
 DEFAULT_TONE = "burglar"
 DEFAULT_VOLUME = "high"
@@ -89,70 +90,69 @@ def parse_max_duration(state: str | None, fallback: int) -> int:
 # --- Nachrichtentexte --------------------------------------------------------
 
 
-def alarm_message(profile_id: str, sensor: str, *, test_mode: bool) -> tuple[str, str]:
-    prefix = "TESTALARM" if test_mode else "EINBRUCHALARM"
-    return (f"Hauswacht: {prefix}", f"{prefix} – ausgelöst durch {sensor} (Profil {profile_id}).")
-
-
-def fault_message(indicators: Iterable[str]) -> tuple[str, str]:
+def alarm_message(
+    profile_id: str, sensor: str, *, test_mode: bool, lang: str = DE
+) -> tuple[str, str]:
+    prefix = tr(lang, "alarm_prefix_test" if test_mode else "alarm_prefix")
     return (
-        "Hauswacht: Störung",
-        "Hauswacht ist scharf, aber diese Systeme sind gestört: "
-        f"{', '.join(sorted(indicators))}. Sensoren dahinter können nicht melden.",
+        tr(lang, "alarm_title", prefix=prefix),
+        tr(lang, "alarm", prefix=prefix, sensor=sensor, profile=profile_id),
     )
 
 
-def sensor_lost_message(sensor: str) -> tuple[str, str]:
+def fault_message(indicators: Iterable[str], lang: str = DE) -> tuple[str, str]:
     return (
-        "Hauswacht: Sensor ausgefallen",
-        f"Der überwachte Sensor {sensor} ist nicht mehr verfügbar.",
+        tr(lang, "fault_title"),
+        tr(lang, "fault", systems=", ".join(sorted(indicators))),
     )
 
 
-def restart_message(previous_profile: str) -> tuple[str, str]:
+def sensor_lost_message(sensor: str, lang: str = DE) -> tuple[str, str]:
+    return (tr(lang, "sensor_lost_title"), tr(lang, "sensor_lost", sensor=sensor))
+
+
+def restart_message(previous_profile: str, lang: str = DE) -> tuple[str, str]:
+    return (tr(lang, "restart_title"), tr(lang, "restart", profile=previous_profile))
+
+
+def tamper_message(sensor: str, lang: str = DE) -> tuple[str, str]:
+    return (tr(lang, "tamper_title"), tr(lang, "tamper", sensor=sensor))
+
+
+def blocked_message(reasons: Iterable[str], lang: str = DE) -> tuple[str, str]:
     return (
-        "Hauswacht: nach Neustart unscharf",
-        f"Home Assistant wurde neu gestartet. Hauswacht war scharf (Profil {previous_profile}) "
-        "und ist jetzt UNSCHARF.",
+        tr(lang, "sirens_blocked_title"),
+        tr(lang, "sirens_blocked", reasons=", ".join(sorted(set(reasons)))),
     )
 
 
-def tamper_message(sensor: str) -> tuple[str, str]:
-    return ("Hauswacht: Manipulation", f"Manipulation gemeldet: {sensor}.")
-
-
-def blocked_message(reasons: Iterable[str]) -> tuple[str, str]:
-    return (
-        "Hauswacht: Sirenen gesperrt",
-        "Alarm ausgelöst, Sirenen wurden aber nicht angesteuert: "
-        f"{', '.join(sorted(set(reasons)))}.",
-    )
-
-
-def invalid_code_message(failures: int, lock_seconds: int | None) -> tuple[str, str]:
-    text = f"{failures} falsche PIN-Eingaben in Folge."
+def invalid_code_message(
+    failures: int, lock_seconds: int | None, lang: str = DE
+) -> tuple[str, str]:
+    text = tr(lang, "invalid_code", failures=failures)
     if lock_seconds:
-        text += f" Die PIN-Eingabe ist für {lock_seconds} Sekunden gesperrt."
-    return ("Hauswacht: falscher PIN", text)
+        text += tr(lang, "invalid_code_lock", seconds=lock_seconds)
+    return (tr(lang, "invalid_code_title"), text)
 
 
-def auto_armed_message(profile_name: str, reason: str) -> tuple[str, str]:
+def auto_armed_message(profile_name: str, reason: str, lang: str = DE) -> tuple[str, str]:
     return (
-        "Hauswacht: automatisch scharf",
-        f"Profil {profile_name} wurde automatisch scharf geschaltet ({reason}).",
+        tr(lang, "auto_armed_title"),
+        tr(lang, "auto_armed", profile=profile_name, reason=reason),
     )
 
 
-def auto_arm_failed_message(profile_name: str, reason: str, details: str) -> tuple[str, str]:
+def auto_arm_failed_message(
+    profile_name: str, reason: str, details: str, lang: str = DE
+) -> tuple[str, str]:
     return (
-        "Hauswacht: automatisches Scharfschalten fehlgeschlagen",
-        f"Profil {profile_name} konnte nicht automatisch scharf geschaltet werden ({reason}): "
-        f"{details}",
+        tr(lang, "auto_arm_failed_title"),
+        tr(lang, "auto_arm_failed", profile=profile_name, reason=reason, details=details),
     )
 
 
-def auto_disarmed_message(profile_name: str, reason: str) -> tuple[str, str]:
+def auto_disarmed_message(profile_name: str, reason: str, lang: str = DE) -> tuple[str, str]:
     return (
-        "Hauswacht: automatisch unscharf",
-        f"Profil {profile_name} wurde automatisch unscharf geschaltet ({reason}).",
+        tr(lang, "auto_disarmed_title"),
+        tr(lang, "auto_disarmed", profile=profile_name, reason=reason),
     )

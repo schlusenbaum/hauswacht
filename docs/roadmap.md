@@ -22,6 +22,7 @@
 | 0.35 | Karte „Hauswacht Alarm“ ohne PIN-Zwang (Konto als Ausweis, PIN je Konto einstellbar) |
 | 0.36 | Heimkehr-Bericht zum Herunterladen (Markdown und CSV) |
 | 0.37 | Visueller Editor für alle Karten; Alarmkarte anpassbar (Profile, Größe, Anzeigen, Farben, Rückfragen) |
+| 0.38 | Benachrichtigungen, Push-Knöpfe und Berichte auf Englisch (folgen der Sprache von Home Assistant) |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -29,6 +30,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| später | Dokumentation auf Englisch |
 | später | ZHA- und Z-Wave-Keypads |
 | später | Entscheidung über eine Heimkehr-Automatik (mit Belegen) anhand der Heimkehr-Beobachtung |
 | 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |

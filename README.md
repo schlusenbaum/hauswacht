@@ -11,7 +11,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.37.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.38.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -34,8 +34,9 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 - **Dashboard cards:** alarm card (no forced PIN – the logged-in account is the credential),
   settings, test, and a printable system overview with checks.
 
-The user interface (setup dialogs, entities, cards) is available in **English and German**.
-Notifications, reports and the **documentation are German only** for now – translations are
+Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
+buttons, announcements and reports – is available in **English and German** (following the
+language of Home Assistant). The **documentation is German only** for now – a translation is
 planned. Installation: add `https://github.com/schlusenbaum/hauswacht` as a custom repository
 (Marketplace: *Add from link*; HACS: *Custom repositories*, type *Integration*), download,
 restart, then add the integration. Questions and feedback in English are welcome in the

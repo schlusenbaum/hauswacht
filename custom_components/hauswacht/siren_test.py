@@ -31,6 +31,7 @@ from .core.siren_test import (
     parse_records,
     parse_settings,
 )
+from .core.texts import tr
 from .names import display_name
 
 if TYPE_CHECKING:
@@ -139,9 +140,15 @@ class SirenTester:
             name = display_name(self.hass, siren)
             self.runtime.notifier.notify(
                 NotifyEvent.SYSTEM,
-                "Hauswacht: Sirenentest",
-                f"Sirenentest {name} in {int(self.prewarn_seconds)} Sekunden "
-                f"({seconds} s, Lautstärke {volume}).",
+                tr(self.runtime.lang, "siren_prewarn_title"),
+                tr(
+                    self.runtime.lang,
+                    "siren_prewarn",
+                    siren=name,
+                    seconds=int(self.prewarn_seconds),
+                    duration=seconds,
+                    volume=volume,
+                ),
             )
             await asyncio.sleep(self.prewarn_seconds)
             if (reason := self.blocker()) is not None:
@@ -217,9 +224,8 @@ class SirenTester:
         names = ", ".join(display_name(self.hass, s) for s in due)
         self.runtime.notifier.notify(
             NotifyEvent.SYSTEM,
-            "Hauswacht: Sirenentest fällig",
-            f"Bitte die Sirenen prüfen: {names}. Einstellungen → Alarmgeber – Sirenen → "
-            "Sirenentest oder Testkarte.",
+            tr(self.runtime.lang, "siren_due_title"),
+            tr(self.runtime.lang, "siren_due", sirens=names),
         )
 
     # --- Anzeige --------------------------------------------------------------

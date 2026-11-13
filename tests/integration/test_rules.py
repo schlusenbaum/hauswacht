@@ -117,7 +117,7 @@ async def test_window_then_cellar_alarm_with_rule_name(hass: HomeAssistant) -> N
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT  # lüften: kein Alarm
     await _set(hass, MOTION2, "on")
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
-    assert any("Auslöseregel: Fenster, dann Keller" in c.data["message"] for c in push)
+    assert any("Trigger rule: Fenster, dann Keller" in c.data["message"] for c in push)
 
 
 async def test_order_matters(hass: HomeAssistant) -> None:
@@ -153,7 +153,7 @@ async def test_unconfirmed_notification_when_enabled(
     await _set(hass, DOOR, "on")
     await _wait(hass, freezer, 125)
     titles = [c.data["title"] for c in push]
-    assert "Hauswacht: unbestätigte Auslösung" in titles
+    assert "Hauswacht: unconfirmed trigger" in titles
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
 
 
@@ -311,7 +311,7 @@ async def test_hint_for_open_rule_sensor_when_armed(hass: HomeAssistant) -> None
     await _set(hass, WINDOW, "on")
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
-    hints = [c for c in push if c.data["title"] == "Hauswacht: Hinweis beim Scharfschalten"]
+    hints = [c for c in push if c.data["title"] == "Hauswacht: note on arming"]
     assert len(hints) == 1
     assert "Fenster, dann Keller" in hints[0].data["message"]
     state = hass.states.get(PANEL)
@@ -333,7 +333,7 @@ async def test_hint_for_open_rule_sensor_when_armed(hass: HomeAssistant) -> None
 
 async def test_no_hint_when_rule_sensors_closed(hass: HomeAssistant) -> None:
     push = await _setup(hass, notify_system=[PHONE])
-    assert not [c for c in push if "Hinweis" in c.data["title"]]
+    assert not [c for c in push if "note" in c.data["title"]]
 
 
 YAML_RULE = {
@@ -435,7 +435,7 @@ async def test_notify_result_only_notifies(hass: HomeAssistant) -> None:
     await _set(hass, WINDOW, "on")
     await _set(hass, MOTION, "on")
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
-    assert any(c.data["title"] == "Hauswacht: Auslöseregel erfüllt" for c in push)
+    assert any(c.data["title"] == "Hauswacht: trigger rule met" for c in push)
 
 
 async def test_wizard_unless(hass: HomeAssistant) -> None:

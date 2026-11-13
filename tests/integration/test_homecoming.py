@@ -46,7 +46,7 @@ def _panel(hass: HomeAssistant) -> str:
     return state.state
 
 
-def _action(call: ServiceCall, title: str = "Unscharf schalten") -> str:
+def _action(call: ServiceCall, title: str = "Disarm") -> str:
     actions = call.data["data"]["actions"]
     assert actions[0]["title"] == title
     assert actions[0]["authenticationRequired"] is True
@@ -76,7 +76,7 @@ async def test_push_button_disarms_from_notification(
     await _arm_and_open(hass)
 
     assert len(push) == 1
-    assert "Tür geöffnet" in push[0].data["title"]
+    assert "door opened" in push[0].data["title"]
     action = _action(push[0])
     assert action.startswith(PUSH_ACTION_PREFIX)
 
@@ -84,7 +84,7 @@ async def test_push_button_disarms_from_notification(
     assert _panel(hass) == AlarmControlPanelState.DISARMED
     messages = [c.data["message"] for c in push[1:]]
     assert "clear_notification" in messages
-    assert any("Push-Knopf" in m for m in messages)
+    assert any("push button" in m for m in messages)
 
 
 async def test_push_button_also_on_alarm(hass: HomeAssistant, hass_admin_user: MockUser) -> None:
@@ -94,7 +94,7 @@ async def test_push_button_also_on_alarm(hass: HomeAssistant, hass_admin_user: M
     set_sensor(hass, "binary_sensor.kuechenfenster", "on")
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
-    await _press(hass, _action(push[0], "Alarm beenden"), hass_admin_user.id)
+    await _press(hass, _action(push[0], "End alarm"), hass_admin_user.id)
     # Während eines Alarms beendet der Knopf nur den Alarm, das Profil bleibt scharf
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
 
@@ -165,11 +165,11 @@ async def test_observation_records_and_switches_nothing(
     assert state is not None
     assert state.state == "1"
     sources = state.attributes["sources"]
-    assert sources["Anna (gesamt)"]["with_door"] == 1
-    assert sources["Anna (gesamt)"]["median_delay"] == 40
+    assert sources["Anna (overall)"]["with_door"] == 1
+    assert sources["Anna (overall)"]["median_delay"] == 40
     assert sources["Anna – Router"]["median_delay"] == 10
-    assert sources["Anna (gesamt)"]["false_alarms_at"]["30"] == 1
-    assert "40 s nach dem Öffnen" in state.attributes["recent"][0]
+    assert sources["Anna (overall)"]["false_alarms_at"]["30"] == 1
+    assert "40 s after opening" in state.attributes["recent"][0]
 
 
 async def test_arrival_without_door_is_counted(
@@ -183,7 +183,7 @@ async def test_arrival_without_door_is_counted(
     await hass.async_block_till_done()
     state = hass.states.get(OBSERVER)
     assert state is not None
-    assert state.attributes["sources"]["Anna (gesamt)"]["without_door"] == 1
+    assert state.attributes["sources"]["Anna (overall)"]["without_door"] == 1
 
 
 async def test_report_button_creates_notification(
@@ -200,7 +200,7 @@ async def test_report_button_creates_notification(
     await _service(hass, "button", "press", entity_id=REPORT)
     notifications = _async_get_or_create_notifications(hass)
     report = notifications["hauswacht_homecoming_report"]
-    assert "| Anna (gesamt) | 1 | 1 | 0 | 20 s |" in report["message"]
+    assert "| Anna (overall) | 1 | 1 | 0 | 20 s |" in report["message"]
     assert "Hauswacht Übersicht" in report["message"]
 
 
@@ -224,12 +224,12 @@ async def test_report_download(
     reply = await client.receive_json()
     assert reply["success"], reply
     result = reply["result"]
-    assert result["filename"].startswith("hauswacht-heimkehr-")
-    assert result["markdown"].startswith("# Hauswacht: Heimkehr-Beobachtung")
-    assert "| Anna (gesamt) | 1 | 1 | 0 | 20 s |" in result["markdown"]
+    assert result["filename"].startswith("hauswacht-homecoming-")
+    assert result["markdown"].startswith("# Hauswacht: homecoming observation")
+    assert "| Anna (overall) | 1 | 1 | 0 | 20 s |" in result["markdown"]
     lines = result["csv"].lstrip("\ufeff").splitlines()
-    assert lines[0].startswith("Art;Zeitpunkt;")
-    assert any(line.startswith("Heimkehr;") and ";20;" in line for line in lines[1:])
+    assert lines[0].startswith("Kind,Time,")
+    assert any(line.startswith("Homecoming,") and ",20," in line for line in lines[1:])
 
     viewer = await hass_ws_client(hass, hass_read_only_access_token)
     await viewer.send_json_auto_id({"type": "hauswacht/homecoming/report"})
@@ -297,8 +297,8 @@ async def test_wifi_signal_and_earliest_signal(
     sources = hass.states.get(OBSERVER).attributes["sources"]  # type: ignore[union-attr]
     wifi = next(v for k, v in sources.items() if "wifi" in k.casefold())
     assert wifi["median_delay"] == -5
-    assert sources["Anna (frühestes Signal)"]["median_delay"] == -5
-    assert sources["Anna (gesamt)"]["median_delay"] == 50
+    assert sources["Anna (earliest signal)"]["median_delay"] == -5
+    assert sources["Anna (overall)"]["median_delay"] == 50
 
 
 async def test_approach_counts_minutes_before_door(

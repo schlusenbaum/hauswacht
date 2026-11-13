@@ -62,7 +62,7 @@ async def test_disarmed_notification_only(hass: HomeAssistant) -> None:
     await _safe(hass, "on")
     assert _panel(hass) == AlarmControlPanelState.DISARMED
     assert sirens == []
-    call = next(c for c in push if c.data["title"] == "Hauswacht: immer aktiver Melder")
+    call = next(c for c in push if c.data["title"] == "Hauswacht: always-active sensor")
     assert call.data["data"]["push"]["interruption-level"] == "critical"
 
 

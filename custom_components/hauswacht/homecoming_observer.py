@@ -47,6 +47,7 @@ from .core.homecoming import (
     track,
     track_value,
 )
+from .core.texts import DE, lang_of, tr
 from .names import display_name, plain_name
 
 _LOGGER = logging.getLogger(__name__)
@@ -297,15 +298,28 @@ class HomecomingObserver:
         doors = [DoorOpening(at=float(d["at"]), sensor=str(d["sensor"])) for d in self.doors]
         return arrivals, doors
 
+    @property
+    def lang(self) -> str:
+        return lang_of(self.hass.config.language)
+
+    def _when(self, at: float, *, seconds: bool = False, year: bool = True) -> str:
+        local = dt_util.as_local(dt_util.utc_from_timestamp(at))
+        if self.lang == DE:
+            fmt = "%d.%m.%Y %H:%M" if year else "%d.%m. %H:%M"
+        else:
+            fmt = "%Y-%m-%d %H:%M" if year else "%m-%d %H:%M"
+        return local.strftime(fmt + (":%S" if seconds else ""))
+
     def names(self) -> dict[str, str]:
         names: dict[str, str] = {}
         arrivals, doors = self._parsed()
+        lang = self.lang
         for arrival in arrivals:
             person = plain_name(self.hass, arrival.person)
             if arrival.source == arrival.person:
-                names[arrival.source] = f"{person} (gesamt)"
+                names[arrival.source] = tr(lang, "hc_overall", person=person)
             elif arrival.source.endswith(EARLIEST):
-                names[arrival.source] = f"{person} (frühestes Signal)"
+                names[arrival.source] = tr(lang, "hc_earliest", person=person)
             else:
                 names[arrival.source] = f"{person} – {plain_name(self.hass, arrival.source)}"
         for door in doors:
@@ -334,8 +348,7 @@ class HomecomingObserver:
         overall = [a for a in arrivals if a.source == a.person]
         verdicts = judge(overall, doors)[-RECENT:]
         return [
-            f"{dt_util.as_local(dt_util.utc_from_timestamp(v.arrival.at)):%d.%m. %H:%M} "
-            + describe(v, names)
+            f"{self._when(v.arrival.at, year=False)} " + describe(v, names, self.lang)
             for v in reversed(verdicts)
         ]
 
@@ -361,6 +374,7 @@ class HomecomingObserver:
 
     def report_text(self) -> str:
         """Bericht als Markdown (Benachrichtigung und Download)."""
+        lang = self.lang
         arrivals, doors = self._parsed()
         overall = frozenset(a.source for a in arrivals if a.source == a.person)
         text = report_markdown(
@@ -368,12 +382,13 @@ class HomecomingObserver:
             self.names(),
             door_only=doors_without_arrival(arrivals, doors, sources=overall),
             days=self.days(),
+            lang=lang,
         )
         timings = entry_stats(self.entry_timings())
         if timings:
             lines = [
-                "\n\n**Tür auf bis unscharf** (Eingangsverzögerung):\n",
-                "| Tür | Eingänge | rechtzeitig | zu spät | typisch | längste | Empfehlung |",
+                "\n\n" + tr(lang, "hc_entry_heading") + "\n",
+                tr(lang, "hc_entry_cols"),
                 "|---|---|---|---|---|---|---|",
             ]
             for door, v in timings.items():
@@ -386,12 +401,13 @@ class HomecomingObserver:
                 )
             text += "\n".join(lines)
         if not self.enabled:
-            text = "Die Heimkehr-Beobachtung ist ausgeschaltet.\n\n" + text
+            text = tr(lang, "hc_off") + "\n\n" + text
         return text
 
     def export(self) -> dict[str, str]:
         """Bericht (Markdown) und alle Einzelwerte (CSV) zum Herunterladen."""
         now = dt_util.now()
+        lang = self.lang
         arrivals, doors = self._parsed()
         names = self.names()
         timings = self.entry_timings()
@@ -399,11 +415,11 @@ class HomecomingObserver:
             names.setdefault(timing.door, display_name(self.hass, timing.door))
         recent = self.recent()
         markdown = (
-            "# Hauswacht: Heimkehr-Beobachtung\n\n"
-            f"Erstellt: {now:%d.%m.%Y %H:%M}\n\n"
+            f"# {tr(lang, 'hc_heading')}\n\n"
+            f"{tr(lang, 'hc_created')}: {self._when(now.timestamp())}\n\n"
             + self.report_text()
             + (
-                "\n\n## Letzte Heimkehrten\n\n" + "\n".join(f"- {line}" for line in recent)
+                f"\n\n## {tr(lang, 'hc_recent')}\n\n" + "\n".join(f"- {line}" for line in recent)
                 if recent
                 else ""
             )
@@ -413,24 +429,22 @@ class HomecomingObserver:
             judge(arrivals, doors, windows=self._windows(arrivals)),
             timings,
             names,
-            lambda at: f"{dt_util.as_local(dt_util.utc_from_timestamp(at)):%d.%m.%Y %H:%M:%S}",
+            lambda at: self._when(at, seconds=True),
+            lang,
         )
         return {
-            "filename": f"hauswacht-heimkehr-{now:%Y-%m-%d}",
+            "filename": f"{tr(lang, 'hc_filename')}-{now:%Y-%m-%d}",
             "markdown": markdown,
-            "csv": to_csv(rows),
+            # Deutsches Excel erwartet Semikolon, englisches Komma
+            "csv": to_csv(rows, delimiter=";" if lang == DE else ","),
         }
 
     @callback
     def create_report(self) -> None:
-        text = (
-            self.report_text()
-            + "\n\nZum Herunterladen (Bericht und alle Einzelwerte als Tabelle): Karte "
-            "„Hauswacht Übersicht“ → Überwachung."
-        )
+        text = self.report_text() + "\n\n" + tr(self.lang, "hc_download")
         persistent_notification.async_create(
             self.hass,
             text,
-            title="Hauswacht: Heimkehr-Beobachtung",
+            title=tr(self.lang, "hc_title"),
             notification_id=NOTIFICATION_REPORT,
         )

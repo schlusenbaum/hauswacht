@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from custom_components.hauswacht.core.homecoming import (
-    CSV_HEADER,
     Arrival,
     DoorOpening,
     EntryTiming,
     PresenceState,
+    csv_header,
     csv_rows,
     describe,
     doors_without_arrival,
@@ -158,7 +158,7 @@ def test_csv_rows_sorted_with_arrivals_and_entries() -> None:
     timings = [EntryTiming(at=101, door=DOOR, seconds=12, in_time=True, delay=30)]
     names = {"person.a": "Anna", DOOR: "Haustür"}
     rows = csv_rows(verdicts, timings, names, lambda at: f"t{at:.0f}")
-    assert rows[0] == CSV_HEADER
+    assert rows[0] == csv_header()
     assert [r[0] for r in rows[1:]] == ["Eingang", "Heimkehr", "Heimkehr"]
     assert rows[1] == (
         "Eingang",

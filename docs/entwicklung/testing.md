@@ -33,6 +33,7 @@ Dieselben Prüfungen laufen bei jedem Pull Request in der CI, dazu Hassfest.
 | `tests/integration/test_always_active.py` | Mit Home Assistant: immer aktive Melder (unscharf nur Benachrichtigung, mit Sirene Alarm und zurück nach unscharf, scharf sofortiger Alarm), Scharf durch Schließen der Tür (Beruhigungszeit, offene Tür am Ende bricht ab) |
 | `tests/integration/test_simulation.py` | Mit Home Assistant: Sensorzustände simulieren (nur Testmodus, Zustand in Home Assistant unverändert, echte Änderungen während der Simulation ignoriert, Zurücksetzen bewertet den echten Wert, Testmodus aus löscht alles, keine Sirene) |
 | `tests/core/test_reactions.py` | Reaktion je Profil, Brand-Indikatoren, Höchstdauer, Texte |
+| `tests/core/test_texts.py` | Texte für Benachrichtigungen: beide Sprachen mit gleichen Schlüsseln und Platzhaltern, Sprache wie Home Assistant, CSV je Sprache |
 | `tests/integration/test_reactions.py` | Mit Home Assistant und **Attrappen-Diensten**: Hardware-Sperre, Testmodus, Brand am eigenen/fremden Melder, Brand während Alarm, keine Schreibzugriffe, Push, Freigabe nur mit Bestätigung |
 | `tests/integration/test_profiles.py` | Mit Home Assistant: keine Standardprofile, Migration der festen Profile, Profile ohne Knopf, nur zugeordnete Knöpfe, Auswahlliste und Knöpfe, Profilverwaltung in den Optionen |
 | `tests/core/test_automation.py` | Uhrzeiten, Wochentage, „alle weg“ (unbekannt zählt nicht als weg) |

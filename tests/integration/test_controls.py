@@ -165,7 +165,7 @@ async def test_emergency_silent_and_alarm(hass: HomeAssistant, mqtt_mock: MqttMo
     push = async_mock_service(hass, "notify", PHONE)
     await _setup(hass, emergency="silent")
     await _press(hass, "emergency", None, 9)
-    assert any("NOTRUF" in c.data["title"] for c in push)
+    assert any("EMERGENCY" in c.data["title"] for c in push)
     assert _panel(hass) == AlarmControlPanelState.DISARMED
 
 

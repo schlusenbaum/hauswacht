@@ -83,9 +83,9 @@ async def test_armed_and_disarmed_when_enabled(hass: HomeAssistant) -> None:
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
     assert len(push) == 1
-    assert "scharf" in push[0].data["title"].lower()
+    assert "armed" in push[0].data["title"].lower()
     assert len(other) == 1  # eigene Empfänger statt der allgemeinen
-    assert "unscharf" in other[0].data["title"].lower()
+    assert "disarmed" in other[0].data["title"].lower()
 
 
 async def test_alarm_event_can_be_switched_off(hass: HomeAssistant) -> None:
@@ -141,13 +141,13 @@ async def test_arm_failed_push_with_force_button(
         await _service(hass, "alarm_control_panel", "alarm_arm_home", entity_id=PANEL)
 
     assert len(push) == 1
-    assert "nicht scharf" in push[0].data["title"]
+    assert "not armed" in push[0].data["title"]
     actions = _actions(push[0])
-    assert set(actions) == {"Trotzdem scharf", "Erneut versuchen"}
-    assert actions["Trotzdem scharf"].startswith(PUSH_ARM_FORCE_PREFIX)
-    assert actions["Erneut versuchen"].startswith(PUSH_ARM_RETRY_PREFIX)
+    assert set(actions) == {"Arm anyway", "Try again"}
+    assert actions["Arm anyway"].startswith(PUSH_ARM_FORCE_PREFIX)
+    assert actions["Try again"].startswith(PUSH_ARM_RETRY_PREFIX)
 
-    await _press(hass, actions["Trotzdem scharf"], hass_admin_user.id)
+    await _press(hass, actions["Arm anyway"], hass_admin_user.id)
     state = hass.states.get(PANEL)
     assert state is not None
     assert state.state == AlarmControlPanelState.ARMED_HOME
@@ -162,16 +162,16 @@ async def test_arm_failed_retry_button(hass: HomeAssistant, hass_admin_user: Moc
     with pytest.raises(ServiceValidationError):
         await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     actions = _actions(push[0])
-    assert set(actions) == {"Erneut versuchen"}  # Überbrücken ist nicht erlaubt
+    assert set(actions) == {"Try again"}  # Überbrücken ist nicht erlaubt
 
     # Fenster noch offen: erneut abgelehnt, neue Nachricht mit neuem Knopf
-    await _press(hass, actions["Erneut versuchen"], hass_admin_user.id)
+    await _press(hass, actions["Try again"], hass_admin_user.id)
     assert _panel(hass) == AlarmControlPanelState.DISARMED
     assert len(push) == 2
 
     set_sensor(hass, WINDOW, "off")
     await hass.async_block_till_done()
-    await _press(hass, _actions(push[1])["Erneut versuchen"], hass_admin_user.id)
+    await _press(hass, _actions(push[1])["Try again"], hass_admin_user.id)
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
 
 
@@ -184,7 +184,7 @@ async def test_arm_button_needs_user_and_is_single_use(
     await hass.async_block_till_done()
     with pytest.raises(ServiceValidationError):
         await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
-    retry = _actions(push[0])["Erneut versuchen"]
+    retry = _actions(push[0])["Try again"]
     set_sensor(hass, DOOR, "off")
     await hass.async_block_till_done()
 
@@ -244,10 +244,10 @@ async def test_reminder_when_everyone_is_away(
     assert push == []
     await _wait(hass, freezer, 6)
     assert len(push) == 1
-    assert "unscharf" in push[0].data["title"]
+    assert "disarmed" in push[0].data["title"]
     actions = _actions(push[0])
-    assert list(actions) == ["Jetzt scharf (Abwesend)"]
-    assert actions["Jetzt scharf (Abwesend)"].startswith(PUSH_ARM_NOW_PREFIX)
+    assert list(actions) == ["Arm now (Abwesend)"]
+    assert actions["Arm now (Abwesend)"].startswith(PUSH_ARM_NOW_PREFIX)
     # nichts selbst geschaltet
     assert _panel(hass) == AlarmControlPanelState.DISARMED
 
@@ -255,7 +255,7 @@ async def test_reminder_when_everyone_is_away(
     await _wait(hass, freezer, 30)
     assert len(push) == 1
 
-    await _press(hass, actions["Jetzt scharf (Abwesend)"], hass_admin_user.id)
+    await _press(hass, actions["Arm now (Abwesend)"], hass_admin_user.id)
     assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_AWAY)
 
 

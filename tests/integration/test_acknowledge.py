@@ -74,7 +74,7 @@ async def test_push_button_during_alarm_ends_alarm(
     await _alarm_by_window(hass)
 
     action = push[0].data["data"]["actions"][0]
-    assert action["title"] == "Alarm beenden"
+    assert action["title"] == "End alarm"
     hass.bus.async_fire(
         PUSH_ACTION_EVENT,
         {"action": action["action"]},
@@ -84,7 +84,7 @@ async def test_push_button_during_alarm_ends_alarm(
     assert _state(hass).state == AlarmControlPanelState.ARMED_NIGHT
     messages = [c.data["message"] for c in push[1:]]
     assert "clear_notification" in messages
-    assert any("Alarm beendet von" in m and "bleibt scharf" in m for m in messages)
+    assert any("Alarm ended by" in m and "stays armed" in m for m in messages)
 
 
 # --- Knöpfe "Unscharf schalten" und "Alarm beenden" --------------------------

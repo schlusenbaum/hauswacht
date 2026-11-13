@@ -115,7 +115,7 @@ async def test_duress_pin_disarms_and_alerts_silently(hass: HomeAssistant) -> No
     assert state.state == AlarmControlPanelState.DISARMED
     assert state.attributes["changed_by"] == "Petra"  # unauffällig
     assert len(alert) == 1
-    assert "Bedrohungs-PIN" in alert[0].data["message"]
+    assert "duress PIN" in alert[0].data["message"]
     notifications = _async_get_or_create_notifications(hass)
     assert not any("BEDROHUNG" in str(n) for n in notifications.values())
 
@@ -149,7 +149,7 @@ async def test_linked_user_rights_for_push(hass: HomeAssistant, hass_admin_user:
     )
     await hass.async_block_till_done()
     assert _panel(hass).state == AlarmControlPanelState.TRIGGERED
-    assert any("Berechtigung" in c.data["message"] for c in push[1:])
+    assert any("permission" in c.data["message"] for c in push[1:])
 
 
 async def test_user_management_in_options(hass: HomeAssistant) -> None:
