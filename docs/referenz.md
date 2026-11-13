@@ -79,6 +79,9 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `hauswacht.siren_test_stop` | – | Laufenden Sirenentest abbrechen (nur Administratoren) |
 | `hauswacht.reset_code_lock` | – | Falsche Eingaben und Sperre zurücksetzen (nur Administratoren) |
 
+Für Karten gibt es zusätzlich den WebSocket-Befehl `hauswacht/overview` (nur Administratoren),
+der die [Anlagenübersicht](uebersicht.md) samt Prüfhinweisen liefert.
+
 Alle Aktionen richten sich an ein Bedienfeld (`target: entity_id: alarm_control_panel.hauswacht`).
 Unscharf schalten geht mit der Standardaktion `alarm_control_panel.alarm_disarm`.
 

@@ -1,6 +1,6 @@
 # Installation und erste Schritte
 
-> **Stand 0.33.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.34.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen

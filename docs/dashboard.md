@@ -103,6 +103,11 @@ sind alle Einstellungen gesperrt.
 Zum gefahrlosen Durchspielen im Testmodus, mit Sirenentest und „Falscheingaben zurücksetzen“ –
 siehe [Testmodus und Testkarte](testmodus.md#karte-hauswacht-test).
 
+## Karte „Hauswacht Übersicht“
+
+Die ganze Konfiguration mit Prüfhinweisen, zum Drucken und als Notfallblatt – siehe
+[Anlagenübersicht](uebersicht.md).
+
 ## Profil-Einstellungen im Dashboard
 
 Kleinigkeiten lassen sich ohne den Einstellungsdialog ändern. Die Entitäten stehen am Gerät

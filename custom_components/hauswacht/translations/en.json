@@ -1255,6 +1255,10 @@
     "users_without_pin": {
       "title": "Hauswacht: not everyone has a PIN",
       "description": "As soon as a PIN exists, the panel (and Alexa) require it **from everyone** to disarm. These people have no PIN and cannot disarm there: **{people}**.\n\nOptions:\n- Give them a PIN under Hauswacht → Configure → System settings → Users and PINs (a shared family PIN is allowed), or\n- enable “Allow dashboard buttons despite PIN” under PIN rules (currently: {buttons}) – dashboard buttons and the push button then keep working without a PIN.\n\nScheduled profiles and presence automation are not affected."
+    },
+    "check_finding": {
+      "title": "Hauswacht: {hint}",
+      "description": "{hint}\n\n**Change it in:** {where}\n\nThis notice disappears by itself once fixed (checked hourly). All review notes are shown in the card “Hauswacht overview”."
     }
   }
 }

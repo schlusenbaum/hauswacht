@@ -1,4 +1,4 @@
-"""Dashboard-Karten "Hauswacht Einstellungen" und "Hauswacht Test": beim Start bereitgestellt.
+"""Dashboard-Karten "Hauswacht Einstellungen", "Test" und "Übersicht": beim Start bereitgestellt.
 
 Die Karten liegen als JavaScript-Dateien in diesem Ordner. Hauswacht stellt sie unter
 ``/hauswacht/…`` bereit und meldet sie beim Frontend an – ein Eintrag unter
@@ -16,7 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 
 CARD_FILE = "hauswacht-einstellungen-card.js"
 TEST_CARD_FILE = "hauswacht-test-card.js"
-CARD_FILES = (CARD_FILE, TEST_CARD_FILE)
+OVERVIEW_CARD_FILE = "hauswacht-uebersicht-card.js"
+CARD_FILES = (CARD_FILE, TEST_CARD_FILE, OVERVIEW_CARD_FILE)
 URL_BASE = "/hauswacht"
 DATA_KEY = "hauswacht_frontend_registered"
 
