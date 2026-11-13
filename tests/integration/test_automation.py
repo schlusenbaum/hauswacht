@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
+from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -72,17 +73,23 @@ async def _setup(hass: HomeAssistant, **auto: Any) -> None:
 # --- Uhrzeit ----------------------------------------------------------------
 
 
-async def test_arm_and_disarm_by_time(hass: HomeAssistant) -> None:
+async def test_arm_and_disarm_by_time(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
-    # Schrittweise vorspulen: Ein Sprung über beide Uhrzeiten löst beide Timer in beliebiger
-    # Reihenfolge aus. Erst bis 06:30 (unscharf ist dann ohne Wirkung), dann bis 23:00.
+    # Die Uhr wirklich vorstellen: Home Assistant plant den nächsten Zeitpunkt ab der aktuellen
+    # Uhrzeit. Nur Zeitereignisse zu feuern hängt sonst von der Tageszeit des Testlaufs ab.
     first_disarm = _next(dt_util.now(), 6, 30)
+    freezer.move_to(first_disarm)
     await _fire(hass, first_disarm)
     assert _state(hass) == AlarmControlPanelState.DISARMED
     arm_at = _next(first_disarm, 23, 0)
+    freezer.move_to(arm_at)
     await _fire(hass, arm_at)
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
-    await _fire(hass, _next(arm_at, 6, 30))
+    disarm_at = _next(arm_at, 6, 30)
+    freezer.move_to(disarm_at)
+    await _fire(hass, disarm_at)
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 

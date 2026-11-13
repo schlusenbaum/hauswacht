@@ -398,8 +398,6 @@ SWITCH = "switch.aussensirene"
 
 
 async def test_switch_as_siren_for_experts(hass: HomeAssistant) -> None:
-    switch_on = async_mock_service(hass, "switch", "turn_on")
-    switch_off = async_mock_service(hass, "switch", "turn_off")
     mocks = await _setup(
         hass,
         sirens=[SWITCH],
@@ -407,6 +405,9 @@ async def test_switch_as_siren_for_experts(hass: HomeAssistant) -> None:
         sirens_hardware_enabled=True,
         night={"sirens": [SWITCH]},
     )
+    # Erst nach dem Einrichten: Hauswacht lädt selbst die switch-Plattform (Testmodus)
+    switch_on = async_mock_service(hass, "switch", "turn_on")
+    switch_off = async_mock_service(hass, "switch", "turn_off")
     hass.states.async_set(SWITCH, "off")
     await _alarm(hass)
     assert [c.data for c in switch_on] == [{"entity_id": SWITCH}]
@@ -416,7 +417,6 @@ async def test_switch_as_siren_for_experts(hass: HomeAssistant) -> None:
 
 
 async def test_switch_as_siren_respects_fire_lock(hass: HomeAssistant) -> None:
-    switch_on = async_mock_service(hass, "switch", "turn_on")
     await _setup(
         hass,
         sirens=[SWITCH],
@@ -424,6 +424,7 @@ async def test_switch_as_siren_respects_fire_lock(hass: HomeAssistant) -> None:
         sirens_hardware_enabled=True,
         night={"sirens": [SWITCH]},
     )
+    switch_on = async_mock_service(hass, "switch", "turn_on")
     hass.states.async_set(SWITCH, "off")
     hass.states.async_set("binary_sensor.rm_kueche_smoke", "on", {"device_class": "smoke"})
     await _alarm(hass)
@@ -475,9 +476,9 @@ async def test_wizard_creates_siren_from_switch(hass: HomeAssistant) -> None:
         "switch", "test", "sirene", suggested_object_id="aussensirene", config_entry=source
     )
     hass.states.async_set(SWITCH, "off")
-    switch_on = async_mock_service(hass, "switch", "turn_on")
     entry = make_entry()
     await setup_entry(hass, entry)
+    switch_on = async_mock_service(hass, "switch", "turn_on")
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     for step in ("sirens", "siren_from_switch"):
         flow = await hass.config_entries.options.async_configure(
