@@ -29,6 +29,8 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from .texts import DE, tr
+
 HOME = "home"
 IGNORED_STATES = frozenset({"unknown", "unavailable", ""})
 
@@ -172,17 +174,17 @@ def doors_without_arrival(
     return sum(1 for door in doors if not any(abs(a.at - door.at) <= window for a in relevant))
 
 
-def describe(verdict: Verdict, name: Mapping[str, str]) -> str:
+def describe(verdict: Verdict, name: Mapping[str, str], lang: str = DE) -> str:
     """Kurzer Text, was eine Heimkehr-Automatik getan hätte."""
     who = name.get(verdict.arrival.source, verdict.arrival.source)
     if verdict.delay is None or verdict.door is None:
-        return f"{who}: Ankunft ohne Türöffnung – würde ignoriert"
+        return tr(lang, "hc_no_door", who=who)
     door = name.get(verdict.door.sensor, verdict.door.sensor)
     if verdict.delay <= 0:
-        return f"{who}: {-verdict.delay:.0f} s VOR dem Öffnen ({door}) erkannt"
+        return tr(lang, "hc_before", who=who, seconds=f"{-verdict.delay:.0f}", door=door)
     ok = [d for d in CANDIDATE_DELAYS if verdict.delay <= d]
-    hint = f"reicht ab {ok[0]} s Eingangsverzögerung" if ok else "zu spät für jede Verzögerung"
-    return f"{who}: {verdict.delay:.0f} s nach dem Öffnen ({door}) erkannt – {hint}"
+    hint = tr(lang, "hc_enough_from", seconds=ok[0]) if ok else tr(lang, "hc_too_late")
+    return tr(lang, "hc_after", who=who, seconds=f"{verdict.delay:.0f}", door=door, hint=hint)
 
 
 def prune(records: list[dict[str, Any]], now: float) -> list[dict[str, Any]]:
@@ -192,15 +194,25 @@ def prune(records: list[dict[str, Any]], now: float) -> list[dict[str, Any]]:
 
 
 def report_markdown(
-    stats: Mapping[str, SourceStats], names: Mapping[str, str], *, door_only: int, days: float
+    stats: Mapping[str, SourceStats],
+    names: Mapping[str, str],
+    *,
+    door_only: int,
+    days: float,
+    lang: str = DE,
 ) -> str:
     """Bericht als Markdown-Tabelle (für eine Benachrichtigung in Home Assistant)."""
     if not stats:
-        return "Noch keine Heimkehr aufgezeichnet."
-    header = "| Quelle | Heimkehr | mit Tür | ohne Tür | typ. Verzögerung | " + " | ".join(
-        f"Fehlalarme bei {d} s" for d in CANDIDATE_DELAYS
-    )
-    rows = [header + " |", "|" + "---|" * (5 + len(CANDIDATE_DELAYS))]
+        return tr(lang, "hc_none")
+    columns = [
+        tr(lang, "hc_col_source"),
+        tr(lang, "hc_col_arrivals"),
+        tr(lang, "hc_col_with_door"),
+        tr(lang, "hc_col_without_door"),
+        tr(lang, "hc_col_delay"),
+        *(tr(lang, "hc_col_false", seconds=d) for d in CANDIDATE_DELAYS),
+    ]
+    rows = ["| " + " | ".join(columns) + " |", "|" + "---|" * len(columns)]
     for source in sorted(stats, key=lambda s: names.get(s, s)):
         s = stats[source]
         median = f"{statistics.median(s.delays):.0f} s" if s.delays else "–"
@@ -214,10 +226,11 @@ def report_markdown(
         ]
         rows.append("| " + " | ".join(cells) + " |")
     return (
-        f"Beobachtet: {days:.1f} Tage. Türöffnungen ohne Heimkehr: {door_only}.\n\n"
+        tr(lang, "hc_summary", days=f"{days:.1f}", door_only=door_only)
+        + "\n\n"
         + "\n".join(rows)
-        + "\n\n**Fehlalarme**: Heimkehr erst nach Ablauf der Eingangsverzögerung erkannt. "
-        "**ohne Tür**: Ankunft ohne Türöffnung (meist Falschmeldung der Ortung)."
+        + "\n\n"
+        + tr(lang, "hc_legend")
     )
 
 
@@ -290,15 +303,19 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
     return result
 
 
-CSV_HEADER = (
-    "Art",
-    "Zeitpunkt",
-    "Wer / Quelle",
-    "Tür",
-    "Sekunden nach Öffnen",
-    "Abwesend (min)",
-    "Ergebnis",
+CSV_COLUMNS = (
+    "hc_csv_kind",
+    "hc_csv_time",
+    "hc_csv_who",
+    "hc_csv_door",
+    "hc_csv_seconds",
+    "hc_csv_away",
+    "hc_csv_result",
 )
+
+
+def csv_header(lang: str = DE) -> tuple[str, ...]:
+    return tuple(tr(lang, key) for key in CSV_COLUMNS)
 
 
 def csv_rows(
@@ -306,6 +323,7 @@ def csv_rows(
     timings: Iterable[EntryTiming],
     names: Mapping[str, str],
     local: Callable[[float], str],
+    lang: str = DE,
 ) -> list[tuple[str, ...]]:
     """Alle Heimkehrten und Eingänge als Tabelle (älteste zuerst), zum Herunterladen.
 
@@ -315,12 +333,12 @@ def csv_rows(
     for v in verdicts:
         door = names.get(v.door.sensor, v.door.sensor) if v.door else ""
         delay = f"{v.delay:.0f}" if v.delay is not None else ""
-        result = describe(v, names).split(": ", 1)[-1]
+        result = describe(v, names, lang).split(": ", 1)[-1]
         rows.append(
             (
                 v.arrival.at,
                 (
-                    "Heimkehr",
+                    tr(lang, "hc_csv_arrival"),
                     local(v.arrival.at),
                     names.get(v.arrival.source, v.arrival.source),
                     door,
@@ -331,16 +349,12 @@ def csv_rows(
             )
         )
     for t in timings:
-        result = (
-            f"rechtzeitig unscharf (Verzögerung {t.delay} s)"
-            if t.in_time
-            else f"zu spät – Alarm (Verzögerung {t.delay} s)"
-        )
+        result = tr(lang, "hc_entry_in_time" if t.in_time else "hc_entry_too_late", delay=t.delay)
         rows.append(
             (
                 t.at,
                 (
-                    "Eingang",
+                    tr(lang, "hc_csv_entry"),
                     local(t.at),
                     "",
                     names.get(t.door, t.door),
@@ -350,12 +364,12 @@ def csv_rows(
                 ),
             )
         )
-    return [CSV_HEADER, *(row for _at, row in sorted(rows, key=lambda r: r[0]))]
+    return [csv_header(lang), *(row for _at, row in sorted(rows, key=lambda r: r[0]))]
 
 
-def to_csv(rows: Iterable[Sequence[str]]) -> str:
-    """CSV für Excel & Co. im deutschen Format: Semikolon, UTF-8 mit BOM."""
+def to_csv(rows: Iterable[Sequence[str]], delimiter: str = ";") -> str:
+    """CSV für Excel & Co.: UTF-8 mit BOM; Semikolon (deutsch) bzw. Komma (englisch)."""
     buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=";", lineterminator="\r\n")
+    writer = csv.writer(buffer, delimiter=delimiter, lineterminator="\r\n")
     writer.writerows(rows)
     return "﻿" + buffer.getvalue()

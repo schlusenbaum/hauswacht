@@ -48,6 +48,7 @@ from .core.controls import (
 )
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
+from .core.texts import tr
 from .core.users import Action, Identity, find_by_ha_user
 from .core.users import label as users_label
 
@@ -296,8 +297,8 @@ class ControlManager:
             return
         self.runtime.notifier.notify(
             NotifyEvent.ALARM,
-            "Hauswacht: NOTRUF",
-            f"Notruf-Taste am Bedienteil {keypad.name} gedrückt.",
+            tr(self.runtime.lang, "panic_title"),
+            tr(self.runtime.lang, "panic", control=keypad.name),
             values={"melder": keypad.name},
             test_mode=self.runtime.ctx.test_mode,
             speak=keypad.emergency is Emergency.ALARM,
@@ -339,9 +340,8 @@ class ControlManager:
         action = Action.DISARM if intent == "disarm" else Action.ARM
         if user is None or not any(user.may_in(action, a.area_id) for a in self._areas(sticker)):
             self.runtime.notifier.send_system(
-                "Hauswacht: Aufkleber abgelehnt",
-                f"NFC-Aufkleber {sticker.name}: Das Handy gehört keinem berechtigten "
-                "Hauswacht-Benutzer.",
+                tr(self.runtime.lang, "sticker_denied_title"),
+                tr(self.runtime.lang, "sticker_denied", sticker=sticker.name),
             )
             return "rejected"
         result = self._execute(sticker, action, sticker.profile, Identity("phone", (user,)))
@@ -364,10 +364,11 @@ class ControlManager:
     def _confirm(self, control: Control, action: Action, result: str, who: str) -> None:
         if result == "ok":
             return  # Scharf/Unscharf melden die normalen Benachrichtigungen
-        what = "unscharf" if action is Action.DISARM else "scharf"
+        lang = self.runtime.lang
+        what = tr(lang, "control_disarm" if action is Action.DISARM else "control_arm")
         self.runtime.notifier.send_system(
-            "Hauswacht: Bedienteil",
-            f"{control.name}: {who} wollte {what} schalten – nicht möglich ({result}).",
+            tr(lang, "control_denied_title"),
+            tr(lang, "control_denied", control=control.name, who=who, what=what, result=result),
         )
 
     # --- Anzeige ----------------------------------------------------------------

@@ -114,7 +114,7 @@ async def test_sirens_locked_by_default(hass: HomeAssistant) -> None:
     assert decision.data["blocked"] == {SIREN: "hardware_disabled"}
     # Push geht trotzdem raus
     assert len(mocks.push) == 1
-    assert "EINBRUCHALARM" in mocks.push[0].data["title"]
+    assert "INTRUSION ALARM" in mocks.push[0].data["title"]
     assert "hardware_disabled" in mocks.push[0].data["message"]
 
 
@@ -246,7 +246,7 @@ async def test_tamper_sends_system_message(hass: HomeAssistant) -> None:
     mocks = await _setup(hass, notify_system=[PHONE])
     set_sensor(hass, "binary_sensor.kontakt_tamper", "on")
     await hass.async_block_till_done()
-    assert "Manipulation" in mocks.push[0].data["title"]
+    assert "tampering" in mocks.push[0].data["title"]
 
 
 # --- Optionen ---------------------------------------------------------------

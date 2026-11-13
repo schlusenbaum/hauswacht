@@ -172,7 +172,7 @@ async def test_reminder_and_prewarn(hass: HomeAssistant) -> None:
     tester = _tester(hass)
     tester._check_reminder(None)
     await hass.async_block_till_done()
-    assert any("fällig" in c.data["title"] for c in mocks.push)
+    assert any("due" in c.data["title"] for c in mocks.push)
     tester.prewarn_seconds = 0
     count = len(mocks.push)
     await _test(hass)

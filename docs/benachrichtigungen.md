@@ -16,6 +16,10 @@ Texte für Push-Nachrichten“ und zwei Punkten zur [Sprachausgabe](#sprachausga
   Lautsprecher.
 - **Pro Ereignis** (aufklappbare Bereiche): an/aus und eigene Empfänger.
 
+**Sprache:** Benachrichtigungen, Push-Knöpfe, Ansagen und Berichte kommen in der Sprache von
+Home Assistant – Deutsch, wenn Home Assistant auf Deutsch steht, sonst Englisch. Eigene Texte
+werden so verschickt, wie sie eingetragen sind.
+
 ## Ereignisse
 
 | Ereignis | Standard | Empfänger |

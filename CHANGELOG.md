@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-11-13
+
+### Hinzugefügt
+- **Englische Benachrichtigungen:** Alle Meldungen von Hauswacht – Push-Nachrichten, Meldungen
+  in Home Assistant, Knöpfe in der Push-Nachricht („Disarm“, „Arm anyway“ …), Bedrohungsalarm,
+  Sirenentest, Heimkehr-Bericht und CSV-Tabelle – folgen jetzt der Sprache von Home Assistant:
+  Deutsch bei deutscher Einstellung, sonst Englisch. Bisher waren sie immer deutsch.
+- Die englische CSV-Tabelle nutzt Komma statt Semikolon (passend zu englischem Excel).
+
+### Geändert
+- Bei englischer Sprache heißen die Quellen der Heimkehr-Beobachtung im Sensor-Attribut
+  `sources` jetzt „(overall)“ bzw. „(earliest signal)“ statt „(gesamt)“ bzw. „(frühestes
+  Signal)“.
+
 ### Dokumentation
 - README: Status „Beta“ und eine kurze englische Zusammenfassung (aufklappbar).
 

@@ -22,6 +22,7 @@ from .const import OPT_REMINDER_DELAY, OPT_REMINDER_PERSONS, OPT_REMINDER_PROFIL
 from .core.automation import all_away
 from .core.profiles import profile_ids
 from .core.state_machine import AlarmState
+from .core.texts import tr
 
 if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
@@ -107,5 +108,5 @@ class ReminderRunner:
         _LOGGER.info("Erinnerung: alle weg, Anlage unscharf")
         self.runtime.send_arm_reminder(
             self.profile_id,
-            f"Alle sind seit {self.delay_minutes} Minuten weg, die Anlage ist aber unscharf.",
+            tr(self.runtime.lang, "reminder", minutes=self.delay_minutes),
         )

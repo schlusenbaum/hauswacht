@@ -27,6 +27,7 @@ from .core.notify_events import NotifyEvent
 from .core.profiles import profile_ids
 from .core.reactions import auto_armed_message, auto_disarmed_message
 from .core.state_machine import AlarmState
+from .core.texts import tr
 
 if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
@@ -157,7 +158,7 @@ class AutomationRunner:
             self._event("AutoArmSkipped", profile_id, reason=reason)
             return
         try:
-            runtime.arm(profile_id, changed_by="Automatik")
+            runtime.arm(profile_id, changed_by=tr(runtime.lang, "automation_actor"))
         except HomeAssistantError as err:
             details = str(err) or type(err).__name__
             _LOGGER.warning("Automatisches Scharfschalten von %s fehlgeschlagen: %s", name, details)
@@ -168,7 +169,7 @@ class AutomationRunner:
         self._event("AutoArmed", profile_id, reason=reason)
         runtime.notifier.notify(
             NotifyEvent.AUTOMATION,
-            *auto_armed_message(name, reason),
+            *auto_armed_message(name, self._reason(reason), runtime.lang),
             values={"profil": name, "grund": reason},
             test_mode=runtime.ctx.test_mode,
         )
@@ -185,14 +186,25 @@ class AutomationRunner:
             return
         if only_if_auto and self.auto_armed_by != profile_id:
             return
-        runtime.disarm_trusted(changed_by="Automatik")
+        runtime.disarm_trusted(changed_by=tr(runtime.lang, "automation_actor"))
         self._event("AutoDisarmed", profile_id, reason=reason)
         runtime.notifier.notify(
             NotifyEvent.AUTOMATION,
-            *auto_disarmed_message(runtime.profile_name(profile_id), reason),
+            *auto_disarmed_message(
+                runtime.profile_name(profile_id), self._reason(reason), runtime.lang
+            ),
             values={"profil": runtime.profile_name(profile_id), "grund": reason},
             test_mode=ctx.test_mode,
         )
+
+    def _reason(self, reason: str) -> str:
+        """Grund für den Nachrichtentext in der Sprache von Home Assistant."""
+        key = {
+            REASON_TIME: "reason_time",
+            REASON_AWAY: "reason_away",
+            REASON_ARRIVAL: "reason_arrival",
+        }
+        return tr(self.runtime.lang, key[reason]) if reason in key else reason
 
     @callback
     def _event(self, kind: str, profile_id: str, **data: Any) -> None:
