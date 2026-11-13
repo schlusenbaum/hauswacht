@@ -9,6 +9,7 @@ from custom_components.hauswacht.core.users import (
     User,
     allowed,
     allowed_in,
+    card_needs_pin,
     find_by_ha_user,
     has_codes,
     label,
@@ -211,3 +212,24 @@ def test_shared_pin_combines_per_area_rights() -> None:
     b = User("b", "B", area_rights=(("garage", frozenset({Action.DISARM})),))
     assert allowed_in((a, b), Action.DISARM, "garage")
     assert not allowed_in((a, b), Action.DISARM, "main")
+
+
+def test_card_needs_pin_only_with_pins() -> None:
+    nobody = (User("a", "Anna", ha_user="ha-a"),)
+    assert not card_needs_pin(nobody, "ha-a", unlinked_pin=True)
+    assert not card_needs_pin(nobody, "ha-fremd", unlinked_pin=True)
+
+
+def test_card_needs_pin_per_account() -> None:
+    tablet = User("t", "Tablet", ha_user="ha-t", card_pin=True)
+    users = (CHRISTIAN, tablet)
+    assert not card_needs_pin(users, "ha-c", unlinked_pin=True)  # zugeordnet, Standard ohne PIN
+    assert card_needs_pin(users, "ha-t", unlinked_pin=False)  # beim Benutzer verlangt
+    assert card_needs_pin(users, "ha-fremd", unlinked_pin=True)  # ohne Benutzer: PIN-Regel
+    assert not card_needs_pin(users, "ha-fremd", unlinked_pin=False)
+    assert card_needs_pin(users, None, unlinked_pin=True)
+
+
+def test_card_pin_parsed() -> None:
+    users = parse_users({"users": {"t": {"name": "Tablet", "card_pin": True}, "a": {"name": "A"}}})
+    assert {u.name: u.card_pin for u in users} == {"Tablet": True, "A": False}

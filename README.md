@@ -11,8 +11,12 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.34.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
+> **Status: 0.35.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
 > Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst freigegeben werden.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/schlusenbaum/hauswacht/main/docs/images/alarm-karte.png" alt="Karte Hauswacht Alarm: unscharf, wird scharf, PIN-Eingabe, Alarm" width="800">
+</p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/schlusenbaum/hauswacht/main/docs/images/test-karte.png" alt="Karte Hauswacht Test" width="420">
@@ -26,6 +30,9 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
   oder wenn alle weg sind.
 - **Auslöseregeln** – Alarm erst bei einer Abfolge („Tür, dann Keller innerhalb von 2 Minuten“),
   mit Ausnahmen und Bedingungen; im Assistenten oder als YAML.
+- **Alarmkarte ohne PIN-Zwang** – große Karte fürs Tablet: Zustand mit Countdown, ein Knopf je
+  Profil, offene Melder mit „Trotzdem scharf“. Wer angemeldet ist, schaltet mit seinen Rechten;
+  einen PIN verlangt sie nur, wo es eingestellt ist – z. B. am Wandtablet im Flur.
 - **Bereiche** – Haus und Garage unabhängig scharf, mit eigenem Bedienfeld und „Alle Bereiche“.
 - **Benutzer und Ausweise** – PIN und beliebig viele RFID-Karten je Person, Rechte je Bereich,
   Gäste mit Gültigkeit, Bedrohungs-PIN mit stillem Notruf, Sperre gegen Durchprobieren.
@@ -65,7 +72,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Melder und Meldergruppen](docs/melder.md) | Welche Sensoren, Typen, immer aktiv, Funkstille |
 | [Alarmprofile und Bereiche](docs/profile.md) | Profile, Automatik, Scharf durch Türschließen, Bereiche |
 | [Auslöseregeln](docs/ausloeseregeln.md) | Abfolgen, Ausnahmen, Bedingungen, YAML |
-| [Bedienung und Dashboard](docs/dashboard.md) | Scharf/unscharf, Alarm beenden, Karten |
+| [Bedienung und Dashboard](docs/dashboard.md) | Scharf/unscharf, Alarmkarte, Alarm beenden, Karten |
 | [Benutzer, PINs und Sperre](docs/benutzer.md) | Benutzer, Rechte, PIN-Regeln, Bedrohungs-PIN |
 | [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser |
 | [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Sirenentest, Brandschutz |

@@ -91,6 +91,8 @@ const LANG = {
     anyPin: "PIN verlangt (Bedienfeld)",
     armCode: "PIN auch zum Scharfschalten",
     buttonsNoPin: "Dashboard-Knöpfe trotz PIN",
+    cardPin: "PIN in der Alarmkarte",
+    cardPinUnlinked: "Alarmkarte: PIN für Konten ohne Benutzer",
     topic: "MQTT-Topic",
     login: "Anmeldung",
     emergency: "Notruf-Taste",
@@ -212,6 +214,8 @@ const LANG = {
     anyPin: "PIN required (panel)",
     armCode: "PIN also for arming",
     buttonsNoPin: "Dashboard buttons despite PIN",
+    cardPin: "PIN in the alarm card",
+    cardPinUnlinked: "Alarm card: PIN for accounts without user",
     topic: "MQTT topic",
     login: "Login",
     emergency: "Emergency key",
@@ -571,7 +575,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       .map((s) => `<div class="item"><div class="n">${esc(s.name)}</div>${this._kv([[this._t("tested"), esc(this._sirenTest(s))], [this._t("capabilities"), esc(this._sirenCaps(s))]])}</div>`)
       .join("");
     const users = d.users
-      .map((u) => `<div class="item"><div class="n">${esc(u.name)}</div>${this._kv([[this._t("pin"), this._yn(u.pin)], [this._t("cards"), u.cards.length ? esc(u.cards.join(", ")) : this._t("none")], [this._t("rights"), esc(this._userRights(u))], [this._t("validity"), esc(this._userValidity(u))], [this._t("haAccount"), this._yn(u.ha_account)]])}</div>`)
+      .map((u) => `<div class="item"><div class="n">${esc(u.name)}</div>${this._kv([[this._t("pin"), this._yn(u.pin)], [this._t("cards"), u.cards.length ? esc(u.cards.join(", ")) : this._t("none")], [this._t("rights"), esc(this._userRights(u))], [this._t("validity"), esc(this._userValidity(u))], [this._t("haAccount"), this._yn(u.ha_account)], [this._t("cardPin"), this._yn(u.card_pin)]])}</div>`)
       .join("");
     const pr = d.pin_rules || {};
     const pinRules = this._kv([
@@ -579,6 +583,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       [this._t("anyPin"), this._yn(pr.any_pin)],
       [this._t("armCode"), this._yn(pr.arm_requires_code)],
       [this._t("buttonsNoPin"), this._yn(pr.buttons_without_pin)],
+      [this._t("cardPinUnlinked"), this._yn(pr.card_pin_unlinked)],
     ]);
     const controls = d.controls.length
       ? d.controls.map((c) => `<div class="item"><div class="n">${esc(c.name)} <span class="muted">${esc(this._l("kind", c.kind))}${c.area ? ` · ${esc(c.area)}` : ""}</span></div><div class="muted">${this._controlDetail(c)}</div></div>`).join("")
@@ -693,10 +698,10 @@ class HauswachtUebersichtCard extends HTMLElement {
     );
     out.push(`<h2>${this._t("users")}</h2>`);
     out.push(
-      `<table><tr><th>${this._t("users")}</th><th>${this._t("pin")}</th><th>${this._t("cards")}</th><th>${this._t("rights")}</th><th>${this._t("validity")}</th><th>${this._t("haAccount")}</th></tr>${d.users.map((u) => `<tr><td>${esc(u.name)}</td><td>${this._yn(u.pin)}</td><td>${u.cards.length ? esc(u.cards.join(", ")) : "–"}</td><td>${esc(this._userRights(u))}</td><td>${esc(this._userValidity(u))}</td><td>${this._yn(u.ha_account)}</td></tr>`).join("")}</table>`
+      `<table><tr><th>${this._t("users")}</th><th>${this._t("pin")}</th><th>${this._t("cards")}</th><th>${this._t("rights")}</th><th>${this._t("validity")}</th><th>${this._t("haAccount")}</th><th>${this._t("cardPin")}</th></tr>${d.users.map((u) => `<tr><td>${esc(u.name)}</td><td>${this._yn(u.pin)}</td><td>${u.cards.length ? esc(u.cards.join(", ")) : "–"}</td><td>${esc(this._userRights(u))}</td><td>${esc(this._userValidity(u))}</td><td>${this._yn(u.ha_account)}</td><td>${this._yn(u.card_pin)}</td></tr>`).join("")}</table>`
     );
     const pr = d.pin_rules || {};
-    out.push(`<h3>${this._t("pinRules")}</h3>${this._table([[this._t("masterPin"), this._yn(pr.master_pin)], [this._t("anyPin"), this._yn(pr.any_pin)], [this._t("armCode"), this._yn(pr.arm_requires_code)], [this._t("buttonsNoPin"), this._yn(pr.buttons_without_pin)]])}`);
+    out.push(`<h3>${this._t("pinRules")}</h3>${this._table([[this._t("masterPin"), this._yn(pr.master_pin)], [this._t("anyPin"), this._yn(pr.any_pin)], [this._t("armCode"), this._yn(pr.arm_requires_code)], [this._t("buttonsNoPin"), this._yn(pr.buttons_without_pin)], [this._t("cardPinUnlinked"), this._yn(pr.card_pin_unlinked)]])}`);
     out.push(`<h2>${this._t("controls")}</h2>`);
     out.push(
       d.controls.length

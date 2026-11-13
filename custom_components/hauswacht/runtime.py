@@ -48,6 +48,7 @@ from .const import (
     NOTIFICATION_FAULT,
     NOTIFICATION_RESTART,
     OPT_BUTTONS_WITHOUT_PIN,
+    OPT_CARD_PIN_UNLINKED,
     OPT_CODE_ARM_REQUIRED,
     OPT_DURESS_NOTIFY,
     OPT_END_ALARM_WITHOUT_PIN,
@@ -378,6 +379,11 @@ class HauswachtRuntime:
     @property
     def code_arm_required(self) -> bool:
         return self.has_codes and bool(self.entry.options.get(OPT_CODE_ARM_REQUIRED, False))
+
+    @property
+    def card_unlinked_pin(self) -> bool:
+        """Alarmkarte: Konten ohne Hauswacht-Benutzer brauchen einen PIN (Standard an)."""
+        return bool(self.entry.options.get(OPT_CARD_PIN_UNLINKED, True))
 
     # --- Lebenszyklus ------------------------------------------------------
 

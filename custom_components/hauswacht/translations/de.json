@@ -32,7 +32,11 @@
           "remove_master_pin": "Master-PIN entfernen",
           "code_arm_required": "PIN auch zum Scharfschalten verlangen",
           "end_alarm_without_pin": "Alarm ohne PIN beenden (Sirene aus, Anlage bleibt scharf)",
-          "buttons_without_pin": "Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)"
+          "buttons_without_pin": "Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)",
+          "card_pin_unlinked": "Alarmkarte: PIN für Home-Assistant-Konten ohne Hauswacht-Benutzer verlangen"
+        },
+        "data_description": {
+          "card_pin_unlinked": "Die Karte „Hauswacht Alarm“ schaltet ohne PIN, wenn das angemeldete Konto einem Hauswacht-Benutzer zugeordnet ist (einstellbar je Benutzer). Andere Konten – z. B. ein eigenes Konto fürs Wandtablet – bekommen mit diesem Schalter eine PIN-Tastatur."
         }
       },
       "profile_settings": {
@@ -220,6 +224,7 @@
           "can_disarm": "Darf unscharf schalten",
           "can_end_alarm": "Darf Alarm beenden",
           "ha_user": "Home-Assistant-Konto (für Push-Knopf und Dashboard-Knöpfe)",
+          "card_pin": "In der Alarmkarte PIN verlangen",
           "valid_from": "Gültig von",
           "valid_until": "Gültig bis",
           "rights": "Rechte gelten für",
@@ -227,7 +232,8 @@
         },
         "data_description": {
           "rights": "**Alle Bereiche gleich:** die Häkchen oben gelten überall. **Je Bereich einzeln:** nach dem Speichern legst du für jeden Bereich fest, was der Benutzer dort darf (die Häkchen oben gelten dann nicht).",
-          "tags": "Beliebig viele, unabhängig vom PIN (ein Benutzer braucht keinen PIN, um mit Karte am Keypad zu schalten). Neue Karte einmal an ein Keypad oder einen Leser halten – sie erscheint dann hier als „neu“ zur Auswahl. Oder ID eintippen."
+          "tags": "Beliebig viele, unabhängig vom PIN (ein Benutzer braucht keinen PIN, um mit Karte am Keypad zu schalten). Neue Karte einmal an ein Keypad oder einen Leser halten – sie erscheint dann hier als „neu“ zur Auswahl. Oder ID eintippen.",
+          "card_pin": "Für das Home-Assistant-Konto dieses Benutzers in der Karte „Hauswacht Alarm“. Aus: schaltet dort ohne PIN, mit den Rechten dieses Benutzers. An: z. B. für ein Wandtablet, das dauerhaft angemeldet ist. Nur wirksam, wenn es überhaupt PINs gibt."
         }
       },
       "user_area_rights": {
@@ -1157,6 +1163,12 @@
     },
     "siren_test_blocked": {
       "message": "Sirenentest nicht möglich: {reason}"
+    },
+    "card_pin_required": {
+      "message": "Bitte PIN eingeben."
+    },
+    "card_no_access": {
+      "message": "Dieses Konto darf das Bedienfeld dieses Bereichs nicht steuern."
     }
   },
   "services": {

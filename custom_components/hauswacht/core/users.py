@@ -56,6 +56,8 @@ class User:
     tags: tuple[str, ...] = ()  # RFID-Karten/-Anhänger (normalisierte IDs)
     # Rechte je Bereich (Bereich -> erlaubte Aktionen); None = allgemeine Rechte für alle
     area_rights: tuple[tuple[str, frozenset[Action]], ...] | None = None
+    # Alarmkarte: muss dieses Home-Assistant-Konto dort einen PIN eingeben?
+    card_pin: bool = False
 
     def may(self, action: Action) -> bool:
         return {
@@ -179,6 +181,7 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
                 else (),
                 tags=_tags(data.get("tags")),
                 area_rights=_area_rights(data),
+                card_pin=bool(data.get("card_pin", False)),
             )
         )
     return tuple(users)
@@ -187,6 +190,21 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
 def has_codes(users: Iterable[User]) -> bool:
     """Gibt es mindestens einen PIN? Dann verlangt das Bedienfeld einen PIN."""
     return any(u.pin is not None or u.duress_pin is not None for u in users)
+
+
+def card_needs_pin(users: Iterable[User], ha_user_id: str | None, *, unlinked_pin: bool) -> bool:
+    """Muss dieses Home-Assistant-Konto in der Alarmkarte einen PIN eingeben?
+
+    Nur wenn es überhaupt PINs gibt. Konten mit Hauswacht-Benutzer: Einstellung des Benutzers.
+    Konten ohne Benutzer (z. B. ein Wandtablet): Einstellung unter PIN-Regeln.
+    """
+    users = tuple(users)
+    if not has_codes(users):
+        return False
+    linked = find_by_ha_user(users, ha_user_id)
+    if linked is not None:
+        return linked.card_pin
+    return unlinked_pin
 
 
 def tag_conflicts(users: Iterable[User]) -> dict[str, list[str]]:
