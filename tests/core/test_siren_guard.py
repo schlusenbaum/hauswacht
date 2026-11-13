@@ -373,3 +373,38 @@ def test_switch_like_device_only_turns_on_and_off() -> None:
     assert (
         decide_activation(burning, ActivateRequest(("x",), "burglar", "high", 180)).commands == ()
     )
+
+
+# --- 0.41: Brandton als Experten-Freigabe ---------------------------------------------
+
+OUTDOOR_TONES = frozenset({"fire", "chime"})
+
+
+def test_expert_fire_tone_for_plain_siren() -> None:
+    caps = SirenCapabilities(tones=OUTDOOR_TONES)
+    locked = device("x", capabilities=caps, tone="fire")
+    assert _one(locked).commands == ()
+    released = device("x", capabilities=caps, tone="fire", fire_tone_allowed=True)
+    assert _one(released).commands[0].tone == "fire"
+
+
+def test_expert_fire_tone_never_on_smoke_detector() -> None:
+    caps = SirenCapabilities(tones=OUTDOOR_TONES)
+    dev = device("x", capabilities=caps, tone="fire", fire_tone_allowed=True, fire_detector=True)
+    assert _one(dev).commands == ()
+
+
+def test_expert_fire_tone_does_not_bypass_fire_lock() -> None:
+    caps = SirenCapabilities(tones=OUTDOOR_TONES)
+    dev = device("x", capabilities=caps, tone="fire", fire_tone_allowed=True)
+    burning = ctx(dev, device("rm", FireIndicator.ACTIVE))
+    assert (
+        decide_activation(burning, ActivateRequest(("x",), "burglar", "high", 180)).commands == ()
+    )
+
+
+def test_expert_release_only_for_the_configured_tone() -> None:
+    # Freigabe ohne eingestellten Ton: kein automatischer Brandton
+    caps = SirenCapabilities(tones=OUTDOOR_TONES)
+    dev = device("x", capabilities=caps, fire_tone_allowed=True)
+    assert _one(dev).commands == ()

@@ -779,9 +779,14 @@
       },
       "siren_tone_edit": {
         "title": "Ton für {siren}",
-        "description": "Töne, die diese Sirene meldet: {tones}\n\nDer gewählte Ton gilt bei Alarm und beim Sirenentest. Brandtöne (mit „fire“, „smoke“ oder „Brand“ im Namen) sind nie erlaubt. Danach am besten einen kurzen, leisen Sirenentest machen.",
+        "description": "Töne, die diese Sirene meldet: {tones}\n\nDer gewählte Ton gilt bei Alarm und beim Sirenentest. Danach am besten einen kurzen, leisen Sirenentest machen.\n\n**Brandtöne** (mit „fire“, „smoke“ oder „Brand“ im Namen) sind für Einbruch gesperrt: Wer einen Brandton hört, verlässt das Haus – womöglich genau dorthin, wo der Einbrecher ist –, und ein Brandton, der auch bei Einbruch ertönt, wird bei echtem Feuer weniger ernst genommen. Nur falls der Name täuscht (z. B. die einzige laute Tonart einer Außensirene heißt „fire“), lässt er sich als Experte freigeben. Für Rauchmelder mit Sirene geht das nie. Die Brandsperre gilt immer.",
         "data": {
-          "tone": "Ton"
+          "tone": "Ton",
+          "allow_fire_tone": "Experten: Brandton für Einbruch erlauben",
+          "confirm_fire_tone": "Ich bestätige: Diese Sirene ist kein Rauchmelder, und alle im Haus kennen den Ton als Einbruchalarm"
+        },
+        "data_description": {
+          "allow_fire_tone": "Nur für diesen Ton an dieser Sirene. Die Übersicht zeigt die Freigabe als Hinweis."
         }
       }
     },
@@ -824,7 +829,9 @@
       "card_expired": "Die neue Karte {conflict} wurde vor zu langer Zeit gelesen und ist nicht mehr zum Anlernen freigegeben. Bitte erneut an das Keypad bzw. den Leser halten.",
       "tag_random": "{conflict} ist eine Zufallsnummer (z. B. von einem Handy). Sie ändert sich bei jedem Lesen und taugt nicht als Ausweis – bitte entfernen.",
       "siren_switch_confirm": "Bitte bestätigen, dass es eine reine Alarmsirene ist.",
-      "siren_tone_fire": "Ein Brandton ist für Einbruchalarme nicht erlaubt."
+      "siren_tone_fire": "Ein Brandton ist für Einbruch gesperrt – nur mit der Experten-Freigabe unten.",
+      "siren_tone_fire_detector": "Diese Sirene hat eigene Brandsensoren (Rauchmelder) – ein Brandton für Einbruch ist hier nie erlaubt.",
+      "siren_tone_fire_confirm": "Bitte die Experten-Freigabe ausdrücklich bestätigen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

@@ -80,6 +80,16 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
             "Alarm devices – sirens → Tone per siren",
         ),
     },
+    "siren_fire_tone": {
+        "de": (
+            "Sirene {name}: Brandton {tone} ist für Einbruch freigegeben (Experten).",
+            "Alarmgeber – Sirenen → Ton je Sirene",
+        ),
+        "en": (
+            "Siren {name}: fire tone {tone} is released for burglar alarms (experts).",
+            "Alarm devices – sirens → Tone per siren",
+        ),
+    },
     "siren_untested": {
         "de": ("Sirene {name} wurde noch nie getestet.", "Testkarte → Sirenentest"),
         "en": ("Siren {name} has never been tested.", "Test card → siren test"),
@@ -271,6 +281,17 @@ def _sirens(overview: Mapping[str, Any], lang: str, now: datetime) -> list[dict[
             found.append(
                 _finding(
                     "siren_no_tone", lang, severity="warning", important=True, key=key, name=name
+                )
+            )
+        if siren.get("fire_tone_override"):
+            found.append(
+                _finding(
+                    "siren_fire_tone",
+                    lang,
+                    severity="warning",
+                    key=key,
+                    name=name,
+                    tone=siren.get("tone"),
                 )
             )
         tested = _parse(siren.get("last_test"))

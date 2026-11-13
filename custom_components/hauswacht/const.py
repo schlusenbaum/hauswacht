@@ -24,6 +24,8 @@ OPT_SIRENS: Final = "sirens"
 OPT_SIRENS_HARDWARE_ENABLED: Final = "sirens_hardware_enabled"
 # Fest eingestellter Ton je Sirene: {entity_id: Ton}
 OPT_SIREN_TONES: Final = "siren_tones"
+# Experten: Sirenen, deren eingestellter Ton ein Brandton sein darf (nie Rauchmelder)
+OPT_SIREN_FIRE_TONE_OK: Final = "siren_fire_tone_ok"
 # Experten: Schalter (switch.…) direkt als Sirene zulassen
 OPT_SIRENS_ALLOW_SWITCH: Final = "sirens_allow_switch"
 OPT_NOTIFY_SYSTEM: Final = "notify_system"

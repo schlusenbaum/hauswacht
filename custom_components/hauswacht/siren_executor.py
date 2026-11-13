@@ -17,7 +17,13 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import EVENT_HAUSWACHT, OPT_SIREN_TONES, OPT_SIRENS, OPT_SIRENS_HARDWARE_ENABLED
+from .const import (
+    EVENT_HAUSWACHT,
+    OPT_SIREN_FIRE_TONE_OK,
+    OPT_SIREN_TONES,
+    OPT_SIRENS,
+    OPT_SIRENS_HARDWARE_ENABLED,
+)
 from .core.reactions import FIRE_DEVICE_CLASSES, fire_state, is_fire_indicator, parse_max_duration
 from .core.siren_guard import (
     ActivateRequest,
@@ -68,6 +74,12 @@ class SirenExecutor:
         self.tones: dict[str, str] = (
             {str(k): str(v) for k, v in tones.items() if v} if isinstance(tones, Mapping) else {}
         )
+        fire_ok = options.get(OPT_SIREN_FIRE_TONE_OK, [])
+        self.fire_tone_ok: frozenset[str] = (
+            frozenset(str(s) for s in fire_ok if isinstance(s, str))
+            if isinstance(fire_ok, list)
+            else frozenset()
+        )
         self.activated: set[str] = set()
         # Eigene Sirenen, deren Ausschalten die Brandsperre verhindert hat
         self.pending_stop: set[str] = set()
@@ -107,6 +119,7 @@ class SirenExecutor:
                 capabilities=self.capabilities(siren),
                 fire_detector=bool(indicators),
                 tone=self.tones.get(siren),
+                fire_tone_allowed=siren in self.fire_tone_ok,
             )
         return devices
 

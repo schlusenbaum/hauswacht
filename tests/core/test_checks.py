@@ -215,3 +215,28 @@ def test_english_and_order() -> None:
     assert findings[0]["code"] == "profile_unheard"  # wichtig zuerst
     assert findings[-1]["severity"] == "info"
     assert findings[0]["text"].startswith("Profile Away")
+
+
+def test_siren_without_burglar_tone_is_important() -> None:
+    siren = {"entity_id": "siren.asir", "name": "ASIR", "burglar_tone": False, "last_test": None}
+    findings = [
+        f for f in run_checks(_overview(sirens=[siren]), now=NOW) if f["key"] == "siren.asir"
+    ]
+    assert findings[0]["code"] == "siren_no_tone"
+    assert findings[0]["important"] is True
+
+
+def test_expert_fire_tone_is_shown() -> None:
+    siren = {
+        "entity_id": "siren.aussen",
+        "name": "Außen",
+        "tone": "fire",
+        "fire_tone_override": True,
+        "burglar_tone": True,
+        "last_test": NOW.isoformat(),
+        "heard": True,
+    }
+    findings = run_checks(_overview(sirens=[siren]), now=NOW)
+    assert _codes(findings) == ["siren_fire_tone"]
+    assert "fire" in findings[0]["text"]
+    assert findings[0]["important"] is False

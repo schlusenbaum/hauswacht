@@ -19,7 +19,7 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | S7 | Laufzeit wird auf die gerätseitige Höchstdauer begrenzt; diese wird **nie verändert** | Gerätewert kann das Brandverhalten beeinflussen |
 | S8 | Sirenen-Services werden nur im Siren Executor aufgerufen | Ein einziger, prüfbarer Pfad |
 | S9 | Fremde Abschalt-Scripts (z. B. ein Script, das alle Rauchmelder abschaltet) werden nie verwendet | Würde einen Brandalarm beenden |
-| S10 | Ton, Lautstärke und Dauer nur senden, wenn die Sirene sie unterstützt; fehlender Einbruchton → anderer Einbruchton, nie ein Brandton; nur Brandtöne → keine Ansteuerung | Abgelehnte Befehle ließen die Sirene stumm |
+| S10 | Ton, Lautstärke und Dauer nur senden, wenn die Sirene sie unterstützt; fehlender Einbruchton → anderer Einbruchton, nie ein Brandton; nur Brandtöne → keine Ansteuerung; Ausnahme ab 0.41: Experten-Freigabe eines eingestellten Tons, nie an Rauchmeldern | Abgelehnte Befehle ließen die Sirene stumm |
 | S11 | Rauchmelder ohne Tonauswahl → keine Einbruch-Ansteuerung | Ihr Standardton ist meist der Brandton |
 | S12 | Sirene ohne Dauer **und** ohne Ausschalten → keine Ansteuerung; Sirene ohne Ausschalten → kein Ausschaltbefehl | Hauswacht muss jeden Ton selbst begrenzen können |
 | S13 | Ende der Reaktionszeit und Unscharfschalten → eigene Sirenen ausschalten. Hat die Brandsperre das verhindert, wird es jede Minute erneut versucht, bis der Guard es erlaubt | Sirenen ohne eigene Laufzeit verstummen sonst nie |
@@ -32,6 +32,9 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 - Ab 0.40 können Experten Schalter als Sirene eintragen. Auch `switch.turn_on`/`turn_off` ruft
   ausschließlich der Executor auf – nach demselben Guard (statischer Test). Ein Schalter gilt
   als Sirene ohne Ton, Lautstärke und Dauer.
+- Ab 0.41 können Experten den eingestellten Ton einer Sirene als Brandton freigeben (Ausnahme von S10,
+  eigene Bestätigung). Der Guard erlaubt das nur für genau diesen Ton und nie für Geräte mit
+  eigenen Brand-Indikatoren; die Brandsperre bleibt davon unberührt.
 - Der Assistent „Sirene aus Schalter erstellen“ legt nur einen Helfer `switch_as_x` an und
   schaltet nichts; der Helfer-Assistent für Melder legt nur `threshold`-Helfer an (statischer
   Test).
