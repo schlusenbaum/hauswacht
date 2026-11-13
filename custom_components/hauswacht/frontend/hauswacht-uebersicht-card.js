@@ -771,7 +771,7 @@ class HauswachtUebersichtCard extends HTMLElement {
   _homecomingRow(h) {
     if (!h) return this._t("none");
     const status = h.enabled
-      ? esc(this._t("hcStatus").replace("{n}", h.arrivals).replace("{d}", h.days))
+      ? esc(this._t("hcStatus").replace("{n}", h.arrivals).replace("{d}", Number(h.days).toLocaleString(this._lang === "de" ? "de-DE" : "en-GB")))
       : this._t("off");
     return `${status}<div class="dl"><button class="b" data-a="hc-md">⬇ ${this._t("hcReport")}</button>
       <button class="b" data-a="hc-csv">⬇ ${this._t("hcTable")}</button></div>`;
