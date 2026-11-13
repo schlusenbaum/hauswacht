@@ -102,7 +102,7 @@ async def test_important_findings_become_repairs(hass: HomeAssistant) -> None:
     issue = registry.async_get_issue(DOMAIN, "check_duress_no_targets")
     assert issue is not None
     assert issue.translation_key == "check_finding"
-    assert "Bedrohungs-PIN" in (issue.translation_placeholders or {})["hint"]
+    assert "duress PIN" in (issue.translation_placeholders or {})["hint"]
     # Behoben: Empfänger eingetragen -> Hinweis verschwindet
     hass.config_entries.async_update_entry(
         entry, options={**entry.options, "duress_notify": ["mobile_app_annas_handy"]}
