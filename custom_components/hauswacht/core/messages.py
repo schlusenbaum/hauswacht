@@ -15,6 +15,7 @@ import string
 from collections.abc import Mapping
 
 from .notify_events import NotifyEvent
+from .texts import DE, tr
 
 PLACEHOLDERS: tuple[str, ...] = (
     "bereich",  # Bereichsname (leer bei nur einem Bereich)
@@ -28,6 +29,28 @@ PLACEHOLDERS: tuple[str, ...] = (
     "grund",  # Grund (z. B. warum Scharfschalten scheiterte)
     "text",  # der Standardtext von Hauswacht
 )
+# Englische Namen derselben Platzhalter – beide Schreibweisen gehen in jeder Sprache
+ENGLISH_NAMES: Mapping[str, str] = {
+    "area": "bereich",
+    "profile": "profil",
+    "sensor": "melder",
+    "open": "offen",
+    "who": "wer",
+    "seconds": "sekunden",
+    "time": "uhrzeit",
+    "rule": "regel",
+    "reason": "grund",
+}
+ALL_PLACEHOLDERS: frozenset[str] = frozenset(PLACEHOLDERS) | frozenset(ENGLISH_NAMES)
+
+
+def placeholder_names(lang: str = DE) -> tuple[str, ...]:
+    """Platzhalter für die Hilfe im Einstellungsdialog, in der Sprache von Home Assistant."""
+    if lang == DE:
+        return PLACEHOLDERS
+    german_to_english = {v: k for k, v in ENGLISH_NAMES.items()}
+    return tuple(german_to_english.get(p, p) for p in PLACEHOLDERS)
+
 
 # Beispielwerte für die Vorschau im Einstellungsdialog
 EXAMPLE_VALUES_DE: Mapping[str, str] = {
@@ -59,21 +82,21 @@ class TemplateError(ValueError):
     """Text ist fehlerhaft (Meldung nennt die Stelle)."""
 
 
-def check_template(template: str) -> None:
+def check_template(template: str, lang: str = DE) -> None:
     """Wirft TemplateError bei unbekannten Platzhaltern, Formatangaben oder Klammerfehlern."""
     if len(template) > MAX_LENGTH:
-        raise TemplateError(f"höchstens {MAX_LENGTH} Zeichen")
+        raise TemplateError(tr(lang, "tpl_too_long", max=MAX_LENGTH))
     try:
         parts = list(string.Formatter().parse(template))
     except ValueError as err:
-        raise TemplateError("geschweifte Klammern passen nicht zusammen") from err
+        raise TemplateError(tr(lang, "tpl_braces")) from err
     for _literal, field, spec, conversion in parts:
         if field is None:
             continue
-        if field not in PLACEHOLDERS:
-            raise TemplateError(f"unbekannter Platzhalter {{{field}}}")
+        if field not in ALL_PLACEHOLDERS:
+            raise TemplateError(tr(lang, "tpl_unknown", field=f"{{{field}}}"))
         if spec or conversion:
-            raise TemplateError(f"{{{field}}}: keine Formatangaben erlaubt")
+            raise TemplateError(tr(lang, "tpl_format", field=f"{{{field}}}"))
 
 
 def _tidy(text: str) -> str:
@@ -90,6 +113,7 @@ def render(template: str, values: Mapping[str, str]) -> str:
     except TemplateError:
         return _tidy(str(values.get("text", "")))
     filled = {key: str(values.get(key, "") or "") for key in PLACEHOLDERS}
+    filled.update({english: filled[german] for english, german in ENGLISH_NAMES.items()})
     return _tidy(template.format(**filled))
 
 
@@ -114,19 +138,19 @@ DEFAULT_SPEECH_DE: Mapping[NotifyEvent, str] = {
     NotifyEvent.UNCONFIRMED_FREQUENT: "{text}",
 }
 DEFAULT_SPEECH_EN: Mapping[NotifyEvent, str] = {
-    NotifyEvent.ALARM: "Attention, burglar alarm! Triggered by {melder}.",
-    NotifyEvent.ENTRY: "Entry delay running. Please disarm within {sekunden} seconds.",
-    NotifyEvent.ARMED: "Alarm system armed, profile {profil}.",
+    NotifyEvent.ALARM: "Attention, burglar alarm! Triggered by {sensor}.",
+    NotifyEvent.ENTRY: "Entry delay running. Please disarm within {seconds} seconds.",
+    NotifyEvent.ARMED: "Alarm system armed, profile {profile}.",
     NotifyEvent.DISARMED: "Alarm system disarmed.",
     NotifyEvent.ALARM_ENDED: "Alarm ended.",
-    NotifyEvent.ARM_FAILED: "Arming not possible, profile {profil}. {grund}",
+    NotifyEvent.ARM_FAILED: "Arming not possible, profile {profile}. {reason}",
     NotifyEvent.AUTOMATION: "{text}",
     NotifyEvent.FAULT: "Alarm system fault. {text}",
     NotifyEvent.SYSTEM: "{text}",
     NotifyEvent.REMINDER: "The alarm system is still disarmed.",
-    NotifyEvent.ALWAYS_ACTIVE: "Attention, {melder} was triggered.",
-    NotifyEvent.RULE_NOTIFY: "Trigger rule {regel} met by {melder}.",
-    NotifyEvent.ARM_HINT: "Note: {offen} is open.",
+    NotifyEvent.ALWAYS_ACTIVE: "Attention, {sensor} was triggered.",
+    NotifyEvent.RULE_NOTIFY: "Trigger rule {rule} met by {sensor}.",
+    NotifyEvent.ARM_HINT: "Note: {open} is open.",
     NotifyEvent.UNCONFIRMED: "{text}",
     NotifyEvent.UNCONFIRMED_FREQUENT: "{text}",
 }

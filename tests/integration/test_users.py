@@ -64,7 +64,7 @@ async def test_shared_pin(hass: HomeAssistant) -> None:
     await setup_entry(hass, make_entry({"users": users}))
     await _arm(hass)
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code="2468")
-    assert _panel(hass).attributes["changed_by"] == "gemeinsamer PIN (Christian, Petra)"
+    assert _panel(hass).attributes["changed_by"] == "shared PIN (Christian, Petra)"
 
 
 async def test_rights_any_user(hass: HomeAssistant) -> None:

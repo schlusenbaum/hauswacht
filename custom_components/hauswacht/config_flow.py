@@ -109,10 +109,10 @@ from .core.controls import (
 from .core.messages import (
     EXAMPLE_VALUES_DE,
     EXAMPLE_VALUES_EN,
-    PLACEHOLDERS,
     TemplateError,
     check_template,
     default_speech,
+    placeholder_names,
     render,
 )
 from .core.notify_events import NotifyEvent, enabled, event_targets
@@ -1885,7 +1885,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         return EXAMPLE_VALUES_DE if self._german() else EXAMPLE_VALUES_EN
 
     def _placeholder_help(self) -> str:
-        return ", ".join(f"{{{p}}}" for p in PLACEHOLDERS)
+        return ", ".join(f"{{{p}}}" for p in placeholder_names("de" if self._german() else "en"))
 
     async def async_step_notify_texts(
         self, user_input: dict[str, Any] | None = None
@@ -1911,7 +1911,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             texts = {k: str(user_input.get(k) or "").strip() for k in ("title", "message")}
             for key, text in texts.items():
                 try:
-                    check_template(text)
+                    check_template(text, "de" if self._german() else "en")
                 except TemplateError as err:
                     errors[key] = "invalid_template"
                     placeholders["error"] = str(err)
@@ -2020,7 +2020,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None and "mode" in user_input:
             text = str(user_input.get("text") or "").strip()
             try:
-                check_template(text)
+                check_template(text, "de" if self._german() else "en")
             except TemplateError as err:
                 errors["text"] = "invalid_template"
                 placeholders["error"] = str(err)

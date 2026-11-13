@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-11-13
+
+### Hinzugefügt
+- **Englische Platzhalter** für eigene Texte und Ansagen: `{area}`, `{profile}`, `{sensor}`,
+  `{open}`, `{who}`, `{seconds}`, `{time}`, `{rule}`, `{reason}` – gleichwertig zu den deutschen
+  (`{bereich}`, `{profil}`, `{melder}` …), auch gemischt. Der Einstellungsdialog nennt sie in der
+  Sprache von Home Assistant; Fehler in eigenen Texten werden ebenfalls übersetzt.
+
+### Geändert
+- „gemeinsamer PIN (A, B)“ heißt bei englischer Sprache „shared PIN (A, B)“.
+- Die englischen Standardansagen nutzen die englischen Platzhalter.
+
 ## [0.38.0] - 2026-11-13
 
 ### Hinzugefügt

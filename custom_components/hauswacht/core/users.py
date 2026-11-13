@@ -24,6 +24,7 @@ from enum import StrEnum
 from typing import Any
 
 from .pin import PinHash, verify_pin
+from .texts import DE, tr
 
 LEGACY_USER_ID = "_main"
 LEGACY_USER_NAME = "Hauptbenutzer"
@@ -246,13 +247,14 @@ def allowed_in(users: Iterable[User], action: Action, area_id: str) -> bool:
     return any(u.may_in(action, area_id) for u in users)
 
 
-def label(users: Iterable[User]) -> str:
+def label(users: Iterable[User], lang: str = DE) -> str:
+    """Wer geschaltet hat: der Name, bei mehreren mit demselben PIN "gemeinsamer PIN (A, B)"."""
     names = sorted({u.name for u in users})
     if not names:
         return ""
     if len(names) == 1:
         return names[0]
-    return f"gemeinsamer PIN ({', '.join(names)})"
+    return tr(lang, "shared_pin", names=", ".join(names))
 
 
 def find_by_ha_user(users: Iterable[User], ha_user_id: str | None) -> User | None:

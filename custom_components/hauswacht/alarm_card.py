@@ -136,7 +136,7 @@ async def _actor(
         if not identity.duress:
             for action in actions:
                 area.check_allowed(identity.users, action)
-        return users_label(identity.users)
+        return users_label(identity.users, area.lang)
     actor: str | None = None
     for action in actions:
         actor = await area.async_actor_for_user(user.id, action)

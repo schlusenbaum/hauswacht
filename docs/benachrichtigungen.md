@@ -53,18 +53,21 @@ werden so verschickt, wie sie eingetragen sind.
 **Benachrichtigungen → Eigene Texte für Push-Nachrichten:** Titel und Text je Ereignis selbst
 formulieren; leer = Standardtext. Dieselben Platzhalter gelten für die Sprachausgabe:
 
-| Platzhalter | Inhalt |
-|---|---|
-| `{bereich}` | Bereichsname (leer bei nur einem Bereich) |
-| `{profil}` | Alarmprofil |
-| `{melder}` | auslösender Melder mit Raum |
-| `{offen}` | offene Melder |
-| `{wer}` | wer geschaltet hat |
-| `{sekunden}` | Eingangsverzögerung in Sekunden |
-| `{uhrzeit}` | aktuelle Uhrzeit |
-| `{regel}` | Auslöseregel |
-| `{grund}` | Grund, z. B. warum das Scharfschalten scheiterte |
-| `{text}` | der Standardtext von Hauswacht (im Titel: der Standardtitel) |
+| Platzhalter | englisch | Inhalt |
+|---|---|---|
+| `{bereich}` | `{area}` | Bereichsname (leer bei nur einem Bereich) |
+| `{profil}` | `{profile}` | Alarmprofil |
+| `{melder}` | `{sensor}` | auslösender Melder mit Raum |
+| `{offen}` | `{open}` | offene Melder |
+| `{wer}` | `{who}` | wer geschaltet hat |
+| `{sekunden}` | `{seconds}` | Eingangsverzögerung in Sekunden |
+| `{uhrzeit}` | `{time}` | aktuelle Uhrzeit |
+| `{regel}` | `{rule}` | Auslöseregel |
+| `{grund}` | `{reason}` | Grund, z. B. warum das Scharfschalten scheiterte |
+| `{text}` | `{text}` | der Standardtext von Hauswacht (im Titel: der Standardtitel) |
+
+Beide Schreibweisen funktionieren immer, auch gemischt. Der Einstellungsdialog nennt die Namen in
+der Sprache von Home Assistant.
 
 Beispiel: `Einbruch {bereich}: {melder} ({profil}, {uhrzeit})`. Unbekannte Platzhalter oder
 Klammerfehler lassen sich nicht speichern; nach dem Speichern zeigt das Menü eine Vorschau mit

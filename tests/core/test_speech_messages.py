@@ -10,6 +10,7 @@ from custom_components.hauswacht.core.messages import (
     TemplateError,
     check_template,
     default_speech,
+    placeholder_names,
     render,
 )
 from custom_components.hauswacht.core.notify_events import NotifyEvent
@@ -112,3 +113,25 @@ def test_profile_speakers() -> None:
     assert profile_speakers(options, "p") == ("d1",)
     assert profile_speakers(options, "x") == ()
     assert profile_speakers(options, None) == ()
+
+
+# --- 0.39: englische Platzhalter ------------------------------------------------------
+
+
+def test_english_placeholder_names_work_everywhere() -> None:
+    check_template("Alarm: {sensor} ({profile}) by {who}")
+    check_template("Alarm: {melder} ({profile})")  # gemischt geht auch
+    values = {"melder": "Haustür", "profil": "Nacht", "wer": "Anna"}
+    assert (
+        render("Alarm: {sensor} ({profile}) by {who}", values) == "Alarm: Haustür (Nacht) by Anna"
+    )
+    assert render("Alarm: {melder}", values) == "Alarm: Haustür"
+    assert "{sensor}" not in "".join(placeholder_names("de"))
+    assert placeholder_names("en")[:3] == ("area", "profile", "sensor")
+
+
+def test_template_errors_in_english() -> None:
+    with pytest.raises(TemplateError, match="unknown placeholder"):
+        check_template("{foo}", "en")
+    with pytest.raises(TemplateError, match="unbekannter Platzhalter"):
+        check_template("{foo}")
