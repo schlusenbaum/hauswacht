@@ -63,6 +63,22 @@ erlauben“ (alle Knöpfe) bzw. „Alarm ohne PIN beenden“ (nur „Alarm beend
 > Knöpfe kommen aber nur angemeldete Home-Assistant-Benutzer, und nach „Alarm beenden“ bleibt
 > die Anlage scharf – jeder weitere Melder löst sofort wieder aus.
 
+## Beispiel-Dashboard „Alarmanlage“
+
+[`examples/dashboard/hauswacht-dashboard.yaml`](../examples/dashboard/hauswacht-dashboard.yaml)
+ist ein fertiges Dashboard mit zwei Ansichten:
+
+| Ansicht | Inhalt |
+|---|---|
+| **Alarm** | Karte „Hauswacht Alarm“, Systemstatus, Testmodus (nur Anzeige), Türen und Fenster mit Badge „offen“, Bewegung, Rauchmelder (nur Anzeige), Keypad-Batterie und -Sabotage, letzter Sirenentest, Verlauf der letzten drei Tage |
+| **Verwaltung** | Anlagenübersicht, Profil-Einstellungen, Testkarte |
+
+**Einfügen:** Einstellungen → Dashboards → **Dashboard hinzufügen** → „Neues Dashboard von Grund
+auf“ → öffnen → Stift → ⋮ → **Raw-Konfigurationseditor** → Inhalt der Datei einfügen. Danach die
+Beispiel-Melder (`binary_sensor.haustuer` …) durch die eigenen ersetzen.
+
+Sirenen stehen bewusst nicht als Kachel im Dashboard – ein Tippen würde sie einschalten.
+
 ## Beispielkarte
 
 [`examples/dashboard/hauswacht-karte.yaml`](../examples/dashboard/hauswacht-karte.yaml) nutzt nur
@@ -106,6 +122,11 @@ title: Alarm      # optional
 Dazu: wer zuletzt geschaltet hat und wann, Testmodus, nicht erreichbare Melder und eine laufende
 PIN-Sperre. Mit mehreren Bereichen steht jeder Bereich untereinander, dazu „Alle Bereiche
 unscharf“.
+
+Die Farben sind fest (grün unscharf, orange Verzögerung, rot scharf, leuchtend rot Alarm) und
+folgen nicht den Zustandsfarben von Home Assistant. Wer andere möchte, setzt im Theme
+`hauswacht-disarmed-color`, `hauswacht-pending-color`, `hauswacht-armed-color` bzw.
+`hauswacht-alarm-color`.
 
 Verlangt ein Profil bei offenen Meldern eine Bestätigung, nennt die Karte die Melder und bietet
 **„Trotzdem scharf schalten“** an – statt nur eine Fehlermeldung zu zeigen.

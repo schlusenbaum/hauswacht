@@ -1,0 +1,164 @@
+# Hauswacht – Beispiel-Dashboard "Alarmanlage"
+#
+# Zwei Ansichten:
+#  1. Alarm       – Karte "Hauswacht Alarm", Systemstatus, Testmodus, Türen und Fenster,
+#                   Bewegung, Rauchmelder (nur Anzeige), Technik, Verlauf
+#  2. Verwaltung  – Übersicht (nur Administratoren), Profil-Einstellungen, Testkarte
+#
+# Einfügen:
+#  1. Einstellungen → Dashboards → Dashboard hinzufügen → "Neues Dashboard von Grund auf",
+#     Name z. B. "Alarmanlage", Symbol mdi:shield-home.
+#  2. Dashboard öffnen → Stift → ⋮ → "Raw-Konfigurationseditor" → diesen Text einfügen.
+#  3. Die Melder unten (binary_sensor.haustuer … ) durch die eigenen ersetzen bzw. löschen.
+#
+# Die Hauswacht-Entitäts-IDs gelten für eine deutschsprachige Instanz. Auf Englisch:
+#   sensor.hauswacht_system_status, switch.hauswacht_test_mode,
+#   binary_sensor.hauswacht_open_sensors, sensor.hauswacht_last_siren_test
+#
+# Sirenen stehen bewusst nicht als Kachel drin: ein Tippen würde sie einschalten.
+
+views:
+  - title: Alarm
+    path: alarm
+    icon: mdi:shield-home
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:hauswacht-alarm-card
+            grid_options:
+              columns: full
+          - type: tile
+            entity: sensor.hauswacht_systemstatus
+            name: Systemstatus
+            icon: mdi:shield-check-outline
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: switch.hauswacht_testmodus
+            name: Testmodus
+            # Nur anzeigen, nicht versehentlich umschalten
+            icon_tap_action:
+              action: none
+            tap_action:
+              action: more-info
+            grid_options:
+              columns: 6
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Türen und Fenster
+            icon: mdi:door-closed-lock
+            badges:
+              - type: entity
+                entity: binary_sensor.hauswacht_offene_sensoren
+                show_state: true
+                color: orange
+                visibility:
+                  - condition: state
+                    entity: binary_sensor.hauswacht_offene_sensoren
+                    state: "on"
+          - type: tile
+            entity: binary_sensor.haustuer
+            name: Haustür
+            state_content: [state, last_changed]
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.terrassentuer
+            name: Terrassentür
+            state_content: [state, last_changed]
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.kuechenfenster
+            name: Küchenfenster
+            grid_options:
+              columns: 6
+          - type: heading
+            heading: Bewegung
+            heading_style: subtitle
+            icon: mdi:motion-sensor
+          - type: tile
+            entity: binary_sensor.bewegung_flur
+            name: Flur
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.bewegung_keller
+            name: Keller
+            grid_options:
+              columns: 6
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rauchmelder
+            icon: mdi:smoke-detector-variant
+          - type: tile
+            entity: binary_sensor.rauchmelder_flur
+            name: Flur
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.rauchmelder_schlafzimmer
+            name: Schlafzimmer
+            grid_options:
+              columns: 6
+          - type: heading
+            heading: Technik
+            heading_style: subtitle
+            icon: mdi:access-point
+          - type: tile
+            entity: sensor.keypad_battery
+            name: Keypad Batterie
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.keypad_tamper
+            name: Keypad Sabotage
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.hauswacht_letzter_sirenentest
+            name: Letzter Sirenentest
+            grid_options:
+              columns: 12
+
+      - type: grid
+        column_span: 3
+        cards:
+          - type: heading
+            heading: Verlauf
+            icon: mdi:history
+          - type: logbook
+            target:
+              entity_id:
+                - alarm_control_panel.hauswacht
+            hours_to_show: 72
+            grid_options:
+              columns: full
+              rows: 6
+
+  - title: Verwaltung
+    path: verwaltung
+    icon: mdi:cog-outline
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:hauswacht-uebersicht-card
+            grid_options:
+              columns: full
+      - type: grid
+        cards:
+          - type: custom:hauswacht-einstellungen-card
+            grid_options:
+              columns: full
+          - type: custom:hauswacht-test-card
+            grid_options:
+              columns: full

@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.35.1] - 2026-11-13
+
+### Geändert
+- **Karte „Hauswacht Alarm“:** feste Farben (grün unscharf, orange Verzögerung, rot scharf,
+  leuchtend rot Alarm) statt der Zustandsfarben von Home Assistant, in denen „scharf“ grün ist.
+  Anpassbar im Theme über `hauswacht-*-color`.
+
+### Hinzugefügt
+- **Beispiel-Dashboard „Alarmanlage“** (`examples/dashboard/hauswacht-dashboard.yaml`): Ansicht
+  „Alarm“ mit Alarmkarte, Türen und Fenster, Bewegung, Rauchmeldern, Technik und Verlauf;
+  Ansicht „Verwaltung“ mit Übersicht, Einstellungen und Testkarte.
+
 ## [0.35.0] - 2026-11-13
 
 ### Hinzugefügt

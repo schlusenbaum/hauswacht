@@ -83,11 +83,13 @@ const ICONS = {
 };
 
 const STYLE = `
+  /* Eigene Farben statt der Zustandsfarben von Home Assistant (dort ist z. B. "scharf" grün).
+     Anpassbar im Theme über --hauswacht-*-color. */
   :host {
-    --hw-ok: var(--state-alarm_control_panel-disarmed-color, #2e7d32);
-    --hw-armed: var(--state-alarm_control_panel-armed_away-color, #b71c1c);
-    --hw-wait: var(--state-alarm_control_panel-arming-color, #e65100);
-    --hw-alarm: var(--state-alarm_control_panel-triggered-color, #d50000);
+    --hw-ok: var(--hauswacht-disarmed-color, #2e7d32);
+    --hw-armed: var(--hauswacht-armed-color, #b71c1c);
+    --hw-wait: var(--hauswacht-pending-color, #e65100);
+    --hw-alarm: var(--hauswacht-alarm-color, #d50000);
     --hw-off: var(--disabled-color, #9e9e9e);
   }
   ha-card { overflow: hidden; }
