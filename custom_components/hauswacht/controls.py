@@ -225,7 +225,7 @@ class ControlManager:
     ) -> str:
         """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort."""
         if identity is not None:
-            actor = users_label(identity.users)
+            actor = users_label(identity.users, self.runtime.lang)
         changed_by = f"{actor} ({control.name})" if actor else control.name
         if action is Action.DISARM:
             targets = [a for a in self._areas(control) if not a.is_disarmed]
@@ -358,7 +358,7 @@ class ControlManager:
         if identity is None:
             return "rejected"
         result = self._execute(reader, action, reader.profile, identity)
-        self._confirm(reader, action, result, users_label(identity.users))
+        self._confirm(reader, action, result, users_label(identity.users, self.runtime.lang))
         return result
 
     def _confirm(self, control: Control, action: Action, result: str, who: str) -> None:

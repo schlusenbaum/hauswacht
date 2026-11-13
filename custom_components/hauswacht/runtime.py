@@ -717,7 +717,7 @@ class HauswachtRuntime:
         identity = await self.async_identify(code, action)
         if not identity.duress:
             self.check_allowed(identity.users, action)
-        return users_label(identity.users)
+        return users_label(identity.users, self.lang)
 
     def check_allowed(self, users: tuple[User, ...], action: Action) -> None:
         """Darf mindestens einer dieser Benutzer die Aktion in diesem Bereich?"""
@@ -725,7 +725,7 @@ class HauswachtRuntime:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="action_not_allowed",
-                translation_placeholders={"user": users_label(users)},
+                translation_placeholders={"user": users_label(users, self.lang)},
             )
 
     async def async_identify(self, code: str | None, action: Action) -> Identity:
@@ -750,7 +750,7 @@ class HauswachtRuntime:
         match = await self.hass.async_add_executor_job(match_pin, code, self.users, timestamp)
         if match.duress:
             self.main._code_guard = register_success(self.main._code_guard)
-            self._send_duress_alert(users_label(match.duress), action)
+            self._send_duress_alert(users_label(match.duress, self.lang), action)
             return Identity(kind="pin", users=match.duress, duress=True)
         if match.users:
             self.main._code_guard = register_success(self.main._code_guard)
@@ -759,7 +759,7 @@ class HauswachtRuntime:
         if blocked:
             self.notifier.send_system(
                 tr(self.lang, "blocked_credential_title"),
-                tr(self.lang, "blocked_credential", who=users_label(blocked)),
+                tr(self.lang, "blocked_credential", who=users_label(blocked, self.lang)),
             )
         if looks_like_card(code) and not blocked:
             # Unbekannte Karte (z. B. zum Anlernen): kann kein PIN sein und ist nicht zu erraten,

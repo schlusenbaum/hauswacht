@@ -233,3 +233,9 @@ def test_card_needs_pin_per_account() -> None:
 def test_card_pin_parsed() -> None:
     users = parse_users({"users": {"t": {"name": "Tablet", "card_pin": True}, "a": {"name": "A"}}})
     assert {u.name: u.card_pin for u in users} == {"Tablet": True, "A": False}
+
+
+def test_label_in_english() -> None:
+    users = (User("c", "Christian"), User("p", "Petra"))
+    assert label(users, "en") == "shared PIN (Christian, Petra)"
+    assert label(users[:1], "en") == "Christian"
