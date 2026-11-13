@@ -6,7 +6,7 @@
 
 ## Welche Sirenen gehen?
 
-Jede Home-Assistant-Entität der Domain `siren` – Innen- und Außensirenen genauso wie
+Jede Home-Assistant-Entität der Domain `siren` (Schalter über einen [Assistenten](#sirene-aus-schalter-erstellen)) – Innen- und Außensirenen genauso wie
 Rauchwarnmelder mit Sirene. Hauswacht liest vor jedem Alarm, was eine Sirene kann
 (`supported_features`, `available_tones`), und sendet nur das:
 
@@ -20,6 +20,8 @@ Rauchwarnmelder mit Sirene. Hauswacht liest vor jedem Alarm, was eine Sirene kan
 | Weder Dauer noch Ausschalten | Sirene wird nicht verwendet – Hauswacht könnte sie nicht beenden |
 | Höchstdauer (`number.<sirene>_max_duration`, Zigbee2MQTT) | Dauer wird darauf begrenzt; fehlt sie, gelten 240 Sekunden |
 | Brandsensor am selben Gerät | Gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt immer |
+| Eigene Tonnamen (z. B. Homematic IP Alarmsirene HmIP-ASIR) | erst nach Wahl des Tons ([Ton je Sirene](#ton-je-sirene)) |
+| Nur als Schalter (`switch.…`) vorhanden | über den [Assistenten](#sirene-aus-schalter-erstellen) oder als [Experten-Funktion](#experten-schalter-direkt-als-sirene) |
 
 **Erprobt** ist der Rauchwarnmelder **Develco/frient SMSZB-120** („Smoke detector with siren“)
 über Zigbee2MQTT – auch mit echtem [Sirenentest](#sirenentest). Andere Modelle erst mit Testmodus
@@ -44,6 +46,49 @@ Beenden des Alarms – schaltet Hauswacht die Sirenen aus, die es selbst eingesc
 für Sirenen wichtig, die nur Ein und Aus kennen. Sirenen mit eigener Laufzeit (z. B. Rauchmelder
 mit Höchstdauer) bekommen die Dauer zusätzlich mitgeschickt, höchstens aber die Höchstdauer
 des Geräts. Diese Höchstdauer wird nur gelesen, nie verändert.
+
+## Ton je Sirene
+
+Normalerweise wählt Hauswacht selbst einen Einbruchton (`burglar`, `emergency` …). Manche
+Sirenen nennen ihre Töne anders – findet Hauswacht keinen bekannten Einbruchton, bleibt die
+Sirene aus Sicherheitsgründen aus (Grund „kein Einbruchton“), und die
+[Übersicht](uebersicht.md#prüfhinweise) meldet das als wichtigen Prüfhinweis.
+
+**Alarmgeber – Sirenen → Ton je Sirene** → Sirene wählen → einen der Töne wählen, die das Gerät
+selbst meldet. Der Ton gilt bei Alarm und beim Sirenentest. Brandtöne (mit „fire“, „smoke“ oder
+„Brand“ im Namen) sind nie erlaubt. Danach einen kurzen, leisen [Sirenentest](#sirenentest)
+machen.
+
+**Beispiel Homematic IP Alarmsirene (HmIP-ASIR, HmIP-ASIR-2, HmIP-ASIR-O)** über die Integration
+Homematic(IP) Local: Die Sirene erscheint als `siren.…` und bleibt stumm, wenn sie nicht Ton
+**und** Dauer bekommt. Als Ton z. B. `FREQUENCY_RISING_AND_FALLING` wählen; die Dauer schickt
+Hauswacht automatisch mit (Alarmdauer des Profils).
+
+## Sirene aus Schalter erstellen
+
+Manche Sirenen erscheinen in Home Assistant nur als Schalter (`switch.…`). Home Assistant kann
+daraus selbst eine Sirene machen – der Helfer **„Gerätetyp eines Schalters ändern“**. Hauswacht
+hat dafür einen Assistenten:
+
+**Alarmgeber – Sirenen → Sirene aus Schalter erstellen** → Schalter wählen → bestätigen, dass es
+eine reine Alarmsirene ist.
+
+- Der Assistent legt den Helfer an und trägt die neue Sirene gleich ein. Der Schalter wird dabei
+  **nicht** geschaltet; Home Assistant blendet ihn aus und zeigt die Sirene.
+- Die neue Sirene kennt nur ein und aus: Hauswacht schaltet sie bei Alarm ein und nach der
+  Alarmdauer wieder aus. Freigabe, Brandsperre, Testmodus und Sirenentest gelten wie immer.
+- Rückgängig: den Helfer unter Einstellungen → Geräte & Dienste → Helfer löschen.
+
+> Bei einem Schalter weiß Hauswacht nicht, was das Gerät beim Einschalten tut. Nur echte
+> Alarmsirenen so einbinden – nie Rauchmelder oder andere Geräte.
+
+### Experten: Schalter direkt als Sirene
+
+Wer keinen Helfer möchte: **Sirenen und Freigabe → „Experten: Schalter direkt als Sirene
+zulassen“** einschalten. Danach lassen sich in derselben Liste auch Schalter auswählen. Hauswacht
+schaltet sie genauso wie eine einfache Sirene (`switch.turn_on` bei Alarm, `switch.turn_off`
+nach der Alarmdauer), mit denselben Sperren. Wird die Experten-Funktion wieder ausgeschaltet,
+fallen die Schalter aus der Liste.
 
 ## Sirenentest
 

@@ -63,6 +63,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 |---|---|
 | Profil ohne Sirene **und** ohne Empfänger – ein Alarm erreicht niemanden | ⚠️ wichtig |
 | Bedrohungs-PIN eingerichtet, aber keine Empfänger | ⚠️ wichtig |
+| Sirene kennt keinen Einbruchton – bliebe stumm ([Ton je Sirene](sirenen.md#ton-je-sirene)) | ⚠️ wichtig |
 | Melder **seit mehr als 24 Stunden** nicht verfügbar | ⚠️ wichtig |
 | Testmodus an | ⚠️ |
 | Profil ohne Meldergruppen und ohne Auslöseregeln | ⚠️ |

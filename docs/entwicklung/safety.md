@@ -29,6 +29,12 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 
 - `siren_executor.py` ist die einzige Datei, die Sirenen-Dienste aufruft; ein statischer Test
   prüft das per Syntaxbaum.
+- Ab 0.40 können Experten Schalter als Sirene eintragen. Auch `switch.turn_on`/`turn_off` ruft
+  ausschließlich der Executor auf – nach demselben Guard (statischer Test). Ein Schalter gilt
+  als Sirene ohne Ton, Lautstärke und Dauer.
+- Der Assistent „Sirene aus Schalter erstellen“ legt nur einen Helfer `switch_as_x` an und
+  schaltet nichts; der Helfer-Assistent für Melder legt nur `threshold`-Helfer an (statischer
+  Test).
 - Brand-Indikatoren einer registrierten Sirene werden über das Gerät erkannt: Binärsensoren mit
   Geräteklasse Rauch, Gas, CO oder Hitze sowie Testknopf-Sensoren (`…_test`). Deaktivierte
   Indikatoren zählen als „unklar“.

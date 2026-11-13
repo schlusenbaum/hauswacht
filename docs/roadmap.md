@@ -23,6 +23,7 @@
 | 0.36 | Heimkehr-Bericht zum Herunterladen (Markdown und CSV) |
 | 0.37 | Visueller Editor für alle Karten; Alarmkarte anpassbar (Profile, Größe, Anzeigen, Farben, Rückfragen) |
 | 0.38–0.39 | Benachrichtigungen, Push-Knöpfe, Berichte und Platzhalter auf Englisch (folgen der Sprache von Home Assistant) |
+| 0.40 | Ton je Sirene (z. B. HmIP-ASIR), Assistent „Sirene aus Schalter erstellen“, Schalter als Sirene für Experten |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -39,8 +40,8 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 ## Grundsätze
 
-- **Hauswacht schaltet keine Geräte** – außer Sirenen (nach Freigabe) und den Zustandsanzeigen
-  eingerichteter Keypads.
+- **Hauswacht schaltet keine Geräte** – außer Sirenen (nach Freigabe; für Experten auch als
+  Sirene eingetragene Schalter) und den Zustandsanzeigen eingerichteter Keypads.
 - **Brandalarm hat Vorrang**, Testmodus sperrt Sirenen technisch, nach einem Neustart unscharf.
 - **PIN optional**, Sprachassistenten nur mit PIN. Freigabe für Alexa & Co. über die normale
   Entitätsfreigabe von Home Assistant.

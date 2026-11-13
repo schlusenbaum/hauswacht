@@ -17,7 +17,7 @@ from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import EVENT_HAUSWACHT, OPT_SIRENS, OPT_SIRENS_HARDWARE_ENABLED
+from .const import EVENT_HAUSWACHT, OPT_SIREN_TONES, OPT_SIRENS, OPT_SIRENS_HARDWARE_ENABLED
 from .core.reactions import FIRE_DEVICE_CLASSES, fire_state, is_fire_indicator, parse_max_duration
 from .core.siren_guard import (
     ActivateRequest,
@@ -35,6 +35,11 @@ from .core.siren_guard import (
 _LOGGER = logging.getLogger(__name__)
 
 SIREN_DOMAIN = "siren"
+SWITCH_DOMAIN = "switch"
+# Ein Schalter kann nur ein und aus: kein Ton, keine Lautstärke, keine eigene Laufzeit
+SWITCH_CAPABILITIES = SirenCapabilities(
+    tones_supported=False, tones=None, volume=False, duration=False, turn_off=True
+)
 DEFAULT_MAX_DURATION = 240  # s, falls das Gerät keine Höchstdauer meldet
 MAX_DURATION_SUFFIX = "_max_duration"
 # Abstand der Wiederholversuche, wenn die Brandsperre das Ausschalten verhindert hat
@@ -59,6 +64,10 @@ class SirenExecutor:
             dict.fromkeys(s for s in options.get(OPT_SIRENS, []) if isinstance(s, str))
         )
         self.hardware_enabled = bool(options.get(OPT_SIRENS_HARDWARE_ENABLED, False))
+        tones = options.get(OPT_SIREN_TONES, {})
+        self.tones: dict[str, str] = (
+            {str(k): str(v) for k, v in tones.items() if v} if isinstance(tones, Mapping) else {}
+        )
         self.activated: set[str] = set()
         # Eigene Sirenen, deren Ausschalten die Brandsperre verhindert hat
         self.pending_stop: set[str] = set()
@@ -97,6 +106,7 @@ class SirenExecutor:
                 max_duration=parse_max_duration(max_state, DEFAULT_MAX_DURATION),
                 capabilities=self.capabilities(siren),
                 fire_detector=bool(indicators),
+                tone=self.tones.get(siren),
             )
         return devices
 
@@ -106,6 +116,9 @@ class SirenExecutor:
         Ist die Sirene gerade nicht verfügbar, gelten die Standardwerte; ein Befehl an eine
         nicht verfügbare Sirene schlägt ohnehin fehl.
         """
+        if entity_id.startswith(f"{SWITCH_DOMAIN}."):
+            # Experten: Schalter als Sirene – nur ein und aus, Hauswacht schaltet selbst ab
+            return SWITCH_CAPABILITIES
         state = self.hass.states.get(entity_id)
         if state is None or "supported_features" not in state.attributes:
             return SirenCapabilities()
@@ -227,11 +240,22 @@ class SirenExecutor:
             data.update({k: v for k, v in optional.items() if v is not None})
         _LOGGER.warning("Sirenenbefehl %s an %s", command.action, command.entity_id)
 
+        # Experten: Schalter als Sirene – nur switch.turn_on / switch.turn_off, ohne Daten
+        is_switch = command.entity_id.startswith(f"{SWITCH_DOMAIN}.")
+
         async def _call() -> None:
             try:
-                await self.hass.services.async_call(
-                    SIREN_DOMAIN, command.action, data, blocking=True
-                )
+                if is_switch:
+                    await self.hass.services.async_call(
+                        SWITCH_DOMAIN,
+                        command.action,
+                        {"entity_id": command.entity_id},
+                        blocking=True,
+                    )
+                else:
+                    await self.hass.services.async_call(
+                        SIREN_DOMAIN, command.action, data, blocking=True
+                    )
             except Exception:
                 _LOGGER.exception("Sirenenbefehl an %s fehlgeschlagen", command.entity_id)
 

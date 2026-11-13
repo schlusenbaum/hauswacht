@@ -619,11 +619,15 @@
       },
       "siren_settings": {
         "title": "Alarm devices – sirens",
-        "description": "Register the sirens Hauswacht may use for intrusion alarms. Fire safety: Hauswacht never switches a siren on or off while any smoke detector reports fire, or while the fire state of a registered siren is unknown. Siren control stays LOCKED until you enable it here and confirm.",
+        "description": "Register the sirens Hauswacht may use for intrusion alarms. Fire safety: Hauswacht never switches a siren on or off while any smoke detector reports fire, or while the fire state of a registered siren is unknown. Siren control stays LOCKED until you enable it here and confirm.\n\nA siren that only appears as a switch in Home Assistant is easiest turned into a siren with the wizard “Create siren from switch”.",
         "data": {
           "sirens": "Sirens",
           "sirens_hardware_enabled": "Allow real siren control",
-          "confirm_hardware": "I confirm: real sirens may sound during an alarm"
+          "confirm_hardware": "I confirm: real sirens may sound during an alarm",
+          "sirens_allow_switch": "Experts: allow switches directly as sirens"
+        },
+        "data_description": {
+          "sirens_allow_switch": "Only needed if you don't want to use the wizard “Create siren from switch”. Hauswacht turns such a switch on in an alarm and off again after the alarm duration – with release, fire lock and test mode like any siren. But Hauswacht cannot know what the device does when switched on: only select pure alarm sirens, never smoke detectors or other devices."
         }
       },
       "sirens": {
@@ -631,6 +635,8 @@
         "description": "{saved}Choose and enable sirens, test sirens.",
         "menu_options": {
           "siren_settings": "Sirens and enabling",
+          "siren_from_switch": "Create siren from switch (wizard)",
+          "siren_tones": "Tone per siren",
           "siren_test": "Siren test (real siren!)",
           "siren_test_settings": "Siren test – reminder and pre-warning",
           "init": "← Back"
@@ -755,6 +761,28 @@
         "data_description": {
           "login": "**Card and PIN:** after the card, confirm the same user by PIN at a keypad in the same area within 30 s."
         }
+      },
+      "siren_from_switch": {
+        "title": "Create siren from switch",
+        "description": "Some sirens only appear as a switch (`switch.…`) in Home Assistant. The wizard creates the Home Assistant helper **“Change device type of a switch”** with type **Siren** and adds the new siren to Hauswacht right away. The switch is not switched; Home Assistant hides it and shows the siren instead. To undo: delete the helper under Settings → Devices & services → Helpers.\n\nOnly pick real alarm sirens – with a switch Hauswacht cannot tell what the device does when switched on.",
+        "data": {
+          "switch": "Switch of the siren",
+          "confirm": "I confirm: this is a pure alarm siren, not a smoke detector"
+        }
+      },
+      "siren_tones": {
+        "title": "Tone per siren",
+        "description": "Normally Hauswacht picks a burglar tone itself (burglar, emergency …). Some sirens have their own tone names – e.g. the Homematic IP alarm siren (HmIP-ASIR): `FREQUENCY_RISING_AND_FALLING`. Set the tone here for such sirens. Which siren?",
+        "data": {
+          "siren": "Siren"
+        }
+      },
+      "siren_tone_edit": {
+        "title": "Tone for {siren}",
+        "description": "Tones reported by this siren: {tones}\n\nThe chosen tone is used in an alarm and in the siren test. Fire tones (with “fire”, “smoke” or “Brand” in the name) are never allowed. Afterwards, best run a short, quiet siren test.",
+        "data": {
+          "tone": "Tone"
+        }
       }
     },
     "error": {
@@ -794,7 +822,9 @@
       "control_device": "Please choose the reader device.",
       "control_profile_area": "The alarm profile belongs to a different area than the control device.",
       "card_expired": "The new card {conflict} was read too long ago and may no longer be learned. Please hold it to the keypad or reader again.",
-      "tag_random": "{conflict} is a random ID (e.g. from a phone). It changes on every read and cannot be used as a credential – please remove it."
+      "tag_random": "{conflict} is a random ID (e.g. from a phone). It changes on every read and cannot be used as a credential – please remove it.",
+      "siren_switch_confirm": "Please confirm that this is a pure alarm siren.",
+      "siren_tone_fire": "A fire tone is not allowed for burglar alarms."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

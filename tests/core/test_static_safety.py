@@ -26,6 +26,8 @@ FORBIDDEN_SNIPPETS = {
 
 # Einzige Dienste, die Hauswacht aufrufen darf: Sirenen (nur im Executor) und Benachrichtigungen.
 ALLOWED_SERVICE_DOMAINS = {"siren", "SIREN_DOMAIN", "notify", "NOTIFY_DOMAIN"}
+# Experten-Funktion "Schalter als Sirene": switch-Dienste ausschließlich im Siren Executor
+EXECUTOR_ONLY_DOMAINS = {"SWITCH_DOMAIN"}
 
 
 def test_sources_exist() -> None:
@@ -127,12 +129,26 @@ def test_only_siren_and_notify_services(path: Path) -> None:
     """Hauswacht ruft keine anderen Dienste auf – also schaltet und schreibt es keine Geräte
     (z. B. keine number-Dienste, die die Höchstdauer der Rauchmelder ändern könnten)."""
     calls = _service_call_domains(ast.parse(path.read_text(encoding="utf-8")))
-    bad = [(line, domain) for line, domain in calls if domain not in ALLOWED_SERVICE_DOMAINS]
+    allowed = ALLOWED_SERVICE_DOMAINS | (
+        EXECUTOR_ONLY_DOMAINS if path.name == "siren_executor.py" else set()
+    )
+    bad = [(line, domain) for line, domain in calls if domain not in allowed]
     assert not bad, f"{path.name}: unerlaubte Dienstaufrufe {bad}"
 
 
-def test_only_threshold_helpers_are_created() -> None:
-    """Der Helfer-Assistent legt ausschließlich Schwellenwert-Helfer an."""
+def test_switch_services_only_from_guarded_executor() -> None:
+    """Schalter werden nur über den Executor geschaltet – also nur nach dem Guard."""
+    text = (SOURCE_ROOT / "siren_executor.py").read_text(encoding="utf-8")
+    assert 'SWITCH_DOMAIN = "switch"' in text
+    for path in SOURCES:
+        if path.name != "siren_executor.py":
+            source = path.read_text(encoding="utf-8")
+            assert "SWITCH_DOMAIN" not in source, path.name
+            assert "switch.turn_" not in source, path.name
+
+
+def test_only_threshold_and_switch_as_x_helpers_are_created() -> None:
+    """Die Assistenten legen ausschließlich Schwellenwert-Helfer bzw. "Schalter als Sirene" an."""
     text = (SOURCE_ROOT / "config_flow.py").read_text(encoding="utf-8")
     tree = ast.parse(text)
     inits = [
@@ -142,11 +158,11 @@ def test_only_threshold_helpers_are_created() -> None:
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "async_init"
     ]
-    assert len(inits) == 1
-    first = inits[0].args[0]
-    assert isinstance(first, ast.Name)
-    assert first.id == "THRESHOLD_DOMAIN"
+    domains = sorted(i.args[0].id for i in inits if isinstance(i.args[0], ast.Name))
+    assert len(inits) == len(domains) == 2
+    assert domains == ["SWITCH_AS_X_DOMAIN", "THRESHOLD_DOMAIN"]
     assert 'THRESHOLD_DOMAIN = "threshold"' in text
+    assert 'SWITCH_AS_X_DOMAIN = "switch_as_x"' in text
 
 
 def test_controls_only_send_keypad_state() -> None:

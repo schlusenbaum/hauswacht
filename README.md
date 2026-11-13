@@ -11,7 +11,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.39.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.40.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -139,8 +139,8 @@ Alles auf einen Blick: [docs/](docs/README.md).
   der Installation aus.
 - **Nach einem Neustart unscharf** – ein früherer Alarm wird nie unkontrolliert wieder
   aufgenommen.
-- **Hauswacht schaltet keine Geräte** außer Sirenen und der Anzeige eingerichteter Keypads – ein
-  Test stellt das sicher.
+- **Hauswacht schaltet keine Geräte** außer Sirenen (auch als Sirene eingetragene Schalter) und
+  der Anzeige eingerichteter Keypads – ein Test stellt das sicher.
 
 Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 

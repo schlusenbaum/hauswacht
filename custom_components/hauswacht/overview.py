@@ -34,6 +34,7 @@ from .core.profiles import profile_behaviour, profile_info, profile_settings, st
 from .core.reactions import parse_reaction
 from .core.rules import build_engine, describe_rule, profile_rule_ids
 from .core.sensor_types import excluded_sensors, normalize
+from .core.siren_guard import FireIndicator, SirenDevice, select_tone
 from .core.speech import parse_speech
 from .core.users import Action
 from .names import display_name, plain_name
@@ -246,6 +247,17 @@ def _sirens(main: HauswachtRuntime) -> list[dict[str, Any]]:
         caps = main.sirens.capabilities(siren)
         record = records.get(siren)
         state = hass.states.get(siren)
+        tone = main.sirens.tones.get(siren)
+        # Würde die Sirene bei einem Einbruch überhaupt einen erlaubten Ton bekommen?
+        probe = SirenDevice(
+            key=siren,
+            entity_id=siren,
+            fire_state=FireIndicator.CLEAR,
+            max_duration=1,
+            capabilities=caps,
+            tone=tone,
+        )
+        burglar_tone, _ = select_tone("burglar", probe)
         rows.append(
             {
                 "entity_id": siren,
@@ -256,6 +268,9 @@ def _sirens(main: HauswachtRuntime) -> list[dict[str, Any]]:
                 "volume": caps.volume,
                 "duration": caps.duration,
                 "turn_off": caps.turn_off,
+                "tone": tone,
+                "burglar_tone": burglar_tone,
+                "switch": siren.startswith("switch."),
                 "last_test": record.at.isoformat() if record else None,
                 "heard": record.heard if record else None,
             }

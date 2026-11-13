@@ -619,11 +619,15 @@
       },
       "siren_settings": {
         "title": "Alarmgeber – Sirenen",
-        "description": "Hier legst du fest, welche Sirenen Hauswacht für Einbruchalarme verwenden darf. Brandschutz: Hauswacht schaltet niemals eine Sirene ein oder aus, solange irgendein Rauchmelder Brand meldet oder der Brandzustand einer registrierten Sirene unklar ist. Die Ansteuerung bleibt GESPERRT, bis du sie hier freigibst und bestätigst.",
+        "description": "Hier legst du fest, welche Sirenen Hauswacht für Einbruchalarme verwenden darf. Brandschutz: Hauswacht schaltet niemals eine Sirene ein oder aus, solange irgendein Rauchmelder Brand meldet oder der Brandzustand einer registrierten Sirene unklar ist. Die Ansteuerung bleibt GESPERRT, bis du sie hier freigibst und bestätigst.\n\nEine Sirene, die nur als Schalter in Home Assistant erscheint, machst du am einfachsten mit dem Assistenten „Sirene aus Schalter erstellen“ zur Sirene.",
         "data": {
           "sirens": "Sirenen",
           "sirens_hardware_enabled": "Echte Sirenenansteuerung erlauben",
-          "confirm_hardware": "Ich bestätige: Bei einem Alarm dürfen echte Sirenen ertönen"
+          "confirm_hardware": "Ich bestätige: Bei einem Alarm dürfen echte Sirenen ertönen",
+          "sirens_allow_switch": "Experten: Schalter direkt als Sirene zulassen"
+        },
+        "data_description": {
+          "sirens_allow_switch": "Nur nötig, wenn du den Assistenten „Sirene aus Schalter erstellen“ nicht nutzen möchtest. Hauswacht schaltet einen solchen Schalter bei Alarm ein und nach der Alarmdauer wieder aus – mit Freigabe, Brandsperre und Testmodus wie bei jeder Sirene. Hauswacht weiß aber nicht, was das Gerät beim Einschalten tut: Nur reine Alarmsirenen auswählen, nie Rauchmelder oder andere Geräte."
         }
       },
       "sirens": {
@@ -631,6 +635,8 @@
         "description": "{saved}Sirenen auswählen und freigeben, Sirenen prüfen.",
         "menu_options": {
           "siren_settings": "Sirenen und Freigabe",
+          "siren_from_switch": "Sirene aus Schalter erstellen (Assistent)",
+          "siren_tones": "Ton je Sirene",
           "siren_test": "Sirenentest (echte Sirene!)",
           "siren_test_settings": "Sirenentest – Erinnerung und Vorwarnung",
           "init": "← Zurück"
@@ -755,6 +761,28 @@
         "data_description": {
           "login": "**Karte und PIN:** Nach der Karte innerhalb von 30 s denselben Benutzer per PIN an einem Keypad im selben Bereich bestätigen."
         }
+      },
+      "siren_from_switch": {
+        "title": "Sirene aus Schalter erstellen",
+        "description": "Manche Sirenen erscheinen in Home Assistant nur als Schalter (`switch.…`). Der Assistent legt dafür den Home-Assistant-Helfer **„Gerätetyp eines Schalters ändern“** mit Typ **Sirene** an und trägt die neue Sirene gleich bei Hauswacht ein. Der Schalter wird dabei nicht geschaltet; Home Assistant blendet ihn aus und zeigt stattdessen die Sirene. Rückgängig: den Helfer unter Einstellungen → Geräte & Dienste → Helfer löschen.\n\nNur echte Alarmsirenen wählen – Hauswacht kann bei einem Schalter nicht erkennen, was das Gerät beim Einschalten tut.",
+        "data": {
+          "switch": "Schalter der Sirene",
+          "confirm": "Ich bestätige: Das ist eine reine Alarmsirene, kein Rauchmelder"
+        }
+      },
+      "siren_tones": {
+        "title": "Ton je Sirene",
+        "description": "Normalerweise wählt Hauswacht selbst einen Einbruchton (burglar, emergency …). Manche Sirenen haben eigene Tonnamen – z. B. die Homematic IP Alarmsirene (HmIP-ASIR): `FREQUENCY_RISING_AND_FALLING`. Für solche Sirenen hier den Ton festlegen. Welche Sirene?",
+        "data": {
+          "siren": "Sirene"
+        }
+      },
+      "siren_tone_edit": {
+        "title": "Ton für {siren}",
+        "description": "Töne, die diese Sirene meldet: {tones}\n\nDer gewählte Ton gilt bei Alarm und beim Sirenentest. Brandtöne (mit „fire“, „smoke“ oder „Brand“ im Namen) sind nie erlaubt. Danach am besten einen kurzen, leisen Sirenentest machen.",
+        "data": {
+          "tone": "Ton"
+        }
       }
     },
     "error": {
@@ -794,7 +822,9 @@
       "control_device": "Bitte das Lesegerät wählen.",
       "control_profile_area": "Das Alarmprofil gehört zu einem anderen Bereich als das Bedienteil.",
       "card_expired": "Die neue Karte {conflict} wurde vor zu langer Zeit gelesen und ist nicht mehr zum Anlernen freigegeben. Bitte erneut an das Keypad bzw. den Leser halten.",
-      "tag_random": "{conflict} ist eine Zufallsnummer (z. B. von einem Handy). Sie ändert sich bei jedem Lesen und taugt nicht als Ausweis – bitte entfernen."
+      "tag_random": "{conflict} ist eine Zufallsnummer (z. B. von einem Handy). Sie ändert sich bei jedem Lesen und taugt nicht als Ausweis – bitte entfernen.",
+      "siren_switch_confirm": "Bitte bestätigen, dass es eine reine Alarmsirene ist.",
+      "siren_tone_fire": "Ein Brandton ist für Einbruchalarme nicht erlaubt."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
