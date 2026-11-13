@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-11-13
+
+### Hinzugefügt
+- **Ton je Sirene:** Für Sirenen mit eigenen Tonnamen – z. B. die Homematic IP Alarmsirene
+  (HmIP-ASIR) mit `FREQUENCY_RISING_AND_FALLING` – lässt sich der Ton festlegen (Alarmgeber –
+  Sirenen → Ton je Sirene). Auswahl aus den Tönen, die das Gerät meldet; Brandtöne bleiben
+  gesperrt. Gilt bei Alarm und Sirenentest.
+- **Assistent „Sirene aus Schalter erstellen“:** macht aus einem Schalter (`switch.…`) über den
+  Home-Assistant-Helfer „Gerätetyp eines Schalters ändern“ eine Sirene und trägt sie gleich ein.
+- **Experten: Schalter direkt als Sirene** (Sirenen und Freigabe): Hauswacht schaltet den
+  Schalter bei Alarm ein und nach der Alarmdauer aus – mit Freigabe, Brandsperre und Testmodus.
+- **Prüfhinweis** (wichtig, auch unter Reparaturen): Sirene kennt keinen Einbruchton und bliebe
+  bei einem Alarm stumm.
+
+### Geändert
+- Brandtöne werden auch an herstellereigenen Namen erkannt („fire“, „smoke“, „Brand“).
+
 ## [0.39.0] - 2026-11-13
 
 ### Hinzugefügt

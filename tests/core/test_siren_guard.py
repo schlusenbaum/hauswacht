@@ -318,3 +318,58 @@ def test_capabilities_never_bypass_fire_lock(fire: FireIndicator) -> None:
     plain = caps(tones_supported=False, volume=False)
     decision = decide_activation(ctx(device("s", fire, capabilities=plain)), ONE)
     assert reasons(decision) == {BlockReason.FIRE_LOCK}
+
+
+# --- 0.40: Ton je Sirene (z. B. HmIP-ASIR) und Schalter als Sirene ----------------------
+
+ASIR_TONES = frozenset(
+    {"FREQUENCY_RISING", "FREQUENCY_RISING_AND_FALLING", "LOW_BATTERY", "DISARMED"}
+)
+
+
+def _one(dev: SirenDevice) -> GuardDecision:
+    return decide_activation(ctx(dev), ActivateRequest(("x",), "burglar", "high", 180))
+
+
+def test_siren_with_own_tone_names_stays_blocked_without_setting() -> None:
+    dev = device("x", capabilities=SirenCapabilities(tones=ASIR_TONES))
+    assert reasons(_one(dev)) == {BlockReason.NO_BURGLAR_TONE}
+
+
+def test_configured_tone_is_used() -> None:
+    dev = device(
+        "x",
+        capabilities=SirenCapabilities(tones=ASIR_TONES),
+        tone="FREQUENCY_RISING_AND_FALLING",
+    )
+    decision = _one(dev)
+    assert decision.commands[0].tone == "FREQUENCY_RISING_AND_FALLING"
+    assert decision.commands[0].duration == 180
+
+
+@pytest.mark.parametrize("tone", ["fire", "FIRE_ALARM", "Brandalarm", "smoke_alarm"])
+def test_configured_fire_tone_is_never_used(tone: str) -> None:
+    dev = device("x", capabilities=SirenCapabilities(tones=frozenset({tone})), tone=tone)
+    assert _one(dev).commands == ()
+
+
+def test_configured_tone_unknown_to_device_falls_back() -> None:
+    caps = SirenCapabilities(tones=frozenset({"burglar"}))
+    dev = device("x", capabilities=caps, tone="FREQUENCY_RISING")
+    assert _one(dev).commands[0].tone == "burglar"
+
+
+def test_switch_like_device_only_turns_on_and_off() -> None:
+    caps = SirenCapabilities(
+        tones_supported=False, tones=None, volume=False, duration=False, turn_off=True
+    )
+    decision = _one(device("x", capabilities=caps))
+    command = decision.commands[0]
+    assert (command.tone, command.volume_level, command.duration) == (None, None, None)
+    stop = decide_stop(ctx(device("x", capabilities=caps), activated=frozenset({"x"})))
+    assert [c.action for c in stop.commands] == ["turn_off"]
+    # Brandsperre gilt auch für Schalter
+    burning = ctx(device("x", capabilities=caps), device("rm", FireIndicator.ACTIVE))
+    assert (
+        decide_activation(burning, ActivateRequest(("x",), "burglar", "high", 180)).commands == ()
+    )

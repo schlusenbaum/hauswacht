@@ -73,7 +73,9 @@ from .const import (
     OPT_REMINDER_PROFILE,
     OPT_SENSOR_TYPES,
     OPT_SIREN_TEST,
+    OPT_SIREN_TONES,
     OPT_SIRENS,
+    OPT_SIRENS_ALLOW_SWITCH,
     OPT_SIRENS_HARDWARE_ENABLED,
     OPT_SPEECH,
     OPT_STALE_AFTER_HOURS,
@@ -175,7 +177,7 @@ from .core.sensors import (
     slugify,
     zone_conflicts,
 )
-from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS
+from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS, is_fire_tone
 from .core.siren_test import DEFAULT_SECONDS as SIREN_DEFAULT_SECONDS
 from .core.siren_test import DEFAULT_TONE as SIREN_DEFAULT_TONE
 from .core.siren_test import DEFAULT_VOLUME as SIREN_DEFAULT_VOLUME
@@ -199,6 +201,9 @@ from .siren_test import SirenTester
 
 SENSOR_DOMAIN = "binary_sensor"
 THRESHOLD_DOMAIN = "threshold"
+# Home-Assistant-Helfer "Gerätetyp eines Schalters ändern" (Schalter → Sirene)
+SWITCH_AS_X_DOMAIN = "switch_as_x"
+AUTO_TONE = "_auto"  # Ton je Sirene: Standard-Einbruchton
 _LOGGER = logging.getLogger(__name__)
 TARGET_ALWAYS = "__always__"
 
@@ -278,6 +283,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._infos: list[str] = []
         self._type_fields: dict[str, str] = {}
         self._siren_queue: list[str] = []
+        self._siren_tone_target: str | None = None
         self._control_id: str | None = None
         self._control_kind: ControlKind = ControlKind.KEYPAD
         self._user_pending: tuple[str, dict[str, Any]] | None = None
@@ -1594,39 +1600,201 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Sirenen -----------------------------------------------------------
 
     async def async_step_sirens(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self._menu("sirens", ["siren_settings", "siren_test", "siren_test_settings", "init"])
+        return self._menu(
+            "sirens",
+            [
+                "siren_settings",
+                "siren_from_switch",
+                "siren_tones",
+                "siren_test",
+                "siren_test_settings",
+                "init",
+            ],
+        )
 
     async def async_step_siren_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         options = dict(self.config_entry.options)
         was_enabled = bool(options.get(OPT_SIRENS_HARDWARE_ENABLED, False))
+        allow_switch = bool(options.get(OPT_SIRENS_ALLOW_SWITCH, False))
         errors: dict[str, str] = {}
         if user_input is not None:
             enable = bool(user_input.get(OPT_SIRENS_HARDWARE_ENABLED, False))
+            want_switch = bool(user_input.get(OPT_SIRENS_ALLOW_SWITCH, False))
             if enable and not was_enabled and not user_input.get("confirm_hardware"):
                 errors["base"] = "confirm_hardware_required"
             else:
                 sirens = sorted(set(user_input.get(OPT_SIRENS) or []))
+                if not want_switch:
+                    # Experten-Funktion aus: Schalter fallen aus der Liste
+                    sirens = [s for s in sirens if not s.startswith("switch.")]
                 options[OPT_SIRENS] = sirens
                 options[OPT_SIRENS_HARDWARE_ENABLED] = enable
+                options[OPT_SIRENS_ALLOW_SWITCH] = want_switch
+                tones = {
+                    k: v for k, v in dict(options.get(OPT_SIREN_TONES, {})).items() if k in sirens
+                }
+                options[OPT_SIREN_TONES] = tones
                 # Aus Profilen entfernen, was nicht mehr registriert ist
                 profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
                 for settings in profiles.values():
                     if "sirens" in settings:
                         settings["sirens"] = [s for s in settings["sirens"] if s in sirens]
                 options[OPT_PROFILES] = profiles
+                if want_switch and not allow_switch:
+                    # Gerade eingeschaltet: Formular erneut zeigen, jetzt mit Schaltern
+                    self.hass.config_entries.async_update_entry(self.config_entry, options=options)
+                    return await self.async_step_siren_settings()
                 return await self._save(options, "sirens")
+        domains = [SIREN_ENTITY_DOMAIN, "switch"] if allow_switch else [SIREN_ENTITY_DOMAIN]
         schema = vol.Schema(
             {
                 vol.Optional(OPT_SIRENS, default=list(options.get(OPT_SIRENS, []))): EntitySelector(
-                    EntitySelectorConfig(domain=SIREN_ENTITY_DOMAIN, multiple=True)
+                    EntitySelectorConfig(domain=domains, multiple=True)
                 ),
                 vol.Required(OPT_SIRENS_HARDWARE_ENABLED, default=was_enabled): BooleanSelector(),
                 vol.Optional("confirm_hardware", default=False): BooleanSelector(),
+                vol.Optional(OPT_SIRENS_ALLOW_SWITCH, default=allow_switch): BooleanSelector(),
             }
         )
         return self.async_show_form(step_id="siren_settings", data_schema=schema, errors=errors)
+
+    async def async_step_siren_from_switch(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Assistent: aus einem Schalter über den Home-Assistant-Helfer "Gerätetyp eines
+        Schalters ändern" eine Sirene machen und gleich als Sirene eintragen. Legt nur einen
+        neuen Helfer an; der Schalter selbst wird nicht geschaltet."""
+        options = dict(self.config_entry.options)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if not user_input.get("confirm"):
+                errors["confirm"] = "siren_switch_confirm"
+            else:
+                entity_id = await self._create_switch_siren(str(user_input["switch"]))
+                if entity_id is None:
+                    errors["base"] = "helper_failed"
+                else:
+                    options[OPT_SIRENS] = sorted({*options.get(OPT_SIRENS, []), entity_id})
+                    created = "Angelegt" if self._german() else "Created"
+                    self._infos = [f"{created}: {entity_id}"]
+                    return await self._save(options, "sirens")
+        schema = vol.Schema(
+            {
+                vol.Required("switch"): EntitySelector(EntitySelectorConfig(domain="switch")),
+                vol.Optional("confirm", default=False): BooleanSelector(),
+            }
+        )
+        return self.async_show_form(step_id="siren_from_switch", data_schema=schema, errors=errors)
+
+    async def _create_switch_siren(self, switch: str) -> str | None:
+        """Helfer "Schalter als Sirene" anlegen; liefert die neue Sirenen-Entität."""
+        try:
+            flow = await self.hass.config_entries.flow.async_init(
+                SWITCH_AS_X_DOMAIN, context={"source": SOURCE_USER}
+            )
+            result = await self.hass.config_entries.flow.async_configure(
+                flow["flow_id"], {"entity_id": switch, "target_domain": SIREN_ENTITY_DOMAIN}
+            )
+        except Exception:
+            _LOGGER.exception("Helfer Schalter als Sirene konnte nicht angelegt werden")
+            return None
+        entry = result.get("result")
+        if result.get("type") != "create_entry" or entry is None:
+            return None
+        sirens = [
+            e.entity_id
+            for e in er.async_entries_for_config_entry(er.async_get(self.hass), entry.entry_id)
+            if e.domain == SIREN_ENTITY_DOMAIN
+        ]
+        return sirens[0] if sirens else None
+
+    async def async_step_siren_tones(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ton je Sirene: erst die Sirene wählen."""
+        options = dict(self.config_entry.options)
+        sirens = [s for s in options.get(OPT_SIRENS, []) if isinstance(s, str)]
+        if not sirens:
+            return self.async_abort(reason="no_sirens")
+        if user_input is not None:
+            self._siren_tone_target = str(user_input["siren"])
+            return await self.async_step_siren_tone_edit()
+        tones = dict(options.get(OPT_SIREN_TONES, {}))
+        auto = "automatisch" if self._german() else "automatic"
+        choices = [
+            SelectOptionDict(
+                value=s, label=f"{display_name(self.hass, s)} – {tones.get(s) or auto}"
+            )
+            for s in sirens
+        ]
+        return self.async_show_form(
+            step_id="siren_tones",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("siren"): SelectSelector(
+                        SelectSelectorConfig(options=choices, mode=SelectSelectorMode.LIST)
+                    )
+                }
+            ),
+        )
+
+    async def async_step_siren_tone_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ton je Sirene: aus den Tönen wählen, die das Gerät selbst meldet."""
+        options = dict(self.config_entry.options)
+        siren = self._siren_tone_target or ""
+        executor = self.config_entry.runtime_data.sirens if self._loaded() else None
+        caps = executor.capabilities(siren) if executor is not None else None
+        known = sorted(caps.tones) if caps is not None and caps.tones else []
+        usable = [t for t in known if not is_fire_tone(t)]
+        tones = dict(options.get(OPT_SIREN_TONES, {}))
+        if user_input is not None:
+            tone = str(user_input.get("tone") or "").strip()
+            if tone in ("", AUTO_TONE):
+                tones.pop(siren, None)
+            elif is_fire_tone(tone):
+                return self.async_show_form(
+                    step_id="siren_tone_edit",
+                    data_schema=self._siren_tone_schema(usable, tone),
+                    errors={"tone": "siren_tone_fire"},
+                    description_placeholders=self._siren_tone_placeholders(siren, caps, known),
+                )
+            else:
+                tones[siren] = tone
+            options[OPT_SIREN_TONES] = tones
+            return await self._save(options, "sirens")
+        return self.async_show_form(
+            step_id="siren_tone_edit",
+            data_schema=self._siren_tone_schema(usable, tones.get(siren, AUTO_TONE)),
+            description_placeholders=self._siren_tone_placeholders(siren, caps, known),
+        )
+
+    def _siren_tone_schema(self, usable: list[str], current: str) -> vol.Schema:
+        auto = (
+            "Automatisch (Standard-Einbruchton)" if self._german() else "Automatic (burglar tone)"
+        )
+        choices = [SelectOptionDict(value=AUTO_TONE, label=auto)] + [
+            SelectOptionDict(value=t, label=t) for t in usable
+        ]
+        return vol.Schema(
+            {
+                vol.Required("tone", default=current or AUTO_TONE): SelectSelector(
+                    SelectSelectorConfig(
+                        options=choices, mode=SelectSelectorMode.DROPDOWN, custom_value=True
+                    )
+                )
+            }
+        )
+
+    def _siren_tone_placeholders(self, siren: str, caps: Any, known: list[str]) -> dict[str, str]:
+        if caps is None or not caps.tones_supported:
+            known_text = "– (diese Sirene kennt keine Töne)" if self._german() else "– (no tones)"
+        else:
+            known_text = ", ".join(known) or "–"
+        return {"siren": display_name(self.hass, siren), "tones": known_text}
 
     # --- Sirenentest ---------------------------------------------------------
 

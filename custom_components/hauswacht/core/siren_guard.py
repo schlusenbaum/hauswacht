@@ -89,6 +89,8 @@ class SirenDevice:
     capabilities: SirenCapabilities = SirenCapabilities()
     # Gerät hat eigene Brand-Indikatoren (Rauchmelder mit Sirene)
     fire_detector: bool = False
+    # Fest eingestellter Ton für diese Sirene (z. B. HmIP-ASIR: "FREQUENCY_RISING_AND_FALLING")
+    tone: str | None = None
 
 
 @dataclass(frozen=True)
@@ -154,9 +156,24 @@ def _global_block(ctx: GuardContext) -> BlockReason | None:
     return None
 
 
+def is_fire_tone(tone: str) -> bool:
+    """Brandton? Auch bei herstellereigenen Namen ("FIRE_ALARM", "Brand")."""
+    name = tone.lower()
+    return tone in FIRE_TONES or "fire" in name or "brand" in name or "smoke" in name
+
+
 def select_tone(requested: str, device: SirenDevice) -> tuple[bool, str | None]:
     """Ton für ein Gerät: (erlaubt, Ton oder None = ohne Tonangabe senden)."""
     caps = device.capabilities
+    # Fest eingestellter Ton – sofern das Gerät ihn kennt (bzw. keine Liste meldet)
+    preferred = device.tone
+    if (
+        caps.tones_supported
+        and preferred
+        and not is_fire_tone(preferred)
+        and (not caps.tones or preferred in caps.tones)
+    ):
+        return (True, preferred)
     if not caps.tones_supported:
         # Ohne Tonauswahl spielt das Gerät seinen Standardton. Bei Rauchmeldern ist das
         # meist der Brandton – das darf ein Einbruchalarm nie auslösen.
@@ -164,7 +181,7 @@ def select_tone(requested: str, device: SirenDevice) -> tuple[bool, str | None]:
     if not caps.tones:
         return (True, requested)
     for tone in (requested, *BURGLAR_TONE_ORDER):
-        if tone in caps.tones and tone not in FIRE_TONES:
+        if tone in caps.tones and not is_fire_tone(tone):
             return (True, tone)
     return (False, None)
 

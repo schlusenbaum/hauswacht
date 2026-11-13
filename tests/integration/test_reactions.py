@@ -354,3 +354,149 @@ async def test_stop_blocked_by_fire_is_retried_after_fire(hass: HomeAssistant) -
     _later(hass, 183)
     await hass.async_block_till_done()
     assert len(mocks.off) == 1  # danach keine weiteren Versuche
+
+
+# --- 0.40: Ton je Sirene, Schalter als Sirene ----------------------------------------
+
+ASIR = "siren.alarmsirene"
+ASIR_TONES = ["DISARMED", "FREQUENCY_RISING", "FREQUENCY_RISING_AND_FALLING", "LOW_BATTERY"]
+
+
+def _asir(hass: HomeAssistant) -> None:
+    # TURN_ON | TURN_OFF | TONES | DURATION, Töne mit eigenen Namen (wie HmIP-ASIR)
+    hass.states.async_set(ASIR, "off", {"supported_features": 23, "available_tones": ASIR_TONES})
+
+
+async def test_siren_with_own_tones_needs_tone_setting(hass: HomeAssistant) -> None:
+    mocks = await _setup(
+        hass, sirens=[ASIR], sirens_hardware_enabled=True, night={"sirens": [ASIR]}
+    )
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    _asir(hass)
+    await _alarm(hass)
+    assert mocks.on == []
+    decision = next(e for e in events if e.data["type"] == "SirenDecision")
+    assert decision.data["blocked"] == {ASIR: "no_burglar_tone"}
+
+
+async def test_configured_tone_per_siren(hass: HomeAssistant) -> None:
+    mocks = await _setup(
+        hass,
+        sirens=[ASIR],
+        sirens_hardware_enabled=True,
+        siren_tones={ASIR: "FREQUENCY_RISING_AND_FALLING"},
+        night={"sirens": [ASIR]},
+    )
+    _asir(hass)
+    await _alarm(hass)
+    assert [c.data for c in mocks.on] == [
+        {"entity_id": ASIR, "tone": "FREQUENCY_RISING_AND_FALLING", "duration": 180}
+    ]
+
+
+SWITCH = "switch.aussensirene"
+
+
+async def test_switch_as_siren_for_experts(hass: HomeAssistant) -> None:
+    mocks = await _setup(
+        hass,
+        sirens=[SWITCH],
+        sirens_allow_switch=True,
+        sirens_hardware_enabled=True,
+        night={"sirens": [SWITCH]},
+    )
+    # Erst nach dem Einrichten: Hauswacht lädt selbst die switch-Plattform (Testmodus)
+    switch_on = async_mock_service(hass, "switch", "turn_on")
+    switch_off = async_mock_service(hass, "switch", "turn_off")
+    hass.states.async_set(SWITCH, "off")
+    await _alarm(hass)
+    assert [c.data for c in switch_on] == [{"entity_id": SWITCH}]
+    assert mocks.on == []
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    assert [c.data for c in switch_off] == [{"entity_id": SWITCH}]
+
+
+async def test_switch_as_siren_respects_fire_lock(hass: HomeAssistant) -> None:
+    await _setup(
+        hass,
+        sirens=[SWITCH],
+        sirens_allow_switch=True,
+        sirens_hardware_enabled=True,
+        night={"sirens": [SWITCH]},
+    )
+    switch_on = async_mock_service(hass, "switch", "turn_on")
+    hass.states.async_set(SWITCH, "off")
+    hass.states.async_set("binary_sensor.rm_kueche_smoke", "on", {"device_class": "smoke"})
+    await _alarm(hass)
+    assert switch_on == []
+
+
+async def test_switching_off_expert_mode_drops_switches(hass: HomeAssistant) -> None:
+    _smoke_detector(hass)
+    entry = make_entry({"sirens": [SIREN, SWITCH], "sirens_allow_switch": True})
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("sirens", "siren_settings"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"],
+        {"sirens": [SIREN, SWITCH], "sirens_hardware_enabled": False, "sirens_allow_switch": False},
+    )
+    assert flow["type"] is FlowResultType.MENU
+    assert entry.options["sirens"] == [SIREN]
+
+
+async def test_siren_tone_in_options_flow(hass: HomeAssistant) -> None:
+    entry = make_entry({"sirens": [ASIR]})
+    await setup_entry(hass, entry)
+    _asir(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("sirens", "siren_tones"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"siren": ASIR})
+    assert flow["step_id"] == "siren_tone_edit"
+    assert "FREQUENCY_RISING_AND_FALLING" in flow["description_placeholders"]["tones"]
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"tone": "FIRE"})
+    assert flow["errors"] == {"tone": "siren_tone_fire"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"tone": "FREQUENCY_RISING_AND_FALLING"}
+    )
+    assert flow["type"] is FlowResultType.MENU
+    assert entry.options["siren_tones"] == {ASIR: "FREQUENCY_RISING_AND_FALLING"}
+
+
+async def test_wizard_creates_siren_from_switch(hass: HomeAssistant) -> None:
+    source = MockConfigEntry(domain="test")
+    source.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create(
+        "switch", "test", "sirene", suggested_object_id="aussensirene", config_entry=source
+    )
+    hass.states.async_set(SWITCH, "off")
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    switch_on = async_mock_service(hass, "switch", "turn_on")
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("sirens", "siren_from_switch"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"switch": SWITCH})
+    assert flow["errors"] == {"confirm": "siren_switch_confirm"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"switch": SWITCH, "confirm": True}
+    )
+    await hass.async_block_till_done()
+    assert flow["type"] is FlowResultType.MENU
+    helpers = hass.config_entries.async_entries("switch_as_x")
+    assert len(helpers) == 1
+    sirens = [
+        e.entity_id
+        for e in er.async_entries_for_config_entry(er.async_get(hass), helpers[0].entry_id)
+        if e.domain == "siren"
+    ]
+    assert entry.options["sirens"] == sirens
+    assert switch_on == []  # angelegt, nicht geschaltet
