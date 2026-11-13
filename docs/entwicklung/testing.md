@@ -37,8 +37,8 @@ Dieselben Prüfungen laufen bei jedem Pull Request in der CI, dazu Hassfest.
 | `tests/integration/test_profiles.py` | Mit Home Assistant: keine Standardprofile, Migration der festen Profile, Profile ohne Knopf, nur zugeordnete Knöpfe, Auswahlliste und Knöpfe, Profilverwaltung in den Optionen |
 | `tests/core/test_automation.py` | Uhrzeiten, Wochentage, „alle weg“ (unbekannt zählt nicht als weg) |
 | `tests/integration/test_automation.py` | Mit Home Assistant: scharf/unscharf nach Uhrzeit und Wochentag, nie über ein anderes Profil, kein Abbruch laufender Alarme, Wartezeit bei Abwesenheit, Rückkehr, Optionen |
-| `tests/core/test_homecoming.py` | Heimkehr-Auswertung: Anwesenheit, Verzögerung zur Tür, Fehlalarme je Eingangsverzögerung, Bericht |
-| `tests/integration/test_homecoming.py` | Mit Home Assistant: Push-Knopf (gültig, veraltet, ohne Benutzer, standardmäßig aus), Beobachtung schaltet nichts, Bericht |
+| `tests/core/test_homecoming.py` | Heimkehr-Auswertung: Anwesenheit, Verzögerung zur Tür, Fehlalarme je Eingangsverzögerung, Bericht, CSV-Tabelle |
+| `tests/integration/test_homecoming.py` | Mit Home Assistant: Push-Knopf (gültig, veraltet, ohne Benutzer, standardmäßig aus), Beobachtung schaltet nichts, Bericht, Download (nur Admins) |
 | `tests/integration/test_acknowledge.py` | Mit Home Assistant: Unscharf während des Alarms beendet nur den Alarm, Überbrückung bis zum Schließen, Push-Knopf „Alarm beenden“ |
 | `tests/core/test_profile_settings.py` | Profil-Einstellungen lesen/schreiben, Grenzen, keine Brandtöne, keine Listen |
 | `tests/integration/test_profile_settings.py` | Mit Home Assistant: Profil bearbeiten, Werte ändern, Sperre im scharfen Zustand |

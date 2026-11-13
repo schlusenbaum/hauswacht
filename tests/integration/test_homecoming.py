@@ -15,6 +15,7 @@ from homeassistant.components.persistent_notification import (
 )
 from homeassistant.core import Context, HomeAssistant, ServiceCall
 from pytest_homeassistant_custom_component.common import MockUser, async_mock_service
+from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
 from custom_components.hauswacht.const import PUSH_ACTION_EVENT, PUSH_ACTION_PREFIX
 
@@ -200,6 +201,41 @@ async def test_report_button_creates_notification(
     notifications = _async_get_or_create_notifications(hass)
     report = notifications["hauswacht_homecoming_report"]
     assert "| Anna (gesamt) | 1 | 1 | 0 | 20 s |" in report["message"]
+    assert "Hauswacht Übersicht" in report["message"]
+
+
+async def test_report_download(
+    hass: HomeAssistant,
+    freezer: FrozenDateTimeFactory,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    _person(hass, "not_home", "not_home")
+    options = {"homecoming_observe": True, "homecoming_persons": [PERSON]}
+    await setup_entry(hass, make_entry(options))
+    freezer.tick(timedelta(minutes=20))
+    set_sensor(hass, DOOR, "on")
+    freezer.tick(timedelta(seconds=20))
+    _person(hass, "home", "home")
+    await hass.async_block_till_done()
+
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "hauswacht/homecoming/report"})
+    reply = await client.receive_json()
+    assert reply["success"], reply
+    result = reply["result"]
+    assert result["filename"].startswith("hauswacht-heimkehr-")
+    assert result["markdown"].startswith("# Hauswacht: Heimkehr-Beobachtung")
+    assert "| Anna (gesamt) | 1 | 1 | 0 | 20 s |" in result["markdown"]
+    lines = result["csv"].lstrip("\ufeff").splitlines()
+    assert lines[0].startswith("Art;Zeitpunkt;")
+    assert any(line.startswith("Heimkehr;") and ";20;" in line for line in lines[1:])
+
+    viewer = await hass_ws_client(hass, hass_read_only_access_token)
+    await viewer.send_json_auto_id({"type": "hauswacht/homecoming/report"})
+    denied = await viewer.receive_json()
+    assert not denied["success"]
+    assert denied["error"]["code"] == "unauthorized"
 
 
 async def test_observation_off_by_default(hass: HomeAssistant) -> None:

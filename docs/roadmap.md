@@ -20,6 +20,7 @@
 | 0.33 | Aufgeräumte Dokumentation, Screenshots, Issue-Vorlagen |
 | 0.34 | Anlagenübersicht (Karte, Druck, Notfallblatt), Prüfhinweise mit Reparaturen, Diagnose-Datei |
 | 0.35 | Karte „Hauswacht Alarm“ ohne PIN-Zwang (Konto als Ausweis, PIN je Konto einstellbar) |
+| 0.36 | Heimkehr-Bericht zum Herunterladen (Markdown und CSV) |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 

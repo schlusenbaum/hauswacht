@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from custom_components.hauswacht.core.homecoming import (
+    CSV_HEADER,
     Arrival,
     DoorOpening,
     EntryTiming,
     PresenceState,
+    csv_rows,
     describe,
     doors_without_arrival,
     entry_stats,
@@ -16,6 +18,7 @@ from custom_components.hauswacht.core.homecoming import (
     prune,
     recommended_entry_delay,
     report_markdown,
+    to_csv,
     track,
 )
 
@@ -144,3 +147,35 @@ def test_entry_stats() -> None:
     assert stats["max_seconds"] == 20
     assert stats["recommended_entry_delay"] == 25
     assert recommended_entry_delay(40) == 50
+
+
+# --- 0.36: Bericht zum Herunterladen ---------------------------------------------------
+
+
+def test_csv_rows_sorted_with_arrivals_and_entries() -> None:
+    doors = [DoorOpening(100, DOOR)]
+    verdicts = judge([arrival(140), arrival(9000, away=7200)], doors)
+    timings = [EntryTiming(at=101, door=DOOR, seconds=12, in_time=True, delay=30)]
+    names = {"person.a": "Anna", DOOR: "Haustür"}
+    rows = csv_rows(verdicts, timings, names, lambda at: f"t{at:.0f}")
+    assert rows[0] == CSV_HEADER
+    assert [r[0] for r in rows[1:]] == ["Eingang", "Heimkehr", "Heimkehr"]
+    assert rows[1] == (
+        "Eingang",
+        "t101",
+        "",
+        "Haustür",
+        "12",
+        "",
+        "rechtzeitig unscharf (Verzögerung 30 s)",
+    )
+    assert rows[2][1:6] == ("t140", "Anna", "Haustür", "40", "60")
+    assert "nach dem Öffnen" in rows[2][6]
+    assert rows[3][3:5] == ("", "")  # ohne Tür
+    assert "ohne Türöffnung" in rows[3][6]
+
+
+def test_to_csv_for_german_excel() -> None:
+    text = to_csv([("A", "B"), ("1", "x; y")])
+    assert text.startswith("\ufeff")
+    assert text == '\ufeffA;B\r\n1;"x; y"\r\n'

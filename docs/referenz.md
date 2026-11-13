@@ -28,7 +28,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `sensor.hauswacht_letzter_sirenentest` | Letzter Sirenentest; je Sirene Datum und „gehört?“ in den Attributen |
 | `sensor.hauswacht_funkstille_beobachtung` | Empfehlung für die maximale Funkstille, längste Pausen je Melder |
 | `sensor.hauswacht_heimkehr_beobachtung` | Anzahl ausgewerteter Heimkehrten; Attribute `sources`, `recent`, `entry_times` |
-| `button.hauswacht_heimkehr_bericht` | Bericht der Heimkehr-Beobachtung als Meldung in Home Assistant |
+| `button.hauswacht_heimkehr_bericht` | Bericht der Heimkehr-Beobachtung als Meldung in Home Assistant (zum Herunterladen: Karte „Hauswacht Übersicht“) |
 | `sensor.hauswacht_simulierte_sensoren` | Grundlage der Testkarte (ausgeblendet) |
 
 ### Profil-Einstellungen (Kategorie Konfiguration)
@@ -84,6 +84,7 @@ Für Karten gibt es zusätzlich WebSocket-Befehle:
 | Befehl | Zweck |
 |---|---|
 | `hauswacht/overview` | [Anlagenübersicht](uebersicht.md) samt Prüfhinweisen (nur Administratoren) |
+| `hauswacht/homecoming/report` | Heimkehr-Bericht zum Herunterladen: `filename`, `markdown`, `csv` (nur Administratoren) |
 | `hauswacht/alarm/info` | [Alarmkarte](dashboard.md#karte-hauswacht-alarm): Bereiche, Profile, PIN-Bedarf und Rechte des angemeldeten Kontos |
 | `hauswacht/alarm/action` | Alarmkarte: `area`, `action` (`arm`, `disarm`, `end_alarm`), `profile`, `code`, `force`; Antwort `ok` bzw. `error`, `message`, `can_force` |
 

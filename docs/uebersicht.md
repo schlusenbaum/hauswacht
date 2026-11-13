@@ -27,7 +27,7 @@ title: Übersicht   # optional
 | Benutzer | PIN ja/nein, Karten (gekürzt), Rechte je Bereich, Gültigkeit; PIN-Regeln |
 | Bedienteile | Keypads mit Tastenbelegung, Aufkleber und Leser mit Aktion |
 | Benachrichtigungen | Empfänger je Ereignis, Ansagen, Nachtruhe |
-| Überwachung | Funkstille-Grenze mit Empfehlung, Funknetz und Gateways, Anlernzeit |
+| Überwachung | Funkstille-Grenze mit Empfehlung, Funknetz und Gateways, Anlernzeit, Heimkehr-Beobachtung mit [Download](beobachtung.md) von Bericht und Tabelle |
 
 Die Karte lädt die Daten beim Öffnen; **Aktualisieren** holt den neuesten Stand.
 

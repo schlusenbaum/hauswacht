@@ -1,6 +1,8 @@
 """Anlagenübersicht nach außen: WebSocket-Befehl für die Karte und Reparatur-Hinweise.
 
 - ``hauswacht/overview`` (nur Administratoren) liefert die Übersicht samt Prüfhinweisen.
+- ``hauswacht/homecoming/report`` (nur Administratoren) liefert den Heimkehr-Bericht zum
+  Herunterladen: Markdown und alle Einzelwerte als CSV.
 - Wichtige Prüfhinweise erscheinen zusätzlich unter Einstellungen → Reparaturen; sie werden beim
   Start (verzögert, bis die Melder ihren Zustand haben) und danach stündlich aktualisiert.
 """
@@ -24,6 +26,7 @@ if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
 
 WS_TYPE = f"{DOMAIN}/overview"
+WS_HOMECOMING = f"{DOMAIN}/homecoming/report"
 ISSUE_PREFIX = "check_"
 ISSUE_TRANSLATION = "check_finding"
 REFRESH = timedelta(hours=1)
@@ -57,11 +60,25 @@ def ws_overview(
     connection.send_result(msg["id"], build_overview(main))
 
 
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): WS_HOMECOMING})
+@callback
+def ws_homecoming_report(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    main = _main(hass)
+    if main is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
+        return
+    connection.send_result(msg["id"], main.homecoming.export())
+
+
 @callback
 def async_register_websocket(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS):
         return
     websocket_api.async_register_command(hass, ws_overview)
+    websocket_api.async_register_command(hass, ws_homecoming_report)
     hass.data[DATA_WS] = True
 
 

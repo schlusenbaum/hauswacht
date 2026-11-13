@@ -35,6 +35,7 @@ from .core.homecoming import (
     EntryTiming,
     PresenceState,
     SourceStats,
+    csv_rows,
     describe,
     doors_without_arrival,
     entry_stats,
@@ -42,6 +43,7 @@ from .core.homecoming import (
     judge,
     prune,
     report_markdown,
+    to_csv,
     track,
     track_value,
 )
@@ -357,8 +359,8 @@ class HomecomingObserver:
         arrivals, doors = self._parsed()
         return len(judge([a for a in arrivals if a.source == a.person], doors))
 
-    @callback
-    def create_report(self) -> None:
+    def report_text(self) -> str:
+        """Bericht als Markdown (Benachrichtigung und Download)."""
         arrivals, doors = self._parsed()
         overall = frozenset(a.source for a in arrivals if a.source == a.person)
         text = report_markdown(
@@ -385,6 +387,47 @@ class HomecomingObserver:
             text += "\n".join(lines)
         if not self.enabled:
             text = "Die Heimkehr-Beobachtung ist ausgeschaltet.\n\n" + text
+        return text
+
+    def export(self) -> dict[str, str]:
+        """Bericht (Markdown) und alle Einzelwerte (CSV) zum Herunterladen."""
+        now = dt_util.now()
+        arrivals, doors = self._parsed()
+        names = self.names()
+        timings = self.entry_timings()
+        for timing in timings:
+            names.setdefault(timing.door, display_name(self.hass, timing.door))
+        recent = self.recent()
+        markdown = (
+            "# Hauswacht: Heimkehr-Beobachtung\n\n"
+            f"Erstellt: {now:%d.%m.%Y %H:%M}\n\n"
+            + self.report_text()
+            + (
+                "\n\n## Letzte Heimkehrten\n\n" + "\n".join(f"- {line}" for line in recent)
+                if recent
+                else ""
+            )
+            + "\n"
+        )
+        rows = csv_rows(
+            judge(arrivals, doors, windows=self._windows(arrivals)),
+            timings,
+            names,
+            lambda at: f"{dt_util.as_local(dt_util.utc_from_timestamp(at)):%d.%m.%Y %H:%M:%S}",
+        )
+        return {
+            "filename": f"hauswacht-heimkehr-{now:%Y-%m-%d}",
+            "markdown": markdown,
+            "csv": to_csv(rows),
+        }
+
+    @callback
+    def create_report(self) -> None:
+        text = (
+            self.report_text()
+            + "\n\nZum Herunterladen (Bericht und alle Einzelwerte als Tabelle): Karte "
+            "„Hauswacht Übersicht“ → Überwachung."
+        )
         persistent_notification.async_create(
             self.hass,
             text,
