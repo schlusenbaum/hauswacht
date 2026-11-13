@@ -6,6 +6,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- README: Status „Beta“ und eine kurze englische Zusammenfassung (aufklappbar).
+
 ## [0.37.0] - 2026-11-13
 
 ### Hinzugefügt

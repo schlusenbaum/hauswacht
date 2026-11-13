@@ -11,8 +11,40 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.37.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
-> Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst freigegeben werden.
+> **Status: 0.37.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
+> freigegeben werden.
+
+<details>
+<summary><b>English summary</b></summary>
+
+**Hauswacht** ("house watch") is an intrusion alarm system for Home Assistant, currently in
+**beta**.
+
+- **Alarm profiles** instead of fixed modes ("Home", "Night", "Vacation" …), each with its own
+  sensors, delays, sirens and recipients; automatic arming by time or when everyone has left.
+- **Trigger rules** such as "door, then basement within 2 minutes", with exceptions and conditions.
+- **Areas** (house, garage …) armed independently.
+- **Users** with PIN and any number of RFID cards, rights per area, guests with validity,
+  duress PIN, lockout against guessing.
+- **Keypads** via Zigbee2MQTT with feedback on the device, NFC tags, RFID readers.
+- **Sirens with fire lock:** never sounds or silences a siren while a smoke detector reports fire;
+  sirens are locked after installation until you release them.
+- **Test mode** that technically blocks sirens, plus a test card to simulate sensors.
+- **Dashboard cards:** alarm card (no forced PIN – the logged-in account is the credential),
+  settings, test, and a printable system overview with checks.
+
+The user interface (setup dialogs, entities, cards) is available in **English and German**.
+Notifications, reports and the **documentation are German only** for now – translations are
+planned. Installation: add `https://github.com/schlusenbaum/hauswacht` as a custom repository
+(Marketplace: *Add from link*; HACS: *Custom repositories*, type *Integration*), download,
+restart, then add the integration. Questions and feedback in English are welcome in the
+[issues](https://github.com/schlusenbaum/hauswacht/issues).
+
+Not a certified security system – it does not replace a professional alarm system or tested
+smoke detectors.
+
+</details>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/schlusenbaum/hauswacht/main/docs/images/alarm-karte.png" alt="Karte Hauswacht Alarm: unscharf, wird scharf, PIN-Eingabe, Alarm" width="800">
