@@ -15,7 +15,15 @@ Hauswacht braucht keine Cloud und keine weiteren Integrationen.
 
 ## Installation
 
-**Über HACS:**
+**Mit einem Klick:** Die Knöpfe öffnen die eigene Home-Assistant-Instanz (beim ersten Mal fragt
+[My Home Assistant](https://my.home-assistant.io) einmal nach deren Adresse).
+
+| Schritt | Knopf |
+|---|---|
+| Hauswacht in HACS öffnen, **Herunterladen**, Home Assistant neu starten | [![Hauswacht in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=schlusenbaum&repository=hauswacht&category=integration) |
+| Hauswacht einrichten | [![Hauswacht einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht) |
+
+**Von Hand über HACS:**
 
 1. HACS → Menü (⋮) → **Benutzerdefinierte Repositories** →
    `https://github.com/schlusenbaum/hauswacht`, Typ **Integration**.

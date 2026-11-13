@@ -54,9 +54,14 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
 ## Schnellstart
 
-1. **HACS** → ⋮ → Benutzerdefinierte Repositories → `https://github.com/schlusenbaum/hauswacht`
-   (Typ Integration) → Hauswacht herunterladen → Home Assistant neu starten.
-2. Einstellungen → Geräte & Dienste → **Integration hinzufügen → Hauswacht**.
+1. Hauswacht in HACS öffnen → **Herunterladen** → Home Assistant neu starten:
+
+   [![Hauswacht in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=schlusenbaum&repository=hauswacht&category=integration)
+
+2. Hauswacht einrichten:
+
+   [![Hauswacht einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)
+
 3. **Konfigurieren:** eine Meldergruppe mit den Tür- und Fensterkontakten anlegen, ein
    Alarmprofil (z. B. „Nacht“) anlegen, das Handy als Empfänger eintragen.
 4. Karte **„Hauswacht Test“** aufs Dashboard, Testmodus an, durchspielen.

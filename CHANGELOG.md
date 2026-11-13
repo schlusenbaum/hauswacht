@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Knöpfe „In HACS öffnen“ und „Integration einrichten“ (My Home Assistant) in README und
+  Installationsanleitung.
+
 ## [0.35.1] - 2026-11-13
 
 ### Geändert
