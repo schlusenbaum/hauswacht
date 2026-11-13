@@ -500,3 +500,59 @@ async def test_wizard_creates_siren_from_switch(hass: HomeAssistant) -> None:
     ]
     assert entry.options["sirens"] == sirens
     assert switch_on == []  # angelegt, nicht geschaltet
+
+
+# --- 0.41: Brandton als Experten-Freigabe ---------------------------------------------
+
+OUTDOOR = "siren.aussen"
+
+
+async def _tone_flow(hass: HomeAssistant, entry: Any, siren: str) -> Any:
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("sirens", "siren_tones"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    return await hass.config_entries.options.async_configure(flow["flow_id"], {"siren": siren})
+
+
+async def test_expert_fire_tone_needs_release_and_confirmation(hass: HomeAssistant) -> None:
+    _smoke_detector(hass)
+    entry = make_entry(
+        {
+            "sirens": [OUTDOOR],
+            "sirens_hardware_enabled": True,
+            "profiles": {"night": {"sirens": [OUTDOOR], "notify": [PHONE]}},
+        }
+    )
+    await setup_entry(hass, entry)
+    hass.states.async_set(OUTDOOR, "off", {"supported_features": 23, "available_tones": ["fire"]})
+    flow = await _tone_flow(hass, entry, OUTDOOR)
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"tone": "fire"})
+    assert flow["errors"] == {"tone": "siren_tone_fire"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"tone": "fire", "allow_fire_tone": True}
+    )
+    assert flow["errors"] == {"confirm_fire_tone": "siren_tone_fire_confirm"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"tone": "fire", "allow_fire_tone": True, "confirm_fire_tone": True}
+    )
+    assert flow["type"] is FlowResultType.MENU
+    assert entry.options["siren_fire_tone_ok"] == [OUTDOOR]
+    await hass.async_block_till_done()
+    hass.states.async_set(OUTDOOR, "off", {"supported_features": 23, "available_tones": ["fire"]})
+    on = async_mock_service(hass, "siren", "turn_on")
+    await _alarm(hass)
+    assert [c.data.get("tone") for c in on] == ["fire"]
+
+
+async def test_fire_tone_never_for_smoke_detector(hass: HomeAssistant) -> None:
+    _smoke_detector(hass)
+    entry = make_entry({"sirens": [SIREN]})
+    await setup_entry(hass, entry)
+    hass.states.async_set(SIREN, "off", {"supported_features": 23, "available_tones": ["fire"]})
+    flow = await _tone_flow(hass, entry, SIREN)
+    assert "allow_fire_tone" not in {str(k) for k in flow["data_schema"].schema}
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"tone": "fire"})
+    assert flow["errors"] == {"tone": "siren_tone_fire_detector"}
+    assert "siren_fire_tone_ok" not in entry.options

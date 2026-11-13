@@ -56,8 +56,27 @@ Sirene aus Sicherheitsgründen aus (Grund „kein Einbruchton“), und die
 
 **Alarmgeber – Sirenen → Ton je Sirene** → Sirene wählen → einen der Töne wählen, die das Gerät
 selbst meldet. Der Ton gilt bei Alarm und beim Sirenentest. Brandtöne (mit „fire“, „smoke“ oder
-„Brand“ im Namen) sind nie erlaubt. Danach einen kurzen, leisen [Sirenentest](#sirenentest)
+„Brand“ im Namen) sind gesperrt – außer mit der
+[Experten-Freigabe](#brandton-als-experten-freigabe). Danach einen kurzen, leisen [Sirenentest](#sirenentest)
 machen.
+
+### Brandton als Experten-Freigabe
+
+Brandtöne sind für Einbruch gesperrt – aus gutem Grund: Wer einen Brandton hört, verlässt das
+Haus, womöglich genau dorthin, wo der Einbrecher ist. Und ein Brandton, der auch bei Einbruch
+ertönt, wird bei echtem Feuer weniger ernst genommen.
+
+Manchmal täuscht aber der Name, z. B. wenn der einzige laute Ton einer Außensirene „fire“
+heißt. Dann lässt er sich unter **Ton je Sirene** freigeben: Ton wählen (in der Liste als
+„Brandton“ markiert), **„Experten: Brandton für Einbruch erlauben“** einschalten und die
+Bestätigung anhaken.
+
+- Gilt nur für diesen Ton an dieser Sirene.
+- **Nie für Rauchmelder mit Sirene** (Geräte mit eigenen Brandsensoren) – dort gibt es die
+  Freigabe gar nicht, und der Guard lehnt sie zusätzlich ab.
+- Die **Brandsperre** bleibt: Meldet irgendwo ein Rauchmelder Brand, schaltet Hauswacht keine
+  Sirene, egal mit welchem Ton.
+- Die [Übersicht](uebersicht.md#prüfhinweise) zeigt die Freigabe dauerhaft als Hinweis.
 
 **Beispiel Homematic IP Alarmsirene (HmIP-ASIR, HmIP-ASIR-2, HmIP-ASIR-O)** über die Integration
 Homematic(IP) Local: Die Sirene erscheint als `siren.…` und bleibt stumm, wenn sie nicht Ton

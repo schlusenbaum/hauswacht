@@ -779,9 +779,14 @@
       },
       "siren_tone_edit": {
         "title": "Tone for {siren}",
-        "description": "Tones reported by this siren: {tones}\n\nThe chosen tone is used in an alarm and in the siren test. Fire tones (with “fire”, “smoke” or “Brand” in the name) are never allowed. Afterwards, best run a short, quiet siren test.",
+        "description": "Tones reported by this siren: {tones}\n\nThe chosen tone is used in an alarm and in the siren test. Afterwards, best run a short, quiet siren test.\n\n**Fire tones** (with “fire”, “smoke” or “Brand” in the name) are locked for burglar alarms: people who hear a fire tone leave the house – possibly right towards the intruder – and a fire tone that also sounds for burglary is taken less seriously in a real fire. Only if the name is misleading (e.g. the only loud tone of an outdoor siren is called “fire”) can experts release it. Never for smoke detectors with a siren. The fire lock always applies.",
         "data": {
-          "tone": "Tone"
+          "tone": "Tone",
+          "allow_fire_tone": "Experts: allow a fire tone for burglar alarms",
+          "confirm_fire_tone": "I confirm: this siren is not a smoke detector, and everyone in the house knows this tone as the burglar alarm"
+        },
+        "data_description": {
+          "allow_fire_tone": "Only for this tone on this siren. The overview shows the release as a notice."
         }
       }
     },
@@ -824,7 +829,9 @@
       "card_expired": "The new card {conflict} was read too long ago and may no longer be learned. Please hold it to the keypad or reader again.",
       "tag_random": "{conflict} is a random ID (e.g. from a phone). It changes on every read and cannot be used as a credential – please remove it.",
       "siren_switch_confirm": "Please confirm that this is a pure alarm siren.",
-      "siren_tone_fire": "A fire tone is not allowed for burglar alarms."
+      "siren_tone_fire": "A fire tone is locked for burglar alarms – only with the expert release below.",
+      "siren_tone_fire_detector": "This siren has its own fire sensors (smoke detector) – a fire tone for burglar alarms is never allowed here.",
+      "siren_tone_fire_confirm": "Please explicitly confirm the expert release."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

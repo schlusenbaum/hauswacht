@@ -72,6 +72,7 @@ from .const import (
     OPT_REMINDER_PERSONS,
     OPT_REMINDER_PROFILE,
     OPT_SENSOR_TYPES,
+    OPT_SIREN_FIRE_TONE_OK,
     OPT_SIREN_TEST,
     OPT_SIREN_TONES,
     OPT_SIRENS,
@@ -1636,6 +1637,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                     k: v for k, v in dict(options.get(OPT_SIREN_TONES, {})).items() if k in sirens
                 }
                 options[OPT_SIREN_TONES] = tones
+                options[OPT_SIREN_FIRE_TONE_OK] = [
+                    x for x in options.get(OPT_SIREN_FIRE_TONE_OK, []) if x in sirens
+                ]
                 # Aus Profilen entfernen, was nicht mehr registriert ist
                 profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
                 for settings in profiles.values():
@@ -1743,51 +1747,78 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def async_step_siren_tone_edit(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Ton je Sirene: aus den Tönen wählen, die das Gerät selbst meldet."""
+        """Ton je Sirene: aus den Tönen wählen, die das Gerät selbst meldet.
+
+        Brandtöne nur als Experten-Freigabe mit eigener Bestätigung – und nie für Sirenen mit
+        eigenen Brandsensoren (Rauchmelder).
+        """
         options = dict(self.config_entry.options)
         siren = self._siren_tone_target or ""
         executor = self.config_entry.runtime_data.sirens if self._loaded() else None
         caps = executor.capabilities(siren) if executor is not None else None
+        device = executor.devices().get(siren) if executor is not None else None
+        smoke_detector = bool(device and device.fire_detector)
         known = sorted(caps.tones) if caps is not None and caps.tones else []
-        usable = [t for t in known if not is_fire_tone(t)]
         tones = dict(options.get(OPT_SIREN_TONES, {}))
+        fire_ok = {s for s in options.get(OPT_SIREN_FIRE_TONE_OK, []) if isinstance(s, str)}
+        placeholders = self._siren_tone_placeholders(siren, caps, known)
+        errors: dict[str, str] = {}
+        current = tones.get(siren, AUTO_TONE)
+        allow = siren in fire_ok
         if user_input is not None:
             tone = str(user_input.get("tone") or "").strip()
-            if tone in ("", AUTO_TONE):
-                tones.pop(siren, None)
-            elif is_fire_tone(tone):
-                return self.async_show_form(
-                    step_id="siren_tone_edit",
-                    data_schema=self._siren_tone_schema(usable, tone),
-                    errors={"tone": "siren_tone_fire"},
-                    description_placeholders=self._siren_tone_placeholders(siren, caps, known),
-                )
+            allow = bool(user_input.get("allow_fire_tone"))
+            current = tone or AUTO_TONE
+            fire = bool(tone) and tone != AUTO_TONE and is_fire_tone(tone)
+            if fire and smoke_detector:
+                errors["tone"] = "siren_tone_fire_detector"
+            elif fire and not allow:
+                errors["tone"] = "siren_tone_fire"
+            elif fire and not user_input.get("confirm_fire_tone"):
+                errors["confirm_fire_tone"] = "siren_tone_fire_confirm"
             else:
-                tones[siren] = tone
-            options[OPT_SIREN_TONES] = tones
-            return await self._save(options, "sirens")
+                if tone in ("", AUTO_TONE):
+                    tones.pop(siren, None)
+                else:
+                    tones[siren] = tone
+                if fire:
+                    fire_ok.add(siren)
+                else:
+                    fire_ok.discard(siren)
+                options[OPT_SIREN_TONES] = tones
+                options[OPT_SIREN_FIRE_TONE_OK] = sorted(fire_ok)
+                return await self._save(options, "sirens")
         return self.async_show_form(
             step_id="siren_tone_edit",
-            data_schema=self._siren_tone_schema(usable, tones.get(siren, AUTO_TONE)),
-            description_placeholders=self._siren_tone_placeholders(siren, caps, known),
+            data_schema=self._siren_tone_schema(
+                known, current, allow=allow, expert=not smoke_detector
+            ),
+            errors=errors,
+            description_placeholders=placeholders,
         )
 
-    def _siren_tone_schema(self, usable: list[str], current: str) -> vol.Schema:
-        auto = (
-            "Automatisch (Standard-Einbruchton)" if self._german() else "Automatic (burglar tone)"
-        )
+    def _siren_tone_schema(
+        self, known: list[str], current: str, *, allow: bool, expert: bool
+    ) -> vol.Schema:
+        german = self._german()
+        auto = "Automatisch (Standard-Einbruchton)" if german else "Automatic (burglar tone)"
+        marker = " – Brandton" if german else " – fire tone"
         choices = [SelectOptionDict(value=AUTO_TONE, label=auto)] + [
-            SelectOptionDict(value=t, label=t) for t in usable
+            SelectOptionDict(value=t, label=t + (marker if is_fire_tone(t) else ""))
+            for t in known
+            if expert or not is_fire_tone(t)
         ]
-        return vol.Schema(
-            {
-                vol.Required("tone", default=current or AUTO_TONE): SelectSelector(
-                    SelectSelectorConfig(
-                        options=choices, mode=SelectSelectorMode.DROPDOWN, custom_value=True
-                    )
+        fields: dict[Any, Any] = {
+            vol.Required("tone", default=current or AUTO_TONE): SelectSelector(
+                SelectSelectorConfig(
+                    options=choices, mode=SelectSelectorMode.DROPDOWN, custom_value=True
                 )
-            }
-        )
+            )
+        }
+        if expert:
+            fields[vol.Optional("allow_fire_tone", default=allow)] = BooleanSelector()
+            fields[vol.Optional("confirm_fire_tone", default=False)] = BooleanSelector()
+        return vol.Schema(fields)
 
     def _siren_tone_placeholders(self, siren: str, caps: Any, known: list[str]) -> dict[str, str]:
         if caps is None or not caps.tones_supported:

@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-11-13
+
+### Hinzugefügt
+- **Brandton als Experten-Freigabe** (Ton je Sirene): Täuscht der Name – z. B. heißt der einzige
+  laute Ton einer Außensirene „fire“ –, lässt sich dieser eine Ton mit eigener Bestätigung für
+  Einbruch freigeben. Nie für Rauchmelder mit Sirene (Geräte mit eigenen Brandsensoren); die
+  Brandsperre gilt weiter. Die Übersicht zeigt die Freigabe als Hinweis.
+
 ## [0.40.0] - 2026-11-13
 
 ### Hinzugefügt

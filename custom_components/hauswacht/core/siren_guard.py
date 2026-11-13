@@ -91,6 +91,9 @@ class SirenDevice:
     fire_detector: bool = False
     # Fest eingestellter Ton für diese Sirene (z. B. HmIP-ASIR: "FREQUENCY_RISING_AND_FALLING")
     tone: str | None = None
+    # Experten: der eingestellte Ton darf ein Brandton sein. Gilt nie für Rauchmelder
+    # (fire_detector) – das prüft der Guard selbst.
+    fire_tone_allowed: bool = False
 
 
 @dataclass(frozen=True)
@@ -162,6 +165,11 @@ def is_fire_tone(tone: str) -> bool:
     return tone in FIRE_TONES or "fire" in name or "brand" in name or "smoke" in name
 
 
+def expert_fire_tone_ok(device: SirenDevice) -> bool:
+    """Experten-Freigabe eines Brandtons – nie an einem Gerät mit eigenen Brandsensoren."""
+    return device.fire_tone_allowed and not device.fire_detector
+
+
 def select_tone(requested: str, device: SirenDevice) -> tuple[bool, str | None]:
     """Ton für ein Gerät: (erlaubt, Ton oder None = ohne Tonangabe senden)."""
     caps = device.capabilities
@@ -170,7 +178,7 @@ def select_tone(requested: str, device: SirenDevice) -> tuple[bool, str | None]:
     if (
         caps.tones_supported
         and preferred
-        and not is_fire_tone(preferred)
+        and (not is_fire_tone(preferred) or expert_fire_tone_ok(device))
         and (not caps.tones or preferred in caps.tones)
     ):
         return (True, preferred)

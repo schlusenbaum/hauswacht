@@ -71,6 +71,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 | Melder nicht verfügbar (kürzer als 24 h) | ⚠️ |
 | Batterie unter 10 % | ⚠️ |
 | Sirene beim letzten Test nicht gehört | ⚠️ |
+| Brandton für Einbruch freigegeben ([Experten](sirenen.md#brandton-als-experten-freigabe)) | ⚠️ |
 | Störung eines überwachten Funknetzes/Gateways | ⚠️ |
 | Profil ohne Sirene (nur Benachrichtigung) | ℹ️ |
 | Sirenen in Profilen, aber noch nicht freigegeben | ℹ️ |
