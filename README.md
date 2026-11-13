@@ -74,8 +74,9 @@ smoke detectors.
 - **Benachrichtigungen** – pro Ereignis mit eigenen Empfängern und Texten, wichtige Hinweise
   durchbrechen „Nicht stören“, Knöpfe „Unscharf schalten“ und „Trotzdem scharf“ in der
   Push-Nachricht, Ansagen über Lautsprecher (z. B. Echo).
-- **Sirenen mit Verstand** – angesteuert nur nach ihren Fähigkeiten, nie mit Brandton, nie
-  während eines Brandes; Sirenentest einzeln, kurz und leise.
+- **Sirenen mit Verstand** – angesteuert nur nach ihren Fähigkeiten, nie während eines Brandes,
+  ein Brandton nur als Experten-Freigabe und nie an Rauchmeldern; Ton je Sirene (z. B. Homematic
+  IP Alarmsirene), Sirenen am Schalter per Assistent; Sirenentest einzeln, kurz und leise.
 - **Ehrlich bei Störungen** – ausgefallene Melder, Funkstille und Ausfälle von Zigbee2MQTT oder
   MQTT werden sichtbar statt verschwiegen.
 - **Testmodus und Testkarte** – alles gefahrlos durchspielen, ohne Sirene, ohne dass andere
@@ -117,7 +118,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Bedienung und Dashboard](docs/dashboard.md) | Scharf/unscharf, Alarmkarte, Alarm beenden, Karten |
 | [Benutzer, PINs und Sperre](docs/benutzer.md) | Benutzer, Rechte, PIN-Regeln, Bedrohungs-PIN |
 | [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser |
-| [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Sirenentest, Brandschutz |
+| [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Ton je Sirene, Sirene aus Schalter, Sirenentest, „Warum hat sie nicht geklingelt?“, Brandschutz |
 | [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
 | [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |
 | [Testmodus](docs/testmodus.md) · [Beobachtungen](docs/beobachtung.md) · [Referenz](docs/referenz.md) · [Fehlersuche](docs/fehlersuche.md) | |
@@ -128,7 +129,7 @@ Alles auf einen Blick: [docs/](docs/README.md).
 
 - Home Assistant **2026.10** oder neuer
 - Melder mit offen/zu (Tür-, Fenster-, Bewegungsmelder …) – herstellerunabhängig
-- Optional: Sirenen (`siren`), Home-Assistant-App, Zigbee2MQTT für Keypads
+- Optional: Sirenen (`siren`, oder Schalter über einen Assistenten), Home-Assistant-App, Zigbee2MQTT für Keypads
 - Keine Cloud, keine weiteren Integrationen nötig
 
 ## Sicherheit

@@ -18,10 +18,31 @@ Nur möglich, wenn **alle Bereiche unscharf** sind.
 ## PIN und Bedienung
 
 **Das Dashboard fragt plötzlich nach einem PIN.**
-Sobald irgendein PIN existiert (auch der Master-PIN), verlangt das Bedienfeld ihn zum
-Unscharfschalten von allen. Abhilfe: allen einen PIN geben, oder unter PIN-Regeln „Dashboard-Knöpfe
-trotz PIN erlauben“ einschalten und die Hauswacht-Knöpfe statt der Alarmkarte verwenden. Siehe
+Sobald irgendein PIN existiert (auch der Master-PIN), verlangt das Bedienfeld von Home Assistant
+(Kachel, Alarm-Karte von Home Assistant) ihn zum Unscharfschalten von allen. Abhilfe: die Karte
+[„Hauswacht Alarm“](dashboard.md#karte-hauswacht-alarm) verwenden – sie schaltet für Konten, die
+einem Hauswacht-Benutzer zugeordnet sind, ohne PIN. Siehe auch
 [Benutzer](benutzer.md#das-wichtigste-vorab).
+
+**Die Karte „Hauswacht Alarm“ fragt bei mir nach dem PIN.**
+Sie fragt, wenn
+
+- dein Home-Assistant-Konto **keinem Hauswacht-Benutzer zugeordnet** ist (Benutzer und PINs →
+  Benutzer → „Home-Assistant-Konto (für Alarmkarte, Push-Knopf und Dashboard-Knöpfe)“) und unter PIN-Regeln „Alarmkarte: PIN für
+  Home-Assistant-Konten ohne Hauswacht-Benutzer verlangen“ an ist (Standard), oder
+- beim zugeordneten Benutzer **„In der Alarmkarte PIN verlangen“** an ist (gedacht für ein
+  Wandtablet).
+
+Scharfschalten fragt nur, wenn „PIN auch zum Scharfschalten verlangen“ an ist. Details:
+[Ohne PIN-Zwang](dashboard.md#ohne-pin-zwang).
+
+**Die Karte „Hauswacht Alarm“ zeigt „Dieses Konto darf die Alarmanlage nicht bedienen“.**
+Das Konto darf in Home Assistant das Bedienfeld nicht steuern (z. B. ein Konto mit
+Nur-Lese-Rechten). Ein Administrator kann das unter Einstellungen → Personen ändern.
+
+**Ein Knopf in der Alarmkarte ist ausgegraut.**
+Dem zugeordneten Benutzer fehlt das Recht dafür in diesem Bereich (Benutzer → Rechte), oder seine
+Gültigkeit ist abgelaufen.
 
 **„Zu viele falsche PIN-Eingaben“.**
 Die [Sperre](benutzer.md#sperre-nach-falschen-eingaben) läuft (1–15 Minuten). Administratoren
@@ -63,14 +84,27 @@ es den [RFID-Leser](bedienteile.md#rfid-leser) oder [NFC-Aufkleber](bedienteile.
 ## Sirenen
 
 **Bei einem Alarm ertönt keine Sirene.**
-Das Attribut `last_siren_decision` am Bedienfeld nennt den Grund. Häufig:
+Das Attribut `last_siren_decision` am Bedienfeld nennt den Grund – alle Gründe im Klartext unter
+[Warum hat eine Sirene nicht geklingelt?](sirenen.md#warum-hat-eine-sirene-nicht-geklingelt).
+Häufig:
 
 - Echte Sirenenansteuerung noch nicht freigegeben (Alarmgeber – Sirenen).
 - Testmodus an.
 - Profil auf „Stiller Alarm“ oder ohne Sirenen.
 - Brandsperre: ein Rauchmelder meldet Brand oder ist nicht verfügbar.
-- Die Sirene kann nur Brandtöne oder lässt sich nicht begrenzen, siehe
+- `no_burglar_tone`: Die Sirene hat eigene Tonnamen (z. B. Homematic IP Alarmsirene) – Ton unter
+  [Ton je Sirene](sirenen.md#ton-je-sirene) festlegen.
+- Die Sirene lässt sich nicht begrenzen, siehe
   [Welche Sirenen gehen?](sirenen.md#welche-sirenen-gehen).
+
+**Meine Sirene gibt es in Home Assistant nur als Schalter.**
+Mit dem Assistenten [Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)
+wird daraus eine Sirene. Alternativ die
+[Experten-Funktion](sirenen.md#experten-schalter-direkt-als-sirene).
+
+**Ton je Sirene: „Ein Brandton ist für Einbruch gesperrt“.**
+Gewollt – siehe [Brandton als Experten-Freigabe](sirenen.md#brandton-als-experten-freigabe). Bei
+Rauchmeldern ist ein Brandton für Einbruch nie möglich.
 
 ## Melder
 
@@ -89,6 +123,21 @@ empfiehlt einen passenden Wert.
 
 **Eine Hauswacht-Karte zeigt nach einem Update die alte Version.**
 Seite neu laden; in der App Einstellungen → Companion App → Frontend-Cache zurücksetzen.
+
+**Beim Bearbeiten einer Karte steht „Visueller Editor wird nicht unterstützt“.**
+Das betrifft Versionen vor 0.37. Nach dem Update die Seite neu laden (siehe oben).
+
+**Die Übersicht zeigt „nur für Administratoren“.**
+Die [Anlagenübersicht](uebersicht.md) enthält Sicherheitsinformationen und ist deshalb nur für
+Administratoren.
+
+## Sprache
+
+**Meldungen kommen auf Englisch (oder Deutsch), ich möchte die andere Sprache.**
+Hauswacht folgt der Sprache von Home Assistant (Einstellungen → System → Allgemein → Sprache):
+Deutsch bei deutscher Einstellung, sonst Englisch. Meldungen folgen der Umstellung sofort;
+Entitätsnamen bleiben, wie sie beim Einrichten angelegt wurden. Eigene Texte werden so verschickt,
+wie sie eingetragen sind.
 
 ## Hilfe holen
 

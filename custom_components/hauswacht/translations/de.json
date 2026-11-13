@@ -223,7 +223,7 @@
           "can_arm": "Darf scharf schalten",
           "can_disarm": "Darf unscharf schalten",
           "can_end_alarm": "Darf Alarm beenden",
-          "ha_user": "Home-Assistant-Konto (für Push-Knopf und Dashboard-Knöpfe)",
+          "ha_user": "Home-Assistant-Konto (für Alarmkarte, Push-Knopf und Dashboard-Knöpfe)",
           "card_pin": "In der Alarmkarte PIN verlangen",
           "valid_from": "Gültig von",
           "valid_until": "Gültig bis",

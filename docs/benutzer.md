@@ -38,7 +38,7 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
 | RFID-Karten/-Anhänger | beliebig viele, siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen) |
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben („gemeinsamer PIN (Christian,
-  Petra)“). Eine Aktion ist erlaubt, wenn **mindestens einer** dieser Benutzer sie darf.
+  Petra)“, bei englischer Sprache „shared PIN (…)“). Eine Aktion ist erlaubt, wenn **mindestens einer** dieser Benutzer sie darf.
 - **Gesperrter oder abgelaufener Ausweis:** wird abgelehnt wie ein falscher; zusätzlich geht
   eine Systemmeldung „gesperrter Ausweis“ raus.
 - **Ohne PIN** (Push-Knopf, Dashboard-Knöpfe, NFC-Aufkleber): Ist das Home-Assistant-Konto einem

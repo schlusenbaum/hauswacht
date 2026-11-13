@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Sirenen-Seite überarbeitet: Überblick über das Sirenen-Menü, Einrichtung Schritt für Schritt,
+  Beispiele (Homematic IP Alarmsirene, Außensirene mit Ton „fire“, Sirene am Schaltaktor) und
+  eine Tabelle aller Gründe, warum eine Sirene nicht geklingelt hat.
+- Fehlersuche: Alarmkarte fragt nach PIN, ausgegraute Knöpfe, Sirene nur als Schalter,
+  gesperrter Brandton, Sprache der Meldungen.
+- Benutzerdialog: Das Feld „Home-Assistant-Konto“ nennt jetzt auch die Alarmkarte.
+
 ## [0.41.0] - 2026-11-13
 
 ### Hinzugefügt

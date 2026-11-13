@@ -223,7 +223,7 @@
           "can_arm": "May arm",
           "can_disarm": "May disarm",
           "can_end_alarm": "May end alarm",
-          "ha_user": "Home Assistant account (for push and dashboard buttons)",
+          "ha_user": "Home Assistant account (for alarm card, push and dashboard buttons)",
           "card_pin": "Require PIN in the alarm card",
           "valid_from": "Valid from",
           "valid_until": "Valid until",
