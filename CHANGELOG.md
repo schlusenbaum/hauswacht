@@ -7,8 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 
 ### Dokumentation
-- Knöpfe „In HACS öffnen“ und „Integration einrichten“ (My Home Assistant) in README und
-  Installationsanleitung.
+- Installation über den Marketplace (ab Home Assistant 2026.11) und HACS beschrieben, mit Knopf
+  „Integration einrichten“ (My Home Assistant) in README und Installationsanleitung.
 
 ## [0.35.1] - 2026-11-13
 

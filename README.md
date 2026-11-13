@@ -54,10 +54,14 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
 ## Schnellstart
 
-1. Hauswacht in HACS öffnen → **Herunterladen** → Home Assistant neu starten:
+1. **Repository einbinden** und Hauswacht herunterladen, danach Home Assistant neu starten:
+   - **Marketplace** (ab Home Assistant 2026.11): Einstellungen → Marketplace → hinzufügen per Link
+     (*Add from link*) → `https://github.com/schlusenbaum/hauswacht`
+   - **HACS** (bis 2026.10): HACS → ⋮ → **Benutzerdefinierte Repositories** → `https://github.com/schlusenbaum/hauswacht`,
+     Typ **Integration**
 
-   [![Hauswacht in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=schlusenbaum&repository=hauswacht&category=integration)
-
+   Hauswacht steht (noch) nicht im Katalog, daher der Umweg über den Link –
+   [Schritt für Schritt](docs/installation.md#installation).
 2. Hauswacht einrichten:
 
    [![Hauswacht einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)

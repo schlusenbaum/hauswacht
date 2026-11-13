@@ -7,7 +7,7 @@ erklären Einrichtung und Bedienung – von der Installation bis zum Keypad an d
 
 | Seite | Inhalt |
 |---|---|
-| [Installation und erste Schritte](installation.md) | Voraussetzungen, Installation über HACS, das Einstellungsmenü, der kürzeste Weg zur ersten Scharfschaltung, Updates |
+| [Installation und erste Schritte](installation.md) | Voraussetzungen, Installation über Marketplace oder HACS, das Einstellungsmenü, der kürzeste Weg zur ersten Scharfschaltung, Updates |
 | [Melder und Meldergruppen](melder.md) | Welche Sensoren gehen, Meldergruppen, Typen (Tür, Fenster, Bewegung …), immer aktive Melder, Funkstille, Funknetz und Gateways |
 | [Alarmprofile und Bereiche](profile.md) | Profile anlegen, Verzögerungen, Reaktion, Automatik, Scharf durch Schließen der Tür, mehrere Bereiche (z. B. Haus und Garage) |
 | [Auslöseregeln](ausloeseregeln.md) | Abfolgen wie „Tür, dann Keller“, Ausnahmen, Bedingungen, YAML-Expertenmodus |
