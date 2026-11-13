@@ -367,6 +367,11 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
             for e in options.get(OPT_INFRASTRUCTURE, [])
         ],
         "card_learn_minutes": learn_minutes(options),
+        "homecoming": {
+            "enabled": main.homecoming.enabled,
+            "days": round(main.homecoming.days(), 1),
+            "arrivals": main.homecoming.summary() or 0,
+        },
     }
 
 

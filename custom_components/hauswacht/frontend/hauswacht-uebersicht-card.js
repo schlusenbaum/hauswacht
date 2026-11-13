@@ -109,6 +109,10 @@ const LANG = {
     off: "aus",
     gateways: "Funknetz und Gateways",
     learn: "Anlernzeit für Karten",
+    homecoming: "Heimkehr-Beobachtung",
+    hcStatus: "{n} Heimkehrten in {d} Tagen",
+    hcReport: "Bericht",
+    hcTable: "Tabelle (CSV)",
     turnOff: "ausschalten",
     duration: "Dauer",
     printNote:
@@ -232,6 +236,10 @@ const LANG = {
     off: "off",
     gateways: "Networks and gateways",
     learn: "Card learning time",
+    homecoming: "Homecoming observation",
+    hcStatus: "{n} homecomings in {d} days",
+    hcReport: "Report",
+    hcTable: "Table (CSV)",
     turnOff: "turn off",
     duration: "duration",
     printNote:
@@ -321,6 +329,7 @@ const STYLE = `
   .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .head .t { font-size: 1.25rem; font-weight: 500; flex: 1; display: flex; align-items: center; gap: 10px; }
   .asof { color: var(--secondary-text-color); font-size: .85rem; margin: 2px 0 10px; }
+  .dl { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
   button.b { font: inherit; font-size: .9rem; padding: 6px 12px; border-radius: 18px; cursor: pointer;
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color); }
   button.b:hover { border-color: var(--primary-color); }
@@ -595,6 +604,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       [this._t("staleAfter"), esc(this._staleText(m))],
       [this._t("gateways"), m.infrastructure?.length ? m.infrastructure.map((i) => `${esc(i.name)} ${i.ok ? "✓" : "⚠️"}`).join(", ") : this._t("none")],
       [this._t("learn"), m.card_learn_minutes ? `${m.card_learn_minutes} min` : this._t("off")],
+      [this._t("homecoming"), this._homecomingRow(m.homecoming)],
     ]);
     const always = d.always_active || {};
     const alwaysSensors = d.sensors.filter((s) => s.always_active).map((s) => s.name);
@@ -638,6 +648,7 @@ class HauswachtUebersichtCard extends HTMLElement {
         if (a === "refresh") this._load();
         else if (a === "print") this._print(this._printHtml());
         else if (a === "sheet") this._print(this._sheetHtml());
+        else if (a === "hc-md" || a === "hc-csv") this._downloadHomecoming(a === "hc-csv" ? "csv" : "markdown");
       })
     );
   }
@@ -755,6 +766,36 @@ class HauswachtUebersichtCard extends HTMLElement {
       <h2>${this._t("sheetFire")}</h2>
       <ul><li>${esc(this._t("sheetFireText"))}</li></ul>
     </div>`;
+  }
+
+  _homecomingRow(h) {
+    if (!h) return this._t("none");
+    const status = h.enabled
+      ? esc(this._t("hcStatus").replace("{n}", h.arrivals).replace("{d}", Number(h.days).toLocaleString(this._lang === "de" ? "de-DE" : "en-GB")))
+      : this._t("off");
+    return `${status}<div class="dl"><button class="b" data-a="hc-md">⬇ ${this._t("hcReport")}</button>
+      <button class="b" data-a="hc-csv">⬇ ${this._t("hcTable")}</button></div>`;
+  }
+
+  async _downloadHomecoming(kind) {
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/homecoming/report" });
+      const csv = kind === "csv";
+      const blob = new Blob([csv ? r.csv : r.markdown], {
+        type: csv ? "text/csv;charset=utf-8" : "text/markdown;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${r.filename}.${csv ? "csv" : "md"}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      this._error = (err && err.message) || String(err);
+      this._render();
+    }
   }
 
   _print(content) {

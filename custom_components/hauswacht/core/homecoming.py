@@ -22,8 +22,10 @@ Bewertet wird pro Ankunft:
 
 from __future__ import annotations
 
+import csv
+import io
 import statistics
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -286,3 +288,74 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
             "recommended_entry_delay": recommended_entry_delay(max(done)) if done else None,
         }
     return result
+
+
+CSV_HEADER = (
+    "Art",
+    "Zeitpunkt",
+    "Wer / Quelle",
+    "Tür",
+    "Sekunden nach Öffnen",
+    "Abwesend (min)",
+    "Ergebnis",
+)
+
+
+def csv_rows(
+    verdicts: Iterable[Verdict],
+    timings: Iterable[EntryTiming],
+    names: Mapping[str, str],
+    local: Callable[[float], str],
+) -> list[tuple[str, ...]]:
+    """Alle Heimkehrten und Eingänge als Tabelle (älteste zuerst), zum Herunterladen.
+
+    ``local`` formatiert einen Zeitstempel (UTC-Sekunden) als Ortszeit.
+    """
+    rows: list[tuple[float, tuple[str, ...]]] = []
+    for v in verdicts:
+        door = names.get(v.door.sensor, v.door.sensor) if v.door else ""
+        delay = f"{v.delay:.0f}" if v.delay is not None else ""
+        result = describe(v, names).split(": ", 1)[-1]
+        rows.append(
+            (
+                v.arrival.at,
+                (
+                    "Heimkehr",
+                    local(v.arrival.at),
+                    names.get(v.arrival.source, v.arrival.source),
+                    door,
+                    delay,
+                    f"{v.arrival.away_seconds / 60:.0f}",
+                    result,
+                ),
+            )
+        )
+    for t in timings:
+        result = (
+            f"rechtzeitig unscharf (Verzögerung {t.delay} s)"
+            if t.in_time
+            else f"zu spät – Alarm (Verzögerung {t.delay} s)"
+        )
+        rows.append(
+            (
+                t.at,
+                (
+                    "Eingang",
+                    local(t.at),
+                    "",
+                    names.get(t.door, t.door),
+                    f"{t.seconds:.0f}",
+                    "",
+                    result,
+                ),
+            )
+        )
+    return [CSV_HEADER, *(row for _at, row in sorted(rows, key=lambda r: r[0]))]
+
+
+def to_csv(rows: Iterable[Sequence[str]]) -> str:
+    """CSV für Excel & Co. im deutschen Format: Semikolon, UTF-8 mit BOM."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=";", lineterminator="\r\n")
+    writer.writerows(rows)
+    return "﻿" + buffer.getvalue()

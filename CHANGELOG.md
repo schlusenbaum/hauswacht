@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-11-13
+
+### Hinzugefügt
+- **Heimkehr-Bericht zum Herunterladen:** In der Karte „Hauswacht Übersicht“ unter Überwachung
+  gibt es den Bericht als Markdown-Datei und alle Einzelwerte als **Tabelle (CSV)** – jede
+  Heimkehr und jeder Eingang mit Zeitpunkt, Quelle, Tür, Sekunden nach dem Öffnen, Abwesenheit
+  und Ergebnis. Die CSV öffnet sich direkt in Excel (Semikolon, UTF-8).
+- Die Benachrichtigung des Knopfs „Heimkehr-Bericht“ weist auf den Download hin.
+- WebSocket-Befehl `hauswacht/homecoming/report` (nur Administratoren).
+
 ### Dokumentation
 - README schlanker: die Befehle für Entwickler stehen jetzt nur noch unter
   [Tests](docs/entwicklung/testing.md).

@@ -30,6 +30,11 @@ Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
   stehen im Attribut `sources`, die letzten zehn Heimkehrten im Attribut `recent`, die Zeiten
   „Tür auf bis unscharf“ im Attribut `entry_times`.
 - **Knopf „Heimkehr-Bericht“**: erstellt eine Übersicht als Benachrichtigung in Home Assistant.
+- **Herunterladen:** Karte [„Hauswacht Übersicht“](uebersicht.md) → Abschnitt **Überwachung** →
+  - **Bericht** – derselbe Bericht als Markdown-Datei, dazu die letzten Heimkehrten;
+  - **Tabelle (CSV)** – jede einzelne Heimkehr und jeder Eingang als Zeile: Zeitpunkt, Person
+    und Quelle, Tür, Sekunden nach dem Öffnen, wie lange die Person weg war, Ergebnis. Die
+    Datei öffnet sich direkt in Excel, Numbers oder LibreOffice (Semikolon, Umlaute korrekt).
 - Gespeichert werden nur Zeitpunkte, höchstens 60 Tage lang.
 
 Nach zwei bis vier Wochen zeigt der Bericht, ob eine Heimkehr-Automatik bei euch zuverlässig
