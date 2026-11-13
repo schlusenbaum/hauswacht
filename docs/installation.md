@@ -6,7 +6,8 @@
 ## Voraussetzungen
 
 - Home Assistant **2026.10** oder neuer
-- [HACS](https://hacs.xyz) (empfohlen) oder manuelle Installation
+- Marketplace (ab Home Assistant 2026.11), [HACS](https://hacs.xyz) (bis 2026.10) oder manuelle
+  Installation
 - Sensoren mit „offen/zu“ in Home Assistant (Tür-, Fenster-, Bewegungsmelder …)
 - Optional: Sirenen (`siren.…`), die Home-Assistant-App für Push-Nachrichten, Zigbee2MQTT für
   Keypads
@@ -15,22 +16,44 @@ Hauswacht braucht keine Cloud und keine weiteren Integrationen.
 
 ## Installation
 
-**Über HACS:**
+Hauswacht steht (noch) nicht im Katalog von Marketplace bzw. HACS. Das Repository wird deshalb
+einmal über seinen Link eingebunden; danach kommen Updates wie gewohnt.
+
+**Marketplace** (Home Assistant 2026.11 und neuer):
+
+1. Einstellungen → **Marketplace**. Beim ersten Mal den Hinweis zu Community-Projekten lesen und
+   bestätigen.
+2. Hinzufügen per Link (*Add from link*) → `https://github.com/schlusenbaum/hauswacht`. Dafür
+   muss im Marketplace ein GitHub-Konto verbunden sein – Home Assistant fragt beim ersten Mal
+   danach.
+3. Hauswacht öffnen → **Herunterladen**.
+4. Home Assistant neu starten.
+
+**HACS** (bis Home Assistant 2026.10):
 
 1. HACS → Menü (⋮) → **Benutzerdefinierte Repositories** →
-   `https://github.com/schlusenbaum/hauswacht`, Typ **Integration**.
+   `https://github.com/schlusenbaum/hauswacht`, Typ **Integration** → Hinzufügen.
 2. Hauswacht suchen → **Herunterladen**.
 3. Home Assistant neu starten.
 
-HACS installiert die Datei `hauswacht.zip` aus dem jeweiligen
-[Release](https://github.com/schlusenbaum/hauswacht/releases). Neue Versionen erscheinen in HACS
-als Update.
+Wer von HACS kommt: Beim Wechsel auf 2026.11 übernimmt der Marketplace die installierten
+Repositories, Hauswacht muss nicht neu eingebunden werden.
+
+Installiert wird die Datei `hauswacht.zip` aus dem jeweiligen
+[Release](https://github.com/schlusenbaum/hauswacht/releases). Neue Versionen erscheinen als
+Update.
 
 **Manuell:** `hauswacht.zip` aus dem neuesten
 [Release](https://github.com/schlusenbaum/hauswacht/releases) nach
 `/config/custom_components/hauswacht` entpacken und Home Assistant neu starten.
 
-**Danach:** Einstellungen → Geräte & Dienste → **Integration hinzufügen → Hauswacht**.
+**Einrichten:** Der Knopf öffnet die eigene Home-Assistant-Instanz direkt beim Einrichten von
+Hauswacht (beim ersten Mal fragt [My Home Assistant](https://my.home-assistant.io) einmal nach
+deren Adresse):
+
+[![Hauswacht einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)
+
+Oder von Hand: Einstellungen → Geräte & Dienste → **Integration hinzufügen → Hauswacht**.
 Hauswacht lässt sich nur einmal einrichten; mehrere Anlagenteile werden über
 [Bereiche](profile.md#bereiche) abgebildet.
 
@@ -99,7 +122,7 @@ PIN-Eingaben beginnt bei null.
 
 ## Updates
 
-- Updates kommen über HACS. Danach Home Assistant neu starten.
+- Updates kommen über den Marketplace bzw. HACS. Danach Home Assistant neu starten.
 - Die eigenen Karten werden automatisch neu geladen; zeigt eine Karte noch die alte Version,
   die Seite neu laden (in der App: Einstellungen → Companion App → Frontend-Cache
   zurücksetzen).
@@ -115,6 +138,6 @@ Besondere Hinweise für sehr alte Versionen:
 
 ## Entfernen
 
-Einstellungen → Geräte & Dienste → Hauswacht → ⋮ → **Löschen**, danach in HACS entfernen.
+Einstellungen → Geräte & Dienste → Hauswacht → ⋮ → **Löschen**, danach im Marketplace bzw. in HACS entfernen.
 Hauswacht hat nichts an Geräten, Automationen oder Skripten verändert; es bleibt nichts zurück
 außer eventuell selbst angelegten Schwellenwert-Helfern (unter Helfer).
