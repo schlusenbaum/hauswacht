@@ -11,7 +11,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.36.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
+> **Status: 0.37.0 – Entwicklungsversion**, im eigenen Haus im Einsatz. Die echte
 > Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst freigegeben werden.
 
 <p align="center">

@@ -11,6 +11,7 @@ from custom_components.hauswacht.frontend import (
     CARD_FILE,
     CARD_FILES,
     DATA_KEY,
+    EDITOR_FILE,
     TEST_CARD_FILE,
     async_register_card,
 )
@@ -62,3 +63,21 @@ def test_card_file_defines_custom_element() -> None:
     assert "window.customCards" in source
     # Regression 0.15.0: formatEntityName lieferte je nach Version nur "entity"
     assert "formatEntityName(" not in source
+
+
+def test_every_card_has_visual_editor() -> None:
+    assert CARD_FILES[0] == EDITOR_FILE  # gemeinsamer Editor zuerst
+    for name in CARD_FILES[1:]:
+        source = _source(name)
+        assert "static getConfigElement()" in source, name
+        assert "static editorSchema(" in source, name
+    assert 'customElements.define("hauswacht-card-editor"' in _source(EDITOR_FILE)
+
+
+def test_alarm_card_editor_keeps_safety_out_of_card_config() -> None:
+    """Unscharf/Alarm beenden nicht ausblendbar, PIN-Regeln nicht in der Karte."""
+    source = _source("hauswacht-alarm-card.js")
+    start = source.index("const DEFAULTS = {")
+    defaults = source[start : source.index("};", start)]
+    for forbidden in ("pin", "unscharf_knopf", "alarm_beenden", "end_alarm"):
+        assert forbidden not in defaults, forbidden
