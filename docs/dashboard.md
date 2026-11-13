@@ -104,13 +104,8 @@ die Profilauswahl.
 ![Karte Hauswacht Alarm: unscharf, wird scharf, PIN-Eingabe, Alarm](images/alarm-karte.png)
 
 Die Karte zum Bedienen – gemacht fürs Tablet an der Wand, passt sich aber auch dem Handy an.
-Dashboard bearbeiten → **Karte hinzufügen** → **„Hauswacht Alarm“** – oder in YAML:
-
-```yaml
-type: custom:hauswacht-alarm-card
-bereich: garage   # optional: nur diesen Bereich zeigen (Kennung oder Name)
-title: Alarm      # optional
-```
+Dashboard bearbeiten → **Karte hinzufügen** → **„Hauswacht Alarm“**. Alles Weitere stellst du
+im **visuellen Editor** der Karte ein (siehe [Karte anpassen](#karte-anpassen)).
 
 | Zustand | Anzeige | Knöpfe |
 |---|---|---|
@@ -124,12 +119,45 @@ PIN-Sperre. Mit mehreren Bereichen steht jeder Bereich untereinander, dazu „Al
 unscharf“.
 
 Die Farben sind fest (grün unscharf, orange Verzögerung, rot scharf, leuchtend rot Alarm) und
-folgen nicht den Zustandsfarben von Home Assistant. Wer andere möchte, setzt im Theme
-`hauswacht-disarmed-color`, `hauswacht-pending-color`, `hauswacht-armed-color` bzw.
-`hauswacht-alarm-color`.
+folgen nicht den Zustandsfarben von Home Assistant – ändern lassen sie sich in der Karte oder im
+Theme.
 
 Verlangt ein Profil bei offenen Meldern eine Bestätigung, nennt die Karte die Melder und bietet
 **„Trotzdem scharf schalten“** an – statt nur eine Fehlermeldung zu zeigen.
+
+### Karte anpassen
+
+Im visuellen Editor (Karte bearbeiten) – oder in YAML:
+
+| Einstellung | YAML | Standard |
+|---|---|---|
+| Titel | `title: Alarm` | keiner |
+| Bereich (nur mit mehreren Bereichen) | `bereich: garage` (Kennung oder Name) | alle |
+| Größe: groß fürs Tablet oder kompakt (eine Zeile Zustand, kleinere Knöpfe) | `groesse: kompakt` | `gross` |
+| **Profilknöpfe:** welche, in welcher Reihenfolge | `profile: [night, away]` | alle, wie angelegt |
+| Knöpfe je Zeile | `spalten: 2` (1–4) | automatisch |
+| Wer zuletzt geschaltet hat | `zeige_zuletzt: false` | an |
+| Offene Melder (unscharf) | `zeige_offen: false` | an |
+| Nicht erreichbare Melder | `zeige_nicht_erreichbar: false` | an |
+| Hinweis Testmodus | `zeige_testmodus: false` | an |
+| Ablaufender Balken bei Verzögerung | `zeige_balken: false` | an |
+| Knopf „Alle Bereiche unscharf“ | `zeige_alle_unscharf: false` | an |
+| Blinken bei Alarm | `blinken: false` | an |
+| **Farben** je Zustand | `farbe_unscharf`, `farbe_verzoegerung`, `farbe_scharf`, `farbe_alarm`, z. B. `"#1565c0"` | grün, orange, rot, leuchtend rot |
+| **Rückfrage** vor dem Scharfschalten („Nacht scharf schalten?“) | `rueckfrage_scharf: true` | aus |
+| **Rückfrage** vor dem Unscharfschalten | `rueckfrage_unscharf: true` | aus |
+
+- **Ausgeblendete Profile** lassen sich mit dieser Karte nur nicht schalten – z. B. am
+  Flur-Tablet nur „Abwesend“ und „Nacht“, auf dem Handy alle.
+- **Rückfragen** schützen vor versehentlichem Tippen (Wandtablet, Hosentasche, Kinder). Wird ein
+  PIN verlangt, gibt es keine zusätzliche Frage – der PIN ist schon die Bestätigung.
+- **Farben fürs ganze Haus** statt je Karte: im Theme `hauswacht-disarmed-color`,
+  `hauswacht-pending-color`, `hauswacht-armed-color`, `hauswacht-alarm-color`. Eine Farbe in der
+  Karte hat Vorrang.
+- **Bewusst nicht einstellbar:** „Unscharf schalten“ und „Alarm beenden“ lassen sich nicht
+  ausblenden, und ob die Karte nach dem PIN fragt, steht nicht in der Karte, sondern in
+  Hauswacht ([Ohne PIN-Zwang](#ohne-pin-zwang)) – die Kartenkonfiguration kann jeder ändern, der
+  das Dashboard bearbeiten darf.
 
 ### Ohne PIN-Zwang
 
@@ -167,7 +195,7 @@ Dashboard bearbeiten → **Karte hinzufügen** → **„Hauswacht Einstellungen�
 
 ```yaml
 type: custom:hauswacht-einstellungen-card
-title: Einstellungen   # optional
+title: Einstellungen   # optional, auch im visuellen Editor
 ```
 
 Die Karte zeigt die [Profil-Einstellungen](#profil-einstellungen-im-dashboard) des gewählten

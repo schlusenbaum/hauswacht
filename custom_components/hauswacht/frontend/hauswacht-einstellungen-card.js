@@ -91,6 +91,20 @@ class HauswachtEinstellungenCard extends HTMLElement {
     return {};
   }
 
+  // Visueller Editor: nur der Titel
+  static getConfigElement() {
+    return window.hauswachtEditor("hauswacht-einstellungen-card");
+  }
+
+  static editorSchema(hass, info, lang) {
+    const de = lang === "de";
+    return {
+      schema: [{ name: "title", selector: { text: {} } }],
+      labels: { title: de ? "Titel" : "Title" },
+      helpers: { title: de ? "Leer = „Hauswacht Einstellungen“" : "Empty = “Hauswacht settings”" },
+    };
+  }
+
   getCardSize() {
     return 10;
   }

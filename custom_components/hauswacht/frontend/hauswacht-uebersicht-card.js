@@ -409,6 +409,20 @@ class HauswachtUebersichtCard extends HTMLElement {
     return {};
   }
 
+  // Visueller Editor: nur der Titel
+  static getConfigElement() {
+    return window.hauswachtEditor("hauswacht-uebersicht-card");
+  }
+
+  static editorSchema(hass, info, lang) {
+    const de = lang === "de";
+    return {
+      schema: [{ name: "title", selector: { text: {} } }],
+      labels: { title: de ? "Titel" : "Title" },
+      helpers: { title: de ? "Leer = „Hauswacht Übersicht“" : "Empty = “Hauswacht overview”" },
+    };
+  }
+
   getCardSize() {
     return 6;
   }

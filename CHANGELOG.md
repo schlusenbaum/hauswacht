@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-11-13
+
+### Hinzugefügt
+- **Visueller Editor für alle Hauswacht-Karten** – kein „Visueller Editor wird nicht
+  unterstützt“ mehr.
+- **Karte „Hauswacht Alarm“ anpassbar:**
+  - Bereich, Größe (groß fürs Tablet oder kompakt)
+  - welche Profilknöpfe in welcher Reihenfolge, Knöpfe je Zeile
+  - was angezeigt wird: wer zuletzt geschaltet hat, offene und nicht erreichbare Melder,
+    Testmodus, Countdown-Balken, „Alle Bereiche unscharf“, Blinken bei Alarm
+  - eigene Farben je Zustand (Vorrang vor dem Theme)
+  - Rückfrage vor dem Scharf- bzw. Unscharfschalten, z. B. fürs Wandtablet (Standard aus; mit
+    PIN keine zusätzliche Frage)
+- „Unscharf schalten“, „Alarm beenden“ und die PIN-Regeln bleiben bewusst nicht einstellbar.
+
 ## [0.36.0] - 2026-11-13
 
 ### Hinzugefügt

@@ -6,8 +6,17 @@
  * Rechte – ein PIN wird nur verlangt, wo es eingestellt ist (z. B. für ein Wandtablet).
  *
  *   type: custom:hauswacht-alarm-card
- *   bereich: garage   # optional: nur dieser Bereich (Kennung oder Name)
- *   title: Alarm      # optional
+ *   title: Alarm                # optional
+ *   bereich: garage             # optional: nur dieser Bereich (Kennung oder Name)
+ *   groesse: kompakt            # gross (Standard) | kompakt
+ *   profile: [night, away]      # optional: nur diese Profilknöpfe, in dieser Reihenfolge
+ *   spalten: 2                  # optional: Knöpfe je Zeile (1–4), sonst automatisch
+ *   zeige_zuletzt: false        # zeige_offen, zeige_nicht_erreichbar, zeige_testmodus,
+ *                               # zeige_balken, zeige_alle_unscharf, blinken (Standard an)
+ *   farbe_scharf: "#1565c0"     # farbe_unscharf, farbe_verzoegerung, farbe_alarm
+ *   rueckfrage_scharf: true     # rueckfrage_unscharf (Standard aus)
+ *
+ * Alles lässt sich auch im visuellen Editor einstellen.
  *
  * Wird von der Integration automatisch geladen.
  */
@@ -41,6 +50,9 @@ const TEXT = {
     noProfiles: "Keine Alarmprofile angelegt.",
     notAllowed: "nicht erlaubt",
     done: { arm: "Wird scharf geschaltet", disarm: "Unscharf geschaltet", end_alarm: "Alarm beendet" },
+    askArm: "{p} scharf schalten?",
+    askDisarm: "Wirklich unscharf schalten?",
+    doArm: "Scharf schalten",
   },
   en: {
     disarmed: "Disarmed",
@@ -70,6 +82,9 @@ const TEXT = {
     noProfiles: "No alarm profiles yet.",
     notAllowed: "not allowed",
     done: { arm: "Arming", disarm: "Disarmed", end_alarm: "Alarm ended" },
+    askArm: "Arm {p}?",
+    askDisarm: "Really disarm?",
+    doArm: "Arm",
   },
 };
 
@@ -93,6 +108,7 @@ const STYLE = `
     --hw-off: var(--disabled-color, #9e9e9e);
   }
   ha-card { overflow: hidden; }
+  .root { display: contents; }
   .title { padding: 16px 20px 0; font-size: 1.25rem; font-weight: 500; }
   .area + .area { border-top: 1px solid var(--divider-color); }
   .band {
@@ -106,6 +122,7 @@ const STYLE = `
   .band.unavailable { --c: var(--hw-off); }
   @keyframes pulse { 50% { filter: brightness(1.25); } }
   @media (prefers-reduced-motion: reduce) { .band.triggered { animation: none; } }
+  .no-pulse .band.triggered { animation: none; }
   .band ha-icon { --mdc-icon-size: 56px; flex: none; }
   .state { min-width: 0; flex: 1; }
   .word { font-size: 2.1rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
@@ -152,12 +169,24 @@ const STYLE = `
   }
   button.plain.primary { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
   .empty { padding: 20px; }
+  /* Kompakt: eine Zeile Zustand, kleinere Knöpfe */
+  .compact .band { padding: 12px 16px; gap: 12px; }
+  .compact .band ha-icon { --mdc-icon-size: 32px; }
+  .compact .word { font-size: 1.3rem; }
+  .compact .sub { margin-top: 2px; font-size: 0.85rem; }
+  .compact .clock { font-size: 1.5rem; }
+  .compact .drain { height: 3px; }
+  .compact .notes { padding: 8px 16px 0; font-size: 0.9rem; }
+  .compact .actions { padding: 10px 16px 14px; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .compact button.act { min-height: 48px; font-size: 1rem; border-radius: 12px; gap: 8px; }
+  .compact button.act ha-icon { --mdc-icon-size: 22px; }
+  .compact button.act.wide { min-height: 52px; font-size: 1.05rem; }
   @media (max-width: 420px) {
     .band { padding: 18px 16px; gap: 12px; }
     .band ha-icon { --mdc-icon-size: 40px; }
     .word { font-size: 1.6rem; }
     .clock { font-size: 1.9rem; }
-    .actions { padding: 14px 16px 16px; grid-template-columns: 1fr 1fr; }
+    .actions:not(.fixed) { padding: 14px 16px 16px; grid-template-columns: 1fr 1fr; }
     button.act { min-height: 64px; font-size: 1rem; }
     .keys { grid-template-columns: repeat(3, 68px); }
     button.key { width: 68px; height: 68px; }
@@ -167,12 +196,199 @@ const STYLE = `
 const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+const DEFAULTS = {
+  groesse: "gross",
+  zeige_zuletzt: true,
+  zeige_offen: true,
+  zeige_nicht_erreichbar: true,
+  zeige_testmodus: true,
+  zeige_balken: true,
+  zeige_alle_unscharf: true,
+  blinken: true,
+  rueckfrage_scharf: false,
+  rueckfrage_unscharf: false,
+};
+const SHOW_KEYS = ["zeige_zuletzt", "zeige_offen", "zeige_nicht_erreichbar", "zeige_testmodus", "zeige_balken", "zeige_alle_unscharf", "blinken"];
+const COLORS = {
+  farbe_unscharf: "--hw-ok",
+  farbe_verzoegerung: "--hw-wait",
+  farbe_scharf: "--hw-armed",
+  farbe_alarm: "--hw-alarm",
+};
+
+// Farbe aus der Konfiguration: #rrggbb, [r, g, b], rgb(…) oder Farbname – sonst ignorieren
+const cssColor = (value) => {
+  if (Array.isArray(value) && value.length === 3 && value.every((n) => Number.isFinite(Number(n)))) {
+    return `rgb(${value.map((n) => Math.max(0, Math.min(255, Math.round(Number(n))))).join(", ")})`;
+  }
+  const v = String(value ?? "").trim();
+  if (/^#[0-9a-f]{3,8}$/i.test(v) || /^rgba?\([0-9.,\s%]+\)$/i.test(v) || /^[a-z]{3,20}$/i.test(v)) return v;
+  return null;
+};
+const toHex = (rgb) => `#${rgb.map((n) => Math.max(0, Math.min(255, Math.round(Number(n)))).toString(16).padStart(2, "0")).join("")}`;
+const toRgb = (value) => {
+  if (Array.isArray(value)) return value;
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(value || ""));
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : undefined;
+};
+
+const EDITOR_TEXT = {
+  de: {
+    title: "Titel",
+    bereich: "Bereich",
+    all: "Alle Bereiche",
+    groesse: "Größe",
+    gross: "Groß (Tablet)",
+    kompakt: "Kompakt",
+    secProfiles: "Profilknöpfe",
+    profile: "Profile und Reihenfolge",
+    profileHelp: "Keine Auswahl = alle Profile. Ausgeblendete Profile lassen sich hier nur nicht schalten.",
+    spalten: "Knöpfe je Zeile",
+    auto: "Automatisch",
+    secShow: "Anzeigen",
+    zeige_zuletzt: "Wer zuletzt geschaltet hat",
+    zeige_offen: "Offene Melder (unscharf)",
+    zeige_nicht_erreichbar: "Nicht erreichbare Melder",
+    zeige_testmodus: "Hinweis Testmodus",
+    zeige_balken: "Ablaufender Balken bei Verzögerung",
+    zeige_alle_unscharf: "Knopf „Alle Bereiche unscharf“",
+    blinken: "Blinken bei Alarm",
+    secColors: "Farben",
+    colorsHelp: "Leer = Standardfarbe",
+    farbe_unscharf: "Unscharf",
+    farbe_verzoegerung: "Verzögerung",
+    farbe_scharf: "Scharf",
+    farbe_alarm: "Alarm",
+    secUse: "Bedienung",
+    rueckfrage_scharf: "Rückfrage vor dem Scharfschalten",
+    rueckfrage_unscharf: "Rückfrage vor dem Unscharfschalten",
+    useHelp: "Gegen versehentliches Tippen, z. B. am Wandtablet. Wird ein PIN verlangt, gibt es keine zusätzliche Frage.",
+  },
+  en: {
+    title: "Title",
+    bereich: "Area",
+    all: "All areas",
+    groesse: "Size",
+    gross: "Large (tablet)",
+    kompakt: "Compact",
+    secProfiles: "Profile buttons",
+    profile: "Profiles and order",
+    profileHelp: "No selection = all profiles. Hidden profiles just can't be armed from this card.",
+    spalten: "Buttons per row",
+    auto: "Automatic",
+    secShow: "Show",
+    zeige_zuletzt: "Who switched last",
+    zeige_offen: "Open sensors (disarmed)",
+    zeige_nicht_erreichbar: "Unreachable sensors",
+    zeige_testmodus: "Test mode notice",
+    zeige_balken: "Countdown bar during delays",
+    zeige_alle_unscharf: "Button “Disarm all areas”",
+    blinken: "Flash during alarm",
+    secColors: "Colors",
+    colorsHelp: "Empty = default color",
+    farbe_unscharf: "Disarmed",
+    farbe_verzoegerung: "Delay",
+    farbe_scharf: "Armed",
+    farbe_alarm: "Alarm",
+    secUse: "Operation",
+    rueckfrage_scharf: "Ask before arming",
+    rueckfrage_unscharf: "Ask before disarming",
+    useHelp: "Against accidental taps, e.g. on a wall tablet. No extra question when a PIN is required.",
+  },
+};
+
 class HauswachtAlarmCard extends HTMLElement {
+  // --- Visueller Editor ----------------------------------------------------------
+
+  static getConfigElement() {
+    return window.hauswachtEditor("hauswacht-alarm-card");
+  }
+
+  static get editorNeedsInfo() {
+    return true;
+  }
+
+  static editorDefaults() {
+    return { ...DEFAULTS };
+  }
+
+  static editorSchema(hass, info, lang, config = {}) {
+    const t = EDITOR_TEXT[lang] || EDITOR_TEXT.en;
+    const areas = (info && info.areas) || [];
+    const many = areas.length > 1;
+    const chosen = String(config.bereich || "").toLowerCase();
+    const shown = chosen ? areas.filter((a) => a.id === chosen || a.name.toLowerCase() === chosen) : areas;
+    const profiles = shown.flatMap((a) =>
+      a.profiles.map((p) => ({ value: p.id, label: shown.length > 1 ? `${p.name} (${a.name})` : p.name })),
+    );
+    const bool = (name) => ({ name, selector: { boolean: {} } });
+    const schema = [
+      { name: "title", selector: { text: {} } },
+      ...(many
+        ? [{ name: "bereich", selector: { select: { mode: "dropdown", options: [{ value: "alle", label: t.all }, ...areas.map((a) => ({ value: a.id, label: a.name }))] } } }]
+        : []),
+      { name: "groesse", selector: { select: { mode: "list", options: [{ value: "gross", label: t.gross }, { value: "kompakt", label: t.kompakt }] } } },
+      {
+        type: "expandable",
+        name: "sec_profile",
+        title: t.secProfiles,
+        flatten: true,
+        schema: [
+          { name: "profile", selector: { select: { multiple: true, reorder: true, mode: "list", options: profiles } } },
+          { name: "spalten", selector: { select: { mode: "dropdown", options: [{ value: "auto", label: t.auto }, ...["1", "2", "3", "4"].map((v) => ({ value: v, label: v }))] } } },
+        ],
+      },
+      { type: "expandable", name: "sec_show", title: t.secShow, flatten: true, schema: SHOW_KEYS.map(bool) },
+      {
+        type: "expandable",
+        name: "sec_colors",
+        title: t.secColors,
+        flatten: true,
+        schema: Object.keys(COLORS).map((name) => ({ name, selector: { color_rgb: {} } })),
+      },
+      { type: "expandable", name: "sec_use", title: t.secUse, flatten: true, schema: [bool("rueckfrage_scharf"), bool("rueckfrage_unscharf")] },
+    ];
+    const labels = { ...t };
+    const helpers = {
+      profile: t.profileHelp,
+      farbe_alarm: t.colorsHelp,
+      rueckfrage_unscharf: t.useHelp,
+    };
+    return { schema, labels, helpers };
+  }
+
+  static editorToForm(config) {
+    const data = { ...DEFAULTS, ...config };
+    data.bereich = config.bereich || "alle";
+    data.spalten = config.spalten ? String(config.spalten) : "auto";
+    for (const key of Object.keys(COLORS)) data[key] = toRgb(config[key]);
+    return data;
+  }
+
+  static editorFromForm(data) {
+    const out = { ...data };
+    if (out.bereich === "alle") delete out.bereich;
+    if (!out.spalten || out.spalten === "auto") delete out.spalten;
+    else out.spalten = Number(out.spalten);
+    for (const key of Object.keys(COLORS)) {
+      if (Array.isArray(out[key])) out[key] = toHex(out[key]);
+    }
+    return out;
+  }
+
+  // --- Karte ---------------------------------------------------------------------
+
+  _opt(key) {
+    const value = this._config[key];
+    return value === undefined ? DEFAULTS[key] : value;
+  }
+
   setConfig(config) {
     this._config = config || {};
     this._ui = null; // { kind: "pin" | "confirm", area, action, profile, code, force, message }
     this._msg = null;
     this._signature = "";
+    if (this._hass) this._render();
   }
 
   static getStubConfig() {
@@ -284,14 +500,20 @@ class HauswachtAlarmCard extends HTMLElement {
       const st = this._hass.states[a.entity_id];
       return st ? [st.state, st.last_changed, JSON.stringify(st.attributes)] : ["?"];
     });
-    const signature = JSON.stringify([this._error, this._info, states, this._ui, this._msg, this._busy]);
+    const signature = JSON.stringify([this._config, this._error, this._info, states, this._ui, this._msg, this._busy]);
     if (signature === this._signature) return;
     this._signature = signature;
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
     }
-    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${this._body(areas)}</ha-card>`;
+    const classes = [this._opt("groesse") === "kompakt" ? "compact" : "", this._opt("blinken") ? "" : "no-pulse"].join(" ").trim();
+    const colors = Object.entries(COLORS)
+      .map(([key, prop]) => [prop, cssColor(this._config[key])])
+      .filter(([, color]) => color)
+      .map(([prop, color]) => `${prop}: ${color};`)
+      .join(" ");
+    this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card class="${classes}"><div class="root" style="${esc(colors)}">${this._body(areas)}</div></ha-card>`;
     this._updateClocks();
   }
 
@@ -303,7 +525,7 @@ class HauswachtAlarmCard extends HTMLElement {
     const blocks = areas.map((a) => this._area(a, areas.length > 1)).join("");
     const armedCount = areas.filter((a) => this._kind(this._hass.states[a.entity_id]) !== "disarmed").length;
     const all =
-      areas.length > 1 && armedCount > 1 && !this._ui
+      areas.length > 1 && armedCount > 1 && !this._ui && this._opt("zeige_alle_unscharf")
         ? `<div class="actions"><button class="act wide go" data-do="disarm-all"><ha-icon icon="mdi:shield-off"></ha-icon>${this._t("disarmAll")}</button></div>`
         : "";
     const msg = this._msg ? `<div class="msg ${this._msg.err ? "err" : ""}" role="status">${esc(this._msg.text)}</div>` : "";
@@ -321,12 +543,13 @@ class HauswachtAlarmCard extends HTMLElement {
       : "";
     const subParts = [];
     if (showName) subParts.push(esc(area.name));
-    if (attrs.changed_by) subParts.push(`${this._t("lastBy")}: ${esc(attrs.changed_by)}, ${esc(this._time(st.last_changed))}`);
+    if (attrs.changed_by && this._opt("zeige_zuletzt")) subParts.push(`${this._t("lastBy")}: ${esc(attrs.changed_by)}, ${esc(this._time(st.last_changed))}`);
     const timer = attrs.timer_ends_at && (kind === "arming" || kind === "pending");
     const band = `<div class="band ${kind}" data-area="${esc(area.id)}">
         <ha-icon icon="${ICONS[kind]}"></ha-icon>
         <div class="state"><div class="word">${esc(word)}${profile}</div>${subParts.length ? `<div class="sub">${subParts.join("<br>")}</div>` : ""}</div>
-        ${timer ? `<div class="clock" data-ends="${esc(attrs.timer_ends_at)}"></div><div class="drain" data-ends="${esc(attrs.timer_ends_at)}" data-from="${esc(st.last_changed)}"></div>` : ""}
+        ${timer ? `<div class="clock" data-ends="${esc(attrs.timer_ends_at)}"></div>` : ""}
+        ${timer && this._opt("zeige_balken") ? `<div class="drain" data-ends="${esc(attrs.timer_ends_at)}" data-from="${esc(st.last_changed)}"></div>` : ""}
       </div>`;
     const ui = this._ui && this._ui.area === area.id ? this._ui : null;
     return `<div class="area">${band}${this._notes(area, kind, attrs)}${ui ? this._dialog(ui) : this._buttons(area, kind)}</div>`;
@@ -334,14 +557,14 @@ class HauswachtAlarmCard extends HTMLElement {
 
   _notes(area, kind, attrs) {
     const notes = [];
-    if (attrs.test_mode) notes.push(["info", "mdi:test-tube", this._t("testMode")]);
+    if (attrs.test_mode && this._opt("zeige_testmodus")) notes.push(["info", "mdi:test-tube", this._t("testMode")]);
     if (kind === "triggered" && attrs.trigger_sensor) {
       notes.push(["", "mdi:alarm-light-outline", `<b>${this._t("trigger")}:</b> ${esc(this._nameOf(attrs.trigger_sensor))}`]);
     }
-    if (kind === "disarmed" && (attrs.open_sensors || []).length) {
+    if (kind === "disarmed" && this._opt("zeige_offen") && (attrs.open_sensors || []).length) {
       notes.push(["", "mdi:door-open", `<b>${this._t("open")}:</b> ${attrs.open_sensors.map((e) => esc(this._nameOf(e))).join(", ")}`]);
     }
-    if ((attrs.unavailable_sensors || []).length) {
+    if (this._opt("zeige_nicht_erreichbar") && (attrs.unavailable_sensors || []).length) {
       notes.push(["", "mdi:wifi-off", `<b>${this._t("unavailableSensors")}:</b> ${attrs.unavailable_sensors.map((e) => esc(this._nameOf(e))).join(", ")}`]);
     }
     if (attrs.code_locked_until && area.pin.disarm) {
@@ -354,10 +577,13 @@ class HauswachtAlarmCard extends HTMLElement {
   _buttons(area, kind) {
     const busy = this._busy ? "disabled" : "";
     if (kind === "unavailable") return "";
+    const cols = Number(this._config.spalten);
+    const grid = cols >= 1 && cols <= 4 ? ` fixed" style="grid-template-columns: repeat(${cols}, 1fr)` : "";
     if (kind === "disarmed") {
-      if (!area.profiles.length) return `<div class="empty">${this._t("noProfiles")}</div>`;
+      const profiles = this._profiles(area);
+      if (!profiles.length) return `<div class="empty">${this._t("noProfiles")}</div>`;
       const may = area.may.arm ? "" : "disabled";
-      return `<div class="actions">${area.profiles
+      return `<div class="actions${grid}">${profiles
         .map(
           (p) => `<button class="act" data-do="arm" data-area="${esc(area.id)}" data-profile="${esc(p.id)}" ${busy || may}>
             <ha-icon icon="${esc(p.icon || "mdi:shield-lock")}"></ha-icon><span>${esc(p.name)}</span></button>`,
@@ -376,7 +602,21 @@ class HauswachtAlarmCard extends HTMLElement {
     return `<div class="actions">${out.join("")}</div>`;
   }
 
+  // Profilknöpfe: alle, oder nur die gewählten in der gewählten Reihenfolge
+  _profiles(area) {
+    const wanted = Array.isArray(this._config.profile) ? this._config.profile.map(String) : [];
+    if (!wanted.length) return area.profiles;
+    const own = wanted.map((id) => area.profiles.find((p) => p.id === id)).filter(Boolean);
+    // Gilt die Auswahl nur für andere Bereiche, zeigt dieser Bereich alle seine Profile
+    return own.length ? own : area.profiles;
+  }
+
   _dialog(ui) {
+    if (ui.kind === "ask") {
+      return `<div class="pad"><div class="what">${esc(ui.question)}</div>
+        <div class="row"><button class="plain" data-do="cancel">${this._t("cancel")}</button>
+        <button class="plain primary" data-do="go">${esc(ui.yes)}</button></div></div>`;
+    }
     if (ui.kind === "confirm") {
       return `<div class="pad"><div class="what">${esc(ui.message)}</div>
         <div class="row"><button class="plain" data-do="cancel">${this._t("cancel")}</button>
@@ -425,6 +665,9 @@ class HauswachtAlarmCard extends HTMLElement {
       this._render();
     } else if (what === "submit") {
       this._submitPin();
+    } else if (what === "go") {
+      const { kind, question, yes, ...req } = this._ui;
+      this._run(req);
     } else if (what === "force") {
       const ui = this._ui;
       this._run({ ...ui, force: true });
@@ -473,7 +716,25 @@ class HauswachtAlarmCard extends HTMLElement {
       this._render();
       return;
     }
+    const ask = this._question(area, req);
+    if (ask) {
+      this._ui = { kind: "ask", ...req, ...ask };
+      this._render();
+      return;
+    }
     this._run(req);
+  }
+
+  // Rückfrage vor dem Schalten (nur ohne PIN – der PIN ist schon eine Bestätigung)
+  _question(area, req) {
+    if (req.action === "arm" && this._opt("rueckfrage_scharf")) {
+      const name = (area.profiles.find((p) => p.id === req.profile) || {}).name || "";
+      return { question: this._t("askArm").replace("{p}", name), yes: this._t("doArm") };
+    }
+    if (req.action === "disarm" && this._opt("rueckfrage_unscharf")) {
+      return { question: this._t("askDisarm"), yes: this._t("disarm") };
+    }
+    return null;
   }
 
   async _send(req) {
@@ -521,6 +782,12 @@ class HauswachtAlarmCard extends HTMLElement {
     if (needsPin) {
       // Ein PIN für alle: nacheinander mit demselben PIN
       this._ui = { kind: "pin", title: `${this._t("enterPin")} – ${this._t("disarmAll")}`, area: needsPin.id, action: "disarm", all: true, code: "" };
+      this._render();
+      return;
+    }
+    if (!areas.length) return;
+    if (this._opt("rueckfrage_unscharf")) {
+      this._ui = { kind: "ask", area: areas[0].id, action: "disarm", all: true, question: this._t("askDisarm"), yes: this._t("disarmAll") };
       this._render();
       return;
     }

@@ -18,7 +18,9 @@ CARD_FILE = "hauswacht-einstellungen-card.js"
 TEST_CARD_FILE = "hauswacht-test-card.js"
 OVERVIEW_CARD_FILE = "hauswacht-uebersicht-card.js"
 ALARM_CARD_FILE = "hauswacht-alarm-card.js"
-CARD_FILES = (CARD_FILE, TEST_CARD_FILE, OVERVIEW_CARD_FILE, ALARM_CARD_FILE)
+# Gemeinsamer visueller Editor aller Karten
+EDITOR_FILE = "hauswacht-editor.js"
+CARD_FILES = (EDITOR_FILE, CARD_FILE, TEST_CARD_FILE, OVERVIEW_CARD_FILE, ALARM_CARD_FILE)
 URL_BASE = "/hauswacht"
 DATA_KEY = "hauswacht_frontend_registered"
 
