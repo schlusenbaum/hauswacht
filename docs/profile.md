@@ -54,7 +54,7 @@ Im Profil, aufklappbar unter **Automatik**. Alle Felder sind optional – leer h
 | Scharf, wenn alle diese Personen weg sind | Sind alle gewählten Personen nicht zu Hause, wird nach der Wartezeit scharf geschaltet |
 | Wartezeit | Standard 15 Minuten. Kommt in dieser Zeit jemand zurück, wird nichts geschaltet |
 | Unscharf, wenn eine dieser Personen heimkommt | **Aus** (Standard), **Wie bisher** oder **Mit Türbeleg**, siehe [unten](#unscharf-bei-rückkehr) |
-| Türbeleg: Zeitfenster | Nur für „Mit Türbeleg“: so weit dürfen Rückkehr und Türöffnung auseinanderliegen. Standard 5 Minuten, 1–30 |
+| Türbeleg: so lange vor der Tür darf das Handy „zuhause“ melden | Nur für „Mit Türbeleg“. Standard 5 Minuten, 1–30. Verzögert den Alarm **nicht**, siehe [Was das Zeitfenster bedeutet](#was-das-zeitfenster-bedeutet) |
 
 Sicherheitsregeln:
 
@@ -120,6 +120,25 @@ Drei Stufen, Standard ist **Aus**:
 - *Einbruch:* Jemand öffnet die Tür, aber niemand ist heimgekommen → normale
   Eingangsverzögerung und Alarm.
 
+#### Was das Zeitfenster bedeutet
+
+Das Zeitfenster **verzögert den Alarm nie**. Wann der Alarm kommt, bestimmt allein die
+**Eingangsverzögerung** – genau wie ohne diese Funktion. Das Zeitfenster sagt nur, wie weit
+Ortung und Türöffnung auseinanderliegen dürfen, damit sie als **eine** Heimkehr zählen.
+
+Beispiel mit 30 Sekunden Eingangsverzögerung und 5 Minuten Zeitfenster:
+
+| Was passiert | Ergebnis |
+|---|---|
+| Handy meldet „zuhause“, 2 Minuten später geht die Tür auf | Beim Öffnen **sofort unscharf**, kein Countdown |
+| Handy meldet „zuhause“, erst 7 Minuten später geht die Tür auf | Zu lange her: normale Eingangsverzögerung, nach 30 s Alarm (wenn niemand unscharf schaltet) |
+| Tür geht auf, 20 s später meldet das Handy „zuhause“ | Nach 20 s **unscharf** (noch in der Eingangsverzögerung) |
+| Tür geht auf, das Handy meldet sich erst nach 45 s | Nach 30 s **Alarm** wie immer; das Handy beendet ihn nicht |
+| Tür geht auf, kein Handy meldet sich (Einbrecher, oder du ohne Handy) | Nach 30 s **Alarm** wie immer |
+
+Kurz: Das Handy darf sich bis zu 5 Minuten **vor** der Tür melden. Meldet es sich **nach** der
+Tür, muss das innerhalb der Eingangsverzögerung passieren.
+
 Genau genommen gilt:
 
 - **Heimkommen** heißt: Die Person war vorher sicher weg und ist jetzt zuhause. Wer die ganze
@@ -129,6 +148,7 @@ Genau genommen gilt:
 - Als Tür zählen alle **Eingangstüren** (Melder mit der Rolle „Eingang“). Eine Tür, die sofort
   Alarm auslöst, ist kein Beleg.
 - Ein laufender **Alarm** wird nie beendet.
+- Nach dem Unscharfschalten verfallen beide Belege; sie werden nicht für später gesammelt.
 
 **Welche Eingangsverzögerung brauche ich?** Kommt die Ortung erst nach dem Öffnen, muss die
 Eingangsverzögerung so lange reichen. Die [Heimkehr-Beobachtung](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg)

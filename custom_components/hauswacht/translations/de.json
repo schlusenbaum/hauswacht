@@ -76,12 +76,12 @@
               "auto_away_persons": "Scharf, wenn alle diese Personen weg sind",
               "auto_away_delay": "Wartezeit, bevor scharf geschaltet wird",
               "auto_arrival_mode": "Unscharf, wenn eine dieser Personen heimkommt",
-              "auto_arrival_window": "Türbeleg: Zeitfenster zwischen Rückkehr und Tür"
+              "auto_arrival_window": "Türbeleg: so lange vor der Tür darf das Handy „zuhause“ melden"
             },
             "data_description": {
               "auto_away_delay": "Handys, die nur über das WLAN erkannt werden, melden im Standby manchmal kurz „weg“. Die Wartezeit verhindert, dass dann versehentlich scharf geschaltet wird.",
               "auto_arrival_mode": "**Wie bisher:** nur wenn Hauswacht das Profil selbst scharf geschaltet hat und noch keine Tür aufging. **Mit Türbeleg:** Rückkehr UND Öffnen einer Eingangstür innerhalb des Zeitfensters, egal in welcher Reihenfolge – auch während der Eingangsverzögerung. Ein laufender Alarm wird nie beendet. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf.",
-              "auto_arrival_window": "Nur für „mit Türbeleg“. Standard 5 Minuten."
+              "auto_arrival_window": "Nur für „mit Türbeleg“, Standard 5 Minuten. Verzögert den Alarm **nicht**: Der kommt wie immer nach der Eingangsverzögerung. Beispiel: Das Handy meldet an der Straßenecke „zuhause“, 2 Minuten später geht die Haustür auf → sofort unscharf. Meldet sich das Handy erst nach der Tür, muss das innerhalb der Eingangsverzögerung passieren."
             }
           },
           "arm_on_close": {
@@ -1132,7 +1132,7 @@
         "name": "Wartezeit bei Abwesenheit"
       },
       "setting_auto_arrival_window": {
-        "name": "Türbeleg-Zeitfenster"
+        "name": "Türbeleg: Ortung vor der Tür"
       }
     },
     "time": {
