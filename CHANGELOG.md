@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.42.1] - 2026-11-15
+
+### Geändert
+- „Unscharf mit Türbeleg“: Das Zeitfenster heißt jetzt „so lange vor der Tür darf das Handy
+  ‚zuhause‘ melden“ (Entität `number.hauswacht_turbeleg_ortung_vor_der_tur`, vorher
+  `…_turbeleg_zeitfenster` – nur der Name für neue Installationen; bestehende Entitäts-IDs
+  bleiben). Die Beschreibung sagt deutlich: Das Zeitfenster verzögert den Alarm nicht.
+
+### Dokumentation
+- Profile: neuer Abschnitt „Was das Zeitfenster bedeutet“ mit Beispieltabelle (Handy vor bzw.
+  nach der Tür, ohne Handy); Fehlersuche präzisiert.
+
 ## [0.42.0] - 2026-11-15
 
 ### Neu

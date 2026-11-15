@@ -23,8 +23,9 @@ sind, und deren Zustand unter Entwicklerwerkzeuge → Zustände.
 
 **„Unscharf bei Rückkehr – mit Türbeleg“ schaltet nicht unscharf.**
 Es braucht beides: Die Person war vorher sicher **weg** und meldet jetzt **zuhause**, und eine
-**Eingangstür** (Rolle „Eingang“) geht auf – höchstens das Zeitfenster auseinander (Standard
-5 Minuten), solange das Profil scharf ist oder die Eingangsverzögerung läuft. Kam die Ortung
+**Eingangstür** (Rolle „Eingang“) geht auf – solange das Profil scharf ist oder die
+Eingangsverzögerung läuft. Die Ortung darf höchstens das Zeitfenster (Standard 5 Minuten)
+**vor** der Tür liegen; **nach** der Tür muss sie innerhalb der Eingangsverzögerung kommen. Kam die Ortung
 erst nach Ablauf der Eingangsverzögerung, läuft schon der Alarm – der wird nie automatisch
 beendet. Dann die Eingangsverzögerung verlängern; den nötigen Wert nennt der
 [Heimkehr-Bericht](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg). Unter Entwicklerwerkzeuge →

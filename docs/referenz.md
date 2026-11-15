@@ -38,7 +38,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `select.hauswacht_profil_bearbeiten` | Welches Profil die folgenden Entitäten zeigen und ändern |
 | `number.hauswacht_ausgangsverzogerung`, `number.hauswacht_eingangsverzogerung` | Verzögerungen |
 | `number.hauswacht_dauer_der_alarmreaktion`, `number.hauswacht_alarmzyklen` | Alarmreaktion |
-| `number.hauswacht_wartezeit_bei_abwesenheit`, `number.hauswacht_turbeleg_zeitfenster` | Automatik |
+| `number.hauswacht_wartezeit_bei_abwesenheit`, `number.hauswacht_turbeleg_ortung_vor_der_tur` | Automatik |
 | `select.hauswacht_unscharf_bei_ruckkehr` | Automatik: Aus, Wie bisher, Mit Türbeleg (ersetzt seit 0.42 den Schalter „Unscharf beim Heimkommen“) |
 | `select.hauswacht_offene_sensoren_beim_scharfschalten`, `select.hauswacht_ausgefallene_sensoren_beim_scharfschalten` | Verhalten beim Scharfschalten |
 | `select.hauswacht_sirenenton`, `select.hauswacht_sirenenlautstarke` | Sirene |

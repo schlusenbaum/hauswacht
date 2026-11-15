@@ -220,7 +220,7 @@ Kleinigkeiten lassen sich ohne den Einstellungsdialog ändern. Die Entitäten st
 1. **Profil bearbeiten** (`select.hauswacht_profil_bearbeiten`): welches Profil die folgenden
    Einstellungen zeigen und ändern.
 2. Zahlen: Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Alarmzyklen, Wartezeit
-   bei Abwesenheit, Türbeleg-Zeitfenster.
+   bei Abwesenheit, Türbeleg (Ortung vor der Tür).
 3. Auswahl: offene bzw. ausgefallene Sensoren beim Scharfschalten, Sirenenton, Lautstärke,
    Unscharf bei Rückkehr (Aus / Wie bisher / Mit Türbeleg).
 4. Schalter: Stiller Alarm, Sabotage löst Alarm aus.
