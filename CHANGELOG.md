@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Roadmap: zusätzliche Signale für die Profil-Automatik; Taster und Türschloss als Bedienteil
+  (Wünsche aus dem simon42-Forum).
+
 ## [0.41.2] - 2026-11-15
 
 ### Behoben
