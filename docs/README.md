@@ -1,7 +1,12 @@
 # Dokumentation
 
+**Deutsch** | [English](en/README.md)
+
 Hauswacht ist eine Einbruchmeldeanlage als Integration für Home Assistant. Diese Seiten
 erklären Einrichtung und Bedienung – von der Installation bis zum Keypad an der Wand.
+
+Die Anleitung gibt es auch [auf Englisch](en/README.md). Jede Seite verlinkt oben ihr
+Gegenstück in der anderen Sprache.
 
 ## Für Anwender
 
@@ -44,6 +49,6 @@ erklären Einrichtung und Bedienung – von der Installation bis zum Keypad an d
 | **Auslöseregel** | Alarm erst bei einer Abfolge von Meldern („Tür, dann Keller“) |
 | **Bereich** | Ein unabhängig scharf schaltbarer Teil der Anlage (z. B. Garage) |
 | **Bedienfeld** | Die Alarm-Entität in Home Assistant (`alarm_control_panel.hauswacht`) |
-| **Bedienteil** | Ein Gerät zum Bedienen: Keypad, NFC-Aufkleber, RFID-Leser |
-| **Ausweis** | PIN oder RFID-Karte eines Benutzers |
+| **Bedienteil** | Ein Gerät zum Bedienen: Keypad, NFC-Aufkleber, RFID-Leser, Taster, Türschloss |
+| **Ausweis** | PIN, RFID-Karte oder Schloss-Kennung eines Benutzers |
 | **Überbrückt** | Ein Melder wird vorübergehend nicht überwacht (z. B. offenes Fenster nach „Trotzdem scharf“) |

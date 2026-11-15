@@ -1,5 +1,7 @@
 # Sirenen
 
+**Deutsch** | [English](en/sirens.md)
+
 > **Sicherheit zuerst:** Nach der Installation sendet Hauswacht **keinen** Sirenenbefehl. Erst
 > die bewusste Freigabe („Echte Sirenenansteuerung erlauben“) schaltet das frei. Im Testmodus
 > sind Sirenen immer gesperrt. Ein Brand hat immer Vorrang.

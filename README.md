@@ -2,6 +2,8 @@
 
 # Hauswacht
 
+**Deutsch** | [English](README.en.md)
+
 [![Release](https://img.shields.io/github/v/release/schlusenbaum/hauswacht?include_prereleases&sort=semver)](https://github.com/schlusenbaum/hauswacht/releases)
 [![Downloads](https://img.shields.io/github/downloads/schlusenbaum/hauswacht/total?label=Downloads)](https://github.com/schlusenbaum/hauswacht/releases)
 [![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
@@ -11,48 +13,11 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.43.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.44.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
-<details>
-<summary><b>English summary</b></summary>
-
-**Hauswacht** ("house watch") is an intrusion alarm system for Home Assistant, currently in
-**beta**.
-
-- **Alarm profiles** instead of fixed modes ("Home", "Night", "Vacation" …), each with its own
-  sensors, delays, sirens and recipients; automatic arming by time or when everyone has left
-  (presence from several signals per person), disarm on arrival with door proof.
-- **Trigger rules** such as "door, then basement within 2 minutes", with exceptions and conditions.
-- **Areas** (house, garage …) armed independently.
-- **Users** with PIN and any number of RFID cards, rights per area, guests with validity,
-  duress PIN, lockout against guessing.
-- **Keypads** via Zigbee2MQTT with feedback on the device, NFC tags, RFID readers, buttons
-  (arm only) and door locks (e.g. Nuki: disarm when a known user unlocks).
-- **Sirens with fire lock:** never sounds or silences a siren while a smoke detector reports fire;
-  sirens are locked after installation until you release them.
-- **Test mode** that technically blocks sirens, plus a test card to simulate sensors.
-- **Dashboard cards:** alarm card (no forced PIN – the logged-in account is the credential),
-  settings, test, and a printable system overview with checks.
-
-Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
-buttons, announcements and reports – is available in **English and German** (following the
-language of Home Assistant). The **documentation is German only** for now – a translation is
-planned. Installation: add `https://github.com/schlusenbaum/hauswacht` as a custom repository
-(Marketplace: *Add from link*; HACS: *Custom repositories*, type *Integration*), download,
-restart, then add the integration. Questions and feedback in English are welcome in the
-[issues](https://github.com/schlusenbaum/hauswacht/issues).
-
-Built with a lot of help from AI: large parts of the code, tests and documentation were written
-by **Claude** (Anthropic), based on my ideas, concepts, safety rules and decisions. It is tested
-in my own home with real hardware (door/window contacts, motion and presence sensors, Zigbee
-keypad, sirens), and every change also has to pass the automated tests before it is merged.
-
-Not a certified security system – it does not replace a professional alarm system or tested
-smoke detectors.
-
-</details>
+**English:** [README in English](README.en.md) · [documentation in English](docs/en/README.md)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/schlusenbaum/hauswacht/main/docs/images/alarm-karte.png" alt="Karte Hauswacht Alarm: unscharf, wird scharf, PIN-Eingabe, Alarm" width="800">
@@ -67,7 +32,8 @@ smoke detectors.
 
 - **Alarmprofile statt fester Modi** – „Zuhause“, „Nacht“, „Urlaub“ … beliebig viele, jedes mit
   eigenen Meldergruppen, Verzögerungen, Sirenen und Empfängern. Automatisch scharf nach Uhrzeit
-  oder wenn alle weg sind.
+  oder wenn alle weg sind – mit Anwesenheit aus mehreren Signalen je Person (WLAN, Bluetooth,
+  Router, Nähe …) – und unscharf bei Rückkehr mit Türbeleg.
 - **Auslöseregeln** – Alarm erst bei einer Abfolge („Tür, dann Keller innerhalb von 2 Minuten“),
   mit Ausnahmen und Bedingungen; im Assistenten oder als YAML.
 - **Alarmkarte ohne PIN-Zwang** – große Karte fürs Tablet: Zustand mit Countdown, ein Knopf je
@@ -131,7 +97,8 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |
 | [Testmodus](docs/testmodus.md) · [Beobachtungen](docs/beobachtung.md) · [Referenz](docs/referenz.md) · [Fehlersuche](docs/fehlersuche.md) | |
 
-Alles auf einen Blick: [docs/](docs/README.md).
+Alles auf einen Blick: [docs/](docs/README.md). Die Anleitung gibt es auch
+[auf Englisch](docs/en/README.md).
 
 ## Voraussetzungen
 

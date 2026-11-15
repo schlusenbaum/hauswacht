@@ -1,5 +1,7 @@
 # Bedienung und Dashboard
 
+**Deutsch** | [English](en/dashboard.md)
+
 ## Scharf und unscharf schalten
 
 | Weg | Scharf | Unscharf |

@@ -27,6 +27,20 @@ def test_readme_status_matches_manifest() -> None:
     assert match.group(1) == _manifest_version()
 
 
+def test_english_readme_status_matches_manifest() -> None:
+    text = (ROOT / "README.en.md").read_text(encoding="utf-8")
+    match = re.search(r"\*\*Status: (\d+\.\d+\.\d+)", text)
+    assert match is not None
+    assert match.group(1) == _manifest_version()
+
+
+def test_english_installation_status_matches_manifest() -> None:
+    text = (ROOT / "docs" / "en" / "installation.md").read_text(encoding="utf-8")
+    match = re.search(r"\*\*As of (\d+\.\d+\.\d+):", text)
+    assert match is not None
+    assert match.group(1) == _manifest_version()
+
+
 def test_installation_status_matches_manifest() -> None:
     text = (ROOT / "docs" / "installation.md").read_text(encoding="utf-8")
     match = re.search(r"\*\*Stand (\d+\.\d+\.\d+):", text)

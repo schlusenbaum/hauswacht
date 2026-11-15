@@ -61,3 +61,64 @@ def test_every_doc_page_is_linked_from_the_index() -> None:
     pages = [p.name for p in (ROOT / "docs").glob("*.md") if p.name != "README.md"]
     missing = [page for page in pages if f"({page}" not in index]
     assert missing == []
+
+
+# --- Englische Dokumentation (docs/en) ------------------------------------------------
+
+# Deutsche Seite -> englische Seite. Neue Seiten hier eintragen – beide Sprachen gehören zusammen.
+PAGES = {
+    "README.md": "README.md",
+    "installation.md": "installation.md",
+    "melder.md": "sensors.md",
+    "profile.md": "profiles.md",
+    "ausloeseregeln.md": "trigger-rules.md",
+    "dashboard.md": "dashboard.md",
+    "benutzer.md": "users.md",
+    "bedienteile.md": "control-devices.md",
+    "sirenen.md": "sirens.md",
+    "benachrichtigungen.md": "notifications.md",
+    "testmodus.md": "test-mode.md",
+    "beobachtung.md": "observations.md",
+    "uebersicht.md": "overview.md",
+    "referenz.md": "reference.md",
+    "fehlersuche.md": "troubleshooting.md",
+    "roadmap.md": "roadmap.md",
+    "entwicklung/safety.md": "development/safety.md",
+}
+
+
+def test_every_german_page_has_an_english_page() -> None:
+    docs = ROOT / "docs"
+    german = {p.name for p in docs.glob("*.md")} | {"entwicklung/safety.md"}
+    assert sorted(german) == sorted(PAGES)
+    missing = [en for en in PAGES.values() if not (docs / "en" / en).exists()]
+    assert missing == []
+    extra = sorted(
+        str(p.relative_to(docs / "en"))
+        for p in (docs / "en").rglob("*.md")
+        if str(p.relative_to(docs / "en")) not in PAGES.values()
+    )
+    assert extra == []
+
+
+def test_language_switch_on_every_page() -> None:
+    """Jede Seite verlinkt oben ihr Gegenstück in der anderen Sprache."""
+    docs = ROOT / "docs"
+    problems: list[str] = []
+    for de, en in PAGES.items():
+        de_path, en_path = docs / de, docs / "en" / en
+        de_head = "\n".join(de_path.read_text(encoding="utf-8").splitlines()[:4])
+        en_head = "\n".join(en_path.read_text(encoding="utf-8").splitlines()[:4])
+        back = Path("..").joinpath(*([".."] * en.count("/")), de).as_posix()
+        forward = Path(*([".."] * de.count("/")), "en", en).as_posix()
+        if f"]({forward})" not in de_head:
+            problems.append(f"{de}: Link auf {forward} fehlt oben")
+        if f"]({back})" not in en_head:
+            problems.append(f"en/{en}: Link auf {back} fehlt oben")
+    assert problems == []
+
+
+def test_every_english_page_is_linked_from_the_english_index() -> None:
+    index = (ROOT / "docs" / "en" / "README.md").read_text(encoding="utf-8")
+    missing = [en for en in PAGES.values() if en != "README.md" and f"({en}" not in index]
+    assert missing == []

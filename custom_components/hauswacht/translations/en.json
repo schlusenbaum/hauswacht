@@ -247,7 +247,7 @@
         "menu_options": {
           "areas": "Areas (e.g. house, garage, garden shed)",
           "users": "Users and PINs",
-          "controls": "Control devices (keypads, NFC stickers, RFID readers)",
+          "controls": "Control devices (keypads, NFC, RFID, buttons, door locks)",
           "sensor_behaviour": "Sensor radio silence",
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Presence and homecoming observation",

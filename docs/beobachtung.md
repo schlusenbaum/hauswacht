@@ -1,5 +1,7 @@
 # Beobachtungen
 
+**Deutsch** | [English](en/observations.md)
+
 Hauswacht kann messen, bevor man automatisiert. Beobachtungen **schalten nichts** – sie
 liefern Zahlen für eigene Entscheidungen. Die [Funkstille-Beobachtung](melder.md#funkstille-beobachtung-der-richtige-wert-aus-euren-daten)
 steht bei den Meldern.

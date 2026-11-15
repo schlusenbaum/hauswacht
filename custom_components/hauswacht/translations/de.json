@@ -247,7 +247,7 @@
         "menu_options": {
           "areas": "Bereiche (z. B. Haus, Garage, Gartenhaus)",
           "users": "Benutzer und PINs",
-          "controls": "Bedienteile (Keypads, NFC-Aufkleber, RFID-Leser)",
+          "controls": "Bedienteile (Keypads, NFC, RFID, Taster, Türschlösser)",
           "sensor_behaviour": "Funkstille von Sensoren",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Anwesenheit und Heimkehr-Beobachtung",
