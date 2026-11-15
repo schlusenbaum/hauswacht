@@ -77,13 +77,10 @@ async def _setup(hass: HomeAssistant, extra: dict[str, Any] | None = None, **aut
 
 async def test_arm_and_disarm_by_time(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
-    # Die Uhr wirklich vorstellen: Home Assistant plant den nächsten Zeitpunkt ab der aktuellen
-    # Uhrzeit. Nur Zeitereignisse zu feuern hängt sonst von der Tageszeit des Testlaufs ab.
-    first_disarm = _next(dt_util.now(), 6, 30)
-    freezer.move_to(first_disarm)
-    await _fire(hass, first_disarm)
-    assert _state(hass) == AlarmControlPanelState.DISARMED
-    arm_at = _next(first_disarm, 23, 0)
+    # Die Uhr wirklich vorstellen und dabei nie über einen geplanten Zeitpunkt springen: Sonst
+    # feuern Scharf und Unscharf im selben Schritt, und das Ergebnis hängt von der Tageszeit des
+    # Testlaufs ab. Ein 06:30 vor dem ersten 23:00 ist harmlos (unscharf bleibt unscharf).
+    arm_at = _next(dt_util.now(), 23, 0)
     freezer.move_to(arm_at)
     await _fire(hass, arm_at)
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
@@ -91,6 +88,10 @@ async def test_arm_and_disarm_by_time(hass: HomeAssistant, freezer: FrozenDateTi
     freezer.move_to(disarm_at)
     await _fire(hass, disarm_at)
     assert _state(hass) == AlarmControlPanelState.DISARMED
+    again = _next(disarm_at, 23, 0)
+    freezer.move_to(again)
+    await _fire(hass, again)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
 
 
 async def test_time_on_other_weekday_does_nothing(hass: HomeAssistant) -> None:
