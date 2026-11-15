@@ -1,9 +1,14 @@
-"""Bedienteile: Zigbee2MQTT-Keypads, NFC-Aufkleber (Companion App) und RFID-Leser.
+"""Bedienteile: Zigbee2MQTT-Keypads, NFC-Aufkleber (Companion App), RFID-Leser, Taster
+und Türschlösser.
 
 Einziger Ort, an dem Hauswacht an ein anderes Gerät als Sirenen/Benachrichtigungen sendet:
 die Rückmeldung an eingerichtete Keypads per MQTT (``<topic>/set`` mit ``arm_mode``) – nur
 Zustandsanzeigen, nichts anderes (statischer Test). Gehört zum Hauptbereich und bedient je nach
 Einstellung einen Bereich oder alle.
+
+Taster schalten nur scharf. Türschlösser schalten unscharf, wenn ein bekannter Benutzer
+aufschließt: Kennung (Nuki-MQTT oder beliebiger Sensor) UND Zustandswechsel des Schlosses in
+Home Assistant, höchstens 30 s auseinander. Hauswacht schaltet das Schloss selbst nie.
 """
 
 from __future__ import annotations
@@ -12,10 +17,12 @@ import json
 import logging
 import time
 from collections.abc import Iterable
+from functools import partial
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import dt as dt_util
 
 from .const import EVENT_HAUSWACHT
@@ -24,22 +31,32 @@ from .core.controls import (
     ALL_AREAS,
     KEY_DISARM,
     KEY_EMERGENCY,
+    LOCK,
     REPLY_ALREADY_DISARMED,
     REPLY_INVALID_CODE,
     REPLY_NOT_READY,
+    UNLOCK,
     Control,
     ControlKind,
     Emergency,
+    LockEvent,
+    LockSource,
     Login,
     PendingLogin,
     fresh_cards,
+    generic_identity,
+    is_new_press,
     is_random_uid,
     keypad_for_topic,
     keypad_mode,
     learn_minutes,
+    lock_confirmed,
+    lock_intent,
     looks_like_card,
     normalize_tag,
     parse_controls,
+    parse_nuki_event,
+    press_value,
     reader_for,
     remember_card,
     second_factor_ok,
@@ -49,7 +66,7 @@ from .core.controls import (
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
 from .core.texts import tr
-from .core.users import Action, Identity, find_by_ha_user
+from .core.users import Action, Identity, find_by_ha_user, match_tag
 from .core.users import label as users_label
 
 if TYPE_CHECKING:
@@ -74,20 +91,35 @@ class ControlManager:
         self.unknown_cards: dict[str, tuple[str, float]] = {}
         # Zuletzt gelesene Zufallsnummer (z. B. Handy): (wo, wann) – nur für einen Hinweis
         self.random_seen: tuple[str, float] | None = None
+        # Türschlösser: letzte Kennung bzw. letzter Zustandswechsel (je Schloss)
+        self._lock_ident: dict[str, tuple[LockEvent, float]] = {}
+        self._lock_state: dict[str, tuple[str, float]] = {}
 
     # --- Start/Stopp ----------------------------------------------------------
 
     async def async_start(self) -> None:
         if not self.controls:
             return
-        if any(c.kind is not ControlKind.KEYPAD for c in self.controls.values()):
+        kinds = {c.kind for c in self.controls.values()}
+        if kinds & {ControlKind.STICKER, ControlKind.READER}:
             self._unsubs.append(self.hass.bus.async_listen(TAG_SCANNED, self._on_tag))
         keypads = [c for c in self.controls.values() if c.kind is ControlKind.KEYPAD and c.topic]
-        if keypads:
+        nuki = [
+            c
+            for c in self.controls.values()
+            if c.kind is ControlKind.LOCK and c.source is LockSource.NUKI_MQTT and c.topic
+        ]
+        if keypads or nuki:
             if MQTT_DOMAIN not in self.hass.config.components:
-                _LOGGER.warning("Keypads brauchen die MQTT-Integration (Zigbee2MQTT)")
+                _LOGGER.warning("Keypads und Nuki über MQTT brauchen die MQTT-Integration")
             else:
                 await self._subscribe(keypads)
+                await self._subscribe_nuki(nuki)
+        watched = self._watched_entities()
+        if watched:
+            self._unsubs.append(
+                async_track_state_change_event(self.hass, sorted(watched), self._on_entity)
+            )
         for area in self.runtime.areas.values():
             self._unsubs.append(area.add_listener(self._update_keypads))
         self._update_keypads()
@@ -97,6 +129,34 @@ class ControlManager:
 
         for keypad in keypads:
             self._unsubs.append(await mqtt.async_subscribe(self.hass, keypad.topic, self._on_mqtt))
+
+    async def _subscribe_nuki(self, locks: Iterable[Control]) -> None:
+        from homeassistant.components import mqtt  # noqa: PLC0415
+
+        for lock in locks:
+            self._unsubs.append(
+                await mqtt.async_subscribe(
+                    self.hass, f"{lock.topic}/lockActionEvent", partial(self._on_nuki, lock)
+                )
+            )
+
+    @callback
+    def _on_nuki(self, control: Control, message: Any) -> None:
+        self.lock_identified(control, parse_nuki_event(message.payload))
+
+    def _watched_entities(self) -> set[str]:
+        """Taster, Schlösser und "Wer"-Sensoren, deren Zustände Hauswacht mitliest."""
+        watched: set[str] = set()
+        for control in self.controls.values():
+            if control.kind in (ControlKind.BUTTON, ControlKind.LOCK) and control.entity:
+                watched.add(control.entity)
+            if (
+                control.kind is ControlKind.LOCK
+                and control.source is LockSource.GENERIC
+                and control.who
+            ):
+                watched.add(control.who)
+        return watched
 
     @callback
     def async_stop(self) -> None:
@@ -370,6 +430,148 @@ class ControlManager:
             tr(lang, "control_denied_title"),
             tr(lang, "control_denied", control=control.name, who=who, what=what, result=result),
         )
+
+    # --- Taster und Türschlösser ------------------------------------------------
+
+    @callback
+    def _on_entity(self, event: Event[EventStateChangedData]) -> None:
+        entity_id = event.data["entity_id"]
+        old = event.data["old_state"]
+        new = event.data["new_state"]
+        old_value = old.state if old is not None else None
+        new_value = new.state if new is not None else None
+        for control in self.controls.values():
+            if control.kind is ControlKind.BUTTON and control.entity == entity_id:
+                if is_new_press(old_value, new_value) and new is not None:
+                    domain = entity_id.split(".", 1)[0]
+                    press = press_value(domain, new_value, new.attributes.get("event_type"))
+                    if press is not None:
+                        self.button_pressed(control, press)
+            elif control.kind is ControlKind.LOCK:
+                if control.entity == entity_id:
+                    intent = lock_intent(old_value, new_value)
+                    if intent is not None:
+                        self.lock_moved(control, intent)
+                if control.source is LockSource.GENERIC and control.who == entity_id:
+                    self._generic_who(control, entity_id, old, new)
+
+    def _generic_who(self, control: Control, entity_id: str, old: Any, new: Any) -> None:
+        """Allgemeine Quelle: neuer Wert des "Wer"-Sensors bzw. neues Ereignis."""
+        if new is None or old is None or old.state == "unavailable":
+            return
+        if old.state == new.state:
+            return
+        value = new.attributes.get("event_type") if entity_id.startswith("event.") else new.state
+        identity = generic_identity(value)
+        if identity is None:
+            return
+        # Die Richtung (auf/zu) kommt vom Schloss selbst
+        self.lock_identified(control, LockEvent(intent="", identity=identity))
+
+    @callback
+    def button_pressed(self, control: Control, press: str) -> str:
+        """Taster: Druckart -> Profil scharf schalten. Nie unscharf, nie "Alarm beenden"."""
+        profile = control.presses.get(press)
+        self._fire("ButtonPressed", control, press=press, profile=profile)
+        if profile is None:
+            return "ignored"
+        area = self._area_of_profile(control, profile)
+        if area is None:
+            return "ignored"
+        if not area.is_disarmed:
+            return "already_armed"  # nie über ein scharfes Profil hinweg umschalten
+        if area.code_arm_required:
+            lang = self.runtime.lang
+            self.runtime.notifier.send_system(
+                tr(lang, "control_denied_title"),
+                tr(lang, "button_pin_required", control=control.name),
+            )
+            return "pin_required"
+        result = self._execute(control, Action.ARM, profile, None)
+        self._confirm(control, Action.ARM, result, control.name)
+        return result
+
+    @callback
+    def lock_identified(self, control: Control, event: LockEvent | None) -> None:
+        """Kennung vom Schloss (Nuki-MQTT oder "Wer"-Sensor)."""
+        if event is None:
+            return
+        self._fire(
+            "LockIdentified",
+            control,
+            intent=event.intent or None,
+            identity=event.identity,
+            reason=event.reason,
+        )
+        if event.identity is None:
+            self._lock_ident.pop(control.control_id, None)
+            return
+        self._lock_ident[control.control_id] = (event, time.monotonic())
+        self._match_lock(control)
+
+    @callback
+    def lock_moved(self, control: Control, intent: str) -> None:
+        """Schloss in Home Assistant auf- bzw. zugeschlossen."""
+        self._lock_state[control.control_id] = (intent, time.monotonic())
+        self._match_lock(control)
+
+    def _match_lock(self, control: Control) -> None:
+        ident = self._lock_ident.get(control.control_id)
+        state = self._lock_state.get(control.control_id)
+        if ident is None or state is None:
+            return
+        event, ident_at = ident
+        intent, state_at = state
+        if event.intent not in ("", intent) or not lock_confirmed(ident_at, state_at):
+            return
+        # Beides verbraucht: dieselbe Kennung zählt nur einmal
+        self._lock_ident.pop(control.control_id, None)
+        self._lock_state.pop(control.control_id, None)
+        assert event.identity is not None
+        self._lock_action(control, intent, event.identity)
+
+    def _lock_action(self, control: Control, intent: str, identity: str) -> str:
+        now = dt_util.utcnow().timestamp()
+        users = match_tag(identity, self.runtime.users, now).users
+        lang = self.runtime.lang
+        if not users:
+            self._learn_lock(identity, control)
+            if intent == UNLOCK and self._armed(control):
+                self.runtime.notifier.send_system(
+                    tr(lang, "control_denied_title"),
+                    tr(lang, "lock_unknown", control=control.name, id=identity),
+                )
+            self._fire("LockIgnored", control, intent=intent, reason="unknown_id")
+            return "unknown"
+        found = Identity("lock", users)
+        who = users_label(users, lang)
+        if intent == UNLOCK:
+            if not self._armed(control):
+                return "already_disarmed"
+            result = self._execute(control, Action.DISARM, None, found)
+            self._confirm(control, Action.DISARM, result, who)
+            return result
+        if intent == LOCK and control.profile:
+            area = self._area_of_profile(control, control.profile)
+            if area is None or not area.is_disarmed:
+                return "ignored"
+            result = self._execute(control, Action.ARM, control.profile, found)
+            self._confirm(control, Action.ARM, result, who)
+            return result
+        return "ignored"
+
+    def _learn_lock(self, identity: str, control: Control) -> None:
+        """Unbekannte Schloss-Kennung zum Anlernen anbieten – nur wenn alles unscharf ist."""
+        minutes = learn_minutes(self.runtime.entry.options)
+        if not minutes or not self.runtime.all_disarmed:
+            return
+        now = dt_util.utcnow().timestamp()
+        self.unknown_cards = remember_card(
+            fresh_cards(self.unknown_cards, now, minutes), identity, control.name, now
+        )
+
+    def _fire(self, kind: str, control: Control, **data: Any) -> None:
+        self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": kind, "control": control.name, **data})
 
     # --- Anzeige ----------------------------------------------------------------
 

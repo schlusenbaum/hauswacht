@@ -230,11 +230,11 @@
           "valid_from": "Gültig von",
           "valid_until": "Gültig bis",
           "rights": "Rechte gelten für",
-          "tags": "RFID-Karten/-Anhänger"
+          "tags": "RFID-Karten und Schloss-Kennungen"
         },
         "data_description": {
           "rights": "**Alle Bereiche gleich:** die Häkchen oben gelten überall. **Je Bereich einzeln:** nach dem Speichern legst du für jeden Bereich fest, was der Benutzer dort darf (die Häkchen oben gelten dann nicht).",
-          "tags": "Beliebig viele, unabhängig vom PIN (ein Benutzer braucht keinen PIN, um mit Karte am Keypad zu schalten). Neue Karte einmal an ein Keypad oder einen Leser halten – sie erscheint dann hier als „neu“ zur Auswahl. Oder ID eintippen.",
+          "tags": "Beliebig viele, unabhängig vom PIN (ein Benutzer braucht keinen PIN, um mit Karte am Keypad zu schalten). Neue Karte einmal an ein Keypad oder einen Leser halten bzw. das Türschloss einmal aufschließen – sie erscheint dann hier als „neu“ zur Auswahl. Oder ID eintippen.",
           "card_pin": "Für das Home-Assistant-Konto dieses Benutzers in der Karte „Hauswacht Alarm“. Aus: schaltet dort ohne PIN, mit den Rechten dieses Benutzers. An: z. B. für ein Wandtablet, das dauerhaft angemeldet ist. Nur wirksam, wenn es überhaupt PINs gibt."
         }
       },
@@ -686,11 +686,13 @@
       },
       "controls": {
         "title": "Bedienteile",
-        "description": "{saved}Bedienteile sind Keypads, NFC-Aufkleber und RFID-Leser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN oder RFID-Karte/-Anhänger (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld.",
+        "description": "{saved}Bedienteile sind Keypads, NFC-Aufkleber, RFID-Leser, Taster und Türschlösser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN, RFID-Karte/-Anhänger oder Schloss-Kennung (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld. Ein Taster weist niemanden aus – deshalb schaltet er nur scharf.",
         "menu_options": {
           "control_add_keypad": "Keypad hinzufügen (Zigbee2MQTT)",
           "control_add_sticker": "NFC-Aufkleber hinzufügen (Companion App)",
           "control_add_reader": "RFID-/NFC-Leser hinzufügen (z. B. ESPHome)",
+          "control_add_button": "Taster hinzufügen (schaltet nur scharf)",
+          "control_add_lock": "Türschloss hinzufügen (z. B. Nuki)",
           "control_edit": "Bedienteil bearbeiten",
           "control_delete": "Bedienteil löschen",
           "control_learn": "Anlernen neuer Karten",
@@ -790,6 +792,49 @@
         "data_description": {
           "allow_fire_tone": "Nur für diesen Ton an dieser Sirene. Die Übersicht zeigt die Freigabe als Hinweis."
         }
+      },
+      "control_button": {
+        "title": "Taster",
+        "description": "Ein Taster (z. B. Zigbee-Taster im Hausflur) schaltet ein Alarmprofil **scharf** – mit der Ausgangsverzögerung des Profils. Er schaltet **nie unscharf** und beendet nie einen Alarm, weil er niemanden ausweist.\n\nGeeignet sind **Ereignis-Entitäten** (`event.…`, z. B. von Zigbee2MQTT, Hue, Shelly, Matter) oder ein **Aktions-Sensor** (`sensor.…_action`). Im nächsten Schritt legst du fest, welche Druckart welches Profil schaltet.\n\nVerlangen die PIN-Regeln einen PIN zum Scharfschalten, schaltet der Taster nicht und Hauswacht schickt eine Systemmeldung.",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "entity": "Taster (Ereignis oder Aktions-Sensor)"
+        }
+      },
+      "control_presses_event": {
+        "title": "Taster: Druckarten",
+        "description": "Für `{entity}`: Wähle je Druckart ein Alarmprofil. Leer = diese Druckart tut nichts.\n\nBeispiel: einfach → „Abwesend“, doppelt → „Nacht“."
+      },
+      "control_presses": {
+        "title": "Taster: Druckarten",
+        "description": "`{entity}` nennt seine Druckarten nicht selbst. Trage den **Wert** ein, den der Sensor beim Drücken annimmt (Entwicklerwerkzeuge → Zustände, einmal drücken und nachsehen), z. B. `single`, `double`, `hold`, und wähle dazu ein Alarmprofil.",
+        "data": {
+          "press_1": "Druckart 1 (Wert)",
+          "profile_1": "Druckart 1 → Alarmprofil",
+          "press_2": "Druckart 2 (Wert)",
+          "profile_2": "Druckart 2 → Alarmprofil",
+          "press_3": "Druckart 3 (Wert)",
+          "profile_3": "Druckart 3 → Alarmprofil"
+        }
+      },
+      "control_lock": {
+        "title": "Türschloss",
+        "description": "Schaltet **unscharf**, wenn ein **bekannter Benutzer aufschließt** – mit dessen Rechten je Bereich. Dafür muss das Schloss sagen, **wer** aufgeschlossen hat, und es muss in Home Assistant wirklich auf „aufgeschlossen“ wechseln (beides innerhalb von 30 s). Hauswacht schaltet das Schloss selbst nie.\n\n**Nie unscharf:** bei unbekannter oder fehlender Kennung, beim Drehknauf oder Knopf innen, bei Zeitsteuerung, beim Aufschließen über Home Assistant/HomeKit und beim bloßen Öffnen der Tür.\n\n**Kennungen anlernen:** Solange alles unscharf ist, einmal aufschließen – die Kennung erscheint dann beim Benutzer unter „RFID-Karten und Schloss-Kennungen“ als „neu“.",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "entity": "Schloss",
+          "source": "Wer hat aufgeschlossen? (Quelle)",
+          "topic": "Nuki: MQTT-Topic des Schlosses",
+          "who": "Allgemein: Sensor oder Ereignis mit der Kennung",
+          "profile": "Optional: beim Abschließen scharf schalten (Alarmprofil)"
+        },
+        "data_description": {
+          "topic": "Z. B. `nuki/3A1B2C4D` (in der Nuki-App unter MQTT; ohne `/lockActionEvent`).",
+          "who": "Ein Sensor, dessen Wert beim Aufschließen die Kennung des Benutzers zeigt (z. B. Benutzername oder Nummer), oder ein Ereignis mit dieser Kennung als Ereignistyp.",
+          "profile": "Nur wenn ein bekannter Benutzer mit Recht zum Scharfschalten von außen abschließt (App, Keypad, Fob) und alles unscharf ist. Leer = Abschließen tut nichts."
+        }
       }
     },
     "error": {
@@ -834,7 +879,10 @@
       "siren_tone_fire": "Ein Brandton ist für Einbruch gesperrt – nur mit der Experten-Freigabe unten.",
       "siren_tone_fire_detector": "Diese Sirene hat eigene Brandsensoren (Rauchmelder) – ein Brandton für Einbruch ist hier nie erlaubt.",
       "siren_tone_fire_confirm": "Bitte die Experten-Freigabe ausdrücklich bestätigen.",
-      "arrival_needs_persons": "„Unscharf bei Rückkehr“ braucht mindestens eine Person unter „Scharf, wenn alle diese Personen weg sind“."
+      "arrival_needs_persons": "„Unscharf bei Rückkehr“ braucht mindestens eine Person unter „Scharf, wenn alle diese Personen weg sind“.",
+      "control_entity": "Bitte eine Entität wählen.",
+      "control_who": "Für die allgemeine Quelle einen Sensor oder ein Ereignis mit der Kennung wählen.",
+      "button_no_press": "Mindestens eine Druckart einem Alarmprofil zuordnen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1002,6 +1050,12 @@
         "off": "Aus",
         "auto_only": "Wie bisher (nur nach automatischem Scharfschalten)",
         "door": "Mit Türbeleg (Rückkehr und Eingangstür)"
+      }
+    },
+    "lock_source": {
+      "options": {
+        "nuki_mqtt": "Nuki über MQTT (lockActionEvent)",
+        "generic": "Allgemein (Sensor oder Ereignis)"
       }
     }
   },

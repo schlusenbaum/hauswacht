@@ -86,6 +86,10 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "sticker_denied": "NFC-Aufkleber {sticker}: Das Handy gehört keinem berechtigten "
         "Hauswacht-Benutzer.",
         "control_denied_title": "Hauswacht: Bedienteil",
+        "button_pin_required": "{control}: Scharfschalten verlangt einen PIN (PIN-Regeln) – "
+        "ein Taster kann keinen PIN eingeben. Nicht scharf geschaltet.",
+        "lock_unknown": "{control}: aufgeschlossen mit einer unbekannten Kennung ({id}) – nicht "
+        "unscharf geschaltet.",
         "control_denied": "{control}: {who} wollte {what} – nicht möglich ({result}).",
         "control_arm": "scharf schalten",
         "control_disarm": "unscharf schalten",
@@ -241,6 +245,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "sticker_denied": "NFC tag {sticker}: the phone does not belong to an authorised "
         "Hauswacht user.",
         "control_denied_title": "Hauswacht: control",
+        "button_pin_required": "{control}: arming requires a PIN (PIN rules) – a button cannot "
+        "enter a PIN. Not armed.",
+        "lock_unknown": "{control}: unlocked with an unknown ID ({id}) – not disarmed.",
         "control_denied": "{control}: {who} tried to {what} – not possible ({result}).",
         "control_arm": "arm",
         "control_disarm": "disarm",

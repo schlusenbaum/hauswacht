@@ -335,6 +335,12 @@ def _controls(main: HauswachtRuntime) -> list[dict[str, Any]]:
                 "emergency": control.emergency.value,
                 "action": control.action.value,
                 "profile": profile_info(options, control.profile).name if control.profile else None,
+                "entity": _name(main.hass, control.entity) if control.entity else None,
+                "presses": {
+                    press: profile_info(options, pid).name for press, pid in control.presses.items()
+                },
+                "source": control.source.value,
+                "who": _name(main.hass, control.who) if control.who else None,
             }
         )
     return rows

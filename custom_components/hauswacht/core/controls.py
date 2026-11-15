@@ -1,4 +1,4 @@
-"""Bedienteile: Keypads, NFC-Aufkleber und RFID-Leser.
+"""Bedienteile: Keypads, NFC-Aufkleber, RFID-Leser, Taster und Türschlösser.
 
 Rein und ohne Home Assistant.
 
@@ -21,10 +21,25 @@ Rein und ohne Home Assistant.
       device: "<geräte-id>"
       action / profile wie beim Aufkleber
       login: card | card_and_pin
+      # button (Taster, z. B. Zigbee-Taster im Flur) – schaltet NUR scharf:
+      entity: "event.taster_flur" | "sensor.taster_flur_action"
+      presses: {single: <profil>, double: <profil>, long: <profil>}
+      # lock (Türschloss) – unscharf beim Aufschließen durch einen bekannten Benutzer:
+      entity: "lock.haustuer"
+      source: nuki_mqtt | generic
+      topic: "nuki/<id>"                      # nuki_mqtt: liest <topic>/lockActionEvent
+      who: "sensor.haustuer_benutzer"         # generic: Wert = Kennung des Benutzers
+      profile: <profil> | None                # optional: Abschließen von außen -> scharf
 
 **Ausweise** gehören zu den Benutzern: PIN (wie bisher) und RFID-Karten/-Anhänger
 (``users.<id>.tags``). Ein NFC-Aufkleber ist KEIN Ausweis: Er sagt nur "hier, diese Aktion" –
 ausgewiesen wird mit dem Handy eines bekannten Benutzers.
+
+Ein **Taster** ist ebenfalls kein Ausweis – deshalb schaltet er nur scharf. Ein **Türschloss**
+weist aus, wenn es sagt, *wer* aufgeschlossen hat: Die Kennung (z. B. Nuki-Benutzer oder
+Keypad-Code) gehört wie eine Karte zum Benutzer (gespeichert bei ``tags``, mit Präfix
+``NUKIAUTH``/``NUKICODE``/``LOCK``, damit sie nie mit einer Karte oder einem PIN verwechselt
+wird). Zusätzlich muss das Schloss in Home Assistant wirklich auf- bzw. zuschließen.
 """
 
 from __future__ import annotations
@@ -42,6 +57,13 @@ class ControlKind(StrEnum):
     KEYPAD = "keypad"
     STICKER = "sticker"
     READER = "reader"
+    BUTTON = "button"
+    LOCK = "lock"
+
+
+class LockSource(StrEnum):
+    NUKI_MQTT = "nuki_mqtt"
+    GENERIC = "generic"
 
 
 class TagAction(StrEnum):
@@ -87,6 +109,10 @@ class Control:
     device: str = ""
     action: TagAction = TagAction.DISARM
     profile: str | None = None
+    entity: str = ""
+    presses: Mapping[str, str] = field(default_factory=dict)
+    source: LockSource = LockSource.NUKI_MQTT
+    who: str = ""
 
 
 def normalize_tag(value: Any) -> str:
@@ -181,8 +207,18 @@ def parse_controls(options: Mapping[str, Any]) -> dict[str, Control]:
             device=str(data.get("device") or ""),
             action=_enum(TagAction, data.get("action"), TagAction.DISARM),
             profile=profile if isinstance(profile, str) and profile else None,
+            entity=str(data.get("entity") or ""),
+            presses=_presses(data.get("presses")),
+            source=_enum(LockSource, data.get("source"), LockSource.NUKI_MQTT),
+            who=str(data.get("who") or ""),
         )
     return result
+
+
+def _presses(value: Any) -> dict[str, str]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {str(k): str(v) for k, v in value.items() if str(k).strip() and isinstance(v, str) and v}
 
 
 def sticker_for(controls: Mapping[str, Control], tag_id: str) -> Control | None:
@@ -256,3 +292,118 @@ def second_factor_ok(
     if now - pending.at > CARD_AND_PIN_WINDOW:
         return False
     return bool(pending.user_ids & user_ids)
+
+
+# --- Taster ---------------------------------------------------------------------------
+
+IGNORED_VALUES = frozenset({"", "unknown", "unavailable", "none", "None"})
+
+
+def press_value(domain: str, state: str | None, event_type: Any) -> str | None:
+    """Welche Druckart? Ereignis-Entität: Attribut ``event_type``; Sensor: sein Wert."""
+    value = event_type if domain == "event" else state
+    if not isinstance(value, str) or value in IGNORED_VALUES:
+        return None
+    return value
+
+
+def is_new_press(old_state: str | None, new_state: str | None) -> bool:
+    """Wirklich gedrückt – nicht nur wieder verbunden oder nach einem Neustart geladen?
+
+    - Ereignis-Entität: neuer Zeitstempel.
+    - Sensor (Zigbee2MQTT "action"): Wert ändert sich auf eine Druckart.
+    - Nie aus "nicht verfügbar" heraus (Gerät wieder verbunden, Zustand wiederhergestellt).
+    """
+    if old_state is None or new_state is None or new_state in IGNORED_VALUES:
+        return False
+    return old_state not in ("unavailable", new_state)
+
+
+# --- Türschlösser ---------------------------------------------------------------------
+
+LOCK_CONFIRM_WINDOW = 30.0  # s: Kennung und Zustand des Schlosses müssen so nah beieinander sein
+UNLOCK = "unlock"
+LOCK = "lock"
+UNLOCKED_STATES = frozenset({"unlocked", "unlocking", "open", "opening"})
+LOCKED_STATES = frozenset({"locked", "locking"})
+
+# Nuki MQTT "lockActionEvent": "Aktion,Auslöser,Auth-ID,Code-ID,Zusatz"
+NUKI_UNLOCK_ACTIONS = frozenset({1, 3})  # aufschließen, öffnen (Falle ziehen)
+NUKI_LOCK_ACTIONS = frozenset({2, 4, 6})  # abschließen, Lock 'n' Go, voll abschließen
+NUKI_PERSON_TRIGGER = 0  # App/Bluetooth, Keypad, Fob – ein Mensch mit Berechtigung
+# Andere Auslöser zählen nie: 2 = Knopf am Schloss (innen), 3 = Zeitsteuerung,
+# 6 = automatisch abschließen, 171 = HomeKit/Matter, 172 = MQTT (z. B. Home Assistant)
+
+
+@dataclass(frozen=True)
+class LockEvent:
+    """Wer hat das Schloss betätigt? ``identity`` ist None, wenn das nicht erkennbar ist."""
+
+    intent: str  # UNLOCK | LOCK
+    identity: str | None
+    reason: str = "ok"  # ok | not_by_person | no_id
+
+
+def parse_nuki_event(payload: Any) -> LockEvent | None:
+    """Nuki ``lockActionEvent`` lesen; None = keine Auf-/Zuschließ-Aktion (oder unlesbar)."""
+    try:
+        parts = [int(p.strip()) for p in str(payload).split(",")]
+    except ValueError:
+        return None
+    if len(parts) < 4:
+        return None
+    action, trigger, auth_id, code_id = parts[:4]
+    if action in NUKI_UNLOCK_ACTIONS:
+        intent = UNLOCK
+    elif action in NUKI_LOCK_ACTIONS:
+        intent = LOCK
+    else:
+        return None
+    if trigger != NUKI_PERSON_TRIGGER:
+        return LockEvent(intent, None, "not_by_person")
+    if code_id > 0:
+        return LockEvent(intent, f"NUKICODE{code_id}")
+    if auth_id > 0:
+        return LockEvent(intent, f"NUKIAUTH{auth_id}")
+    return LockEvent(intent, None, "no_id")
+
+
+def generic_identity(value: Any) -> str | None:
+    """Kennung aus einem beliebigen Sensor/Ereignis (z. B. Benutzername oder Nummer)."""
+    if not isinstance(value, str) or value.strip() in IGNORED_VALUES:
+        return None
+    tag = normalize_tag(value)
+    return f"LOCK{tag}" if tag else None
+
+
+def lock_intent(old_state: str | None, new_state: str | None) -> str | None:
+    """Zustandswechsel des Schlosses: aufgeschlossen, abgeschlossen oder nichts davon."""
+    if old_state is None or new_state is None:
+        return None
+    if new_state in UNLOCKED_STATES and old_state not in UNLOCKED_STATES:
+        return UNLOCK
+    if new_state in LOCKED_STATES and old_state not in LOCKED_STATES:
+        return LOCK
+    return None
+
+
+def lock_confirmed(
+    identity_at: float | None, state_at: float | None, window: float = LOCK_CONFIRM_WINDOW
+) -> bool:
+    """Kennung und Zustandswechsel gehören zusammen (egal in welcher Reihenfolge)."""
+    if identity_at is None or state_at is None:
+        return False
+    return abs(identity_at - state_at) <= window
+
+
+def lock_id_label(tag: str, lang: str = "de") -> str:
+    """Lesbare Form einer Schloss-Kennung für Formulare."""
+    names = (
+        (("NUKIAUTH", "Nuki-Benutzer "), ("NUKICODE", "Nuki-Keypad-Code "))
+        if lang == "de"
+        else (("NUKIAUTH", "Nuki user "), ("NUKICODE", "Nuki keypad code "))
+    )
+    for prefix, text in names:
+        if tag.startswith(prefix):
+            return text + tag[len(prefix) :]
+    return tag
