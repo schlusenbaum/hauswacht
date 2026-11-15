@@ -34,6 +34,8 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 | später | Dokumentation auf Englisch |
 | später | ZHA- und Z-Wave-Keypads |
 | später | Entscheidung über eine Heimkehr-Automatik (mit Belegen) anhand der Heimkehr-Beobachtung |
+| später | **Zusätzliche Signale für die Profil-Automatik:** neben Personen auch beliebige Anwesenheits-Signale (z. B. eine HomeKit-Variable „Martin zuhause“, WLAN, Bluetooth) für „alle weg“ und „Rückkehr“ – auf Basis der Messungen der Heimkehr-Beobachtung |
+| später | **Taster und Türschloss als Bedienteil:** Taster (z. B. im Hausflur) zum verzögerten Scharfschalten eines Bereichs; Türschloss (z. B. Nuki) als „unscharf beim berechtigten Aufschließen“ – nur wenn erkennbar ist, *wer* aufgeschlossen hat, nie beim bloßen Öffnen der Tür |
 | 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
 | 1.x | Weitere Ausweise (z. B. Fingerabdruck), weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten |
