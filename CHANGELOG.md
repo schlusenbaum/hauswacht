@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.44.1] - 2026-11-15
+
+### Dokumentation
+- **Fingerabdruck-Leser mit ESPHome** (Bedienteile, deutsch und englisch): ESP32 mit
+  R503-Sensor, vollständige ESPHome-Konfiguration, Finger anlernen und dem Benutzer zuordnen –
+  in Hauswacht als RFID-Leser, ohne neue Funktion. Dazu der Hinweis, dass Fingerabdrücke am Nuki
+  Keypad 2.0 wie Keypad-Codes angelernt werden.
+
 ## [0.44.0] - 2026-11-15
 
 ### Dokumentation

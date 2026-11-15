@@ -13,7 +13,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.44.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.44.1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -91,7 +91,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Auslöseregeln](docs/ausloeseregeln.md) | Abfolgen, Ausnahmen, Bedingungen, YAML |
 | [Bedienung und Dashboard](docs/dashboard.md) | Scharf/unscharf, Alarmkarte, Alarm beenden, Karten |
 | [Benutzer, PINs und Sperre](docs/benutzer.md) | Benutzer, Rechte, PIN-Regeln, Bedrohungs-PIN |
-| [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser, Taster, Türschlösser |
+| [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser, Fingerabdruck, Taster, Türschlösser |
 | [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Ton je Sirene, Sirene aus Schalter, Sirenentest, „Warum hat sie nicht geklingelt?“, Brandschutz |
 | [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
 | [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |

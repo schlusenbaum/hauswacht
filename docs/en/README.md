@@ -19,7 +19,7 @@ ones of the English interface.
 | [Trigger rules](trigger-rules.md) | sequences like "door, then basement", exceptions, conditions, YAML expert mode |
 | [Operation and dashboard](dashboard.md) | arming and disarming, ending an alarm, card "Hauswacht Alarm", example dashboard, profile settings |
 | [Users, PINs and lockout](users.md) | users, rights per area, PIN rules, master PIN, lockout after wrong entries, duress PIN |
-| [Control devices](control-devices.md) | Zigbee keypads, learning RFID cards, NFC stickers, RFID readers, buttons, door locks (Nuki) |
+| [Control devices](control-devices.md) | Zigbee keypads, learning RFID cards, NFC stickers, RFID readers, fingerprint readers, buttons, door locks (Nuki) |
 | [Sirens](sirens.md) | which sirens work, release, tone per siren, siren from switch, siren test, reasons for a silent siren, fire protection |
 | [Notifications and speech](notifications.md) | recipients per event, custom texts, announcements via speakers, push buttons |
 | [Test mode and test card](test-mode.md) | play everything through safely: simulate sensors, no siren |
