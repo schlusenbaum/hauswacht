@@ -45,9 +45,9 @@ restart, then add the integration. Questions and feedback in English are welcome
 [issues](https://github.com/schlusenbaum/hauswacht/issues).
 
 Built with a lot of help from AI: large parts of the code, tests and documentation were written
-by **Claude** (Anthropic), based on my ideas, concepts, safety rules and decisions, and tried out
-in my own home. Every change has to pass the automated checks (core logic, integration tests
-with Home Assistant, safety tests – without real devices or sirens) before it is merged.
+by **Claude** (Anthropic), based on my ideas, concepts, safety rules and decisions. It is tested
+in my own home with real hardware (door/window contacts, motion and presence sensors, Zigbee
+keypad, sirens), and every change also has to pass the automated tests before it is merged.
 
 Not a certified security system – it does not replace a professional alarm system or tested
 smoke detectors.
@@ -162,11 +162,16 @@ Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 
 Hauswacht ist mit **viel Hilfe von KI** entstanden: Große Teile des Codes, der Tests und der
 Dokumentation hat **Claude** (Anthropic) geschrieben. Die Ideen, Konzepte, Sicherheitsregeln und
-Entscheidungen stammen von mir; erprobt wird Hauswacht im eigenen Haus. Jede Änderung muss vor
-dem Zusammenführen die automatischen Prüfungen bestehen – Kernlogik, Integrationstests mit Home
-Assistant und Sicherheitstests, alles ohne echte Geräte und ohne Sirenen.
+Entscheidungen stammen von mir.
 
-Gerade deshalb sind Rückmeldungen aus anderen Installationen wertvoll.
+Getestet wird auf zwei Wegen: **im eigenen Haus mit echter Hardware** – Tür- und
+Fensterkontakten, Bewegungs- und Präsenzmeldern, Zigbee-Keypad und Sirenen – und zusätzlich mit
+**automatischen Tests**, die jede Änderung vor dem Zusammenführen bestehen muss. Die
+automatischen Tests spielen auch Fälle durch, die man im Haus nicht ausprobieren möchte, etwa
+einen Alarm, während ein Rauchmelder Feuer meldet.
+
+Andere Häuser haben andere Geräte – deshalb sind Rückmeldungen aus anderen Installationen
+besonders wertvoll.
 
 ## Mitmachen
 
