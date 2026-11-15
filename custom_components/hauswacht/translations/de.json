@@ -719,7 +719,7 @@
       },
       "control_keypad": {
         "title": "Keypad (Zigbee2MQTT)",
-        "description": "Für Alarm-Keypads nach Zigbee-Standard (z. B. frient/Develco KEPZB-110/KEYZB-110, Linkind, Centralite, Heiman). Hauswacht empfängt Taste, PIN bzw. Karte und **bestätigt** jede Eingabe (gültig, ungültiger Ausweis, nicht bereit); danach zeigt das Keypad den Zustand (Verzögerungen, scharf, Alarm). Dafür sendet Hauswacht an `<Topic>/set` – nur Zustandsanzeigen.\n\nDer Sabotage-Kontakt des Keypads ist ein eigener Binärsensor in Home Assistant – in eine Meldergruppe aufnehmen (Typ Manipulation).",
+        "description": "Für Alarm-Keypads nach Zigbee-Standard (z. B. frient/Develco KEPZB-110/KEYZB-110, Linkind, Centralite, Heiman). Hauswacht empfängt Taste, PIN bzw. Karte und **bestätigt** jede Eingabe (gültig, ungültiger Ausweis, nicht bereit); danach zeigt das Keypad den Zustand (Verzögerungen, scharf, Alarm). Dafür sendet Hauswacht an das Topic mit `/set` am Ende – nur Zustandsanzeigen.\n\nDer Sabotage-Kontakt des Keypads ist ein eigener Binärsensor in Home Assistant – in eine Meldergruppe aufnehmen (Typ Manipulation).",
         "data": {
           "name": "Name",
           "area": "Bereich",

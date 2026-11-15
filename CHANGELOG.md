@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.41.2] - 2026-11-15
+
+### Behoben
+- **Keypad einrichten:** Der Dialog zeigte statt der Beschreibung „Translation error:
+  UNCLOSED_TAG“. Ursache war `<Topic>` im deutschen Text, das Home Assistant als HTML-Tag
+  liest. Ein Test verhindert spitze Klammern in Übersetzungen künftig.
+
+### Dokumentation
+- Deutlicher Hinweis: „Unscharf“ ist kein Alarmprofil; Keypad-Tasten nur mit Profilen zum
+  Scharfschalten belegen. MQTT-Topic genau wie in Zigbee2MQTT schreiben.
+
 ## [0.41.1] - 2026-11-13
 
 ### Dokumentation
