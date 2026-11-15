@@ -66,6 +66,7 @@ const LANG = {
     awayPersons: "scharf, wenn weg",
     after: "nach",
     disarmOnArrival: "unscharf bei Heimkehr",
+    disarmOnArrivalDoor: "unscharf bei Heimkehr mit Türbeleg",
     armOnClose: "Scharf durch Schließen",
     sensorsArmed: "Melder einzeln scharf",
     group: "Gruppe",
@@ -193,6 +194,7 @@ const LANG = {
     awayPersons: "arm when away",
     after: "after",
     disarmOnArrival: "disarm on arrival",
+    disarmOnArrivalDoor: "disarm on arrival with door proof",
     armOnClose: "Arm by closing",
     sensorsArmed: "Sensors armed individually",
     group: "Group",
@@ -481,7 +483,9 @@ class HauswachtUebersichtCard extends HTMLElement {
       autoParts.push(auto.weekdays?.length ? auto.weekdays.map((d) => this._l("weekday", d)).join(" ") : this._t("daily"));
     if (auto.away_persons?.length)
       autoParts.push(`${this._t("awayPersons")}: ${auto.away_persons.join(", ")} (${this._t("after")} ${auto.away_delay} min)`);
-    if (auto.disarm_on_arrival) autoParts.push(this._t("disarmOnArrival"));
+    if (auto.arrival_mode === "door")
+      autoParts.push(`${this._t("disarmOnArrivalDoor")} (${auto.arrival_window} min)`);
+    else if (auto.disarm_on_arrival) autoParts.push(this._t("disarmOnArrival"));
     const close = p.arm_on_close || {};
     const sirens = p.silent ? `${this._t("silent")}` : this._list(p.sirens);
     return [

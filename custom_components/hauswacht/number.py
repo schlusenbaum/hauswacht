@@ -16,6 +16,7 @@ ICONS = {
     "reaction_time": "mdi:timer-alert-outline",
     "max_alarm_cycles": "mdi:repeat",
     "auto_away_delay": "mdi:account-clock-outline",
+    "auto_arrival_window": "mdi:door-open",
 }
 
 

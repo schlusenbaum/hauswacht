@@ -147,6 +147,8 @@ def _profiles(main: HauswachtRuntime) -> list[dict[str, Any]]:
                         "away_persons": [plain_name(hass, p) for p in auto.away_persons],
                         "away_delay": auto.away_delay,
                         "disarm_on_arrival": auto.disarm_on_arrival,
+                        "arrival_mode": auto.arrival_mode if auto.away_persons else "off",
+                        "arrival_window": auto.arrival_window,
                     },
                     "arm_on_close": {
                         "enabled": close.enabled,

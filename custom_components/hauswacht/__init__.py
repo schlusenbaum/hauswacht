@@ -71,12 +71,14 @@ def _async_remove_stale_areas(hass: HomeAssistant, entry: HauswachtConfigEntry) 
     from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
 
     from .const import DOMAIN  # noqa: PLC0415
-    from .core.areas import stale_all_panel, stale_area_device  # noqa: PLC0415
+    from .core.areas import retired_entity, stale_all_panel, stale_area_device  # noqa: PLC0415
 
     areas = set(entry.runtime_data.areas)
     entities = er.async_get(hass)
     for entity in er.async_entries_for_config_entry(entities, entry.entry_id):
-        if stale_all_panel(entity.unique_id, entry.entry_id, areas):
+        if stale_all_panel(entity.unique_id, entry.entry_id, areas) or retired_entity(
+            entity.unique_id, entry.entry_id
+        ):
             entities.async_remove(entity.entity_id)
     devices = dr.async_get(hass)
     for device in dr.async_entries_for_config_entry(devices, entry.entry_id):

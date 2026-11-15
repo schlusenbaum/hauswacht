@@ -6,9 +6,36 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-11-15
+
+### Neu
+- **Anwesenheit aus mehreren Signalen:** Die zusätzlichen Signale je Person (WLAN-Sensor,
+  Bluetooth, Router, „Nähe“, beliebiger Binärsensor wie eine HomeKit-Variable) gelten jetzt
+  auch für die Profil-Automatik. Zuhause, sobald ein Signal zuhause meldet; weg erst, wenn
+  alle sicher weg melden – unbekannt oder nicht verfügbar zählt nie als weg. Eingestellt an
+  einer Stelle: Systemeinstellungen → **Anwesenheit und Heimkehr-Beobachtung**. Der
+  Signal-Schritt zeigt auch die Personen aus der Automatik der Profile.
+- **„Unscharf bei Rückkehr“ in drei Stufen:** Aus (Standard), Wie bisher (nur nach
+  automatischem Scharfschalten) und neu **Mit Türbeleg**: Rückkehr einer Person und Öffnen
+  einer Eingangstür innerhalb eines Zeitfensters (Standard 5 Minuten), egal in welcher
+  Reihenfolge – auch während der Eingangsverzögerung und unabhängig davon, wie scharf
+  geschaltet wurde. Geister-Heimkehrten ohne Tür bewirken nichts; ein laufender Alarm wird nie
+  beendet.
+- **Empfehlung für die Eingangsverzögerung:** Der Heimkehr-Bericht nennt je Person, welche
+  Eingangsverzögerung „Mit Türbeleg“ bräuchte (Attribut `door_proof`).
+- Neue Ereignisse `ArrivalNoted` und `DoorNoted`.
+
+### Geändert
+- Der Schalter „Unscharf beim Heimkommen“ (`switch.hauswacht_unscharf_beim_heimkommen`) ist
+  durch die Auswahl **„Unscharf bei Rückkehr“** (`select.hauswacht_unscharf_bei_ruckkehr`)
+  ersetzt; dazu kommt `number.hauswacht_turbeleg_zeitfenster`. Bestehende Einstellungen werden
+  übernommen („an“ = „Wie bisher“), der alte Schalter wird entfernt. Wer ihn im Dashboard
+  oder in Automationen nutzt, stellt auf die Auswahl um.
+
 ### Dokumentation
-- Roadmap: zusätzliche Signale für die Profil-Automatik; Taster und Türschloss als Bedienteil
-  (Wünsche aus dem simon42-Forum).
+- Profile: „Woran Hauswacht erkennt, wer zuhause ist“ und „Unscharf bei Rückkehr“ mit
+  Alltagsbeispielen; Beobachtungen: Empfehlung lesen; Fehlersuche, Referenz (Entitäten und
+  Ereignisse der Automatik), Roadmap (Wünsche aus dem simon42-Forum).
 
 ## [0.41.2] - 2026-11-15
 

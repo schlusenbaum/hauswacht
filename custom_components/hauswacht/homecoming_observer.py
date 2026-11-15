@@ -37,6 +37,8 @@ from .core.homecoming import (
     SourceStats,
     csv_rows,
     describe,
+    door_proof_advice,
+    door_proof_lines,
     doors_without_arrival,
     entry_stats,
     evaluate,
@@ -364,6 +366,10 @@ class HomecomingObserver:
                 display_name(self.hass, door): values
                 for door, values in entry_stats(self.entry_timings()).items()
             },
+            "door_proof": {
+                plain_name(self.hass, person): values
+                for person, values in door_proof_advice(self.stats()).items()
+            },
         }
 
     def summary(self) -> int | None:
@@ -400,6 +406,13 @@ class HomecomingObserver:
                     f"{v['recommended_entry_delay'] or '–'} s |"
                 )
             text += "\n".join(lines)
+        proof = door_proof_lines(
+            door_proof_advice(self.stats()),
+            {p: plain_name(self.hass, p) for p in self.persons},
+            lang,
+        )
+        if proof:
+            text += "\n\n" + "\n".join(proof)
         if not self.enabled:
             text = tr(lang, "hc_off") + "\n\n" + text
         return text

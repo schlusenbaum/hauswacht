@@ -75,11 +75,13 @@
               "auto_weekdays": "On these days (empty = every day)",
               "auto_away_persons": "Arm when all of these persons are away",
               "auto_away_delay": "Delay before arming",
-              "auto_disarm_on_arrival": "Disarm when one of these persons arrives home"
+              "auto_arrival_mode": "Disarm when one of these persons arrives home",
+              "auto_arrival_window": "Door proof: time window between arrival and door"
             },
             "data_description": {
               "auto_away_delay": "Phones detected only via Wi-Fi sometimes briefly report \"away\" in standby. The delay prevents accidental arming.",
-              "auto_disarm_on_arrival": "Only if the profile was armed automatically. Note: whoever has one of these phones can disarm with it."
+              "auto_arrival_mode": "**As before:** only if Hauswacht armed the profile itself and no door has opened yet. **With door proof:** arrival AND opening of an entry door within the time window, in any order – also during the entry delay. A running alarm is never ended. Note: whoever has the phone of one of these persons can disarm with it.",
+              "auto_arrival_window": "Only for “with door proof”. Default 5 minutes."
             }
           },
           "arm_on_close": {
@@ -179,11 +181,11 @@
         }
       },
       "homecoming": {
-        "title": "Homecoming observation",
-        "description": "Hauswacht records when entry doors open and people are detected as home – per location source – and calculates whether automatic homecoming would be reliable. The observation switches NOTHING: no disarm, no alarm. Press “Homecoming report” for the report.\n\n**Home Wi-Fi(s):** names of your Wi-Fi networks, comma separated (e.g. for the companion app's Wi-Fi sensor). In the next step you choose additional signals per person.\n\nThe observation also measures how long it takes from “door opened” to “disarmed” – which gives a recommendation for the entry delay.",
+        "title": "Presence and homecoming observation",
+        "description": "Choose how Hauswacht detects whether someone is home. This applies to the **profile automation** (“arm when everyone is away”, “disarm on arrival”) and to the **homecoming observation**.\n\n**Observe homecoming:** Hauswacht records when entry doors open and persons are detected as home – per location source – and calculates whether an automatic homecoming would be reliable. The observation switches NOTHING. The button “Homecoming report” creates the report.\n\n**Home Wi-Fi network(s):** names of your Wi-Fi networks, separated by commas (e.g. for the Wi-Fi sensor of the Companion app). In the next step you choose additional signals per person – also for the persons from the profile automation.\n\nThe observation also measures how long it takes from “door open” to “disarmed” – which gives a recommendation for the entry delay.",
         "data": {
           "homecoming_observe": "Observe homecoming",
-          "homecoming_persons": "People",
+          "homecoming_persons": "Persons to observe",
           "homecoming_ssids": "Home Wi-Fi(s)"
         }
       },
@@ -248,7 +250,7 @@
           "controls": "Control devices (keypads, NFC stickers, RFID readers)",
           "sensor_behaviour": "Sensor radio silence",
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
-          "homecoming": "Homecoming observation",
+          "homecoming": "Presence and homecoming observation",
           "init": "← Back"
         },
         "description": "{saved}"
@@ -679,8 +681,8 @@
         }
       },
       "homecoming_signals": {
-        "title": "Homecoming: additional signals per person",
-        "description": "Further signals per person that can report “home” – observation only, nothing is switched:\n\n- **Wi-Fi sensor** of the companion app (`sensor.…_wifi_connection` or `sensor.…_ssid`): home when connected to a home Wi-Fi\n- **Bluetooth** (e.g. Bermuda) or **FRITZ!Box** tracker: `device_tracker.…`\n- **Approach** (“Proximity” integration): direction sensor `sensor.…_direction_of_travel` – towards/arrived = home\n- **Binary sensors**: on = home\n\nHauswacht also evaluates the **earliest signal** per person (any source reports home)."
+        "title": "Presence: additional signals per person",
+        "description": "Additional signals per person that report “home” or “away”. They apply to the homecoming observation **and** to the profile automation:\n\n- **Wi-Fi sensor** of the Companion app (`sensor.…_wifi_connection` or `sensor.…_ssid`): home when connected to a home Wi-Fi\n- **Bluetooth** (e.g. Bermuda) or **FRITZ!Box** tracker: `device_tracker.…`\n- **Approach** (Proximity integration): direction sensor `sensor.…_direction_of_travel` – towards/arrived = home\n- **Binary sensors**: on = home\n\nA person is **home** as soon as any signal reports home. They are **away** only when all signals reliably report away – an unknown or unavailable signal never counts as away."
       },
       "controls": {
         "title": "Control devices",
@@ -831,7 +833,8 @@
       "siren_switch_confirm": "Please confirm that this is a pure alarm siren.",
       "siren_tone_fire": "A fire tone is locked for burglar alarms – only with the expert release below.",
       "siren_tone_fire_detector": "This siren has its own fire sensors (smoke detector) – a fire tone for burglar alarms is never allowed here.",
-      "siren_tone_fire_confirm": "Please explicitly confirm the expert release."
+      "siren_tone_fire_confirm": "Please explicitly confirm the expert release.",
+      "arrival_needs_persons": "“Disarm on arrival” needs at least one person under “Arm when all of these persons are away”."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -993,6 +996,13 @@
         "disarm": "Disarm",
         "end_alarm": "End alarm"
       }
+    },
+    "arrival_mode": {
+      "options": {
+        "off": "Off",
+        "auto_only": "As before (only after automatic arming)",
+        "door": "With door proof (arrival and entry door)"
+      }
     }
   },
   "entity": {
@@ -1005,9 +1015,6 @@
       },
       "setting_tamper_triggers_alarm": {
         "name": "Tamper triggers alarm"
-      },
-      "setting_auto_disarm_on_arrival": {
-        "name": "Disarm on arrival"
       }
     },
     "sensor": {
@@ -1081,6 +1088,14 @@
           "high": "High",
           "very_high": "Very high"
         }
+      },
+      "setting_auto_arrival_mode": {
+        "name": "Disarm on arrival",
+        "state": {
+          "off": "Off",
+          "auto_only": "As before (only after automatic arming)",
+          "door": "With door proof (arrival and entry door)"
+        }
       }
     },
     "button": {
@@ -1115,6 +1130,9 @@
       },
       "setting_auto_away_delay": {
         "name": "Away delay"
+      },
+      "setting_auto_arrival_window": {
+        "name": "Door proof time window"
       }
     },
     "time": {

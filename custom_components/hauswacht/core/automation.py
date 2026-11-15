@@ -6,8 +6,18 @@ Gespeichert im jeweiligen Profil:
 - ``auto_weekdays``: Wochentage für die Uhrzeiten (leer = jeden Tag)
 - ``auto_away_persons``: Personen; sind alle weg, wird nach ``auto_away_delay`` Minuten
   scharf geschaltet
-- ``auto_disarm_on_arrival``: unscharf, sobald eine dieser Personen heimkommt
-  (nur wenn das Profil zuvor automatisch scharf geschaltet wurde)
+- ``auto_arrival_mode``: "Unscharf bei Rückkehr" einer dieser Personen
+  - ``off``: aus
+  - ``auto_only``: wie bisher – nur wenn das Profil zuvor automatisch scharf geschaltet wurde,
+    nie in der Eingangsverzögerung (früher ``auto_disarm_on_arrival: true``)
+  - ``door``: mit Türbeleg – Rückkehr UND Öffnen einer Eingangstür innerhalb von
+    ``auto_arrival_window`` Minuten, egal in welcher Reihenfolge; auch während der
+    Eingangsverzögerung, egal wie scharf geschaltet wurde
+
+Anwesenheit je Person: die Person selbst plus die zusätzlichen Signale aus
+"Anwesenheit & Heimkehr" (WLAN, Bluetooth, Nähe, Binärsensoren).
+- zuhause: irgendein Signal meldet zuhause
+- weg: ALLE Signale melden sicher weg (unbekannt oder nicht verfügbar zählt nie als weg)
 
 Sicherheitsregeln:
 - Automatisch scharf geschaltet wird nur aus "unscharf" heraus, nie über ein anderes Profil.
@@ -28,6 +38,13 @@ UNKNOWN_STATES = frozenset({"unavailable", "unknown"})
 DEFAULT_AWAY_DELAY = 15  # Minuten
 MAX_AWAY_DELAY = 240
 
+ARRIVAL_OFF = "off"
+ARRIVAL_AUTO_ONLY = "auto_only"
+ARRIVAL_DOOR = "door"
+ARRIVAL_MODES: tuple[str, ...] = (ARRIVAL_OFF, ARRIVAL_AUTO_ONLY, ARRIVAL_DOOR)
+DEFAULT_ARRIVAL_WINDOW = 5  # Minuten zwischen Rückkehr und Türöffnung
+MAX_ARRIVAL_WINDOW = 30
+
 
 @dataclass(frozen=True)
 class AutoConfig:
@@ -36,7 +53,17 @@ class AutoConfig:
     weekdays: frozenset[str] = frozenset()
     away_persons: tuple[str, ...] = ()
     away_delay: int = DEFAULT_AWAY_DELAY
-    disarm_on_arrival: bool = False
+    arrival_mode: str = ARRIVAL_OFF
+    arrival_window: int = DEFAULT_ARRIVAL_WINDOW
+
+    @property
+    def disarm_on_arrival(self) -> bool:
+        """Irgendeine Form von "Unscharf bei Rückkehr" an (und Personen gewählt)."""
+        return self.arrival_mode != ARRIVAL_OFF and bool(self.away_persons)
+
+    @property
+    def door_proof(self) -> bool:
+        return self.arrival_mode == ARRIVAL_DOOR and bool(self.away_persons)
 
     @property
     def enabled(self) -> bool:
@@ -79,8 +106,27 @@ def parse_automation(options: Mapping[str, Any], profile_id: str) -> AutoConfig:
         if isinstance(persons, list)
         else (),
         away_delay=delay_int,
-        disarm_on_arrival=bool(stored.get("auto_disarm_on_arrival", False)),
+        arrival_mode=arrival_mode(stored),
+        arrival_window=_int_in(
+            stored.get("auto_arrival_window"), 1, MAX_ARRIVAL_WINDOW, DEFAULT_ARRIVAL_WINDOW
+        ),
     )
+
+
+def arrival_mode(stored: Mapping[str, Any]) -> str:
+    """Stufe von "Unscharf bei Rückkehr"; ältere Einstellungen (Schalter) werden übernommen."""
+    mode = stored.get("auto_arrival_mode")
+    if mode in ARRIVAL_MODES:
+        return str(mode)
+    return ARRIVAL_AUTO_ONLY if stored.get("auto_disarm_on_arrival") else ARRIVAL_OFF
+
+
+def _int_in(value: Any, minimum: int, maximum: int, default: int) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return default
+    return number if minimum <= number <= maximum else default
 
 
 def is_active_day(config: AutoConfig, weekday_index: int) -> bool:
@@ -102,3 +148,40 @@ def all_away(person_states: Iterable[str | None]) -> bool:
 
 def anyone_home(person_states: Iterable[str | None]) -> bool:
     return any(s == HOME_STATE for s in person_states)
+
+
+# --- Anwesenheit aus mehreren Signalen ---------------------------------------------------
+
+
+def person_value(state: str | None) -> bool | None:
+    """Personen-Entität: zuhause, weg (andere Zone/not_home) oder unbekannt."""
+    if state is None or state in UNKNOWN_STATES or state == "":
+        return None
+    return state == HOME_STATE
+
+
+def combine(values: Iterable[bool | None]) -> bool | None:
+    """Ein Signal zuhause -> zuhause; alle sicher weg -> weg; sonst unbekannt."""
+    items = list(values)
+    if any(v is True for v in items):
+        return True
+    if items and all(v is False for v in items):
+        return False
+    return None
+
+
+def all_away_values(values: Iterable[bool | None]) -> bool:
+    """Alle Personen sicher weg (unbekannt zählt nicht als weg)."""
+    items = list(values)
+    return bool(items) and all(v is False for v in items)
+
+
+def anyone_home_values(values: Iterable[bool | None]) -> bool:
+    return any(v is True for v in values)
+
+
+def door_proof_ok(arrival_at: float | None, door_at: float | None, window_minutes: int) -> bool:
+    """Rückkehr und Türöffnung liegen höchstens ``window_minutes`` auseinander."""
+    if arrival_at is None or door_at is None:
+        return False
+    return abs(arrival_at - door_at) <= window_minutes * 60

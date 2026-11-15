@@ -131,6 +131,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "automation_actor": "Automatik",
         "reason_away": "alle weg",
         "reason_arrival": "Rückkehr",
+        "reason_arrival_door": "Rückkehr mit Türbeleg",
         # Sirenentest
         "siren_prewarn_title": "Hauswacht: Sirenentest",
         "siren_prewarn": "Sirenentest {siren} in {seconds} Sekunden ({duration} s, Lautstärke "
@@ -161,6 +162,10 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "„Hauswacht Übersicht“ → Überwachung.",
         "hc_overall": "{person} (gesamt)",
         "hc_earliest": "{person} (frühestes Signal)",
+        "hc_proof_heading": "**Unscharf mit Türbeleg** – nötige Eingangsverzögerung je Person:",
+        "hc_proof_line": "- {person}: mindestens {seconds} s (längste Erkennung nach dem "
+        "Öffnen: {late} s; {count} Heimkehrten mit Tür, {phantom} ohne Tür – die würden "
+        "ignoriert)",
         "hc_no_door": "{who}: Ankunft ohne Türöffnung – würde ignoriert",
         "hc_before": "{who}: {seconds} s VOR dem Öffnen ({door}) erkannt",
         "hc_after": "{who}: {seconds} s nach dem Öffnen ({door}) erkannt – {hint}",
@@ -276,6 +281,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "automation_actor": "Automation",
         "reason_away": "everyone away",
         "reason_arrival": "return",
+        "reason_arrival_door": "return with door opening",
         "siren_prewarn_title": "Hauswacht: siren test",
         "siren_prewarn": "Siren test {siren} in {seconds} seconds ({duration} s, volume {volume}).",
         "siren_due_title": "Hauswacht: siren test due",
@@ -303,6 +309,10 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "“Hauswacht Übersicht” (overview) → Monitoring.",
         "hc_overall": "{person} (overall)",
         "hc_earliest": "{person} (earliest signal)",
+        "hc_proof_heading": "**Disarm with door proof** – entry delay needed per person:",
+        "hc_proof_line": "- {person}: at least {seconds} s (latest detection after opening: "
+        "{late} s; {count} homecomings with door, {phantom} without door – those would be "
+        "ignored)",
         "hc_no_door": "{who}: arrival without door opening – would be ignored",
         "hc_before": "{who}: detected {seconds} s BEFORE opening ({door})",
         "hc_after": "{who}: detected {seconds} s after opening ({door}) – {hint}",

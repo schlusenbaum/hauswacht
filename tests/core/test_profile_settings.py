@@ -68,3 +68,18 @@ def test_write_rejects_invalid(key: str, value: object) -> None:
 def test_write_unknown_profile() -> None:
     with pytest.raises(SettingError):
         write(OPTIONS, "vacation", "entry_delay", 10)
+
+
+def test_arrival_mode_select_reads_old_switch_and_writes_both() -> None:
+    from custom_components.hauswacht.core.profile_settings import (  # noqa: PLC0415
+        read_select,
+        write,
+    )
+
+    options = {"profiles": {"away": {"auto_disarm_on_arrival": True}}}
+    assert read_select(options, "away", "auto_arrival_mode") == "auto_only"
+    new = write(options, "away", "auto_arrival_mode", "door")
+    assert new["profiles"]["away"]["auto_arrival_mode"] == "door"
+    assert new["profiles"]["away"]["auto_disarm_on_arrival"] is False
+    assert read_select(new, "away", "auto_arrival_mode") == "door"
+    assert options["profiles"]["away"] == {"auto_disarm_on_arrival": True}  # Original unverändert

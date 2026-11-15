@@ -1,6 +1,6 @@
 # Installation und erste Schritte
 
-> **Stand 0.41.2:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.42.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -76,7 +76,7 @@ Konfigurieren**. Sie lassen sich nur ändern, wenn **alle Bereiche unscharf** si
 | **Systemeinstellungen** → Bedienteile | Keypads, NFC-Aufkleber, RFID-Leser | [Bedienteile](bedienteile.md) |
 | **Systemeinstellungen** → Funkstille von Sensoren | Wann ein Sensor als ausgefallen gilt | [Melder](melder.md#funkstille-von-sensoren) |
 | **Systemeinstellungen** → Funknetz und Gateways überwachen | Zigbee2MQTT, MQTT … | [Melder](melder.md#funknetz-und-gateways-überwachen) |
-| **Systemeinstellungen** → Heimkehr-Beobachtung | Messen, schaltet nichts | [Beobachtungen](beobachtung.md) |
+| **Systemeinstellungen** → Anwesenheit und Heimkehr-Beobachtung | Signale je Person (für Automatik und Beobachtung); Heimkehr messen | [Profile](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist), [Beobachtungen](beobachtung.md) |
 
 So funktioniert der Dialog:
 

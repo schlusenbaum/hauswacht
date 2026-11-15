@@ -86,6 +86,7 @@ SELECT_ICONS = {
     "unavailable_policy": "mdi:lan-disconnect",
     "siren_tone": "mdi:bullhorn-outline",
     "siren_volume": "mdi:volume-high",
+    "auto_arrival_mode": "mdi:home-import-outline",
 }
 
 

@@ -103,3 +103,13 @@ def stale_area_device(identifier: str, entry_id: str, areas: set[str]) -> bool:
 def stale_all_panel(unique_id: str, entry_id: str, areas: set[str]) -> bool:
     """Bedienfeld "Alle Bereiche", obwohl es nur noch einen Bereich gibt?"""
     return unique_id == f"{entry_id}_{ALL_PANEL_KEY}" and len(areas) < 2
+
+
+# Entitäten, die es nicht mehr gibt (werden beim Start entfernt)
+RETIRED_KEYS: tuple[str, ...] = (
+    "setting_auto_disarm_on_arrival",  # 0.42: Auswahl "Unscharf bei Rückkehr" statt Schalter
+)
+
+
+def retired_entity(unique_id: str, entry_id: str) -> bool:
+    return any(unique_id == f"{entry_id}_{key}" for key in RETIRED_KEYS)

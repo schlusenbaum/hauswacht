@@ -303,6 +303,50 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
     return result
 
 
+def door_proof_advice(stats: Mapping[str, SourceStats]) -> dict[str, dict[str, int]]:
+    """Je Person: welche Eingangsverzögerung "Unscharf mit Türbeleg" bräuchte.
+
+    Grundlage ist die Kombination "frühestes Signal" (irgendein Signal meldet zuhause) – so
+    entscheidet auch die Profil-Automatik. Kommt die Erkennung erst nach dem Öffnen der Tür,
+    muss die Eingangsverzögerung so lange reichen. Heimkehrten ohne Tür würden ignoriert.
+    """
+    advice: dict[str, dict[str, int]] = {}
+    for source, entry in stats.items():
+        if not source.endswith(EARLIEST) or not entry.delays:
+            continue
+        late = max(0.0, *entry.delays)
+        advice[source[: -len(EARLIEST)]] = {
+            "with_door": entry.with_door,
+            "without_door": entry.without_door,
+            "longest_after_door": round(late),
+            "recommended_entry_delay": recommended_entry_delay(late),
+        }
+    return advice
+
+
+def door_proof_lines(
+    advice: Mapping[str, Mapping[str, int]], names: Mapping[str, str], lang: str = DE
+) -> list[str]:
+    """Abschnitt für den Bericht (leer, wenn es noch keine Heimkehr mit Tür gibt)."""
+    if not advice:
+        return []
+    lines = [tr(lang, "hc_proof_heading"), ""]
+    for person in sorted(advice, key=lambda p: names.get(p, p)):
+        v = advice[person]
+        lines.append(
+            tr(
+                lang,
+                "hc_proof_line",
+                person=names.get(person, person),
+                seconds=v["recommended_entry_delay"],
+                late=v["longest_after_door"],
+                count=v["with_door"],
+                phantom=v["without_door"],
+            )
+        )
+    return lines
+
+
 CSV_COLUMNS = (
     "hc_csv_kind",
     "hc_csv_time",

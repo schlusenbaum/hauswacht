@@ -45,7 +45,7 @@ const GROUPS = [
   { title: "times", keys: ["setting_exit_delay", "setting_entry_delay", "setting_reaction_time", "setting_max_alarm_cycles"] },
   { title: "alarm", keys: ["setting_silent", "setting_tamper_triggers_alarm", "setting_siren_tone", "setting_siren_volume"] },
   { title: "arming", keys: ["setting_open_policy", "setting_unavailable_policy"] },
-  { title: "automation", keys: ["setting_auto_arm_time", "setting_auto_disarm_time", "setting_auto_away_delay", "setting_auto_disarm_on_arrival"] },
+  { title: "automation", keys: ["setting_auto_arm_time", "setting_auto_disarm_time", "setting_auto_away_delay", "setting_auto_arrival_mode", "setting_auto_arrival_window"] },
 ];
 
 const STYLE = `

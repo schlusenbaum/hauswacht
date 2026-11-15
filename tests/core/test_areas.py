@@ -59,3 +59,11 @@ def test_stale_all_panel() -> None:
     assert stale_all_panel("e1_all_panel", "e1", {"main"})
     assert not stale_all_panel("e1_all_panel", "e1", {"main", "garage"})
     assert not stale_all_panel("e1_panel", "e1", {"main"})
+
+
+def test_retired_entity() -> None:
+    from custom_components.hauswacht.core.areas import retired_entity  # noqa: PLC0415
+
+    assert retired_entity("e1_setting_auto_disarm_on_arrival", "e1")
+    assert not retired_entity("e1_setting_auto_arrival_mode", "e1")
+    assert not retired_entity("e2_setting_auto_disarm_on_arrival", "e1")

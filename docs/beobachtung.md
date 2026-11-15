@@ -6,8 +6,8 @@ steht bei den Meldern.
 
 ## Heimkehr-Beobachtung
 
-**Systemeinstellungen → Heimkehr-Beobachtung.** Personen auswählen und „Heimkehr beobachten“
-einschalten.
+**Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung.** Personen auswählen und
+„Heimkehr beobachten“ einschalten.
 
 Hauswacht zeichnet dann auf, wann eine **Eingangstür** (Sensoren mit der Rolle „entry“)
 geöffnet wird und wann eine Person als **heimgekommen** erkannt wird – für die Person insgesamt
@@ -43,7 +43,12 @@ wäre, für welche Personen und Ortungsquellen, und mit welcher Eingangsverzöge
 ## Zusätzliche Signale je Person
 
 Im zweiten Schritt des Formulars wählst du je Person weitere Signale. Je früher und
-zuverlässiger ein Signal, desto besser:
+zuverlässiger ein Signal, desto besser.
+
+Die Signale gelten **auch für die Profil-Automatik** („Scharf, wenn alle weg“, „Unscharf bei
+Rückkehr“). Der zweite Schritt zeigt deshalb auch die Personen aus der Automatik der Profile,
+selbst wenn die Beobachtung aus ist. Wie die Automatik die Signale verbindet, steht unter
+[Profile → Woran Hauswacht erkennt, wer zuhause ist](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist).
 
 | Signal | Woher | gilt als „zuhause“ |
 |---|---|---|
@@ -54,8 +59,30 @@ zuverlässiger ein Signal, desto besser:
 | Binärsensor | beliebig | an |
 
 Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: zuhause, sobald
-irgendeine Quelle zuhause meldet. So siehst du, ob eine ODER-Kombination früh genug wäre –
-eine UND-Kombination (zwei Belege) wäre sicherer, aber langsamer.
+irgendeine Quelle zuhause meldet. So entscheidet auch die Profil-Automatik. (Die Beobachtung
+nimmt dabei auch die Geräte-Tracker der Person einzeln dazu; die Automatik nutzt die Person
+selbst und die gewählten Signale.)
+
+### Empfehlung für „Unscharf mit Türbeleg“
+
+Sobald es Heimkehrten **mit Tür** gibt, enthält der Bericht einen Abschnitt **„Unscharf mit
+Türbeleg – nötige Eingangsverzögerung je Person“**. Beispiel:
+
+```
+- Christian: mindestens 60 s (längste Erkennung nach dem Öffnen: 48 s; 30 Heimkehrten mit
+  Tür, 2 ohne Tür – die würden ignoriert)
+- Niklas: mindestens 5 s (längste Erkennung nach dem Öffnen: 0 s; 22 Heimkehrten mit Tür,
+  23 ohne Tür – die würden ignoriert)
+```
+
+So liest du das:
+
+- **mindestens … s:** Mit dieser Eingangsverzögerung hätte „Mit Türbeleg“ bei jeder
+  beobachteten Heimkehr rechtzeitig unscharf geschaltet (längste Verspätung plus 25 %
+  Puffer, mindestens 5 s). Die Eingangsverzögerung selbst stellst du im Profil ein – für
+  das Aufschließen ohne Handy brauchst du ohnehin genug Zeit.
+- **ohne Tür:** Geister-Heimkehrten. „Mit Türbeleg“ ignoriert sie.
+- Den Wert findest du auch im Attribut `door_proof` des Sensors „Heimkehr-Beobachtung“.
 
 ## Tür auf bis unscharf
 
