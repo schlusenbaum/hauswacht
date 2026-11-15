@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.44.0] - 2026-11-15
+
+### Dokumentation
+- **Anleitung auf Englisch:** alle Nutzerseiten und die Sicherheitsregeln unter `docs/en/`,
+  mit den Begriffen der englischen Oberfläche und den englischen Entitäts-IDs. Jede Seite
+  verlinkt oben ihr Gegenstück in der anderen Sprache („Deutsch | English“).
+- **README auf Englisch** (`README.en.md`) statt der aufklappbaren Zusammenfassung; das
+  deutsche README bleibt die Startseite.
+- Tests stellen sicher, dass es zu jeder deutschen Seite die englische gibt, dass beide
+  einander verlinken und dass alle Links und Anker stimmen.
+- Profile: Hinweis zu Profilen namens „Unscharf“ ohne Verweis auf andere Integrationen.
+
+### Geändert
+- Einstellungen: Der Menüpunkt „Bedienteile“ nennt jetzt auch Taster und Türschlösser.
+
 ## [0.43.0] - 2026-11-15
 
 ### Neu

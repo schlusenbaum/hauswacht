@@ -1,5 +1,7 @@
 # Fehlersuche
 
+**Deutsch** | [English](en/troubleshooting.md)
+
 ## Scharfschalten
 
 **„Scharfschalten abgelehnt“ – warum?**

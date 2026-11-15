@@ -1,5 +1,7 @@
 # Referenz
 
+**Deutsch** | [English](en/reference.md)
+
 Entitäts-IDs gelten für eine deutschsprachige Home-Assistant-Instanz (auf Englisch z. B.
 `switch.hauswacht_test_mode`). Für weitere Bereiche kommt der Bereichsname hinter „hauswacht“,
 z. B. `alarm_control_panel.hauswacht_garage`.

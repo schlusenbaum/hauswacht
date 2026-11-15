@@ -1,5 +1,7 @@
 # Auslöseregeln
 
+**Deutsch** | [English](en/trigger-rules.md)
+
 **Alarmauslösung → Auslöseregeln.** Eine Auslöseregel löst erst bei einer **Abfolge** von
 Meldern aus – z. B. „Tür, dann Keller“. Auslöseregeln stehen für sich; im Alarmprofil wählst du
 unter **Auslöseregeln**, welche gelten. Dieselbe Regel kann in mehreren Profilen stecken.

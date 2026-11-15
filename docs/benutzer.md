@@ -1,5 +1,7 @@
 # Benutzer, PINs und Sperre
 
+**Deutsch** | [English](en/users.md)
+
 ## Das Wichtigste vorab
 
 > ⚠️ **Entweder alle bekommen einen PIN – oder keiner.**

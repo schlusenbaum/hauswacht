@@ -1,5 +1,7 @@
 # Alarmprofile und Bereiche
 
+**Deutsch** | [English](en/profiles.md)
+
 ## Alarmprofile
 
 **Alarmprofile → Alarmprofil anlegen.** Es gibt keine vorgegebenen Profile – du legst so viele
@@ -8,7 +10,7 @@ an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub
 > **Jedes Profil ist eine Art, scharf zu schalten.** „Unscharf“ ist kein Profil, sondern der
 > Grundzustand – erreichbar über „Unscharf“ am Bedienfeld, die Unscharf-Taste am Keypad oder die
 > Alarmkarte. Ein Profil namens „Unscharf“ würde die Anlage scharf schalten. Legst du aus
-> Gewohnheit (z. B. von Alarmo) eines an, bitte wieder löschen.
+> Gewohnheit (z. B. von anderen Alarm-Integrationen) eines an, bitte wieder löschen.
 
 | Einstellung | Bedeutung |
 |---|---|

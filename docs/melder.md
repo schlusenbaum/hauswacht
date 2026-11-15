@@ -1,5 +1,7 @@
 # Melder und Meldergruppen
 
+**Deutsch** | [English](en/sensors.md)
+
 ## Welche Melder gehen?
 
 Hauswacht überwacht nur Entitäten, die **offen/zu** kennen:

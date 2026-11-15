@@ -1,5 +1,7 @@
 # Benachrichtigungen und Sprachausgabe
 
+**Deutsch** | [English](en/notifications.md)
+
 ## Empfänger
 
 **Benachrichtigungen** mit den Punkten „Empfänger und Ereignisse“, „Eigene

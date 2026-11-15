@@ -1,5 +1,7 @@
 # Sicherheitsregeln
 
+**Deutsch** | [English](../en/development/safety.md)
+
 Diese Regeln sind verbindlich. Sie dürfen nicht vereinfacht werden, um die Implementierung zu
 erleichtern. Jede Regel ist durch Tests abgesichert.
 

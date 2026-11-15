@@ -1,5 +1,7 @@
 # Bedienteile: Keypads, Karten, NFC-Aufkleber, RFID-Leser, Taster, Türschlösser
 
+**Deutsch** | [English](en/control-devices.md)
+
 **Systemeinstellungen → Bedienteile.** Beliebig viele Bedienteile, jedes für einen **Bereich**
 oder für **alle Bereiche**. Ausgewiesen wird immer mit den **Ausweisen der Benutzer** (PIN,
 RFID-Karte, Schloss-Kennung): Rechte, Gültigkeit, Sperre nach falschen Eingaben und Bedrohungs-PIN gelten wie am

@@ -47,7 +47,7 @@ Dieselben Prüfungen laufen bei jedem Pull Request in der CI, dazu Hassfest.
 | `tests/core/test_checks.py` | Prüfhinweise: Lücken, Vergessenes, Widersprüche; Bedrohungs-PIN ohne Namen |
 | `tests/integration/test_alarm_card.py` | Alarmkarte: ohne PINs frei, zugeordnetes Konto ohne PIN mit Namen und Rechten, fremdes Konto bzw. Tablet mit PIN, falscher PIN, „Trotzdem scharf“, kein Zugriff für Nur-Lesen-Konten |
 | `tests/integration/test_overview.py` | Übersicht per WebSocket (nur Admins, nichts Geheimes), Reparaturen kommen und gehen, Diagnose geschwärzt |
-| `tests/core/test_docs.py` | Dokumentation: keine toten Links oder Anker, jede Seite im Inhaltsverzeichnis |
+| `tests/core/test_docs.py` | Dokumentation: keine toten Links oder Anker, jede Seite im Inhaltsverzeichnis; zu jeder deutschen Seite die englische (`PAGES`), beide verlinken einander oben |
 | `tests/core/test_versions.py` | Versionsangaben in README, Anleitung, pyproject und CHANGELOG passen zum Manifest |
 | `tests/integration/test_users.py` | Mit Home Assistant: „geändert von“, gemeinsamer PIN, Rechte, gesperrt/abgelaufen, Bedrohungs-PIN unauffällig, Push mit Rechten, Benutzerverwaltung |
 | `tests/integration/test_integration.py` | Mit Home Assistant: Einrichtung, Entladen, Scharf/Unscharf mit Verzögerung, PIN, Testmodus, Neustart und Neuladen im scharfen Zustand, Options Flow |
@@ -64,3 +64,10 @@ Ein veröffentlichtes GitHub-Release startet `.github/workflows/release.yml`: De
 dass der Tag (`vX.Y.Z`) zur Version im Manifest passt, packt `custom_components/hauswacht` in
 `hauswacht.zip` und hängt die Datei an das Release. HACS installiert aus dieser ZIP und zählt
 die Downloads (Abzeichen im README).
+
+## Dokumentation in zwei Sprachen
+
+Jede Änderung an der Anleitung kommt in **beide** Sprachen: `docs/<seite>.md` und
+`docs/en/<page>.md` (Zuordnung in `PAGES` in `tests/core/test_docs.py`). Die englische Seite
+verwendet die Begriffe der englischen Oberfläche (`translations/en.json`) und die englischen
+Entitäts-IDs. Neue Seiten in `PAGES` eintragen; sonst schlägt der Test fehl.

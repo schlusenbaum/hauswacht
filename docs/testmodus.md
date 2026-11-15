@@ -1,5 +1,7 @@
 # Testmodus und Testkarte
 
+**Deutsch** | [English](en/test-mode.md)
+
 Im **Testmodus** laufen alle Abläufe wie im Ernstfall – Scharfschalten, Verzögerungen, Alarm,
 Benachrichtigungen –, aber:
 

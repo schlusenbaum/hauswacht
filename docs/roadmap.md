@@ -1,5 +1,7 @@
 # Roadmap
 
+**Deutsch** | [English](en/roadmap.md)
+
 ## Erreicht
 
 | Version | Inhalt |
@@ -26,6 +28,7 @@
 | 0.40–0.41 | Ton je Sirene (z. B. HmIP-ASIR), Assistent „Sirene aus Schalter erstellen“, Schalter als Sirene und Brandton-Freigabe für Experten |
 | 0.42 | Zusätzliche Anwesenheits-Signale je Person für die Profil-Automatik, „Unscharf bei Rückkehr“ mit Türbeleg, Empfehlung der Eingangsverzögerung aus der Heimkehr-Beobachtung |
 | 0.43 | Taster als Bedienteil (nur scharf), Türschloss als Bedienteil (Nuki über MQTT oder allgemein: unscharf beim Aufschließen durch einen bekannten Benutzer, optional scharf beim Abschließen) |
+| 0.44 | Dokumentation auf Englisch (Anleitung und Sicherheitsregeln), englisches README |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -33,7 +36,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| später | Dokumentation auf Englisch |
+| später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
 | 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
