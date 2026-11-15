@@ -44,6 +44,11 @@ planned. Installation: add `https://github.com/schlusenbaum/hauswacht` as a cust
 restart, then add the integration. Questions and feedback in English are welcome in the
 [issues](https://github.com/schlusenbaum/hauswacht/issues).
 
+Built with a lot of help from AI: large parts of the code, tests and documentation were written
+by **Claude** (Anthropic), based on my ideas, concepts, safety rules and decisions, and tried out
+in my own home. Every change has to pass the automated checks (core logic, integration tests
+with Home Assistant, safety tests – without real devices or sirens) before it is merged.
+
 Not a certified security system – it does not replace a professional alarm system or tested
 smoke detectors.
 
@@ -152,6 +157,16 @@ Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 > **Hinweis:** Hauswacht ist ein Hobbyprojekt und **kein zertifiziertes Sicherheitssystem**
 > (keine VdS- oder EN-50131-Zertifizierung). Es ersetzt weder eine professionelle
 > Einbruchmeldeanlage noch geprüfte Rauchwarnmelder.
+
+## Wie Hauswacht entstanden ist
+
+Hauswacht ist mit **viel Hilfe von KI** entstanden: Große Teile des Codes, der Tests und der
+Dokumentation hat **Claude** (Anthropic) geschrieben. Die Ideen, Konzepte, Sicherheitsregeln und
+Entscheidungen stammen von mir; erprobt wird Hauswacht im eigenen Haus. Jede Änderung muss vor
+dem Zusammenführen die automatischen Prüfungen bestehen – Kernlogik, Integrationstests mit Home
+Assistant und Sicherheitstests, alles ohne echte Geräte und ohne Sirenen.
+
+Gerade deshalb sind Rückmeldungen aus anderen Installationen wertvoll.
 
 ## Mitmachen
 

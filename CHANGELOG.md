@@ -6,6 +6,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- README: Hinweis, dass Hauswacht mit viel Hilfe von KI (Claude) entstanden ist.
+
 ## [0.43.0] - 2026-11-15
 
 ### Neu
