@@ -309,26 +309,16 @@ def migrate_legacy_pin(options: Mapping[str, Any]) -> dict[str, Any]:
     return new
 
 
-def people_without_pin(
-    users: Iterable[User], ha_users: Mapping[str, str], *, ignore: Iterable[str] = ()
-) -> list[str]:
-    """Wer kann am Bedienfeld nicht unscharf schalten, weil er keinen PIN hat?
+def people_without_pin(users: Iterable[User], *, ignore: Iterable[str] = ()) -> list[str]:
+    """Welche Hauswacht-Benutzer können am Bedienfeld nicht unscharf schalten (kein PIN)?
 
-    Nur relevant, wenn es überhaupt PINs gibt. ``ha_users``: ID -> Name der
-    Home-Assistant-Benutzer. Ein Home-Assistant-Benutzer gilt als versorgt, wenn ein
-    Hauswacht-Benutzer mit PIN mit ihm verknüpft ist oder seinen Namen trägt.
+    Nur relevant, wenn es überhaupt PINs gibt. Maßgeblich sind allein die Hauswacht-Benutzer –
+    nicht alle Home-Assistant-Konten: Dienstkonten (z. B. für Grafana oder MQTT) und ein
+    Tablet-Konto ohne Hauswacht-Benutzer sind keine Personen, die unscharf schalten sollen.
     """
     users = list(users)
     if not has_codes(users):
         return []
     skip = set(ignore)
-    with_pin = [u for u in users if u.pin is not None]
-    missing = [u.name for u in users if u.pin is None and u.user_id not in skip]
-    linked = {u.ha_user for u in with_pin if u.ha_user}
-    named = {u.name.casefold() for u in with_pin}
-    pinless_names = {u.name.casefold() for u in users if u.pin is None}
-    for ha_id, ha_name in ha_users.items():
-        if ha_id in linked or ha_name.casefold() in named or ha_name.casefold() in pinless_names:
-            continue
-        missing.append(ha_name)
-    return sorted(set(missing), key=str.casefold)
+    missing = {u.name for u in users if u.pin is None and u.user_id not in skip}
+    return sorted(missing, key=str.casefold)

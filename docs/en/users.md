@@ -7,9 +7,11 @@
 > ⚠️ **Either everyone gets a PIN – or nobody.**
 > As soon as **one** PIN exists (including the master PIN), the alarm panel and Alexa require a
 > PIN for disarming – **from everyone**. Whoever has none can then only disarm via dashboard
-> buttons (if "Allow dashboard buttons despite PIN" is on under PIN rules), the push button or
-> their RFID card. A shared family PIN is allowed. If someone has no PIN, Home Assistant shows the
-> hint "Not all persons have a PIN" under **Settings → Repairs**.
+> buttons (if "Allow dashboard buttons despite PIN" is on under PIN rules), the push button, their
+> RFID card or the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin). A shared family PIN is
+> allowed. If a **Hauswacht user** has no PIN, Home Assistant shows the hint "Not every user has a
+> PIN" under **Settings → Repairs**. Home Assistant accounts without a Hauswacht user – e.g. for
+> Grafana, MQTT or a wall tablet – do not count.
 
 **RFID cards are independent of the PIN:** cards do not make the alarm panel require a PIN. So
 without any PINs, everyone switches on the dashboard without a PIN, and still with a card at the

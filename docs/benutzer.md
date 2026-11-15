@@ -8,9 +8,11 @@
 > Sobald **ein** PIN existiert (auch der Master-PIN), verlangen das Bedienfeld und Alexa zum
 > Unscharfschalten einen PIN – **von allen**. Wer keinen hat, kann dann nur noch über
 > Dashboard-Knöpfe (wenn unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ an ist), den
-> Push-Knopf oder seine RFID-Karte unscharf schalten. Ein gemeinsamer Familien-PIN ist erlaubt.
-> Fehlt jemandem ein PIN, zeigt Home Assistant unter **Einstellungen → Reparaturen** den Hinweis
-> „Nicht alle Personen haben einen PIN“.
+> Push-Knopf, seine RFID-Karte oder die Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang)
+> unscharf schalten. Ein gemeinsamer Familien-PIN ist erlaubt. Fehlt einem **Hauswacht-Benutzer**
+> ein PIN, zeigt Home Assistant unter **Einstellungen → Reparaturen** den Hinweis „Nicht alle
+> Benutzer haben einen PIN“. Home-Assistant-Konten ohne Hauswacht-Benutzer – z. B. für Grafana,
+> MQTT oder ein Wandtablet – zählen dabei nicht.
 
 **RFID-Karten sind unabhängig vom PIN:** Karten machen das Bedienfeld nicht PIN-pflichtig. Ganz
 ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Keypad.

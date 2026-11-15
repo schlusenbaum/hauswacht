@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.44.2] - 2026-11-15
+
+### Behoben
+- Reparatur-Hinweis „nicht alle Personen haben einen PIN“ nannte auch Home-Assistant-Konten,
+  die gar keine Hauswacht-Benutzer sind – z. B. Dienstkonten für Grafana oder MQTT und ein
+  Wandtablet-Konto, dem die Doku bewusst keinen Benutzer gibt. Jetzt zählen nur noch
+  Hauswacht-Benutzer ohne PIN (gemeldet im simon42-Forum). Der Hinweis heißt jetzt „nicht alle
+  Benutzer haben einen PIN“ und nennt die Alarmkarte als weiteren Ausweg; „an/aus“ erscheint auf
+  Englisch als „on/off“.
+
 ## [0.44.1] - 2026-11-15
 
 ### Dokumentation

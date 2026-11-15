@@ -842,12 +842,7 @@ class HauswachtRuntime:
 
     async def _async_check_pin_coverage(self) -> None:
         """Reparatur-Hinweis, wenn es PINs gibt, aber Personen ohne PIN."""
-        ha_users = {
-            u.id: u.name
-            for u in await self.hass.auth.async_get_users()
-            if u.is_active and not u.system_generated and u.name
-        }
-        missing = people_without_pin(self.users, ha_users, ignore=[MASTER_USER_ID])
+        missing = people_without_pin(self.users, ignore=[MASTER_USER_ID])
         if missing:
             ir.async_create_issue(
                 self.hass,
@@ -858,7 +853,7 @@ class HauswachtRuntime:
                 translation_key=ISSUE_PIN_COVERAGE,
                 translation_placeholders={
                     "people": ", ".join(missing),
-                    "buttons": "an" if self.buttons_without_pin else "aus",
+                    "buttons": tr(self.lang, "on" if self.buttons_without_pin else "off"),
                 },
             )
         else:
