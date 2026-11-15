@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.44.3] - 2026-11-15
+
+### Behoben
+- **„Unscharf um“ über Nacht mit Wochentagen:** Bei einem Profil über Nacht (z. B. scharf
+  23:00, unscharf 06:30) mit Tagen Mo–Fr blieb die Anlage nach Freitagnacht das ganze Wochenende
+  scharf, weil Samstag kein aktiver Tag ist. Jetzt gehört der Morgen zur Nacht davor: Hauswacht
+  schaltet auch am Morgen nach einem aktiven Tag unscharf. Tagesprofile sind unverändert.
+
+### Dokumentation
+- Profile: „Uhrzeiten, über Nacht und scharf von Hand“ mit Wochenbeispiel und dem Verhalten,
+  wenn ein Profil mit Uhrzeiten von Hand scharf geschaltet wird (deutsch und englisch).
+
 ## [0.44.2] - 2026-11-15
 
 ### Behoben

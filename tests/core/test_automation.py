@@ -198,3 +198,39 @@ def test_door_proof_ok(arrival: float | None, door: float | None, expected: bool
     from custom_components.hauswacht.core.automation import door_proof_ok  # noqa: PLC0415
 
     assert door_proof_ok(arrival, door, 5) is expected
+
+
+# --- 0.44.3: "Unscharf um" über Nacht ---------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("weekday", "expected"),
+    [
+        (0, True),  # Montag: aktiver Tag
+        (4, True),  # Freitag
+        (5, True),  # Samstag früh: Freitagnacht scharf geschaltet
+        (6, False),  # Sonntag früh: Samstag ist kein aktiver Tag
+    ],
+)
+def test_disarm_due_overnight(weekday: int, expected: bool) -> None:
+    from custom_components.hauswacht.core.automation import disarm_due  # noqa: PLC0415
+
+    workdays = frozenset({"mon", "tue", "wed", "thu", "fri"})
+    night = AutoConfig(arm_time=time(23, 0), disarm_time=time(6, 30), weekdays=workdays)
+    assert disarm_due(night, weekday) is expected
+
+
+def test_disarm_due_same_day_only_on_active_days() -> None:
+    from custom_components.hauswacht.core.automation import disarm_due, overnight  # noqa: PLC0415
+
+    workdays = frozenset({"mon", "tue", "wed", "thu", "fri"})
+    day = AutoConfig(arm_time=time(7, 30), disarm_time=time(16, 0), weekdays=workdays)
+    assert not overnight(day)
+    assert disarm_due(day, 4)
+    assert not disarm_due(day, 5)  # Samstag: kein Tagesprofil
+    # nur "Unscharf um" ohne Scharf-Uhrzeit: kein "über Nacht"
+    only_disarm = AutoConfig(disarm_time=time(6, 30), weekdays=workdays)
+    assert not overnight(only_disarm)
+    assert not disarm_due(only_disarm, 5)
+    # ohne Wochentage: täglich
+    assert disarm_due(AutoConfig(arm_time=time(23, 0), disarm_time=time(6, 30)), 6)

@@ -134,6 +134,27 @@ def is_active_day(config: AutoConfig, weekday_index: int) -> bool:
     return not config.weekdays or WEEKDAYS[weekday_index] in config.weekdays
 
 
+def overnight(config: AutoConfig) -> bool:
+    """Scharf am Abend, unscharf am nächsten Morgen (Unscharf-Uhrzeit vor der Scharf-Uhrzeit)."""
+    return (
+        config.arm_time is not None
+        and config.disarm_time is not None
+        and config.disarm_time < config.arm_time
+    )
+
+
+def disarm_due(config: AutoConfig, weekday_index: int) -> bool:
+    """Gilt "Unscharf um" heute?
+
+    An einem aktiven Tag immer. Geht das Profil über Nacht (z. B. scharf 23:00, unscharf 06:30),
+    zusätzlich am Morgen nach einem aktiven Tag: Bei Mo–Fr wird Freitagnacht scharf geschaltet
+    und Samstag früh wieder unscharf – sonst bliebe die Anlage das ganze Wochenende scharf.
+    """
+    if is_active_day(config, weekday_index):
+        return True
+    return overnight(config) and is_active_day(config, (weekday_index - 1) % 7)
+
+
 def all_away(person_states: Iterable[str | None]) -> bool:
     """True nur, wenn ALLE Personen sicher nicht zu Hause sind.
 
