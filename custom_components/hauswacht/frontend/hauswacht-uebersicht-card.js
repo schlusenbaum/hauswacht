@@ -95,6 +95,9 @@ const LANG = {
     cardPin: "PIN in der Alarmkarte",
     cardPinUnlinked: "Alarmkarte: PIN für Konten ohne Benutzer",
     topic: "MQTT-Topic",
+    armOnly: "nur scharf",
+    lockArms: "abschließen schaltet scharf",
+    unlockDisarms: "aufschließen (bekannter Benutzer) schaltet unscharf",
     login: "Anmeldung",
     emergency: "Notruf-Taste",
     action: "Aktion",
@@ -223,6 +226,9 @@ const LANG = {
     cardPin: "PIN in the alarm card",
     cardPinUnlinked: "Alarm card: PIN for accounts without user",
     topic: "MQTT topic",
+    armOnly: "arms only",
+    lockArms: "locking arms",
+    unlockDisarms: "unlocking (known user) disarms",
     login: "Login",
     emergency: "Emergency key",
     action: "Action",
@@ -282,7 +288,8 @@ const LABELS = {
     status: { ok: "OK", degraded: "Melder ausgefallen", fault: "Störung" },
     result: { alarm: "sofort Alarm", entry_delay: "Eingangsverzögerung, dann Alarm", notify: "nur Benachrichtigung" },
     right: { arm: "scharf", disarm: "unscharf", end_alarm: "Alarm beenden" },
-    kind: { keypad: "Keypad", sticker: "NFC-Aufkleber", reader: "RFID-Leser" },
+    kind: { keypad: "Keypad", sticker: "NFC-Aufkleber", reader: "RFID-Leser", button: "Taster", lock: "Türschloss" },
+    source: { nuki_mqtt: "Nuki über MQTT", generic: "Sensor/Ereignis" },
     login: { pin_or_card: "PIN oder Karte", card: "Karte", card_and_pin: "Karte und PIN" },
     emergency: { off: "aus", silent: "still", alarm: "Alarm" },
     action: { disarm: "unscharf", arm: "scharf", toggle: "umschalten" },
@@ -309,7 +316,8 @@ const LABELS = {
     status: { ok: "OK", degraded: "sensors unavailable", fault: "fault" },
     result: { alarm: "immediate alarm", entry_delay: "entry delay, then alarm", notify: "notification only" },
     right: { arm: "arm", disarm: "disarm", end_alarm: "end alarm" },
-    kind: { keypad: "Keypad", sticker: "NFC sticker", reader: "RFID reader" },
+    kind: { keypad: "Keypad", sticker: "NFC sticker", reader: "RFID reader", button: "Button", lock: "Door lock" },
+    source: { nuki_mqtt: "Nuki via MQTT", generic: "sensor/event" },
     login: { pin_or_card: "PIN or card", card: "card", card_and_pin: "card and PIN" },
     emergency: { off: "off", silent: "silent", alarm: "alarm" },
     action: { disarm: "disarm", arm: "arm", toggle: "toggle" },
@@ -543,6 +551,15 @@ class HauswachtUebersichtCard extends HTMLElement {
     if (c.kind === "keypad") {
       const keys = Object.entries(c.buttons || {}).map(([k, p]) => `${this._l("key", k)} → ${p}`).join(", ");
       return `${this._t("topic")}: ${esc(c.topic)} · ${esc(keys || this._t("none"))} · ${this._t("login")}: ${esc(this._l("login", c.login))} · ${this._t("emergency")}: ${esc(this._l("emergency", c.emergency))}`;
+    }
+    if (c.kind === "button") {
+      const presses = Object.entries(c.presses || {}).map(([k, p]) => `${esc(k)} → ${esc(p)}`).join(", ");
+      return `${esc(c.entity || "–")} · ${this._t("armOnly")}: ${presses || esc(this._t("none"))}`;
+    }
+    if (c.kind === "lock") {
+      const who = c.source === "generic" ? esc(c.who || "–") : `${this._t("topic")}: ${esc(c.topic || "–")}`;
+      const lockArm = c.profile ? ` · ${this._t("lockArms")}: ${esc(c.profile)}` : "";
+      return `${esc(c.entity || "–")} · ${esc(this._l("source", c.source))} (${who}) · ${this._t("unlockDisarms")}${lockArm}`;
     }
     const profile = c.profile ? ` (${esc(c.profile)})` : "";
     const login = c.kind === "reader" ? ` · ${this._t("login")}: ${esc(this._l("login", c.login))}` : "";

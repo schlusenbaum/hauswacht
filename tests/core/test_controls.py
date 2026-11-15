@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from custom_components.hauswacht.core.controls import (
     ALL_AREAS,
     ControlKind,
@@ -141,3 +143,143 @@ def test_random_uids_are_detected() -> None:
     assert not is_random_uid("+041B4932E82880")  # feste 7-Byte-UID
     assert not is_random_uid("40CC995C")
     assert not is_random_uid("08837CF0AA")  # länger als 4 Byte
+
+
+# --- 0.43: Taster und Türschlösser ---------------------------------------------
+
+
+def test_parse_button_and_lock() -> None:
+    from custom_components.hauswacht.core.controls import (  # noqa: PLC0415
+        ControlKind,
+        LockSource,
+        parse_controls,
+    )
+
+    controls = parse_controls(
+        {
+            "controls": {
+                "t": {
+                    "kind": "button",
+                    "entity": "event.t",
+                    "presses": {"single": "away", "": "x", "double": None},
+                },
+                "s": {"kind": "lock", "entity": "lock.s", "source": "generic", "who": "sensor.w"},
+                "n": {"kind": "lock", "entity": "lock.n", "topic": "nuki/1/", "profile": "night"},
+            }
+        }
+    )
+    assert controls["t"].kind is ControlKind.BUTTON
+    assert controls["t"].presses == {"single": "away"}
+    assert controls["s"].source is LockSource.GENERIC
+    assert controls["s"].who == "sensor.w"
+    assert controls["n"].source is LockSource.NUKI_MQTT  # Standard
+    assert controls["n"].topic == "nuki/1"
+    assert controls["n"].profile == "night"
+
+
+@pytest.mark.parametrize(
+    ("domain", "state", "event_type", "expected"),
+    [
+        ("event", "2026-11-15T12:00:00", "single", "single"),
+        ("event", "2026-11-15T12:00:00", None, None),
+        ("sensor", "double", None, "double"),
+        ("sensor", "", None, None),
+        ("sensor", "None", None, None),
+    ],
+)
+def test_press_value(domain: str, state: str, event_type: str | None, expected: str | None) -> None:
+    from custom_components.hauswacht.core.controls import press_value  # noqa: PLC0415
+
+    assert press_value(domain, state, event_type) == expected
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "expected"),
+    [
+        ("unknown", "2026-11-15T12:00:00", True),  # erstes Drücken
+        ("2026-11-15T12:00:00", "2026-11-15T12:00:05", True),
+        ("unavailable", "2026-11-15T12:00:00", False),  # wieder verbunden
+        (None, "2026-11-15T12:00:00", False),  # Neustart
+        ("single", "single", False),
+        ("", "single", True),
+        ("single", "", False),
+    ],
+)
+def test_is_new_press(old: str | None, new: str | None, expected: bool) -> None:
+    from custom_components.hauswacht.core.controls import is_new_press  # noqa: PLC0415
+
+    assert is_new_press(old, new) is expected
+
+
+@pytest.mark.parametrize(
+    ("payload", "intent", "identity", "reason"),
+    [
+        ("1,0,52653,0,0", "unlock", "NUKIAUTH52653", "ok"),  # App
+        ("3,0,52653,0,0", "unlock", "NUKIAUTH52653", "ok"),  # öffnen
+        ("1,0,1921,8192,1", "unlock", "NUKICODE8192", "ok"),  # Keypad-Code
+        ("2,0,52653,0,0", "lock", "NUKIAUTH52653", "ok"),
+        ("4,0,52653,0,0", "lock", "NUKIAUTH52653", "ok"),  # Lock 'n' Go
+        ("1,2,0,0,1", "unlock", None, "not_by_person"),  # Knopf innen
+        ("2,6,0,0,0", "lock", None, "not_by_person"),  # automatisch
+        ("1,172,52653,0,0", "unlock", None, "not_by_person"),  # MQTT
+        ("1,0,0,0,0", "unlock", None, "no_id"),
+    ],
+)
+def test_parse_nuki_event(payload: str, intent: str, identity: str | None, reason: str) -> None:
+    from custom_components.hauswacht.core.controls import parse_nuki_event  # noqa: PLC0415
+
+    event = parse_nuki_event(payload)
+    assert event is not None
+    assert (event.intent, event.identity, event.reason) == (intent, identity, reason)
+
+
+@pytest.mark.parametrize("payload", ["5,0,1,0,0", "80,0,1,0,0", "x,y", "1,0", ""])
+def test_parse_nuki_event_ignores_other(payload: str) -> None:
+    from custom_components.hauswacht.core.controls import parse_nuki_event  # noqa: PLC0415
+
+    assert parse_nuki_event(payload) is None
+
+
+def test_generic_identity_and_labels() -> None:
+    from custom_components.hauswacht.core.controls import (  # noqa: PLC0415
+        generic_identity,
+        lock_id_label,
+    )
+
+    assert generic_identity("Anna") == "LOCKANNA"
+    assert generic_identity(" 17 ") == "LOCK17"
+    assert generic_identity("unknown") is None
+    assert generic_identity("") is None
+    assert generic_identity(None) is None
+    assert lock_id_label("NUKIAUTH52653") == "Nuki-Benutzer 52653"
+    assert lock_id_label("NUKICODE8192") == "Nuki-Keypad-Code 8192"
+    assert lock_id_label("LOCKANNA") == "LOCKANNA"
+    assert lock_id_label("NUKIAUTH52653", "en") == "Nuki user 52653"
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "expected"),
+    [
+        ("locked", "unlocked", "unlock"),
+        ("locked", "unlocking", "unlock"),
+        ("unlocking", "unlocked", None),  # schon gezählt
+        ("unlocked", "open", None),
+        ("unlocked", "locked", "lock"),
+        ("locked", "jammed", None),
+        (None, "unlocked", None),
+    ],
+)
+def test_lock_intent(old: str | None, new: str | None, expected: str | None) -> None:
+    from custom_components.hauswacht.core.controls import lock_intent  # noqa: PLC0415
+
+    assert lock_intent(old, new) == expected
+
+
+def test_lock_confirmed() -> None:
+    from custom_components.hauswacht.core.controls import lock_confirmed  # noqa: PLC0415
+
+    assert lock_confirmed(100.0, 110.0)
+    assert lock_confirmed(110.0, 100.0)
+    assert not lock_confirmed(100.0, 131.0)
+    assert not lock_confirmed(None, 100.0)
+    assert not lock_confirmed(100.0, None)

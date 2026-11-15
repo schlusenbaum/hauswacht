@@ -89,3 +89,6 @@ verhält sich wie bei einem aktiven Brand.
 | H8 | PIN-Prüfung im Hintergrund, PINs nie im Klartext; gesperrte/abgelaufene PINs werden wie falsche behandelt | Kein Hängen, nichts verraten |
 | H5 | Knopf „Unscharf schalten“ bei eingestelltem PIN nie verfügbar; „Alarm beenden“ ohne PIN nur mit ausdrücklicher Option | Unscharfschalten bleibt immer durch den PIN geschützt |
 | H4 | Push-Knopf standardmäßig aus | Bewusste Entscheidung, auch wegen Android (keine Gerätesperre für Knöpfe) |
+| H9 | Automatisch unscharf bei Rückkehr nur „wie bisher“ (nach eigenem Scharfschalten) oder mit Türbeleg (Rückkehr nach sicherer Abwesenheit UND Eingangstür im Zeitfenster); ein laufender Alarm wird nie beendet; Standard aus | Eine Fehlortung allein darf nie unscharf schalten |
+| H10 | Ein Taster schaltet nur scharf – nie unscharf, nie „Alarm beenden“, nie über ein scharfes Profil hinweg, nicht wenn ein PIN zum Scharfschalten verlangt wird | Ein Taster weist niemanden aus |
+| H11 | Ein Türschloss schaltet nur unscharf mit bekannter Kennung (Rechte des Benutzers) UND tatsächlichem Aufschließen in Home Assistant (≤ 30 s); nie bei Knopf innen, Zeitsteuerung, Automatik, HomeKit/MQTT oder bloßem Öffnen; Hauswacht schaltet das Schloss nie | Manche Schlösser melden auch falsche Codes |

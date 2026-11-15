@@ -1,8 +1,8 @@
-# Bedienteile: Keypads, Karten, NFC-Aufkleber, RFID-Leser
+# Bedienteile: Keypads, Karten, NFC-Aufkleber, RFID-Leser, Taster, Türschlösser
 
 **Systemeinstellungen → Bedienteile.** Beliebig viele Bedienteile, jedes für einen **Bereich**
 oder für **alle Bereiche**. Ausgewiesen wird immer mit den **Ausweisen der Benutzer** (PIN,
-RFID-Karte): Rechte, Gültigkeit, Sperre nach falschen Eingaben und Bedrohungs-PIN gelten wie am
+RFID-Karte, Schloss-Kennung): Rechte, Gültigkeit, Sperre nach falschen Eingaben und Bedrohungs-PIN gelten wie am
 Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
 
 | Bedienteil | Ausweis | Typisch für |
@@ -10,6 +10,8 @@ Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
 | [Keypad](#keypad-zigbee2mqtt) | PIN und/oder RFID-Karte + Taste | Wand neben der Haustür |
 | [NFC-Aufkleber](#nfc-aufkleber-companion-app) | das eigene Handy (Home-Assistant-App) | Bewohner mit App |
 | [RFID-Leser](#rfid-leser) | RFID-Karte, ohne Taste | Karte vorhalten und fertig |
+| [Taster](#taster) | **keiner** – schaltet deshalb nur scharf | Taster im Hausflur: drücken, rausgehen |
+| [Türschloss](#türschloss-z-b-nuki) | wer aufgeschlossen hat (Nuki-Benutzer, Keypad-Code …) | Aufschließen = unscharf |
 
 ## Keypad (Zigbee2MQTT)
 
@@ -54,14 +56,15 @@ Messung [„Tür auf bis unscharf“](beobachtung.md#tür-auf-bis-unscharf).
 
 ## Karten anlernen
 
-RFID-Karten und -Anhänger gehören zu den **Benutzern** (Feld „RFID-Karten/-Anhänger“, beliebig
-viele je Benutzer).
+RFID-Karten und -Anhänger gehören zu den **Benutzern** (Feld „RFID-Karten und
+Schloss-Kennungen“, beliebig viele je Benutzer). Kennungen von [Türschlössern](#türschloss-z-b-nuki)
+lernst du genauso an.
 
 1. Alle Bereiche unscharf.
 2. Neue Karte ans Keypad halten und **Unscharf** drücken (bzw. an den Leser halten). Hauswacht
    lehnt sie ab, merkt sie sich aber.
-3. Innerhalb der **Anlernzeit** (Standard 5 Minuten): Benutzer bearbeiten → „RFID-Karten/
-   -Anhänger“ → die Karte steht dort als „neu, gelesen an Keypad um 18:04“ → auswählen,
+3. Innerhalb der **Anlernzeit** (Standard 5 Minuten): Benutzer bearbeiten → „RFID-Karten und
+   Schloss-Kennungen“ → die Karte steht dort als „neu, gelesen an Keypad um 18:04“ → auswählen,
    speichern.
 
 - Die Anlernzeit ist einstellbar unter **Bedienteile → Anlernen neuer Karten** (1–60 Minuten,
@@ -110,6 +113,152 @@ PN532 oder RC522 über ESPHome. Anders als beim Keypad reicht **Karte vorhalten*
 „Umschalten“ ist bequem, kann aber auch versehentlich scharf schalten. Einfache 125-kHz-Karten
 sind leicht kopierbar – besser 13,56-MHz-Karten oder NFC per Handy.
 
+## Taster
+
+Ein Taster – z. B. ein Zigbee-Taster im Hausflur – schaltet ein Alarmprofil **scharf**, mit der
+Ausgangsverzögerung des Profils. Drücken, rausgehen, fertig.
+
+> Ein Taster weist **niemanden** aus: Wer davorsteht, ist unbekannt. Deshalb schaltet er **nur
+> scharf** – nie unscharf, und er beendet nie einen Alarm.
+
+**Einrichten:** Systemeinstellungen → Bedienteile → **Taster hinzufügen**.
+
+1. Name, Bereich und den **Taster** wählen:
+   - eine **Ereignis-Entität** (`event.…`) – so liefern Zigbee2MQTT (neuere Versionen), Hue,
+     Shelly und Matter ihre Taster, oder
+   - einen **Aktions-Sensor** (`sensor.…_action`), wie ihn ältere Zigbee2MQTT-Versionen anlegen.
+2. Im zweiten Schritt legst du fest, welche **Druckart** welches Profil schaltet:
+   - Bei einer Ereignis-Entität zeigt Hauswacht die Druckarten des Geräts selbst an (z. B.
+     `single`, `double`, `long`). Leer lassen = diese Druckart tut nichts.
+   - Bei einem Aktions-Sensor trägst du den **Wert** ein, den der Sensor beim Drücken annimmt.
+     So findest du ihn: Entwicklerwerkzeuge → Zustände → Sensor suchen → Taster drücken → der
+     Wert erscheint kurz (z. B. `single`, `double`, `hold`).
+
+**Beispiel:** Taster im Flur, einfach → „Abwesend“, doppelt → „Nacht“. Im Logbuch steht
+„geändert von: Taster Flur“.
+
+Gut zu wissen:
+
+- Ist schon ein Profil scharf, tut der Taster nichts – er schaltet nie über ein anderes Profil
+  hinweg um.
+- Sind Melder offen, gilt die Einstellung des Profils (z. B. „verweigern“) – dann kommt die
+  übliche Meldung „nicht scharf geschaltet“.
+- Verlangen die PIN-Regeln einen **PIN zum Scharfschalten**, schaltet der Taster **nicht** –
+  er kann keinen PIN eingeben. Hauswacht schickt dann eine Systemmeldung.
+- Kommt der Taster nach einem Funkausfall wieder, zählt das nicht als Drücken.
+- Ein Taster **außen** an der Tür ist nicht verboten, aber dann kann jeder Vorbeigehende scharf
+  schalten (und wer drinnen ist, löst später Alarm aus). Besser innen anbringen.
+
+## Türschloss (z. B. Nuki)
+
+Ein elektronisches Türschloss schaltet **unscharf, wenn ein bekannter Benutzer aufschließt** –
+mit dessen Rechten je Bereich. Im Logbuch steht z. B. „Anna (Haustür-Schloss)“. Optional
+schaltet **Abschließen von außen** ein Profil scharf.
+
+Dafür muss das Schloss sagen, **wer** aufgeschlossen hat. Das bloße Öffnen der Tür oder
+„aufgeschlossen“ ohne Person reicht nie.
+
+> Hauswacht **liest nur mit** und schaltet das Schloss selbst nie.
+
+### Was Hauswacht verlangt
+
+Hauswacht schaltet nur unscharf, wenn **beides** zusammenkommt, höchstens 30 Sekunden
+auseinander:
+
+1. eine **Kennung** vom Schloss, die einem Hauswacht-Benutzer gehört (z. B. sein
+   Nuki-App-Zugang oder sein Keypad-Code), und
+2. das Schloss wechselt in Home Assistant wirklich auf **„aufgeschlossen“** bzw. „offen“.
+
+Warum beides? Manche Nuki-Modelle melden auch einen **falsch** eingetippten Keypad-Code als
+Aufschließen (ein bekannter Firmware-Fehler). Ohne tatsächliche Bewegung des Schlosses passiert
+deshalb nichts.
+
+**Nie unscharf**
+
+| Situation | Warum |
+|---|---|
+| Kennung unbekannt oder fehlt | Wer es war, ist nicht klar (Hauswacht meldet das per Systemmeldung, wenn scharf) |
+| Drehknauf oder Knopf am Schloss (innen) | kein Ausweis |
+| Zeitsteuerung, automatisches Abschließen | keine Person |
+| Aufschließen über Home Assistant, HomeKit oder MQTT | kein Ausweis an der Tür |
+| Tür geht nur auf | kein Aufschließen |
+| Benutzer darf nicht unscharf schalten oder ist abgelaufen | Rechte gelten wie am Bedienfeld |
+
+### Einrichten mit Nuki über MQTT
+
+Voraussetzung: Nuki Smart Lock (3.0 Pro, 4. oder 5. Generation) mit eingeschaltetem **MQTT**
+in der Nuki-App und die MQTT-Integration in Home Assistant. Das Schloss selbst ist meist schon
+über MQTT oder die Nuki-Integration als `lock.…` in Home Assistant.
+
+1. **Systemeinstellungen → Bedienteile → Türschloss hinzufügen.**
+2. Ausfüllen:
+
+| Einstellung | Beispiel | Bedeutung |
+|---|---|---|
+| Name | Haustür-Schloss | erscheint im Logbuch |
+| Bereich | Haus | welcher Bereich unscharf wird |
+| Schloss | `lock.haustuer` | die Entität in Home Assistant |
+| Quelle | Nuki über MQTT | |
+| MQTT-Topic | `nuki/3A1B2C4D` | Basis-Topic des Schlosses (die Nuki-ID in Hex), **ohne** `/lockActionEvent` |
+| Beim Abschließen scharf | leer oder „Abwesend“ | optional, siehe unten |
+
+Hauswacht liest dann `nuki/3A1B2C4D/lockActionEvent`. Das Nuki schickt dort bei jeder Aktion
+fünf Zahlen, z. B. `1,0,52653,0,0`:
+
+| Stelle | Bedeutung | Beispiel |
+|---|---|---|
+| 1 | Aktion: 1 = aufschließen, 2 = abschließen, 3 = öffnen, 4 = Lock 'n' Go, 6 = voll abschließen | `1` |
+| 2 | Auslöser: 0 = App/Bluetooth, Keypad, Fob; 2 = Knopf am Schloss; 3 = Zeitsteuerung; 6 = automatisch; 171 = HomeKit/Matter; 172 = MQTT | `0` |
+| 3 | Auth-ID: wer (App-Zugang) | `52653` |
+| 4 | Code-ID: welcher Keypad-Code (0 = keiner) | `0` |
+| 5 | Zusatz (z. B. Fingerabdruck, Auto-Unlock) | `0` |
+
+Hauswacht zählt nur Auslöser **0**. Aus Code-ID bzw. Auth-ID wird die Kennung, die beim
+Benutzer erscheint: „Nuki-Keypad-Code 8192“ bzw. „Nuki-Benutzer 52653“ (gespeichert als
+`NUKICODE8192` bzw. `NUKIAUTH52653`).
+
+### Kennungen anlernen
+
+Wie bei [Karten](#karten-anlernen):
+
+1. Alle Bereiche unscharf.
+2. Mit der App, dem Keypad-Code oder dem Fingerabdruck **einmal aufschließen**.
+3. Innerhalb der Anlernzeit: Benutzer bearbeiten → „RFID-Karten und Schloss-Kennungen“ → dort
+   steht z. B. „Nuki-Benutzer 52653 (neu, gelesen an Haustür-Schloss um 18:04)“ → auswählen,
+   speichern.
+
+Am besten jede Person einzeln anlernen, damit klar ist, welche Kennung zu wem gehört. Jeder
+Keypad-Code und jeder App-Zugang ist eine eigene Kennung; ein Benutzer kann mehrere haben.
+
+### Abschließen = scharf (optional)
+
+Ist ein Profil eingetragen, schaltet **Abschließen von außen** durch einen bekannten Benutzer
+mit Recht zum Scharfschalten dieses Profil scharf – aber nur, wenn alles unscharf ist.
+Automatisches Abschließen, Zeitsteuerung und der Knopf innen zählen nicht.
+
+> Achtung: „Von außen“ heißt für Nuki nur „per App, Keypad oder Fob“. Wer abends **im Bett per
+> App** abschließt, schaltet damit ebenfalls scharf. Für die Haustür daher eher ein Profil wie
+> „Abwesend“ wählen und die App dafür nicht von innen nutzen – oder das Feld leer lassen.
+
+### Andere Schlösser (allgemeine Quelle)
+
+Für Schlösser, die den Benutzer als **Sensor** oder **Ereignis** in Home Assistant zeigen
+(z. B. einen Sensor „zuletzt geöffnet von“ oder ein Ereignis mit dem Benutzernamen):
+
+| Einstellung | Beispiel |
+|---|---|
+| Quelle | Allgemein |
+| Sensor oder Ereignis mit der Kennung | `sensor.haustuer_benutzer` |
+
+Ändert sich der Wert (bzw. kommt ein Ereignis) und schließt das Schloss innerhalb von
+30 Sekunden auf, gilt der Wert als Kennung – z. B. „Anna“ wird zu `LOCKANNA`. Angelernt wird
+wie oben.
+
+Wichtig: Der Sensor darf seinen Wert **nur beim Aufschließen** ändern. Zeigt er z. B. auch
+an, wer zuletzt **abgeschlossen** hat, würde das Abschließen von Anna und ein späteres
+Aufschließen durch einen Unbekannten zusammengezählt, wenn beides innerhalb von 30 Sekunden
+passiert.
+
 ## Sicherheit
 
 - Eine reine Kartennummer ist kein starker Schutz: Wer sie ausliest (z. B. im Vorbeigehen), kann
@@ -118,3 +267,7 @@ sind leicht kopierbar – besser 13,56-MHz-Karten oder NFC per Handy.
   schaltet.
 - Verlorene Karte: beim Benutzer entfernen oder den Benutzer auf „Aktiv: aus“ stellen.
 - Der Bedrohungs-PIN wirkt auch am Keypad.
+- **Türschloss:** Wer das Handy mit der Nuki-App **und** den Zugang dazu hat, schaltet mit dem
+  Aufschließen unscharf – genau wie er die Tür öffnen kann. Verlorenes Handy: in der Nuki-App
+  den Zugang sperren **und** die Kennung beim Benutzer entfernen.
+- **Taster:** schalten nur scharf; sie sind kein Ausweis.

@@ -98,6 +98,30 @@ sehen.
 Mit einem Zigbee-Keypad nicht – es schickt die Kartennummer nur mit einem Tastendruck. Dafür gibt
 es den [RFID-Leser](bedienteile.md#rfid-leser) oder [NFC-Aufkleber](bedienteile.md#nfc-aufkleber-companion-app).
 
+**Der Taster schaltet nicht scharf.**
+
+- Ist schon ein Profil scharf? Dann tut der Taster nichts.
+- Ist die Druckart einem Profil zugeordnet? Beim Aktions-Sensor muss der eingetragene Wert genau
+  dem Wert des Sensors entsprechen (Entwicklerwerkzeuge → Zustände, einmal drücken).
+- Verlangen die PIN-Regeln einen PIN zum Scharfschalten? Dann kommt eine Systemmeldung – ein
+  Taster kann keinen PIN eingeben.
+- Unter Entwicklerwerkzeuge → Ereignisse → `hauswacht_event` anhören: Kommt beim Drücken
+  `ButtonPressed` mit der richtigen Druckart (`press`)?
+
+**Das Türschloss schaltet nicht unscharf.**
+
+- Ist die Kennung beim Benutzer eingetragen? Unbekannte Kennungen meldet Hauswacht per
+  Systemmeldung, solange scharf ist. Anlernen geht nur, wenn alles unscharf ist.
+- Darf der Benutzer in diesem Bereich unscharf schalten, und ist er gültig?
+- Wechselt das Schloss in Home Assistant auf „aufgeschlossen“? Ohne diesen Wechsel (innerhalb
+  von 30 s) passiert absichtlich nichts.
+- Nuki: Stimmt das MQTT-Topic (z. B. `nuki/3A1B2C4D`, ohne `/lockActionEvent`)? Mit einem
+  MQTT-Programm (z. B. MQTT Explorer) prüfen, ob beim Aufschließen unter
+  `nuki/…/lockActionEvent` fünf Zahlen erscheinen. Die zweite muss `0` sein – Knopf innen,
+  Zeitsteuerung oder Aufschließen über Home Assistant zählen nie.
+- Unter `hauswacht_event` zeigt `LockIdentified` die erkannte Kennung (`identity`) und den
+  Grund (`reason`: `not_by_person`, `no_id`).
+
 ## Sirenen
 
 **Bei einem Alarm ertönt keine Sirene.**

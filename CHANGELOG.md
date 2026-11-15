@@ -6,6 +6,31 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-11-15
+
+### Neu
+- **Taster als Bedienteil:** Ein Taster (Ereignis-Entität, z. B. von Zigbee2MQTT, Hue,
+  Shelly, Matter, oder ein Aktions-Sensor) schaltet je Druckart ein Alarmprofil scharf – mit
+  dessen Ausgangsverzögerung. Ein Taster weist niemanden aus und schaltet deshalb **nur
+  scharf**, nie unscharf, nie über ein anderes Profil hinweg. Verlangen die PIN-Regeln einen
+  PIN zum Scharfschalten, schaltet er nicht (Systemmeldung).
+- **Türschloss als Bedienteil:** unscharf, wenn ein bekannter Benutzer aufschließt – mit dessen
+  Rechten je Bereich. Quellen: **Nuki über MQTT** (`lockActionEvent`: Auth-ID bzw. Keypad-Code)
+  oder **allgemein** (Sensor oder Ereignis mit der Kennung). Hauswacht verlangt zusätzlich, dass
+  das Schloss in Home Assistant innerhalb von 30 s wirklich aufschließt. Nie unscharf bei
+  unbekannter oder fehlender Kennung, Knopf innen, Zeitsteuerung, automatischem Abschließen,
+  Aufschließen über Home Assistant/HomeKit/MQTT oder bloßem Öffnen der Tür. Optional:
+  **Abschließen von außen** schaltet ein Profil scharf.
+- Schloss-Kennungen gehören wie RFID-Karten zum Benutzer und werden genauso angelernt (Feld
+  „RFID-Karten und Schloss-Kennungen“, Anzeige z. B. „Nuki-Benutzer 52653“).
+- Übersicht-Karte zeigt Taster und Türschlösser; neue Ereignisse `ButtonPressed`,
+  `LockIdentified`, `LockIgnored`.
+
+### Dokumentation
+- Bedienteile: Abschnitte „Taster“ und „Türschloss (z. B. Nuki)“ mit Einrichtung Schritt für
+  Schritt, Aufbau der Nuki-Nachricht, Anlernen, „Abschließen = scharf“ und allgemeiner Quelle;
+  Fehlersuche für Taster und Schloss; Referenz der Ereignisse.
+
 ## [0.42.1] - 2026-11-15
 
 ### Geändert

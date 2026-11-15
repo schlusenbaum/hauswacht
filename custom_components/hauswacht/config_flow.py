@@ -111,6 +111,7 @@ from .core.controls import (
     ControlKind,
     is_random_uid,
     learn_minutes,
+    lock_id_label,
     normalize_tag,
     parse_controls,
 )
@@ -2550,6 +2551,8 @@ class HauswachtOptionsFlow(OptionsFlow):
                 "control_add_keypad",
                 "control_add_sticker",
                 "control_add_reader",
+                "control_add_button",
+                "control_add_lock",
                 "control_edit",
                 "control_delete",
                 "control_learn",
@@ -2599,6 +2602,18 @@ class HauswachtOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         self._control_id, self._control_kind = None, ControlKind.READER
+        return await self.async_step_control_settings()
+
+    async def async_step_control_add_button(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._control_id, self._control_kind = None, ControlKind.BUTTON
+        return await self.async_step_control_settings()
+
+    async def async_step_control_add_lock(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._control_id, self._control_kind = None, ControlKind.LOCK
         return await self.async_step_control_settings()
 
     def _control_selector(self) -> SelectSelector:
@@ -2672,16 +2687,32 @@ class HauswachtOptionsFlow(OptionsFlow):
         options = self.config_entry.options
         area = data.get("area") or CONTROL_ALL_AREAS
         profiles = [data.get("profile")] if kind is not ControlKind.KEYPAD else []
+        if kind is ControlKind.BUTTON:
+            profiles = list((data.get("presses") or {}).values())
         if kind is ControlKind.KEYPAD:
             profiles = [data.get(k) for k in CONTROL_ARM_KEYS]
             if not str(data.get("topic") or "").strip().strip("/"):
                 errors["topic"] = "control_topic"
-        elif data.get("action") in ("arm", "toggle") and not data.get("profile"):
+        elif (
+            kind in (ControlKind.STICKER, ControlKind.READER)
+            and data.get("action") in ("arm", "toggle")
+            and not data.get("profile")
+        ):
             errors["profile"] = "control_profile_required"
         if kind is ControlKind.STICKER and not normalize_tag(data.get("tag")):
             errors["tag"] = "control_tag"
         if kind is ControlKind.READER and not data.get("device"):
             errors["device"] = "control_device"
+        if kind in (ControlKind.BUTTON, ControlKind.LOCK) and not data.get("entity"):
+            errors["entity"] = "control_entity"
+        if kind is ControlKind.LOCK:
+            profiles = [data.get("profile")]
+            if data.get("source") == "generic" and not data.get("who"):
+                errors["who"] = "control_who"
+            if data.get("source", "nuki_mqtt") == "nuki_mqtt" and not str(
+                data.get("topic") or ""
+            ).strip().strip("/"):
+                errors["topic"] = "control_topic"
         for profile in profiles:
             if profile and area != CONTROL_ALL_AREAS and profile_area(options, profile) != area:
                 errors["base"] = "control_profile_area"
@@ -2697,32 +2728,28 @@ class HauswachtOptionsFlow(OptionsFlow):
         if user_input is not None:
             errors = self._validate_control(kind, user_input)
             if not errors:
-                data: dict[str, Any] = {
-                    "name": str(user_input.get("name") or "").strip() or kind.value,
-                    "kind": kind.value,
-                    "area": user_input.get("area") or CONTROL_ALL_AREAS,
-                }
-                if kind is ControlKind.KEYPAD:
-                    data["topic"] = str(user_input["topic"]).strip().rstrip("/")
-                    data["buttons"] = {
-                        k: user_input[k] for k in CONTROL_ARM_KEYS if user_input.get(k)
-                    }
-                    data["login"] = user_input.get("login", "pin_or_card")
-                    data["emergency"] = user_input.get("emergency", "off")
-                else:
-                    data["action"] = user_input.get("action", "disarm")
-                    data["profile"] = user_input.get("profile") or None
-                if kind is ControlKind.STICKER:
-                    data["tag"] = normalize_tag(user_input.get("tag"))
-                if kind is ControlKind.READER:
-                    data["device"] = user_input.get("device")
-                    data["login"] = user_input.get("login", "card")
+                data = _control_data(kind, user_input, current)
                 control_id = self._control_id or slugify(data["name"], existing=list(stored))
                 stored[control_id] = data
                 options = dict(self.config_entry.options)
                 options[OPT_CONTROLS] = stored
+                if kind is ControlKind.BUTTON:
+                    # Zweiter Schritt: welche Druckart welches Profil schaltet
+                    self._control_id = control_id
+                    self._pending = options
+                    return await self.async_step_control_presses()
                 return await self._save(options, "controls")
-        source = {**current, **(user_input or {})}
+        fields = self._control_fields(kind, {**current, **(user_input or {})}, current)
+        return self.async_show_form(
+            step_id=f"control_{kind.value}",
+            data_schema=vol.Schema(fields),
+            errors=errors,
+        )
+
+    def _control_fields(
+        self, kind: ControlKind, source: dict[str, Any], current: dict[str, Any]
+    ) -> dict[Any, Any]:
+        """Formularfelder je Art des Bedienteils."""
         buttons = current.get("buttons", {})
         fields: dict[Any, Any] = {
             vol.Required("name", default=source.get("name", "")): TextSelector(),
@@ -2744,6 +2771,26 @@ class HauswachtOptionsFlow(OptionsFlow):
             fields[vol.Required("emergency", default=source.get("emergency", "off"))] = _select(
                 ["off", "silent", "alarm"], "control_emergency"
             )
+        elif kind is ControlKind.BUTTON:
+            fields[vol.Required("entity", default=source.get("entity", vol.UNDEFINED))] = (
+                EntitySelector(EntitySelectorConfig(domain=["event", "sensor"]))
+            )
+        elif kind is ControlKind.LOCK:
+            fields[vol.Required("entity", default=source.get("entity", vol.UNDEFINED))] = (
+                EntitySelector(EntitySelectorConfig(domain="lock"))
+            )
+            fields[vol.Required("source", default=source.get("source", "nuki_mqtt"))] = _select(
+                ["nuki_mqtt", "generic"], "lock_source"
+            )
+            fields[vol.Optional("topic", description={"suggested_value": source.get("topic")})] = (
+                TextSelector()
+            )
+            fields[vol.Optional("who", description={"suggested_value": source.get("who")})] = (
+                EntitySelector(EntitySelectorConfig(domain=["sensor", "event"]))
+            )
+            fields[
+                vol.Optional("profile", description={"suggested_value": source.get("profile")})
+            ] = self._control_profile_selector()
         else:
             if kind is ControlKind.STICKER:
                 fields[vol.Required("tag", default=source.get("tag", ""))] = TextSelector()
@@ -2761,11 +2808,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 fields[vol.Required("login", default=source.get("login", "card"))] = _select(
                     ["card", "card_and_pin"], "control_login"
                 )
-        return self.async_show_form(
-            step_id=f"control_{kind.value}",
-            data_schema=vol.Schema(fields),
-            errors=errors,
-        )
+        return fields
 
     async def async_step_control_keypad(
         self, user_input: dict[str, Any] | None = None
@@ -2781,6 +2824,87 @@ class HauswachtOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return await self.async_step_control_settings(user_input)
+
+    async def async_step_control_button(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_control_settings(user_input)
+
+    async def async_step_control_lock(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_control_settings(user_input)
+
+    async def async_step_control_presses(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Taster: je Druckart ein Profil. Ereignis-Entitäten nennen ihre Druckarten selbst."""
+        options = dict(self._pending or self.config_entry.options)
+        stored = dict(options.get(OPT_CONTROLS, {}))
+        control_id = self._control_id or ""
+        data = dict(stored.get(control_id, {}))
+        known = self._event_types(str(data.get("entity") or ""))
+        current: dict[str, str] = dict(data.get("presses", {}))
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if known:
+                presses = {t: user_input[t] for t in known if user_input.get(t)}
+            else:
+                presses = {
+                    str(user_input[f"press_{n}"]).strip(): user_input[f"profile_{n}"]
+                    for n in (1, 2, 3)
+                    if str(user_input.get(f"press_{n}") or "").strip()
+                    and user_input.get(f"profile_{n}")
+                }
+            area = data.get("area") or CONTROL_ALL_AREAS
+            if not presses:
+                errors["base"] = "button_no_press"
+            elif area != CONTROL_ALL_AREAS and any(
+                profile_area(options, p) != area for p in presses.values()
+            ):
+                errors["base"] = "control_profile_area"
+            if not errors:
+                data["presses"] = presses
+                stored[control_id] = data
+                options[OPT_CONTROLS] = stored
+                self._pending = None
+                return await self._save(options, "controls")
+        fields: dict[Any, Any] = {}
+        if known:
+            for event_type in known:
+                suggested = {"suggested_value": current.get(event_type)}
+                fields[vol.Optional(event_type, description=suggested)] = (
+                    self._control_profile_selector()
+                )
+        else:
+            pairs = list(current.items())
+            for n in (1, 2, 3):
+                press, profile = pairs[n - 1] if len(pairs) >= n else (None, None)
+                fields[vol.Optional(f"press_{n}", description={"suggested_value": press})] = (
+                    TextSelector()
+                )
+                fields[vol.Optional(f"profile_{n}", description={"suggested_value": profile})] = (
+                    self._control_profile_selector()
+                )
+        return self.async_show_form(
+            step_id="control_presses_event" if known else "control_presses",
+            data_schema=vol.Schema(fields),
+            errors=errors,
+            description_placeholders={"entity": str(data.get("entity") or "")},
+        )
+
+    async def async_step_control_presses_event(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_control_presses(user_input)
+
+    def _event_types(self, entity_id: str) -> list[str]:
+        """Druckarten einer Ereignis-Entität (Attribut ``event_types``)."""
+        if not entity_id.startswith("event."):
+            return []
+        state = self.hass.states.get(entity_id)
+        types = state.attributes.get("event_types") if state else None
+        return [t for t in types if isinstance(t, str) and t] if isinstance(types, list) else []
 
     # --- Heimkehr-Beobachtung ---------------------------------------------
 
@@ -2913,7 +3037,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         """Beliebig viele Karten/Chips: eigene plus zuletzt gelesene unbekannte zum Anlernen."""
         stored = current.get("tags", [])
         tags = [t for t in stored if isinstance(t, str)] if isinstance(stored, list) else []
-        options = [SelectOptionDict(value=t, label=t) for t in tags]
+        lang = "de" if self._german() else "en"
+        options = [SelectOptionDict(value=t, label=lock_id_label(t, lang)) for t in tags]
         unknown = self._unknown_cards()
         self._offered_new = set(unknown) - set(tags)
         de = self._german()
@@ -2926,7 +3051,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                 if de
                 else f"new, read at {source} at {time_text}"
             )
-            options.append(SelectOptionDict(value=tag, label=f"{tag} ({hint})"))
+            options.append(
+                SelectOptionDict(value=tag, label=f"{lock_id_label(tag, lang)} ({hint})")
+            )
         return {
             vol.Optional("tags", default=tags): SelectSelector(
                 SelectSelectorConfig(
@@ -3059,6 +3186,40 @@ class HauswachtOptionsFlow(OptionsFlow):
                 [RIGHTS_ALL, RIGHTS_PER_AREA], "user_rights_scope"
             )
         }
+
+
+def _control_data(
+    kind: ControlKind, user_input: dict[str, Any], current: dict[str, Any]
+) -> dict[str, Any]:
+    """Gespeicherte Daten eines Bedienteils aus dem Formular."""
+    data: dict[str, Any] = {
+        "name": str(user_input.get("name") or "").strip() or kind.value,
+        "kind": kind.value,
+        "area": user_input.get("area") or CONTROL_ALL_AREAS,
+    }
+    if kind is ControlKind.KEYPAD:
+        data["topic"] = str(user_input["topic"]).strip().rstrip("/")
+        data["buttons"] = {k: user_input[k] for k in CONTROL_ARM_KEYS if user_input.get(k)}
+        data["login"] = user_input.get("login", "pin_or_card")
+        data["emergency"] = user_input.get("emergency", "off")
+    elif kind is ControlKind.BUTTON:
+        data["entity"] = user_input["entity"]
+        data["presses"] = dict(current.get("presses", {}))
+    elif kind is ControlKind.LOCK:
+        data["entity"] = user_input["entity"]
+        data["source"] = user_input.get("source", "nuki_mqtt")
+        data["topic"] = str(user_input.get("topic") or "").strip().rstrip("/")
+        data["who"] = user_input.get("who") or ""
+        data["profile"] = user_input.get("profile") or None
+    else:
+        data["action"] = user_input.get("action", "disarm")
+        data["profile"] = user_input.get("profile") or None
+    if kind is ControlKind.STICKER:
+        data["tag"] = normalize_tag(user_input.get("tag"))
+    if kind is ControlKind.READER:
+        data["device"] = user_input.get("device")
+        data["login"] = user_input.get("login", "card")
+    return data
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:

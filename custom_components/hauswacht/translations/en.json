@@ -230,11 +230,11 @@
           "valid_from": "Valid from",
           "valid_until": "Valid until",
           "rights": "Rights apply to",
-          "tags": "RFID cards/fobs"
+          "tags": "RFID cards and lock IDs"
         },
         "data_description": {
           "rights": "**All areas alike:** the checkboxes above apply everywhere. **Per area:** after saving you choose for each area what the user may do there (the checkboxes above are then ignored).",
-          "tags": "Any number, independent of the PIN (a user needs no PIN to use a card at a keypad). Hold a new card once to a keypad or reader – it then shows up here as “new”. Or type the ID.",
+          "tags": "Any number, independent of the PIN (a user needs no PIN to use a card at a keypad). Hold a new card to a keypad or reader once, or unlock the door lock once – it then appears here as “new”. Or type the ID.",
           "card_pin": "For this user's Home Assistant account in the “Hauswacht Alarm” card. Off: arms and disarms there without a PIN, with this user's rights. On: e.g. for a wall tablet that is always logged in. Only applies if any PIN exists."
         }
       },
@@ -686,11 +686,13 @@
       },
       "controls": {
         "title": "Control devices",
-        "description": "{saved}Control devices are keypads, NFC stickers and RFID readers. Identification uses the **users' credentials**: PIN or RFID card/fob (under Users and PINs). Rights, validity, lock after wrong entries and duress PIN apply as on the panel.",
+        "description": "{saved}Controls are keypads, NFC tags, RFID readers, buttons and door locks. Identification uses the **users' credentials**: PIN, RFID card/fob or lock ID (under Users and PINs). Rights, validity, lockout after wrong entries and duress PIN apply as on the alarm panel. A button identifies nobody – so it only arms.",
         "menu_options": {
           "control_add_keypad": "Add keypad (Zigbee2MQTT)",
           "control_add_sticker": "Add NFC sticker (companion app)",
           "control_add_reader": "Add RFID/NFC reader (e.g. ESPHome)",
+          "control_add_button": "Add button (arms only)",
+          "control_add_lock": "Add door lock (e.g. Nuki)",
           "control_edit": "Edit control device",
           "control_delete": "Delete control device",
           "control_learn": "Learning new cards",
@@ -790,6 +792,49 @@
         "data_description": {
           "allow_fire_tone": "Only for this tone on this siren. The overview shows the release as a notice."
         }
+      },
+      "control_button": {
+        "title": "Button",
+        "description": "A button (e.g. a Zigbee button in the hallway) **arms** an alarm profile – with the profile's exit delay. It **never disarms** and never ends an alarm, because it identifies nobody.\n\nSuitable are **event entities** (`event.…`, e.g. from Zigbee2MQTT, Hue, Shelly, Matter) or an **action sensor** (`sensor.…_action`). In the next step you choose which press type arms which profile.\n\nIf the PIN rules require a PIN for arming, the button does not arm and Hauswacht sends a system message.",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "entity": "Button (event or action sensor)"
+        }
+      },
+      "control_presses_event": {
+        "title": "Button: press types",
+        "description": "For `{entity}`: choose an alarm profile per press type. Empty = this press type does nothing.\n\nExample: single → “Away”, double → “Night”."
+      },
+      "control_presses": {
+        "title": "Button: press types",
+        "description": "`{entity}` does not list its press types. Enter the **value** the sensor takes when pressed (Developer tools → States, press once and look), e.g. `single`, `double`, `hold`, and choose an alarm profile for it.",
+        "data": {
+          "press_1": "Press type 1 (value)",
+          "profile_1": "Press type 1 → alarm profile",
+          "press_2": "Press type 2 (value)",
+          "profile_2": "Press type 2 → alarm profile",
+          "press_3": "Press type 3 (value)",
+          "profile_3": "Press type 3 → alarm profile"
+        }
+      },
+      "control_lock": {
+        "title": "Door lock",
+        "description": "Disarms when a **known user unlocks** – with that user's rights per area. The lock must tell **who** unlocked, and it must really change to “unlocked” in Home Assistant (both within 30 s). Hauswacht never operates the lock itself.\n\n**Never disarms:** with an unknown or missing ID, with the inside knob or button, by time control, when unlocked via Home Assistant/HomeKit, or when the door is merely opened.\n\n**Learning IDs:** while everything is disarmed, unlock once – the ID then appears with the user under “RFID cards and lock IDs” as “new”.",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "entity": "Lock",
+          "source": "Who unlocked? (source)",
+          "topic": "Nuki: MQTT topic of the lock",
+          "who": "Generic: sensor or event with the ID",
+          "profile": "Optional: arm when locking (alarm profile)"
+        },
+        "data_description": {
+          "topic": "E.g. `nuki/3A1B2C4D` (in the Nuki app under MQTT; without `/lockActionEvent`).",
+          "who": "A sensor whose value shows the user's ID when unlocking (e.g. user name or number), or an event with this ID as event type.",
+          "profile": "Only if a known user with the right to arm locks from outside (app, keypad, fob) and everything is disarmed. Empty = locking does nothing."
+        }
       }
     },
     "error": {
@@ -834,7 +879,10 @@
       "siren_tone_fire": "A fire tone is locked for burglar alarms – only with the expert release below.",
       "siren_tone_fire_detector": "This siren has its own fire sensors (smoke detector) – a fire tone for burglar alarms is never allowed here.",
       "siren_tone_fire_confirm": "Please explicitly confirm the expert release.",
-      "arrival_needs_persons": "“Disarm on arrival” needs at least one person under “Arm when all of these persons are away”."
+      "arrival_needs_persons": "“Disarm on arrival” needs at least one person under “Arm when all of these persons are away”.",
+      "control_entity": "Please choose an entity.",
+      "control_who": "For the generic source, choose a sensor or event with the ID.",
+      "button_no_press": "Assign at least one press type to an alarm profile."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1002,6 +1050,12 @@
         "off": "Off",
         "auto_only": "As before (only after automatic arming)",
         "door": "With door proof (arrival and entry door)"
+      }
+    },
+    "lock_source": {
+      "options": {
+        "nuki_mqtt": "Nuki via MQTT (lockActionEvent)",
+        "generic": "Generic (sensor or event)"
       }
     }
   },
