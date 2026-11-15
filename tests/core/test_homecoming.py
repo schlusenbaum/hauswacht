@@ -179,3 +179,40 @@ def test_to_csv_for_german_excel() -> None:
     text = to_csv([("A", "B"), ("1", "x; y")])
     assert text.startswith("\ufeff")
     assert text == '\ufeffA;B\r\n1;"x; y"\r\n'
+
+
+def test_door_proof_advice_uses_earliest_signal() -> None:
+    from custom_components.hauswacht.core.homecoming import (  # noqa: PLC0415
+        EARLIEST,
+        SourceStats,
+        door_proof_advice,
+        door_proof_lines,
+    )
+
+    stats = {
+        "person.a" + EARLIEST: SourceStats(
+            arrivals=5, with_door=4, without_door=1, delays=[-30, 10, 21, 48]
+        ),
+        # einzelne Quelle: für die Empfehlung nicht maßgeblich
+        "person.a": SourceStats(arrivals=4, with_door=4, delays=[90, 90, 90, 90]),
+        "person.b" + EARLIEST: SourceStats(arrivals=2, with_door=2, delays=[-60, -10]),
+        "person.c" + EARLIEST: SourceStats(arrivals=3, without_door=3),  # nur Geister-Heimkehrten
+    }
+    advice = door_proof_advice(stats)
+    assert set(advice) == {"person.a", "person.b"}
+    assert advice["person.a"] == {
+        "with_door": 4,
+        "without_door": 1,
+        "longest_after_door": 48,
+        "recommended_entry_delay": 60,  # 48 s plus 25 % Puffer, auf 5 s gerundet
+    }
+    # immer vor der Tür erkannt: der Mindestpuffer genügt
+    assert advice["person.b"]["longest_after_door"] == 0
+    assert advice["person.b"]["recommended_entry_delay"] == 5
+    lines = door_proof_lines(advice, {"person.a": "Anna", "person.b": "Ben"})
+    assert lines[0].startswith("**Unscharf mit Türbeleg**")
+    assert lines[2].startswith("- Anna: mindestens 60 s")
+    assert "1 ohne Tür" in lines[2]
+    assert door_proof_lines({}, {}) == []
+    english = door_proof_lines(advice, {"person.a": "Anna"}, "en")
+    assert english[2].startswith("- Anna: at least 60 s")

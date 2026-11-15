@@ -27,7 +27,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `sensor.hauswacht_systemstatus` | `ok` · `degraded` (Melder ausgefallen) · `fault` (Störung); Attribute `faulty_infrastructure`, `unavailable_sensors` |
 | `sensor.hauswacht_letzter_sirenentest` | Letzter Sirenentest; je Sirene Datum und „gehört?“ in den Attributen |
 | `sensor.hauswacht_funkstille_beobachtung` | Empfehlung für die maximale Funkstille, längste Pausen je Melder |
-| `sensor.hauswacht_heimkehr_beobachtung` | Anzahl ausgewerteter Heimkehrten; Attribute `sources`, `recent`, `entry_times` |
+| `sensor.hauswacht_heimkehr_beobachtung` | Anzahl ausgewerteter Heimkehrten; Attribute `sources`, `recent`, `entry_times`, `door_proof` |
 | `button.hauswacht_heimkehr_bericht` | Bericht der Heimkehr-Beobachtung als Meldung in Home Assistant (zum Herunterladen: Karte „Hauswacht Übersicht“) |
 | `sensor.hauswacht_simulierte_sensoren` | Grundlage der Testkarte (ausgeblendet) |
 
@@ -38,10 +38,11 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `select.hauswacht_profil_bearbeiten` | Welches Profil die folgenden Entitäten zeigen und ändern |
 | `number.hauswacht_ausgangsverzogerung`, `number.hauswacht_eingangsverzogerung` | Verzögerungen |
 | `number.hauswacht_dauer_der_alarmreaktion`, `number.hauswacht_alarmzyklen` | Alarmreaktion |
-| `number.hauswacht_wartezeit_bei_abwesenheit` | Automatik |
+| `number.hauswacht_wartezeit_bei_abwesenheit`, `number.hauswacht_turbeleg_zeitfenster` | Automatik |
+| `select.hauswacht_unscharf_bei_ruckkehr` | Automatik: Aus, Wie bisher, Mit Türbeleg (ersetzt seit 0.42 den Schalter „Unscharf beim Heimkommen“) |
 | `select.hauswacht_offene_sensoren_beim_scharfschalten`, `select.hauswacht_ausgefallene_sensoren_beim_scharfschalten` | Verhalten beim Scharfschalten |
 | `select.hauswacht_sirenenton`, `select.hauswacht_sirenenlautstarke` | Sirene |
-| `switch.hauswacht_stiller_alarm`, `switch.hauswacht_sabotage_lost_alarm_aus`, `switch.hauswacht_unscharf_beim_heimkommen` | Schalter |
+| `switch.hauswacht_stiller_alarm`, `switch.hauswacht_sabotage_lost_alarm_aus` | Schalter |
 | `time.hauswacht_automatisch_scharf_um`, `time.hauswacht_automatisch_unscharf_um` | Uhrzeiten |
 
 ## Attribute des Bedienfelds
@@ -108,6 +109,9 @@ z. B.:
 | `RestartedDisarmed` | Nach einem Neustart unscharf |
 | `AlwaysActiveTriggered` | Immer aktiver Melder ausgelöst |
 | `ArmedByClosingDoor` | Scharf durch Schließen der Tür |
+| `AutoArmScheduled`, `AutoArmCancelled`, `AutoArmed`, `AutoArmSkipped`, `AutoArmFailed` | Profil-Automatik: Scharfschalten geplant, abgebrochen, erfolgt, übersprungen, fehlgeschlagen (mit `profile_id`, `reason`) |
+| `AutoDisarmed`, `AutoDisarmSkipped` | Profil-Automatik: unscharf geschaltet bzw. nicht (z. B. Alarm läuft) |
+| `ArrivalNoted`, `DoorNoted` | „Unscharf mit Türbeleg“: Rückkehr (mit `persons`) bzw. Eingangstür (mit `door`) erkannt, während das Profil scharf ist |
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | Auslöseregeln |
 | `InvalidCode`, `CodeLockReset` | Falsche Eingabe (mit `failures`, `lock_seconds`), Zähler zurückgesetzt |
 | `Panic`, `Emergency` | Notruf-Taste am Keypad |

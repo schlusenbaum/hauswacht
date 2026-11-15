@@ -50,7 +50,6 @@ class HauswachtTestModeSwitch(HauswachtEntity, SwitchEntity):
 SWITCH_ICONS = {
     "silent": "mdi:volume-off",
     "tamper_triggers_alarm": "mdi:shield-alert-outline",
-    "auto_disarm_on_arrival": "mdi:home-import-outline",
 }
 
 

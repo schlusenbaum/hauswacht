@@ -1737,6 +1737,7 @@ class HauswachtRuntime:
             | frozenset(self._last_seen_entity.values())
         )
         self.homecoming.refresh()
+        self.automation.refresh_doors()
         if wanted == self._subscribed and self._unsub_states is not None:
             return
         if self._unsub_states is not None:

@@ -93,7 +93,12 @@ from .core.always_active import (
 from .core.areas import DEFAULT_ICON as DEFAULT_AREA_ICON
 from .core.areas import MAIN_AREA, multi_area, parse_areas, profile_area
 from .core.automation import (
+    ARRIVAL_AUTO_ONLY,
+    ARRIVAL_MODES,
+    ARRIVAL_OFF,
+    DEFAULT_ARRIVAL_WINDOW,
     DEFAULT_AWAY_DELAY,
+    MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
     WEEKDAYS,
     AutoConfig,
@@ -671,6 +676,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
         if set(user_input.get("excluded") or []) - chosen:
             errors["excluded"] = "excluded_not_in_groups"
+        auto = user_input.get("automation") or {}
+        if auto.get("auto_arrival_mode", ARRIVAL_OFF) != ARRIVAL_OFF and not auto.get(
+            "auto_away_persons"
+        ):
+            errors["base"] = "arrival_needs_persons"
         return errors
 
     async def async_step_profile_settings(
@@ -2786,7 +2796,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 for part in str(user_input.get(OPT_HOMECOMING_SSIDS) or "").split(",")
                 if part.strip()
             ]
-            if not options[OPT_HOMECOMING_PERSONS]:
+            if not _presence_persons(options):
                 return await self._save(options, "system")
             self._pending = options
             return await self.async_step_homecoming_signals()
@@ -2813,9 +2823,12 @@ class HauswachtOptionsFlow(OptionsFlow):
     async def async_step_homecoming_signals(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Zusätzliche Signale je Person (WLAN, Bluetooth, Annäherung …) – nur Beobachtung."""
+        """Zusätzliche Signale je Person (WLAN, Bluetooth, Annäherung …).
+
+        Gelten für die Heimkehr-Beobachtung UND die Profil-Automatik ("alle weg", "Rückkehr").
+        """
         options = dict(self._pending or self.config_entry.options)
-        persons = list(options.get(OPT_HOMECOMING_PERSONS, []))
+        persons = _presence_persons(options)
         fields: dict[str, str] = {}
         for person in persons:
             name = plain_name(self.hass, person)
@@ -3048,6 +3061,14 @@ class HauswachtOptionsFlow(OptionsFlow):
         }
 
 
+def _presence_persons(options: Mapping[str, Any]) -> list[str]:
+    """Personen der Heimkehr-Beobachtung und der Profil-Automatik (ohne Doppelte)."""
+    persons = [p for p in options.get(OPT_HOMECOMING_PERSONS, []) if isinstance(p, str)]
+    for pid in profile_ids(options):
+        persons.extend(parse_automation(options, pid).away_persons)
+    return list(dict.fromkeys(persons))
+
+
 def _automation_schema(auto: AutoConfig) -> vol.Schema:
     """Automatik eines Profils. Leere Felder bedeuten: diese Automatik ist aus."""
 
@@ -3086,9 +3107,18 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
                     mode=NumberSelectorMode.BOX,
                 )
             ),
-            vol.Optional(
-                "auto_disarm_on_arrival", default=auto.disarm_on_arrival
-            ): BooleanSelector(),
+            vol.Optional("auto_arrival_mode", default=auto.arrival_mode): _select(
+                list(ARRIVAL_MODES), "arrival_mode"
+            ),
+            vol.Optional("auto_arrival_window", default=auto.arrival_window): NumberSelector(
+                NumberSelectorConfig(
+                    min=1,
+                    max=MAX_ARRIVAL_WINDOW,
+                    step=1,
+                    unit_of_measurement="min",
+                    mode=NumberSelectorMode.BOX,
+                )
+            ),
         }
     )
 
@@ -3115,13 +3145,19 @@ def _arm_on_close_from_input(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:
+    mode = data.get("auto_arrival_mode")
+    if mode not in ARRIVAL_MODES:
+        mode = ARRIVAL_AUTO_ONLY if data.get("auto_disarm_on_arrival") else ARRIVAL_OFF
     return {
         "auto_arm_time": data.get("auto_arm_time") or None,
         "auto_disarm_time": data.get("auto_disarm_time") or None,
         "auto_weekdays": [d for d in data.get("auto_weekdays", []) if d in WEEKDAYS],
         "auto_away_persons": list(data.get("auto_away_persons") or []),
         "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
-        "auto_disarm_on_arrival": bool(data.get("auto_disarm_on_arrival", False)),
+        "auto_arrival_mode": mode,
+        "auto_arrival_window": int(data.get("auto_arrival_window") or DEFAULT_ARRIVAL_WINDOW),
+        # alter Schalter (bis 0.41) passend mitführen
+        "auto_disarm_on_arrival": mode == ARRIVAL_AUTO_ONLY,
     }
 
 

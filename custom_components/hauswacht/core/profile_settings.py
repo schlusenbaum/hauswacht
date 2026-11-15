@@ -12,7 +12,16 @@ from dataclasses import dataclass
 from datetime import time
 from typing import Any
 
-from .automation import DEFAULT_AWAY_DELAY, MAX_AWAY_DELAY, parse_time
+from .automation import (
+    ARRIVAL_MODES,
+    ARRIVAL_OFF,
+    DEFAULT_ARRIVAL_WINDOW,
+    DEFAULT_AWAY_DELAY,
+    MAX_ARRIVAL_WINDOW,
+    MAX_AWAY_DELAY,
+    arrival_mode,
+    parse_time,
+)
 from .profiles import (
     DEFAULT_ALARM_CYCLES,
     DEFAULT_ENTRY_DELAY,
@@ -48,6 +57,7 @@ NUMBERS: Mapping[str, NumberSetting] = {
     "reaction_time": NumberSetting(10, MAX_REACTION_TIME, 10, DEFAULT_REACTION_TIME, "s"),
     "max_alarm_cycles": NumberSetting(1, MAX_ALARM_CYCLES, 1, DEFAULT_ALARM_CYCLES, None),
     "auto_away_delay": NumberSetting(1, MAX_AWAY_DELAY, 1, DEFAULT_AWAY_DELAY, "min"),
+    "auto_arrival_window": NumberSetting(1, MAX_ARRIVAL_WINDOW, 1, DEFAULT_ARRIVAL_WINDOW, "min"),
 }
 
 SELECTS: Mapping[str, SelectSetting] = {
@@ -59,12 +69,12 @@ SELECTS: Mapping[str, SelectSetting] = {
     ),
     "siren_tone": SelectSetting(tuple(sorted(BURGLAR_TONES)), DEFAULT_TONE),
     "siren_volume": SelectSetting(tuple(VOLUME_LEVELS), DEFAULT_VOLUME),
+    "auto_arrival_mode": SelectSetting(ARRIVAL_MODES, ARRIVAL_OFF),
 }
 
 SWITCHES: Mapping[str, bool] = {
     "silent": False,
     "tamper_triggers_alarm": False,
-    "auto_disarm_on_arrival": False,
 }
 
 TIMES: tuple[str, ...] = ("auto_arm_time", "auto_disarm_time")
@@ -90,6 +100,8 @@ def read_number(options: Mapping[str, Any], profile_id: str, key: str) -> int:
 
 def read_select(options: Mapping[str, Any], profile_id: str, key: str) -> str:
     setting = SELECTS[key]
+    if key == "auto_arrival_mode":
+        return arrival_mode(_stored(options, profile_id))  # übernimmt den alten Schalter
     value = _stored(options, profile_id).get(key)
     return value if value in setting.options else setting.default
 
@@ -132,4 +144,7 @@ def write(options: Mapping[str, Any], profile_id: str, key: str, value: Any) -> 
         raise SettingError(profile_id)
     new = copy.deepcopy(dict(options))
     new["profiles"][profile_id][key] = _validated(key, value)
+    if key == "auto_arrival_mode":
+        # alter Schalter (bis 0.41) passend mitführen
+        new["profiles"][profile_id]["auto_disarm_on_arrival"] = value == "auto_only"
     return new

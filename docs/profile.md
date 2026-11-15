@@ -53,26 +53,92 @@ Im Profil, aufklappbar unter **Automatik**. Alle Felder sind optional – leer h
 | An diesen Tagen | Gilt für beide Uhrzeiten; leer = täglich |
 | Scharf, wenn alle diese Personen weg sind | Sind alle gewählten Personen nicht zu Hause, wird nach der Wartezeit scharf geschaltet |
 | Wartezeit | Standard 15 Minuten. Kommt in dieser Zeit jemand zurück, wird nichts geschaltet |
-| Unscharf, wenn eine dieser Personen heimkommt | Nur wenn das Profil vorher **automatisch** scharf geschaltet wurde |
+| Unscharf, wenn eine dieser Personen heimkommt | **Aus** (Standard), **Wie bisher** oder **Mit Türbeleg**, siehe [unten](#unscharf-bei-rückkehr) |
+| Türbeleg: Zeitfenster | Nur für „Mit Türbeleg“: so weit dürfen Rückkehr und Türöffnung auseinanderliegen. Standard 5 Minuten, 1–30 |
 
 Sicherheitsregeln:
 
 - Automatisch scharf nur, wenn die Anlage unscharf ist – nie über ein anderes Profil hinweg.
 - Offene oder ausgefallene Melder werden automatisch **nie** bestätigt. Klappt das
   Scharfschalten deshalb nicht, kommt eine Systemmeldung.
-- Ein laufender Alarm oder eine laufende Eingangsverzögerung wird nie automatisch beendet.
+- Ein **laufender Alarm** wird nie automatisch beendet. Eine laufende Eingangsverzögerung nur
+  mit Türbeleg.
 - Eine Person mit unbekanntem oder nicht verfügbarem Aufenthalt gilt **nicht** als weg.
 - Nach einem Neustart ist die Anlage unscharf; die Anwesenheits-Automatik greift erst beim
   nächsten Wechsel einer Person.
-- „Unscharf bei Rückkehr“: Wer das Handy einer der Personen hat, schaltet damit unscharf. Für
-  „Abwesend“ oder „Urlaub“ gut überlegen. Wie zuverlässig das bei euch wäre, misst die
-  [Heimkehr-Beobachtung](beobachtung.md).
 
 Handys, die nur über das WLAN erkannt werden (Ping am Router), melden im Standby manchmal kurz
 „weg“. Die Wartezeit fängt das ab.
 
 Statt automatisch scharf zu schalten, kann Hauswacht auch nur erinnern: siehe
 [Erinnerung „Alle weg“](benachrichtigungen.md#erinnerung-alle-weg-anlage-unscharf).
+
+### Woran Hauswacht erkennt, wer zuhause ist
+
+Grundlage ist die **Person** in Home Assistant (`person.…`). Zusätzlich kannst du je Person
+weitere **Signale** wählen – unter **Systemeinstellungen → Anwesenheit und
+Heimkehr-Beobachtung**, im zweiten Schritt. Dieselben Signale nutzt auch die
+[Heimkehr-Beobachtung](beobachtung.md#zusätzliche-signale-je-person); du stellst sie nur an
+einer Stelle ein.
+
+Geeignet sind z. B. der WLAN-Sensor der Companion App, Bluetooth (Bermuda), ein Router-Tracker,
+die Richtung aus der Integration „Nähe“ oder ein beliebiger Binärsensor (an = zuhause) – etwa
+eine HomeKit-Variable „Martin zuhause“.
+
+| Die Person gilt als … | wenn … |
+|---|---|
+| **zuhause** | irgendein Signal zuhause meldet (die Person selbst oder eines der Signale) |
+| **weg** | **alle** Signale sicher „weg“ melden |
+| unbekannt | sonst, z. B. ein Signal ist „nicht verfügbar“ – das zählt **nie** als weg |
+
+**Beispiel:** Anna ist laut Person „nicht zuhause“, ihr WLAN-Sensor meldet aber noch das
+Heim-WLAN. Dann ist Anna zuhause, „Scharf, wenn alle weg“ wartet. Erst wenn auch das WLAN
+weg ist, beginnt die Wartezeit.
+
+So schaltet ein kurz aussetzendes Signal nicht gleich scharf, und das schnellste Signal
+erkennt die Rückkehr.
+
+### Unscharf bei Rückkehr
+
+Drei Stufen, Standard ist **Aus**:
+
+| Stufe | Wann unscharf | Was schützt vor einer falschen Ortung |
+|---|---|---|
+| **Aus** | nie | – |
+| **Wie bisher** | Eine der Personen kommt heim – nur wenn Hauswacht das Profil **selbst** scharf geschaltet hat und noch keine Tür aufging (nicht in der Eingangsverzögerung) | Kopplung an „Scharf, wenn alle weg“ |
+| **Mit Türbeleg** | Eine der Personen kommt heim **und** eine Eingangstür wird geöffnet – beides innerhalb des Zeitfensters, egal in welcher Reihenfolge. Auch während der Eingangsverzögerung, egal wie scharf geschaltet wurde | zwei Belege: Ortung **und** Tür |
+
+**„Mit Türbeleg“ im Alltag**
+
+- *Die Ortung kommt zu spät:* Christian öffnet die Haustür, die Eingangsverzögerung läuft.
+  20 Sekunden später meldet sein Handy „zuhause“ → Hauswacht schaltet unscharf, noch bevor
+  der Alarm kommt.
+- *Die Ortung kommt früh:* Das Handy meldet schon an der Straßenecke „zuhause“. Es passiert
+  erst einmal nichts. Zwei Minuten später geht die Haustür auf → sofort unscharf.
+- *Geister-Heimkehr:* Niklas’ Handy meldet nachts „zuhause“, obwohl er unterwegs ist. Ohne
+  geöffnete Tür passiert **nichts**.
+- *Einbruch:* Jemand öffnet die Tür, aber niemand ist heimgekommen → normale
+  Eingangsverzögerung und Alarm.
+
+Genau genommen gilt:
+
+- **Heimkommen** heißt: Die Person war vorher sicher weg und ist jetzt zuhause. Wer die ganze
+  Zeit zuhause war, „kommt nicht heim“.
+- Rückkehr und Tür zählen nur, solange das Profil **scharf** ist oder die
+  **Eingangsverzögerung** läuft – nicht in der Ausgangsverzögerung.
+- Als Tür zählen alle **Eingangstüren** (Melder mit der Rolle „Eingang“). Eine Tür, die sofort
+  Alarm auslöst, ist kein Beleg.
+- Ein laufender **Alarm** wird nie beendet.
+
+**Welche Eingangsverzögerung brauche ich?** Kommt die Ortung erst nach dem Öffnen, muss die
+Eingangsverzögerung so lange reichen. Die [Heimkehr-Beobachtung](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg)
+rechnet das je Person aus und nennt einen Wert.
+
+> **Restrisiko:** Wer das Handy einer der Personen **und** Zugang zur Tür hat (z. B. Handy und
+> Schlüssel gestohlen), schaltet damit unscharf. Für „Urlaub“ deshalb besser **Aus**.
+
+Die Stufe „Wie bisher“ entspricht dem früheren Schalter „Unscharf beim Heimkommen“;
+bestehende Einstellungen werden übernommen.
 
 ## Scharf durch Schließen der Tür
 

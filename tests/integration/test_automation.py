@@ -17,7 +17,7 @@ from pytest_homeassistant_custom_component.common import (
 
 from custom_components.hauswacht.const import EVENT_HAUSWACHT
 
-from .conftest import PANEL, WINDOW, make_entry, set_sensor, setup_entry
+from .conftest import DOOR, PANEL, WINDOW, make_entry, set_sensor, setup_entry
 
 A = "person.a"
 B = "person.b"
@@ -64,10 +64,12 @@ async def _person(hass: HomeAssistant, entity_id: str, state: str) -> None:
     await hass.async_block_till_done()
 
 
-async def _setup(hass: HomeAssistant, **auto: Any) -> None:
+async def _setup(hass: HomeAssistant, extra: dict[str, Any] | None = None, **auto: Any) -> None:
     hass.states.async_set(A, "home")
     hass.states.async_set(B, "home")
-    await setup_entry(hass, make_entry({"profiles": {"away": {**auto, "exit_delay": 0}}}))
+    await setup_entry(
+        hass, make_entry({"profiles": {"away": {**auto, "exit_delay": 0}}, **(extra or {})})
+    )
 
 
 # --- Uhrzeit ----------------------------------------------------------------
@@ -197,7 +199,7 @@ async def test_options_flow_saves_automation(hass: HomeAssistant) -> None:
                 "auto_arm_time": "22:45:00",
                 "auto_weekdays": ["fri", "sat"],
                 "auto_away_delay": 20,
-                "auto_disarm_on_arrival": False,
+                "auto_arrival_mode": "off",
             },
         },
     )
@@ -207,3 +209,170 @@ async def test_options_flow_saves_automation(hass: HomeAssistant) -> None:
     assert night["auto_weekdays"] == ["fri", "sat"]
     assert night["auto_away_delay"] == 20
     assert night["zones"] == ["aussen", "keller"]
+
+
+# --- 0.42: Unscharf mit Türbeleg ----------------------------------------------
+
+SIGNAL = "binary_sensor.a_wlan"
+
+
+async def _door(hass: HomeAssistant) -> None:
+    """Haustür auf (und wieder zu); die Prüfung läuft nach der Reaktion der Anlage."""
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    await hass.async_block_till_done()
+
+
+async def _armed_and_away(hass: HomeAssistant, **auto: Any) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_arrival_mode="door", **auto)
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_door_proof_disarms_during_entry_delay(hass: HomeAssistant) -> None:
+    """Tür zuerst, Ortung 20 s später: noch in der Eingangsverzögerung unscharf."""
+    await _armed_and_away(hass)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _door(hass)
+    assert _state(hass) == AlarmControlPanelState.PENDING
+    await _person(hass, A, "home")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    disarmed = [e for e in events if e.data["type"] == "AutoDisarmed"]
+    assert disarmed[0].data["reason"] == "Rückkehr mit Türbeleg"
+
+
+async def test_door_proof_arrival_first_then_door(hass: HomeAssistant) -> None:
+    """Ortung vor der Tür (manuell scharf geschaltet): unscharf, sobald die Tür aufgeht."""
+    await _armed_and_away(hass)
+    await _person(hass, A, "home")
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY  # ohne Tür passiert nichts
+    await _later(hass, 3)
+    await _door(hass)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_phantom_arrival_without_door_does_nothing(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    await _armed_and_away(hass)
+    await _person(hass, A, "home")
+    freezer.tick(timedelta(minutes=10))
+    await _later(hass, 0)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    # Eine Tür weit außerhalb des Zeitfensters zählt nicht als Beleg
+    await _door(hass)
+    assert _state(hass) == AlarmControlPanelState.PENDING
+
+
+async def test_door_without_arrival_still_alarms(hass: HomeAssistant) -> None:
+    await _armed_and_away(hass)
+    await _door(hass)
+    assert _state(hass) == AlarmControlPanelState.PENDING
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_door_proof_never_ends_running_alarm(hass: HomeAssistant) -> None:
+    await _armed_and_away(hass)
+    await _door(hass)
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+    await _person(hass, A, "home")
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_door_proof_needs_known_absence(hass: HomeAssistant) -> None:
+    """Wer die ganze Zeit zuhause war, "kommt nicht heim" – die Tür allein schaltet nichts."""
+    await _setup(hass, auto_away_persons=[A, B], auto_arrival_mode="door")
+    await _person(hass, B, "not_home")
+    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=PANEL)
+    await _door(hass)
+    await _person(hass, A, "home")  # unverändert zuhause
+    assert _state(hass) == AlarmControlPanelState.PENDING
+
+
+async def test_signal_keeps_person_home(hass: HomeAssistant) -> None:
+    """Zusätzliches Signal meldet zuhause: nicht "alle weg", also nicht scharf."""
+    hass.states.async_set(SIGNAL, "on")
+    await _setup(
+        hass,
+        {"homecoming_signals": {A: [SIGNAL]}},
+        auto_away_persons=[A, B],
+        auto_away_delay=1,
+    )
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    await _person(hass, SIGNAL, "off")
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_unavailable_signal_is_not_away(hass: HomeAssistant) -> None:
+    hass.states.async_set(SIGNAL, "unavailable")
+    await _setup(
+        hass,
+        {"homecoming_signals": {A: [SIGNAL]}},
+        auto_away_persons=[A, B],
+        auto_away_delay=1,
+    )
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_earliest_signal_counts_as_arrival(hass: HomeAssistant) -> None:
+    """Das WLAN meldet zuhause, bevor die Person umschaltet: Das genügt als Rückkehr."""
+    hass.states.async_set(SIGNAL, "off")
+    await _setup(
+        hass,
+        {"homecoming_signals": {A: [SIGNAL]}},
+        auto_away_persons=[A, B],
+        auto_arrival_mode="door",
+    )
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=PANEL)
+    await _door(hass)
+    await _person(hass, SIGNAL, "on")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_options_flow_saves_arrival_mode(hass: HomeAssistant) -> None:
+    hass.states.async_set(A, "home")
+    entry = make_entry()
+    await setup_entry(hass, entry)
+
+    async def _edit(automation: dict[str, Any]) -> Any:
+        flow = await hass.config_entries.options.async_init(entry.entry_id)
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": "profiles"}
+        )
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": "profile_edit"}
+        )
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"profile": "away"}
+        )
+        return await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"name": "Abwesend", "automation": automation}
+        )
+
+    flow = await _edit({"auto_arrival_mode": "door"})
+    assert flow["type"] is FlowResultType.FORM
+    assert flow["errors"] == {"base": "arrival_needs_persons"}
+
+    flow = await _edit(
+        {"auto_away_persons": [A], "auto_arrival_mode": "door", "auto_arrival_window": 3}
+    )
+    assert flow["type"] is FlowResultType.MENU
+    away = entry.options["profiles"]["away"]
+    assert away["auto_arrival_mode"] == "door"
+    assert away["auto_arrival_window"] == 3
+    assert away["auto_disarm_on_arrival"] is False

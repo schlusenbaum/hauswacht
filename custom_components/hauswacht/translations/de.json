@@ -75,11 +75,13 @@
               "auto_weekdays": "An diesen Tagen (leer = täglich)",
               "auto_away_persons": "Scharf, wenn alle diese Personen weg sind",
               "auto_away_delay": "Wartezeit, bevor scharf geschaltet wird",
-              "auto_disarm_on_arrival": "Unscharf, wenn eine dieser Personen heimkommt"
+              "auto_arrival_mode": "Unscharf, wenn eine dieser Personen heimkommt",
+              "auto_arrival_window": "Türbeleg: Zeitfenster zwischen Rückkehr und Tür"
             },
             "data_description": {
               "auto_away_delay": "Handys, die nur über das WLAN erkannt werden, melden im Standby manchmal kurz „weg“. Die Wartezeit verhindert, dass dann versehentlich scharf geschaltet wird.",
-              "auto_disarm_on_arrival": "Nur wenn das Profil zuvor automatisch scharf geschaltet wurde. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf."
+              "auto_arrival_mode": "**Wie bisher:** nur wenn Hauswacht das Profil selbst scharf geschaltet hat und noch keine Tür aufging. **Mit Türbeleg:** Rückkehr UND Öffnen einer Eingangstür innerhalb des Zeitfensters, egal in welcher Reihenfolge – auch während der Eingangsverzögerung. Ein laufender Alarm wird nie beendet. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf.",
+              "auto_arrival_window": "Nur für „mit Türbeleg“. Standard 5 Minuten."
             }
           },
           "arm_on_close": {
@@ -179,11 +181,11 @@
         }
       },
       "homecoming": {
-        "title": "Heimkehr-Beobachtung",
-        "description": "Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS: kein Unscharf, kein Alarm. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.\n\n**Heim-WLAN(s):** Namen eurer WLANs, durch Komma getrennt (z. B. für den WLAN-Sensor der Companion App). Im nächsten Schritt wählst du je Person zusätzliche Signale.\n\nAußerdem misst die Beobachtung, wie lange es von „Tür auf“ bis „unscharf“ dauert – daraus ergibt sich eine Empfehlung für die Eingangsverzögerung.",
+        "title": "Anwesenheit und Heimkehr-Beobachtung",
+        "description": "Hier stellst du ein, woran Hauswacht erkennt, ob jemand zuhause ist. Das gilt für die **Profil-Automatik** („Scharf, wenn alle weg“, „Unscharf bei Rückkehr“) und für die **Heimkehr-Beobachtung**.\n\n**Heimkehr beobachten:** Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.\n\n**Heim-WLAN(s):** Namen eurer WLANs, durch Komma getrennt (z. B. für den WLAN-Sensor der Companion App). Im nächsten Schritt wählst du je Person zusätzliche Signale – auch für die Personen aus der Profil-Automatik.\n\nAußerdem misst die Beobachtung, wie lange es von „Tür auf“ bis „unscharf“ dauert – daraus ergibt sich eine Empfehlung für die Eingangsverzögerung.",
         "data": {
           "homecoming_observe": "Heimkehr beobachten",
-          "homecoming_persons": "Personen",
+          "homecoming_persons": "Personen für die Beobachtung",
           "homecoming_ssids": "Heim-WLAN(s)"
         }
       },
@@ -248,7 +250,7 @@
           "controls": "Bedienteile (Keypads, NFC-Aufkleber, RFID-Leser)",
           "sensor_behaviour": "Funkstille von Sensoren",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
-          "homecoming": "Heimkehr-Beobachtung",
+          "homecoming": "Anwesenheit und Heimkehr-Beobachtung",
           "init": "← Zurück"
         },
         "description": "{saved}"
@@ -679,8 +681,8 @@
         }
       },
       "homecoming_signals": {
-        "title": "Heimkehr: zusätzliche Signale je Person",
-        "description": "Je Person weitere Signale, die „zuhause“ melden können – nur zur Beobachtung, es wird nichts geschaltet:\n\n- **WLAN-Sensor** der Companion App (`sensor.…_wifi_connection` bzw. `sensor.…_ssid`): zuhause, wenn mit einem Heim-WLAN verbunden\n- **Bluetooth** (z. B. Bermuda) oder **FRITZ!Box**-Tracker: `device_tracker.…`\n- **Annäherung** (Integration „Nähe“): Richtungs-Sensor `sensor.…_direction_of_travel` – nähert sich/angekommen = zuhause\n- **Binärsensoren**: an = zuhause\n\nZusätzlich wertet Hauswacht je Person das **früheste Signal** aus (irgendeine Quelle meldet zuhause)."
+        "title": "Anwesenheit: zusätzliche Signale je Person",
+        "description": "Je Person weitere Signale, die „zuhause“ oder „weg“ melden. Sie gelten für die Heimkehr-Beobachtung **und** für die Profil-Automatik:\n\n- **WLAN-Sensor** der Companion App (`sensor.…_wifi_connection` bzw. `sensor.…_ssid`): zuhause, wenn mit einem Heim-WLAN verbunden\n- **Bluetooth** (z. B. Bermuda) oder **FRITZ!Box**-Tracker: `device_tracker.…`\n- **Annäherung** (Integration „Nähe“): Richtungs-Sensor `sensor.…_direction_of_travel` – nähert sich/angekommen = zuhause\n- **Binärsensoren**: an = zuhause\n\n**Zuhause** ist eine Person, sobald irgendein Signal zuhause meldet. **Weg** ist sie erst, wenn alle Signale sicher weg melden – ein unbekanntes oder nicht verfügbares Signal zählt nie als weg."
       },
       "controls": {
         "title": "Bedienteile",
@@ -831,7 +833,8 @@
       "siren_switch_confirm": "Bitte bestätigen, dass es eine reine Alarmsirene ist.",
       "siren_tone_fire": "Ein Brandton ist für Einbruch gesperrt – nur mit der Experten-Freigabe unten.",
       "siren_tone_fire_detector": "Diese Sirene hat eigene Brandsensoren (Rauchmelder) – ein Brandton für Einbruch ist hier nie erlaubt.",
-      "siren_tone_fire_confirm": "Bitte die Experten-Freigabe ausdrücklich bestätigen."
+      "siren_tone_fire_confirm": "Bitte die Experten-Freigabe ausdrücklich bestätigen.",
+      "arrival_needs_persons": "„Unscharf bei Rückkehr“ braucht mindestens eine Person unter „Scharf, wenn alle diese Personen weg sind“."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -993,6 +996,13 @@
         "disarm": "Unscharf schalten",
         "end_alarm": "Alarm beenden"
       }
+    },
+    "arrival_mode": {
+      "options": {
+        "off": "Aus",
+        "auto_only": "Wie bisher (nur nach automatischem Scharfschalten)",
+        "door": "Mit Türbeleg (Rückkehr und Eingangstür)"
+      }
     }
   },
   "entity": {
@@ -1005,9 +1015,6 @@
       },
       "setting_tamper_triggers_alarm": {
         "name": "Sabotage löst Alarm aus"
-      },
-      "setting_auto_disarm_on_arrival": {
-        "name": "Unscharf beim Heimkommen"
       }
     },
     "sensor": {
@@ -1081,6 +1088,14 @@
           "high": "Laut",
           "very_high": "Sehr laut"
         }
+      },
+      "setting_auto_arrival_mode": {
+        "name": "Unscharf bei Rückkehr",
+        "state": {
+          "off": "Aus",
+          "auto_only": "Wie bisher (nur nach automatischem Scharfschalten)",
+          "door": "Mit Türbeleg (Rückkehr und Eingangstür)"
+        }
       }
     },
     "button": {
@@ -1115,6 +1130,9 @@
       },
       "setting_auto_away_delay": {
         "name": "Wartezeit bei Abwesenheit"
+      },
+      "setting_auto_arrival_window": {
+        "name": "Türbeleg-Zeitfenster"
       }
     },
     "time": {

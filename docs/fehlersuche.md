@@ -15,6 +15,22 @@ Nur Profile mit zugeordnetem Bedienfeld-Knopf erscheinen dort. Alle anderen übe
 **Einstellungen lassen sich nicht ändern.**
 Nur möglich, wenn **alle Bereiche unscharf** sind.
 
+**„Scharf, wenn alle weg“ schaltet nicht scharf, obwohl alle weg sind.**
+Eine Person gilt erst als weg, wenn die Person selbst **und alle** ihre zusätzlichen Signale
+„weg“ melden. Ein Signal auf „nicht verfügbar“ oder „unbekannt“ hält die Automatik an. Prüfe
+unter Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung, welche Signale gewählt
+sind, und deren Zustand unter Entwicklerwerkzeuge → Zustände.
+
+**„Unscharf bei Rückkehr – mit Türbeleg“ schaltet nicht unscharf.**
+Es braucht beides: Die Person war vorher sicher **weg** und meldet jetzt **zuhause**, und eine
+**Eingangstür** (Rolle „Eingang“) geht auf – höchstens das Zeitfenster auseinander (Standard
+5 Minuten), solange das Profil scharf ist oder die Eingangsverzögerung läuft. Kam die Ortung
+erst nach Ablauf der Eingangsverzögerung, läuft schon der Alarm – der wird nie automatisch
+beendet. Dann die Eingangsverzögerung verlängern; den nötigen Wert nennt der
+[Heimkehr-Bericht](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg). Unter Entwicklerwerkzeuge →
+Ereignisse → `hauswacht_event` anhören siehst du `ArrivalNoted` (Rückkehr erkannt) und
+`DoorNoted` (Tür erkannt).
+
 ## PIN und Bedienung
 
 **Das Dashboard fragt plötzlich nach einem PIN.**
