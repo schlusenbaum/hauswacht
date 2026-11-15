@@ -25,10 +25,10 @@ MQTT-Integration in Home Assistant. ZHA- und Z-Wave-Keypads sind geplant.
 
 | Einstellung | Bedeutung |
 |---|---|
-| Name | z. B. „Keypad Flur“ – erscheint in „geändert von“ |
+| Name | z. B. „Keypad Flur“ – erscheint in „geändert von“, etwa „Anna (Keypad Flur)“ |
 | Bereich | ein Bereich oder alle |
-| MQTT-Topic | Basis-Topic + Gerätename in Zigbee2MQTT, z. B. `zigbee2mqtt/Keypad` |
-| Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil; Tasten ohne Profil antworten „nicht bereit“ |
+| MQTT-Topic | Basis-Topic + Gerätename in Zigbee2MQTT, z. B. `zigbee2mqtt/Keypad` – genau wie in Zigbee2MQTT geschrieben (Groß-/Kleinschreibung, Bindestriche), ohne `/set` |
+| Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil zum **Scharfschalten**, z. B. Tag → „Zuhause“, Nacht → „Nacht“, Alle → „Abwesend“; Tasten ohne Profil antworten „nicht bereit“. Unscharf schaltet die eigene Unscharf-Taste – kein Profil dafür anlegen |
 | Anmeldung | **PIN oder Karte** oder **Karte und PIN** (beide Ausweise desselben Benutzers innerhalb von 30 s; der erste wird mit „nicht bereit“ quittiert) |
 | Notruf-Taste | **aus**, **still** (wichtige Push-Nachricht) oder **Alarm** (zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils) |
 
