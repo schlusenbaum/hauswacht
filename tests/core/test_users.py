@@ -149,16 +149,16 @@ def test_migrate_legacy_pin() -> None:
 
 
 def test_people_without_pin() -> None:
-    ha = {"ha-c": "Christian", "ha-p": "Petra", "ha-f": "Finja"}
     only_me = [User("c", "Christian", pin=ph("1111"), ha_user="ha-c")]
-    assert people_without_pin(only_me, ha) == ["Finja", "Petra"]
+    # Home-Assistant-Konten ohne Hauswacht-Benutzer (Grafana, MQTT, Tablet) zählen nicht
+    assert people_without_pin(only_me) == []
     users = [*only_me, User("p", "Petra"), User("f", "Finja", pin=ph("2222"))]
-    assert people_without_pin(users, ha) == ["Petra"]
+    assert people_without_pin(users) == ["Petra"]
     # ohne PINs ist alles egal
-    assert people_without_pin([User("p", "Petra")], ha) == []
+    assert people_without_pin([User("p", "Petra")]) == []
     # Master-PIN zählt nicht als Person
-    master = [User("master", "Master-PIN", pin=ph("9999"))]
-    assert people_without_pin(master, {"ha-c": "Christian"}) == ["Christian"]
+    master = [User("master", "Master-PIN", pin=ph("9999")), User("c", "Christian")]
+    assert people_without_pin(master, ignore=["master"]) == ["Christian"]
 
 
 # --- Rechte je Bereich -------------------------------------------------------

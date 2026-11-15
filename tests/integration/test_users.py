@@ -294,6 +294,9 @@ async def test_repair_issue_when_not_everyone_has_pin(hass: HomeAssistant) -> No
 async def test_no_repair_issue_when_all_have_pin(hass: HomeAssistant) -> None:
     from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
 
+    # Konten ohne Hauswacht-Benutzer (Dienste, Wandtablet) sind keine Personen ohne PIN
+    for name in ("Grafana", "mqtt-user", "Tablett"):
+        await hass.auth.async_create_user(name)
     users = {"c": user("Christian", "1357"), "p": user("Petra", "1357")}
     await setup_entry(hass, make_entry({"users": users}))
     assert ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin") is None
