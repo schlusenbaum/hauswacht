@@ -6,9 +6,6 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-### Dokumentation
-- README: Hinweis, dass Hauswacht mit viel Hilfe von KI (Claude) entstanden ist.
-
 ## [0.43.0] - 2026-11-15
 
 ### Neu
@@ -33,6 +30,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - Bedienteile: Abschnitte „Taster“ und „Türschloss (z. B. Nuki)“ mit Einrichtung Schritt für
   Schritt, Aufbau der Nuki-Nachricht, Anlernen, „Abschließen = scharf“ und allgemeiner Quelle;
   Fehlersuche für Taster und Schloss; Referenz der Ereignisse.
+- README: Hinweis, dass Hauswacht mit viel Hilfe von KI (Claude) entstanden ist.
 
 ## [0.42.1] - 2026-11-15
 
