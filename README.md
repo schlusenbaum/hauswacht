@@ -11,7 +11,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.42.1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.43.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -22,12 +22,14 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 **beta**.
 
 - **Alarm profiles** instead of fixed modes ("Home", "Night", "Vacation" …), each with its own
-  sensors, delays, sirens and recipients; automatic arming by time or when everyone has left.
+  sensors, delays, sirens and recipients; automatic arming by time or when everyone has left
+  (presence from several signals per person), disarm on arrival with door proof.
 - **Trigger rules** such as "door, then basement within 2 minutes", with exceptions and conditions.
 - **Areas** (house, garage …) armed independently.
 - **Users** with PIN and any number of RFID cards, rights per area, guests with validity,
   duress PIN, lockout against guessing.
-- **Keypads** via Zigbee2MQTT with feedback on the device, NFC tags, RFID readers.
+- **Keypads** via Zigbee2MQTT with feedback on the device, NFC tags, RFID readers, buttons
+  (arm only) and door locks (e.g. Nuki: disarm when a known user unlocks).
 - **Sirens with fire lock:** never sounds or silences a siren while a smoke detector reports fire;
   sirens are locked after installation until you release them.
 - **Test mode** that technically blocks sirens, plus a test card to simulate sensors.
@@ -70,7 +72,8 @@ smoke detectors.
 - **Benutzer und Ausweise** – PIN und beliebig viele RFID-Karten je Person, Rechte je Bereich,
   Gäste mit Gültigkeit, Bedrohungs-PIN mit stillem Notruf, Sperre gegen Durchprobieren.
 - **Bedienteile** – Zigbee-Keypads über Zigbee2MQTT mit Rückmeldung am Gerät, Karten direkt am
-  Keypad anlernen, NFC-Aufkleber mit der Home-Assistant-App, RFID-Leser.
+  Keypad anlernen, NFC-Aufkleber mit der Home-Assistant-App, RFID-Leser, Taster (nur scharf)
+  und Türschlösser (z. B. Nuki: unscharf, wenn ein bekannter Benutzer aufschließt).
 - **Benachrichtigungen** – pro Ereignis mit eigenen Empfängern und Texten, wichtige Hinweise
   durchbrechen „Nicht stören“, Knöpfe „Unscharf schalten“ und „Trotzdem scharf“ in der
   Push-Nachricht, Ansagen über Lautsprecher (z. B. Echo).
@@ -117,7 +120,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Auslöseregeln](docs/ausloeseregeln.md) | Abfolgen, Ausnahmen, Bedingungen, YAML |
 | [Bedienung und Dashboard](docs/dashboard.md) | Scharf/unscharf, Alarmkarte, Alarm beenden, Karten |
 | [Benutzer, PINs und Sperre](docs/benutzer.md) | Benutzer, Rechte, PIN-Regeln, Bedrohungs-PIN |
-| [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser |
+| [Bedienteile](docs/bedienteile.md) | Keypads, Karten anlernen, NFC, RFID-Leser, Taster, Türschlösser |
 | [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Ton je Sirene, Sirene aus Schalter, Sirenentest, „Warum hat sie nicht geklingelt?“, Brandschutz |
 | [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
 | [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |
@@ -141,7 +144,8 @@ Alles auf einen Blick: [docs/](docs/README.md).
 - **Nach einem Neustart unscharf** – ein früherer Alarm wird nie unkontrolliert wieder
   aufgenommen.
 - **Hauswacht schaltet keine Geräte** außer Sirenen (auch als Sirene eingetragene Schalter) und
-  der Anzeige eingerichteter Keypads – ein Test stellt das sicher.
+  der Anzeige eingerichteter Keypads – ein Test stellt das sicher. Türschlösser liest
+  Hauswacht nur mit, es schaltet sie nie.
 
 Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 
