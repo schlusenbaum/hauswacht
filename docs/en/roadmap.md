@@ -40,7 +40,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | later | ZHA and Z-Wave keypads |
 | 1.0.0 | stable, documentation complete, inclusion in the HACS default list |
 | some day | cameras: picture in the message, camera detection as its own sensor type – to be designed afresh |
-| 1.x | further credentials (e.g. fingerprint), further automation conditions, recurring guest times |
+| 1.x | dedicated kind "fingerprint reader" (names per finger, minimum match) – already possible today via RFID reader or Nuki Keypad 2.0; further automation conditions, recurring guest times |
 
 ## Principles
 

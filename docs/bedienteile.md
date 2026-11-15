@@ -12,6 +12,7 @@ Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
 | [Keypad](#keypad-zigbee2mqtt) | PIN und/oder RFID-Karte + Taste | Wand neben der Haustür |
 | [NFC-Aufkleber](#nfc-aufkleber-companion-app) | das eigene Handy (Home-Assistant-App) | Bewohner mit App |
 | [RFID-Leser](#rfid-leser) | RFID-Karte, ohne Taste | Karte vorhalten und fertig |
+| [Fingerabdruck-Leser](#fingerabdruck-leser-esphome) | gespeicherter Finger (wie eine Karte) | Finger auflegen, z. B. im Flur |
 | [Taster](#taster) | **keiner** – schaltet deshalb nur scharf | Taster im Hausflur: drücken, rausgehen |
 | [Türschloss](#türschloss-z-b-nuki) | wer aufgeschlossen hat (Nuki-Benutzer, Keypad-Code …) | Aufschließen = unscharf |
 
@@ -114,6 +115,121 @@ PN532 oder RC522 über ESPHome. Anders als beim Keypad reicht **Karte vorhalten*
 
 „Umschalten“ ist bequem, kann aber auch versehentlich scharf schalten. Einfache 125-kHz-Karten
 sind leicht kopierbar – besser 13,56-MHz-Karten oder NFC per Handy.
+
+### Fingerabdruck-Leser (ESPHome)
+
+Ein Fingerabdruck-Sensor an einem ESP32 meldet den erkannten Finger wie eine Karte. In Hauswacht
+ist er deshalb einfach ein **RFID-Leser** – ein Finger ist ein Ausweis wie eine Karte.
+
+**Was du brauchst:**
+
+| Teil | Beispiel | Preis etwa |
+|---|---|---|
+| Mikrocontroller | ESP32-Board (z. B. ESP32-DevKitC) | 5–10 € |
+| Fingerabdruck-Sensor | **R503** (rund, mit LED-Ring; auch R307, ZFM-20) | 15–25 € |
+| Software | [ESPHome](https://esphome.io/components/fingerprint_grow.html) (Komponente `fingerprint_grow`) | kostenlos |
+
+Verkabelung: 3,3 V und GND vom ESP32; TX des Sensors an den RX-Pin des ESP32, RX des Sensors
+an den TX-Pin; den WAKEUP-Draht an einen freien Pin (`sensing_pin`), damit der Sensor ein
+Auflegen sofort erkennt.
+
+**ESPHome-Konfiguration** (Gerät hier `fingerabdruck-flur`, Pins anpassen):
+
+```yaml
+esphome:
+  name: fingerabdruck-flur
+
+esp32:
+  board: esp32dev
+
+uart:
+  rx_pin: GPIO16      # an TX des Sensors
+  tx_pin: GPIO17      # an RX des Sensors
+  baud_rate: 57600
+
+fingerprint_grow:
+  sensing_pin: GPIO4  # WAKEUP des Sensors
+  on_finger_scan_matched:
+    - if:
+        condition:
+          lambda: 'return confidence > 50;'
+        then:
+          - homeassistant.tag_scanned: !lambda 'return "FINGER" + to_string(finger_id);'
+          - fingerprint_grow.aura_led_control:
+              state: FLASHING
+              speed: 25
+              color: BLUE
+              count: 2
+  on_finger_scan_unmatched:
+    - fingerprint_grow.aura_led_control:
+        state: FLASHING
+        speed: 25
+        color: RED
+        count: 2
+
+api:
+  actions:
+    - action: finger_anlernen
+      variables:
+        finger_id: int
+      then:
+        - fingerprint_grow.enroll:
+            finger_id: !lambda 'return finger_id;'
+            num_scans: 2
+    - action: finger_loeschen
+      variables:
+        finger_id: int
+      then:
+        - fingerprint_grow.delete:
+            finger_id: !lambda 'return finger_id;'
+
+sensor:
+  - platform: fingerprint_grow
+    fingerprint_count:
+      name: "Gespeicherte Finger"
+    last_finger_id:
+      name: "Letzter Finger"
+    last_confidence:
+      name: "Letzte Übereinstimmung"
+```
+
+**Einrichten:**
+
+1. **Finger im Sensor speichern:** Entwicklerwerkzeuge → Aktionen →
+   `esphome.fingerabdruck_flur_finger_anlernen` mit `finger_id: 1` → zweimal denselben Finger
+   auflegen. Für jeden Finger eine eigene Nummer (Platz 1, 2, 3 …). Am besten eine kleine Liste
+   führen: 1 = Anna, rechter Zeigefinger; 2 = Anna, linker Zeigefinger; 3 = Ben …
+2. **In Hauswacht:** Systemeinstellungen → Bedienteile → **RFID-/NFC-Leser hinzufügen** →
+   Lesegerät „fingerabdruck-flur“ → Aktion z. B. „unscharf schalten“.
+3. **Finger dem Benutzer zuordnen** wie eine [Karte](#karten-anlernen): alles unscharf, Finger
+   auflegen, dann Benutzer bearbeiten → „RFID-Karten und Schloss-Kennungen“ → „FINGER1 (neu,
+   gelesen an …)“ auswählen, speichern. Oder `FINGER1` eintippen.
+
+Gut zu wissen:
+
+- **Kommt nichts an?** Unter Entwicklerwerkzeuge → Ereignisse `tag_scanned` anhören und einen
+  Finger auflegen. Bleibt es still: Einstellungen → Geräte & Dienste → ESPHome → das Gerät →
+  Konfigurieren → **„Dem Gerät erlauben, Home-Assistant-Aktionen auszuführen“** einschalten.
+- Die Fingerabdrücke selbst bleiben **im Sensor**. Home Assistant und Hauswacht sehen nur die
+  Nummer des Platzes („FINGER1“).
+- Ein **unbekannter Finger** schickt nichts – er zählt deshalb auch nicht als Fehlversuch.
+- `confidence > 50` ist die Mindest-Übereinstimmung; höher = weniger Fehlerkennungen, aber
+  öfter „nicht erkannt“. Zusätzlich lässt sich am Sensor `security_level` (1–5) einstellen.
+- Die LED zeigt nur, ob der **Sensor** den Finger erkannt hat – nicht, ob Hauswacht unscharf
+  geschaltet hat (z. B. fehlendes Recht oder Sperre). Das zeigen Keypad, Alarmkarte und Logbuch.
+- **Mehr Sicherheit:** Anmeldung „Karte und PIN“ – nach dem Finger innerhalb von 30 s den PIN am
+  Keypad.
+- **Sicherheit des Lesers:** Wer den ESP32 oder sein WLAN übernimmt, kann jede Nummer schicken.
+  Den Leser deshalb **innen** anbringen (z. B. im Flur in Reichweite der Eingangsverzögerung),
+  ESPHome mit API-Schlüssel und Passwort betreiben und das Gehäuse gegen Öffnen sichern. Außen an
+  der Tür ist ein Schloss mit eigenem Fingerabdruck-Leser (z. B. Nuki Keypad 2.0, siehe
+  [Türschloss](#türschloss-z-b-nuki)) die robustere Wahl.
+- Ein **verlorener oder verletzter Finger**: den Platz im Sensor löschen
+  (`esphome.fingerabdruck_flur_finger_loeschen`) und die Kennung beim Benutzer entfernen.
+
+> Diese Anleitung folgt der ESPHome-Dokumentation; mit echter Hardware erprobt ist sie bei
+> Hauswacht noch nicht. Rückmeldungen gern als [Issue](https://github.com/schlusenbaum/hauswacht/issues).
+
 
 ## Taster
 
@@ -218,6 +334,10 @@ fünf Zahlen, z. B. `1,0,52653,0,0`:
 Hauswacht zählt nur Auslöser **0**. Aus Code-ID bzw. Auth-ID wird die Kennung, die beim
 Benutzer erscheint: „Nuki-Keypad-Code 8192“ bzw. „Nuki-Benutzer 52653“ (gespeichert als
 `NUKICODE8192` bzw. `NUKIAUTH52653`).
+
+**Fingerabdruck am Nuki Keypad 2.0:** Ein Fingerabdruck kommt wie ein Keypad-Code an (eigene
+Code-ID, an Stelle 5 eine `2` für „Fingerabdruck“). Er wird also genauso als „Nuki-Keypad-Code …“
+angelernt – das ist der einfachste Weg zu einem Fingerabdruck an der Haustür.
 
 ### Kennungen anlernen
 

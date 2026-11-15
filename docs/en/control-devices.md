@@ -12,6 +12,7 @@ ID): rights, validity, lockout after wrong entries and duress PIN apply as on th
 | [Keypad](#keypad-zigbee2mqtt) | PIN and/or RFID card + key | wall next to the front door |
 | [NFC sticker](#nfc-sticker-companion-app) | your own phone (Home Assistant app) | residents with the app |
 | [RFID reader](#rfid-reader) | RFID card, no key | hold up the card and done |
+| [Fingerprint reader](#fingerprint-reader-esphome) | stored finger (like a card) | place a finger, e.g. in the hallway |
 | [Button](#button) | **none** – so it only arms | button in the hallway: press, leave |
 | [Door lock](#door-lock-eg-nuki) | who unlocked (Nuki user, keypad code …) | unlocking = disarmed |
 
@@ -107,6 +108,119 @@ RC522 via ESPHome. Unlike the keypad, **holding up the card** is enough.
 
 "Toggle" is convenient but can also arm by accident. Simple 125 kHz cards are easy to copy –
 better use 13.56 MHz cards or NFC via phone.
+
+### Fingerprint reader (ESPHome)
+
+A fingerprint sensor on an ESP32 reports the recognised finger like a card. In Hauswacht it is
+therefore simply an **RFID reader** – a finger is a credential like a card.
+
+**What you need:**
+
+| Part | Example | Price approx. |
+|---|---|---|
+| Microcontroller | ESP32 board (e.g. ESP32-DevKitC) | €5–10 |
+| Fingerprint sensor | **R503** (round, with LED ring; also R307, ZFM-20) | €15–25 |
+| Software | [ESPHome](https://esphome.io/components/fingerprint_grow.html) (component `fingerprint_grow`) | free |
+
+Wiring: 3.3 V and GND from the ESP32; the sensor's TX to the ESP32's RX pin, the sensor's RX to
+the TX pin; the WAKEUP wire to a free pin (`sensing_pin`), so the sensor notices a finger at once.
+
+**ESPHome configuration** (device called `fingerprint-hallway` here, adjust the pins):
+
+```yaml
+esphome:
+  name: fingerprint-hallway
+
+esp32:
+  board: esp32dev
+
+uart:
+  rx_pin: GPIO16      # to the sensor's TX
+  tx_pin: GPIO17      # to the sensor's RX
+  baud_rate: 57600
+
+fingerprint_grow:
+  sensing_pin: GPIO4  # the sensor's WAKEUP
+  on_finger_scan_matched:
+    - if:
+        condition:
+          lambda: 'return confidence > 50;'
+        then:
+          - homeassistant.tag_scanned: !lambda 'return "FINGER" + to_string(finger_id);'
+          - fingerprint_grow.aura_led_control:
+              state: FLASHING
+              speed: 25
+              color: BLUE
+              count: 2
+  on_finger_scan_unmatched:
+    - fingerprint_grow.aura_led_control:
+        state: FLASHING
+        speed: 25
+        color: RED
+        count: 2
+
+api:
+  actions:
+    - action: enroll_finger
+      variables:
+        finger_id: int
+      then:
+        - fingerprint_grow.enroll:
+            finger_id: !lambda 'return finger_id;'
+            num_scans: 2
+    - action: delete_finger
+      variables:
+        finger_id: int
+      then:
+        - fingerprint_grow.delete:
+            finger_id: !lambda 'return finger_id;'
+
+sensor:
+  - platform: fingerprint_grow
+    fingerprint_count:
+      name: "Enrolled fingers"
+    last_finger_id:
+      name: "Last finger"
+    last_confidence:
+      name: "Last confidence"
+```
+
+**Setting up:**
+
+1. **Store fingers in the sensor:** Developer tools → Actions →
+   `esphome.fingerprint_hallway_enroll_finger` with `finger_id: 1` → place the same finger twice.
+   Use a separate number for each finger (slot 1, 2, 3 …). Best keep a small list: 1 = Anna,
+   right index finger; 2 = Anna, left index finger; 3 = Ben …
+2. **In Hauswacht:** System settings → Control devices → **Add RFID/NFC reader** → reader device
+   "fingerprint-hallway" → action e.g. "disarm".
+3. **Assign the finger to the user** like a [card](#learning-cards): everything disarmed, place
+   the finger, then edit user → "RFID cards and lock IDs" → select "FINGER1 (new, read at …)",
+   save. Or type `FINGER1`.
+
+Good to know:
+
+- **Nothing arrives?** Listen to `tag_scanned` under Developer tools → Events and place a finger.
+  If it stays silent: Settings → Devices & services → ESPHome → the device → Configure →
+  switch on **"Allow the device to perform Home Assistant actions"**.
+- The fingerprints themselves stay **in the sensor**. Home Assistant and Hauswacht only see the
+  slot number ("FINGER1").
+- An **unknown finger** sends nothing – so it does not count as a failed attempt either.
+- `confidence > 50` is the minimum match; higher = fewer false matches, but more often "not
+  recognised". In addition, `security_level` (1–5) can be set on the sensor.
+- The LED only shows whether the **sensor** recognised the finger – not whether Hauswacht disarmed
+  (e.g. missing right or lockout). Keypad, alarm card and logbook show that.
+- **More security:** login "card and PIN" – after the finger, the PIN at the keypad within 30 s.
+- **Security of the reader:** whoever takes over the ESP32 or its Wi-Fi can send any number. Mount
+  the reader **inside** (e.g. in the hallway within reach during the entry delay), run ESPHome
+  with an API key and password, and secure the housing against opening. Outside at the door, a
+  lock with its own fingerprint reader (e.g. Nuki Keypad 2.0, see [Door lock](#door-lock-eg-nuki))
+  is the more robust choice.
+- A **lost or injured finger**: delete the slot in the sensor
+  (`esphome.fingerprint_hallway_delete_finger`) and remove the ID from the user.
+
+> These instructions follow the ESPHome documentation; they have not yet been tried with real
+> hardware for Hauswacht. Feedback welcome as an [issue](https://github.com/schlusenbaum/hauswacht/issues).
+
 
 ## Button
 
@@ -208,6 +322,10 @@ action, e.g. `1,0,52653,0,0`:
 
 Hauswacht only counts trigger **0**. The code ID or auth ID becomes the ID shown with the user:
 "Nuki keypad code 8192" or "Nuki user 52653" (stored as `NUKICODE8192` or `NUKIAUTH52653`).
+
+**Fingerprint on the Nuki Keypad 2.0:** a fingerprint arrives like a keypad code (its own code
+ID, a `2` for "fingerprint" in position 5). It is therefore learned the same way as "Nuki keypad
+code …" – the simplest way to a fingerprint at the front door.
 
 ### Learning IDs
 

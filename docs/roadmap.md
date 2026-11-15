@@ -40,7 +40,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 | später | ZHA- und Z-Wave-Keypads |
 | 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
-| 1.x | Weitere Ausweise (z. B. Fingerabdruck), weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten |
+| 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten |
 
 ## Grundsätze
 

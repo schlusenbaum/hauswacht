@@ -13,7 +13,7 @@
 definable alarm profiles, trigger rules like "door, then basement", users with PIN and RFID card,
 Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can go off.
 
-> **Status: 0.44.0 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.44.1 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -95,7 +95,7 @@ In detail: [Installation and first steps](docs/en/installation.md).
 | [Trigger rules](docs/en/trigger-rules.md) | sequences, exceptions, conditions, YAML |
 | [Operation and dashboard](docs/en/dashboard.md) | arm/disarm, alarm card, ending an alarm, cards |
 | [Users, PINs and lockout](docs/en/users.md) | users, rights, PIN rules, duress PIN |
-| [Control devices](docs/en/control-devices.md) | keypads, learning cards, NFC, RFID readers, buttons, door locks |
+| [Control devices](docs/en/control-devices.md) | keypads, learning cards, NFC, RFID readers, fingerprint, buttons, door locks |
 | [Sirens](docs/en/sirens.md) | compatibility, release, tone per siren, siren from switch, siren test, "why didn't it sound?", fire protection |
 | [Notifications](docs/en/notifications.md) | events, custom texts, speech |
 | [System overview](docs/en/overview.md) | overview, printing, emergency sheet, check hints |
