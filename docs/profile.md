@@ -52,7 +52,7 @@ Im Profil, aufklappbar unter **Automatik**. Alle Felder sind optional – leer h
 | Einstellung | Wirkung |
 |---|---|
 | Scharf um / Unscharf um | Uhrzeit, zu der das Profil scharf bzw. unscharf geschaltet wird |
-| An diesen Tagen | Gilt für beide Uhrzeiten; leer = täglich |
+| An diesen Tagen | Tage, an denen die Uhrzeiten gelten; leer = täglich. Über Nacht siehe [unten](#uhrzeiten-über-nacht-und-scharf-von-hand) |
 | Scharf, wenn alle diese Personen weg sind | Sind alle gewählten Personen nicht zu Hause, wird nach der Wartezeit scharf geschaltet |
 | Wartezeit | Standard 15 Minuten. Kommt in dieser Zeit jemand zurück, wird nichts geschaltet |
 | Unscharf, wenn eine dieser Personen heimkommt | **Aus** (Standard), **Wie bisher** oder **Mit Türbeleg**, siehe [unten](#unscharf-bei-rückkehr) |
@@ -74,6 +74,36 @@ Handys, die nur über das WLAN erkannt werden (Ping am Router), melden im Standb
 
 Statt automatisch scharf zu schalten, kann Hauswacht auch nur erinnern: siehe
 [Erinnerung „Alle weg“](benachrichtigungen.md#erinnerung-alle-weg-anlage-unscharf).
+
+### Uhrzeiten, über Nacht und „scharf von Hand“
+
+**Über Nacht:** Liegt „Unscharf um“ vor „Scharf um“ (z. B. scharf 23:00, unscharf 06:30), gehört
+der Morgen zur Nacht davor. Hauswacht schaltet dann auch am Morgen **nach** einem aktiven Tag
+unscharf.
+
+Beispiel „Nacht“, scharf 23:00, unscharf 06:30, Tage Mo–Fr:
+
+| Wann | Was passiert |
+|---|---|
+| Freitag 23:00 | scharf (Freitag ist aktiv) |
+| Samstag 06:30 | **unscharf** – die Nacht hat am Freitag begonnen |
+| Samstag 23:00 | nichts (Samstag ist nicht aktiv) |
+| Sonntag 06:30 | nichts – Samstag und Sonntag sind nicht aktiv |
+| Montag 06:30 | unscharf (Montag ist aktiv) |
+
+Ein Tagesprofil (z. B. scharf 07:30, unscharf 16:00) gilt nur an den gewählten Tagen.
+
+**Scharf von Hand:** Ein Profil mit Uhrzeiten lässt sich jederzeit auch von Hand scharf
+schalten. Dann gilt:
+
+- **„Scharf um“** tut nichts, wenn die Anlage schon scharf ist – Hauswacht schaltet nie über ein
+  scharfes Profil hinweg.
+- **„Unscharf um“** schaltet das Profil unscharf, egal wer es scharf geschaltet hat (nicht
+  während einer Eingangsverzögerung oder eines Alarms).
+- Ein **anderes** Profil, von Hand scharf geschaltet, beendet „Unscharf um“ nicht – die Uhrzeit
+  gilt nur für ihr eigenes Profil.
+
+Beispiel: „Nacht“ um 22:00 von Hand scharf → 23:00 nichts → 06:30 unscharf.
 
 ### Woran Hauswacht erkennt, wer zuhause ist
 

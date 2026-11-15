@@ -52,7 +52,7 @@ In the profile, expandable under **Automation**. All fields are optional – emp
 | Setting | Effect |
 |---|---|
 | Arm at / Disarm at | Time at which the profile is armed or disarmed |
-| On these days | Applies to both times; empty = every day |
+| On these days | Days on which the times apply; empty = every day. Overnight see [below](#times-overnight-and-manual-arming) |
 | Arm when all of these persons are away | If all selected persons are away, the profile is armed after the delay |
 | Delay before arming | Default 15 minutes. If someone comes back during this time, nothing is switched |
 | Disarm when one of these persons arrives home | **Off** (default), **As before** or **With door proof**, see [below](#disarm-on-arrival) |
@@ -73,6 +73,34 @@ standby. The delay catches that.
 
 Instead of arming automatically, Hauswacht can also just remind you: see
 [Reminder "everyone away"](notifications.md#reminder-everyone-away-system-disarmed).
+
+### Times, overnight and manual arming
+
+**Overnight:** if "Disarm at" is before "Arm at" (e.g. arm 23:00, disarm 06:30), the morning
+belongs to the night before. Hauswacht then also disarms on the morning **after** an active day.
+
+Example "Night", arm 23:00, disarm 06:30, days Mon–Fri:
+
+| When | What happens |
+|---|---|
+| Friday 23:00 | armed (Friday is active) |
+| Saturday 06:30 | **disarmed** – the night started on Friday |
+| Saturday 23:00 | nothing (Saturday is not active) |
+| Sunday 06:30 | nothing – Saturday and Sunday are not active |
+| Monday 06:30 | disarmed (Monday is active) |
+
+A daytime profile (e.g. arm 07:30, disarm 16:00) only applies on the chosen days.
+
+**Manual arming:** a profile with times can be armed by hand at any time. Then:
+
+- **"Arm at"** does nothing if the system is already armed – Hauswacht never switches over an
+  armed profile.
+- **"Disarm at"** disarms the profile, no matter who armed it (not during an entry delay or an
+  alarm).
+- A **different** profile, armed by hand, is not ended by "Disarm at" – the time only applies to
+  its own profile.
+
+Example: "Night" armed by hand at 22:00 → 23:00 nothing → 06:30 disarmed.
 
 ### How Hauswacht knows who is home
 

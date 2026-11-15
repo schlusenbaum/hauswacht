@@ -33,6 +33,7 @@ from .core.automation import (
     all_away_values,
     anyone_home_values,
     combine,
+    disarm_due,
     door_proof_ok,
     is_active_day,
     parse_automation,
@@ -168,11 +169,13 @@ class AutomationRunner:
     @callback
     def _on_time(self, profile_id: str, action: str, _now: datetime) -> None:
         cfg = self.configs.get(profile_id)
-        if cfg is None or not is_active_day(cfg, dt_util.now().weekday()):
+        if cfg is None:
             return
+        today = dt_util.now().weekday()
         if action == "arm":
-            self.auto_arm(profile_id, REASON_TIME)
-        else:
+            if is_active_day(cfg, today):
+                self.auto_arm(profile_id, REASON_TIME)
+        elif disarm_due(cfg, today):
             self.auto_disarm(profile_id, REASON_TIME)
 
     # --- Anwesenheit ----------------------------------------------------------
