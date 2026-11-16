@@ -83,6 +83,17 @@ from .const import (
     OPT_USERS,
     OPT_ZONES,
 )
+from .core.action_codes import (
+    ACTION_CODE_KEYS,
+    ALL_KEYPADS,
+    OPT_ACTION_CODES,
+    ActionCode,
+    CodeAction,
+    action_code_clash,
+    is_action_code,
+    is_valid_action_code,
+    parse_action_codes,
+)
 from .core.always_active import (
     DEFAULT_SETTLE,
     MAX_SETTLE,
@@ -107,6 +118,10 @@ from .core.automation import (
 from .core.controls import ALL_AREAS as CONTROL_ALL_AREAS
 from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
 from .core.controls import (
+    KEY_ALL,
+    KEY_DAY,
+    KEY_DISARM,
+    KEY_NIGHT,
     MAX_LEARN_MINUTES,
     ControlKind,
     is_random_uid,
@@ -254,6 +269,7 @@ SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 # "Neue Karte anlernen" in der Kartenliste; so lange wartet der Dialog aufs Hinhalten
 CARD_NEW = "__new__"
+ACTION_CODE_NEW = "__new__"
 # "Kartennummer eintippen": ohne Warten, mit den zuletzt gelesenen Karten zur Auswahl
 CARD_TYPE = "__type__"
 CARD_WAIT_SECONDS = 120
@@ -307,6 +323,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._user_pending: tuple[str, dict[str, Any]] | None = None
         self._offered_new: set[str] = set()
         self._card: str | None = None
+        self._action_code: str | None = None
         self._new_card: str | None = None
         self._card_task: asyncio.Task[str | None] | None = None
         self._siren_params: dict[str, Any] = {}
@@ -617,6 +634,8 @@ class HauswachtOptionsFlow(OptionsFlow):
             elif master:
                 if not is_valid_pin_format(master):
                     errors["master_pin"] = "invalid_pin"
+                elif is_action_code(parse_action_codes(options), master):
+                    errors["master_pin"] = "pin_is_action_code"
                 else:
                     users = parse_users(options)
                     found = await self.hass.async_add_executor_job(
@@ -2592,6 +2611,170 @@ class HauswachtOptionsFlow(OptionsFlow):
             description_placeholders={"name": str(data.get("name", user_id))},
         )
 
+    # --- Aktions-Codes --------------------------------------------------------
+
+    def _keypads(self) -> dict[str, str]:
+        """Eingerichtete Keypads: ID -> Name."""
+        return {
+            c.control_id: c.name
+            for c in parse_controls(self.config_entry.options).values()
+            if c.kind is ControlKind.KEYPAD
+        }
+
+    def _action_code_label(self, code: ActionCode) -> str:
+        de = self._german()
+        keys = {
+            KEY_DAY: "🏠 Haus" if de else "🏠 house",
+            KEY_NIGHT: "🌙 Nacht" if de else "🌙 night",
+            KEY_ALL: "🔒 Schloss" if de else "🔒 lock",
+            KEY_DISARM: "🔓 offenes Schloss" if de else "🔓 open lock",
+        }
+        keypad = (
+            ("alle Keypads" if de else "all keypads")
+            if code.keypad == ALL_KEYPADS
+            else self._keypads().get(code.keypad, code.keypad)
+        )
+        if code.action is CodeAction.ARM:
+            names = {i.profile_id: i.name for i in profile_infos(self.config_entry.options)}
+            what = ("scharf: " if de else "arm: ") + names.get(code.profile or "", "?")
+        elif code.action is CodeAction.SILENT_EMERGENCY:
+            what = "stiller Notruf" if de else "silent emergency"
+        else:
+            what = "Ereignis" if de else "event"
+        return f"{code.name} – {code.code} + {keys[code.key]} · {keypad} → {what}"
+
+    async def async_step_action_codes(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Liste der Aktions-Codes (Code + Taste am Keypad -> Aktion)."""
+        if not self._keypads():
+            return self.async_abort(reason="no_keypads")
+        if user_input is not None:
+            choice = user_input["action_code"]
+            self._action_code = None if choice == ACTION_CODE_NEW else choice
+            return await self.async_step_action_code_edit()
+        de = self._german()
+        options = [
+            SelectOptionDict(
+                value=ACTION_CODE_NEW,
+                label="➕ Neuer Aktions-Code" if de else "➕ New action code",
+            )
+        ]
+        options.extend(
+            SelectOptionDict(value=c.code_id, label=self._action_code_label(c))
+            for c in sorted(
+                parse_action_codes(self.config_entry.options), key=lambda c: c.name.casefold()
+            )
+        )
+        saved, self._saved = self._saved, False
+        return self.async_show_form(
+            step_id="action_codes",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("action_code"): SelectSelector(
+                        SelectSelectorConfig(options=options, mode=SelectSelectorMode.LIST)
+                    )
+                }
+            ),
+            description_placeholders={"saved": self._saved_text() if saved else ""},
+        )
+
+    async def async_step_action_code_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Einen Aktions-Code anlegen, ändern oder löschen."""
+        options = dict(self.config_entry.options)
+        stored: dict[str, Any] = dict(options.get(OPT_ACTION_CODES, {}))
+        code_id = self._action_code
+        current: dict[str, Any] = dict(stored.get(code_id, {})) if code_id else {}
+        errors: dict[str, str] = {}
+        conflict = ""
+        if user_input is not None:
+            if code_id and user_input.get("delete"):
+                stored.pop(code_id, None)
+                options[OPT_ACTION_CODES] = stored
+                self._action_code = None
+                return await self._save(options, "action_codes")
+            data, errors, conflict = await self._validate_action_code(user_input, code_id, stored)
+            if not errors:
+                stored[code_id or _unique_id(data["name"], stored)] = data
+                options[OPT_ACTION_CODES] = stored
+                self._action_code = None
+                return await self._save(options, "action_codes")
+            current = {**current, **user_input}
+        keypads = [SelectOptionDict(value=ALL_KEYPADS, label=self._all_keypads_label())]
+        keypads.extend(SelectOptionDict(value=k, label=n) for k, n in self._keypads().items())
+        fields: dict[Any, Any] = {
+            vol.Required("name", default=current.get("name", "")): TextSelector(),
+            vol.Required("code", default=current.get("code", "")): TextSelector(),
+            vol.Required("key", default=current.get("key", KEY_DAY)): _select(
+                list(ACTION_CODE_KEYS), "action_code_key"
+            ),
+            vol.Required("keypad", default=current.get("keypad", ALL_KEYPADS)): SelectSelector(
+                SelectSelectorConfig(options=keypads, mode=SelectSelectorMode.DROPDOWN)
+            ),
+            vol.Required("action", default=current.get("action", CodeAction.EVENT.value)): (
+                _select([a.value for a in CodeAction], "action_code_action")
+            ),
+            vol.Optional(
+                "profile", description={"suggested_value": current.get("profile")}
+            ): self._control_profile_selector(),
+        }
+        if code_id:
+            fields[vol.Optional("delete", default=False)] = BooleanSelector()
+        return self.async_show_form(
+            step_id="action_code_edit",
+            data_schema=vol.Schema(fields),
+            errors=errors,
+            description_placeholders={"conflict": conflict},
+        )
+
+    def _all_keypads_label(self) -> str:
+        return "Alle Keypads" if self._german() else "All keypads"
+
+    async def _validate_action_code(
+        self, user_input: dict[str, Any], code_id: str | None, stored: Mapping[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, str], str]:
+        """Prüfen: Name eindeutig, 2–8 Ziffern, kein PIN, Code + Taste nicht doppelt."""
+        name = str(user_input.get("name") or "").strip()
+        code = str(user_input.get("code") or "").strip()
+        key = str(user_input.get("key") or KEY_DAY)
+        keypad = str(user_input.get("keypad") or ALL_KEYPADS)
+        action = str(user_input.get("action") or CodeAction.EVENT.value)
+        profile = user_input.get("profile")
+        data: dict[str, Any] = {
+            "name": name,
+            "code": code,
+            "key": key,
+            "keypad": keypad,
+            "action": action,
+        }
+        errors: dict[str, str] = {}
+        conflict = ""
+        others = [c for c in parse_action_codes({OPT_ACTION_CODES: stored}) if c.code_id != code_id]
+        if not name:
+            errors["name"] = "user_name_required"
+        elif any(c.name.casefold() == name.casefold() for c in others):
+            errors["name"] = "action_code_name_taken"
+        if not is_valid_action_code(code):
+            errors["code"] = "action_code_invalid"
+        elif (clash := action_code_clash(others, code, key, keypad)) is not None:
+            errors["code"] = "action_code_taken"
+            conflict = clash.name
+        if action == CodeAction.ARM.value:
+            if not profile:
+                errors["profile"] = "action_code_profile_missing"
+            else:
+                data["profile"] = profile
+        if not errors:
+            users = parse_users(self.config_entry.options)
+            found = await self.hass.async_add_executor_job(
+                lambda: pin_conflicts(code, users, kind="duress")
+            )
+            if found:
+                errors["code"] = "action_code_is_pin"
+        return data, errors, conflict
+
     # --- Karten und PINs ------------------------------------------------------
 
     def _when_used(self, key: str) -> str:
@@ -2973,6 +3156,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 "control_edit",
                 "control_delete",
                 "control_learn",
+                "action_codes",
                 "system",
             ],
         )
@@ -3433,6 +3617,10 @@ class HauswachtOptionsFlow(OptionsFlow):
             errors["new_duress_pin"] = "invalid_pin"
         if new_pin and new_duress and new_pin == new_duress:
             errors["new_duress_pin"] = "duress_equals_pin"
+        codes = parse_action_codes(self.config_entry.options)
+        for field, value in (("new_pin", new_pin), ("new_duress_pin", new_duress)):
+            if value and field not in errors and is_action_code(codes, value):
+                errors[field] = "pin_is_action_code"
         users = parse_users(self.config_entry.options)
         if not errors and new_pin:
             found = await self.hass.async_add_executor_job(

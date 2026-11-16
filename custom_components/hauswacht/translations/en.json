@@ -749,6 +749,7 @@
           "control_edit": "Edit control device",
           "control_delete": "Delete control device",
           "control_learn": "Learning new cards",
+          "action_codes": "Action codes (code + key at the keypad → own action)",
           "system": "← Back"
         }
       },
@@ -900,6 +901,31 @@
           "restart_behavior": "Default: restore the previous state.",
           "restart_profile": "Only for “always armed”."
         }
+      },
+      "action_codes": {
+        "title": "Action codes",
+        "description": "{saved}An action code is a code plus a function key at the keypad, e.g. **7777 + house**. It triggers a fixed action – an event for your own automations, arming or a silent emergency call.\n\nAn action code is **not a credential**: it belongs to no person, is not secret and can never disarm. Please do not trigger anything security-critical (e.g. door openers) with it.",
+        "data": {
+          "action_code": "Action code"
+        }
+      },
+      "action_code_edit": {
+        "title": "Action code",
+        "description": "The same code may have different actions with different keys (e.g. 7777 + house = light on, 7777 + night = light off). It must not equal a PIN.",
+        "data": {
+          "name": "Name (e.g. outdoor light)",
+          "code": "Code (2–8 digits)",
+          "key": "Key",
+          "keypad": "Keypad",
+          "action": "Action",
+          "profile": "Alarm profile (only for \"Arm\")",
+          "delete": "Delete action code"
+        },
+        "data_description": {
+          "name": "Shown in the logbook and, for \"Event\", the event type you choose in the automation.",
+          "action": "**Event:** the entity \"Hauswacht action code\" reports an event with this name – use it as the trigger of your own automation. **Arm:** arms the chosen profile. **Silent emergency:** important push message to the alarm recipients, nothing else visible.",
+          "code": "Digits only. At the keypad: type the code, then press the key. During a PIN lockout, action codes are locked too."
+        }
       }
     },
     "error": {
@@ -950,7 +976,13 @@
       "button_no_press": "Assign at least one press type to an alarm profile.",
       "restart_needs_profile": "“Always armed” needs at least one alarm profile.",
       "card_missing": "Please choose a card or type in its number.",
-      "user_missing": "Please choose a user."
+      "user_missing": "Please choose a user.",
+      "action_code_name_taken": "Another action code already has this name.",
+      "action_code_invalid": "Please enter 2 to 8 digits.",
+      "action_code_taken": "This code with this key already exists (“{conflict}”).",
+      "action_code_profile_missing": "Please choose an alarm profile.",
+      "action_code_is_pin": "This code is already a PIN or duress PIN – please choose another one.",
+      "pin_is_action_code": "This PIN is already an action code – please choose another one."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -960,7 +992,8 @@
       "no_rules": "There is no trigger rule yet.",
       "no_areas": "There is only the first area – it cannot be deleted.",
       "no_sirens": "No sirens are set up (Alarm devices – sirens → Sirens and enabling).",
-      "no_controls": "There are no control devices yet."
+      "no_controls": "There are no control devices yet.",
+      "no_keypads": "No keypad is set up yet. Action codes only exist for keypads."
     },
     "progress": {
       "wait_card": "Hold the new card to a keypad now (and press Disarm) or to a reader – or unlock the door lock once with the new ID. It continues automatically as soon as it has been read (at the latest after {seconds} seconds)."
@@ -1135,6 +1168,21 @@
         "armed": "Always armed (with a fixed profile)",
         "disarmed": "Always disarmed"
       }
+    },
+    "action_code_key": {
+      "options": {
+        "arm_day_zones": "🏠 House (day)",
+        "arm_night_zones": "🌙 Night",
+        "arm_all_zones": "🔒 Lock (all)",
+        "disarm": "🔓 Open lock (disarm)"
+      }
+    },
+    "action_code_action": {
+      "options": {
+        "event": "Event for your own automation",
+        "arm": "Arm with profile …",
+        "silent_emergency": "Silent emergency"
+      }
     }
   },
   "entity": {
@@ -1278,6 +1326,11 @@
     "alarm_control_panel": {
       "all_panel": {
         "name": "All areas"
+      }
+    },
+    "event": {
+      "action_code": {
+        "name": "Action code"
       }
     }
   },

@@ -20,6 +20,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `button.hauswacht_unscharf_schalten` | Sofort unscharf, auch während eines Alarms |
 | `button.hauswacht_alarm_beenden` | Nur den Alarm beenden, Profil bleibt scharf |
 | `switch.hauswacht_testmodus` | Testmodus |
+| `event.hauswacht_aktions_code` | Nur mit [Aktions-Codes](bedienteile.md#aktions-codes) der Aktion „Ereignis“: Ereignistyp = Name des Codes, Attribute `keypad`, `test` |
 
 ### Zustand und Diagnose
 
@@ -120,6 +121,7 @@ z. B.:
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | Auslöseregeln |
 | `InvalidCode`, `CodeLockReset` | Falsche Eingabe (mit `failures`, `lock_seconds`), Zähler zurückgesetzt |
 | `Panic`, `Emergency` | Notruf-Taste am Keypad |
+| `ActionCode` | Aktions-Code eingegeben (mit `name`, `action`, `control`, `test`) |
 | `SirenDecision`, `SirenTest` | Sirenenentscheidung (`action`: `activate`, `stop`, `stop_restored` = nach Neustart ausschalten), Schritte eines Sirenentests |
 | `SensorSimulated` | Testmodus: Melder simuliert |
 | `NotificationSuppressed`, `SpeechSuppressed` | Benachrichtigung bzw. Ansage unterdrückt (z. B. Testmodus, Nachtruhe) |

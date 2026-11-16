@@ -69,6 +69,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "sirens_blocked": "Alarm ausgelöst, Sirenen wurden aber nicht angesteuert: {reasons}.",
         "panic_title": "Hauswacht: NOTRUF",
         "panic": "Notruf-Taste am Bedienteil {control} gedrückt.",
+        "action_code_actor": "Aktions-Code „{name}“",
         # Ausweise
         "invalid_code_title": "Hauswacht: falscher PIN",
         "invalid_code": "{failures} falsche PIN-Eingaben in Folge.",
@@ -260,6 +261,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "sirens_blocked": "Alarm triggered, but the sirens were not activated: {reasons}.",
         "panic_title": "Hauswacht: EMERGENCY",
         "panic": "Emergency button pressed on {control}.",
+        "action_code_actor": "action code “{name}”",
         "invalid_code_title": "Hauswacht: wrong PIN",
         "invalid_code": "{failures} wrong PIN entries in a row.",
         "invalid_code_lock": " PIN entry is locked for {seconds} seconds.",

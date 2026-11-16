@@ -562,3 +562,128 @@ async def test_code_entity_created_later_is_disabled(
     code = _z2m_entity(hass, "Keypad Flur", "action_code")
     await hass.async_block_till_done()
     assert er.async_get(hass).async_get(code).disabled_by is er.RegistryEntryDisabler.USER
+
+
+ACTION_CODES = {
+    "licht": {"name": "Außenlicht", "code": "7777", "key": "arm_day_zones"},
+    "nacht": {
+        "name": "Nacht per Code",
+        "code": "11",
+        "key": "arm_all_zones",
+        "action": "arm",
+        "profile": "night",
+    },
+    "notruf": {
+        "name": "Notruf",
+        "code": "9111",
+        "key": "arm_night_zones",
+        "action": "silent_emergency",
+    },
+}
+
+
+async def _setup_codes(hass: HomeAssistant) -> Any:
+    options = {
+        "users": _users(),
+        "controls": _controls(),
+        "notify_system": [PHONE],
+        "action_codes": ACTION_CODES,
+    }
+    entry = make_entry(options)
+    await setup_entry(hass, entry)
+    return entry
+
+
+async def test_action_code_fires_event_without_failure(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    await _setup_codes(hass)
+    event_entity = "event.hauswacht_action_code"  # Testumgebung: Englisch
+    state = hass.states.get(event_entity)
+    assert state is not None
+    assert state.attributes["event_types"] == ["Außenlicht"]
+    await _press(hass, "arm_day_zones", "7777", 1)
+    state = hass.states.get(event_entity)
+    assert state is not None
+    assert state.attributes["event_type"] == "Außenlicht"
+    assert state.attributes["keypad"] == "Keypad Flur"
+    assert _panel(hass) == AlarmControlPanelState.DISARMED  # Taste "Tag" hat sonst kein Profil
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert panel.attributes["code_failures"] == 0
+    assert {"mode": "disarm", "transaction": 1} in _sent(mqtt_mock)
+
+
+async def test_action_code_arms_profile(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    await _setup_codes(hass)
+    await _press(hass, "arm_all_zones", "11", 2)
+    assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert "Nacht per Code" in panel.attributes["changed_by"]
+
+
+async def test_action_code_never_disarms(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    entry = await _setup_codes(hass)
+    entry.runtime_data.arm("night", changed_by="Test")
+    await hass.async_block_till_done()
+    await _press(hass, "disarm", "7777", 3)  # 7777 gibt es nur mit "Haus"
+    assert _panel(hass) != AlarmControlPanelState.DISARMED
+
+
+async def test_silent_emergency_code(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    await _setup_codes(hass)
+    await _press(hass, "arm_night_zones", "9111", 4)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    assert push  # Nachricht an die Alarm-Empfänger
+
+
+async def test_action_code_locked_during_pin_lockout(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    await _setup_codes(hass)
+    for transaction in range(10, 15):
+        await _press(hass, "disarm", "0000", transaction)
+    await _press(hass, "arm_day_zones", "7777", 20)
+    state = hass.states.get("event.hauswacht_action_code")
+    assert state is not None
+    assert state.attributes.get("event_type") is None
+    assert {"mode": "invalid_code", "transaction": 20} in _sent(mqtt_mock)
+
+
+async def test_action_code_flow_rejects_pin(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    entry = await _setup_codes(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "controls", "action_codes"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    assert flow["step_id"] == "action_codes"
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"action_code": "__new__"}
+    )
+    base = {"name": "Garage", "key": "arm_day_zones", "keypad": "all", "action": "event"}
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {**base, "code": PIN})
+    assert flow["errors"] == {"code": "action_code_is_pin"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {**base, "code": "7777"}
+    )
+    assert flow["errors"] == {"code": "action_code_taken"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {**base, "code": "4242"}
+    )
+    assert flow["step_id"] == "action_codes"
+    stored = entry.options["action_codes"]
+    assert any(c["name"] == "Garage" and c["code"] == "4242" for c in stored.values())
+    # umgekehrt: ein PIN darf kein Aktions-Code sein
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "users", "pins"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"new_pin": "4242"})
+    assert flow["errors"] == {"new_pin": "pin_is_action_code"}

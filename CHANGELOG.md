@@ -6,6 +6,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-11-16
+
+### Hinzugefügt
+- **Aktions-Codes** (Bedienteile → Aktions-Codes): Code + Funktionstaste am Keypad löst eine
+  festgelegte Aktion aus, z. B. „7777 + 🏠 Haus“ = Außenlicht. Beliebig viele, je Code und Taste
+  eine Aktion – derselbe Code kann mit verschiedenen Tasten verschiedene Aktionen haben.
+  - **Ereignis** für eigene Automationen über die neue Entität `event.hauswacht_aktions_code`
+    (Ereignistyp = Name des Codes); Hauswacht selbst schaltet dabei nichts.
+  - **Scharf schalten** mit einem Profil.
+  - **Stiller Notruf** – wie SOS „still“, aber unauffällig über eine normale Taste.
+  - 2–8 Ziffern, für alle oder ein bestimmtes Keypad. Ein Aktions-Code zählt nie als
+    Fehlversuch, ist in der PIN-Sperre aber gesperrt. Er ist kein Ausweis und kann nie unscharf
+    schalten. Codes und PINs dürfen sich nicht gleichen (wird beim Speichern geprüft).
+
+### Dokumentation
+- Bedienteile (deutsch und englisch): Abschnitt „Aktions-Codes“ mit Beispiel-Automation;
+  Tastenbelegung des frient-Keypads (Tag = Haus, Nacht = Mond, Alle = Schloss); Referenz um
+  Entität und Ereignis ergänzt.
+
 ## [0.48.3] - 2026-11-16
 
 ### Sicherheit
