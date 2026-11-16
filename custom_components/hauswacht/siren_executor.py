@@ -8,7 +8,7 @@ Gerätewerte wie die Höchstdauer werden nur gelesen, nie geschrieben.
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -27,6 +27,7 @@ from .const import (
 from .core.reactions import FIRE_DEVICE_CLASSES, fire_state, is_fire_indicator, parse_max_duration
 from .core.siren_guard import (
     ActivateRequest,
+    BlockedCommand,
     BlockReason,
     FireIndicator,
     GuardContext,
@@ -83,8 +84,84 @@ class SirenExecutor:
         self.activated: set[str] = set()
         # Eigene Sirenen, deren Ausschalten die Brandsperre verhindert hat
         self.pending_stop: set[str] = set()
+        # Eigene Sirenen, die vor einem Neustart an waren (gespeichert) und danach noch nicht
+        # wieder von Hauswacht eingeschaltet wurden – werden nach dem Start ausgeschaltet
+        self.restored: set[str] = set()
         self._unsub_retry: CALLBACK_TYPE | None = None
         self.last_result: dict[str, Any] = {}
+        # Aufruf, wenn sich die gemerkten Sirenen ändern (Runtime speichert dann)
+        self.on_change: Callable[[], None] | None = None
+        self.test_mode_now: Callable[[], bool] | None = None
+        self._last_snapshot: dict[str, list[str]] = self.snapshot()
+
+    # --- Merken über einen Neustart hinweg -------------------------------------
+
+    def snapshot(self) -> dict[str, list[str]]:
+        """Was gespeichert wird: eigene eingeschaltete und noch auszuschaltende Sirenen."""
+        return {
+            "activated": sorted(self.activated | self.restored),
+            "pending_stop": sorted(self.pending_stop),
+        }
+
+    @callback
+    def _changed(self) -> None:
+        snapshot = self.snapshot()
+        if snapshot != self._last_snapshot:
+            self._last_snapshot = snapshot
+            if self.on_change is not None:
+                self.on_change()
+
+    @callback
+    def restore(self, saved: Any) -> frozenset[str]:
+        """Gespeicherte Sirenen von vor dem Neustart übernehmen (nur noch eingetragene).
+
+        Sie gelten als "noch auszuschalten": Auch ein Unscharfschalten vor dem Ausschalten
+        vergisst sie nicht (siehe ``reset``).
+        """
+        keys: set[str] = set()
+        if isinstance(saved, Mapping):
+            for name in ("activated", "pending_stop"):
+                values = saved.get(name)
+                if isinstance(values, list):
+                    keys.update(v for v in values if isinstance(v, str) and v in self.sirens)
+        self.restored = keys
+        self.activated |= keys
+        self.pending_stop |= keys
+        self._last_snapshot = self.snapshot()
+        return frozenset(keys)
+
+    @callback
+    def stop_restored(self, *, test_mode: bool, only_on: bool = False) -> GuardDecision:
+        """Sirenen von vor dem Neustart ausschalten – nur mit Erlaubnis des Guards.
+
+        Nie Sirenen, die inzwischen ein Bereich wieder nutzt (neuer Alarm). ``only_on``: nur die,
+        die Home Assistant gerade als eingeschaltet meldet (zweiter Versuch nach der Startphase).
+        """
+        keys = sorted(k for k in self.restored if not self.owners.get(k))
+        if only_on:
+            keys = [k for k in keys if self._state(k) == "on"]
+            self.restored = set()
+        if not keys:
+            return GuardDecision()
+        self.activated |= set(keys)
+        decision = decide_stop(self.guard_context(test_mode=test_mode), targets=keys)
+        for command in decision.commands:
+            self._send(command)
+            self.activated.discard(command.device_key)
+            self.pending_stop.discard(command.device_key)
+        self._forget_unstoppable(decision.blocked)
+        self._report("stop_restored", decision)
+        self._schedule_retry(test_mode=test_mode)
+        self._changed()
+        return decision
+
+    def _forget_unstoppable(self, blocked: Iterable[BlockedCommand]) -> None:
+        """Geräte, die sich nie ausschalten lassen, nicht endlos erneut versuchen."""
+        for item in blocked:
+            if item.reason in (BlockReason.TURN_OFF_UNSUPPORTED, BlockReason.UNKNOWN_DEVICE):
+                self.activated.discard(item.device_key)
+                self.pending_stop.discard(item.device_key)
+                self.restored.discard(item.device_key)
 
     # --- Lagebild ------------------------------------------------------------
 
@@ -185,8 +262,10 @@ class SirenExecutor:
             self._send(command)
             self.activated.add(command.device_key)
             self.pending_stop.discard(command.device_key)
+            self.restored.discard(command.device_key)
             self.owners.setdefault(command.device_key, set()).add(self.owner)
         self._report("activate", decision)
+        self._changed()
         return decision
 
     @callback
@@ -207,8 +286,10 @@ class SirenExecutor:
             if blocked.reason is BlockReason.FIRE_LOCK:
                 # Nicht vergessen: Sirenen ohne eigene Laufzeit liefen sonst endlos weiter.
                 self.pending_stop.add(blocked.device_key)
+        self._forget_unstoppable(decision.blocked)
         self._report("stop", decision)
         self._schedule_retry(test_mode=test_mode)
+        self._changed()
         return decision
 
     @callback
@@ -217,7 +298,9 @@ class SirenExecutor:
 
             @callback
             def _retry(_now: datetime) -> None:
-                self.stop(test_mode=test_mode)
+                # Aktueller Testmodus, nicht der beim ersten Versuch
+                current = self.test_mode_now() if self.test_mode_now is not None else test_mode
+                self.stop(test_mode=current)
 
             self._unsub_retry = async_track_time_interval(
                 self.hass, _retry, RETRY_STOP_INTERVAL, name="hauswacht_siren_retry_stop"
@@ -239,6 +322,7 @@ class SirenExecutor:
         ausgeschaltet, sobald der Guard es erlaubt.
         """
         self.activated &= self.pending_stop
+        self._changed()
 
     @callback
     def _send(self, command: SirenCommand) -> None:

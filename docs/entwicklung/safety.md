@@ -13,7 +13,7 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | Nr. | Regel | Grund |
 |---|---|---|
 | S1 | Testmodus aktiv → keinerlei Sirenenbefehle | Fehlbedienung im Test darf keinen echten Alarm auslösen |
-| S2 | Hardware-Freigabe aus → keinerlei Sirenenbefehle. Standard nach Installation: **aus** | Sirenen erst nach bewusster Freigabe |
+| S2 | Hardware-Freigabe aus → kein Einschaltbefehl. Standard nach Installation: **aus**. Ausschalten eigener Sirenen (S5) bleibt erlaubt (ab 0.46) | Sirenen erst nach bewusster Freigabe; Ausschalten ist die sichere Richtung |
 | S3 | Brand an irgendeinem Melder **aktiv** oder an einer registrierten Sirene **unklar** → keine Einbruch-Aktivierung | Brandalarm hat Vorrang, kein verwirrender Einbruchton während einer Evakuierung |
 | S4 | Brand an irgendeinem Melder **aktiv** oder an einer registrierten Sirene **unklar** → kein einziger Ausschaltbefehl | Ein Stoppbefehl könnte einen lokalen Brandalarm stumm schalten (nicht ausgeschlossen) |
 | S5 | Ausschalten nur für Geräte, die Hauswacht selbst aktiviert hat | Fremde Alarme werden nie beeinflusst |
@@ -26,6 +26,7 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | S12 | Sirene ohne Dauer **und** ohne Ausschalten → keine Ansteuerung; Sirene ohne Ausschalten → kein Ausschaltbefehl | Hauswacht muss jeden Ton selbst begrenzen können |
 | S13 | Ende der Reaktionszeit und Unscharfschalten → eigene Sirenen ausschalten. Hat die Brandsperre das verhindert, wird es jede Minute erneut versucht, bis der Guard es erlaubt | Sirenen ohne eigene Laufzeit verstummen sonst nie |
 | S14 | Sirenentest: gleicher Weg wie ein Alarm (S1–S12 gelten); zusätzlich nur unscharf, eine Sirene, höchstens 10 s, nur Administratoren; Scharfschalten währenddessen gesperrt | Prüfen ohne Sonderweg, an dem die Regeln nicht gelten |
+| S15 | Eigene eingeschaltete und noch auszuschaltende Sirenen werden gespeichert. Nach einem Neustart werden sie ausgeschaltet (nach dem Hochfahren, nach der Startphase ein zweites Mal, falls noch „an“) – nach S1, S4, S5; nie Sirenen, die inzwischen ein neuer Alarm nutzt (ab 0.46) | Sirenen ohne eigene Laufzeit verstummen sonst nach einem Neustart nie, auch nicht beim Unscharfschalten |
 
 ### Umsetzung (ab 0.5.0)
 

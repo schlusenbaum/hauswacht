@@ -46,3 +46,20 @@ Ausfallmeldungen; Melder, die erstmals offen gemeldet werden, werden bis zum Sch
 - Wer während eines Neustarts ein Fenster öffnet, löst keinen Alarm aus, solange es offen bleibt;
   es wird aber gemeldet, und alle anderen Melder bleiben scharf.
 - Nach dem Wiederherstellen werden offene oder ausgefallene Melder nicht erneut geprüft.
+
+## Nachtrag 0.46: Sirenen, die beim Neustart noch liefen
+
+Bis 0.45 merkte sich Hauswacht nur im Arbeitsspeicher, welche Sirenen es eingeschaltet hatte. Nach
+einem Neustart mitten im Alarm lief eine Sirene ohne eigene Laufzeit (z. B. ein Relais als
+Sirene) weiter, und auch Unscharfschalten schaltete sie nicht mehr aus.
+
+Entscheidung:
+
+- Die eigenen eingeschalteten und noch auszuschaltenden Sirenen werden gespeichert.
+- Nach dem Hochfahren schaltet Hauswacht sie aus; nach der Startphase ein zweites Mal, falls eine
+  dann noch „an“ meldet (z. B. vorher nicht erreichbar). Sie gelten bis dahin als „noch
+  auszuschalten“ – auch Unscharfschalten vergisst sie nicht.
+- Es gelten Testmodus-Sperre, Brandsperre (dann jede Minute erneut) und „nur eigene Sirenen“.
+  Die Hardware-Freigabe sperrt Ausschalten nicht mehr (Sicherheitsregel S2 angepasst, S15 neu):
+  Ausschalten ist die sichere Richtung.
+- Sirenen, die inzwischen ein neuer Alarm nutzt, werden nie ausgeschaltet.

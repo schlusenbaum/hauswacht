@@ -120,7 +120,7 @@ z. B.:
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | Auslöseregeln |
 | `InvalidCode`, `CodeLockReset` | Falsche Eingabe (mit `failures`, `lock_seconds`), Zähler zurückgesetzt |
 | `Panic`, `Emergency` | Notruf-Taste am Keypad |
-| `SirenDecision`, `SirenTest` | Sirenenentscheidung, Schritte eines Sirenentests |
+| `SirenDecision`, `SirenTest` | Sirenenentscheidung (`action`: `activate`, `stop`, `stop_restored` = nach Neustart ausschalten), Schritte eines Sirenentests |
 | `SensorSimulated` | Testmodus: Melder simuliert |
 | `NotificationSuppressed`, `SpeechSuppressed` | Benachrichtigung bzw. Ansage unterdrückt (z. B. Testmodus, Nachtruhe) |
 

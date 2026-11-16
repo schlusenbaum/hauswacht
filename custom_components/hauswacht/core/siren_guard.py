@@ -253,9 +253,13 @@ def decide_stop(ctx: GuardContext, targets: Iterable[str] | None = None) -> Guar
         else tuple(dict.fromkeys(targets))
     )
 
-    reason = _global_block(ctx)
-    if reason is not None:
-        return _block_all(wanted, reason)
+    # Ausschalten ist die sichere Richtung: Die Hardware-Freigabe sperrt es nicht (S2) – sonst
+    # liefe z. B. eine Sirene, die vor einem Neustart an ging, nach dem Abschalten der Freigabe
+    # endlos weiter. Testmodus (S1) und Brandsperre (S4) gelten weiter.
+    if ctx.test_mode:
+        return _block_all(wanted, BlockReason.TEST_MODE)
+    if ctx.fire_lock:
+        return _block_all(wanted, BlockReason.FIRE_LOCK)
 
     commands: list[SirenCommand] = []
     blocked: list[BlockedCommand] = []

@@ -149,6 +149,7 @@ from .core.sensors import (
     resolve_zones,
     sensor_role,
 )
+from .core.siren_guard import BlockReason
 from .core.speech import parse_speech, profile_speakers
 from .core.state_machine import (
     ActivateReaction,
@@ -289,6 +290,9 @@ class HauswachtRuntime:
         # Sirenen-Belegung über alle Bereiche: Sirene -> Bereiche, die sie gerade nutzen
         self.siren_owners: dict[str, set[str]] = self.main.siren_owners if main else {}
         self.sirens = SirenExecutor(hass, entry.options, owner=area_id, owners=self.siren_owners)
+        self.sirens.on_change = self._save_soon
+        self.sirens.test_mode_now = lambda: self.ctx.test_mode
+        self._unsub_siren_check: CALLBACK_TYPE | None = None
         # Sirenentest: nur im Hauptbereich (gilt für alle Bereiche)
         self.siren_tester: SirenTester | None = SirenTester(hass, self) if main is None else None
         # Bedienteile (Keypads, NFC, RFID): nur im Hauptbereich, bedienen je nach Einstellung
@@ -549,6 +553,9 @@ class HauswachtRuntime:
             self._restore(plan)
         elif plan.kind is RestartKind.ARM and plan.profile_id is not None:
             self._schedule_restart_arm(plan.profile_id)
+        # Eigene Sirenen, die vor dem Neustart an waren, nach dem Hochfahren ausschalten
+        if self.sirens.restore(data.get("sirens")):
+            self._unsub_siren_check = async_at_started(self.hass, self._stop_restored_sirens)
         # Sofort speichern, damit ein erneuter Absturz nicht doppelt meldet.
         await self._store.async_save(self._storage_data())
         self._infra_faulty = self.faulty_infrastructure()
@@ -677,6 +684,38 @@ class HauswachtRuntime:
         )
 
     @callback
+    def _save_soon(self) -> None:
+        self._store.async_delay_save(self._storage_data, 0)
+
+    @callback
+    def _stop_restored_sirens(self, _hass: HomeAssistant) -> None:
+        """Nach dem Hochfahren: Sirenen ausschalten, die Hauswacht vor dem Neustart eingeschaltet
+        hatte (z. B. Schalter ohne eigene Laufzeit) – nach der Startphase noch einmal, falls eine
+        Sirene erst dann wieder erreichbar ist."""
+        decision = self.sirens.stop_restored(test_mode=self.ctx.test_mode)
+        sent = [c.entity_id for c in decision.commands]
+        held = [b.device_key for b in decision.blocked if b.reason is BlockReason.FIRE_LOCK]
+        if sent:
+            names = ", ".join(display_name(self.hass, e) for e in sent)
+            self.notifier.send_system(
+                tr(self.lang, "sirens_restart_off_title"),
+                tr(self.lang, "sirens_restart_off", sirens=names),
+            )
+        if held:
+            names = ", ".join(display_name(self.hass, e) for e in held)
+            self.notifier.send_system(
+                tr(self.lang, "sirens_restart_off_title"),
+                tr(self.lang, "sirens_restart_fire", sirens=names),
+            )
+
+        @callback
+        def _again(_now: Any) -> None:
+            self._unsub_siren_check = None
+            self.sirens.stop_restored(test_mode=self.ctx.test_mode, only_on=True)
+
+        self._unsub_siren_check = async_call_later(self.hass, STARTUP_GRACE, _again)
+
+    @callback
     def _schedule_restart_arm(self, profile_id: str) -> None:
         """Einstellung "scharf": normal scharf schalten, kurz nachdem alles hochgefahren ist."""
 
@@ -697,6 +736,9 @@ class HauswachtRuntime:
         if self._unsub_grace is not None:
             self._unsub_grace()
             self._unsub_grace = None
+        if self._unsub_siren_check is not None:
+            self._unsub_siren_check()
+            self._unsub_siren_check = None
         self._cancel_timer()
         self._cancel_settle()
         self._cancel_speech_repeat()
@@ -2092,6 +2134,7 @@ class HauswachtRuntime:
                 auto_armed_by=self.automation.auto_armed_by,
             ),
             "test_mode": self.ctx.test_mode,
+            "sirens": self.sirens.snapshot(),
             "selected_profile": self._selected_profile,
             "edit_profile": self._edit_profile,
         }

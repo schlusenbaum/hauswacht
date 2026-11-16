@@ -11,7 +11,8 @@ Einbruchton, der gewählten Lautstärke und für die „Dauer der Alarmreaktion�
 Beenden des Alarms und beim Unscharfschalten schaltet Hauswacht sie wieder aus. Vorher prüft ein
 eigener Sicherheitsbaustein (der „Sirenen-Guard“) jedes Mal: Ist die Ansteuerung freigegeben?
 Ist der Testmodus aus? Meldet kein Rauchmelder Brand? Hat die Sirene einen Einbruchton? Erst dann
-geht ein Befehl raus.
+geht ein Befehl raus. **Ausschalten** darf Hauswacht seine eigenen Sirenen auch ohne Freigabe –
+das ist immer die sichere Richtung; nur Testmodus und Brand verhindern es.
 
 ## Das Menü „Alarmgeber – Sirenen“
 
@@ -269,5 +270,33 @@ Testknopf-Sensoren automatisch.
 - Ein Rauchmelder spielt bei Einbruch nie seinen Brandton – auch nicht mit der
   [Experten-Freigabe](#brandton-als-experten-freigabe).
 - Fremde Abschalt-Skripte (z. B. „alle Rauchmelder aus“) verwendet Hauswacht nie.
+
+## Sirene lief beim Neustart noch
+
+Startet Home Assistant mitten in einem Alarm neu (Absturz, Stromausfall, Update), würde eine
+Sirene ohne eigene Laufzeit – vor allem ein [Schalter als Sirene](#sirene-aus-schalter-erstellen)
+– sonst einfach weiterlaufen. Deshalb merkt sich Hauswacht dauerhaft, welche Sirenen **es selbst**
+eingeschaltet hat, und schaltet sie nach dem Neustart wieder aus:
+
+- **Wann:** sobald Home Assistant fertig hochgefahren ist. Nach der Startphase (2 Minuten) prüft
+  Hauswacht noch einmal: Meldet eine dieser Sirenen dann noch „an“ (z. B. weil sie vorher nicht
+  erreichbar war), wird sie ein zweites Mal ausgeschaltet. Danach nicht mehr.
+- **Nur eigene:** Sirenen, die eine andere Automation oder ein Rauchmelder eingeschaltet hat,
+  fasst Hauswacht nie an.
+- **Brand geht vor:** Meldet ein Rauchmelder Brand (oder ist der Zustand einer registrierten
+  Sirene unklar), wird nichts ausgeschaltet. Du bekommst eine Nachricht, und Hauswacht versucht es
+  jede Minute erneut, bis kein Brand mehr gemeldet wird. Auch Unscharfschalten vergisst die Sirene
+  nicht.
+- **Ohne Freigabe:** Auch wenn die Sirenenfreigabe inzwischen aus ist, wird ausgeschaltet.
+- **Neuer Alarm:** Löst nach dem Neustart ein neuer Alarm aus und schaltet die Sirene wieder ein,
+  gehört sie diesem Alarm – der zweite Versuch schaltet sie dann nicht aus.
+- **Nachricht:** „Hauswacht: Sirene nach Neustart – lief beim Neustart noch für einen Alarm und
+  wurde ausgeschaltet: Garage Sirene.“ (Ereignis „System“ in den
+  [Benachrichtigungen](benachrichtigungen.md)).
+
+**Beispiel:** Ein Relais `switch.sirene_garage` ist als Sirene eingetragen. Während eines Alarms
+stürzt Home Assistant ab und startet neu. Das Relais bleibt angezogen, die Sirene heult. Etwa eine
+halbe Minute später ist Home Assistant hochgefahren, Hauswacht schaltet `switch.sirene_garage` aus
+und meldet das.
 
 Die verbindlichen Regeln dahinter stehen unter [Sicherheitsregeln](entwicklung/safety.md).

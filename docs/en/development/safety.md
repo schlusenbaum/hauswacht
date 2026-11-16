@@ -13,7 +13,7 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | No. | Rule | Reason |
 |---|---|---|
 | S1 | test mode active → no siren commands at all | a mistake during a test must not cause a real alarm |
-| S2 | hardware release off → no siren commands at all. Default after installation: **off** | sirens only after a deliberate release |
+| S2 | hardware release off → no switch-on command. Default after installation: **off**. Switching off its own sirens (S5) stays allowed (from 0.46) | sirens only after a deliberate release; switching off is the safe direction |
 | S3 | fire **active** at any sensor, or **unclear** at a registered siren → no burglar activation | the fire alarm has priority, no confusing burglar tone during an evacuation |
 | S4 | fire **active** at any sensor, or **unclear** at a registered siren → not a single switch-off command | a stop command could silence a local fire alarm (cannot be ruled out) |
 | S5 | switching off only for devices Hauswacht activated itself | other alarms are never affected |
@@ -26,6 +26,7 @@ Tests: `tests/core/test_siren_guard.py`, `tests/core/test_static_safety.py`, `te
 | S12 | siren without duration **and** without switching off → no control; siren without switching off → no switch-off command | Hauswacht must be able to limit every sound itself |
 | S13 | end of the reaction time and disarming → switch off own sirens. If the fire lock prevented this, it is retried every minute until the guard allows it | sirens without their own running time would otherwise never go quiet |
 | S14 | siren test: same path as an alarm (S1–S12 apply); in addition only disarmed, one siren, at most 10 s, administrators only; arming locked meanwhile | checking without a special path where the rules do not apply |
+| S15 | sirens switched on by Hauswacht and not yet switched off are saved. After a restart they are switched off (after startup, a second time after the startup phase if still "on") – according to S1, S4, S5; never sirens a new alarm uses by then (from 0.46) | sirens without their own running time would otherwise never go quiet after a restart, not even when disarming |
 
 ### Implementation (from 0.5.0)
 

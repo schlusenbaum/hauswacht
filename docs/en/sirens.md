@@ -10,7 +10,9 @@
 the chosen volume and for the "alarm reaction time". Afterwards, when the alarm ends and when
 disarming, Hauswacht switches them off again. Before that, a separate safety component (the
 "siren guard") checks every time: is control enabled? Is test mode off? Does no smoke detector
-report fire? Does the siren have a burglar tone? Only then is a command sent.
+report fire? Does the siren have a burglar tone? Only then is a command sent. Hauswacht may
+**switch off** its own sirens even without the release – that is always the safe direction; only
+test mode and fire prevent it.
 
 ## The menu "Alarm devices – sirens"
 
@@ -266,5 +268,30 @@ button sensors automatically.
 - A smoke detector never plays its fire tone for a burglary – not even with the
   [expert release](#fire-tone-as-expert-release).
 - Hauswacht never uses other switch-off scripts (e.g. "all smoke detectors off").
+
+## Siren was still on at a restart
+
+If Home Assistant restarts in the middle of an alarm (crash, power cut, update), a siren without its
+own running time – above all a [switch as siren](#create-siren-from-switch) – would otherwise just
+keep sounding. That is why Hauswacht permanently remembers which sirens **it has switched on
+itself**, and switches them off again after the restart:
+
+- **When:** as soon as Home Assistant has finished starting. After the startup phase (2 minutes),
+  Hauswacht checks once more: if one of these sirens still reports "on" (e.g. because it was not
+  reachable before), it is switched off a second time. Not after that.
+- **Only its own:** sirens switched on by another automation or by a smoke detector are never
+  touched.
+- **Fire comes first:** if a smoke detector reports fire (or the state of a registered siren is
+  unclear), nothing is switched off. You get a message, and Hauswacht tries again every minute
+  until no fire is reported any more. Disarming does not make it forget the siren either.
+- **Without release:** it is switched off even if the siren release is off by now.
+- **New alarm:** if a new alarm after the restart switches the siren on again, it belongs to that
+  alarm – the second attempt then does not switch it off.
+- **Message:** "Hauswacht: siren after restart – was still on for an alarm at the restart and has
+  been switched off: garage siren." (event "System" in the [notifications](notifications.md)).
+
+**Example:** a relay `switch.sirene_garage` is set up as a siren. During an alarm, Home Assistant
+crashes and restarts. The relay stays on, the siren is howling. About half a minute later Home
+Assistant has started, Hauswacht switches `switch.sirene_garage` off and reports it.
 
 The binding rules behind this are in the [safety rules](development/safety.md).

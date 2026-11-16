@@ -122,7 +122,7 @@ e.g.:
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | trigger rules |
 | `InvalidCode`, `CodeLockReset` | wrong entry (with `failures`, `lock_seconds`), counter reset |
 | `Panic`, `Emergency` | emergency key on the keypad |
-| `SirenDecision`, `SirenTest` | siren decision, steps of a siren test |
+| `SirenDecision`, `SirenTest` | siren decision (`action`: `activate`, `stop`, `stop_restored` = switch off after restart), steps of a siren test |
 | `SensorSimulated` | test mode: sensor simulated |
 | `NotificationSuppressed`, `SpeechSuppressed` | notification or announcement suppressed (e.g. test mode, quiet hours) |
 
