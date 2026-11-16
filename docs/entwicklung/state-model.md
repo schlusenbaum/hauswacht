@@ -56,8 +56,10 @@ in der Zustandsmaschine geführt.
   abgelehnt.
 - **Timer-Tokens.** Jeder Timer trägt ein Token. Läuft ein Timer ab, dessen Token nicht mehr
   aktuell ist (z. B. nach Unscharfschaltung oder Neustart), wird das Ereignis ignoriert.
-- **Überbrückte Sensoren** (bewusst bestätigt oder `bypass_auto`) lösen im scharfen Zustand
-  nicht aus.
+- **Überbrückte Sensoren** (bewusst bestätigt oder `bypass_auto`): Ihr offener Zustand löst
+  nicht aus. Ausgelöst wird nur durch einen Wechsel nach „offen“ – ein überbrückter Melder, der
+  geschlossen und wieder geöffnet wird, löst also normal aus. Ebenso akzeptierte ausgefallene
+  Melder, die offen zurückkommen.
 - **Erneute Prüfung am Ende der Ausgangsverzögerung.** Bereits bestätigte Überbrückungen
   bleiben gültig. Neue Probleme können dann nicht mehr bestätigt werden, die Scharfschaltung
   wird abgebrochen (sichere Seite).

@@ -35,8 +35,17 @@ data:
   confirm: true
 ```
 
-Offene Melder werden dabei **überbrückt**, also bis zum Unscharfschalten nicht überwacht. Steht
-das Profil auf „verweigern“, lehnt Hauswacht auch die Bestätigung ab.
+Offene Melder werden dabei **überbrückt**: Ihr offener Zustand löst keinen Alarm aus. **Sobald
+ein überbrückter Melder geschlossen wird, ist er wieder normal überwacht** – wird er danach erneut
+geöffnet, löst er aus. Steht das Profil auf „verweigern“, lehnt Hauswacht auch die Bestätigung ab.
+
+**Beispiel:** Das Badfenster ist gekippt, du schaltest mit „Trotzdem scharf“ auf „Nacht“. Das
+gekippte Fenster löst nichts aus. Schließt du es später und öffnet es jemand wieder, gibt es
+Alarm.
+
+Genauso bei **ausgefallenen** Meldern, die du beim Scharfschalten bestätigt hast: Solange sie
+fehlen, passiert nichts. Kommen sie geschlossen zurück, sind sie wieder normal überwacht; kommen
+sie **offen** zurück, lösen sie aus (ein verpasstes Öffnen wird nachgeholt).
 
 ## Alarm beenden
 

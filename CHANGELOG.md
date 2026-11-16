@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.45.1] - 2026-11-16
+
+### Dokumentation
+- **„Überbrückt“ richtig beschrieben:** Nach „Trotzdem scharf“ löst der offene Zustand eines
+  Melders keinen Alarm aus; sobald er geschlossen wird, ist er wieder normal überwacht – erneutes
+  Öffnen löst aus. Bisher stand in der Doku fälschlich „bis zum Unscharfschalten nicht überwacht“.
+  Ebenso für bestätigte ausgefallene Melder, die offen zurückkommen. Mit Beispiel (deutsch und
+  englisch), Begriffe, Testmodus, Zustandsmodell.
+- Testkarte: Der Hinweis „überbrückt“ sagt jetzt, dass der Melder nach „Zu“ wieder überwacht ist.
+
 ## [0.45.0] - 2026-11-16
 
 ### Neu
