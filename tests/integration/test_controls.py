@@ -505,3 +505,60 @@ async def test_random_uid_not_learnable(hass: HomeAssistant, mqtt_mock: MqttMock
         flow["flow_id"], {"card": "08ECA2B8", "user": "niklas"}
     )
     assert flow["errors"] == {"card": "tag_random"}
+
+
+def _z2m_entity(hass: HomeAssistant, device_name: str, key: str) -> str:
+    """Wie Zigbee2MQTT per MQTT-Discovery: Gerät mit Entität sensor.<gerät>_<key>."""
+    from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
+    from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+
+    mqtt_entry = next(iter(hass.config_entries.async_entries("mqtt")))
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=mqtt_entry.entry_id,
+        identifiers={("mqtt", f"zigbee2mqtt_0x00aa_{device_name}")},
+        name=device_name,
+    )
+    entry = er.async_get(hass).async_get_or_create(
+        "sensor",
+        "mqtt",
+        f"0x00aa_{device_name}_{key}_zigbee2mqtt",
+        config_entry=mqtt_entry,
+        device_id=device.id,
+        suggested_object_id=f"{device_name}_{key}",
+    )
+    return entry.entity_id
+
+
+async def test_keypad_code_entity_is_disabled(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+
+    push = async_mock_service(hass, "notify", PHONE)
+    code = _z2m_entity(hass, "Keypad Flur", "action_code")
+    zone = _z2m_entity(hass, "Keypad Flur", "action_zone")
+    other = _z2m_entity(hass, "Anderes Keypad", "action_code")  # nicht in Hauswacht
+    await _setup(hass)
+    registry = er.async_get(hass)
+    assert registry.async_get(code).disabled_by is er.RegistryEntryDisabler.USER
+    assert registry.async_get(zone).disabled_by is None  # nur der Code
+    assert registry.async_get(other).disabled_by is None
+    assert any(code in c.data["message"] for c in push)
+    # bewusst wieder eingeschaltet: Hauswacht überstimmt das nicht (auch nicht nach Neustart)
+    registry.async_update_entity(code, disabled_by=None)
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_entries("hauswacht")[0]
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert registry.async_get(code).disabled_by is None
+
+
+async def test_code_entity_created_later_is_disabled(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+
+    await _setup(hass)
+    code = _z2m_entity(hass, "Keypad Flur", "action_code")
+    await hass.async_block_till_done()
+    assert er.async_get(hass).async_get(code).disabled_by is er.RegistryEntryDisabler.USER

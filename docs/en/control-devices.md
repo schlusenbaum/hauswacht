@@ -51,6 +51,14 @@ window open –, already disarmed) and then continuously shows the state: exit a
 armed (day/night/all), alarm. For this Hauswacht sends to `<topic>/set` (`arm_mode`) – **only**
 state displays to configured keypads; a test makes sure that Hauswacht sends nowhere else.
 
+**PINs not in the history:** Zigbee2MQTT creates its own entity for the code typed at the keypad,
+e.g. `sensor.keypad_hallway_action_code`. Home Assistant stores it in the history – i.e. every PIN
+in plain text, also in backups. Hauswacht does not need it and **disables it automatically** as
+soon as the keypad is set up (also if it only appears later). You get a message about this once.
+If you deliberately enable it again (Settings → Entities), Hauswacht leaves it alone. Home
+Assistant deletes entries already stored with the normal history purge (default: 10 days) – at
+once with the action "Recorder: Purge entities" for this entity.
+
 Where the keypad should hang so that you reach it during the entry delay is shown by the
 measurement ["Door open to disarmed"](observations.md#door-open-to-disarmed).
 

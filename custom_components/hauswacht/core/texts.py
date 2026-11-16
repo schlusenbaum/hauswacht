@@ -73,6 +73,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "invalid_code_title": "Hauswacht: falscher PIN",
         "invalid_code": "{failures} falsche PIN-Eingaben in Folge.",
         "invalid_code_lock": " Die PIN-Eingabe ist für {seconds} Sekunden gesperrt.",
+        "code_entity_hidden_title": "Hauswacht: Keypad-Codes nicht mehr im Verlauf",
+        "code_entity_hidden": "Hauswacht hat {entities} deaktiviert. Zigbee2MQTT legt dort den am "
+        "Keypad getippten Code ab, und Home Assistant speichert ihn im Verlauf – also deine PINs "
+        "im Klartext, auch in Backups. Hauswacht braucht diese Entität nicht. Bereits gespeicherte "
+        "Einträge verschwinden mit dem normalen Aufräumen des Verlaufs (Standard: 10 Tage).",
         "card_disabled_title": "Hauswacht: deaktivierte Karte benutzt",
         "card_disabled": "Die deaktivierte Karte „{card}“ ({who}) wurde an {where} benutzt. Sie "
         "schaltet nichts; der Versuch zählt als Fehleingabe.",
@@ -258,6 +263,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "invalid_code_title": "Hauswacht: wrong PIN",
         "invalid_code": "{failures} wrong PIN entries in a row.",
         "invalid_code_lock": " PIN entry is locked for {seconds} seconds.",
+        "code_entity_hidden_title": "Hauswacht: keypad codes no longer in the history",
+        "code_entity_hidden": "Hauswacht has disabled {entities}. Zigbee2MQTT puts the code "
+        "typed at the keypad there, and Home Assistant stores it in the history – i.e. your PINs "
+        "in plain text, also in backups. Hauswacht does not need this entity. Entries already "
+        "stored disappear with the normal history purge (default: 10 days).",
         "card_disabled_title": "Hauswacht: disabled card used",
         "card_disabled": "The disabled card “{card}” ({who}) was used at {where}. It switches "
         "nothing; the attempt counts as a wrong entry.",

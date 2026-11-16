@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.48.3] - 2026-11-16
+
+### Sicherheit
+- **Am Keypad getippte PINs landen nicht mehr im Klartext im Verlauf.** Zigbee2MQTT legt für den
+  getippten Code eine eigene Entität an (z. B. `sensor.keypad_flur_action_code`), und Home
+  Assistant speichert sie im Verlauf – damit standen alle PINs lesbar im Verlauf und in Backups.
+  Hauswacht braucht diese Entität nicht und deaktiviert sie jetzt automatisch für jedes
+  eingerichtete Keypad, auch wenn sie erst später entsteht; dazu kommt einmal eine Nachricht.
+  Wer sie bewusst wieder einschaltet, wird nicht überstimmt. Bereits gespeicherte Einträge
+  verschwinden mit dem normalen Aufräumen des Verlaufs (Standard: 10 Tage) oder sofort über
+  „Recorder: Entitäten bereinigen“. **Empfehlung:** PINs ändern, falls Verlauf oder Backups
+  anderen zugänglich waren.
+
+### Dokumentation
+- Bedienteile, README und Installation (deutsch und englisch): Abschnitt „PINs nicht im
+  Verlauf“, Hinweis beim Entfernen.
+
 ## [0.48.2] - 2026-11-16
 
 ### Behoben

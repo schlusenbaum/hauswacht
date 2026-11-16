@@ -13,7 +13,7 @@
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
 und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
-> **Status: 0.48.2 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.48.3 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -119,6 +119,8 @@ Alles auf einen Blick: [docs/](docs/README.md). Die Anleitung gibt es auch
 - **Hauswacht schaltet keine Geräte** außer Sirenen (auch als Sirene eingetragene Schalter) und
   der Anzeige eingerichteter Keypads – ein Test stellt das sicher. Türschlösser liest
   Hauswacht nur mit, es schaltet sie nie.
+- **PINs nicht im Klartext im Verlauf:** Die Entität, in der Zigbee2MQTT den am Keypad getippten
+  Code ablegt, deaktiviert Hauswacht automatisch.
 
 Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 
