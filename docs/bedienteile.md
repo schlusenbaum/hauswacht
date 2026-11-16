@@ -145,6 +145,115 @@ Mal. Der Zustand (Zeitpunkt des letzten Ereignisses) ändert sich dagegen jedes 
 
 Die Entität hat außerdem die Attribute `keypad` (welches Keypad) und `test` (Testmodus an).
 
+### Weitere Beispiele
+
+**Ausprobieren, was ankommt:** Entwicklerwerkzeuge → Ereignisse → bei „Auf Ereignisse hören“
+`hauswacht_event` eintragen → „Zuhören starten“ → am Keypad den Code tippen und die Taste
+drücken. Es erscheint z. B.:
+
+```yaml
+event_type: hauswacht_event
+data:
+  type: ActionCode
+  name: Außenlicht
+  action: event
+  control: Keypad Flur
+  test: false
+```
+
+Dieses Ereignis `hauswacht_event` kommt bei **jedem** Aktions-Code – auch bei „Scharf schalten“
+und „stiller Notruf“. Als Auslöser ist es oft einfacher als die Entität, weil ein einziger
+Auslöser genügt:
+
+**A – Außenlicht mit nur einem Auslöser** (gleiche Wirkung wie oben):
+
+```yaml
+alias: Außenlicht per Keypad
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: Außenlicht
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.aussen
+  - delay: "00:05:00"
+  - action: light.turn_off
+    target:
+      entity_id: light.aussen
+mode: restart
+```
+
+Im Automations-Editor: Auslöser → **Manuelles Ereignis empfangen** → Ereignistyp
+`hauswacht_event`, Ereignisdaten `type: ActionCode` und `name: Außenlicht`. `mode: restart`
+sorgt dafür, dass ein erneuter Code die 5 Minuten neu startet.
+
+**B – Ein Code, zwei Tasten: Licht an und aus.** Zwei Aktions-Codes anlegen: „Licht an“
+(`7777` + 🏠 Haus) und „Licht aus“ (`7777` + 🌙 Nacht), beide mit Aktion Ereignis. Eine
+Automation für beide:
+
+```yaml
+alias: Wohnzimmerlicht per Keypad
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: Licht an
+    id: an
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: Licht aus
+    id: aus
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: an
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.wohnzimmer
+      - conditions:
+          - condition: trigger
+            id: aus
+        sequence:
+          - action: light.turn_off
+            target:
+              entity_id: light.wohnzimmer
+```
+
+**C – Scharf schalten und gleichzeitig etwas anderes tun.** Aktions-Code „Gute Nacht“ (`11` +
+🔒 Schloss) mit Aktion **Scharf schalten → Nacht**. Hauswacht schaltet scharf; diese Automation
+fährt zusätzlich die Rollläden herunter:
+
+```yaml
+alias: Gute Nacht per Keypad
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: Gute Nacht
+actions:
+  - action: cover.close_cover
+    target:
+      area_id: wohnzimmer
+```
+
+**Testmodus ausnehmen:** Soll im [Testmodus](testmodus.md) nichts passieren, diese Bedingung
+ergänzen:
+
+```yaml
+conditions:
+  - condition: template
+    value_template: "{{ not trigger.event.data.test }}"
+```
+
 ### Aktion „Scharf schalten“ und „stiller Notruf“
 
 - **Scharf schalten:** schaltet das gewählte Profil scharf, genau wie die Taste mit Profil – mit

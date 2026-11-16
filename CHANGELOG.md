@@ -6,6 +6,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Aktions-Codes (deutsch und englisch): weitere Beispiele – Ereignis `hauswacht_event` als
+  einfacher Auslöser, Licht an/aus mit zwei Tasten, Scharf schalten plus Rollläden, Testmodus
+  ausnehmen, „Ausprobieren, was ankommt“ in den Entwicklerwerkzeugen.
+
 ## [0.49.1] - 2026-11-16
 
 ### Geändert
