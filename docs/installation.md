@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.44.3:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.45.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -78,6 +78,7 @@ Konfigurieren**. Sie lassen sich nur ändern, wenn **alle Bereiche unscharf** si
 | **Systemeinstellungen** → Bedienteile | Keypads, NFC-Aufkleber, RFID-Leser, Taster, Türschlösser | [Bedienteile](bedienteile.md) |
 | **Systemeinstellungen** → Funkstille von Sensoren | Wann ein Sensor als ausgefallen gilt | [Melder](melder.md#funkstille-von-sensoren) |
 | **Systemeinstellungen** → Funknetz und Gateways überwachen | Zigbee2MQTT, MQTT … | [Melder](melder.md#funknetz-und-gateways-überwachen) |
+| **Systemeinstellungen** → Verhalten nach Neustart | Wiederherstellen (Standard), immer scharf, immer unscharf | [unten](#verhalten-nach-einem-neustart) |
 | **Systemeinstellungen** → Anwesenheit und Heimkehr-Beobachtung | Signale je Person (für Automatik und Beobachtung); Heimkehr messen | [Profile](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist), [Beobachtungen](beobachtung.md) |
 
 So funktioniert der Dialog:
@@ -117,10 +118,78 @@ dieser Anleitung.
 
 ## Verhalten nach einem Neustart
 
-Hauswacht startet **immer unscharf**. War die Anlage vorher scharf, kommt die Meldung
-„Hauswacht: nach Neustart unscharf“. Ein früherer Alarm wird nie unkontrolliert wieder
-aufgenommen. Der Testmodus bleibt erhalten, simulierte Sensoren nicht. Der Zähler für falsche
-PIN-Eingaben beginnt bei null.
+**Systemeinstellungen → Verhalten nach Neustart.** Was passiert, wenn Home Assistant neu startet
+– etwa nach einem Update, einer nächtlichen Sicherung oder einem Stromausfall – oder Hauswacht
+neu geladen wird. Drei Möglichkeiten:
+
+| Einstellung | Was nach dem Neustart passiert | Gedacht für |
+|---|---|---|
+| **Vorherigen Zustand wiederherstellen** (Standard) | War die Anlage scharf, ist sie es sofort wieder; war sie unscharf, bleibt sie unscharf | fast alle |
+| **Immer scharf** (mit festem Profil) | etwa eine Minute nach dem Hochfahren wird das gewählte Profil normal scharf geschaltet | Ferienhaus, unbewohnte Bereiche |
+| **Immer unscharf** | immer unscharf; war die Anlage scharf, kommt die Nachricht „nach Neustart unscharf“ | wer lieber selbst entscheidet (Verhalten bis 0.44) |
+
+### Wiederherstellen im Detail
+
+Die Anlage ist **sofort** wieder scharf – mit demselben Profil und denselben überbrückten
+Meldern. Sie wird dabei **nicht neu geprüft** und es läuft **keine Ausgangsverzögerung**: Die
+Anlage war ja schon scharf. Du bekommst die Nachricht „Hauswacht: nach Neustart wieder scharf“.
+
+Was gerade lief, als Home Assistant neu startete:
+
+| Lief gerade … | Nach dem Neustart |
+|---|---|
+| nichts (scharf) | scharf |
+| die **Ausgangsverzögerung** | scharf – ein Neustart dauert länger als die Verzögerung, wer gehen wollte, ist längst draußen |
+| die **Eingangsverzögerung** | die Eingangsverzögerung **beginnt neu**. Wer gerade heimkam, konnte während des Neustarts weder am Keypad noch in der App unscharf schalten – ohne neue Verzögerung gäbe es bei der ersten Bewegung im Flur sofort Alarm |
+| ein **Alarm** | **nicht fortgesetzt**: keine Sirenen, die Anlage ist scharf. Die Nachricht nennt, welcher Melder den Alarm ausgelöst hatte |
+
+**Melder beim Hochfahren.** Nach einem Neustart melden sich Funkmelder erst nach und nach – viele
+sind kurz „nicht verfügbar“. Deshalb gibt es nach dem Wiederherstellen eine **Startphase von zwei
+Minuten** (ab dem Moment, in dem Home Assistant fertig hochgefahren ist):
+
+- **Keine Ausfallmeldungen** in dieser Zeit. Fehlt ein Melder nach der Startphase noch, kommt
+  die Meldung „Sensor ausgefallen“.
+- **Melder, die geschlossen zurückkommen:** nichts passiert.
+- **Melder, die offen zurückkommen:** Hauswacht kann nicht unterscheiden, ob das Fenster schon
+  vor dem Neustart offen war oder währenddessen geöffnet wurde. Deshalb:
+  - **Eingangstüren** (Typ Tür) starten die **Eingangsverzögerung** – vielleicht kommt gerade
+    jemand heim, der dann unscharf schalten kann.
+  - **Alle anderen** (Fenster, Bewegung …) werden **bis zum Schließen überbrückt** statt nachts
+    einen Sirenenalarm auszulösen. Nach der Startphase kommt die Nachricht „Hauswacht: offen nach
+    Neustart“ mit den Namen. Sobald ein solcher Melder schließt, ist er wieder normal überwacht.
+- Melder, die vor dem Neustart überbrückt waren, bleiben überbrückt.
+
+**Beispiel:** Die Anlage ist nachts auf „Nacht“ scharf, um 3:00 startet Home Assistant für eine
+Sicherung neu. Um 3:02 ist Hauswacht wieder scharf, Profil „Nacht“, und schickt „nach Neustart
+wieder scharf (Nacht)“. Das gekippte Badfenster war schon vorher überbrückt und bleibt es.
+
+Auch die Profil-Automatik merkt sich, ob sie scharf geschaltet hatte – „Unscharf bei Rückkehr –
+wie bisher“ funktioniert nach einem Neustart also weiter.
+
+### Immer scharf
+
+Für jeden Bereich wählst du ein Profil (z. B. „Abwesend“). Etwa **eine Minute** nachdem Home
+Assistant hochgefahren ist – damit die Funkmelder wieder melden –, wird es **ganz normal** scharf
+geschaltet: mit Prüfung offener und ausgefallener Melder nach den Regeln des Profils und mit
+Ausgangsverzögerung. Klappt es nicht (z. B. Fenster offen), kommt die übliche Nachricht „nicht
+scharf geschaltet“. Bereiche ohne Profil bleiben unscharf. Im Logbuch steht „Automatik“, die
+Nachricht „automatisch scharf (Neustart)“.
+
+> „Immer scharf“ schaltet auch scharf, wenn die Anlage **vor** dem Neustart unscharf war – z. B.
+> weil jemand zuhause war. Für ein bewohntes Haus ist deshalb „Wiederherstellen“ die bessere
+> Wahl.
+
+### Immer gleich
+
+Unabhängig von der Einstellung gilt:
+
+- Ein früherer **Alarm wird nie fortgesetzt**, Sirenen gehen durch einen Neustart nie an.
+- Der **Testmodus** bleibt erhalten, simulierte Sensoren nicht.
+- Der Zähler für falsche PIN-Eingaben beginnt bei null.
+- Wurde das Profil inzwischen gelöscht, bleibt die Anlage unscharf und meldet das.
+- Bei mehreren Bereichen gilt das für jeden Bereich einzeln.
+
+Die [Übersicht](uebersicht.md) zeigt die Einstellung unter „Überwachung“.
 
 ## Updates
 

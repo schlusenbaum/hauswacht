@@ -14,6 +14,17 @@ oder ein Profil ohne Meldergruppen. Offene Melder zeigt auch
 Nur Profile mit zugeordnetem Bedienfeld-Knopf erscheinen dort. Alle anderen über Auswahlliste
 „Profil“ + „Scharf schalten“.
 
+**Nach einem Neustart ist die Anlage unscharf (oder scharf), ich wollte es anders.**
+Das regelt Systemeinstellungen → [Verhalten nach Neustart](installation.md#verhalten-nach-einem-neustart).
+Standard ist „vorherigen Zustand wiederherstellen“. Unscharf trotz Wiederherstellen heißt: Die
+Anlage war vorher unscharf, oder das Profil wurde inzwischen gelöscht (dann kommt eine
+Nachricht).
+
+**Nach einem Neustart steht ein Fenster unter „überbrückt bis geschlossen“.**
+Es wurde beim Hochfahren offen gemeldet. Hauswacht kann nicht unterscheiden, ob es vorher schon
+offen war, und überbrückt es deshalb, statt Alarm auszulösen. Sobald es geschlossen ist, wird es
+wieder normal überwacht.
+
 **Einstellungen lassen sich nicht ändern.**
 Nur möglich, wenn **alle Bereiche unscharf** sind.
 

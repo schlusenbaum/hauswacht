@@ -68,8 +68,12 @@ in der Zustandsmaschine geführt.
   tatsächlich ausgehen, entscheidet der Sirenen-Guard (Brandsperre).
 - **Testmodus** lässt sich nur im Zustand `disarmed` umschalten und bleibt über Neustarts
   erhalten. Alle Reaktionen tragen das Testmodus-Kennzeichen.
-- **Neustart:** immer `disarmed`. War die Anlage vorher scharf, entsteht
-  `RestartedDisarmed`, damit eine Benachrichtigung verschickt werden kann.
+- **Neustart:** `Startup` führt immer erst nach `disarmed` (alte Timer verfallen). Bei
+  „Wiederherstellen“ folgt `RestoreRequested`: direkt `armed` ohne Prüfung und
+  Ausgangsverzögerung, bzw. `pending` mit neuer Eingangsverzögerung. Ein Alarm wird nie
+  fortgesetzt. `BypassUntilClosed` überbrückt Melder, die in der Startphase offen gemeldet
+  werden. Ist die Anlage danach unscharf, obwohl sie vorher scharf war, entsteht
+  `RestartedDisarmed` ([ADR 0008](adr/0008-verhalten-nach-neustart.md)).
 
 ## Offene Punkte für spätere Versionen
 

@@ -65,8 +65,8 @@ verhält sich wie bei einem aktiven Brand.
 
 | Nr. | Regel |
 |---|---|
-| Z1 | Nach jedem Start ist die Anlage unscharf. Ein früherer Alarm wird nie wieder aufgenommen. |
-| Z2 | War die Anlage vor dem Neustart scharf, wird das gemeldet. |
+| Z1 | Nach einem Start wird ein früherer Alarm nie fortgesetzt, Sirenen werden dadurch nie eingeschaltet. Ob die Anlage danach scharf ist, regelt die Einstellung „Verhalten nach Neustart“ (ab 0.45, [ADR 0008](adr/0008-verhalten-nach-neustart.md)): wiederherstellen (Standard, ohne Prüfung und Ausgangsverzögerung; eine laufende Eingangsverzögerung beginnt neu), immer scharf (normal geprüft, nach dem Hochfahren) oder immer unscharf. |
+| Z2 | Jeder Neustart im scharfen Zustand wird gemeldet („wieder scharf“ bzw. „unscharf“). In der Startphase (2 min) werden offen gemeldete Melder bis zum Schließen überbrückt statt Alarm auszulösen (Eingangstüren: Eingangsverzögerung), Ausfallmeldungen erst danach. |
 | Z3 | Der Testmodus lässt sich nur im unscharfen Zustand umschalten. |
 | Z4 | Abgelaufene Timer aus einem früheren Zustand oder vor einem Neustart bewirken nichts. |
 | Z5 | Der Anlagenzustand ändert sich nur über Ereignisse der Zustandsmaschine. |

@@ -110,7 +110,8 @@ e.g.:
 | `TamperDetected` | tampering |
 | `SensorUnavailable` | monitored sensor failed |
 | `InfrastructureFault`, `InfrastructureRecovered` | radio network/gateway failed or back |
-| `RestartedDisarmed` | disarmed after a restart |
+| `RestartedDisarmed` | disarmed after a restart (setting "always disarmed", or profile deleted) |
+| `RestoredAfterRestart` | restored after a restart (with `profile_id`, `entry_delay`, `alarm_was_active`) |
 | `AlwaysActiveTriggered` | always-active sensor triggered |
 | `ArmedByClosingDoor` | armed by closing the door |
 | `AutoArmScheduled`, `AutoArmCancelled`, `AutoArmed`, `AutoArmSkipped`, `AutoArmFailed` | profile automation: arming scheduled, cancelled, done, skipped, failed (with `profile_id`, `reason`) |

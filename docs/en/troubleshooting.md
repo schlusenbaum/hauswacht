@@ -14,6 +14,16 @@ confirmation", use [Arm anyway](dashboard.md#arm-anyway).
 Only profiles with an assigned alarm panel button appear there. All others via the selection list
 "Profile" + "Arm".
 
+**After a restart the system is disarmed (or armed), I wanted it differently.**
+This is set under System settings → [Behaviour after restart](installation.md#behaviour-after-a-restart).
+The default is "restore the previous state". Disarmed despite restoring means: the system was
+disarmed before, or the profile has been deleted in the meantime (then you get a message).
+
+**After a restart a window is listed as "bypassed until closed".**
+It was reported open at startup. Hauswacht cannot tell whether it was already open before, so it
+bypasses it instead of triggering an alarm. As soon as it is closed, it is monitored normally
+again.
+
 **Settings cannot be changed.**
 Only possible while **all areas are disarmed**.
 

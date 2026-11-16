@@ -1,6 +1,6 @@
 # ADR 0004: Nach Neustart immer unscharf
 
-- Status: angenommen
+- Status: abgelöst durch [ADR 0008](0008-verhalten-nach-neustart.md) (0.45)
 - Datum: 2026-11-06
 
 ## Entscheidung
