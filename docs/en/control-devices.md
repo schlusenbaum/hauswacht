@@ -139,6 +139,113 @@ the last event) changes every time.
 
 The entity also has the attributes `keypad` (which keypad) and `test` (test mode on).
 
+### More examples
+
+**Try out what arrives:** Developer tools → Events → under "Listen to events" enter
+`hauswacht_event` → "Start listening" → type the code at the keypad and press the key. You see
+e.g.:
+
+```yaml
+event_type: hauswacht_event
+data:
+  type: ActionCode
+  name: outdoor light
+  action: event
+  control: Keypad hallway
+  test: false
+```
+
+This event `hauswacht_event` comes with **every** action code – also with "arm" and "silent
+emergency". As a trigger it is often simpler than the entity, because a single trigger is
+enough:
+
+**A – outdoor light with only one trigger** (same effect as above):
+
+```yaml
+alias: Outdoor light via keypad
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: outdoor light
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.outdoor
+  - delay: "00:05:00"
+  - action: light.turn_off
+    target:
+      entity_id: light.outdoor
+mode: restart
+```
+
+In the automation editor: trigger → **Manual event received** → event type `hauswacht_event`,
+event data `type: ActionCode` and `name: outdoor light`. `mode: restart` makes a repeated code
+restart the 5 minutes.
+
+**B – one code, two keys: light on and off.** Add two action codes: "light on" (`7777` + 🏠
+house) and "light off" (`7777` + 🌙 night), both with action event. One automation for both:
+
+```yaml
+alias: Living room light via keypad
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: light on
+    id: "on"
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: light off
+    id: "off"
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "on"
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.living_room
+      - conditions:
+          - condition: trigger
+            id: "off"
+        sequence:
+          - action: light.turn_off
+            target:
+              entity_id: light.living_room
+```
+
+**C – arm and do something else at the same time.** Action code "good night" (`11` + 🔒 lock)
+with action **Arm → Night**. Hauswacht arms; this automation also closes the shutters:
+
+```yaml
+alias: Good night via keypad
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: ActionCode
+      name: good night
+actions:
+  - action: cover.close_cover
+    target:
+      area_id: living_room
+```
+
+**Exclude test mode:** if nothing should happen in [test mode](test-mode.md), add this
+condition:
+
+```yaml
+conditions:
+  - condition: template
+    value_template: "{{ not trigger.event.data.test }}"
+```
+
 ### Actions "arm" and "silent emergency"
 
 - **Arm:** arms the chosen profile, just like the key with a profile – with the check of open
