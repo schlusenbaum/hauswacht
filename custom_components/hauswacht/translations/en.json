@@ -196,6 +196,8 @@
           "user_add": "Add user",
           "user_edit": "Edit user",
           "user_delete": "Delete user",
+          "cards": "Cards and tags (learn, name, assign, disable)",
+          "pins": "PINs (set, change, remove)",
           "code": "PIN rules (master PIN, PIN for arming …)",
           "system": "← Back"
         }
@@ -210,17 +212,14 @@
         "title": "Delete user",
         "data": {
           "user": "User"
-        }
+        },
+        "description": "The user's cards are deleted too."
       },
       "user_settings": {
         "title": "User",
-        "description": "Status: {status}. Leave PIN fields empty to keep them.\n\n**Duress PIN:** works normally but silently sends an emergency message to the recipients under “Notifications → Duress recipients”. It must not equal any normal PIN.\n\n**Valid from/until:** for guests – outside this time the PIN is blocked.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one. RFID cards do not count as PINs: without PINs the panel stays PIN-free, and cards still work at keypads and readers.{random}",
+        "description": "Status: {status}. You manage **cards** and **PINs** under \"Users and PINs → Cards and tags\" and \"→ PINs\".\n\n**Valid from/until:** for guests – outside this time, neither the PIN nor the cards of this user switch.\n\n**Active off:** the user does not switch at all any more (PIN, cards, phone).",
         "data": {
           "name": "Name",
-          "new_pin": "New PIN (4–8 digits)",
-          "remove_pin": "Remove PIN",
-          "new_duress_pin": "New duress PIN (4–8 digits)",
-          "remove_duress_pin": "Remove duress PIN",
           "active": "Active",
           "can_arm": "May arm",
           "can_disarm": "May disarm",
@@ -229,12 +228,10 @@
           "card_pin": "Require PIN in the alarm card",
           "valid_from": "Valid from",
           "valid_until": "Valid until",
-          "rights": "Rights apply to",
-          "tags": "RFID cards and lock IDs"
+          "rights": "Rights apply to"
         },
         "data_description": {
           "rights": "**All areas alike:** the checkboxes above apply everywhere. **Per area:** after saving you choose for each area what the user may do there (the checkboxes above are then ignored).",
-          "tags": "Any number, independent of the PIN (a user needs no PIN to use a card at a keypad). Hold a new card to a keypad or reader once, or unlock the door lock once – it then appears here as “new”. Or type the ID.",
           "card_pin": "For this user's Home Assistant account in the “Hauswacht Alarm” card. Off: arms and disarms there without a PIN, with this user's rights. On: e.g. for a wall tablet that is always logged in. Only applies if any PIN exists."
         }
       },
@@ -242,9 +239,60 @@
         "title": "Rights per area",
         "description": "What may **{name}** do in which area? An area without a selection is locked for this user."
       },
-      "user_tag_names": {
-        "title": "Names of the cards",
-        "description": "Give the cards and tags of **{name}** names, e.g. “key ring” or “wallet”. Then you know which one to delete if one gets lost, and the logbook and messages show which card was used (“{name} · key ring”). Leave empty = no name."
+      "cards": {
+        "title": "Cards and tags",
+        "description": "{saved}All RFID cards, tags, fingers (fingerprint reader) and lock IDs. 🟢 active · ⏸️ disabled. Choose a card to rename, hand over, disable or delete it – or \"Learn new card\".\n\nLearning only works while all areas are disarmed.",
+        "data": {
+          "card": "Card"
+        }
+      },
+      "card_wait": {
+        "title": "Learn new card"
+      },
+      "card_new": {
+        "title": "New card",
+        "description": "{found}{random}",
+        "data": {
+          "card": "Card (number)",
+          "name": "Name of the card (e.g. key ring)",
+          "user": "Belongs to",
+          "active": "Active"
+        },
+        "data_description": {
+          "card": "Recognised or recently read card – or type in the number (case and separators do not matter).",
+          "active": "Off: the card is known but switches nothing. If it is used, you get a message."
+        }
+      },
+      "card_edit": {
+        "title": "Card {card}",
+        "description": "{used}",
+        "data": {
+          "name": "Name of the card",
+          "user": "Belongs to",
+          "active": "Active",
+          "delete": "Delete card"
+        },
+        "data_description": {
+          "active": "Off (disabled): switches nothing. If it is used, you get a message and it counts as a failed attempt – e.g. for a misplaced card that may turn up again.",
+          "delete": "Final. After that the card is rejected like an unknown card."
+        }
+      },
+      "pins": {
+        "title": "PINs",
+        "description": "{saved}Who has a PIN or duress PIN, and when was it last used? PINs themselves are only stored encrypted and can never be shown – only set anew or removed.",
+        "data": {
+          "user": "User"
+        }
+      },
+      "pin_edit": {
+        "title": "PINs of {name}",
+        "description": "Status: {status}. Leave fields empty to change nothing.\n\n**Duress PIN:** switches quite normally, but secretly sends an emergency call to the recipients under \"Notifications → duress alarm recipients\". It must not equal a normal PIN.\n\n⚠️ **Important:** as soon as **one** PIN exists, the alarm panel (and Alexa) asks for a PIN to disarm – **from everyone**. So: either give everyone a PIN (a shared PIN is allowed) or nobody. RFID cards do not count as a PIN.",
+        "data": {
+          "new_pin": "New PIN (4–8 digits)",
+          "remove_pin": "Remove PIN",
+          "new_duress_pin": "New duress PIN (4–8 digits)",
+          "remove_duress_pin": "Remove duress PIN"
+        }
       },
       "system": {
         "title": "System settings",
@@ -900,7 +948,9 @@
       "control_entity": "Please choose an entity.",
       "control_who": "For the generic source, choose a sensor or event with the ID.",
       "button_no_press": "Assign at least one press type to an alarm profile.",
-      "restart_needs_profile": "“Always armed” needs at least one alarm profile."
+      "restart_needs_profile": "“Always armed” needs at least one alarm profile.",
+      "card_missing": "Please choose a card or type in its number.",
+      "user_missing": "Please choose a user."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -911,6 +961,9 @@
       "no_areas": "There is only the first area – it cannot be deleted.",
       "no_sirens": "No sirens are set up (Alarm devices – sirens → Sirens and enabling).",
       "no_controls": "There are no control devices yet."
+    },
+    "progress": {
+      "wait_card": "Hold the new card to a keypad now (and press Disarm) or to a reader – or unlock the door lock once with the new ID. The dialog waits up to {seconds} seconds."
     }
   },
   "selector": {

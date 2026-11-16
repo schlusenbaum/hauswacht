@@ -83,7 +83,7 @@ from .core.code_guard import (
 )
 from .core.conditions import all_met as conditions_met
 from .core.confirmation import FREQUENT_COUNT, LoneTriggerCounter
-from .core.controls import looks_like_card
+from .core.controls import looks_like_card, normalize_tag
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
 from .core.profile_settings import SettingError
@@ -192,6 +192,7 @@ from .core.users import (
     Identity,
     User,
     allowed_in,
+    disabled_tag,
     find_by_ha_user,
     has_codes,
     identity_label,
@@ -295,6 +296,9 @@ class HauswachtRuntime:
         self.sirens.on_change = self._save_soon
         self.sirens.test_mode_now = lambda: self.ctx.test_mode
         self._unsub_siren_check: CALLBACK_TYPE | None = None
+        # Wann Karten ("card:<ID>") und PINs ("pin:<Benutzer>") zuletzt geschaltet haben
+        # (nur im Hauptbereich gepflegt; gespeichert, nicht in den Einstellungen)
+        self.last_used: dict[str, float] = {}
         # Sirenentest: nur im Hauptbereich (gilt für alle Bereiche)
         self.siren_tester: SirenTester | None = SirenTester(hass, self) if main is None else None
         # Bedienteile (Keypads, NFC, RFID): nur im Hauptbereich, bedienen je nach Einstellung
@@ -556,6 +560,11 @@ class HauswachtRuntime:
         elif plan.kind is RestartKind.ARM and plan.profile_id is not None:
             self._schedule_restart_arm(plan.profile_id)
         # Eigene Sirenen, die vor dem Neustart an waren, nach dem Hochfahren ausschalten
+        stored_used = data.get("last_used")
+        if isinstance(stored_used, dict):
+            self.last_used = {
+                str(k): float(v) for k, v in stored_used.items() if isinstance(v, (int, float))
+            }
         if self.sirens.restore(data.get("sirens")):
             self._unsub_siren_check = async_at_started(self.hass, self._stop_restored_sirens)
         # Sofort speichern, damit ein erneuter Absturz nicht doppelt meldet.
@@ -684,6 +693,12 @@ class HauswachtRuntime:
                 "alarm_was_active": plan.alarm_was_active,
             },
         )
+
+    @callback
+    def note_used(self, key: str) -> None:
+        """Karte bzw. PIN hat gerade erfolgreich geschaltet (für "zuletzt benutzt")."""
+        self.last_used[key] = dt_util.utcnow().timestamp()
+        self._save_soon()
 
     @callback
     def _save_soon(self) -> None:
@@ -925,7 +940,9 @@ class HauswachtRuntime:
                 translation_placeholders={"user": users_label(users, self.lang)},
             )
 
-    async def async_identify(self, code: str | None, action: Action) -> Identity:
+    async def async_identify(
+        self, code: str | None, action: Action, source: str | None = None
+    ) -> Identity:
         """Ausweis prüfen: RFID-Karte oder PIN, mit gemeinsamem Schutz gegen Durchprobieren.
 
         Ungültig -> ServiceValidationError (``invalid_code`` oder ``code_locked``).
@@ -942,6 +959,7 @@ class HauswachtRuntime:
         card = match_tag(code, self.users, timestamp)
         if card.users:
             self.main._code_guard = register_success(self.main._code_guard)
+            self.main.note_used(f"card:{normalize_tag(code)}")
             return Identity(
                 kind="card", users=card.users, credential=tag_credential(code, card.users)
             )
@@ -949,10 +967,14 @@ class HauswachtRuntime:
         match = await self.hass.async_add_executor_job(match_pin, code, self.users, timestamp)
         if match.duress:
             self.main._code_guard = register_success(self.main._code_guard)
+            for user in match.duress:
+                self.main.note_used(f"pin:{user.user_id}")
             self._send_duress_alert(users_label(match.duress, self.lang), action)
             return Identity(kind="pin", users=match.duress, duress=True)
         if match.users:
             self.main._code_guard = register_success(self.main._code_guard)
+            for user in match.users:
+                self.main.note_used(f"pin:{user.user_id}")
             return Identity(kind="pin", users=match.users)
         blocked = match.blocked + card.blocked
         if blocked:
@@ -960,7 +982,20 @@ class HauswachtRuntime:
                 tr(self.lang, "blocked_credential_title"),
                 tr(self.lang, "blocked_credential", who=users_label(blocked, self.lang)),
             )
-        if looks_like_card(code) and not blocked:
+        disabled = disabled_tag(code, self.users)
+        if disabled is not None:
+            owner, card_name = disabled
+            self.notifier.send_system(
+                tr(self.lang, "card_disabled_title"),
+                tr(
+                    self.lang,
+                    "card_disabled",
+                    card=card_name or normalize_tag(code),
+                    who=owner.name,
+                    where=source or "–",
+                ),
+            )
+        if looks_like_card(code) and not blocked and disabled is None:
             # Unbekannte Karte (z. B. zum Anlernen): kann kein PIN sein und ist nicht zu erraten,
             # zählt daher nicht als Fehleingabe.
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="invalid_code")
@@ -2139,6 +2174,7 @@ class HauswachtRuntime:
             ),
             "test_mode": self.ctx.test_mode,
             "sirens": self.sirens.snapshot(),
+            "last_used": self.last_used,
             "selected_profile": self._selected_profile,
             "edit_profile": self._edit_profile,
         }

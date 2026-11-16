@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -66,7 +66,15 @@ from .core.controls import (
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
 from .core.texts import tr
-from .core.users import Action, Identity, find_by_ha_user, identity_label, match_tag, tag_credential
+from .core.users import (
+    Action,
+    Identity,
+    disabled_tag,
+    find_by_ha_user,
+    identity_label,
+    match_tag,
+    tag_credential,
+)
 
 if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
@@ -90,6 +98,8 @@ class ControlManager:
         self.unknown_cards: dict[str, tuple[str, float]] = {}
         # Zuletzt gelesene Zufallsnummer (z. B. Handy): (wo, wann) – nur für einen Hinweis
         self.random_seen: tuple[str, float] | None = None
+        # Wer gerade auf eine neue Karte wartet ("Neue Karte anlernen" im Einstellungsdialog)
+        self._card_waiters: list[Callable[[str], None]] = []
         # Türschlösser: letzte Kennung bzw. letzter Zustandswechsel (je Schloss)
         self._lock_ident: dict[str, tuple[LockEvent, float]] = {}
         self._lock_state: dict[str, tuple[str, float]] = {}
@@ -230,7 +240,7 @@ class ControlManager:
         if not code:
             return None
         try:
-            identity = await self.runtime.async_identify(code, action)
+            identity = await self.runtime.async_identify(code, action, source=control.name)
         except HomeAssistantError:
             self._learn(code, control)
             return None
@@ -249,8 +259,9 @@ class ControlManager:
         minutes = learn_minutes(self.runtime.entry.options)
         if not minutes or not self.runtime.all_disarmed or not looks_like_card(code):
             return
-        if any(normalize_tag(code) in u.tags for u in self.runtime.users):
-            return  # Karte gehört schon jemandem (z. B. gesperrter Gast)
+        tag = normalize_tag(code)
+        if any(tag in u.tags or tag in u.disabled_tags for u in self.runtime.users):
+            return  # Karte gehört schon jemandem (z. B. gesperrter Gast, deaktivierte Karte)
         now = dt_util.utcnow().timestamp()
         if is_random_uid(code):
             self.random_seen = (control.name, now)  # nicht anlernbar, nur Hinweis
@@ -258,6 +269,7 @@ class ControlManager:
         self.unknown_cards = remember_card(
             fresh_cards(self.unknown_cards, now, minutes), code, control.name, now
         )
+        self._card_read(tag)
 
     def learnable_cards(self) -> dict[str, tuple[str, float]]:
         """Unbekannte Karten, die noch angelernt werden dürfen (abgelaufene fallen weg)."""
@@ -533,6 +545,21 @@ class ControlManager:
         now = dt_util.utcnow().timestamp()
         users = match_tag(identity, self.runtime.users, now).users
         lang = self.runtime.lang
+        disabled = disabled_tag(identity, self.runtime.users)
+        if not users and disabled is not None:
+            owner, card_name = disabled
+            self.runtime.notifier.send_system(
+                tr(lang, "card_disabled_title"),
+                tr(
+                    lang,
+                    "lock_disabled",
+                    card=card_name or identity,
+                    who=owner.name,
+                    where=control.name,
+                ),
+            )
+            self._fire("LockIgnored", control, intent=intent, reason="disabled_id")
+            return "disabled"
         if not users:
             self._learn_lock(identity, control)
             if intent == UNLOCK and self._armed(control):
@@ -543,6 +570,7 @@ class ControlManager:
             self._fire("LockIgnored", control, intent=intent, reason="unknown_id")
             return "unknown"
         found = Identity("lock", users, credential=tag_credential(identity, users))
+        self.runtime.main.note_used(f"card:{identity}")
         who = identity_label(found, lang)
         if intent == UNLOCK:
             if not self._armed(control):
@@ -568,6 +596,21 @@ class ControlManager:
         self.unknown_cards = remember_card(
             fresh_cards(self.unknown_cards, now, minutes), identity, control.name, now
         )
+        self._card_read(identity)
+
+    def wait_for_card(self, waiter: Callable[[str], None]) -> Callable[[], None]:
+        """Bei der nächsten neu gelesenen (anlernbaren) Karte ``waiter`` aufrufen."""
+        self._card_waiters.append(waiter)
+
+        def _remove() -> None:
+            if waiter in self._card_waiters:
+                self._card_waiters.remove(waiter)
+
+        return _remove
+
+    def _card_read(self, tag: str) -> None:
+        for waiter in list(self._card_waiters):
+            waiter(tag)
 
     def _fire(self, kind: str, control: Control, **data: Any) -> None:
         self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": kind, "control": control.name, **data})
