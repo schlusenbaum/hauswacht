@@ -32,10 +32,15 @@ MQTT integration in Home Assistant. ZHA and Z-Wave keypads are planned.
 |---|---|
 | Name | e.g. "Keypad hallway" – appears in "changed by", e.g. "Anna (Keypad hallway)" |
 | Area | one area or all |
-| MQTT topic | base topic + device name in Zigbee2MQTT, e.g. `zigbee2mqtt/Keypad` – written exactly as in Zigbee2MQTT (upper/lower case, hyphens), without `/set` |
+| Keypad device | the keypad from the list (devices of Zigbee2MQTT or MQTT). Hauswacht builds the MQTT topic from it: `zigbee2mqtt/<name in Zigbee2MQTT>`, e.g. `zigbee2mqtt/Alarm-Keypad` |
+| MQTT topic (experts only) | **leave empty** = automatically from the keypad device. Only needed if a base topic other than `zigbee2mqtt` is set in Zigbee2MQTT or the device does not appear in the list. Then: base topic + device name, written exactly as in Zigbee2MQTT (upper/lower case, hyphens), without `/set`. An entered topic takes precedence |
 | Keys "Day", "Night", "All" | one alarm profile each for **arming**, e.g. Day → "Home", Night → "Night", All → "Away"; keys without a profile answer "not ready". On the frient keypad: **Day = 🏠 house**, **Night = 🌙 moon**, **All = 🔒 lock**. The keypad's own key 🔓 (open lock) disarms – do not create a profile for it. Assigning keys several times: [action codes](#action-codes) |
 | Login | **PIN or card** or **card and PIN** (both credentials of the same user within 30 s; the first is acknowledged with "not ready") |
-| Emergency key | **off**, **silent** (critical push message) or **alarm** (additionally an instant alarm – disarmed with the sirens under "Always active", armed with those of the active profile) |
+| Emergency key | **off** (default – then pressing SOS does nothing visible), **silent** (critical push message) or **alarm** (additionally an instant alarm – disarmed with the sirens under "Always active", armed with those of the active profile) |
+
+**Keypad renamed in Zigbee2MQTT?** Then its MQTT topic changes too. Edit the keypad in Hauswacht
+once and submit – the topic is built from the new name. If a custom topic is in the expert field,
+adjust it.
 
 3. Add the keypad's **tamper contact** (`binary_sensor.<keypad>_tamper`) to a sensor group (type
    Tamper) – sensibly only once it hangs firmly on the wall, and then select it in the profiles.

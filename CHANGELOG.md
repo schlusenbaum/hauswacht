@@ -6,6 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.49.1] - 2026-11-16
+
+### Geändert
+- **Keypad einrichten ohne MQTT-Topic:** Im Keypad-Formular wählst du jetzt einfach das
+  **Keypad-Gerät** aus der Liste; Hauswacht bildet das MQTT-Topic daraus selbst
+  (`zigbee2mqtt/<Name in Zigbee2MQTT>`). Das Feld „MQTT-Topic“ bleibt für Experten – z. B. bei
+  einem anderen Basis-Topic – und hat Vorrang, wenn es ausgefüllt ist. Vorhandene Keypads behalten
+  ihr Topic.
+
+### Dokumentation
+- Bedienteile (deutsch und englisch): Keypad-Gerät und Experten-Topic, Hinweis „Keypad in
+  Zigbee2MQTT umbenannt?“, Notruf-Taste „aus“ = nichts Sichtbares.
+
 ## [0.49.0] - 2026-11-16
 
 ### Hinzugefügt

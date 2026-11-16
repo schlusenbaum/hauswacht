@@ -781,7 +781,8 @@
         "data": {
           "name": "Name",
           "area": "Bereich",
-          "topic": "MQTT-Topic des Keypads",
+          "keypad_device": "Keypad-Gerät (aus Zigbee2MQTT)",
+          "topic": "MQTT-Topic (nur für Experten)",
           "arm_day_zones": "Taste „Tag“ → Alarmprofil",
           "arm_night_zones": "Taste „Nacht“ → Alarmprofil",
           "arm_all_zones": "Taste „Alle“ → Alarmprofil",
@@ -789,9 +790,10 @@
           "emergency": "Notruf-Taste"
         },
         "data_description": {
-          "topic": "Z. B. `zigbee2mqtt/Keypad Flur` (Basis-Topic + Name des Geräts in Zigbee2MQTT).",
+          "topic": "Leer lassen = automatisch aus dem Keypad-Gerät. Nur nötig, wenn in Zigbee2MQTT ein anderes Basis-Topic als `zigbee2mqtt` eingestellt ist oder das Gerät in Home Assistant nicht auftaucht – dann z. B. `zigbee2mqtt/Keypad Flur` (Basis-Topic + Name des Geräts in Zigbee2MQTT, ohne `/set`). Ein eingetragenes Topic hat Vorrang.",
           "login": "**Karte und PIN:** Beide Ausweise desselben Benutzers innerhalb von 30 s (erste Eingabe quittiert das Keypad mit „nicht bereit“).",
-          "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils."
+          "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils.",
+          "keypad_device": "Das Keypad, wie es über Zigbee2MQTT in Home Assistant erscheint. Daraus bildet Hauswacht das MQTT-Topic selbst: `zigbee2mqtt/<Name des Geräts in Zigbee2MQTT>`."
         }
       },
       "control_sticker": {
@@ -982,7 +984,8 @@
       "action_code_taken": "Diesen Code mit dieser Taste gibt es schon („{conflict}“).",
       "action_code_profile_missing": "Bitte ein Alarmprofil wählen.",
       "action_code_is_pin": "Dieser Code ist schon ein PIN oder Bedrohungs-PIN – bitte einen anderen wählen.",
-      "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen."
+      "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen.",
+      "control_keypad_topic": "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

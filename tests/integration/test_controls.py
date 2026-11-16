@@ -224,7 +224,7 @@ async def test_options_add_keypad(hass: HomeAssistant, mqtt_mock: MqttMockHAClie
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {**base, "topic": " "}
     )
-    assert flow["errors"] == {"topic": "control_topic"}
+    assert flow["errors"] == {"keypad_device": "control_keypad_topic"}
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {**base, "topic": TOPIC + "/", "arm_night_zones": "night"}
     )
@@ -232,6 +232,48 @@ async def test_options_add_keypad(hass: HomeAssistant, mqtt_mock: MqttMockHAClie
     stored = entry.options["controls"]["keypad_flur"]
     assert stored["topic"] == TOPIC
     assert stored["buttons"] == {"arm_night_zones": "night"}
+
+
+async def test_keypad_topic_from_device(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
+
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    mqtt_entry = next(iter(hass.config_entries.async_entries("mqtt")))
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=mqtt_entry.entry_id,
+        identifiers={("mqtt", "zigbee2mqtt_0x00bb")},
+        name="Alarm-Tastatur",
+    )
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "controls", "control_add_keypad"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    base = {"name": "Keypad Flur", "area": "__all__", "login": "pin_or_card", "emergency": "off"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {**base, "keypad_device": device.id}
+    )
+    assert flow["type"] == "menu"
+    stored = entry.options["controls"]["keypad_flur"]
+    assert stored["topic"] == "zigbee2mqtt/Alarm-Tastatur"
+    assert stored["keypad_device"] == device.id
+    # beim Bearbeiten bleibt das Topic-Feld leer (kommt aus dem Gerät)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "controls", "control_edit"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"control": "keypad_flur"}
+    )
+    topic_key = next(k for k in flow["data_schema"].schema if str(k) == "topic")
+    assert topic_key.description["suggested_value"] == ""
+    # Experte: eigenes Topic hat Vorrang
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {**base, "keypad_device": device.id, "topic": "z2m/Alarm-Tastatur"}
+    )
+    assert entry.options["controls"]["keypad_flur"]["topic"] == "z2m/Alarm-Tastatur"
 
 
 async def _setup_without_pin(hass: HomeAssistant) -> Any:

@@ -32,10 +32,15 @@ MQTT-Integration in Home Assistant. ZHA- und Z-Wave-Keypads sind geplant.
 |---|---|
 | Name | z. B. „Keypad Flur“ – erscheint in „geändert von“, etwa „Anna (Keypad Flur)“ |
 | Bereich | ein Bereich oder alle |
-| MQTT-Topic | Basis-Topic + Gerätename in Zigbee2MQTT, z. B. `zigbee2mqtt/Keypad` – genau wie in Zigbee2MQTT geschrieben (Groß-/Kleinschreibung, Bindestriche), ohne `/set` |
+| Keypad-Gerät | das Keypad aus der Liste (Geräte von Zigbee2MQTT bzw. MQTT). Daraus bildet Hauswacht das MQTT-Topic selbst: `zigbee2mqtt/<Name in Zigbee2MQTT>`, z. B. `zigbee2mqtt/Alarm-Tastatur` |
+| MQTT-Topic (nur für Experten) | **leer lassen** = automatisch aus dem Keypad-Gerät. Nur nötig, wenn in Zigbee2MQTT ein anderes Basis-Topic als `zigbee2mqtt` eingestellt ist oder das Gerät nicht in der Liste auftaucht. Dann: Basis-Topic + Gerätename, genau wie in Zigbee2MQTT geschrieben (Groß-/Kleinschreibung, Bindestriche), ohne `/set`. Ein eingetragenes Topic hat Vorrang |
 | Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil zum **Scharfschalten**, z. B. Tag → „Zuhause“, Nacht → „Nacht“, Alle → „Abwesend“; Tasten ohne Profil antworten „nicht bereit“. Beim frient-Keypad: **Tag = 🏠 Haus**, **Nacht = 🌙 Mond**, **Alle = 🔒 Schloss**. Unscharf schaltet die eigene Taste 🔓 (offenes Schloss) – kein Profil dafür anlegen. Tasten mehrfach belegen: [Aktions-Codes](#aktions-codes) |
 | Anmeldung | **PIN oder Karte** oder **Karte und PIN** (beide Ausweise desselben Benutzers innerhalb von 30 s; der erste wird mit „nicht bereit“ quittiert) |
-| Notruf-Taste | **aus**, **still** (wichtige Push-Nachricht) oder **Alarm** (zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils) |
+| Notruf-Taste | **aus** (Standard – dann passiert beim Drücken von SOS nichts Sichtbares), **still** (wichtige Push-Nachricht) oder **Alarm** (zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils) |
+
+**Keypad in Zigbee2MQTT umbenannt?** Dann ändert sich auch sein MQTT-Topic. Keypad in Hauswacht
+einmal bearbeiten und absenden – das Topic wird aus dem neuen Namen gebildet. Steht ein eigenes
+Topic im Expertenfeld, dieses anpassen.
 
 3. Den **Sabotagekontakt** des Keypads (`binary_sensor.<keypad>_tamper`) in eine Meldergruppe
    aufnehmen (Typ Manipulation) – sinnvollerweise erst, wenn es fest an der Wand hängt, und
