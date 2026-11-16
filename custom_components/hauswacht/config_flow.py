@@ -143,6 +143,10 @@ from .core.profiles import (
     stale_after_seconds,
 )
 from .core.reactions import parse_reaction
+from .core.restart import ARMED as RESTART_ARMED
+from .core.restart import BEHAVIORS as RESTART_BEHAVIORS
+from .core.restart import DEFAULT_BEHAVIOR as DEFAULT_RESTART_BEHAVIOR
+from .core.restart import OPT_RESTART_BEHAVIOR, OPT_RESTART_PROFILES, restart_behavior
 from .core.rules import DEFAULT_WITHIN as RULE_DEFAULT_WITHIN
 from .core.rules import MAX_STEPS as RULE_MAX_STEPS
 from .core.rules import MAX_UNLESS as RULE_MAX_UNLESS
@@ -413,8 +417,69 @@ class HauswachtOptionsFlow(OptionsFlow):
                 "sensor_behaviour",
                 "infrastructure",
                 "homecoming",
+                "restart",
                 "init",
             ],
+        )
+
+    # --- Verhalten nach Neustart ----------------------------------------------
+
+    def _restart_profile_key(self, area_id: str, area_name: str, single: bool) -> str:
+        """Feldname je Bereich (mehrere Bereiche: der Name ist zugleich die Beschriftung)."""
+        if single:
+            return "restart_profile"
+        prefix = "Profil" if self._german() else "Profile"
+        return f"{prefix}: {area_name}" if area_id != MAIN_AREA else "restart_profile"
+
+    async def async_step_restart(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Was nach einem Neustart von Home Assistant passiert."""
+        options = self.config_entry.options
+        areas = parse_areas(options)
+        single = len(areas) == 1
+        stored = dict(options.get(OPT_RESTART_PROFILES) or {})
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            behavior = user_input.get(OPT_RESTART_BEHAVIOR, DEFAULT_RESTART_BEHAVIOR)
+            chosen = {
+                area_id: user_input[key]
+                for area_id, area in areas.items()
+                if (key := self._restart_profile_key(area_id, area.name, single)) in user_input
+                and user_input[key]
+            }
+            if behavior == RESTART_ARMED and not chosen:
+                errors["base"] = "restart_needs_profile"
+            else:
+                new = dict(options)
+                new[OPT_RESTART_BEHAVIOR] = behavior
+                new[OPT_RESTART_PROFILES] = chosen
+                return await self._save(new, "system")
+        fields: dict[Any, Any] = {
+            vol.Required(OPT_RESTART_BEHAVIOR, default=restart_behavior(options)): _select(
+                list(RESTART_BEHAVIORS), "restart_behavior"
+            ),
+        }
+        for area_id, area in areas.items():
+            infos = [
+                i for i in profile_infos(options) if profile_area(options, i.profile_id) == area_id
+            ]
+            if not infos:
+                continue
+            key = self._restart_profile_key(area_id, area.name, single)
+            fields[vol.Optional(key, description={"suggested_value": stored.get(area_id)})] = (
+                SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SelectOptionDict(value=i.profile_id, label=self._profile_label(i))
+                            for i in infos
+                        ],
+                        mode=SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            )
+        return self.async_show_form(
+            step_id="restart", data_schema=vol.Schema(fields), errors=errors
         )
 
     # --- Bereiche ------------------------------------------------------------

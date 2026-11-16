@@ -14,6 +14,7 @@ from custom_components.hauswacht.core.state_machine import (
     AlwaysActiveTriggered,
     ArmingAborted,
     ArmRequested,
+    BypassUntilClosed,
     CancelTimer,
     ConfirmationRequired,
     DisarmRequested,
@@ -28,6 +29,7 @@ from custom_components.hauswacht.core.state_machine import (
     Readiness,
     Rejected,
     RestartedDisarmed,
+    RestoreRequested,
     SensorClosed,
     SensorRole,
     SensorsBypassed,
@@ -36,6 +38,7 @@ from custom_components.hauswacht.core.state_machine import (
     SetTestMode,
     StartTimer,
     Startup,
+    StateChanged,
     StopReaction,
     TamperDetected,
     TestModeChanged,
@@ -519,6 +522,53 @@ def test_timer_from_before_restart_is_ignored() -> None:
     effects = h.send(EntryDelayElapsed(token=token))
     assert of_type(effects, Ignored)
     assert h.ctx.state is AlarmState.DISARMED
+
+
+# --- Wiederherstellen nach Neustart (0.45) ----------------------------------
+
+
+def test_restore_is_armed_at_once_without_exit_delay() -> None:
+    h = Harness()
+    effects = h.send(RestoreRequested(profile=AWAY, bypassed=frozenset({"fenster"})))
+    assert h.ctx.state is AlarmState.ARMED
+    assert h.ctx.profile == AWAY
+    assert h.ctx.bypassed == {"fenster"}
+    assert not of_type(effects, StartTimer)  # keine Ausgangsverzögerung
+    assert of_type(effects, StateChanged)[0].cause == "restored"
+
+
+def test_restore_starts_entry_delay_again() -> None:
+    h = Harness()
+    h.send(RestoreRequested(profile=AWAY, entry_delay=True, trigger_sensor="haustuer"))
+    assert h.ctx.state is AlarmState.PENDING
+    assert h.ctx.trigger_sensor == "haustuer"
+    timer = h.timer()
+    assert timer.kind is TimerKind.ENTRY_DELAY
+    assert timer.seconds == 30
+
+
+def test_restore_only_when_disarmed() -> None:
+    h = Harness()
+    h.arm(NIGHT)
+    effects = h.send(RestoreRequested(profile=AWAY))
+    assert of_type(effects, Rejected)
+    assert h.ctx.profile == NIGHT
+
+
+def test_bypass_until_closed_after_restore() -> None:
+    h = Harness()
+    h.send(RestoreRequested(profile=NIGHT))
+    h.send(BypassUntilClosed(sensors=frozenset({"fenster"})))
+    assert h.ctx.bypassed_until_closed == {"fenster"}
+    # geschlossen: wieder überwacht
+    h.send(SensorClosed(sensor_key="fenster"))
+    assert h.ctx.bypassed_until_closed == frozenset()
+
+
+def test_bypass_until_closed_ignored_when_disarmed() -> None:
+    h = Harness()
+    h.send(BypassUntilClosed(sensors=frozenset({"fenster"})))
+    assert h.ctx.bypassed_until_closed == frozenset()
 
 
 # --- Testmodus --------------------------------------------------------------

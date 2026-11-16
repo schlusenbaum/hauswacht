@@ -251,6 +251,7 @@
           "sensor_behaviour": "Funkstille von Sensoren",
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Anwesenheit und Heimkehr-Beobachtung",
+          "restart": "Verhalten nach Neustart",
           "init": "← Zurück"
         },
         "description": "{saved}"
@@ -835,6 +836,18 @@
           "who": "Ein Sensor, dessen Wert beim Aufschließen die Kennung des Benutzers zeigt (z. B. Benutzername oder Nummer), oder ein Ereignis mit dieser Kennung als Ereignistyp.",
           "profile": "Nur wenn ein bekannter Benutzer mit Recht zum Scharfschalten von außen abschließt (App, Keypad, Fob) und alles unscharf ist. Leer = Abschließen tut nichts."
         }
+      },
+      "restart": {
+        "title": "Verhalten nach Neustart",
+        "description": "Was Hauswacht macht, wenn Home Assistant neu startet (z. B. nach einem Update oder einer nächtlichen Sicherung) oder Hauswacht neu geladen wird.\n\n**Vorherigen Zustand wiederherstellen (Standard):** War die Anlage scharf, ist sie sofort wieder scharf – mit demselben Profil und denselben überbrückten Meldern, ohne erneute Prüfung und ohne Ausgangsverzögerung. War sie unscharf, bleibt sie unscharf.\n- Lief gerade die **Eingangsverzögerung**, beginnt sie neu – wer heimkam, konnte während des Neustarts nicht unscharf schalten.\n- Ein laufender **Alarm wird nie fortgesetzt**: keine Sirenen, die Anlage ist scharf, eine Nachricht nennt den Auslöser.\n- Melder, die beim Hochfahren **offen** gemeldet werden, werden bis zum Schließen überbrückt (Eingangstüren starten stattdessen die Eingangsverzögerung) und gemeldet.\n\n**Immer scharf:** etwa eine Minute nach dem Hochfahren wird das gewählte Profil normal scharf geschaltet – mit Prüfung offener Melder. Für Ferienhaus oder unbewohnte Bereiche. Bereiche ohne Profil bleiben unscharf.\n\n**Immer unscharf:** wie bis Version 0.44; war die Anlage scharf, kommt die Nachricht „nach Neustart unscharf“.",
+        "data": {
+          "restart_behavior": "Nach einem Neustart",
+          "restart_profile": "Alarmprofil für „immer scharf“"
+        },
+        "data_description": {
+          "restart_behavior": "Standard: vorherigen Zustand wiederherstellen.",
+          "restart_profile": "Nur für „immer scharf“."
+        }
       }
     },
     "error": {
@@ -882,7 +895,8 @@
       "arrival_needs_persons": "„Unscharf bei Rückkehr“ braucht mindestens eine Person unter „Scharf, wenn alle diese Personen weg sind“.",
       "control_entity": "Bitte eine Entität wählen.",
       "control_who": "Für die allgemeine Quelle einen Sensor oder ein Ereignis mit der Kennung wählen.",
-      "button_no_press": "Mindestens eine Druckart einem Alarmprofil zuordnen."
+      "button_no_press": "Mindestens eine Druckart einem Alarmprofil zuordnen.",
+      "restart_needs_profile": "„Immer scharf“ braucht mindestens ein Alarmprofil."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1056,6 +1070,13 @@
       "options": {
         "nuki_mqtt": "Nuki über MQTT (lockActionEvent)",
         "generic": "Allgemein (Sensor oder Ereignis)"
+      }
+    },
+    "restart_behavior": {
+      "options": {
+        "restore": "Vorherigen Zustand wiederherstellen",
+        "armed": "Immer scharf (mit festem Profil)",
+        "disarmed": "Immer unscharf"
       }
     }
   },

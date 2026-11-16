@@ -32,6 +32,7 @@ from .core.controls import learn_minutes, parse_controls
 from .core.notify_events import NotifyEvent, enabled, route
 from .core.profiles import profile_behaviour, profile_info, profile_settings, stale_after_seconds
 from .core.reactions import parse_reaction
+from .core.restart import OPT_RESTART_PROFILES, restart_behavior
 from .core.rules import build_engine, describe_rule, profile_rule_ids
 from .core.sensor_types import excluded_sensors, normalize
 from .core.siren_guard import FireIndicator, SirenDevice, is_fire_tone, select_tone
@@ -394,6 +395,14 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
             for e in options.get(OPT_INFRASTRUCTURE, [])
         ],
         "card_learn_minutes": learn_minutes(options),
+        "restart": {
+            "behavior": restart_behavior(options),
+            "profiles": [
+                main.areas[a].profile_name(p)
+                for a, p in (options.get(OPT_RESTART_PROFILES) or {}).items()
+                if a in main.areas and p in main.areas[a].profiles
+            ],
+        },
         "homecoming": {
             "enabled": main.homecoming.enabled,
             "days": round(main.homecoming.days(), 1),

@@ -55,6 +55,7 @@ REASON_TIME = "Uhrzeit"
 REASON_AWAY = "alle weg"
 REASON_ARRIVAL = "Rückkehr"
 REASON_ARRIVAL_DOOR = "Rückkehr mit Türbeleg"
+REASON_RESTART = "Neustart"
 _PROOF_STATES = (AlarmState.ARMED, AlarmState.PENDING)
 
 
@@ -344,6 +345,7 @@ class AutomationRunner:
             REASON_AWAY: "reason_away",
             REASON_ARRIVAL: "reason_arrival",
             REASON_ARRIVAL_DOOR: "reason_arrival_door",
+            REASON_RESTART: "reason_restart",
         }
         return tr(self.runtime.lang, key[reason]) if reason in key else reason
 
