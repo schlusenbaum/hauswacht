@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.45.2:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.45.3:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -151,7 +151,12 @@ from the moment Home Assistant has finished starting):
     who can then disarm.
   - **All others** (windows, motion …) are **bypassed until closed** instead of causing a siren
     alarm at night. After the startup phase you get the message "Hauswacht: open after restart"
-    with the names. As soon as such a sensor closes, it is monitored normally again.
+    with the names. If such a sensor briefly reports "unavailable" and then open again, there is
+    still no alarm. As soon as it closes, it is monitored normally again.
+- **Sensors already reported open when the state is restored** (their gateway was faster than
+  Hauswacht) are **always bypassed until closed – entry doors too**. A door that is already open
+  when Hauswacht starts was more likely forgotten than just opened; an entry delay would otherwise
+  sound the siren at night after 30 seconds.
 - Sensors that were bypassed before the restart stay bypassed.
 
 **Example:** the system is armed "Night", at 3:00 Home Assistant restarts for a backup. At 3:02
@@ -167,7 +172,10 @@ For each area you choose a profile (e.g. "Away"). About **one minute** after Hom
 started – so the radio sensors report again –, it is armed **quite normally**: with the check of
 open and failed sensors according to the rules of the profile, and with exit delay. If this fails
 (e.g. window open), you get the usual message "not armed". Areas without a profile stay disarmed.
-The logbook says "Automation", the message "armed automatically (restart)".
+The logbook says "Automation", the message "armed automatically (restart)". Like every automation
+message, it is sent via the event **"Automation"** in the [notifications](notifications.md)
+(default: on) – if you switched this event off, you don't get it. "Not armed" is sent via the
+event "Arming rejected" (default: on).
 
 > "Always armed" also arms if the system was disarmed **before** the restart – e.g. because
 > someone was home. For an occupied house, "Restore" is therefore the better choice.

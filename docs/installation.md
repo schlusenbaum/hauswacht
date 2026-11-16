@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.45.2:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.45.3:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -156,7 +156,13 @@ Minuten** (ab dem Moment, in dem Home Assistant fertig hochgefahren ist):
     jemand heim, der dann unscharf schalten kann.
   - **Alle anderen** (Fenster, Bewegung …) werden **bis zum Schließen überbrückt** statt nachts
     einen Sirenenalarm auszulösen. Nach der Startphase kommt die Nachricht „Hauswacht: offen nach
-    Neustart“ mit den Namen. Sobald ein solcher Melder schließt, ist er wieder normal überwacht.
+    Neustart“ mit den Namen. Meldet so ein Melder zwischendurch kurz „nicht verfügbar“ und dann
+    wieder offen, gibt es trotzdem keinen Alarm. Sobald er schließt, ist er wieder normal
+    überwacht.
+- **Melder, die schon beim Wiederherstellen offen gemeldet sind** (ihr Gateway war schneller als
+  Hauswacht), werden **immer bis zum Schließen überbrückt – auch Eingangstüren**. Eine Tür, die
+  schon offen steht, wenn Hauswacht startet, ist eher vergessen als gerade geöffnet; eine
+  Eingangsverzögerung würde sonst nachts nach 30 Sekunden die Sirene auslösen.
 - Melder, die vor dem Neustart überbrückt waren, bleiben überbrückt.
 
 **Beispiel:** Die Anlage ist nachts auf „Nacht“ scharf, um 3:00 startet Home Assistant für eine
@@ -173,7 +179,10 @@ Assistant hochgefahren ist – damit die Funkmelder wieder melden –, wird es *
 geschaltet: mit Prüfung offener und ausgefallener Melder nach den Regeln des Profils und mit
 Ausgangsverzögerung. Klappt es nicht (z. B. Fenster offen), kommt die übliche Nachricht „nicht
 scharf geschaltet“. Bereiche ohne Profil bleiben unscharf. Im Logbuch steht „Automatik“, die
-Nachricht „automatisch scharf (Neustart)“.
+Nachricht „automatisch scharf (Neustart)“. Sie kommt wie jede Automatik-Nachricht über das
+Ereignis **„Automatik“** in den [Benachrichtigungen](benachrichtigungen.md) (Standard: an) – wer
+dieses Ereignis ausgeschaltet hat, bekommt sie nicht. „Nicht scharf geschaltet“ kommt über das
+Ereignis „Scharfschaltung abgelehnt“ (Standard: an).
 
 > „Immer scharf“ schaltet auch scharf, wenn die Anlage **vor** dem Neustart unscharf war – z. B.
 > weil jemand zuhause war. Für ein bewohntes Haus ist deshalb „Wiederherstellen“ die bessere

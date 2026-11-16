@@ -478,7 +478,8 @@ def _on_restore(ctx: AlarmContext, event: RestoreRequested, now: float) -> Resul
     ctx = replace(
         ctx,
         profile=profile,
-        bypassed=event.bypassed,
+        # "bis zum Schließen" ist immer auch überbrückt (ältere Speicherstände: nur dort)
+        bypassed=event.bypassed | event.bypassed_until_closed,
         bypassed_until_closed=event.bypassed_until_closed,
         accepted_unavailable=event.accepted_unavailable,
         alarm_cycles=0,
@@ -496,7 +497,12 @@ def _on_restore(ctx: AlarmContext, event: RestoreRequested, now: float) -> Resul
 def _on_bypass_until_closed(ctx: AlarmContext, event: BypassUntilClosed) -> Result:
     if ctx.state is AlarmState.DISARMED or not event.sensors:
         return ctx, ()
-    return replace(ctx, bypassed_until_closed=ctx.bypassed_until_closed | event.sensors), ()
+    # Wie nach "Alarm beenden": überbrückt (ignoriert) UND beim Schließen wieder überwacht
+    return replace(
+        ctx,
+        bypassed=ctx.bypassed | event.sensors,
+        bypassed_until_closed=ctx.bypassed_until_closed | event.sensors,
+    ), ()
 
 
 def _on_arm(ctx: AlarmContext, event: ArmRequested, now: float) -> Result:
