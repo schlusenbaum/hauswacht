@@ -678,3 +678,12 @@ async def test_action_code_flow_rejects_pin(
     assert flow["step_id"] == "action_codes"
     stored = entry.options["action_codes"]
     assert any(c["name"] == "Garage" and c["code"] == "4242" for c in stored.values())
+    # umgekehrt: ein PIN darf kein Aktions-Code sein
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "users", "pins"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"new_pin": "4242"})
+    assert flow["errors"] == {"new_pin": "pin_is_action_code"}

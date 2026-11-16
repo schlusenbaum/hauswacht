@@ -22,6 +22,7 @@ e.g. `alarm_control_panel.hauswacht_garage`.
 | `button.hauswacht_disarm_now` | disarm immediately, also during an alarm |
 | `button.hauswacht_end_alarm` | only end the alarm, profile stays armed |
 | `switch.hauswacht_test_mode` | test mode |
+| `event.hauswacht_action_code` | only with [action codes](control-devices.md#action-codes) with the action "event": event type = name of the code, attributes `keypad`, `test` |
 
 ### State and diagnostics
 
@@ -122,6 +123,7 @@ e.g.:
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | trigger rules |
 | `InvalidCode`, `CodeLockReset` | wrong entry (with `failures`, `lock_seconds`), counter reset |
 | `Panic`, `Emergency` | emergency key on the keypad |
+| `ActionCode` | action code entered (with `name`, `action`, `control`, `test`) |
 | `SirenDecision`, `SirenTest` | siren decision (`action`: `activate`, `stop`, `stop_restored` = switch off after restart), steps of a siren test |
 | `SensorSimulated` | test mode: sensor simulated |
 | `NotificationSuppressed`, `SpeechSuppressed` | notification or announcement suppressed (e.g. test mode, quiet hours) |

@@ -33,7 +33,7 @@ MQTT integration in Home Assistant. ZHA and Z-Wave keypads are planned.
 | Name | e.g. "Keypad hallway" – appears in "changed by", e.g. "Anna (Keypad hallway)" |
 | Area | one area or all |
 | MQTT topic | base topic + device name in Zigbee2MQTT, e.g. `zigbee2mqtt/Keypad` – written exactly as in Zigbee2MQTT (upper/lower case, hyphens), without `/set` |
-| Keys "Day", "Night", "All" | one alarm profile each for **arming**, e.g. Day → "Home", Night → "Night", All → "Away"; keys without a profile answer "not ready". The keypad's own disarm key disarms – do not create a profile for it |
+| Keys "Day", "Night", "All" | one alarm profile each for **arming**, e.g. Day → "Home", Night → "Night", All → "Away"; keys without a profile answer "not ready". On the frient keypad: **Day = 🏠 house**, **Night = 🌙 moon**, **All = 🔒 lock**. The keypad's own key 🔓 (open lock) disarms – do not create a profile for it. Assigning keys several times: [action codes](#action-codes) |
 | Login | **PIN or card** or **card and PIN** (both credentials of the same user within 30 s; the first is acknowledged with "not ready") |
 | Emergency key | **off**, **silent** (critical push message) or **alarm** (additionally an instant alarm – disarmed with the sirens under "Always active", armed with those of the active profile) |
 
@@ -61,6 +61,88 @@ once with the action "Recorder: Purge entities" for this entity.
 
 Where the keypad should hang so that you reach it during the entry delay is shown by the
 measurement ["Door open to disarmed"](observations.md#door-open-to-disarmed).
+
+## Action codes
+
+**System settings → Control devices → Action codes.** An action code is a **code plus a function
+key** at the keypad, e.g. **7777 + 🏠 house**. It triggers a fixed action – this way the keys of
+the keypad can be assigned several times:
+
+```
+➕ New action code
+outdoor light – 7777 + 🏠 house · all keypads → event
+light off – 7777 + 🌙 night · all keypads → event
+garage light – 42 + 🔒 lock · Keypad hallway → event
+emergency – 9111 + 🌙 night · all keypads → silent emergency
+```
+
+| Field | Meaning |
+|---|---|
+| Name | e.g. "outdoor light" – shown in the logbook and, for "event", the event type |
+| Code | **2–8 digits**. Must not equal a PIN, duress PIN or master PIN (and vice versa) |
+| Key | 🏠 house, 🌙 night, 🔒 lock or 🔓 open lock. SOS does not work – it sends no code |
+| Keypad | all or a specific one |
+| Action | **Event** for your own automation, **Arm** with a profile or **silent emergency** |
+
+The same code may have different actions with different keys. Code + key may exist only once,
+though. Tap an entry: change or delete it.
+
+**At the keypad:** type the code, then press the key. The keypad gets a positive response and
+then shows the state again. An action code **never counts as a failed attempt** – during a
+[PIN lockout](users.md#lockout-after-wrong-entries) it is locked too, though. If a code with a key
+is set up as an action code, it takes precedence over the normal assignment of the key.
+
+**Not a credential:** an action code belongs to no person and is not secret – whoever knows or
+guesses it triggers the action. That is why it can **never disarm**, and you should not trigger
+anything security-critical with it (e.g. door openers, garage door).
+
+### Action "event": your own automation
+
+As soon as there is an action code with "event", Hauswacht has the entity
+**`event.hauswacht_action_code`** ("Hauswacht action code"; with German language
+`event.hauswacht_aktions_code`). For every action code it reports an event with the **name** of
+the code as event type. Hauswacht itself switches nothing – your automation decides what happens.
+
+**Example – 7777 + house switches the outdoor light on for 5 minutes:**
+
+1. Add an action code: name "outdoor light", code `7777`, key 🏠 house, action event.
+2. New automation. Trigger: state of "Hauswacht action code" (every event changes it).
+   Condition: attribute "event type" is "outdoor light". In YAML:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: event.hauswacht_action_code
+conditions:
+  - condition: state
+    entity_id: event.hauswacht_action_code
+    attribute: event_type
+    state: outdoor light
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.outdoor
+  - delay: "00:05:00"
+  - action: light.turn_off
+    target:
+      entity_id: light.outdoor
+```
+
+Why not directly "attribute changes to outdoor light"? If the same code is typed twice in a row,
+the event type stays the same – the automation would only run the first time. The state (time of
+the last event) changes every time.
+
+The entity also has the attributes `keypad` (which keypad) and `test` (test mode on).
+
+### Actions "arm" and "silent emergency"
+
+- **Arm:** arms the chosen profile, just like the key with a profile – with the check of open
+  sensors and exit delay. The logbook shows e.g. "action code “night by code” (Keypad hallway)".
+  This also applies if "PIN when arming" is on under PIN rules: whoever sets up an action code
+  for arming wants exactly that.
+- **Silent emergency:** important push message "emergency at Keypad hallway" to the alarm
+  recipients – like the SOS key on "silent", but inconspicuously via a normal key. No siren, no
+  display on the keypad.
 
 ## Learning cards
 

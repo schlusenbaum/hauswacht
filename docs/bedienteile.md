@@ -33,7 +33,7 @@ MQTT-Integration in Home Assistant. ZHA- und Z-Wave-Keypads sind geplant.
 | Name | z. B. „Keypad Flur“ – erscheint in „geändert von“, etwa „Anna (Keypad Flur)“ |
 | Bereich | ein Bereich oder alle |
 | MQTT-Topic | Basis-Topic + Gerätename in Zigbee2MQTT, z. B. `zigbee2mqtt/Keypad` – genau wie in Zigbee2MQTT geschrieben (Groß-/Kleinschreibung, Bindestriche), ohne `/set` |
-| Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil zum **Scharfschalten**, z. B. Tag → „Zuhause“, Nacht → „Nacht“, Alle → „Abwesend“; Tasten ohne Profil antworten „nicht bereit“. Unscharf schaltet die eigene Unscharf-Taste – kein Profil dafür anlegen |
+| Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil zum **Scharfschalten**, z. B. Tag → „Zuhause“, Nacht → „Nacht“, Alle → „Abwesend“; Tasten ohne Profil antworten „nicht bereit“. Beim frient-Keypad: **Tag = 🏠 Haus**, **Nacht = 🌙 Mond**, **Alle = 🔒 Schloss**. Unscharf schaltet die eigene Taste 🔓 (offenes Schloss) – kein Profil dafür anlegen. Tasten mehrfach belegen: [Aktions-Codes](#aktions-codes) |
 | Anmeldung | **PIN oder Karte** oder **Karte und PIN** (beide Ausweise desselben Benutzers innerhalb von 30 s; der erste wird mit „nicht bereit“ quittiert) |
 | Notruf-Taste | **aus**, **still** (wichtige Push-Nachricht) oder **Alarm** (zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils) |
 
@@ -65,6 +65,90 @@ dem normalen Aufräumen des Verlaufs (Standard: 10 Tage) – sofort geht es mit 
 
 Wo das Keypad hängen sollte, damit man es in der Eingangsverzögerung erreicht, hilft die
 Messung [„Tür auf bis unscharf“](beobachtung.md#tür-auf-bis-unscharf).
+
+## Aktions-Codes
+
+**Systemeinstellungen → Bedienteile → Aktions-Codes.** Ein Aktions-Code ist ein **Code plus eine
+Funktionstaste** am Keypad, z. B. **7777 + 🏠 Haus**. Er löst eine festgelegte Aktion aus – so
+lassen sich die Tasten des Keypads mehrfach belegen:
+
+```
+➕ Neuer Aktions-Code
+Außenlicht – 7777 + 🏠 Haus · alle Keypads → Ereignis
+Licht aus – 7777 + 🌙 Nacht · alle Keypads → Ereignis
+Garagenlicht – 42 + 🔒 Schloss · Keypad Flur → Ereignis
+Notruf – 9111 + 🌙 Nacht · alle Keypads → stiller Notruf
+```
+
+| Feld | Bedeutung |
+|---|---|
+| Name | z. B. „Außenlicht“ – erscheint im Logbuch und ist bei „Ereignis“ der Ereignistyp |
+| Code | **2–8 Ziffern**. Darf keinem PIN, Bedrohungs-PIN oder Master-PIN gleichen (umgekehrt genauso) |
+| Taste | 🏠 Haus, 🌙 Nacht, 🔒 Schloss oder 🔓 offenes Schloss. SOS geht nicht – sie schickt keinen Code mit |
+| Keypad | alle oder ein bestimmtes |
+| Aktion | **Ereignis** für eine eigene Automation, **Scharf schalten** mit einem Profil oder **stiller Notruf** |
+
+Derselbe Code darf mit verschiedenen Tasten verschiedene Aktionen haben. Code + Taste darf es
+aber nur einmal geben. Einen Eintrag antippen: ändern oder löschen.
+
+**Am Keypad:** Code tippen, dann die Taste drücken. Das Keypad bekommt eine positive Rückmeldung
+und zeigt danach wieder den Zustand. Ein Aktions-Code zählt **nie als Fehlversuch** – während
+einer [PIN-Sperre](benutzer.md#sperre-nach-falschen-eingaben) ist er aber ebenfalls gesperrt.
+Ist ein Code mit einer Taste als Aktions-Code eingerichtet, hat er Vorrang vor der normalen
+Belegung der Taste.
+
+**Kein Ausweis:** Ein Aktions-Code gehört keiner Person und ist nicht geheim – wer ihn kennt oder
+errät, löst die Aktion aus. Deshalb kann er **nie unscharf schalten**, und du solltest nichts
+Sicherheitskritisches damit auslösen (z. B. Türöffner, Garagentor).
+
+### Aktion „Ereignis“: eigene Automation
+
+Sobald es einen Aktions-Code mit „Ereignis“ gibt, hat Hauswacht die Entität
+**`event.hauswacht_aktions_code`** („Hauswacht Aktions-Code“; bei englischer Sprache
+`event.hauswacht_action_code`). Bei jedem Aktions-Code meldet sie ein Ereignis mit dem **Namen**
+des Codes als Ereignistyp. Hauswacht selbst schaltet dabei nichts – was passiert, bestimmt deine
+Automation.
+
+**Beispiel – 7777 + Haus schaltet das Außenlicht für 5 Minuten ein:**
+
+1. Aktions-Code anlegen: Name „Außenlicht“, Code `7777`, Taste 🏠 Haus, Aktion Ereignis.
+2. Neue Automation. Auslöser: Zustand von „Hauswacht Aktions-Code“ (jedes Ereignis ändert ihn).
+   Bedingung: Attribut „Ereignistyp“ ist „Außenlicht“. In YAML:
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: event.hauswacht_aktions_code
+conditions:
+  - condition: state
+    entity_id: event.hauswacht_aktions_code
+    attribute: event_type
+    state: Außenlicht
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.aussen
+  - delay: "00:05:00"
+  - action: light.turn_off
+    target:
+      entity_id: light.aussen
+```
+
+Warum nicht direkt „Attribut ändert sich auf Außenlicht“? Wird derselbe Code zweimal
+hintereinander getippt, bleibt der Ereignistyp gleich – die Automation liefe dann nur beim ersten
+Mal. Der Zustand (Zeitpunkt des letzten Ereignisses) ändert sich dagegen jedes Mal.
+
+Die Entität hat außerdem die Attribute `keypad` (welches Keypad) und `test` (Testmodus an).
+
+### Aktion „Scharf schalten“ und „stiller Notruf“
+
+- **Scharf schalten:** schaltet das gewählte Profil scharf, genau wie die Taste mit Profil – mit
+  Prüfung offener Melder und Ausgangsverzögerung. Im Logbuch steht z. B. „Aktions-Code ‚Nacht per
+  Code‘ (Keypad Flur)“. Das gilt auch, wenn unter PIN-Regeln „PIN beim Scharfschalten“ an ist:
+  Wer einen Aktions-Code zum Scharfschalten anlegt, will genau das.
+- **Stiller Notruf:** wichtige Push-Nachricht „Notruf am Keypad Flur“ an die Alarm-Empfänger –
+  wie die SOS-Taste auf „still“, aber unauffällig über eine normale Taste. Keine Sirene, keine
+  Anzeige am Keypad.
 
 ## Karten anlernen
 
