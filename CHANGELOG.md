@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.48.1] - 2026-11-16
+
+### Behoben
+- **„Neue Karte anlernen“ wartet jetzt immer auf eine Karte, die während des Dialogs gelesen
+  wird.** Bisher sprang der Dialog sofort zu einer Karte aus einem früheren, abgebrochenen
+  Versuch. Sobald eine Karte gelesen ist, geht es wie bisher sofort weiter; angeboten wird nur
+  diese Karte.
+
+### Geändert
+- Neuer Eintrag **„⌨️ Kartennummer eintippen“** in der Kartenliste: ohne Warten, mit den zuletzt
+  gelesenen unbekannten Karten zur Auswahl. „Neue Karte anlernen“ heißt jetzt „Neue Karte
+  anlernen (hinhalten)“; der Wartetext sagt, dass es automatisch weitergeht.
+
+### Dokumentation
+- Bedienteile (deutsch und englisch): Anlernen, Eintippen, Hinweis „frient-Keypad: Unscharf
+  drücken“, Türschlösser angepasst.
+
 ## [0.48.0] - 2026-11-16
 
 ### Hinzugefügt

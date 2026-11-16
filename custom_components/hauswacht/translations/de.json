@@ -241,7 +241,7 @@
       },
       "cards": {
         "title": "Karten und Anhänger",
-        "description": "{saved}Alle RFID-Karten, Anhänger, Finger (Fingerabdruck-Leser) und Schloss-Kennungen. 🟢 aktiv · ⏸️ deaktiviert. Wähle eine Karte zum Umbenennen, Weitergeben, Deaktivieren oder Löschen – oder „Neue Karte anlernen“.\n\nAnlernen geht nur, wenn alle Bereiche unscharf sind.",
+        "description": "{saved}Alle RFID-Karten, Anhänger, Finger (Fingerabdruck-Leser) und Schloss-Kennungen. 🟢 aktiv · ⏸️ deaktiviert. Wähle eine Karte zum Umbenennen, Weitergeben, Deaktivieren oder Löschen – oder „Neue Karte anlernen“ (hinhalten) bzw. „Kartennummer eintippen“.\n\nAnlernen geht nur, wenn alle Bereiche unscharf sind.",
         "data": {
           "card": "Karte"
         }
@@ -963,7 +963,7 @@
       "no_controls": "Es gibt noch keine Bedienteile."
     },
     "progress": {
-      "wait_card": "Halte die neue Karte jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser – bzw. schließe das Türschloss einmal mit der neuen Kennung auf. Der Dialog wartet bis zu {seconds} Sekunden."
+      "wait_card": "Halte die neue Karte jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser – bzw. schließe das Türschloss einmal mit der neuen Kennung auf. Es geht automatisch weiter, sobald sie gelesen wurde (spätestens nach {seconds} Sekunden)."
     }
   },
   "selector": {

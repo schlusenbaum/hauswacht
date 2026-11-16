@@ -241,7 +241,7 @@
       },
       "cards": {
         "title": "Cards and tags",
-        "description": "{saved}All RFID cards, tags, fingers (fingerprint reader) and lock IDs. 🟢 active · ⏸️ disabled. Choose a card to rename, hand over, disable or delete it – or \"Learn new card\".\n\nLearning only works while all areas are disarmed.",
+        "description": "{saved}All RFID cards, tags, fingers (fingerprint reader) and lock IDs. 🟢 active · ⏸️ disabled. Choose a card to rename, hand over, disable or delete it – or \"Learn new card\" (hold it up) or \"Type in card number\".\n\nLearning only works while all areas are disarmed.",
         "data": {
           "card": "Card"
         }
@@ -963,7 +963,7 @@
       "no_controls": "There are no control devices yet."
     },
     "progress": {
-      "wait_card": "Hold the new card to a keypad now (and press Disarm) or to a reader – or unlock the door lock once with the new ID. The dialog waits up to {seconds} seconds."
+      "wait_card": "Hold the new card to a keypad now (and press Disarm) or to a reader – or unlock the door lock once with the new ID. It continues automatically as soon as it has been read (at the latest after {seconds} seconds)."
     }
   },
   "selector": {
