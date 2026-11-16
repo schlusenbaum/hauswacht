@@ -26,20 +26,29 @@ keypad.
 
 ## Users
 
-**System settings → Users and PINs.** Every person gets a user:
+**System settings → Users and PINs.** The menu has:
+
+| Menu item | What for |
+|---|---|
+| Add / edit / delete user | name, rights, validity, Home Assistant account |
+| **Cards and tags** | all cards, fingers and lock IDs: learn, name, assign to a user, disable, delete – see [Control devices → Learning cards](control-devices.md#learning-cards) |
+| **PINs** | set, change, remove PIN and duress PIN per user – see [PINs](#pins) |
+| PIN rules | master PIN, PIN when arming … – see [PIN rules](#pin-rules) |
+
+Every person gets a user:
 
 | Field | Meaning |
 |---|---|
 | Name | suggestions from the Home Assistant users, or free (e.g. "Cleaner"). Shown as "changed by" on the alarm panel, in the logbook and in push messages |
-| PIN | 4–8 digits, stored as a hash only. Optional |
-| Duress PIN | see [below](#duress-pin) |
 | Active | off = credentials blocked without deleting them |
 | May arm / May disarm / May end alarm | rights (with "All areas alike") |
 | Rights apply to | only with several areas, see [Rights](#rights) |
 | Home Assistant account | links the alarm card, push button, dashboard buttons and NFC stickers to this user. Set automatically if a Home Assistant user was chosen as the name |
 | Require PIN in the alarm card | for this user's Home Assistant account in the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin), e.g. for a tablet account. Default off |
 | Valid from / until | for guests: outside this time, the credentials are blocked |
-| RFID cards and lock IDs | any number, see [Control devices → Learning cards](control-devices.md#learning-cards). After saving, the cards can be named (e.g. "key ring") – so you know which one to delete if one gets lost: [Naming cards](control-devices.md#naming-cards--and-deleting-a-lost-card) |
+
+At the top, the user dialog shows the status, e.g. "2 cards · PIN set". You change cards and PINs
+themselves in their own lists. If a user is deleted, their cards are deleted too.
 
 - **Shared PIN:** several users may have the same PIN ("shared PIN (Christian, Petra)"). An
   action is allowed if **at least one** of these users may do it.
@@ -49,6 +58,26 @@ keypad.
   linked to a user, that user's name and rights apply; otherwise the account name is shown and
   everything is allowed (NFC stickers always require a linked user).
 - The automation (time, presence) appears as "Automation".
+
+## PINs
+
+**Users and PINs → PINs.** The list shows who has a PIN or duress PIN and when the PIN last
+switched:
+
+```
+Christian – PIN · duress PIN · last 07:10
+Anna – PIN · last 15.11.2026
+Guest – no PIN
+```
+
+Tap a user: **New PIN** (4–8 digits), **Remove PIN**, **New duress PIN**, **Remove duress PIN**.
+Empty fields change nothing.
+
+PINs are stored as a hash only – Hauswacht can never show them, not here either. Whoever has
+forgotten their PIN gets a new one.
+
+**Example:** Petra is to get a PIN. Users and PINs → PINs → "Petra – no PIN" → New PIN `2580` →
+submit. The list now shows "Petra – PIN · never used".
 
 ## Rights
 

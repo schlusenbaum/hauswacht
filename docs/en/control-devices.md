@@ -56,35 +56,67 @@ measurement ["Door open to disarmed"](observations.md#door-open-to-disarmed).
 
 ## Learning cards
 
-RFID cards and fobs belong to the **users** (field "RFID cards and lock IDs", any number per
-user). IDs of [door locks](#door-lock-eg-nuki) are learned the same way.
+RFID cards, tags, fingers at the [fingerprint reader](#fingerprint-reader-esphome) and IDs of
+[door locks](#door-lock-eg-nuki) are managed in one place: **System settings → Users and PINs →
+Cards and tags.** Below, all of this is simply called "card".
+
+### The card list
+
+The list shows every card with name, number, owner and when it last switched:
+
+```
+➕ Learn new card
+🟢 key ring (04A1B2C3) – Christian · last 07:12
+🟢 wallet (0011223344) – Christian · last 02.11.2026
+⏸️ spare card (A1B2C3D4E5) – Anna · disabled
+🟢 Nuki app (Nuki user 4711) – Anna · never used
+```
+
+🟢 = active, ⏸️ = disabled. "Last" shows the time for today, otherwise the date.
+
+### Learn a new card
 
 1. All areas disarmed.
-2. Hold the new card to the keypad and press **Disarm** (or hold it to the reader). Hauswacht
-   rejects it but remembers it.
-3. Within the **learning time** (default 5 minutes): edit user → "RFID cards and lock IDs" → the
-   card is listed as "new, read at Keypad at 18:04" → select it, save.
-4. Hauswacht then asks for the **names of the cards** – e.g. "key ring". Leaving it empty is fine
-   too.
+2. **Cards and tags → ➕ Learn new card.** The dialog shows: *"Hold the new card to a keypad now
+   (and press Disarm) or to a reader"* and waits up to 2 minutes. For a door lock: unlock once
+   with the new ID.
+3. As soon as the card has been read, the dialog moves on: **"✅ Card recognised"**. Enter a
+   **name** (e.g. "key ring"), choose the **user**, save.
 
-### Naming cards – and deleting a lost card
+If you held the card up **before** (within the learning time), there is no waiting: it is offered
+directly as "new, read at Keypad at 18:04". If there is no card to read, you can also type in
+the number.
 
-If a user has cards or lock IDs, the form **"Names of the cards"** follows after saving their
-settings: one field per card, labelled with its ID. An empty field means: no name. The same goes
-for fingers at the [fingerprint reader](#fingerprint-reader-esphome) ("right thumb") and lock IDs
-("Nuki app").
+**Example:** Anna gets a new tag. Cards and tags → Learn new card → hold the tag to the keypad in
+the hallway, press Disarm → "✅ Card recognised: 04C3D2E1" → name "key ring", user "Anna" →
+submit. From now on Anna's tag switches, and the logbook shows "Anna · key ring (Keypad hallway)".
 
-With names
+### Edit, disable, delete a card
 
-- the user dialog shows **"key ring (04A1B2C3)"** instead of just the number,
-- the logbook, the alarm panel ("changed by") and messages show **which** card was used:
-  "Christian · key ring (Keypad hallway)",
-- the [system overview](overview.md) shows "key ring …B2C3".
+Tap a card in the list:
 
-**Example – card lost:** Christian has two tags, "key ring" and "wallet". The wallet is gone. Edit
-user → Christian → in the field "RFID cards and lock IDs" click the ✕ at **"wallet (…)"** → save →
-simply confirm the next form (names). From now on the card switches nothing, its name is deleted
-too. Whoever finds it and holds it up is rejected as an unknown card.
+| Field | Meaning |
+|---|---|
+| Name of the card | e.g. "key ring", "wallet", "right thumb", "Nuki app". Empty = no name |
+| Belongs to | user – this is also where you hand a card over to someone else |
+| Active | off = **disabled**: the card switches nothing any more but stays known |
+| Delete card | final; afterwards it is rejected like an unknown card |
+
+**A disabled card is used:** it switches nothing, the keypad shows "invalid", and it counts as a
+failed attempt for the [lockout](users.md#lockout-after-wrong-entries). You get a message: *"The
+disabled card “wallet” (Christian) was used at Keypad hallway."* With a disabled lock ID,
+Hauswacht also switches nothing and reports it (a door lock does not count as a failed attempt).
+
+**Example – wallet gone:** Christian misses his wallet with the tag in it. Cards and tags →
+"wallet (0011223344) – Christian" → **Active off** → submit. If the wallet turns up again: active
+on again. If it stays lost: **Delete card**. If anyone tries to disarm with the tag in the
+meantime, you know at once.
+
+With names, the logbook, the alarm panel ("changed by") and messages also show **which** card
+was used – "Christian · key ring (Keypad hallway)" – and the [system overview](overview.md)
+shows "key ring …B2C3" (disabled ones with ⏸).
+
+### Rules for learning
 
 - The learning time can be set under **Control devices → Learning new cards** (1–60 minutes,
   0 = learning off). After that the card is forgotten; whoever saves too late gets a hint and
@@ -214,9 +246,9 @@ sensor:
    right index finger; 2 = Anna, left index finger; 3 = Ben …
 2. **In Hauswacht:** System settings → Control devices → **Add RFID/NFC reader** → reader device
    "fingerprint-hallway" → action e.g. "disarm".
-3. **Assign the finger to the user** like a [card](#learning-cards): everything disarmed, place
-   the finger, then edit user → "RFID cards and lock IDs" → select "FINGER1 (new, read at …)",
-   save. Or type `FINGER1`.
+3. **Assign the finger to the user** like a [card](#learn-a-new-card): everything disarmed,
+   Users and PINs → Cards and tags → Learn new card → place the finger → "✅ Card recognised:
+   FINGER1" → name "right index finger", user "Anna" → save. Or type `FINGER1`.
 
 Good to know:
 
@@ -354,8 +386,11 @@ Like [cards](#learning-cards):
 
 1. All areas disarmed.
 2. **Unlock once** with the app, the keypad code or the fingerprint.
-3. Within the learning time: edit user → "RFID cards and lock IDs" → there you find e.g. "Nuki
-   user 52653 (new, read at Front door lock at 18:04)" → select it, save.
+3. Users and PINs → Cards and tags → Learn new card: the dialog recognises the ID (or it is
+   offered as "Nuki user 52653 (new, read at Front door lock at 18:04)") → name e.g. "Nuki app",
+   choose the user → save.
+
+   You can also open "Learn new card" first and then unlock – the dialog waits up to 2 minutes.
 
 Best learn each person separately, so it is clear which ID belongs to whom. Every keypad code and
 every app access is its own ID; a user can have several.

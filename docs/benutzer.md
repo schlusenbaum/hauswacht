@@ -26,20 +26,29 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
 
 ## Benutzer
 
-**Systemeinstellungen → Benutzer und PINs.** Jede Person bekommt einen Benutzer:
+**Systemeinstellungen → Benutzer und PINs.** Das Menü hat:
+
+| Menüpunkt | Wofür |
+|---|---|
+| Benutzer anlegen / bearbeiten / löschen | Name, Rechte, Gültigkeit, Home-Assistant-Konto |
+| **Karten und Anhänger** | alle Karten, Finger und Schloss-Kennungen: anlernen, benennen, einem Benutzer zuweisen, deaktivieren, löschen – siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen) |
+| **PINs** | PIN und Bedrohungs-PIN je Benutzer setzen, ändern, entfernen – siehe [PINs](#pins) |
+| PIN-Regeln | Master-PIN, PIN beim Scharfschalten … – siehe [PIN-Regeln](#pin-regeln) |
+
+Jede Person bekommt einen Benutzer:
 
 | Feld | Bedeutung |
 |---|---|
 | Name | Vorschläge aus den Home-Assistant-Benutzern oder frei (z. B. „Putzhilfe“). Erscheint als „geändert von“ am Bedienfeld, im Logbuch und in Push-Nachrichten |
-| PIN | 4–8 Ziffern, nur als Hash gespeichert. Optional |
-| Bedrohungs-PIN | siehe [unten](#bedrohungs-pin) |
 | Aktiv | aus = Ausweise gesperrt, ohne sie zu löschen |
 | Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte (bei „alle Bereiche gleich“) |
 | Rechte gelten für | nur bei mehreren Bereichen, siehe [Rechte](#rechte) |
 | Home-Assistant-Konto | ordnet Push-Knopf, Dashboard-Knöpfe und NFC-Aufkleber diesem Benutzer zu. Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | In der Alarmkarte PIN verlangen | für das Home-Assistant-Konto dieses Benutzers in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang), z. B. bei einem Tablet-Konto. Standard aus |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit sind die Ausweise gesperrt |
-| RFID-Karten/-Anhänger | beliebig viele, siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen). Nach dem Speichern lassen sich die Karten benennen (z. B. „Schlüsselbund“) – so weißt du beim Verlust, welche du löschst: [Karten benennen](bedienteile.md#karten-benennen--und-eine-verlorene-karte-löschen) |
+
+Oben im Benutzer-Dialog steht der Stand, z. B. „2 Karten · PIN gesetzt“. Karten und PINs selbst
+änderst du in den eigenen Listen. Wird ein Benutzer gelöscht, werden seine Karten mit gelöscht.
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben („gemeinsamer PIN (Christian,
   Petra)“, bei englischer Sprache „shared PIN (…)“). Eine Aktion ist erlaubt, wenn **mindestens einer** dieser Benutzer sie darf.
@@ -49,6 +58,26 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
   Benutzer zugeordnet, gelten dessen Name und Rechte; sonst erscheint der Name des Kontos und
   alles ist erlaubt (NFC-Aufkleber verlangen immer einen zugeordneten Benutzer).
 - Automatik (Uhrzeit, Anwesenheit) erscheint als „Automatik“.
+
+## PINs
+
+**Benutzer und PINs → PINs.** Die Liste zeigt, wer einen PIN bzw. Bedrohungs-PIN hat und wann
+der PIN zuletzt geschaltet hat:
+
+```
+Christian – PIN · Bedrohungs-PIN · zuletzt 07:10
+Anna – PIN · zuletzt 15.11.2026
+Gast – kein PIN
+```
+
+Einen Benutzer antippen: **Neuer PIN** (4–8 Ziffern), **PIN entfernen**, **Neuer
+Bedrohungs-PIN**, **Bedrohungs-PIN entfernen**. Leere Felder ändern nichts.
+
+PINs werden nur als Hash gespeichert – Hauswacht kann sie nie anzeigen, auch nicht hier. Wer
+seinen PIN vergessen hat, bekommt einen neuen.
+
+**Beispiel:** Petra soll einen PIN bekommen. Benutzer und PINs → PINs → „Petra – kein PIN“ →
+Neuer PIN `2580` → Absenden. In der Liste steht jetzt „Petra – PIN · noch nie benutzt“.
 
 ## Rechte
 

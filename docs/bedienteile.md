@@ -59,38 +59,70 @@ Messung [„Tür auf bis unscharf“](beobachtung.md#tür-auf-bis-unscharf).
 
 ## Karten anlernen
 
-RFID-Karten und -Anhänger gehören zu den **Benutzern** (Feld „RFID-Karten und
-Schloss-Kennungen“, beliebig viele je Benutzer). Kennungen von [Türschlössern](#türschloss-z-b-nuki)
-lernst du genauso an.
+RFID-Karten, Anhänger, Finger am [Fingerabdruck-Leser](#fingerabdruck-leser-esphome) und
+Kennungen von [Türschlössern](#türschloss-z-b-nuki) verwaltest du an einer Stelle:
+**Systemeinstellungen → Benutzer und PINs → Karten und Anhänger.** Im Folgenden heißt all das
+einfach „Karte“.
+
+### Die Kartenliste
+
+Die Liste zeigt jede Karte mit Name, Nummer, Besitzer und wann sie zuletzt geschaltet hat:
+
+```
+➕ Neue Karte anlernen
+🟢 Schlüsselbund (04A1B2C3) – Christian · zuletzt 07:12
+🟢 Geldbörse (0011223344) – Christian · zuletzt 02.11.2026
+⏸️ Ersatzkarte (A1B2C3D4E5) – Anna · deaktiviert
+🟢 Nuki-App (Nuki-Benutzer 4711) – Anna · noch nie benutzt
+```
+
+🟢 = aktiv, ⏸️ = deaktiviert. „Zuletzt“ zeigt bei heute die Uhrzeit, sonst das Datum.
+
+### Neue Karte anlernen
 
 1. Alle Bereiche unscharf.
-2. Neue Karte ans Keypad halten und **Unscharf** drücken (bzw. an den Leser halten). Hauswacht
-   lehnt sie ab, merkt sie sich aber.
-3. Innerhalb der **Anlernzeit** (Standard 5 Minuten): Benutzer bearbeiten → „RFID-Karten und
-   Schloss-Kennungen“ → die Karte steht dort als „neu, gelesen an Keypad um 18:04“ → auswählen,
-   speichern.
-4. Danach fragt Hauswacht nach den **Namen der Karten** – z. B. „Schlüsselbund“. Leer lassen
-   geht auch.
+2. **Karten und Anhänger → ➕ Neue Karte anlernen.** Der Dialog zeigt: *„Halte die neue Karte
+   jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser“* und wartet bis zu
+   2 Minuten. Bei einem Türschloss: einmal mit der neuen Kennung aufschließen.
+3. Sobald die Karte gelesen ist, springt der Dialog weiter: **„✅ Karte erkannt“**. Gib einen
+   **Namen** ein (z. B. „Schlüsselbund“), wähle den **Benutzer**, speichern.
 
-### Karten benennen – und eine verlorene Karte löschen
+Hast du die Karte schon **vorher** hingehalten (innerhalb der Anlernzeit), entfällt das Warten:
+Sie steht direkt als „neu, gelesen an Keypad um 18:04“ zur Auswahl. Ist keine Karte zu lesen,
+kannst du die Nummer auch eintippen.
 
-Hat ein Benutzer Karten oder Schloss-Kennungen, folgt nach dem Speichern seiner Einstellungen
-das Formular **„Namen der Karten“**: ein Feld je Karte, beschriftet mit ihrer Kennung. Ein leeres
-Feld heißt: ohne Namen. Das gilt genauso für Finger am [Fingerabdruck-Leser](#fingerabdruck-leser-esphome)
-(„Daumen rechts“) und Schloss-Kennungen („Nuki-App“).
+**Beispiel:** Anna bekommt einen neuen Anhänger. Karten und Anhänger → Neue Karte anlernen →
+Anhänger ans Keypad im Flur halten, Unscharf drücken → „✅ Karte erkannt: 04C3D2E1“ → Name
+„Schlüsselbund“, Benutzer „Anna“ → Absenden. Ab jetzt schaltet Annas Anhänger, und im Logbuch
+steht „Anna · Schlüsselbund (Keypad Flur)“.
 
-Mit Namen
+### Karte bearbeiten, deaktivieren, löschen
 
-- steht im Benutzer-Dialog **„Schlüsselbund (04A1B2C3)“** statt nur der Nummer,
-- zeigen Logbuch, Bedienfeld („Geändert von“) und Nachrichten, **welche** Karte benutzt wurde:
-  „Christian · Schlüsselbund (Keypad Flur)“,
-- zeigt die [Systemübersicht](uebersicht.md) „Schlüsselbund …B2C3“.
+In der Liste eine Karte antippen:
 
-**Beispiel – Karte verloren:** Christian hat zwei Anhänger, „Schlüsselbund“ und „Geldbörse“. Die
-Geldbörse ist weg. Benutzer bearbeiten → Christian → im Feld „RFID-Karten und Schloss-Kennungen“
-bei **„Geldbörse (…)“** auf das ✕ → speichern → das nächste Formular (Namen) einfach bestätigen.
-Die Karte schaltet ab sofort nichts mehr, ihr Name wird mit gelöscht. Wer sie findet und hinhält,
-wird als unbekannte Karte abgelehnt.
+| Feld | Bedeutung |
+|---|---|
+| Name der Karte | z. B. „Schlüsselbund“, „Geldbörse“, „Daumen rechts“, „Nuki-App“. Leer = ohne Namen |
+| Gehört | Benutzer – hier gibst du eine Karte auch an jemand anderen weiter |
+| Aktiv | aus = **deaktiviert**: die Karte schaltet nichts mehr, bleibt aber bekannt |
+| Karte löschen | endgültig; danach wird sie wie eine unbekannte Karte abgelehnt |
+
+**Deaktivierte Karte wird benutzt:** Sie schaltet nichts, am Keypad erscheint „ungültig“, und es
+zählt als Fehlversuch für die [Sperre](benutzer.md#sperre-nach-falschen-eingaben). Du bekommst
+eine Nachricht: *„Die deaktivierte Karte ‚Geldbörse‘ (Christian) wurde an Keypad Flur benutzt.“*
+Bei einer deaktivierten Schloss-Kennung schaltet Hauswacht ebenfalls nichts und meldet es (ein
+Türschloss zählt nicht als Fehlversuch).
+
+**Beispiel – Geldbörse weg:** Christian vermisst seine Geldbörse mit dem Anhänger darin. Karten
+und Anhänger → „Geldbörse (0011223344) – Christian“ → **Aktiv aus** → Absenden. Taucht die
+Geldbörse wieder auf: Aktiv wieder an. Bleibt sie verschwunden: **Karte löschen**. Versucht in
+der Zwischenzeit jemand, mit dem Anhänger unscharf zu schalten, weißt du es sofort.
+
+Mit Namen zeigen außerdem Logbuch, Bedienfeld („Geändert von“) und Nachrichten, **welche** Karte
+benutzt wurde – „Christian · Schlüsselbund (Keypad Flur)“ – und die
+[Systemübersicht](uebersicht.md) zeigt „Schlüsselbund …B2C3“ (deaktivierte mit ⏸).
+
+### Regeln beim Anlernen
 
 - Die Anlernzeit ist einstellbar unter **Bedienteile → Anlernen neuer Karten** (1–60 Minuten,
   0 = Anlernen aus). Danach wird die Karte vergessen; wer zu spät speichert, bekommt einen
@@ -223,9 +255,10 @@ sensor:
    führen: 1 = Anna, rechter Zeigefinger; 2 = Anna, linker Zeigefinger; 3 = Ben …
 2. **In Hauswacht:** Systemeinstellungen → Bedienteile → **RFID-/NFC-Leser hinzufügen** →
    Lesegerät „fingerabdruck-flur“ → Aktion z. B. „unscharf schalten“.
-3. **Finger dem Benutzer zuordnen** wie eine [Karte](#karten-anlernen): alles unscharf, Finger
-   auflegen, dann Benutzer bearbeiten → „RFID-Karten und Schloss-Kennungen“ → „FINGER1 (neu,
-   gelesen an …)“ auswählen, speichern. Oder `FINGER1` eintippen.
+3. **Finger dem Benutzer zuordnen** wie eine [Karte](#neue-karte-anlernen): alles unscharf,
+   Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen → Finger auflegen → „✅ Karte
+   erkannt: FINGER1“ → Name „Zeigefinger rechts“, Benutzer „Anna“ → speichern. Oder `FINGER1`
+   eintippen.
 
 Gut zu wissen:
 
@@ -367,9 +400,12 @@ Wie bei [Karten](#karten-anlernen):
 
 1. Alle Bereiche unscharf.
 2. Mit der App, dem Keypad-Code oder dem Fingerabdruck **einmal aufschließen**.
-3. Innerhalb der Anlernzeit: Benutzer bearbeiten → „RFID-Karten und Schloss-Kennungen“ → dort
-   steht z. B. „Nuki-Benutzer 52653 (neu, gelesen an Haustür-Schloss um 18:04)“ → auswählen,
-   speichern.
+3. Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen: Der Dialog erkennt die Kennung
+   (oder sie steht als „Nuki-Benutzer 52653 (neu, gelesen an Haustür-Schloss um 18:04)“ zur
+   Auswahl) → Name z. B. „Nuki-App“, Benutzer wählen → speichern.
+
+   Du kannst auch zuerst „Neue Karte anlernen“ öffnen und dann aufschließen – der Dialog wartet
+   bis zu 2 Minuten.
 
 Am besten jede Person einzeln anlernen, damit klar ist, welche Kennung zu wem gehört. Jeder
 Keypad-Code und jeder App-Zugang ist eine eigene Kennung; ein Benutzer kann mehrere haben.

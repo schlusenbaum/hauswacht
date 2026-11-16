@@ -117,7 +117,7 @@ e.g.:
 | `AutoArmScheduled`, `AutoArmCancelled`, `AutoArmed`, `AutoArmSkipped`, `AutoArmFailed` | profile automation: arming scheduled, cancelled, done, skipped, failed (with `profile_id`, `reason`) |
 | `AutoDisarmed`, `AutoDisarmSkipped` | profile automation: disarmed, or not (e.g. alarm running) |
 | `ButtonPressed` | button pressed (with `control`, `press`, `profile`) |
-| `LockIdentified`, `LockIgnored` | door lock: ID received (with `intent`, `identity`, `reason`) or not used (e.g. `unknown_id`) |
+| `LockIdentified`, `LockIgnored` | door lock: ID received (with `intent`, `identity`, `reason`) or not used (e.g. `unknown_id`, `disabled_id` = disabled ID) |
 | `ArrivalNoted`, `DoorNoted` | "Disarm with door proof": arrival (with `persons`) or entry door (with `door`) detected while the profile is armed |
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | trigger rules |
 | `InvalidCode`, `CodeLockReset` | wrong entry (with `failures`, `lock_seconds`), counter reset |

@@ -52,7 +52,7 @@ Without technical details and without security details.
 ### What never appears in the overview
 
 - **PINs** – not even parts or hashes; only "PIN: yes/no".
-- **Card numbers** only shortened ("…2880"), with the name in front ("key ring …2880").
+- **Card numbers** only shortened ("…2880"), with the name in front ("key ring …2880"); disabled cards with ⏸.
 - **Duress PIN:** whether someone has one does not show in the overview. Only if it would have no
   effect without recipients is there a check hint – without names.
 
