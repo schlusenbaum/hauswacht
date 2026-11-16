@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Referenz (deutsch und englisch): Werte des Attributs `phase` erklärt, Beispiel-Automation
+  „Haustür abschließen, wenn scharf“.
+
 ## [0.50.0] - 2026-11-16
 
 ### Hinzugefügt

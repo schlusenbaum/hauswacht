@@ -56,7 +56,7 @@ e.g. `alarm_control_panel.hauswacht_garage`.
 |---|---|
 | `area`, `area_name` | area |
 | `profile`, `profile_name` | active profile (ID, name) |
-| `phase` | internal state |
+| `phase` | state independent of the profile: `disarmed`, `arming` (exit delay), `armed`, `pending` (entry delay), `triggered` (alarm), `alarm_hold` (alarm over, not yet acknowledged) – see [example](#example-automation-when-armed) |
 | `changed_by` | who switched last, e.g. "Anna (Keypad hallway)" |
 | `test_mode` | test mode active |
 | `timer`, `timer_ends_at` | running delay and its end |
@@ -71,6 +71,34 @@ e.g. `alarm_control_panel.hauswacht_garage`.
 | `last_siren_decision` | which sirens were controlled on the last alarm, or why they were blocked |
 | `code_failures`, `code_locked_until` | wrong entries, end of a running lockout |
 | `areas` | only "All areas": state per area |
+
+### Example: automation when armed
+
+`phase` is the simplest trigger for your own automations, because it does not depend on which
+alarm panel button a profile has. Which profile is armed is in `profile_name`.
+
+**Lock the front door as soon as "Away" or "Vacation" is armed** (i.e. after the exit delay,
+when everyone is outside):
+
+```yaml
+alias: Lock front door when Hauswacht is armed
+triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.hauswacht
+    attribute: phase
+    to: armed
+conditions:
+  - condition: template
+    value_template: >
+      {{ state_attr('alarm_control_panel.hauswacht', 'profile_name') in ['Away', 'Vacation'] }}
+actions:
+  - action: lock.lock
+    target:
+      entity_id: lock.front_door
+```
+
+The profile names must be written exactly as in Hauswacht. Better do **not** couple unlocking
+automatically to disarming: whoever disarms by mistake would otherwise also have opened the door.
 
 ## Actions
 

@@ -54,7 +54,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 |---|---|
 | `area`, `area_name` | Bereich |
 | `profile`, `profile_name` | Aktives Profil (Kennung, Name) |
-| `phase` | Interner Zustand |
+| `phase` | Zustand unabhängig vom Profil: `disarmed` (unscharf), `arming` (Ausgangsverzögerung), `armed` (scharf), `pending` (Eingangsverzögerung), `triggered` (Alarm), `alarm_hold` (Alarm vorbei, noch nicht quittiert) – siehe [Beispiel](#beispiel-automation-wenn-scharf) |
 | `changed_by` | Wer zuletzt geschaltet hat, z. B. „Anna (Keypad Flur)“ |
 | `test_mode` | Testmodus aktiv |
 | `timer`, `timer_ends_at` | Laufende Verzögerung und ihr Ende |
@@ -69,6 +69,35 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `last_siren_decision` | Welche Sirenen beim letzten Alarm angesteuert bzw. warum gesperrt wurden |
 | `code_failures`, `code_locked_until` | Falsche Eingaben, Ende einer laufenden Sperre |
 | `areas` | Nur „Alle Bereiche“: Zustand je Bereich |
+
+### Beispiel: Automation, wenn scharf
+
+`phase` ist der einfachste Auslöser für eigene Automationen, weil er nicht davon abhängt, welchen
+Bedienfeld-Knopf ein Profil hat. Welches Profil scharf ist, steht in `profile_name`.
+
+**Haustür abschließen, sobald „Abwesend“ oder „Urlaub“ scharf ist** (also nach der
+Ausgangsverzögerung, wenn alle draußen sind):
+
+```yaml
+alias: Haustür abschließen, wenn Hauswacht scharf
+triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.hauswacht
+    attribute: phase
+    to: armed
+conditions:
+  - condition: template
+    value_template: >
+      {{ state_attr('alarm_control_panel.hauswacht', 'profile_name') in ['Abwesend', 'Urlaub'] }}
+actions:
+  - action: lock.lock
+    target:
+      entity_id: lock.haustuer
+```
+
+Die Profilnamen müssen genau so geschrieben sein wie in Hauswacht. Das **Aufschließen** besser
+nicht automatisch an das Unscharfschalten koppeln: Wer fälschlich unscharf schaltet, hätte sonst
+zusätzlich die Tür geöffnet.
 
 ## Aktionen
 
