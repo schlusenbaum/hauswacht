@@ -115,7 +115,7 @@ z. B.:
 | `AutoArmScheduled`, `AutoArmCancelled`, `AutoArmed`, `AutoArmSkipped`, `AutoArmFailed` | Profil-Automatik: Scharfschalten geplant, abgebrochen, erfolgt, übersprungen, fehlgeschlagen (mit `profile_id`, `reason`) |
 | `AutoDisarmed`, `AutoDisarmSkipped` | Profil-Automatik: unscharf geschaltet bzw. nicht (z. B. Alarm läuft) |
 | `ButtonPressed` | Taster gedrückt (mit `control`, `press`, `profile`) |
-| `LockIdentified`, `LockIgnored` | Türschloss: Kennung empfangen (mit `intent`, `identity`, `reason`) bzw. nicht verwendet (z. B. `unknown_id`) |
+| `LockIdentified`, `LockIgnored` | Türschloss: Kennung empfangen (mit `intent`, `identity`, `reason`) bzw. nicht verwendet (z. B. `unknown_id`, `disabled_id` = deaktivierte Kennung) |
 | `ArrivalNoted`, `DoorNoted` | „Unscharf mit Türbeleg“: Rückkehr (mit `persons`) bzw. Eingangstür (mit `door`) erkannt, während das Profil scharf ist |
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | Auslöseregeln |
 | `InvalidCode`, `CodeLockReset` | Falsche Eingabe (mit `failures`, `lock_seconds`), Zähler zurückgesetzt |

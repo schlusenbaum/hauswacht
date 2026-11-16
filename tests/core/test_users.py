@@ -11,15 +11,18 @@ from custom_components.hauswacht.core.users import (
     allowed,
     allowed_in,
     card_needs_pin,
+    disabled_tag,
     find_by_ha_user,
     has_codes,
     identity_label,
     label,
     match_pin,
+    match_tag,
     migrate_legacy_pin,
     parse_users,
     people_without_pin,
     pin_conflicts,
+    tag_conflicts,
     tag_credential,
 )
 
@@ -271,3 +274,39 @@ def test_identity_label_with_card_name() -> None:
     identity = Identity(kind="card", users=users, credential=tag_credential("AB12", users))
     assert identity_label(identity) == "Christian · Uhr"
     assert identity_label(Identity(kind="pin", users=users)) == "Christian"
+
+
+def test_disabled_cards_do_not_match_but_are_recognised() -> None:
+    users = parse_users(
+        {
+            "users": {
+                "c": {
+                    "name": "Christian",
+                    "tags": ["AA11"],
+                    "tags_disabled": ["BB22", "AA11"],  # doppelt: aktiv gewinnt
+                    "tag_names": {"BB22": "Geldbörse"},
+                }
+            }
+        }
+    )
+    (user,) = users
+    assert user.tags == ("AA11",)
+    assert user.disabled_tags == ("BB22",)
+    assert not match_tag("BB22", users, 0).ok
+    found = disabled_tag("bb-22", users)
+    assert found is not None
+    assert found[0].name == "Christian"
+    assert found[1] == "Geldbörse"
+    assert disabled_tag("AA11", users) is None
+
+
+def test_tag_conflicts_include_disabled_cards() -> None:
+    users = parse_users(
+        {
+            "users": {
+                "a": {"name": "Anna", "tags": ["X1"]},
+                "b": {"name": "Ben", "tags_disabled": ["X1"]},
+            }
+        }
+    )
+    assert tag_conflicts(users) == {"X1": ["Anna", "Ben"]}

@@ -37,7 +37,7 @@ from .core.rules import build_engine, describe_rule, profile_rule_ids
 from .core.sensor_types import excluded_sensors, normalize
 from .core.siren_guard import FireIndicator, SirenDevice, is_fire_tone, select_tone
 from .core.speech import parse_speech
-from .core.users import Action
+from .core.users import Action, User
 from .names import display_name, plain_name
 
 if TYPE_CHECKING:
@@ -83,6 +83,11 @@ def _battery(hass: HomeAssistant, entity_id: str) -> int | None:
 
 def _masked(tag: str) -> str:
     return f"…{tag[-4:]}" if len(tag) > 4 else "…"
+
+
+def _card_text(user: User, tag: str) -> str:
+    """ "Schlüsselbund …B2C3" bzw. nur "…B2C3"."""
+    return f"{user.tag_name(tag)} {_masked(tag)}" if user.tag_name(tag) else _masked(tag)
 
 
 def _time(value: Any) -> str | None:
@@ -304,10 +309,8 @@ def _users(main: HauswachtRuntime) -> list[dict[str, Any]]:
             {
                 "name": user.name,
                 "pin": user.pin is not None,
-                "cards": [
-                    f"{user.tag_name(t)} {_masked(t)}" if user.tag_name(t) else _masked(t)
-                    for t in user.tags
-                ],
+                "cards": [_card_text(user, t) for t in user.tags]
+                + [f"{_card_text(user, t)} ⏸" for t in user.disabled_tags],
                 "active": user.active,
                 "valid": user.valid_at(now),
                 "valid_from": _iso(user.valid_from),

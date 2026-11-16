@@ -187,6 +187,28 @@ async def test_nuki_unlock_by_known_user_disarms(
     assert state.attributes["changed_by"] == "Anna (Haustür-Schloss)"
 
 
+async def test_disabled_lock_id_does_not_disarm(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    entry = await _setup(hass)
+    users = dict(entry.options["users"])
+    users["anna"] = {
+        **users["anna"],
+        "tags": ["LOCKANNA"],
+        "tags_disabled": ["NUKIAUTH52653"],
+        "tag_names": {"NUKIAUTH52653": "Nuki-App"},
+    }
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "users": users})
+    await hass.async_block_till_done()
+    await _arm_away(hass)
+    await _nuki(hass, "1,0,52653,0,0")
+    await _lock(hass, "unlocked")
+    assert _panel(hass) != AlarmControlPanelState.DISARMED
+    assert any("Nuki-App" in c.data["message"] for c in push)
+    assert "NUKIAUTH52653" not in entry.runtime_data.controls.unknown_cards
+
+
 async def test_nuki_state_first_then_event(
     hass: HomeAssistant, mqtt_mock: MqttMockHAClient
 ) -> None:
@@ -256,12 +278,13 @@ async def test_unknown_lock_id_is_offered_for_learning(
     await _lock(hass, "unlocked")
     assert "NUKIAUTH4711" in entry.runtime_data.controls.unknown_cards
     flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "users", "user_edit"):
+    for step in ("system", "users", "cards"):
         flow = await hass.config_entries.options.async_configure(
             flow["flow_id"], {"next_step_id": step}
         )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
-    key = next(k for k in flow["data_schema"].schema if str(k) == "tags")
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"card": "__new__"})
+    assert flow["step_id"] == "card_new"
+    key = next(k for k in flow["data_schema"].schema if str(k) == "card")
     options = flow["data_schema"].schema[key].config["options"]
     new = next(o for o in options if o["value"] == "NUKIAUTH4711")
     assert new["label"].startswith("Nuki user 4711")  # Testumgebung: Englisch

@@ -168,33 +168,65 @@ async def test_user_management_in_options(hass: HomeAssistant) -> None:
             flow["flow_id"], {"next_step_id": step}
         )
 
-    flow = await flow_to_user_settings("user_add")
+    async def add_user(name: str) -> None:
+        flow = await flow_to_user_settings("user_add")
+        assert "new_pin" not in flow["data_schema"].schema  # PINs: eigene Liste
+        result = await hass.config_entries.options.async_configure(flow["flow_id"], {"name": name})
+        await hass.async_block_till_done()
+        assert result["type"] == "menu"
+
+    async def pin_form(user_id: str) -> dict:
+        flow = await flow_to_user_settings("pins")
+        assert flow["step_id"] == "pins"
+        return await hass.config_entries.options.async_configure(flow["flow_id"], {"user": user_id})
+
+    await add_user("Petra")
+    await add_user("Niklas")
+    assert "pin_digest" not in entry.options["users"]["petra"]
+
+    flow = await pin_form("petra")
+    assert flow["step_id"] == "pin_edit"
     result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Petra", "new_pin": "1357", "new_duress_pin": "7531"}
+        flow["flow_id"], {"new_pin": "1357", "new_duress_pin": "7531"}
     )
     await hass.async_block_till_done()
-    assert result["type"] == "menu"
+    assert result["step_id"] == "pins"  # zurück in die PIN-Liste
     stored = entry.options["users"]["petra"]
     assert stored["name"] == "Petra"
     assert stored["pin_digest"]
     assert stored["duress_digest"]
     assert "1357" not in stored.values()  # nie im Klartext
     assert "new_pin" not in stored
+    labels = {
+        o["value"]: o["label"]
+        for o in result["data_schema"]
+        .schema[next(iter(result["data_schema"].schema))]
+        .config["options"]
+    }
+    assert labels["petra"].startswith("Petra – PIN · duress PIN")
+    assert labels["niklas"] == "Niklas – no PIN"
 
     # Bedrohungs-PIN gleich einem normalen PIN: Fehler
-    flow = await flow_to_user_settings("user_add")
+    flow = await pin_form("niklas")
     result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Niklas", "new_pin": "2222", "new_duress_pin": "1357"}
+        flow["flow_id"], {"new_pin": "2222", "new_duress_pin": "1357"}
     )
     assert result["errors"] == {"new_duress_pin": "duress_conflict"}
 
     # gleicher normaler PIN wie Petra: erlaubt
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"name": "Niklas", "new_pin": "1357"}
+        result["flow_id"], {"new_pin": "1357"}
     )
     await hass.async_block_till_done()
-    assert result["type"] == "menu"
-    assert set(entry.options["users"]) == {"petra", "niklas"}
+    assert result["step_id"] == "pins"
+    assert entry.options["users"]["niklas"]["pin_digest"]
+
+    # PIN entfernen
+    flow = await pin_form("petra")
+    await hass.config_entries.options.async_configure(flow["flow_id"], {"remove_pin": True})
+    await hass.async_block_till_done()
+    assert "pin_digest" not in entry.options["users"]["petra"]
+    assert entry.options["users"]["petra"]["duress_digest"]
 
 
 async def test_automation_shows_automatik(hass: HomeAssistant) -> None:

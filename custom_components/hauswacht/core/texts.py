@@ -73,6 +73,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "invalid_code_title": "Hauswacht: falscher PIN",
         "invalid_code": "{failures} falsche PIN-Eingaben in Folge.",
         "invalid_code_lock": " Die PIN-Eingabe ist für {seconds} Sekunden gesperrt.",
+        "card_disabled_title": "Hauswacht: deaktivierte Karte benutzt",
+        "card_disabled": "Die deaktivierte Karte „{card}“ ({who}) wurde an {where} benutzt. Sie "
+        "schaltet nichts; der Versuch zählt als Fehleingabe.",
+        "lock_disabled": "Die deaktivierte Schloss-Kennung „{card}“ ({who}) wurde an {where} "
+        "benutzt. Hauswacht hat deshalb nichts geschaltet.",
         "blocked_credential_title": "Hauswacht: gesperrter Ausweis",
         "blocked_credential": "Ein gesperrter oder abgelaufener PIN bzw. eine solche Karte wurde "
         "verwendet: {who}.",
@@ -253,6 +258,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "invalid_code_title": "Hauswacht: wrong PIN",
         "invalid_code": "{failures} wrong PIN entries in a row.",
         "invalid_code_lock": " PIN entry is locked for {seconds} seconds.",
+        "card_disabled_title": "Hauswacht: disabled card used",
+        "card_disabled": "The disabled card “{card}” ({who}) was used at {where}. It switches "
+        "nothing; the attempt counts as a wrong entry.",
+        "lock_disabled": "The disabled lock ID “{card}” ({who}) was used at {where}. Hauswacht "
+        "therefore switched nothing.",
         "blocked_credential_title": "Hauswacht: blocked credential",
         "blocked_credential": "A blocked or expired PIN or card was used: {who}.",
         "duress_title": "DURESS – Hauswacht",

@@ -24,6 +24,7 @@ REDACT = {
     "duress_digest",
     "tags",
     "tag_names",
+    "tags_disabled",
     "tag",
     "cards",
     # Personen, Konten, Empfänger, Netzwerke

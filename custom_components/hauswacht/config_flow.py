@@ -252,6 +252,11 @@ FINDING_TEXTS_EN = {
 SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 
+# "Neue Karte anlernen" in der Kartenliste; so lange wartet der Dialog aufs Hinhalten
+CARD_NEW = "__new__"
+CARD_WAIT_SECONDS = 120
+
+
 class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 5
 
@@ -299,6 +304,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         self._control_kind: ControlKind = ControlKind.KEYPAD
         self._user_pending: tuple[str, dict[str, Any]] | None = None
         self._offered_new: set[str] = set()
+        self._card: str | None = None
+        self._new_card: str | None = None
+        self._card_task: asyncio.Task[str | None] | None = None
         self._siren_params: dict[str, Any] = {}
         self._siren_prewarned = False
         self._siren_summary: list[str] = []
@@ -2426,7 +2434,9 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Benutzer ------------------------------------------------------------
 
     async def async_step_users(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self._menu("users", ["user_add", "user_edit", "user_delete", "code", "system"])
+        return self._menu(
+            "users", ["user_add", "user_edit", "user_delete", "cards", "pins", "code", "system"]
+        )
 
     def _user_selector(self) -> SelectSelector:
         stored = self.config_entry.options.get(OPT_USERS, {})
@@ -2498,18 +2508,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         user_id = getattr(self, "_user_id", None)
         current: dict[str, Any] = dict(stored_all.get(user_id, {})) if user_id else {}
         errors: dict[str, str] = {}
-        placeholders = {"conflict": "", "random": self._random_hint()}
+        placeholders = {"conflict": ""}
         if user_input is not None:
             name = str(user_input.get("name") or "").strip()
-            new_pin = str(user_input.get("new_pin") or "").strip()
-            new_duress = str(user_input.get("new_duress_pin") or "").strip()
-            errors, conflict = await self._validate_user(
-                name, (new_pin, new_duress), user_id, stored_all
-            )
+            errors, conflict = await self._validate_user(name, ("", ""), user_id, stored_all)
             placeholders["conflict"] = conflict
-            tag_list = _tag_input(user_input.get("tags"))
-            if (tag_error := self._tag_error(tag_list, user_id, stored_all, current)) is not None:
-                errors["tags"], placeholders["conflict"] = tag_error
             if not errors:
                 data = dict(current)
                 data.update(
@@ -2530,19 +2533,6 @@ class HauswachtOptionsFlow(OptionsFlow):
                     data["rights"] = RIGHTS_ALL
                     data.pop("areas", None)
                     data.pop("area_rights", None)
-                _set_tags(data, tag_list)
-                if user_input.get("remove_pin"):
-                    data.pop("pin_salt", None)
-                    data.pop("pin_digest", None)
-                elif new_pin:
-                    hashed = await self.hass.async_add_executor_job(hash_pin, new_pin)
-                    data["pin_salt"], data["pin_digest"] = hashed.salt, hashed.digest
-                if user_input.get("remove_duress_pin"):
-                    data.pop("duress_salt", None)
-                    data.pop("duress_digest", None)
-                elif new_duress:
-                    hashed = await self.hass.async_add_executor_job(hash_pin, new_duress)
-                    data["duress_salt"], data["duress_digest"] = hashed.salt, hashed.digest
                 new_id = user_id or _unique_id(name, stored_all)
                 stored_all[new_id] = data
                 new_options = dict(options)
@@ -2550,14 +2540,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                 if scope == RIGHTS_PER_AREA:
                     self._user_pending = (new_id, new_options)
                     return await self.async_step_user_area_rights()
-                return await self._user_finish(new_id, new_options)
+                return await self._save(new_options, "users")
 
-        status = []
-        if current.get("pin_digest"):
-            status.append("PIN gesetzt")
-        if current.get("duress_digest"):
-            status.append("Bedrohungs-PIN gesetzt")
-        placeholders["status"] = ", ".join(status) or "kein PIN"
+        placeholders["status"] = self._credential_status(current)
         schema = await self._user_schema(current)
         return self.async_show_form(
             step_id="user_settings",
@@ -2586,7 +2571,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             new_options = dict(options)
             new_options[OPT_USERS] = users
             self._user_pending = None
-            return await self._user_finish(user_id, new_options)
+            return await self._save(new_options, "users")
         current = _area_rights_defaults(data, list(areas))
         fields: dict[Any, Any] = {
             vol.Optional(area.name, default=current[area.area_id]): SelectSelector(
@@ -2605,47 +2590,351 @@ class HauswachtOptionsFlow(OptionsFlow):
             description_placeholders={"name": str(data.get("name", user_id))},
         )
 
-    async def _user_finish(self, user_id: str, options: dict[str, Any]) -> ConfigFlowResult:
-        """Speichern – bei Karten vorher noch ihre Namen abfragen."""
-        data = options[OPT_USERS][user_id]
-        if data.get("tags"):
-            self._user_pending = (user_id, options)
-            return await self.async_step_user_tag_names()
-        return await self._save(options, "users")
+    # --- Karten und PINs ------------------------------------------------------
 
-    async def async_step_user_tag_names(
+    def _when_used(self, key: str) -> str:
+        """ "zuletzt 16.11. 07:12" bzw. "noch nie benutzt" (nur wenn Hauswacht läuft)."""
+        if not self._loaded():
+            return ""
+        used = getattr(self.config_entry.runtime_data, "last_used", {}).get(key)
+        de = self._german()
+        if not used:
+            return "noch nie benutzt" if de else "never used"
+        local = dt_util.as_local(dt_util.utc_from_timestamp(used))
+        today = dt_util.now().date()
+        text = local.strftime("%H:%M") if local.date() == today else local.strftime("%d.%m.%Y")
+        return f"zuletzt {text}" if de else f"last {text}"
+
+    def _credential_status(self, current: Mapping[str, Any]) -> str:
+        """Kurzer Stand im Benutzer-Dialog: "2 Karten · PIN gesetzt"."""
+        de = self._german()
+        cards = len(current.get("tags", []) or []) + len(current.get("tags_disabled", []) or [])
+        parts = [
+            (f"{cards} Karte" if cards == 1 else f"{cards} Karten")
+            if de
+            else (f"{cards} card" if cards == 1 else f"{cards} cards"),
+            ("PIN gesetzt" if de else "PIN set")
+            if current.get("pin_digest")
+            else ("kein PIN" if de else "no PIN"),
+        ]
+        if current.get("duress_digest"):
+            parts.append("Bedrohungs-PIN gesetzt" if de else "duress PIN set")
+        return " · ".join(parts)
+
+    def _users_choice(self) -> SelectSelector:
+        stored = self.config_entry.options.get(OPT_USERS, {})
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=uid, label=str(data.get("name") or uid))
+                    for uid, data in stored.items()
+                ],
+                mode=SelectSelectorMode.DROPDOWN,
+            )
+        )
+
+    async def async_step_cards(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Alle Karten, Finger und Schloss-Kennungen: wem gehören sie, aktiv, zuletzt benutzt."""
+        users = self.config_entry.options.get(OPT_USERS, {})
+        if not users:
+            return self.async_abort(reason="no_users")
+        if user_input is not None:
+            choice = user_input["card"]
+            if choice == CARD_NEW:
+                return await self._card_new_start()
+            self._card = choice
+            return await self.async_step_card_edit()
+        de = self._german()
+        lang = "de" if de else "en"
+        options = [
+            SelectOptionDict(
+                value=CARD_NEW, label="➕ Neue Karte anlernen" if de else "➕ Learn new card"
+            )
+        ]
+        for tag, uid, name, active in _all_cards(users):
+            owner = str(users[uid].get("name") or uid)
+            ident = lock_id_label(tag, lang)
+            title = f"{name} ({ident})" if name else ident
+            state = (
+                self._when_used(f"card:{tag}") if active else ("deaktiviert" if de else "disabled")
+            )
+            text = f"{'🟢' if active else '⏸️'} {title} – {owner}"
+            options.append(
+                SelectOptionDict(value=tag, label=f"{text} · {state}" if state else text)
+            )
+        saved, self._saved = self._saved, False
+        return self.async_show_form(
+            step_id="cards",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("card"): SelectSelector(
+                        SelectSelectorConfig(options=options, mode=SelectSelectorMode.LIST)
+                    )
+                }
+            ),
+            description_placeholders={"saved": self._saved_text() if saved else ""},
+        )
+
+    async def _card_new_start(self) -> ConfigFlowResult:
+        """Neue Karte: auf das Hinhalten warten – außer es wurde gerade schon eine gelesen."""
+        self._new_card = None
+        controls = (
+            getattr(self.config_entry.runtime_data, "controls", None) if self._loaded() else None
+        )
+        waiting_possible = (
+            controls is not None
+            and learn_minutes(self.config_entry.options) > 0
+            and self._is_disarmed()
+        )
+        if self._unknown_cards() or not waiting_possible:
+            return await self.async_step_card_new()
+        return await self.async_step_card_wait()
+
+    async def async_step_card_wait(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Namen für die Karten eines Benutzers (z. B. "Schlüsselbund"), damit man beim Verlust
-        weiß, welche man löscht. Ein Feld je Karte, leer = ohne Namen."""
-        assert self._user_pending is not None
-        user_id, options = self._user_pending
-        users = dict(options[OPT_USERS])
-        data = dict(users[user_id])
-        tags = [t for t in data.get("tags", []) if isinstance(t, str)]
-        lang = "de" if self._german() else "en"
-        fields_by_tag = {tag: lock_id_label(tag, lang) for tag in tags}
-        stored = data.get("tag_names")
-        names: dict[str, str] = dict(stored) if isinstance(stored, dict) else {}
+        """ "Halte die Karte jetzt ans Keypad …" – wartet bis zu CARD_WAIT_SECONDS."""
+        if self._card_task is None:
+            self._card_task = self.hass.async_create_background_task(
+                self._wait_for_card(), "hauswacht_card_wait"
+            )
+        if not self._card_task.done():
+            return self.async_show_progress(
+                step_id="card_wait",
+                progress_action="wait_card",
+                progress_task=self._card_task,
+                description_placeholders={"seconds": str(CARD_WAIT_SECONDS)},
+            )
+        self._new_card = self._card_task.result()
+        self._card_task = None
+        return self.async_show_progress_done(next_step_id="card_new")
+
+    async def _wait_for_card(self) -> str | None:
+        controls = getattr(self.config_entry.runtime_data, "controls", None)
+        if controls is None:
+            return None
+        future: asyncio.Future[str] = self.hass.loop.create_future()
+
+        def _read(tag: str) -> None:
+            if not future.done():
+                future.set_result(tag)
+
+        remove = controls.wait_for_card(_read)
+        try:
+            return await asyncio.wait_for(future, CARD_WAIT_SECONDS)
+        except TimeoutError:
+            return None
+        finally:
+            remove()
+
+    async def async_step_card_new(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Neue Karte: erkannte/gelesene Karte oder eingetippte Nummer, Name, Benutzer."""
+        options = dict(self.config_entry.options)
+        users: dict[str, Any] = dict(options.get(OPT_USERS, {}))
+        errors: dict[str, str] = {}
+        conflict = ""
         if user_input is not None:
-            data["tag_names"] = {
-                tag: text
-                for tag, field in fields_by_tag.items()
-                if (text := str(user_input.get(field) or "").strip())
+            tags = _tag_input(user_input.get("card"))
+            tag = tags[0] if tags else ""
+            if (error := self._card_error(tag, users)) is not None:
+                errors["card"], conflict = error
+            elif user_input.get("user") not in users:
+                errors["user"] = "user_missing"
+            else:
+                _put_card(
+                    users,
+                    tag,
+                    user_input["user"],
+                    str(user_input.get("name") or "").strip(),
+                    active=bool(user_input.get("active", True)),
+                )
+                options[OPT_USERS] = users
+                self._new_card = None
+                return await self._save(options, "cards")
+        card_options = self._new_card_options()
+        default = self._new_card or (card_options[0]["value"] if card_options else None)
+        de = self._german()
+        if self._new_card:
+            found = (
+                f"✅ Karte erkannt: **{self._new_card}**"
+                if de
+                else f"✅ Card recognised: **{self._new_card}**"
+            )
+        elif card_options:
+            found = (
+                "Zuletzt gelesene unbekannte Karten stehen unten zur Auswahl."
+                if de
+                else "Recently read unknown cards are offered below."
+            )
+        else:
+            found = (
+                "Es wurde keine neue Karte gelesen. Halte sie an ein Keypad oder einen Leser und "
+                "öffne diesen Dialog noch einmal – oder tippe die Nummer ein."
+                if de
+                else "No new card was read. Hold it to a keypad or reader and open this dialog "
+                "again – or type in the number."
+            )
+        card_key = vol.Required("card", default=default) if default else vol.Required("card")
+        schema = vol.Schema(
+            {
+                card_key: SelectSelector(
+                    SelectSelectorConfig(
+                        options=card_options, custom_value=True, mode=SelectSelectorMode.DROPDOWN
+                    )
+                ),
+                vol.Optional("name"): TextSelector(),
+                vol.Required("user"): self._users_choice(),
+                vol.Optional("active", default=True): BooleanSelector(),
             }
-            users[user_id] = data
-            new_options = dict(options)
-            new_options[OPT_USERS] = users
-            self._user_pending = None
-            return await self._save(new_options, "users")
-        fields: dict[Any, Any] = {
-            vol.Optional(field, description={"suggested_value": names.get(tag, "")}): TextSelector()
-            for tag, field in fields_by_tag.items()
-        }
+        )
         return self.async_show_form(
-            step_id="user_tag_names",
-            data_schema=vol.Schema(fields),
-            description_placeholders={"name": str(data.get("name", user_id))},
+            step_id="card_new",
+            data_schema=self.add_suggested_values_to_schema(schema, user_input or {}),
+            errors=errors,
+            description_placeholders={
+                "found": found,
+                "conflict": conflict,
+                "random": self._random_hint(),
+            },
+        )
+
+    async def async_step_card_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Eine Karte: umbenennen, anderem Benutzer geben, deaktivieren, löschen."""
+        options = dict(self.config_entry.options)
+        users: dict[str, Any] = dict(options.get(OPT_USERS, {}))
+        tag = self._card
+        row = next((r for r in _all_cards(users) if r[0] == tag), None)
+        if tag is None or row is None:
+            return await self.async_step_cards()
+        _, owner, name, active = row
+        if user_input is not None:
+            if user_input.get("delete"):
+                _remove_card(users, tag)
+            else:
+                target = user_input.get("user") if user_input.get("user") in users else owner
+                _put_card(
+                    users,
+                    tag,
+                    target,
+                    str(user_input.get("name") or "").strip(),
+                    active=bool(user_input.get("active", True)),
+                )
+            options[OPT_USERS] = users
+            self._card = None
+            return await self._save(options, "cards")
+        lang = "de" if self._german() else "en"
+        schema = vol.Schema(
+            {
+                vol.Optional("name", description={"suggested_value": name}): TextSelector(),
+                vol.Required("user", default=owner): self._users_choice(),
+                vol.Optional("active", default=active): BooleanSelector(),
+                vol.Optional("delete", default=False): BooleanSelector(),
+            }
+        )
+        return self.async_show_form(
+            step_id="card_edit",
+            data_schema=schema,
+            description_placeholders={
+                "card": lock_id_label(tag, lang),
+                "used": self._when_used(f"card:{tag}"),
+            },
+        )
+
+    async def async_step_pins(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Wer hat einen PIN / Bedrohungs-PIN, wann zuletzt benutzt (PINs selbst nie sichtbar)."""
+        users = self.config_entry.options.get(OPT_USERS, {})
+        if not users:
+            return self.async_abort(reason="no_users")
+        if user_input is not None:
+            self._user_id = user_input["user"]
+            return await self.async_step_pin_edit()
+        de = self._german()
+        options = []
+        for uid, data in users.items():
+            parts = []
+            if data.get("pin_digest"):
+                parts.append("PIN")
+            if data.get("duress_digest"):
+                parts.append("Bedrohungs-PIN" if de else "duress PIN")
+            if parts:
+                used = self._when_used(f"pin:{uid}")
+                if used:
+                    parts.append(used)
+            text = " · ".join(parts) if parts else ("kein PIN" if de else "no PIN")
+            options.append(SelectOptionDict(value=uid, label=f"{data.get('name') or uid} – {text}"))
+        saved, self._saved = self._saved, False
+        return self.async_show_form(
+            step_id="pins",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("user"): SelectSelector(
+                        SelectSelectorConfig(options=options, mode=SelectSelectorMode.LIST)
+                    )
+                }
+            ),
+            description_placeholders={"saved": self._saved_text() if saved else ""},
+        )
+
+    async def async_step_pin_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """PIN und Bedrohungs-PIN eines Benutzers setzen, ändern oder entfernen."""
+        options = dict(self.config_entry.options)
+        stored_all: dict[str, Any] = dict(options.get(OPT_USERS, {}))
+        user_id = getattr(self, "_user_id", None)
+        if user_id not in stored_all:
+            return await self.async_step_pins()
+        data = dict(stored_all[user_id])
+        name = str(data.get("name") or user_id)
+        errors: dict[str, str] = {}
+        conflict = ""
+        if user_input is not None:
+            new_pin = str(user_input.get("new_pin") or "").strip()
+            new_duress = str(user_input.get("new_duress_pin") or "").strip()
+            errors, conflict = await self._validate_user(
+                name, (new_pin, new_duress), user_id, stored_all
+            )
+            if not errors:
+                if user_input.get("remove_pin"):
+                    data.pop("pin_salt", None)
+                    data.pop("pin_digest", None)
+                elif new_pin:
+                    hashed = await self.hass.async_add_executor_job(hash_pin, new_pin)
+                    data["pin_salt"], data["pin_digest"] = hashed.salt, hashed.digest
+                if user_input.get("remove_duress_pin"):
+                    data.pop("duress_salt", None)
+                    data.pop("duress_digest", None)
+                elif new_duress:
+                    hashed = await self.hass.async_add_executor_job(hash_pin, new_duress)
+                    data["duress_salt"], data["duress_digest"] = hashed.salt, hashed.digest
+                stored_all[user_id] = data
+                options[OPT_USERS] = stored_all
+                return await self._save(options, "pins")
+        schema = vol.Schema(
+            {
+                vol.Optional("new_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_pin", default=False): BooleanSelector(),
+                vol.Optional("new_duress_pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional("remove_duress_pin", default=False): BooleanSelector(),
+            }
+        )
+        return self.async_show_form(
+            step_id="pin_edit",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "name": name,
+                "status": self._credential_status(data),
+                "conflict": conflict,
+            },
         )
 
     # --- Bedienteile ---------------------------------------------------------
@@ -3141,64 +3430,34 @@ class HauswachtOptionsFlow(OptionsFlow):
                 conflict = ", ".join(found)
         return errors, conflict
 
-    def _tags_field(self, current: dict[str, Any]) -> dict[Any, Any]:
-        """Beliebig viele Karten/Chips: eigene plus zuletzt gelesene unbekannte zum Anlernen."""
-        stored = current.get("tags", [])
-        tags = [t for t in stored if isinstance(t, str)] if isinstance(stored, list) else []
+    def _new_card_options(self) -> list[SelectOptionDict]:
+        """Zuletzt gelesene unbekannte Karten zum Anlernen ("neu, gelesen an … um …")."""
         lang = "de" if self._german() else "en"
-        stored_names = current.get("tag_names")
-        names = stored_names if isinstance(stored_names, dict) else {}
-        options = [
-            SelectOptionDict(
-                value=t,
-                label=f"{names[t]} ({lock_id_label(t, lang)})"
-                if names.get(t)
-                else lock_id_label(t, lang),
-            )
-            for t in tags
-        ]
         unknown = self._unknown_cards()
-        self._offered_new = set(unknown) - set(tags)
-        de = self._german()
+        self._offered_new = set(unknown)
+        options: list[SelectOptionDict] = []
         for tag, (source, when) in unknown.items():
-            if tag in tags:
-                continue
             time_text = dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%H:%M")
             hint = (
                 f"neu, gelesen an {source} um {time_text}"
-                if de
+                if lang == "de"
                 else f"new, read at {source} at {time_text}"
             )
             options.append(
                 SelectOptionDict(value=tag, label=f"{lock_id_label(tag, lang)} ({hint})")
             )
-        return {
-            vol.Optional("tags", default=tags): SelectSelector(
-                SelectSelectorConfig(
-                    options=options,
-                    multiple=True,
-                    custom_value=True,
-                    mode=SelectSelectorMode.DROPDOWN,
-                )
-            )
-        }
+        return options
 
-    def _tag_error(
-        self,
-        tags: list[str],
-        user_id: str | None,
-        stored: Mapping[str, Any],
-        current: Mapping[str, Any],
-    ) -> tuple[str, str] | None:
-        """Karte gehört schon jemand anderem, oder eine angebotene neue Karte ist abgelaufen."""
-        if (owner := _tag_owner(tags, user_id, stored)) is not None:
+    def _card_error(self, tag: str, stored: Mapping[str, Any]) -> tuple[str, str] | None:
+        """Neue Karte: fehlt, gehört schon jemandem, Zufallsnummer, oder inzwischen abgelaufen."""
+        if not tag:
+            return "card_missing", ""
+        if (owner := _tag_owner([tag], None, stored)) is not None:
             return "tag_taken", owner
-        if random := [t for t in tags if is_random_uid(t)]:
-            return "tag_random", ", ".join(random)
-        own = set(current.get("tags", []) or [])
-        expired = (set(tags) - own) & self._offered_new - set(self._unknown_cards())
-        if expired:
-            return "card_expired", ", ".join(sorted(expired))
+        if is_random_uid(tag):
+            return "tag_random", tag
+        if tag in self._offered_new and tag not in self._unknown_cards():
+            return "card_expired", tag
         return None
 
     def _random_hint(self) -> str:
@@ -3256,14 +3515,6 @@ class HauswachtOptionsFlow(OptionsFlow):
                         options=name_options, custom_value=True, mode=SelectSelectorMode.DROPDOWN
                     )
                 ),
-                vol.Optional("new_pin"): TextSelector(
-                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                ),
-                vol.Optional("remove_pin", default=False): BooleanSelector(),
-                vol.Optional("new_duress_pin"): TextSelector(
-                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                ),
-                vol.Optional("remove_duress_pin", default=False): BooleanSelector(),
                 vol.Optional("active", default=bool(current.get("active", True))): (
                     BooleanSelector()
                 ),
@@ -3291,7 +3542,6 @@ class HauswachtOptionsFlow(OptionsFlow):
                     "valid_until", description=_suggested_local(current.get("valid_until"))
                 ): DateTimeSelector(),
                 **self._user_area_field(current),
-                **self._tags_field(current),
             }
         )
 
@@ -3449,18 +3699,58 @@ def _tag_input(value: Any) -> list[str]:
     return list(dict.fromkeys(t for t in (normalize_tag(i) for i in items) if t))
 
 
-def _set_tags(data: dict[str, Any], tags: list[str]) -> None:
-    """Karten setzen; Namen entfernter Karten nicht aufbewahren."""
-    data["tags"] = tags
-    names = data.get("tag_names")
-    if isinstance(names, dict):
-        data["tag_names"] = {t: n for t, n in names.items() if t in tags}
+def _remove_card(users: dict[str, Any], tag: str) -> None:
+    """Karte bei allen Benutzern entfernen (aktiv, deaktiviert, Name)."""
+    for uid, data in list(users.items()):
+        if not isinstance(data, Mapping):
+            continue
+        new = dict(data)
+        new["tags"] = [t for t in new.get("tags", []) or [] if t != tag]
+        disabled = [t for t in new.get("tags_disabled", []) or [] if t != tag]
+        if disabled or "tags_disabled" in new:
+            new["tags_disabled"] = disabled
+        names = new.get("tag_names")
+        if isinstance(names, dict):
+            new["tag_names"] = {k: v for k, v in names.items() if k != tag}
+        users[uid] = new
+
+
+def _put_card(users: dict[str, Any], tag: str, user_id: str, name: str, *, active: bool) -> None:
+    """Karte einem Benutzer geben (vorher bei allen entfernen)."""
+    _remove_card(users, tag)
+    data = dict(users[user_id])
+    key = "tags" if active else "tags_disabled"
+    data[key] = [*list(data.get(key, []) or []), tag]
+    names = dict(data.get("tag_names") or {})
+    if name:
+        names[tag] = name
+    data["tag_names"] = names
+    users[user_id] = data
+
+
+def _all_cards(users: Mapping[str, Any]) -> list[tuple[str, str, str, bool]]:
+    """Alle Karten: (Karte, Benutzer-ID, Name, aktiv), sortiert nach Benutzer und Name."""
+    rows: list[tuple[str, str, str, bool]] = []
+    for uid, data in users.items():
+        if not isinstance(data, Mapping):
+            continue
+        names = data.get("tag_names") if isinstance(data.get("tag_names"), Mapping) else {}
+        assert isinstance(names, Mapping)
+        rows.extend((t, uid, str(names.get(t, "")), True) for t in data.get("tags", []) or [])
+        rows.extend(
+            (t, uid, str(names.get(t, "")), False) for t in data.get("tags_disabled", []) or []
+        )
+    return sorted(
+        rows,
+        key=lambda r: (str(users[r[1]].get("name", r[1])).casefold(), r[2].casefold(), r[0]),
+    )
 
 
 def _tag_owner(tags: list[str], user_id: str | None, stored: Mapping[str, Any]) -> str | None:
     """Gehört eine dieser Karten schon einem anderen Benutzer? Dann dessen Name."""
     for other_id, other in stored.items():
-        if other_id != user_id and set(tags) & set(other.get("tags", []) or []):
+        own = set(other.get("tags", []) or []) | set(other.get("tags_disabled", []) or [])
+        if other_id != user_id and set(tags) & own:
             return str(other.get("name", other_id))
     return None
 

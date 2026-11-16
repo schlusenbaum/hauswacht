@@ -6,6 +6,37 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.48.0] - 2026-11-16
+
+### Hinzugefügt
+- **Karten und Anhänger an einer Stelle** (Benutzer und PINs → Karten und Anhänger): Liste aller
+  RFID-Karten, Anhänger, Finger und Schloss-Kennungen mit Name, Nummer, Besitzer und „zuletzt
+  benutzt“ (🟢 aktiv, ⏸️ deaktiviert). Karte antippen: umbenennen, einem anderen Benutzer geben,
+  deaktivieren, löschen.
+- **Neue Karte anlernen am Stück:** „Halte die neue Karte jetzt ans Keypad …“ – der Dialog wartet
+  bis zu 2 Minuten, erkennt die Karte und fragt Name und Benutzer ab. Schon vorher gelesene Karten
+  stehen direkt zur Auswahl, Nummern lassen sich weiter eintippen.
+- **Karten deaktivieren:** Eine deaktivierte Karte schaltet nichts. Wird sie benutzt, kommt eine
+  Nachricht („Die deaktivierte Karte ‚Geldbörse‘ (Christian) wurde an Keypad Flur benutzt“), und
+  es zählt als Fehlversuch für die Sperre. Bei Schloss-Kennungen: Nachricht, kein Fehlversuch.
+- **PIN-Liste** (Benutzer und PINs → PINs): wer hat PIN bzw. Bedrohungs-PIN, wann zuletzt benutzt;
+  Benutzer antippen: PIN bzw. Bedrohungs-PIN setzen, ändern, entfernen. PINs selbst sind nie
+  sichtbar.
+
+### Geändert
+- Der Benutzer-Dialog enthält keine Karten- und PIN-Felder mehr, sondern zeigt den Stand
+  („2 Karten · PIN gesetzt“) mit Verweis auf die beiden Listen. Das Formular „Namen der Karten“
+  aus 0.47 entfällt – Namen vergibst du jetzt in der Kartenliste.
+- Vorhandene Karten, Namen und PINs bleiben unverändert erhalten; es muss nichts umgestellt
+  werden. Wird ein Benutzer gelöscht, werden seine Karten mit gelöscht.
+- Systemübersicht: deaktivierte Karten mit ⏸.
+
+### Dokumentation
+- Bedienteile (deutsch und englisch): Abschnitt „Karten anlernen“ neu – Kartenliste, Anlernen,
+  Bearbeiten/Deaktivieren/Löschen mit Beispielen („Geldbörse weg“); Finger und Türschlösser
+  angepasst.
+- Benutzer (deutsch und englisch): Menüübersicht, neuer Abschnitt „PINs“ mit Beispiel.
+
 ## [0.47.0] - 2026-11-16
 
 ### Hinzugefügt

@@ -57,6 +57,8 @@ class User:
     tags: tuple[str, ...] = ()  # RFID-Karten/-Anhänger (normalisierte IDs)
     # Selbst vergebene Namen der Karten (Karte -> Name), z. B. "Schlüsselbund"
     tag_names: tuple[tuple[str, str], ...] = ()
+    # Deaktivierte Karten: schalten nichts, werden aber erkannt (Nachricht + Fehlversuch)
+    disabled_tags: tuple[str, ...] = ()
     # Rechte je Bereich (Bereich -> erlaubte Aktionen); None = allgemeine Rechte für alle
     area_rights: tuple[tuple[str, frozenset[Action]], ...] | None = None
     # Alarmkarte: muss dieses Home-Assistant-Konto dort einen PIN eingeben?
@@ -165,6 +167,17 @@ def tag_credential(tag: str | None, users: Iterable[User]) -> str:
     return ", ".join(names)
 
 
+def disabled_tag(tag: str | None, users: Iterable[User]) -> tuple[User, str] | None:
+    """Gehört die Karte zu den deaktivierten? Dann (Besitzer, Kartenname)."""
+    wanted = "".join(ch for ch in str(tag or "").upper() if ch.isalnum())
+    if not wanted:
+        return None
+    for user in users:
+        if wanted in user.disabled_tags:
+            return user, user.tag_name(wanted)
+    return None
+
+
 def identity_label(identity: Identity, lang: str = DE) -> str:
     """Wer geschaltet hat, mit Kartenname: "Christian · Schlüsselbund"."""
     who = label(identity.users, lang)
@@ -213,7 +226,13 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
                 if isinstance(areas, list)
                 else (),
                 tags=_tags(data.get("tags")),
-                tag_names=_tag_names(data.get("tag_names"), _tags(data.get("tags"))),
+                tag_names=_tag_names(
+                    data.get("tag_names"),
+                    _tags(data.get("tags")) + _tags(data.get("tags_disabled")),
+                ),
+                disabled_tags=tuple(
+                    t for t in _tags(data.get("tags_disabled")) if t not in _tags(data.get("tags"))
+                ),
                 area_rights=_area_rights(data),
                 card_pin=bool(data.get("card_pin", False)),
             )
@@ -245,7 +264,7 @@ def tag_conflicts(users: Iterable[User]) -> dict[str, list[str]]:
     """Karten, die mehreren Benutzern zugeordnet sind (Karte -> Namen)."""
     owners: dict[str, list[str]] = {}
     for user in users:
-        for tag in user.tags:
+        for tag in user.tags + user.disabled_tags:
             owners.setdefault(tag, []).append(user.name)
     return {tag: names for tag, names in owners.items() if len(names) > 1}
 
