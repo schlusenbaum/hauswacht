@@ -6,6 +6,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.45.3] - 2026-11-16
+
+### Behoben
+- **Nach einem Neustart offen vorgefundene Melder sind jetzt wirklich bis zum Schließen
+  überbrückt** – genau wie nach „Alarm beenden“. Bisher waren sie nur als „überbrückt bis zum
+  Schließen“ vermerkt, aber nicht ignoriert: Meldete so ein offenes Fenster nach der Startphase
+  kurz „nicht verfügbar“ und dann wieder offen, löste es Alarm aus. Jetzt nicht mehr; nach dem
+  Schließen ist es wieder normal überwacht. Das Attribut `bypassed_sensors` am Bedienfeld führt
+  diese Melder jetzt ebenfalls auf. Gespeicherte Zustände älterer Versionen werden beim Start
+  entsprechend übernommen.
+
+### Dokumentation
+- Verhalten nach Neustart (deutsch und englisch): Melder, die **schon beim Wiederherstellen**
+  offen gemeldet sind, werden immer bis zum Schließen überbrückt – auch Eingangstüren (mit
+  Begründung). Nur Eingangstüren, die sich erst später offen melden, starten die
+  Eingangsverzögerung.
+- „Immer scharf“: Die Nachricht „automatisch scharf (Neustart)“ kommt über das Ereignis
+  „Automatik“, „nicht scharf geschaltet“ über „Scharfschaltung abgelehnt“ – wer diese Ereignisse
+  abschaltet, bekommt sie nicht.
+
 ## [0.45.2] - 2026-11-16
 
 ### Dokumentation

@@ -75,7 +75,8 @@ in der Zustandsmaschine geführt.
   „Wiederherstellen“ folgt `RestoreRequested`: direkt `armed` ohne Prüfung und
   Ausgangsverzögerung, bzw. `pending` mit neuer Eingangsverzögerung. Ein Alarm wird nie
   fortgesetzt. `BypassUntilClosed` überbrückt Melder, die in der Startphase offen gemeldet
-  werden. Ist die Anlage danach unscharf, obwohl sie vorher scharf war, entsteht
+  werden – wie `_acknowledge` in `bypassed` **und** `bypassed_until_closed` (ignoriert, bis
+  `SensorClosed` beide Mengen leert). Ist die Anlage danach unscharf, obwohl sie vorher scharf war, entsteht
   `RestartedDisarmed` ([ADR 0008](adr/0008-verhalten-nach-neustart.md)).
 
 ## Offene Punkte für spätere Versionen

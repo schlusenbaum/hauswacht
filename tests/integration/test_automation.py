@@ -76,6 +76,9 @@ async def _setup(hass: HomeAssistant, extra: dict[str, Any] | None = None, **aut
 
 
 async def test_arm_and_disarm_by_time(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
+    # Fester Start um 12:00: Läuft der Test vor 06:30, lägen sonst beide geplanten Zeitpunkte
+    # im ersten Schritt, und das Ergebnis hinge wieder von der Tageszeit des Testlaufs ab.
+    freezer.move_to(dt_util.now().replace(hour=12, minute=0, second=0, microsecond=0))
     await _setup(hass, auto_arm_time="23:00:00", auto_disarm_time="06:30:00")
     # Die Uhr wirklich vorstellen und dabei nie über einen geplanten Zeitpunkt springen: Sonst
     # feuern Scharf und Unscharf im selben Schritt, und das Ergebnis hängt von der Tageszeit des

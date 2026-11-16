@@ -560,9 +560,23 @@ def test_bypass_until_closed_after_restore() -> None:
     h.send(RestoreRequested(profile=NIGHT))
     h.send(BypassUntilClosed(sensors=frozenset({"fenster"})))
     assert h.ctx.bypassed_until_closed == {"fenster"}
+    assert h.ctx.bypassed == {"fenster"}
+    # kurz weg und wieder offen gemeldet: kein Alarm (wie nach "Alarm beenden")
+    effects = h.send(SensorTriggered(sensor_key="fenster", role=SensorRole.INSTANT))
+    assert h.ctx.state is AlarmState.ARMED
+    assert of_type(effects, Ignored)
     # geschlossen: wieder überwacht
     h.send(SensorClosed(sensor_key="fenster"))
     assert h.ctx.bypassed_until_closed == frozenset()
+    assert h.ctx.bypassed == frozenset()
+    h.send(SensorTriggered(sensor_key="fenster", role=SensorRole.INSTANT))
+    assert h.ctx.state is AlarmState.TRIGGERED
+
+
+def test_restore_until_closed_from_old_storage_is_bypassed() -> None:
+    h = Harness()
+    h.send(RestoreRequested(profile=NIGHT, bypassed_until_closed=frozenset({"fenster"})))
+    assert h.ctx.bypassed == {"fenster"}
 
 
 def test_bypass_until_closed_ignored_when_disarmed() -> None:

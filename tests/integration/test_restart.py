@@ -140,6 +140,14 @@ async def test_open_window_at_startup_is_bypassed_not_alarm(
     assert state is not None
     assert state.state == AlarmControlPanelState.ARMED_NIGHT
     assert WINDOW in state.attributes["bypassed_until_closed"]
+    assert WINDOW in state.attributes["bypassed_sensors"]
+    # nach der Startphase kurz weg und wieder offen gemeldet: weiter überbrückt, kein Alarm
+    await _later(hass, 130)
+    set_sensor(hass, WINDOW, "unavailable")
+    await hass.async_block_till_done()
+    set_sensor(hass, WINDOW, "on")
+    await hass.async_block_till_done()
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
     # geschlossen und wieder geöffnet: normal überwacht
     set_sensor(hass, WINDOW, "off")
     await hass.async_block_till_done()
