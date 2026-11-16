@@ -178,6 +178,18 @@ def test_users_without_pin_and_expired_guests() -> None:
     assert sorted(_codes(findings)) == ["user_expired", "user_without_pin"]
 
 
+def test_users_without_own_pin_use_master_pin() -> None:
+    users = [
+        {"name": "Christian", "pin": True, "active": True},
+        {"name": "Petra", "pin": False, "active": True},
+    ]
+    rules = {"any_pin": True, "master_pin": True}
+    findings = run_checks(_overview(users=users, pin_rules=rules), now=NOW)
+    assert _codes(findings) == ["user_master_pin_only"]
+    assert "Master-PIN" in findings[0]["text"]
+    assert "Petra" in findings[0]["text"]
+
+
 def test_monitoring_hints() -> None:
     off = _overview(
         monitoring={"stale_after_hours": 0, "recommended_hours": 4, "infrastructure": []}

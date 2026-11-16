@@ -2630,6 +2630,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 options=[
                     SelectOptionDict(value=uid, label=str(data.get("name") or uid))
                     for uid, data in stored.items()
+                    if uid != MASTER_USER_ID  # Master-PIN ist keine Person
                 ],
                 mode=SelectSelectorMode.DROPDOWN,
             )

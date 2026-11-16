@@ -1453,7 +1453,11 @@
   "issues": {
     "users_without_pin": {
       "title": "Hauswacht: nicht alle Benutzer haben einen PIN",
-      "description": "Sobald es einen PIN gibt, verlangt das Bedienfeld (und Alexa) ihn **von allen** zum Unscharfschalten. Diese Hauswacht-Benutzer haben keinen PIN und können dort nicht unscharf schalten: **{people}**.\n\nAuswege:\n- ihnen unter Hauswacht → Konfigurieren → Systemeinstellungen → Benutzer und PINs einen PIN geben (gemeinsamer Familien-PIN ist erlaubt), oder\n- unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ einschalten (derzeit: {buttons}) – dann bleiben Dashboard-Knöpfe und Push-Knopf ohne PIN nutzbar, oder\n- die Karte „Hauswacht Alarm“ verwenden: Wer mit seinem Home-Assistant-Konto einem Benutzer zugeordnet ist, schaltet dort ohne PIN.\n\nZeitgesteuerte Profile und die Anwesenheits-Automatik sind davon nicht betroffen."
+      "description": "Sobald es einen PIN gibt, verlangt das Bedienfeld (und Alexa) ihn **von allen** zum Unscharfschalten. Diese Hauswacht-Benutzer haben keinen PIN und können dort nicht unscharf schalten: **{people}**.\n\nAuswege:\n- ihnen unter Hauswacht → Konfigurieren → Systemeinstellungen → Benutzer und PINs → PINs einen PIN geben (gemeinsamer Familien-PIN ist erlaubt), oder\n- unter PIN-Regeln „Dashboard-Knöpfe trotz PIN erlauben“ einschalten (derzeit: {buttons}) – dann bleiben Dashboard-Knöpfe und Push-Knopf ohne PIN nutzbar, oder\n- die Karte „Hauswacht Alarm“ verwenden: Wer mit seinem Home-Assistant-Konto einem Benutzer zugeordnet ist, schaltet dort ohne PIN.\n\nZeitgesteuerte Profile und die Anwesenheits-Automatik sind davon nicht betroffen."
+    },
+    "users_master_pin_only": {
+      "title": "Hauswacht: Benutzer ohne eigenen PIN",
+      "description": "Diese Hauswacht-Benutzer haben **keinen eigenen PIN**: **{people}**. Am Bedienfeld (und bei Alexa) schalten sie mit dem **Master-PIN** – im Logbuch steht dann „Master-PIN“, nicht wer es war.\n\nWenn das so gewollt ist, kannst du diesen Hinweis ignorieren. Sonst:\n- ihnen unter Hauswacht → Konfigurieren → Systemeinstellungen → Benutzer und PINs → PINs einen eigenen PIN geben, oder\n- die Karte „Hauswacht Alarm“ verwenden: Wer mit seinem Home-Assistant-Konto einem Benutzer zugeordnet ist, schaltet dort ohne PIN und unter eigenem Namen.\n\nDashboard-Knöpfe trotz PIN: derzeit {buttons}."
     },
     "check_finding": {
       "title": "Hauswacht: {hint}",

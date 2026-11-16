@@ -323,6 +323,17 @@ async def test_repair_issue_when_not_everyone_has_pin(hass: HomeAssistant) -> No
     assert "Petra" in issue.translation_placeholders["people"]
 
 
+async def test_repair_issue_names_master_pin(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    users = {"master": {**user("Master-PIN", "8642")}, "p": user("Petra")}
+    await setup_entry(hass, make_entry({"users": users}))
+    issue = ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin")
+    assert issue is not None
+    assert issue.translation_key == "users_master_pin_only"
+    assert issue.translation_placeholders["people"] == "Petra"
+
+
 async def test_no_repair_issue_when_all_have_pin(hass: HomeAssistant) -> None:
     from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
 

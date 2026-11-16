@@ -1453,7 +1453,11 @@
   "issues": {
     "users_without_pin": {
       "title": "Hauswacht: not every user has a PIN",
-      "description": "As soon as a PIN exists, the panel (and Alexa) require it **from everyone** to disarm. These Hauswacht users have no PIN and cannot disarm there: **{people}**.\n\nOptions:\n- Give them a PIN under Hauswacht → Configure → System settings → Users and PINs (a shared family PIN is allowed), or\n- enable “Allow dashboard buttons despite PIN” under PIN rules (currently: {buttons}) – dashboard buttons and the push button then keep working without a PIN, or\n- use the card “Hauswacht Alarm”: whoever is linked to a user with their Home Assistant account switches there without a PIN.\n\nScheduled profiles and presence automation are not affected."
+      "description": "As soon as a PIN exists, the panel (and Alexa) require it **from everyone** to disarm. These Hauswacht users have no PIN and cannot disarm there: **{people}**.\n\nOptions:\n- Give them a PIN under Hauswacht → Configure → System settings → Users and PINs → PINs (a shared family PIN is allowed), or\n- enable “Allow dashboard buttons despite PIN” under PIN rules (currently: {buttons}) – dashboard buttons and the push button then keep working without a PIN, or\n- use the card “Hauswacht Alarm”: whoever is linked to a user with their Home Assistant account switches there without a PIN.\n\nScheduled profiles and presence automation are not affected."
+    },
+    "users_master_pin_only": {
+      "title": "Hauswacht: users without an own PIN",
+      "description": "These Hauswacht users have **no own PIN**: **{people}**. At the panel (and with Alexa) they switch with the **master PIN** – the logbook then shows “Master-PIN”, not who it was.\n\nIf this is intended, you can ignore this notice. Otherwise:\n- give them an own PIN under Hauswacht → Configure → System settings → Users and PINs → PINs, or\n- use the card “Hauswacht Alarm”: whoever is linked to a user with their Home Assistant account switches there without a PIN and under their own name.\n\nDashboard buttons despite PIN: currently {buttons}."
     },
     "check_finding": {
       "title": "Hauswacht: {hint}",

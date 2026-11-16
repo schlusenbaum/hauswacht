@@ -13,6 +13,11 @@
 > ein PIN, zeigt Home Assistant unter **Einstellungen → Reparaturen** den Hinweis „Nicht alle
 > Benutzer haben einen PIN“. Home-Assistant-Konten ohne Hauswacht-Benutzer – z. B. für Grafana,
 > MQTT oder ein Wandtablet – zählen dabei nicht.
+>
+> **Mit Master-PIN** können Benutzer ohne eigenen PIN am Bedienfeld trotzdem unscharf schalten –
+> eben mit dem Master-PIN. Der Hinweis heißt dann „Benutzer ohne eigenen PIN“ und nennt sie; im
+> Logbuch steht bei ihnen „Master-PIN“ statt ihres Namens. Ist das so gewollt, kannst du den
+> Hinweis in den Reparaturen ignorieren.
 
 **RFID-Karten sind unabhängig vom PIN:** Karten machen das Bedienfeld nicht PIN-pflichtig. Ganz
 ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Keypad.

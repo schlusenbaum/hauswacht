@@ -117,14 +117,26 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
         "de": ("{name}: Gültigkeit abgelaufen – Benutzer noch nötig?", "Benutzer und PINs"),
         "en": ("{name}: validity expired – still needed?", "Users and PINs"),
     },
+    "user_master_pin_only": {
+        "de": (
+            "{name} hat keinen eigenen PIN und schaltet am Bedienfeld mit dem Master-PIN – im "
+            "Logbuch steht dann „Master-PIN“ statt {name}.",
+            "Benutzer und PINs → PINs",
+        ),
+        "en": (
+            "{name} has no own PIN and uses the master PIN at the panel – the logbook then shows "
+            "“Master-PIN” instead of {name}.",
+            "Users and PINs → PINs",
+        ),
+    },
     "user_without_pin": {
         "de": (
             "{name} hat keinen PIN, andere schon – das Bedienfeld verlangt auch von {name} einen.",
-            "Benutzer und PINs",
+            "Benutzer und PINs → PINs",
         ),
         "en": (
             "{name} has no PIN but others do – the panel asks {name} for one too.",
-            "Users and PINs",
+            "Users and PINs → PINs",
         ),
     },
     "silence_off": {
@@ -311,12 +323,14 @@ def _users(overview: Mapping[str, Any], lang: str, duress: bool) -> list[dict[st
     if duress and not overview.get("notifications", {}).get("duress_targets"):
         found.append(_finding("duress_no_targets", lang, severity="warning", important=True))
     any_pin = overview.get("pin_rules", {}).get("any_pin")
+    master = overview.get("pin_rules", {}).get("master_pin")
     for user in overview.get("users", []):
         name = user["name"]
         if user.get("expired"):
             found.append(_finding("user_expired", lang, key=name, name=name))
         if any_pin and user.get("active") and not user.get("pin") and not user.get("expired"):
-            found.append(_finding("user_without_pin", lang, key=name, name=name))
+            code = "user_master_pin_only" if master else "user_without_pin"
+            found.append(_finding(code, lang, key=name, name=name))
     return found
 
 

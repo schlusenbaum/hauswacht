@@ -43,6 +43,7 @@ from .const import (
     DOMAIN,
     EVENT_HAUSWACHT,
     ISSUE_PIN_COVERAGE,
+    ISSUE_PIN_MASTER_ONLY,
     MASTER_USER_ID,
     NOTIFICATION_ALARM,
     NOTIFICATION_ARM_HINT,
@@ -1077,6 +1078,8 @@ class HauswachtRuntime:
     async def _async_check_pin_coverage(self) -> None:
         """Reparatur-Hinweis, wenn es PINs gibt, aber Personen ohne PIN."""
         missing = people_without_pin(self.users, ignore=[MASTER_USER_ID])
+        # Mit Master-PIN können sie trotzdem unscharf schalten – nur eben mit dem Master-PIN
+        master = any(u.user_id == MASTER_USER_ID and u.pin is not None for u in self.users)
         if missing:
             ir.async_create_issue(
                 self.hass,
@@ -1084,7 +1087,7 @@ class HauswachtRuntime:
                 ISSUE_PIN_COVERAGE,
                 is_fixable=False,
                 severity=ir.IssueSeverity.WARNING,
-                translation_key=ISSUE_PIN_COVERAGE,
+                translation_key=ISSUE_PIN_MASTER_ONLY if master else ISSUE_PIN_COVERAGE,
                 translation_placeholders={
                     "people": ", ".join(missing),
                     "buttons": tr(self.lang, "on" if self.buttons_without_pin else "off"),

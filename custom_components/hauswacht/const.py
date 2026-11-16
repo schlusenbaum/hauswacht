@@ -55,6 +55,8 @@ PUSH_ARM_TAG: Final = "hauswacht_arm"
 OPT_BUTTONS_WITHOUT_PIN: Final = "buttons_without_pin"
 MASTER_USER_ID: Final = "master"
 ISSUE_PIN_COVERAGE: Final = "users_without_pin"
+# Gleicher Hinweis, aber es gibt einen Master-PIN: sie schalten mit ihm statt mit eigenem PIN
+ISSUE_PIN_MASTER_ONLY: Final = "users_master_pin_only"
 MASTER_USER_NAME: Final = "Master-PIN"
 # "Alarm beenden" (Sirene aus, bleibt scharf) auch bei eingestelltem PIN ohne PIN erlauben
 OPT_END_ALARM_WITHOUT_PIN: Final = "end_alarm_without_pin"
