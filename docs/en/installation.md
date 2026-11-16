@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.45.3:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.46.0:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -184,7 +184,9 @@ event "Arming rejected" (default: on).
 
 Whatever the setting:
 
-- A previous **alarm is never continued**; sirens never go on because of a restart.
+- A previous **alarm is never continued**; sirens never go on because of a restart. Sirens that
+  Hauswacht had switched on for the alarm and that are still sounding are switched off after
+  startup ([details](sirens.md#siren-was-still-on-at-a-restart)).
 - **Test mode** is kept, simulated sensors are not.
 - The counter of wrong PIN entries starts at zero.
 - If the profile has been deleted in the meantime, the system stays disarmed and reports this.

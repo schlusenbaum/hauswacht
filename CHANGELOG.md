@@ -6,6 +6,35 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.46.0] - 2026-11-16
+
+### Hinzugefügt
+- **Sirenen, die beim Neustart noch liefen, werden ausgeschaltet.** Hauswacht merkt sich jetzt
+  dauerhaft, welche Sirenen es selbst eingeschaltet hat. Startet Home Assistant mitten in einem
+  Alarm neu, schaltet Hauswacht diese Sirenen nach dem Hochfahren aus – und nach der Startphase
+  (2 Minuten) ein zweites Mal, falls eine dann noch „an“ meldet. Bisher lief eine Sirene ohne
+  eigene Laufzeit (z. B. ein Relais als Sirene) weiter, und auch Unscharfschalten schaltete sie
+  nicht mehr aus. Nachricht „Hauswacht: Sirene nach Neustart“ (Ereignis „System“).
+  - Nur eigene Sirenen; nie Sirenen, die inzwischen ein neuer Alarm nutzt.
+  - Brand geht vor: Meldet ein Rauchmelder Brand, wird nichts ausgeschaltet; Hauswacht meldet das
+    und versucht es jede Minute erneut. Auch Unscharfschalten vergisst die Sirene nicht.
+
+### Geändert
+- **Ausschalten eigener Sirenen ist auch ohne Sirenenfreigabe erlaubt** – Ausschalten ist immer
+  die sichere Richtung. Einschalten bleibt ohne Freigabe gesperrt; Testmodus und Brandsperre
+  sperren weiterhin beides. Sicherheitsregel S2 angepasst, S15 neu (deutsch und englisch),
+  Nachtrag zu ADR 0008.
+- Wiederholte Ausschaltversuche (Brandsperre) richten sich nach dem aktuellen Testmodus, nicht
+  nach dem beim ersten Versuch. Sirenen, die sich gar nicht ausschalten lassen, werden nicht
+  endlos erneut versucht.
+
+### Dokumentation
+- Sirenen (deutsch und englisch): neuer Abschnitt „Sirene lief beim Neustart noch“ mit Beispiel;
+  Installation, README und Sicherheitsregeln ergänzt.
+
+### Intern
+- Test der Zeitautomatik startet fest um 12:00 (hing von der Uhrzeit des Testlaufs ab).
+
 ## [0.45.3] - 2026-11-16
 
 ### Behoben

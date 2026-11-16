@@ -184,9 +184,10 @@ def test_stop_blocked_in_test_mode() -> None:
     assert decide_stop(guard).commands == ()
 
 
-def test_stop_blocked_without_hardware_release() -> None:
+def test_stop_allowed_without_hardware_release() -> None:
+    # Ausschalten eigener Sirenen ist die sichere Richtung (z. B. nach einem Neustart)
     guard = ctx(device("diele"), hardware=False, activated=frozenset({"diele"}))
-    assert decide_stop(guard).commands == ()
+    assert [c.entity_id for c in decide_stop(guard).commands] == ["siren.diele"]
 
 
 def test_stop_with_nothing_activated_does_nothing() -> None:
@@ -212,7 +213,8 @@ def test_no_command_ever_escapes_the_locks(
     )
     all_open = hardware and not test_mode and fire is FireIndicator.CLEAR
     assert bool(decide_activation(guard, REQ).commands) is all_open
-    assert bool(decide_stop(guard).commands) is all_open
+    # Ausschalten: ohne Hardware-Freigabe erlaubt, Testmodus und Brandsperre gelten
+    assert bool(decide_stop(guard).commands) is (not test_mode and fire is FireIndicator.CLEAR)
 
 
 # --- Brand an fremden Meldern -----------------------------------------------

@@ -113,6 +113,12 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "restored_open": "Beim Hochfahren offen und deshalb bis zum Schließen überbrückt: "
         "{sensors}.",
         "restart_actor": "Neustart",
+        "sirens_restart_off_title": "Hauswacht: Sirene nach Neustart",
+        "sirens_restart_off": "Lief beim Neustart noch für einen Alarm und wurde ausgeschaltet: "
+        "{sirens}.",
+        "sirens_restart_fire": "Lief beim Neustart noch für einen Alarm, wird wegen der "
+        "Brandsperre aber noch nicht ausgeschaltet: {sirens}. Hauswacht versucht es jede Minute "
+        "erneut.",
         "reason_restart": "Neustart",
         "restart_title": "Hauswacht: nach Neustart unscharf",
         "restart": "Home Assistant wurde neu gestartet. Hauswacht war scharf (Profil {profile}) "
@@ -281,6 +287,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "restored_open_title": "Hauswacht: open after restart",
         "restored_open": "Open at startup and therefore bypassed until closed: {sensors}.",
         "restart_actor": "restart",
+        "sirens_restart_off_title": "Hauswacht: siren after restart",
+        "sirens_restart_off": "Was still on for an alarm at the restart and has been switched "
+        "off: {sirens}.",
+        "sirens_restart_fire": "Was still on for an alarm at the restart, but is not switched off "
+        "yet because of the fire lock: {sirens}. Hauswacht tries again every minute.",
         "reason_restart": "restart",
         "restart_title": "Hauswacht: disarmed after restart",
         "restart": "Home Assistant was restarted. Hauswacht was armed (profile {profile}) and is "

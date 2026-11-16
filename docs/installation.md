@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.45.3:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.46.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -193,6 +193,8 @@ Ereignis „Scharfschaltung abgelehnt“ (Standard: an).
 Unabhängig von der Einstellung gilt:
 
 - Ein früherer **Alarm wird nie fortgesetzt**, Sirenen gehen durch einen Neustart nie an.
+  Sirenen, die Hauswacht für den Alarm eingeschaltet hatte und die noch laufen, schaltet es nach
+  dem Hochfahren aus ([Details](sirenen.md#sirene-lief-beim-neustart-noch)).
 - Der **Testmodus** bleibt erhalten, simulierte Sensoren nicht.
 - Der Zähler für falsche PIN-Eingaben beginnt bei null.
 - Wurde das Profil inzwischen gelöscht, bleibt die Anlage unscharf und meldet das.
