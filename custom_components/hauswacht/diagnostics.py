@@ -25,6 +25,7 @@ REDACT = {
     "tags",
     "tag_names",
     "tags_disabled",
+    "action_codes",
     "tag",
     "cards",
     # Personen, Konten, Empfänger, Netzwerke

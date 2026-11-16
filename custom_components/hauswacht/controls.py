@@ -28,7 +28,9 @@ from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import dt as dt_util
 
 from .const import EVENT_HAUSWACHT
+from .core.action_codes import ActionCode, CodeAction, find_action_code, parse_action_codes
 from .core.alarm_states import panel_value
+from .core.code_guard import remaining_lock
 from .core.controls import (
     ALL_AREAS,
     KEY_DISARM,
@@ -92,6 +94,7 @@ class ControlManager:
         self.hass = hass
         self.runtime = runtime  # Hauptbereich
         self.controls = parse_controls(runtime.entry.options)
+        self._action_codes = parse_action_codes(runtime.entry.options)
         self._unsubs: list[CALLBACK_TYPE] = []
         self._transactions: dict[str, Any] = {}
         self._pending: dict[str, PendingLogin] = {}
@@ -280,6 +283,15 @@ class ControlManager:
         if action == KEY_EMERGENCY:
             await self._emergency(keypad)
             return "emergency"
+        action_code = find_action_code(self._action_codes, code, action, keypad.control_id)
+        if action_code is not None:
+            # Aktions-Code: kein Ausweis, kein Fehlversuch – in der PIN-Sperre aber gesperrt
+            if remaining_lock(self.runtime.main._code_guard, time.monotonic()):
+                return await self._reply(keypad, transaction, REPLY_INVALID_CODE)
+            result = self._run_action_code(keypad, action_code)
+            states = [panel_value(a.ctx, a.options) for a in self._areas(keypad)]
+            mode = keypad_mode(_combined(states))
+            return await self._reply(keypad, transaction, mode if result == "ok" else result)
         if action != KEY_DISARM and action not in keypad.buttons:
             return await self._reply(keypad, transaction, REPLY_NOT_READY)
         wanted = Action.DISARM if action == KEY_DISARM else Action.ARM
@@ -414,6 +426,35 @@ class ControlManager:
             self.hass.async_create_task(
                 self._publish(keypad, {"mode": mode}), f"hauswacht_keypad_show_{keypad.control_id}"
             )
+
+    def _run_action_code(self, keypad: Control, action_code: ActionCode) -> str:
+        """Aktion eines Aktions-Codes ausführen. Nie unscharf: ein Aktions-Code ist kein Ausweis."""
+        actor = tr(self.runtime.lang, "action_code_actor", name=action_code.name)
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {
+                "type": "ActionCode",
+                "name": action_code.name,
+                "action": action_code.action.value,
+                "control": keypad.name,
+                "test": self.runtime.ctx.test_mode,
+            },
+        )
+        if action_code.action is CodeAction.ARM and action_code.profile:
+            return self._execute(keypad, Action.ARM, action_code.profile, None, actor=actor)
+        if action_code.action is CodeAction.SILENT_EMERGENCY:
+            self._silent_emergency(keypad)
+        return "ok"
+
+    def _silent_emergency(self, keypad: Control) -> None:
+        self.runtime.notifier.notify(
+            NotifyEvent.ALARM,
+            tr(self.runtime.lang, "panic_title"),
+            tr(self.runtime.lang, "panic", control=keypad.name),
+            values={"melder": keypad.name},
+            test_mode=self.runtime.ctx.test_mode,
+            speak=False,
+        )
 
     async def _emergency(self, keypad: Control) -> None:
         """Notruf-Taste: je Bedienteil aus, stiller Notruf (Push) oder Alarm."""

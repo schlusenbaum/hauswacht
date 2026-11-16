@@ -18,6 +18,7 @@ PLATFORMS: list[str] = [
     "alarm_control_panel",
     "binary_sensor",
     "button",
+    "event",
     "number",
     "select",
     "sensor",

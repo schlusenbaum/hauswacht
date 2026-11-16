@@ -749,6 +749,7 @@
           "control_edit": "Bedienteil bearbeiten",
           "control_delete": "Bedienteil löschen",
           "control_learn": "Anlernen neuer Karten",
+          "action_codes": "Aktions-Codes (Code + Taste am Keypad → eigene Aktion)",
           "system": "← Zurück"
         }
       },
@@ -900,6 +901,31 @@
           "restart_behavior": "Standard: vorherigen Zustand wiederherstellen.",
           "restart_profile": "Nur für „immer scharf“."
         }
+      },
+      "action_codes": {
+        "title": "Aktions-Codes",
+        "description": "{saved}Ein Aktions-Code ist ein Code plus eine Funktionstaste am Keypad, z. B. **7777 + Haus**. Er löst eine festgelegte Aktion aus – ein Ereignis für eigene Automationen, Scharfschalten oder einen stillen Notruf.\n\nEin Aktions-Code ist **kein Ausweis**: Er gehört keiner Person, ist nicht geheim und kann nie unscharf schalten. Bitte nichts Sicherheitskritisches (z. B. Türöffner) damit auslösen.",
+        "data": {
+          "action_code": "Aktions-Code"
+        }
+      },
+      "action_code_edit": {
+        "title": "Aktions-Code",
+        "description": "Derselbe Code darf mit verschiedenen Tasten verschiedene Aktionen haben (z. B. 7777 + Haus = Licht an, 7777 + Nacht = Licht aus). Er darf keinem PIN gleichen.",
+        "data": {
+          "name": "Name (z. B. Außenlicht)",
+          "code": "Code (2–8 Ziffern)",
+          "key": "Taste",
+          "keypad": "Keypad",
+          "action": "Aktion",
+          "profile": "Alarmprofil (nur bei „Scharf schalten“)",
+          "delete": "Aktions-Code löschen"
+        },
+        "data_description": {
+          "name": "Erscheint im Logbuch und ist bei „Ereignis“ der Ereignistyp, den du in der Automation auswählst.",
+          "action": "**Ereignis:** die Entität „Hauswacht Aktions-Code“ meldet ein Ereignis mit diesem Namen – in einer eigenen Automation als Auslöser verwenden. **Scharf schalten:** schaltet das gewählte Profil scharf. **Stiller Notruf:** wichtige Push-Nachricht an die Alarm-Empfänger, sonst nichts Sichtbares.",
+          "code": "Nur Ziffern. Am Keypad: Code tippen, dann die Taste drücken. Während einer PIN-Sperre sind auch Aktions-Codes gesperrt."
+        }
       }
     },
     "error": {
@@ -950,7 +976,13 @@
       "button_no_press": "Mindestens eine Druckart einem Alarmprofil zuordnen.",
       "restart_needs_profile": "„Immer scharf“ braucht mindestens ein Alarmprofil.",
       "card_missing": "Bitte eine Karte wählen oder ihre Nummer eintippen.",
-      "user_missing": "Bitte einen Benutzer wählen."
+      "user_missing": "Bitte einen Benutzer wählen.",
+      "action_code_name_taken": "Diesen Namen hat schon ein anderer Aktions-Code.",
+      "action_code_invalid": "Bitte 2 bis 8 Ziffern eingeben.",
+      "action_code_taken": "Diesen Code mit dieser Taste gibt es schon („{conflict}“).",
+      "action_code_profile_missing": "Bitte ein Alarmprofil wählen.",
+      "action_code_is_pin": "Dieser Code ist schon ein PIN oder Bedrohungs-PIN – bitte einen anderen wählen.",
+      "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -960,7 +992,8 @@
       "no_rules": "Es gibt noch keine Auslöseregel.",
       "no_areas": "Es gibt nur den ersten Bereich – er lässt sich nicht löschen.",
       "no_sirens": "Es sind keine Sirenen eingerichtet (Alarmgeber – Sirenen → Sirenen und Freigabe).",
-      "no_controls": "Es gibt noch keine Bedienteile."
+      "no_controls": "Es gibt noch keine Bedienteile.",
+      "no_keypads": "Es ist noch kein Keypad eingerichtet. Aktions-Codes gibt es nur für Keypads."
     },
     "progress": {
       "wait_card": "Halte die neue Karte jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser – bzw. schließe das Türschloss einmal mit der neuen Kennung auf. Es geht automatisch weiter, sobald sie gelesen wurde (spätestens nach {seconds} Sekunden)."
@@ -1135,6 +1168,21 @@
         "armed": "Immer scharf (mit festem Profil)",
         "disarmed": "Immer unscharf"
       }
+    },
+    "action_code_key": {
+      "options": {
+        "arm_day_zones": "🏠 Haus (Tag)",
+        "arm_night_zones": "🌙 Nacht",
+        "arm_all_zones": "🔒 Schloss (Alle)",
+        "disarm": "🔓 offenes Schloss (Unscharf)"
+      }
+    },
+    "action_code_action": {
+      "options": {
+        "event": "Ereignis für eigene Automation",
+        "arm": "Scharf schalten mit Profil …",
+        "silent_emergency": "Stiller Notruf"
+      }
     }
   },
   "entity": {
@@ -1278,6 +1326,11 @@
     "alarm_control_panel": {
       "all_panel": {
         "name": "Alle Bereiche"
+      }
+    },
+    "event": {
+      "action_code": {
+        "name": "Aktions-Code"
       }
     }
   },
