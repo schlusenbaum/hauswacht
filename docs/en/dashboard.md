@@ -39,12 +39,16 @@ data:
   confirm: true
 ```
 
-Open sensors are then **bypassed**: their open state causes no alarm. **As soon as a bypassed
-sensor is closed, it is monitored normally again** – if it is opened again afterwards, it
-triggers. If the profile is set to "refuse", Hauswacht also refuses the confirmation.
+Open sensors are then **bypassed**, i.e. **not monitored until disarming** – even if they are
+closed and opened again in between. If the profile is set to "refuse", Hauswacht also refuses
+the confirmation.
 
-**Example:** the bathroom window is tilted, you arm "Night" with "Arm anyway". The tilted window
-triggers nothing. If you close it later and someone opens it again, there is an alarm.
+**Example:** the bathroom window is tilted, you arm "Night" with "Arm anyway". The bathroom window
+triggers nothing that night, even if someone closes it and opens it again. All other sensors are
+armed normally. Only after disarming is it included normally again.
+
+It is different when **ending an alarm**: there, sensors are only bypassed **until they are
+closed** (see below).
 
 The same applies to **failed** sensors you confirmed when arming: while they are missing, nothing
 happens. If they come back closed, they are monitored normally again; if they come back **open**,

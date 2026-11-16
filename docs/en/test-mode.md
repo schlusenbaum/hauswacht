@@ -42,7 +42,7 @@ Below each sensor it says what Hauswacht is currently doing with it:
 | monitored | triggers in the active profile |
 | not in the active profile | is ignored (e.g. basement with the profile "Home") |
 | only in trigger rules: … | belongs only to these trigger rules in the active profile |
-| bypassed | was open when arming ("Arm anyway"); monitored again after **Closed**, opening again triggers |
+| bypassed | was open when arming ("Arm anyway"); not monitored until disarming |
 | bypassed until closed | was open when an alarm was ended or after a restart; monitored again only after **Closed** |
 | always active | reports even when disarmed |
 | tamper triggers alarm / message only | depending on the profile; when disarmed always just a message |

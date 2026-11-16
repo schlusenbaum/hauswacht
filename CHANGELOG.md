@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.45.2] - 2026-11-16
+
+### Dokumentation
+- **Korrektur von 0.45.1:** Die Änderung zu „überbrückt“ war falsch. Richtig ist (wie bis 0.45.0
+  beschrieben): Nach „Trotzdem scharf“ sind überbrückte Melder **bis zum Unscharfschalten nicht
+  überwacht**, auch wenn sie geschlossen und wieder geöffnet werden. Nur nach „Alarm beenden“ und
+  nach einem Neustart gilt „überbrückt bis zum Schließen“. Doku (deutsch und englisch),
+  Begriffe, Testmodus, Zustandsmodell und Testkarte entsprechend korrigiert und um ein Beispiel
+  ergänzt.
+- Richtig bleibt aus 0.45.1: Bestätigte ausgefallene Melder lösen aus, wenn sie offen
+  zurückkommen.
+
 ## [0.45.1] - 2026-11-16
 
 ### Dokumentation
