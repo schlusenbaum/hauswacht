@@ -455,6 +455,7 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
         "sensor_behaviour",
         "infrastructure",
         "homecoming",
+        "restart",
         "init",
     ]
     flow = await hass.config_entries.options.async_configure(

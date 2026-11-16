@@ -132,6 +132,30 @@ class Startup:
 
 
 @dataclass(frozen=True)
+class RestoreRequested:
+    """Zustand von vor dem Neustart wiederherstellen (Einstellung "Wiederherstellen").
+
+    Ohne Prüfung und ohne Ausgangsverzögerung: Die Anlage war schon scharf. Lief eine
+    Eingangsverzögerung, beginnt sie neu – wer gerade heimkam, konnte während des Neustarts
+    nicht unscharf schalten. Ein laufender Alarm wird nie fortgesetzt.
+    """
+
+    profile: ProfileRuntime
+    bypassed: frozenset[str] = frozenset()
+    bypassed_until_closed: frozenset[str] = frozenset()
+    accepted_unavailable: frozenset[str] = frozenset()
+    entry_delay: bool = False
+    trigger_sensor: str | None = None
+
+
+@dataclass(frozen=True)
+class BypassUntilClosed:
+    """Sensoren bis zum Schließen überbrücken (nach dem Wiederherstellen offen vorgefunden)."""
+
+    sensors: frozenset[str]
+
+
+@dataclass(frozen=True)
 class ArmRequested:
     profile: ProfileRuntime
     readiness: Readiness = Readiness()
@@ -196,6 +220,8 @@ class SetTestMode:
 Event = (
     Startup
     | ArmRequested
+    | RestoreRequested
+    | BypassUntilClosed
     | DisarmRequested
     | SensorTriggered
     | AlwaysActiveTriggered
@@ -443,6 +469,34 @@ def _on_startup(ctx: AlarmContext, event: Startup) -> Result:
     if event.previous_profile_id is not None:
         effects.append(RestartedDisarmed(previous_profile_id=event.previous_profile_id))
     return new_ctx, tuple(effects)
+
+
+def _on_restore(ctx: AlarmContext, event: RestoreRequested, now: float) -> Result:
+    if ctx.state is not AlarmState.DISARMED:
+        return ctx, (Rejected(reason="not_disarmed"),)
+    profile = event.profile
+    ctx = replace(
+        ctx,
+        profile=profile,
+        bypassed=event.bypassed,
+        bypassed_until_closed=event.bypassed_until_closed,
+        accepted_unavailable=event.accepted_unavailable,
+        alarm_cycles=0,
+        trigger_sensor=None,
+    )
+    if event.entry_delay and profile.entry_delay > 0:
+        ctx, changed = _goto(ctx, AlarmState.PENDING, "restored")
+        ctx = replace(ctx, trigger_sensor=event.trigger_sensor)
+        ctx, timer = _start_timer(ctx, TimerKind.ENTRY_DELAY, profile.entry_delay, now)
+        return ctx, (changed, timer)
+    ctx, changed = _goto(ctx, AlarmState.ARMED, "restored")
+    return ctx, (changed,)
+
+
+def _on_bypass_until_closed(ctx: AlarmContext, event: BypassUntilClosed) -> Result:
+    if ctx.state is AlarmState.DISARMED or not event.sensors:
+        return ctx, ()
+    return replace(ctx, bypassed_until_closed=ctx.bypassed_until_closed | event.sensors), ()
 
 
 def _on_arm(ctx: AlarmContext, event: ArmRequested, now: float) -> Result:
@@ -715,6 +769,10 @@ def step(ctx: AlarmContext, event: Event, now: float) -> Result:
             return _on_startup(ctx, event)
         case ArmRequested():
             return _on_arm(ctx, event, now)
+        case RestoreRequested():
+            return _on_restore(ctx, event, now)
+        case BypassUntilClosed():
+            return _on_bypass_until_closed(ctx, event)
         case DisarmRequested():
             return _on_disarm(ctx, event)
         case SensorTriggered():

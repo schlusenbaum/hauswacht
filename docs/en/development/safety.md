@@ -64,8 +64,8 @@ an active fire.
 
 | No. | Rule |
 |---|---|
-| Z1 | After every start the system is disarmed. A previous alarm is never resumed. |
-| Z2 | If the system was armed before the restart, this is reported. |
+| Z1 | After a start, a previous alarm is never continued and sirens are never switched on because of it. Whether the system is armed afterwards is decided by the setting "Behaviour after restart" (from 0.45): restore (default, without check and exit delay; a running entry delay starts again), always armed (checked normally, after startup) or always disarmed. |
+| Z2 | Every restart while armed is reported ("armed again" or "disarmed"). During the startup phase (2 min), sensors reported open are bypassed until closed instead of triggering (entry doors: entry delay); failure messages only afterwards. |
 | Z3 | Test mode can only be switched while disarmed. |
 | Z4 | Expired timers from an earlier state or from before a restart have no effect. |
 | Z5 | The system state only changes via events of the state machine. |

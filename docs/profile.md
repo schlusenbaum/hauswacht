@@ -66,8 +66,9 @@ Sicherheitsregeln:
 - Ein **laufender Alarm** wird nie automatisch beendet. Eine laufende Eingangsverzögerung nur
   mit Türbeleg.
 - Eine Person mit unbekanntem oder nicht verfügbarem Aufenthalt gilt **nicht** als weg.
-- Nach einem Neustart ist die Anlage unscharf; die Anwesenheits-Automatik greift erst beim
-  nächsten Wechsel einer Person.
+- Nach einem Neustart gilt das [Verhalten nach Neustart](installation.md#verhalten-nach-einem-neustart)
+  (Standard: vorheriger Zustand); die Anwesenheits-Automatik greift erst beim nächsten Wechsel
+  einer Person.
 
 Handys, die nur über das WLAN erkannt werden (Ping am Router), melden im Standby manchmal kurz
 „weg“. Die Wartezeit fängt das ab.

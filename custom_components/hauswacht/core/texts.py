@@ -103,6 +103,17 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "überwachen.",
         "tamper_title": "Hauswacht: Manipulation",
         "tamper": "Manipulation gemeldet: {sensor}.",
+        "restored_title": "Hauswacht: nach Neustart wieder scharf",
+        "restored": "Home Assistant wurde neu gestartet. Hauswacht ist wieder scharf "
+        "(Profil {profile}) – wie vor dem Neustart.",
+        "restored_entry": " Vor dem Neustart lief die Eingangsverzögerung; sie beginnt neu.",
+        "restored_alarm": " Vor dem Neustart lief ein Alarm (ausgelöst von {sensor}). Er wird "
+        "nicht fortgesetzt, die Sirenen bleiben aus; die Anlage ist scharf.",
+        "restored_open_title": "Hauswacht: offen nach Neustart",
+        "restored_open": "Beim Hochfahren offen und deshalb bis zum Schließen überbrückt: "
+        "{sensors}.",
+        "restart_actor": "Neustart",
+        "reason_restart": "Neustart",
         "restart_title": "Hauswacht: nach Neustart unscharf",
         "restart": "Home Assistant wurde neu gestartet. Hauswacht war scharf (Profil {profile}) "
         "und ist jetzt UNSCHARF.",
@@ -261,6 +272,16 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "sensor_lost_armed": " Hauswacht is armed but can no longer monitor this area.",
         "tamper_title": "Hauswacht: tampering",
         "tamper": "Tampering reported: {sensor}.",
+        "restored_title": "Hauswacht: armed again after restart",
+        "restored": "Home Assistant was restarted. Hauswacht is armed again (profile {profile}) "
+        "– as before the restart.",
+        "restored_entry": " The entry delay was running before the restart; it starts again.",
+        "restored_alarm": " An alarm was running before the restart (triggered by {sensor}). It "
+        "is not continued and the sirens stay off; the system is armed.",
+        "restored_open_title": "Hauswacht: open after restart",
+        "restored_open": "Open at startup and therefore bypassed until closed: {sensors}.",
+        "restart_actor": "restart",
+        "reason_restart": "restart",
         "restart_title": "Hauswacht: disarmed after restart",
         "restart": "Home Assistant was restarted. Hauswacht was armed (profile {profile}) and is "
         "now DISARMED.",

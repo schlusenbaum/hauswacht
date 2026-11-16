@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.44.3:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.45.0:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -75,6 +75,7 @@ be changed while **all areas are disarmed**.
 | **System settings** → Control devices | Keypads, NFC stickers, RFID readers, buttons, door locks | [Control devices](control-devices.md) |
 | **System settings** → Sensor radio silence | When a sensor counts as failed | [Sensors](sensors.md#sensor-radio-silence) |
 | **System settings** → Monitor radio networks and gateways | Zigbee2MQTT, MQTT … | [Sensors](sensors.md#monitor-radio-networks-and-gateways) |
+| **System settings** → Behaviour after restart | restore (default), always armed, always disarmed | [below](#behaviour-after-a-restart) |
 | **System settings** → Presence and homecoming observation | Signals per person (for automation and observation); measure homecomings | [Profiles](profiles.md#how-hauswacht-knows-who-is-home), [Observations](observations.md) |
 
 How the dialog works:
@@ -113,9 +114,75 @@ leads to these instructions.
 
 ## Behaviour after a restart
 
-Hauswacht **always starts disarmed**. If the system was armed before, you get the message
-"Hauswacht: disarmed after restart". A previous alarm is never resumed on its own. Test mode is
-kept, simulated sensors are not. The counter for wrong PIN entries starts at zero.
+**System settings → Behaviour after restart.** What happens when Home Assistant restarts – e.g.
+after an update, a nightly backup or a power cut – or Hauswacht is reloaded. Three options:
+
+| Setting | What happens after the restart | Meant for |
+|---|---|---|
+| **Restore the previous state** (default) | if the system was armed, it is armed again right away; if it was disarmed, it stays disarmed | almost everyone |
+| **Always armed** (with a fixed profile) | about one minute after startup, the chosen profile is armed normally | holiday homes, unoccupied areas |
+| **Always disarmed** | always disarmed; if the system was armed, you get the message "disarmed after restart" | whoever prefers to decide themselves (behaviour up to 0.44) |
+
+### Restoring in detail
+
+The system is armed again **at once** – with the same profile and the same bypassed sensors. It
+is **not checked again** and there is **no exit delay**: the system was already armed. You get
+the message "Hauswacht: armed again after restart".
+
+What was running when Home Assistant restarted:
+
+| Running at the time … | After the restart |
+|---|---|
+| nothing (armed) | armed |
+| the **exit delay** | armed – a restart takes longer than the delay, whoever wanted to leave is long gone |
+| the **entry delay** | the entry delay **starts again**. Whoever just came home could not disarm during the restart, neither at the keypad nor in the app – without a new delay, the first movement in the hallway would cause an instant alarm |
+| an **alarm** | **not continued**: no sirens, the system is armed. The message names the sensor that had triggered the alarm |
+
+**Sensors at startup.** After a restart, radio sensors report back one by one – many are briefly
+"unavailable". That is why there is a **startup phase of two minutes** after restoring (counted
+from the moment Home Assistant has finished starting):
+
+- **No failure messages** during this time. If a sensor is still missing after the startup
+  phase, you get the message "sensor lost".
+- **Sensors that come back closed:** nothing happens.
+- **Sensors that come back open:** Hauswacht cannot tell whether the window was already open
+  before the restart or was opened during it. Therefore:
+  - **Entry doors** (type door) start the **entry delay** – maybe someone is just coming home
+    who can then disarm.
+  - **All others** (windows, motion …) are **bypassed until closed** instead of causing a siren
+    alarm at night. After the startup phase you get the message "Hauswacht: open after restart"
+    with the names. As soon as such a sensor closes, it is monitored normally again.
+- Sensors that were bypassed before the restart stay bypassed.
+
+**Example:** the system is armed "Night", at 3:00 Home Assistant restarts for a backup. At 3:02
+Hauswacht is armed again, profile "Night", and sends "armed again after restart (Night)". The
+tilted bathroom window was already bypassed before and stays bypassed.
+
+The profile automation also remembers whether it had armed – "Disarm on arrival – as before"
+keeps working after a restart.
+
+### Always armed
+
+For each area you choose a profile (e.g. "Away"). About **one minute** after Home Assistant has
+started – so the radio sensors report again –, it is armed **quite normally**: with the check of
+open and failed sensors according to the rules of the profile, and with exit delay. If this fails
+(e.g. window open), you get the usual message "not armed". Areas without a profile stay disarmed.
+The logbook says "Automation", the message "armed automatically (restart)".
+
+> "Always armed" also arms if the system was disarmed **before** the restart – e.g. because
+> someone was home. For an occupied house, "Restore" is therefore the better choice.
+
+### Always the same
+
+Whatever the setting:
+
+- A previous **alarm is never continued**; sirens never go on because of a restart.
+- **Test mode** is kept, simulated sensors are not.
+- The counter of wrong PIN entries starts at zero.
+- If the profile has been deleted in the meantime, the system stays disarmed and reports this.
+- With several areas, this applies to each area separately.
+
+The [overview](overview.md) shows the setting under "Monitoring".
 
 ## Updates
 

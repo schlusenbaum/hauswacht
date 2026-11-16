@@ -194,7 +194,8 @@ async def test_test_mode_cannot_change_while_armed(hass: HomeAssistant) -> None:
 async def test_restart_while_armed_comes_back_disarmed(
     hass: HomeAssistant, hass_storage: dict[str, Any]
 ) -> None:
-    entry = make_entry()
+    """Einstellung "immer unscharf" (Verhalten bis 0.44)."""
+    entry = make_entry({"restart_behavior": "disarmed"})
     hass_storage[f"{DOMAIN}.{entry.entry_id}"] = {
         "version": 1,
         "minor_version": 1,

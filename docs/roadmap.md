@@ -29,6 +29,7 @@
 | 0.42 | Zusätzliche Anwesenheits-Signale je Person für die Profil-Automatik, „Unscharf bei Rückkehr“ mit Türbeleg, Empfehlung der Eingangsverzögerung aus der Heimkehr-Beobachtung |
 | 0.43 | Taster als Bedienteil (nur scharf), Türschloss als Bedienteil (Nuki über MQTT oder allgemein: unscharf beim Aufschließen durch einen bekannten Benutzer, optional scharf beim Abschließen) |
 | 0.44 | Dokumentation auf Englisch (Anleitung und Sicherheitsregeln), englisches README |
+| 0.45 | Verhalten nach Neustart einstellbar: vorherigen Zustand wiederherstellen (Standard), immer scharf, immer unscharf |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -46,7 +47,8 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 - **Hauswacht schaltet keine Geräte** – außer Sirenen (nach Freigabe; für Experten auch als
   Sirene eingetragene Schalter) und den Zustandsanzeigen eingerichteter Keypads.
-- **Brandalarm hat Vorrang**, Testmodus sperrt Sirenen technisch, nach einem Neustart unscharf.
+- **Brandalarm hat Vorrang**, Testmodus sperrt Sirenen technisch, ein Alarm wird nach einem
+  Neustart nie fortgesetzt.
 - **PIN optional**, Sprachassistenten nur mit PIN. Freigabe für Alexa & Co. über die normale
   Entitätsfreigabe von Home Assistant.
 - Größere Bausteine erst mit Konzept, dann umsetzen. Entscheidungen mit Begründung stehen in den

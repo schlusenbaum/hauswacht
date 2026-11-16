@@ -108,7 +108,8 @@ z. B.:
 | `TamperDetected` | Manipulation |
 | `SensorUnavailable` | Überwachter Melder ausgefallen |
 | `InfrastructureFault`, `InfrastructureRecovered` | Funknetz/Gateway ausgefallen bzw. wieder da |
-| `RestartedDisarmed` | Nach einem Neustart unscharf |
+| `RestartedDisarmed` | Nach einem Neustart unscharf (Einstellung „immer unscharf“, oder Profil gelöscht) |
+| `RestoredAfterRestart` | Nach einem Neustart wiederhergestellt (mit `profile_id`, `entry_delay`, `alarm_was_active`) |
 | `AlwaysActiveTriggered` | Immer aktiver Melder ausgelöst |
 | `ArmedByClosingDoor` | Scharf durch Schließen der Tür |
 | `AutoArmScheduled`, `AutoArmCancelled`, `AutoArmed`, `AutoArmSkipped`, `AutoArmFailed` | Profil-Automatik: Scharfschalten geplant, abgebrochen, erfolgt, übersprungen, fehlgeschlagen (mit `profile_id`, `reason`) |

@@ -34,6 +34,7 @@ const LANG = {
     controls: "Bedienteile",
     notifications: "Benachrichtigungen",
     monitoring: "Überwachung",
+    restartRow: "Nach Neustart",
     pinRules: "PIN-Regeln",
     yes: "ja",
     no: "nein",
@@ -165,6 +166,7 @@ const LANG = {
     controls: "Control devices",
     notifications: "Notifications",
     monitoring: "Monitoring",
+    restartRow: "After restart",
     pinRules: "PIN rules",
     yes: "yes",
     no: "no",
@@ -288,6 +290,7 @@ const LABELS = {
     status: { ok: "OK", degraded: "Melder ausgefallen", fault: "Störung" },
     result: { alarm: "sofort Alarm", entry_delay: "Eingangsverzögerung, dann Alarm", notify: "nur Benachrichtigung" },
     right: { arm: "scharf", disarm: "unscharf", end_alarm: "Alarm beenden" },
+    restart: { restore: "vorherigen Zustand wiederherstellen", armed: "immer scharf", disarmed: "immer unscharf" },
     kind: { keypad: "Keypad", sticker: "NFC-Aufkleber", reader: "RFID-Leser", button: "Taster", lock: "Türschloss" },
     source: { nuki_mqtt: "Nuki über MQTT", generic: "Sensor/Ereignis" },
     login: { pin_or_card: "PIN oder Karte", card: "Karte", card_and_pin: "Karte und PIN" },
@@ -316,6 +319,7 @@ const LABELS = {
     status: { ok: "OK", degraded: "sensors unavailable", fault: "fault" },
     result: { alarm: "immediate alarm", entry_delay: "entry delay, then alarm", notify: "notification only" },
     right: { arm: "arm", disarm: "disarm", end_alarm: "end alarm" },
+    restart: { restore: "restore the previous state", armed: "always armed", disarmed: "always disarmed" },
     kind: { keypad: "Keypad", sticker: "NFC sticker", reader: "RFID reader", button: "Button", lock: "Door lock" },
     source: { nuki_mqtt: "Nuki via MQTT", generic: "sensor/event" },
     login: { pin_or_card: "PIN or card", card: "card", card_and_pin: "card and PIN" },
@@ -639,6 +643,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       [this._t("staleAfter"), esc(this._staleText(m))],
       [this._t("gateways"), m.infrastructure?.length ? m.infrastructure.map((i) => `${esc(i.name)} ${i.ok ? "✓" : "⚠️"}`).join(", ") : this._t("none")],
       [this._t("learn"), m.card_learn_minutes ? `${m.card_learn_minutes} min` : this._t("off")],
+      [this._t("restartRow"), this._restartText(m.restart)],
       [this._t("homecoming"), this._homecomingRow(m.homecoming)],
     ]);
     const always = d.always_active || {};
@@ -765,9 +770,16 @@ class HauswachtUebersichtCard extends HTMLElement {
         [this._t("staleAfter"), esc(this._staleText(m))],
         [this._t("gateways"), m.infrastructure?.length ? m.infrastructure.map((i) => `${esc(i.name)} ${i.ok ? "✓" : "⚠"}`).join(", ") : this._t("none")],
         [this._t("learn"), m.card_learn_minutes ? `${m.card_learn_minutes} min` : this._t("off")],
+        [this._t("restartRow"), this._restartText(m.restart)],
       ])
     );
     return `<div>${out.join("\n")}</div>`;
+  }
+
+  _restartText(r) {
+    if (!r) return "–";
+    const text = esc(this._l("restart", r.behavior));
+    return r.behavior === "armed" && r.profiles?.length ? `${text} (${r.profiles.map(esc).join(", ")})` : text;
   }
 
   _sheetHtml() {

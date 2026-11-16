@@ -65,8 +65,9 @@ Safety rules:
   you get a system message.
 - A **running alarm** is never ended automatically. A running entry delay only with door proof.
 - A person whose location is unknown or unavailable does **not** count as away.
-- After a restart the system is disarmed; the presence automation only acts on the next change
-  of a person.
+- After a restart, the [behaviour after restart](installation.md#behaviour-after-a-restart)
+  applies (default: previous state); the presence automation only acts on the next change of a
+  person.
 
 Phones that are only detected via Wi-Fi (ping by the router) sometimes briefly report "away" in
 standby. The delay catches that.

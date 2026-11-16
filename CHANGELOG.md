@@ -6,6 +6,37 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-11-16
+
+### Neu
+- **Verhalten nach Neustart einstellbar** (Systemeinstellungen → Verhalten nach Neustart):
+  - **Vorherigen Zustand wiederherstellen (neuer Standard):** War die Anlage scharf, ist sie nach
+    dem Neustart sofort wieder scharf – gleiches Profil, gleiche überbrückte Melder, ohne erneute
+    Prüfung und ohne Ausgangsverzögerung. Eine laufende Eingangsverzögerung beginnt neu. Ein
+    laufender Alarm wird nie fortgesetzt (keine Sirenen), die Anlage ist scharf und meldet ihn.
+    Nachricht „Hauswacht: nach Neustart wieder scharf“.
+  - **Immer scharf** mit festem Profil je Bereich: etwa eine Minute nach dem Hochfahren normal
+    scharf geschaltet (mit Prüfung offener Melder).
+  - **Immer unscharf:** das bisherige Verhalten.
+- **Startphase nach dem Wiederherstellen** (2 Minuten): keine Ausfallmeldungen für Melder, die
+  beim Hochfahren kurz fehlen; Melder, die offen gemeldet werden, werden bis zum Schließen
+  überbrückt und gemeldet („offen nach Neustart“) statt nachts Alarm auszulösen – Eingangstüren
+  starten stattdessen die Eingangsverzögerung.
+- Die Profil-Automatik merkt sich über den Neustart, ob sie scharf geschaltet hatte.
+- Übersicht-Karte zeigt die Einstellung unter „Überwachung“; neues Ereignis
+  `RestoredAfterRestart`.
+
+### Geändert
+- **Standardverhalten nach Neustart:** bisher immer unscharf, jetzt „vorherigen Zustand
+  wiederherstellen“. Wer das alte Verhalten möchte, wählt „Immer unscharf“. Das gilt schon für
+  den ersten Neustart nach dem Update: War die Anlage beim Update scharf, ist sie danach wieder
+  scharf.
+- Sicherheitsregeln Z1/Z2 angepasst; ADR 0008 löst ADR 0004 ab.
+
+### Dokumentation
+- Installation: „Verhalten nach einem Neustart“ mit Tabelle, Startphase, Beispiel (deutsch und
+  englisch); Fehlersuche, Profile, Referenz, Sicherheitsregeln, Roadmap, Zustandsmodell.
+
 ## [0.44.3] - 2026-11-15
 
 ### Behoben

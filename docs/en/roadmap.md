@@ -29,6 +29,7 @@
 | 0.42 | additional presence signals per person for the profile automation, "Disarm on arrival" with door proof, entry delay recommendation from the homecoming observation |
 | 0.43 | button as control device (arms only), door lock as control device (Nuki via MQTT or generic: disarm when a known user unlocks, optionally arm when locking) |
 | 0.44 | documentation in English (user guide and safety rules), English README |
+| 0.45 | configurable behaviour after restart: restore the previous state (default), always armed, always disarmed |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -46,7 +47,8 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 - **Hauswacht switches no devices** – except sirens (after release; for experts also switches
   added as sirens) and the state displays of configured keypads.
-- **Fire alarm has priority**, test mode locks sirens technically, disarmed after a restart.
+- **Fire alarm has priority**, test mode locks sirens technically, an alarm is never continued
+  after a restart.
 - **PIN optional**, voice assistants only with PIN. Exposure to Alexa & co. via the normal entity
   exposure of Home Assistant.
 - Larger building blocks first get a concept, then are implemented. Decisions with their reasons

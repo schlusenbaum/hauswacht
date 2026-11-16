@@ -34,10 +34,11 @@ from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_interval,
 )
+from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .automation_runner import AutomationRunner
+from .automation_runner import REASON_RESTART, AutomationRunner
 from .const import (
     DOMAIN,
     EVENT_HAUSWACHT,
@@ -104,6 +105,16 @@ from .core.reactions import (
     sensor_lost_message,
     tamper_message,
 )
+from .core.restart import (
+    ARM_AFTER_START,
+    STARTUP_GRACE,
+    RestartKind,
+    RestartPlan,
+    plan_restart,
+    restart_behavior,
+    restart_profile,
+    saved_state,
+)
 from .core.rules import (
     STRICTNESS,
     Progress,
@@ -126,6 +137,7 @@ from .core.sensor_types import (
     sensor_type,
 )
 from .core.sensors import (
+    UNAVAILABLE_STATES,
     SensorSnapshot,
     all_configured_sensors,
     became_unavailable,
@@ -146,6 +158,7 @@ from .core.state_machine import (
     AlwaysActiveTriggered,
     ArmingAborted,
     ArmRequested,
+    BypassUntilClosed,
     CancelTimer,
     ConfirmationRequired,
     DisarmRequested,
@@ -157,6 +170,7 @@ from .core.state_machine import (
     Readiness,
     Rejected,
     RestartedDisarmed,
+    RestoreRequested,
     SensorClosed,
     SensorRole,
     SensorsRestored,
@@ -336,6 +350,10 @@ class HauswachtRuntime:
         if area_id != MAIN_AREA:
             store_key += f".{area_id}"
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, store_key)
+        # Nach dem Wiederherstellen: Startphase (keine Ausfallmeldungen, offene Melder überbrücken)
+        self._grace_until: float | None = None
+        self._unsub_grace: CALLBACK_TYPE | None = None
+        self._startup_open: frozenset[str] = frozenset()
         # Push-Knopf "Unscharf schalten": gilt nur für die laufende Scharfschaltung
         self.push_disarm = bool(entry.options.get(OPT_PUSH_DISARM, False))
         self._session: str | None = None
@@ -513,15 +531,26 @@ class HauswachtRuntime:
         edit = data.get("edit_profile")
         self._edit_profile = edit if isinstance(edit, str) else None
         previous = data.get("armed_profile")
+        plan = plan_restart(
+            restart_behavior(self.entry.options),
+            saved=data.get("restore") if isinstance(data.get("restore"), dict) else None,
+            previous_profile=previous if isinstance(previous, str) else None,
+            fixed_profile=restart_profile(self.entry.options, self.area_id),
+            known_profiles=set(self.profiles),
+        )
         self._dispatch(
             Startup(
-                previous_profile_id=previous if isinstance(previous, str) else None,
+                previous_profile_id=plan.report_disarmed,
                 test_mode=bool(data.get("test_mode", False)),
             )
         )
+        self._refresh_sensors()
+        if plan.kind is RestartKind.RESTORE:
+            self._restore(plan)
+        elif plan.kind is RestartKind.ARM and plan.profile_id is not None:
+            self._schedule_restart_arm(plan.profile_id)
         # Sofort speichern, damit ein erneuter Absturz nicht doppelt meldet.
         await self._store.async_save(self._storage_data())
-        self._refresh_sensors()
         self._infra_faulty = self.faulty_infrastructure()
         self.automation.start()
         self.reminder.start()
@@ -541,9 +570,133 @@ class HauswachtRuntime:
         if self.main is self:
             await self._async_check_pin_coverage()
 
+    # --- Verhalten nach Neustart -----------------------------------------------
+
+    @callback
+    def _restore(self, plan: RestartPlan) -> None:
+        """Zustand von vor dem Neustart wiederherstellen (ohne Prüfung, ohne Ausgangszeit)."""
+        profile_id = plan.profile_id
+        profile = self.profiles.get(profile_id) if profile_id else None
+        if profile_id is None or profile is None:
+            return
+        sensors = self.profile_sensors(profile_id)
+        engine = build_engine(
+            [
+                self.rules[r]
+                for r in profile_rule_ids(self.entry.options, profile_id)
+                if r in self.rules
+            ],
+            self.zones,
+            self._labels,
+        )
+        self.single_sensors = sensors
+        self.armed_sensors = sensors | engine.watched()
+        self._engine = engine
+        self._exit_doors = frozenset()
+        self.changed_by = tr(self.lang, "restart_actor")
+        known = self.armed_sensors
+        effects = self._dispatch(
+            RestoreRequested(
+                profile=profile,
+                bypassed=plan.bypassed & known,
+                bypassed_until_closed=plan.bypassed_until_closed & known,
+                accepted_unavailable=plan.accepted_unavailable & known,
+                entry_delay=plan.entry_delay,
+                trigger_sensor=plan.trigger_sensor,
+            )
+        )
+        if any(isinstance(e, Rejected) for e in effects):
+            return
+        self.automation.auto_armed_by = plan.auto_armed_by
+        # Melder, die jetzt schon offen sind, aber nicht überbrückt waren: bis zum Schließen
+        # überbrücken (ob sie vorher offen waren oder während des Neustarts geöffnet wurden,
+        # lässt sich nicht unterscheiden) – gemeldet am Ende der Startphase.
+        bypassed = self.ctx.bypassed | self.ctx.bypassed_until_closed
+        open_now = frozenset(
+            e for e in self.armed_sensors - bypassed if self._effective_state(e) == "on"
+        )
+        if open_now:
+            self._dispatch(BypassUntilClosed(sensors=open_now))
+            self._startup_open |= open_now
+        self._grace_until = time.monotonic() + STARTUP_GRACE
+        self._send_restored(profile_id, plan)
+        self._unsub_grace = async_at_started(self.hass, self._start_grace_timer)
+
+    @callback
+    def _start_grace_timer(self, _hass: HomeAssistant) -> None:
+        self._grace_until = time.monotonic() + STARTUP_GRACE
+        self._unsub_grace = async_call_later(self.hass, STARTUP_GRACE, self._grace_ended)
+
+    @callback
+    def _grace_ended(self, _now: Any = None) -> None:
+        """Ende der Startphase: Melder melden, die noch fehlen oder offen vorgefunden wurden."""
+        self._grace_until = None
+        self._unsub_grace = None
+        if self.ctx.state is AlarmState.DISARMED:
+            self._startup_open = frozenset()
+            return
+        for entity_id in sorted(self.armed_sensors):
+            if self._effective_state(entity_id) in (None, *UNAVAILABLE_STATES):
+                self._on_sensor_lost(entity_id)
+        still_open = frozenset(e for e in self._startup_open if e in self.ctx.bypassed_until_closed)
+        self._startup_open = frozenset()
+        if still_open:
+            names = ", ".join(sorted(display_name(self.hass, e) for e in still_open))
+            title = tr(self.lang, "restored_open_title")
+            message = tr(self.lang, "restored_open", sensors=names)
+            self.notifier.send_system(title, message)
+            persistent_notification.async_create(
+                self.hass, message, title=title, notification_id=f"{NOTIFICATION_RESTART}_open"
+            )
+
+    def _in_startup_grace(self) -> bool:
+        return self._grace_until is not None and time.monotonic() < self._grace_until
+
+    def _send_restored(self, profile_id: str, plan: RestartPlan) -> None:
+        name = self.profile_name(profile_id)
+        message = tr(self.lang, "restored", profile=name)
+        if plan.entry_delay:
+            message += tr(self.lang, "restored_entry")
+        if plan.alarm_was_active:
+            sensor = display_name(self.hass, plan.trigger_sensor) if plan.trigger_sensor else "-"
+            message += tr(self.lang, "restored_alarm", sensor=sensor)
+        title = tr(self.lang, "restored_title")
+        self.notifier.send_system(title, message)
+        persistent_notification.async_create(
+            self.hass, message, title=title, notification_id=NOTIFICATION_RESTART
+        )
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {
+                "type": "RestoredAfterRestart",
+                "area": self.area_id,
+                "profile_id": profile_id,
+                "entry_delay": plan.entry_delay,
+                "alarm_was_active": plan.alarm_was_active,
+            },
+        )
+
+    @callback
+    def _schedule_restart_arm(self, profile_id: str) -> None:
+        """Einstellung "scharf": normal scharf schalten, kurz nachdem alles hochgefahren ist."""
+
+        @callback
+        def _later(_hass: HomeAssistant) -> None:
+            self._unsub_grace = async_call_later(self.hass, ARM_AFTER_START, _arm)
+
+        @callback
+        def _arm(_now: Any) -> None:
+            self._unsub_grace = None
+            self.automation.auto_arm(profile_id, REASON_RESTART)
+
+        self._unsub_grace = async_at_started(self.hass, _later)
+
     @callback
     def async_stop(self) -> None:
         """Beim Entladen: Timer und Abos stoppen. Der gespeicherte Zustand bleibt erhalten."""
+        if self._unsub_grace is not None:
+            self._unsub_grace()
+            self._unsub_grace = None
         self._cancel_timer()
         self._cancel_settle()
         self._cancel_speech_repeat()
@@ -1519,6 +1672,14 @@ class HauswachtRuntime:
 
     # --- Simulation (nur Testmodus) -----------------------------------------
 
+    def _effective_state(self, entity_id: str) -> str | None:
+        """Zustand für Hauswacht: simuliert (Testmodus) oder echt, vereinheitlicht."""
+        simulated = self.simulated(entity_id)
+        if simulated is not None:
+            return simulated
+        state = self.hass.states.get(entity_id)
+        return normalize(entity_id, state.state if state else None)
+
     def simulated(self, entity_id: str) -> str | None:
         """Simulierter Zustand – nur im Testmodus wirksam."""
         if not self.ctx.test_mode:
@@ -1791,10 +1952,31 @@ class HauswachtRuntime:
             or entity_id in self.always_sensors
             or (armed and entity_id in self.armed_sensors)
         )
+        if (
+            armed
+            and self._in_startup_grace()
+            and entity_id in self.armed_sensors
+            and new_state == "on"
+            and (old_state is None or old_state in UNAVAILABLE_STATES)
+            and role is not SensorRole.ENTRY
+            and entity_id not in self.ctx.bypassed
+        ):
+            # Nach dem Wiederherstellen erstmals gemeldet und offen: Fenster oder Bewegung
+            # bis zum Schließen überbrücken statt nachts Sirenenalarm – Eingangstüren starten
+            # dagegen die Eingangsverzögerung (z. B. wer gerade heimkam).
+            self._dispatch(BypassUntilClosed(sensors=frozenset({entity_id})))
+            self._startup_open |= {entity_id}
+            self._notify()
+            return
         if relevant and is_trigger(old_state, new_state):
             self._sensor_triggered(entity_id, role)
             return
-        if armed and entity_id in self.armed_sensors and became_unavailable(old_state, new_state):
+        if (
+            armed
+            and entity_id in self.armed_sensors
+            and became_unavailable(old_state, new_state)
+            and not self._in_startup_grace()  # beim Hochfahren normal; gemeldet wird danach
+        ):
             self._on_sensor_lost(entity_id)
         if entity_id in self.ctx.bypassed_until_closed and new_state == "off":
             self._dispatch(SensorClosed(sensor_key=entity_id))
@@ -1872,10 +2054,20 @@ class HauswachtRuntime:
                 self.armed_sensors = frozenset()
                 self.single_sensors = frozenset()
                 self._refresh_sensors()
-        if (old_ctx.state, old_ctx.profile, old_ctx.test_mode) != (
+        if (
+            old_ctx.state,
+            old_ctx.profile,
+            old_ctx.test_mode,
+            old_ctx.bypassed,
+            old_ctx.bypassed_until_closed,
+            old_ctx.trigger_sensor,
+        ) != (
             self.ctx.state,
             self.ctx.profile,
             self.ctx.test_mode,
+            self.ctx.bypassed,
+            self.ctx.bypassed_until_closed,
+            self.ctx.trigger_sensor,
         ):
             self._store.async_delay_save(self._storage_data, 0)
         self._notify()
@@ -1890,6 +2082,15 @@ class HauswachtRuntime:
         armed = self.ctx.state is not AlarmState.DISARMED and self.ctx.profile is not None
         return {
             "armed_profile": self.ctx.profile.profile_id if armed and self.ctx.profile else None,
+            "restore": saved_state(
+                profile_id=self.ctx.profile.profile_id if armed and self.ctx.profile else None,
+                state=self.ctx.state.value,
+                bypassed=self.ctx.bypassed,
+                bypassed_until_closed=self.ctx.bypassed_until_closed,
+                accepted_unavailable=self.ctx.accepted_unavailable,
+                trigger_sensor=self.ctx.trigger_sensor,
+                auto_armed_by=self.automation.auto_armed_by,
+            ),
             "test_mode": self.ctx.test_mode,
             "selected_profile": self._selected_profile,
             "edit_profile": self._edit_profile,

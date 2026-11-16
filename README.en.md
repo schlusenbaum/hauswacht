@@ -13,7 +13,7 @@
 definable alarm profiles, trigger rules like "door, then basement", users with PIN and RFID card,
 Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can go off.
 
-> **Status: 0.44.3 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.45.0 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -116,7 +116,8 @@ Everything at a glance: [docs/en/](docs/en/README.md).
   unclear, Hauswacht switches no siren on and none off.
 - **Test mode locks sirens technically**, not just in the display. The siren release is off after
   installation.
-- **Disarmed after a restart** – a previous alarm is never resumed on its own.
+- **After a restart as before** – armed stays armed (configurable: always armed or always
+  disarmed); a previous alarm is never continued, sirens never go on because of it.
 - **Hauswacht switches no devices** except sirens (including switches added as sirens) and the
   display of configured keypads – a test makes sure of this. Hauswacht only reads door locks, it
   never operates them.
