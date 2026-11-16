@@ -23,6 +23,7 @@ REDACT = {
     "duress_salt",
     "duress_digest",
     "tags",
+    "tag_names",
     "tag",
     "cards",
     # Personen, Konten, Empfänger, Netzwerke

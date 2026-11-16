@@ -39,7 +39,7 @@ keypad.
 | Home Assistant account | links the alarm card, push button, dashboard buttons and NFC stickers to this user. Set automatically if a Home Assistant user was chosen as the name |
 | Require PIN in the alarm card | for this user's Home Assistant account in the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin), e.g. for a tablet account. Default off |
 | Valid from / until | for guests: outside this time, the credentials are blocked |
-| RFID cards and lock IDs | any number, see [Control devices → Learning cards](control-devices.md#learning-cards) |
+| RFID cards and lock IDs | any number, see [Control devices → Learning cards](control-devices.md#learning-cards). After saving, the cards can be named (e.g. "key ring") – so you know which one to delete if one gets lost: [Naming cards](control-devices.md#naming-cards--and-deleting-a-lost-card) |
 
 - **Shared PIN:** several users may have the same PIN ("shared PIN (Christian, Petra)"). An
   action is allowed if **at least one** of these users may do it.

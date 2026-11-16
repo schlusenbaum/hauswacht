@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-11-16
+
+### Hinzugefügt
+- **Namen für RFID-Karten, Finger und Schloss-Kennungen.** Nach dem Speichern eines Benutzers mit
+  Karten folgt das Formular „Namen der Karten“ – ein Feld je Karte, z. B. „Schlüsselbund“ oder
+  „Geldbörse“; leer = ohne Namen. Damit
+  - steht im Benutzer-Dialog „Schlüsselbund (04A1B2C3)“ statt nur der Nummer – bei Verlust ist
+    klar, welche Karte zu löschen ist,
+  - zeigen Logbuch, „Geändert von“ und Nachrichten, welche Karte benutzt wurde:
+    „Christian · Schlüsselbund (Keypad Flur)“,
+  - zeigt die Systemübersicht „Schlüsselbund …B2C3“.
+  - Wird eine Karte entfernt, verschwindet ihr Name mit. Die Namen werden in der
+    Diagnose-Datei entfernt (sie enthalten die Kartennummern).
+
+### Dokumentation
+- Bedienteile (deutsch und englisch): neuer Abschnitt „Karten benennen – und eine verlorene Karte
+  löschen“ mit Beispiel; Benutzer und Systemübersicht ergänzt.
+
 ## [0.46.0] - 2026-11-16
 
 ### Hinzugefügt

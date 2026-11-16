@@ -286,9 +286,50 @@ async def test_unknown_card_offered_in_user_form(
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"name": "Niklas", "tags": [CARD, "0011223344", "A1B2C3D4E5"]}
     )
+    # danach: Namen der Karten (ein Feld je Karte, leer = ohne Namen)
+    assert flow["step_id"] == "user_tag_names"
+    assert [str(k) for k in flow["data_schema"].schema] == [CARD, "0011223344", "A1B2C3D4E5"]
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"A1B2C3D4E5": " Schlüsselbund "}
+    )
     assert flow["type"] == "menu"
     assert entry.options["users"]["niklas"]["tags"] == [CARD, "0011223344", "A1B2C3D4E5"]
+    assert entry.options["users"]["niklas"]["tag_names"] == {"A1B2C3D4E5": "Schlüsselbund"}
     assert "pin_digest" not in entry.options["users"]["niklas"]
+    # Im Formular steht der Name vor der Kennung
+    flow = await _user_form(hass, entry, "niklas")
+    key = next(k for k in flow["data_schema"].schema if str(k) == "tags")
+    labels = {o["value"]: o["label"] for o in flow["data_schema"].schema[key].config["options"]}
+    assert labels["A1B2C3D4E5"] == "Schlüsselbund (A1B2C3D4E5)"
+    # Karte entfernt: ihr Name verschwindet mit
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"name": "Niklas", "tags": [CARD]}
+    )
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {})
+    assert entry.options["users"]["niklas"]["tag_names"] == {}
+
+
+async def test_card_name_in_logbook_actor(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    niklas = {"name": "Niklas", "tags": [CARD, "0011223344"], "tag_names": {CARD: "Schlüsselbund"}}
+    await setup_entry(hass, make_entry({"users": {"niklas": niklas}, "controls": _controls()}))
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    await _press(hass, "disarm", CARD.lower(), 5)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["changed_by"] == "Niklas · Schlüsselbund (Keypad Flur)"
+    # Karte ohne Namen: wie bisher nur der Benutzer
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    await _press(hass, "disarm", "0011223344", 6)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["changed_by"] == "Niklas (Keypad Flur)"
 
 
 async def test_reset_failed_attempts_admin_only(

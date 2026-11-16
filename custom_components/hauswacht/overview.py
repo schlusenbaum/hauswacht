@@ -304,7 +304,10 @@ def _users(main: HauswachtRuntime) -> list[dict[str, Any]]:
             {
                 "name": user.name,
                 "pin": user.pin is not None,
-                "cards": [_masked(t) for t in user.tags],
+                "cards": [
+                    f"{user.tag_name(t)} {_masked(t)}" if user.tag_name(t) else _masked(t)
+                    for t in user.tags
+                ],
                 "active": user.active,
                 "valid": user.valid_at(now),
                 "valid_from": _iso(user.valid_from),

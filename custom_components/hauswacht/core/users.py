@@ -55,6 +55,8 @@ class User:
     valid_until: float | None = None
     areas: tuple[str, ...] = ()  # vorbereitet für Bereiche; leer = alle
     tags: tuple[str, ...] = ()  # RFID-Karten/-Anhänger (normalisierte IDs)
+    # Selbst vergebene Namen der Karten (Karte -> Name), z. B. "Schlüsselbund"
+    tag_names: tuple[tuple[str, str], ...] = ()
     # Rechte je Bereich (Bereich -> erlaubte Aktionen); None = allgemeine Rechte für alle
     area_rights: tuple[tuple[str, frozenset[Action]], ...] | None = None
     # Alarmkarte: muss dieses Home-Assistant-Konto dort einen PIN eingeben?
@@ -73,6 +75,10 @@ class User:
             return action in dict(self.area_rights).get(area_id, frozenset())
         return (not self.areas or area_id in self.areas) and self.may(action)
 
+    def tag_name(self, tag: str) -> str:
+        """Selbst vergebener Name einer Karte ("" ohne Namen)."""
+        return dict(self.tag_names).get(tag, "")
+
     def valid_at(self, now: float) -> bool:
         if not self.active:
             return False
@@ -85,9 +91,11 @@ class User:
 class Identity:
     """Ergebnis einer Ausweisprüfung (bzw. Handy eines bekannten Benutzers)."""
 
-    kind: str  # "card" | "pin" | "phone"
+    kind: str  # "card" | "pin" | "phone" | "lock"
     users: tuple[User, ...]
     duress: bool = False
+    # Name der benutzten Karte bzw. Schloss-Kennung, falls vergeben (z. B. "Schlüsselbund")
+    credential: str = ""
 
 
 @dataclass(frozen=True)
@@ -139,6 +147,30 @@ def _tags(value: Any) -> tuple[str, ...]:
     return tuple(dict.fromkeys(t for t in normalized if t))
 
 
+def _tag_names(value: Any, tags: tuple[str, ...]) -> tuple[tuple[str, str], ...]:
+    if not isinstance(value, Mapping):
+        return ()
+    names = {
+        "".join(ch for ch in str(k).upper() if ch.isalnum()): str(v).strip()
+        for k, v in value.items()
+        if isinstance(v, str)
+    }
+    return tuple((t, names[t]) for t in tags if names.get(t))
+
+
+def tag_credential(tag: str | None, users: Iterable[User]) -> str:
+    """Name der Karte, wie ihn der Besitzer vergeben hat ("" ohne Namen)."""
+    wanted = "".join(ch for ch in str(tag or "").upper() if ch.isalnum())
+    names = sorted({u.tag_name(wanted) for u in users if wanted in u.tags} - {""})
+    return ", ".join(names)
+
+
+def identity_label(identity: Identity, lang: str = DE) -> str:
+    """Wer geschaltet hat, mit Kartenname: "Christian · Schlüsselbund"."""
+    who = label(identity.users, lang)
+    return f"{who} · {identity.credential}" if who and identity.credential else who
+
+
 def match_tag(tag: str | None, users: Iterable[User], now: float) -> PinMatch:
     """Welche Benutzer haben diese RFID-Karte? (Gleiche Struktur wie beim PIN.)"""
     wanted = "".join(ch for ch in str(tag or "").upper() if ch.isalnum())
@@ -181,6 +213,7 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
                 if isinstance(areas, list)
                 else (),
                 tags=_tags(data.get("tags")),
+                tag_names=_tag_names(data.get("tag_names"), _tags(data.get("tags"))),
                 area_rights=_area_rights(data),
                 card_pin=bool(data.get("card_pin", False)),
             )

@@ -64,6 +64,27 @@ user). IDs of [door locks](#door-lock-eg-nuki) are learned the same way.
    rejects it but remembers it.
 3. Within the **learning time** (default 5 minutes): edit user → "RFID cards and lock IDs" → the
    card is listed as "new, read at Keypad at 18:04" → select it, save.
+4. Hauswacht then asks for the **names of the cards** – e.g. "key ring". Leaving it empty is fine
+   too.
+
+### Naming cards – and deleting a lost card
+
+If a user has cards or lock IDs, the form **"Names of the cards"** follows after saving their
+settings: one field per card, labelled with its ID. An empty field means: no name. The same goes
+for fingers at the [fingerprint reader](#fingerprint-reader-esphome) ("right thumb") and lock IDs
+("Nuki app").
+
+With names
+
+- the user dialog shows **"key ring (04A1B2C3)"** instead of just the number,
+- the logbook, the alarm panel ("changed by") and messages show **which** card was used:
+  "Christian · key ring (Keypad hallway)",
+- the [system overview](overview.md) shows "key ring …B2C3".
+
+**Example – card lost:** Christian has two tags, "key ring" and "wallet". The wallet is gone. Edit
+user → Christian → in the field "RFID cards and lock IDs" click the ✕ at **"wallet (…)"** → save →
+simply confirm the next form (names). From now on the card switches nothing, its name is deleted
+too. Whoever finds it and holds it up is rejected as an unknown card.
 
 - The learning time can be set under **Control devices → Learning new cards** (1–60 minutes,
   0 = learning off). After that the card is forgotten; whoever saves too late gets a hint and

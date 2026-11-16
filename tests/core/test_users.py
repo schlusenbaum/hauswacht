@@ -6,18 +6,21 @@ from custom_components.hauswacht.core.pin import PinHash
 from custom_components.hauswacht.core.users import (
     LEGACY_USER_NAME,
     Action,
+    Identity,
     User,
     allowed,
     allowed_in,
     card_needs_pin,
     find_by_ha_user,
     has_codes,
+    identity_label,
     label,
     match_pin,
     migrate_legacy_pin,
     parse_users,
     people_without_pin,
     pin_conflicts,
+    tag_credential,
 )
 
 
@@ -239,3 +242,32 @@ def test_label_in_english() -> None:
     users = (User("c", "Christian"), User("p", "Petra"))
     assert label(users, "en") == "shared PIN (Christian, Petra)"
     assert label(users[:1], "en") == "Christian"
+
+
+def test_tag_names_parsed_for_own_cards_only() -> None:
+    (user,) = parse_users(
+        {
+            "users": {
+                "c": {
+                    "name": "Christian",
+                    "tags": ["04-a1-b2", "0011"],
+                    "tag_names": {"04a1b2": " Schlüsselbund ", "FREMD": "x", "0011": ""},
+                }
+            }
+        }
+    )
+    assert user.tags == ("04A1B2", "0011")
+    assert user.tag_names == (("04A1B2", "Schlüsselbund"),)
+    assert user.tag_name("04A1B2") == "Schlüsselbund"
+    assert user.tag_name("0011") == ""
+
+
+def test_identity_label_with_card_name() -> None:
+    users = parse_users(
+        {"users": {"c": {"name": "Christian", "tags": ["AB12"], "tag_names": {"AB12": "Uhr"}}}}
+    )
+    assert tag_credential("ab-12", users) == "Uhr"
+    assert tag_credential("FFFF", users) == ""
+    identity = Identity(kind="card", users=users, credential=tag_credential("AB12", users))
+    assert identity_label(identity) == "Christian · Uhr"
+    assert identity_label(Identity(kind="pin", users=users)) == "Christian"
