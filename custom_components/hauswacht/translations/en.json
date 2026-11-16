@@ -793,7 +793,7 @@
           "topic": "Leave empty = automatically from the keypad device. Only needed if a base topic other than `zigbee2mqtt` is set in Zigbee2MQTT or the device does not appear in Home Assistant – then e.g. `zigbee2mqtt/Keypad hallway` (base topic + name of the device in Zigbee2MQTT, without `/set`). An entered topic takes precedence.",
           "login": "**Card and PIN:** both credentials of the same user within 30 s (the keypad answers the first one with “not ready”).",
           "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile.",
-          "keypad_device": "The keypad as it appears in Home Assistant via Zigbee2MQTT. Hauswacht builds the MQTT topic from it: `zigbee2mqtt/<name of the device in Zigbee2MQTT>`."
+          "keypad_device": "The keypad as it appears in Home Assistant via Zigbee2MQTT. Hauswacht builds the MQTT topic from it: `zigbee2mqtt/` + name of the device in Zigbee2MQTT."
         }
       },
       "control_sticker": {

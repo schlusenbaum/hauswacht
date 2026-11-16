@@ -793,7 +793,7 @@
           "topic": "Leer lassen = automatisch aus dem Keypad-Gerät. Nur nötig, wenn in Zigbee2MQTT ein anderes Basis-Topic als `zigbee2mqtt` eingestellt ist oder das Gerät in Home Assistant nicht auftaucht – dann z. B. `zigbee2mqtt/Keypad Flur` (Basis-Topic + Name des Geräts in Zigbee2MQTT, ohne `/set`). Ein eingetragenes Topic hat Vorrang.",
           "login": "**Karte und PIN:** Beide Ausweise desselben Benutzers innerhalb von 30 s (erste Eingabe quittiert das Keypad mit „nicht bereit“).",
           "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils.",
-          "keypad_device": "Das Keypad, wie es über Zigbee2MQTT in Home Assistant erscheint. Daraus bildet Hauswacht das MQTT-Topic selbst: `zigbee2mqtt/<Name des Geräts in Zigbee2MQTT>`."
+          "keypad_device": "Das Keypad, wie es über Zigbee2MQTT in Home Assistant erscheint. Daraus bildet Hauswacht das MQTT-Topic selbst: `zigbee2mqtt/` + Name des Geräts in Zigbee2MQTT."
         }
       },
       "control_sticker": {
