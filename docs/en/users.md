@@ -46,6 +46,7 @@ Every person gets a user:
 | Name | suggestions from the Home Assistant users, or free (e.g. "Cleaner"). Shown as "changed by" on the alarm panel, in the logbook and in push messages |
 | Active | off = credentials blocked without deleting them |
 | May arm / May disarm / May end alarm | rights (with "All areas alike") |
+| May arm anyway at the keypad | bypass open sensors with a second key press, see [Arm anyway at the keypad](control-devices.md#arm-anyway-at-the-keypad). Default on – switch off e.g. for children or guests |
 | Rights apply to | only with several areas, see [Rights](#rights) |
 | Home Assistant account | links the alarm card, push button, dashboard buttons and NFC stickers to this user. Set automatically if a Home Assistant user was chosen as the name |
 | Require PIN in the alarm card | for this user's Home Assistant account in the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin), e.g. for a tablet account. Default off |

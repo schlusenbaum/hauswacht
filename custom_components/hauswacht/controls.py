@@ -46,7 +46,9 @@ from .core.controls import (
     LockEvent,
     LockSource,
     Login,
+    PendingForce,
     PendingLogin,
+    force_confirmed,
     fresh_cards,
     generic_identity,
     is_new_press,
@@ -105,6 +107,8 @@ class ControlManager:
         self.random_seen: tuple[str, float] | None = None
         # Wer gerade auf eine neue Karte wartet ("Neue Karte anlernen" im Einstellungsdialog)
         self._card_waiters: list[Callable[[str], None]] = []
+        # Keypad -> erster gescheiterter Scharf-Versuch (für "trotzdem scharf" per zweitem Druck)
+        self._force: dict[str, PendingForce] = {}
         # Türschlösser: letzte Kennung bzw. letzter Zustandswechsel (je Schloss)
         self._lock_ident: dict[str, tuple[LockEvent, float]] = {}
         self._lock_state: dict[str, tuple[str, float]] = {}
@@ -301,8 +305,35 @@ class ControlManager:
             return await self._reply(keypad, transaction, REPLY_INVALID_CODE)
         if identity == "pending":
             return await self._reply(keypad, transaction, REPLY_NOT_READY)
-        result = self._execute(keypad, wanted, keypad.buttons.get(action), identity)
+        force = self._force_wanted(keypad, action, identity)
+        result = self._execute(
+            keypad, wanted, keypad.buttons.get(action), identity, confirmed=force
+        )
+        self._remember_force(keypad, action, identity, result)
         return await self._reply(keypad, transaction, action if result == "ok" else result)
+
+    def _force_users(self, identity: Any) -> frozenset[str] | None:
+        """Wer per zweitem Druck trotzdem scharf schalten darf (sonst None)."""
+        if not isinstance(identity, Identity) or identity.duress:
+            return None
+        if not any(u.can_force_arm for u in identity.users):
+            return None
+        return frozenset(u.user_id for u in identity.users)
+
+    def _force_wanted(self, keypad: Control, action: str, identity: Any) -> bool:
+        users = self._force_users(identity)
+        if users is None or action == KEY_DISARM:
+            return False
+        pending = self._force.get(keypad.control_id)
+        return force_confirmed(pending, action, users, time.monotonic())
+
+    def _remember_force(self, keypad: Control, action: str, identity: Any, result: str) -> None:
+        """Nach "nicht bereit" merken: derselbe Druck gleich noch einmal = trotzdem scharf."""
+        users = self._force_users(identity)
+        if result == REPLY_NOT_READY and users is not None and action != KEY_DISARM:
+            self._force[keypad.control_id] = PendingForce(action, users, time.monotonic())
+        else:
+            self._force.pop(keypad.control_id, None)
 
     async def _login(self, control: Control, code: str | None, action: Action) -> Any:
         """Ausweis prüfen. None = kein/ungültiger Ausweis, "pending" = erster von zweien."""
@@ -355,15 +386,21 @@ class ControlManager:
             return None
         return self.random_seen
 
-    def _execute(
+    def _execute(  # noqa: PLR0913
         self,
         control: Control,
         action: Action,
         profile: str | None,
         identity: Identity | None,
         actor: str | None = None,
+        *,
+        confirmed: bool = False,
     ) -> str:
-        """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort."""
+        """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort.
+
+        ``confirmed``: offene Melder überbrücken ("trotzdem scharf"), wenn das Profil das nach
+        Bestätigung erlaubt.
+        """
         if identity is not None:
             actor = identity_label(identity, self.runtime.lang)
         changed_by = f"{actor} ({control.name})" if actor else control.name
@@ -385,7 +422,7 @@ class ControlManager:
         try:
             if identity is not None and not identity.duress:
                 area.check_allowed(identity.users, action)
-            area.arm(profile, changed_by=changed_by)
+            area.arm(profile, confirmed=confirmed, changed_by=changed_by)
         except HomeAssistantError:
             return REPLY_NOT_READY
         return "ok"

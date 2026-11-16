@@ -224,6 +224,7 @@
           "can_arm": "Darf scharf schalten",
           "can_disarm": "Darf unscharf schalten",
           "can_end_alarm": "Darf Alarm beenden",
+          "can_force_arm": "Darf am Keypad trotzdem scharf schalten",
           "ha_user": "Home-Assistant-Konto (für Alarmkarte, Push-Knopf und Dashboard-Knöpfe)",
           "card_pin": "In der Alarmkarte PIN verlangen",
           "valid_from": "Gültig von",
@@ -232,7 +233,8 @@
         },
         "data_description": {
           "rights": "**Alle Bereiche gleich:** die Häkchen oben gelten überall. **Je Bereich einzeln:** nach dem Speichern legst du für jeden Bereich fest, was der Benutzer dort darf (die Häkchen oben gelten dann nicht).",
-          "card_pin": "Für das Home-Assistant-Konto dieses Benutzers in der Karte „Hauswacht Alarm“. Aus: schaltet dort ohne PIN, mit den Rechten dieses Benutzers. An: z. B. für ein Wandtablet, das dauerhaft angemeldet ist. Nur wirksam, wenn es überhaupt PINs gibt."
+          "card_pin": "Für das Home-Assistant-Konto dieses Benutzers in der Karte „Hauswacht Alarm“. Aus: schaltet dort ohne PIN, mit den Rechten dieses Benutzers. An: z. B. für ein Wandtablet, das dauerhaft angemeldet ist. Nur wirksam, wenn es überhaupt PINs gibt.",
+          "can_force_arm": "Sind beim Scharfschalten Melder offen, antwortet das Keypad „nicht bereit“. Drückt dieser Benutzer innerhalb von 10 Sekunden noch einmal dieselbe Taste mit seiner PIN bzw. Karte, wird trotzdem scharf geschaltet und die offenen Melder werden überbrückt – nur in Profilen mit „Nach Bestätigung erlauben“."
         }
       },
       "user_area_rights": {

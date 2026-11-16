@@ -59,6 +59,34 @@ Ausgangs- und Eingangsverzögerung, scharf (Tag/Nacht/alle), Alarm. Dafür sende
 `<Topic>/set` (`arm_mode`) – **nur** Zustandsanzeigen an eingerichtete Keypads; ein Test stellt
 sicher, dass Hauswacht sonst nirgends hin sendet.
 
+### Trotzdem scharf am Keypad
+
+Ist beim Scharfschalten noch ein Melder offen (z. B. ein gekipptes Fenster), antwortet das
+Keypad **„nicht bereit“**. Erlaubt das Profil offene Melder **nach Bestätigung**, bestätigst du
+am Keypad so:
+
+1. PIN tippen bzw. Karte vorhalten und die Taste drücken, z. B. 🌙 Nacht → „nicht bereit“.
+2. **Innerhalb von 10 Sekunden** noch einmal: dieselbe PIN bzw. Karte und **dieselbe Taste**.
+3. Hauswacht schaltet **trotzdem scharf** und überbrückt die offenen Melder bis zum
+   Unscharfschalten – wie „Trotzdem scharf“ in der Karte. Im Logbuch steht wie immer, wer es war.
+
+Bedingungen:
+
+- Profil-Einstellung „Offene Sensoren beim Scharfschalten“ = **nach Bestätigung erlauben**
+  (gilt genauso für ausgefallene Melder mit dieser Einstellung). Bei **verweigern** bleibt es
+  auch beim zweiten Druck bei „nicht bereit“; bei **automatisch überbrücken** braucht es keinen
+  zweiten Druck.
+- Der Benutzer hat das Recht **„Darf am Keypad trotzdem scharf schalten“** (Standard an; im
+  Benutzer-Dialog abschaltbar, z. B. für Kinder).
+- Es muss dieselbe Person mit derselben Taste sein. Drückt dazwischen jemand etwas anderes,
+  verfällt die Bestätigung. Ohne PIN oder Karte (Scharfschalten ohne Code) gibt es kein
+  „trotzdem“.
+- Bei Anmeldung „Karte und PIN“ meldest du dich für den zweiten Druck wieder mit beidem an.
+
+**Beispiel:** Abends ist das Badfenster gekippt. Anna tippt `2580` + 🌙 → „nicht bereit“. Sie
+tippt sofort noch einmal `2580` + 🌙 → das Keypad zeigt die Ausgangsverzögerung, Hauswacht
+meldet „scharf, überbrückt: Badfenster“.
+
 **PINs nicht im Verlauf:** Zigbee2MQTT legt für den am Keypad getippten Code eine eigene
 Entität an, z. B. `sensor.keypad_flur_action_code`. Home Assistant speichert sie im Verlauf –
 also jede PIN im Klartext, auch in Backups. Hauswacht braucht sie nicht und **deaktiviert sie

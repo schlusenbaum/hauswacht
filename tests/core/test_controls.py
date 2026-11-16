@@ -283,3 +283,19 @@ def test_lock_confirmed() -> None:
     assert not lock_confirmed(100.0, 131.0)
     assert not lock_confirmed(None, 100.0)
     assert not lock_confirmed(100.0, None)
+
+
+def test_force_confirmed_window() -> None:
+    from custom_components.hauswacht.core.controls import (  # noqa: PLC0415
+        FORCE_ARM_WINDOW,
+        PendingForce,
+        force_confirmed,
+    )
+
+    users = frozenset({"anna"})
+    pending = PendingForce("arm_night_zones", users, 100.0)
+    assert force_confirmed(pending, "arm_night_zones", users, 105.0)
+    assert not force_confirmed(pending, "arm_night_zones", users, 100.0 + FORCE_ARM_WINDOW + 1)
+    assert not force_confirmed(pending, "arm_all_zones", users, 105.0)
+    assert not force_confirmed(pending, "arm_night_zones", frozenset({"ben"}), 105.0)
+    assert not force_confirmed(None, "arm_night_zones", users, 105.0)

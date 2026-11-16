@@ -56,6 +56,32 @@ window open –, already disarmed) and then continuously shows the state: exit a
 armed (day/night/all), alarm. For this Hauswacht sends to `<topic>/set` (`arm_mode`) – **only**
 state displays to configured keypads; a test makes sure that Hauswacht sends nowhere else.
 
+### Arm anyway at the keypad
+
+If a sensor is still open when arming (e.g. a tilted window), the keypad answers **"not
+ready"**. If the profile allows open sensors **after confirmation**, you confirm at the keypad
+like this:
+
+1. Type the PIN or hold up the card and press the key, e.g. 🌙 night → "not ready".
+2. **Within 10 seconds** once more: the same PIN or card and **the same key**.
+3. Hauswacht **arms anyway** and bypasses the open sensors until disarming – like "Arm anyway"
+   in the card. As always, the logbook shows who it was.
+
+Conditions:
+
+- Profile setting "Open sensors when arming" = **allow after confirmation** (the same applies to
+  unavailable sensors with this setting). With **refuse** it stays "not ready" also on the
+  second press; with **bypass automatically** no second press is needed.
+- The user has the right **"May arm anyway at the keypad"** (default on; can be switched off in
+  the user dialog, e.g. for children).
+- It must be the same person with the same key. If someone presses something else in between,
+  the confirmation expires. Without a PIN or card (arming without a code) there is no "anyway".
+- With login "card and PIN", log in with both again for the second press.
+
+**Example:** in the evening the bathroom window is tilted. Anna types `2580` + 🌙 → "not ready".
+She immediately types `2580` + 🌙 again → the keypad shows the exit delay, Hauswacht reports
+"armed, bypassed: bathroom window".
+
 **PINs not in the history:** Zigbee2MQTT creates its own entity for the code typed at the keypad,
 e.g. `sensor.keypad_hallway_action_code`. Home Assistant stores it in the history – i.e. every PIN
 in plain text, also in backups. Hauswacht does not need it and **disables it automatically** as

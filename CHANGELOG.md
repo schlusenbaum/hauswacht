@@ -6,7 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-11-16
+
+### Hinzugefügt
+- **Trotzdem scharf am Keypad:** Sind beim Scharfschalten Melder offen, antwortet das Keypad wie
+  bisher „nicht bereit“. Drückt dieselbe Person innerhalb von 10 Sekunden noch einmal dieselbe
+  Taste mit ihrer PIN bzw. Karte, schaltet Hauswacht trotzdem scharf und überbrückt die offenen
+  Melder – wie „Trotzdem scharf“ in der Karte. Nur in Profilen mit „nach Bestätigung erlauben“;
+  „verweigern“ bleibt verweigern.
+- Neues Benutzerrecht **„Darf am Keypad trotzdem scharf schalten“** (Standard an, z. B. für
+  Kinder abschaltbar).
+
 ### Dokumentation
+- Bedienteile (deutsch und englisch): Abschnitt „Trotzdem scharf am Keypad“ mit Beispiel; Benutzer
+  und Profile ergänzt.
 - Aktions-Codes (deutsch und englisch): weitere Beispiele – Ereignis `hauswacht_event` als
   einfacher Auslöser, Licht an/aus mit zwei Tasten, Scharf schalten plus Rollläden, Testmodus
   ausnehmen, „Ausprobieren, was ankommt“ in den Entwicklerwerkzeugen.
