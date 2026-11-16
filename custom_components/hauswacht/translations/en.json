@@ -781,7 +781,8 @@
         "data": {
           "name": "Name",
           "area": "Area",
-          "topic": "MQTT topic of the keypad",
+          "keypad_device": "Keypad device (from Zigbee2MQTT)",
+          "topic": "MQTT topic (experts only)",
           "arm_day_zones": "Key “day” → alarm profile",
           "arm_night_zones": "Key “night” → alarm profile",
           "arm_all_zones": "Key “all” → alarm profile",
@@ -789,9 +790,10 @@
           "emergency": "Emergency key"
         },
         "data_description": {
-          "topic": "E.g. `zigbee2mqtt/Keypad hall` (base topic + device name in Zigbee2MQTT).",
+          "topic": "Leave empty = automatically from the keypad device. Only needed if a base topic other than `zigbee2mqtt` is set in Zigbee2MQTT or the device does not appear in Home Assistant – then e.g. `zigbee2mqtt/Keypad hallway` (base topic + name of the device in Zigbee2MQTT, without `/set`). An entered topic takes precedence.",
           "login": "**Card and PIN:** both credentials of the same user within 30 s (the keypad answers the first one with “not ready”).",
-          "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile."
+          "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile.",
+          "keypad_device": "The keypad as it appears in Home Assistant via Zigbee2MQTT. Hauswacht builds the MQTT topic from it: `zigbee2mqtt/` + name of the device in Zigbee2MQTT."
         }
       },
       "control_sticker": {
@@ -982,7 +984,8 @@
       "action_code_taken": "This code with this key already exists (“{conflict}”).",
       "action_code_profile_missing": "Please choose an alarm profile.",
       "action_code_is_pin": "This code is already a PIN or duress PIN – please choose another one.",
-      "pin_is_action_code": "This PIN is already an action code – please choose another one."
+      "pin_is_action_code": "This PIN is already an action code – please choose another one.",
+      "control_keypad_topic": "Please choose the keypad device or enter the MQTT topic."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

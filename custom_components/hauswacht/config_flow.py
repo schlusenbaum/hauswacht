@@ -19,6 +19,7 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.selector import (
     BooleanSelector,
@@ -269,6 +270,8 @@ SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 # "Neue Karte anlernen" in der Kartenliste; so lange wartet der Dialog aufs Hinhalten
 CARD_NEW = "__new__"
+# Basis-Topic von Zigbee2MQTT (Standard); abweichend: Topic im Keypad-Formular selbst eintragen
+Z2M_BASE_TOPIC = "zigbee2mqtt"
 ACTION_CODE_NEW = "__new__"
 # "Kartennummer eintippen": ohne Warten, mit den zuletzt gelesenen Karten zur Auswahl
 CARD_TYPE = "__type__"
@@ -3283,6 +3286,20 @@ class HauswachtOptionsFlow(OptionsFlow):
             )
         )
 
+    def _keypad_topic(self, device_id: str | None) -> str:
+        """MQTT-Topic eines Zigbee2MQTT-Geräts: Basis-Topic + Gerätename in Zigbee2MQTT."""
+        device = dr.async_get(self.hass).async_get(device_id) if device_id else None
+        if device is None or not device.name:
+            return ""
+        return f"{Z2M_BASE_TOPIC}/{device.name}"
+
+    def _resolve_keypad_topic(self, user_input: dict[str, Any]) -> dict[str, Any]:
+        """Ohne eigenes Topic: aus dem gewählten Keypad-Gerät bilden."""
+        topic = str(user_input.get("topic") or "").strip().rstrip("/")
+        if not topic or topic == Z2M_BASE_TOPIC:
+            topic = self._keypad_topic(user_input.get("keypad_device"))
+        return {**user_input, "topic": topic}
+
     def _validate_control(self, kind: ControlKind, data: dict[str, Any]) -> dict[str, str]:
         errors: dict[str, str] = {}
         options = self.config_entry.options
@@ -3293,7 +3310,7 @@ class HauswachtOptionsFlow(OptionsFlow):
         if kind is ControlKind.KEYPAD:
             profiles = [data.get(k) for k in CONTROL_ARM_KEYS]
             if not str(data.get("topic") or "").strip().strip("/"):
-                errors["topic"] = "control_topic"
+                errors["keypad_device"] = "control_keypad_topic"
         elif (
             kind in (ControlKind.STICKER, ControlKind.READER)
             and data.get("action") in ("arm", "toggle")
@@ -3327,6 +3344,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         current: dict[str, Any] = dict(stored.get(self._control_id or "", {}))
         errors: dict[str, str] = {}
         if user_input is not None:
+            if kind is ControlKind.KEYPAD:
+                user_input = self._resolve_keypad_topic(user_input)
             errors = self._validate_control(kind, user_input)
             if not errors:
                 data = _control_data(kind, user_input, current)
@@ -3359,9 +3378,14 @@ class HauswachtOptionsFlow(OptionsFlow):
             ),
         }
         if kind is ControlKind.KEYPAD:
-            fields[vol.Required("topic", default=source.get("topic", "zigbee2mqtt/"))] = (
-                TextSelector()
+            device = source.get("keypad_device")
+            topic = str(source.get("topic") or "")
+            if device and topic == self._keypad_topic(device):
+                topic = ""  # kommt automatisch aus dem Gerät
+            fields[vol.Optional("keypad_device", description={"suggested_value": device})] = (
+                DeviceSelector(DeviceSelectorConfig(integration="mqtt"))
             )
+            fields[vol.Optional("topic", description={"suggested_value": topic})] = TextSelector()
             for key in CONTROL_ARM_KEYS:
                 fields[vol.Optional(key, description={"suggested_value": buttons.get(key)})] = (
                     self._control_profile_selector()
@@ -3775,6 +3799,8 @@ def _control_data(
     }
     if kind is ControlKind.KEYPAD:
         data["topic"] = str(user_input["topic"]).strip().rstrip("/")
+        if user_input.get("keypad_device"):
+            data["keypad_device"] = user_input["keypad_device"]
         data["buttons"] = {k: user_input[k] for k in CONTROL_ARM_KEYS if user_input.get(k)}
         data["login"] = user_input.get("login", "pin_or_card")
         data["emergency"] = user_input.get("emergency", "off")
