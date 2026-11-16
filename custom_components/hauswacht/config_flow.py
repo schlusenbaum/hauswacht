@@ -2546,6 +2546,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                         "can_arm": bool(user_input.get("can_arm", True)),
                         "can_disarm": bool(user_input.get("can_disarm", True)),
                         "can_end_alarm": bool(user_input.get("can_end_alarm", True)),
+                        "can_force_arm": bool(user_input.get("can_force_arm", True)),
                         "ha_user": user_input.get("ha_user") or await self._ha_user_by_name(name),
                         "card_pin": bool(user_input.get("card_pin", False)),
                         "valid_from": _to_iso(user_input.get("valid_from")),
@@ -3758,6 +3759,9 @@ class HauswachtOptionsFlow(OptionsFlow):
                 ),
                 vol.Optional(
                     "can_end_alarm", default=bool(current.get("can_end_alarm", True))
+                ): BooleanSelector(),
+                vol.Optional(
+                    "can_force_arm", default=bool(current.get("can_force_arm", True))
                 ): BooleanSelector(),
                 vol.Optional("ha_user", description=ha_desc): SelectSelector(
                     SelectSelectorConfig(

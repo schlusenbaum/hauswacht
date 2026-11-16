@@ -50,6 +50,8 @@ class User:
     can_arm: bool = True
     can_disarm: bool = True
     can_end_alarm: bool = True
+    # Am Keypad offene Melder per zweitem Tastendruck überbrücken ("trotzdem scharf")
+    can_force_arm: bool = True
     ha_user: str | None = None
     valid_from: float | None = None  # Zeitstempel (UTC)
     valid_until: float | None = None
@@ -219,6 +221,7 @@ def parse_users(options: Mapping[str, Any]) -> tuple[User, ...]:
                 can_arm=bool(data.get("can_arm", True)),
                 can_disarm=bool(data.get("can_disarm", True)),
                 can_end_alarm=bool(data.get("can_end_alarm", True)),
+                can_force_arm=bool(data.get("can_force_arm", True)),
                 ha_user=data.get("ha_user") if isinstance(data.get("ha_user"), str) else None,
                 valid_from=_timestamp(data.get("valid_from")),
                 valid_until=_timestamp(data.get("valid_until")),

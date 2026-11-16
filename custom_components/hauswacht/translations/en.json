@@ -224,6 +224,7 @@
           "can_arm": "May arm",
           "can_disarm": "May disarm",
           "can_end_alarm": "May end alarm",
+          "can_force_arm": "May arm anyway at the keypad",
           "ha_user": "Home Assistant account (for alarm card, push and dashboard buttons)",
           "card_pin": "Require PIN in the alarm card",
           "valid_from": "Valid from",
@@ -232,7 +233,8 @@
         },
         "data_description": {
           "rights": "**All areas alike:** the checkboxes above apply everywhere. **Per area:** after saving you choose for each area what the user may do there (the checkboxes above are then ignored).",
-          "card_pin": "For this user's Home Assistant account in the “Hauswacht Alarm” card. Off: arms and disarms there without a PIN, with this user's rights. On: e.g. for a wall tablet that is always logged in. Only applies if any PIN exists."
+          "card_pin": "For this user's Home Assistant account in the “Hauswacht Alarm” card. Off: arms and disarms there without a PIN, with this user's rights. On: e.g. for a wall tablet that is always logged in. Only applies if any PIN exists.",
+          "can_force_arm": "If sensors are open when arming, the keypad answers “not ready”. If this user presses the same key again with their PIN or card within 10 seconds, the system is armed anyway and the open sensors are bypassed – only in profiles with “Allow after confirmation”."
         }
       },
       "user_area_rights": {

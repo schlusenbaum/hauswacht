@@ -729,3 +729,57 @@ async def test_action_code_flow_rejects_pin(
     flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
     flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"new_pin": "4242"})
     assert flow["errors"] == {"new_pin": "pin_is_action_code"}
+
+
+async def _setup_force(hass: HomeAssistant, *, policy: str, may: bool = True) -> None:
+    users = _users()
+    users["anna"]["can_force_arm"] = may
+    options = {
+        "users": users,
+        "controls": _controls(),
+        "notify_system": [PHONE],
+        "profiles": {"night": {"open_policy": policy}},
+    }
+    await setup_entry(hass, make_entry(options))
+    set_sensor(hass, WINDOW, "on")  # Fenster offen
+    await hass.async_block_till_done()
+
+
+async def test_keypad_second_press_arms_anyway(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    await _setup_force(hass, policy="confirm")
+    await _press(hass, "arm_night_zones", PIN, 30)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    assert {"mode": "not_ready", "transaction": 30} in _sent(mqtt_mock)
+    await _press(hass, "arm_night_zones", PIN, 31)  # gleich noch einmal: trotzdem scharf
+    assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert WINDOW in state.attributes["bypassed_sensors"]
+
+
+async def test_keypad_force_needs_right(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    await _setup_force(hass, policy="confirm", may=False)
+    await _press(hass, "arm_night_zones", PIN, 40)
+    await _press(hass, "arm_night_zones", PIN, 41)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_keypad_force_respects_refuse(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    await _setup_force(hass, policy="refuse")
+    await _press(hass, "arm_night_zones", PIN, 50)
+    await _press(hass, "arm_night_zones", PIN, 51)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_keypad_force_needs_same_key(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    await _setup_force(hass, policy="confirm")
+    await _press(hass, "arm_night_zones", PIN, 60)
+    await _press(hass, "disarm", PIN, 61)  # dazwischen etwas anderes: Bestätigung verfällt
+    await _press(hass, "arm_night_zones", PIN, 62)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED

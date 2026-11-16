@@ -407,3 +407,30 @@ def lock_id_label(tag: str, lang: str = "de") -> str:
         if tag.startswith(prefix):
             return text + tag[len(prefix) :]
     return tag
+
+
+# --- Trotzdem scharf am Keypad ---------------------------------------------------
+
+# So lange gilt ein zweiter Druck derselben Taste durch dieselbe Person als Bestätigung
+FORCE_ARM_WINDOW = 10.0
+
+
+@dataclass(frozen=True)
+class PendingForce:
+    """Erster Versuch scharf zu schalten scheiterte an offenen Meldern ("nicht bereit")."""
+
+    key: str
+    users: frozenset[str]
+    at: float
+
+
+def force_confirmed(
+    pending: PendingForce | None, key: str, users: frozenset[str], now: float
+) -> bool:
+    """Ist das der zweite Druck derselben Taste durch dieselbe(n) Person(en), rechtzeitig?"""
+    return (
+        pending is not None
+        and pending.key == key
+        and pending.users == users
+        and 0 <= now - pending.at <= FORCE_ARM_WINDOW
+    )

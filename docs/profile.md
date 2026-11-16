@@ -22,7 +22,7 @@ an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub
 | Auslöseregeln | Zusätzlich: Abfolgen von Meldern, siehe [Auslöseregeln](ausloeseregeln.md) |
 | Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten (Standard je 30 s) |
 | Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert (Standard 180 s) |
-| Offene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben · automatisch überbrücken |
+| Offene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben · automatisch überbrücken. Bestätigen: „Trotzdem scharf“ in Karte oder Push – oder am Keypad [dieselbe Taste noch einmal](bedienteile.md#trotzdem-scharf-am-keypad) |
 | Ausgefallene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben |
 | Maximale Alarmzyklen | Wie oft nach einem Alarm erneut ausgelöst werden darf |
 | Manipulation löst Alarm aus | Sonst wird Manipulation nur gemeldet |

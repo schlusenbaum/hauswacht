@@ -47,6 +47,7 @@ Jede Person bekommt einen Benutzer:
 | Name | Vorschläge aus den Home-Assistant-Benutzern oder frei (z. B. „Putzhilfe“). Erscheint als „geändert von“ am Bedienfeld, im Logbuch und in Push-Nachrichten |
 | Aktiv | aus = Ausweise gesperrt, ohne sie zu löschen |
 | Darf scharf schalten / unscharf schalten / Alarm beenden | Rechte (bei „alle Bereiche gleich“) |
+| Darf am Keypad trotzdem scharf schalten | offene Melder per zweitem Tastendruck überbrücken, siehe [Trotzdem scharf am Keypad](bedienteile.md#trotzdem-scharf-am-keypad). Standard an – z. B. für Kinder oder Gäste ausschalten |
 | Rechte gelten für | nur bei mehreren Bereichen, siehe [Rechte](#rechte) |
 | Home-Assistant-Konto | ordnet Push-Knopf, Dashboard-Knöpfe und NFC-Aufkleber diesem Benutzer zu. Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | In der Alarmkarte PIN verlangen | für das Home-Assistant-Konto dieses Benutzers in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang), z. B. bei einem Tablet-Konto. Standard aus |
