@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import dt as dt_util
 
@@ -113,6 +115,13 @@ class ControlManager:
         if kinds & {ControlKind.STICKER, ControlKind.READER}:
             self._unsubs.append(self.hass.bus.async_listen(TAG_SCANNED, self._on_tag))
         keypads = [c for c in self.controls.values() if c.kind is ControlKind.KEYPAD and c.topic]
+        if keypads:
+            self._hide_code_entities()
+            self._unsubs.append(
+                self.hass.bus.async_listen(
+                    er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
+                )
+            )
         nuki = [
             c
             for c in self.controls.values()
@@ -132,6 +141,54 @@ class ControlManager:
         for area in self.runtime.areas.values():
             self._unsubs.append(area.add_listener(self._update_keypads))
         self._update_keypads()
+
+    # --- Getippte Codes nicht im Verlauf speichern ------------------------------
+
+    @callback
+    def _on_registry_updated(self, event: Event[Any]) -> None:
+        if event.data.get("action") == "create":
+            self._hide_code_entities()
+
+    @callback
+    def _hide_code_entities(self) -> None:
+        """Code-Entität der Keypads in Zigbee2MQTT deaktivieren (einmalig je Entität).
+
+        Zigbee2MQTT legt für den am Keypad getippten Code eine eigene Entität an
+        (``sensor.<keypad>_action_code``). Home Assistant speichert sie im Verlauf – also jede
+        PIN im Klartext, auch in Backups. Hauswacht liest das Keypad direkt über MQTT und braucht
+        sie nicht. Wer sie danach bewusst wieder einschaltet, wird nicht überstimmt.
+        """
+        ent_reg = er.async_get(self.hass)
+        dev_reg = dr.async_get(self.hass)
+        main = self.runtime.main
+        topics = [c.topic for c in self.controls.values() if c.kind is ControlKind.KEYPAD]
+        hidden: list[str] = []
+        for entry in list(ent_reg.entities.values()):
+            if (
+                entry.platform != MQTT_DOMAIN
+                or entry.domain != "sensor"
+                or "_action_code_" not in f"{entry.unique_id}_"
+                or entry.entity_id in main.code_entities_hidden
+                or entry.device_id is None
+            ):
+                continue
+            device = dev_reg.async_get(entry.device_id)
+            names = {device.name, device.name_by_user} - {None} if device is not None else set()
+            if not any(t.endswith(f"/{name}") for t in topics for name in names):
+                continue
+            main.code_entities_hidden.append(entry.entity_id)
+            if entry.disabled_by is None:
+                ent_reg.async_update_entity(
+                    entry.entity_id, disabled_by=er.RegistryEntryDisabler.USER
+                )
+                hidden.append(entry.entity_id)
+        if hidden:
+            self.hass.async_create_task(main.async_save_now(), "hauswacht_save")
+            _LOGGER.warning("Code-Entitäten deaktiviert (PINs im Klartext): %s", hidden)
+            self.runtime.notifier.send_system(
+                tr(self.runtime.lang, "code_entity_hidden_title"),
+                tr(self.runtime.lang, "code_entity_hidden", entities=", ".join(hidden)),
+            )
 
     async def _subscribe(self, keypads: Iterable[Control]) -> None:
         from homeassistant.components import mqtt  # noqa: PLC0415

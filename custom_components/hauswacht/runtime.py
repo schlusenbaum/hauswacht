@@ -300,6 +300,8 @@ class HauswachtRuntime:
         # Wann Karten ("card:<ID>") und PINs ("pin:<Benutzer>") zuletzt geschaltet haben
         # (nur im Hauptbereich gepflegt; gespeichert, nicht in den Einstellungen)
         self.last_used: dict[str, float] = {}
+        # Code-Entitäten der Keypads, die Hauswacht schon einmal deaktiviert hat (nur einmal)
+        self.code_entities_hidden: list[str] = []
         # Sirenentest: nur im Hauptbereich (gilt für alle Bereiche)
         self.siren_tester: SirenTester | None = SirenTester(hass, self) if main is None else None
         # Bedienteile (Keypads, NFC, RFID): nur im Hauptbereich, bedienen je nach Einstellung
@@ -561,6 +563,9 @@ class HauswachtRuntime:
         elif plan.kind is RestartKind.ARM and plan.profile_id is not None:
             self._schedule_restart_arm(plan.profile_id)
         # Eigene Sirenen, die vor dem Neustart an waren, nach dem Hochfahren ausschalten
+        hidden = data.get("code_entities_hidden")
+        if isinstance(hidden, list):
+            self.code_entities_hidden = [h for h in hidden if isinstance(h, str)]
         stored_used = data.get("last_used")
         if isinstance(stored_used, dict):
             self.last_used = {
@@ -700,6 +705,9 @@ class HauswachtRuntime:
         """Karte bzw. PIN hat gerade erfolgreich geschaltet (für "zuletzt benutzt")."""
         self.last_used[key] = dt_util.utcnow().timestamp()
         self._save_soon()
+
+    async def async_save_now(self) -> None:
+        await self._store.async_save(self._storage_data())
 
     @callback
     def _save_soon(self) -> None:
@@ -2178,6 +2186,7 @@ class HauswachtRuntime:
             "test_mode": self.ctx.test_mode,
             "sirens": self.sirens.snapshot(),
             "last_used": self.last_used,
+            "code_entities_hidden": self.code_entities_hidden,
             "selected_profile": self._selected_profile,
             "edit_profile": self._edit_profile,
         }

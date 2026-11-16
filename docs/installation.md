@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.48.2:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.48.3:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -222,4 +222,6 @@ Besondere Hinweise für sehr alte Versionen:
 
 Einstellungen → Geräte & Dienste → Hauswacht → ⋮ → **Löschen**, danach im Marketplace bzw. in HACS entfernen.
 Hauswacht hat nichts an Geräten, Automationen oder Skripten verändert; es bleibt nichts zurück
-außer eventuell selbst angelegten Schwellenwert-Helfern (unter Helfer).
+außer eventuell selbst angelegten Schwellenwert-Helfern (unter Helfer). Einzige Ausnahme: Die
+Code-Entität der Keypads (z. B. `sensor.keypad_flur_action_code`) bleibt deaktiviert – bei
+Bedarf unter Einstellungen → Entitäten wieder einschalten.
