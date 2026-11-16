@@ -44,7 +44,8 @@ Unter jedem Melder steht, was Hauswacht gerade mit ihm macht:
 | überwacht | löst im aktiven Profil aus |
 | nicht im aktiven Profil | wird ignoriert (z. B. Keller beim Profil „Zuhause“) |
 | nur in Auslöseregeln: … | gehört im aktiven Profil nur zu diesen Auslöseregeln |
-| überbrückt bis zum Schließen | war beim Beenden eines Alarms offen; erst nach **Zu** wieder überwacht |
+| überbrückt | war beim Scharfschalten offen („Trotzdem scharf“); nach **Zu** wieder überwacht, erneutes **Auf** löst aus |
+| überbrückt bis zum Schließen | war beim Beenden eines Alarms oder nach einem Neustart offen; erst nach **Zu** wieder überwacht |
 | immer aktiv | meldet auch unscharf |
 | Manipulation löst Alarm aus / nur Meldung | je nach Profil; unscharf immer nur Meldung |
 

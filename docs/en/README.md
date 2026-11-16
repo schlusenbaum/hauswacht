@@ -49,4 +49,4 @@ ones of the English interface.
 | **Alarm panel** | the alarm entity in Home Assistant (`alarm_control_panel.hauswacht`) |
 | **Control device** | a device for operating: keypad, NFC sticker, RFID reader, button, door lock |
 | **Credential** | a user's PIN, RFID card or lock ID |
-| **Bypassed** | a sensor is temporarily not monitored (e.g. an open window after "Arm anyway") |
+| **Bypassed** | the open state of a sensor causes no alarm (e.g. a tilted window after "Arm anyway"); as soon as it closes, it is monitored normally again |
