@@ -12,6 +12,10 @@
 > allowed. If a **Hauswacht user** has no PIN, Home Assistant shows the hint "Not every user has a
 > PIN" under **Settings → Repairs**. Home Assistant accounts without a Hauswacht user – e.g. for
 > Grafana, MQTT or a wall tablet – do not count.
+>
+> **With a master PIN**, users without an own PIN can still disarm at the panel – with the master
+> PIN. The hint is then called "Users without an own PIN" and names them; the logbook shows
+> "Master-PIN" instead of their name. If this is intended, you can ignore the hint in Repairs.
 
 **RFID cards are independent of the PIN:** cards do not make the alarm panel require a PIN. So
 without any PINs, everyone switches on the dashboard without a PIN, and still with a card at the

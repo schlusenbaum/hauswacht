@@ -6,6 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.48.2] - 2026-11-16
+
+### Behoben
+- **Hinweis bei Master-PIN:** Gibt es einen Master-PIN, aber Benutzer ohne eigenen PIN, hieß es
+  bisher, sie könnten am Bedienfeld nicht unscharf schalten – das stimmte nicht. Jetzt: „Benutzer
+  ohne eigenen PIN“ – sie schalten mit dem Master-PIN, im Logbuch steht dann „Master-PIN“. Gilt
+  für den Hinweis unter Reparaturen und für die Prüfhinweise der Übersicht. Der Hinweis lässt
+  sich ignorieren, wenn das so gewollt ist.
+- Der Master-PIN steht nicht mehr als möglicher Besitzer in der Kartenliste (er ist keine Person).
+
+### Dokumentation
+- Benutzer (deutsch und englisch): Absatz zum Master-PIN im Abschnitt „Das Wichtigste vorab“.
+
 ## [0.48.1] - 2026-11-16
 
 ### Behoben
