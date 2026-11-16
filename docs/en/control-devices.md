@@ -65,7 +65,8 @@ Cards and tags.** Below, all of this is simply called "card".
 The list shows every card with name, number, owner and when it last switched:
 
 ```
-➕ Learn new card
+➕ Learn new card (hold it up)
+⌨️ Type in card number
 🟢 key ring (04A1B2C3) – Christian · last 07:12
 🟢 wallet (0011223344) – Christian · last 02.11.2026
 ⏸️ spare card (A1B2C3D4E5) – Anna · disabled
@@ -77,15 +78,20 @@ The list shows every card with name, number, owner and when it last switched:
 ### Learn a new card
 
 1. All areas disarmed.
-2. **Cards and tags → ➕ Learn new card.** The dialog shows: *"Hold the new card to a keypad now
-   (and press Disarm) or to a reader"* and waits up to 2 minutes. For a door lock: unlock once
-   with the new ID.
-3. As soon as the card has been read, the dialog moves on: **"✅ Card recognised"**. Enter a
+2. **Cards and tags → ➕ Learn new card (hold it up).** The dialog shows: *"Hold the new card to
+   a keypad now (and press Disarm) or to a reader"*. For a door lock: unlock once with the new
+   ID.
+3. **As soon as the card has been read, it continues at once:** "✅ Card recognised". Enter a
    **name** (e.g. "key ring"), choose the **user**, save.
 
-If you held the card up **before** (within the learning time), there is no waiting: it is offered
-directly as "new, read at Keypad at 18:04". If there is no card to read, you can also type in
-the number.
+At the frient keypad, holding up the card alone is not enough – it only sends the number with
+**Disarm**. If no card comes for 2 minutes, the dialog continues without a card.
+
+Only a card read **during** the dialog counts. A card from an earlier, cancelled attempt is not
+preselected.
+
+**⌨️ Type in card number:** without waiting. The recently read unknown cards (within the learning
+time) are offered here as "new, read at Keypad at 18:04", or you type in the number.
 
 **Example:** Anna gets a new tag. Cards and tags → Learn new card → hold the tag to the keypad in
 the hallway, press Disarm → "✅ Card recognised: 04C3D2E1" → name "key ring", user "Anna" →
@@ -385,12 +391,12 @@ code …" – the simplest way to a fingerprint at the front door.
 Like [cards](#learning-cards):
 
 1. All areas disarmed.
-2. **Unlock once** with the app, the keypad code or the fingerprint.
-3. Users and PINs → Cards and tags → Learn new card: the dialog recognises the ID (or it is
-   offered as "Nuki user 52653 (new, read at Front door lock at 18:04)") → name e.g. "Nuki app",
-   choose the user → save.
+2. Users and PINs → Cards and tags → **Learn new card (hold it up)**.
+3. **Unlock once** with the app, the keypad code or the fingerprint – the dialog recognises the ID
+   at once → name e.g. "Nuki app", choose the user → save.
 
-   You can also open "Learn new card" first and then unlock – the dialog waits up to 2 minutes.
+Already unlocked before? Then "Type in card number": the ID is offered there as "Nuki user 52653
+(new, read at Front door lock at 18:04)".
 
 Best learn each person separately, so it is clear which ID belongs to whom. Every keypad code and
 every app access is its own ID; a user can have several.

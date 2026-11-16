@@ -254,6 +254,8 @@ SIREN_ENTITY_DOMAIN = "siren"  # nur zur Auswahl im Formular, kein Dienstaufruf
 
 # "Neue Karte anlernen" in der Kartenliste; so lange wartet der Dialog aufs Hinhalten
 CARD_NEW = "__new__"
+# "Kartennummer eintippen": ohne Warten, mit den zuletzt gelesenen Karten zur Auswahl
+CARD_TYPE = "__type__"
 CARD_WAIT_SECONDS = 120
 
 
@@ -2642,14 +2644,24 @@ class HauswachtOptionsFlow(OptionsFlow):
             choice = user_input["card"]
             if choice == CARD_NEW:
                 return await self._card_new_start()
+            if choice == CARD_TYPE:
+                self._new_card = None
+                return await self.async_step_card_new()
             self._card = choice
             return await self.async_step_card_edit()
         de = self._german()
         lang = "de" if de else "en"
         options = [
             SelectOptionDict(
-                value=CARD_NEW, label="➕ Neue Karte anlernen" if de else "➕ Learn new card"
-            )
+                value=CARD_NEW,
+                label="➕ Neue Karte anlernen (hinhalten)"
+                if de
+                else "➕ Learn new card (hold it up)",
+            ),
+            SelectOptionDict(
+                value=CARD_TYPE,
+                label="⌨️ Kartennummer eintippen" if de else "⌨️ Type in card number",
+            ),
         ]
         for tag, uid, name, active in _all_cards(users):
             owner = str(users[uid].get("name") or uid)
@@ -2676,7 +2688,8 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
 
     async def _card_new_start(self) -> ConfigFlowResult:
-        """Neue Karte: auf das Hinhalten warten – außer es wurde gerade schon eine gelesen."""
+        """Neue Karte: immer auf das Hinhalten warten – eine früher gelesene (z. B. aus einem
+        abgebrochenen Versuch) wird nicht vorausgewählt. Geht weiter, sobald eine gelesen ist."""
         self._new_card = None
         controls = (
             getattr(self.config_entry.runtime_data, "controls", None) if self._loaded() else None
@@ -2686,7 +2699,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             and learn_minutes(self.config_entry.options) > 0
             and self._is_disarmed()
         )
-        if self._unknown_cards() or not waiting_possible:
+        if not waiting_possible:
             return await self.async_step_card_new()
         return await self.async_step_card_wait()
 
@@ -2754,6 +2767,12 @@ class HauswachtOptionsFlow(OptionsFlow):
                 self._new_card = None
                 return await self._save(options, "cards")
         card_options = self._new_card_options()
+        if self._new_card:
+            # Gerade erkannt: nur diese Karte anbieten, keine älteren
+            card_options = [o for o in card_options if o["value"] == self._new_card] or [
+                SelectOptionDict(value=self._new_card, label=self._new_card)
+            ]
+            self._offered_new &= {self._new_card}
         default = self._new_card or (card_options[0]["value"] if card_options else None)
         de = self._german()
         if self._new_card:

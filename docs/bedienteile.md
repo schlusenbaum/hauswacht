@@ -69,7 +69,8 @@ einfach „Karte“.
 Die Liste zeigt jede Karte mit Name, Nummer, Besitzer und wann sie zuletzt geschaltet hat:
 
 ```
-➕ Neue Karte anlernen
+➕ Neue Karte anlernen (hinhalten)
+⌨️ Kartennummer eintippen
 🟢 Schlüsselbund (04A1B2C3) – Christian · zuletzt 07:12
 🟢 Geldbörse (0011223344) – Christian · zuletzt 02.11.2026
 ⏸️ Ersatzkarte (A1B2C3D4E5) – Anna · deaktiviert
@@ -81,15 +82,21 @@ Die Liste zeigt jede Karte mit Name, Nummer, Besitzer und wann sie zuletzt gesch
 ### Neue Karte anlernen
 
 1. Alle Bereiche unscharf.
-2. **Karten und Anhänger → ➕ Neue Karte anlernen.** Der Dialog zeigt: *„Halte die neue Karte
-   jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser“* und wartet bis zu
-   2 Minuten. Bei einem Türschloss: einmal mit der neuen Kennung aufschließen.
-3. Sobald die Karte gelesen ist, springt der Dialog weiter: **„✅ Karte erkannt“**. Gib einen
+2. **Karten und Anhänger → ➕ Neue Karte anlernen (hinhalten).** Der Dialog zeigt: *„Halte die
+   neue Karte jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser“*. Bei einem
+   Türschloss: einmal mit der neuen Kennung aufschließen.
+3. **Sobald die Karte gelesen ist, geht es sofort weiter:** „✅ Karte erkannt“. Gib einen
    **Namen** ein (z. B. „Schlüsselbund“), wähle den **Benutzer**, speichern.
 
-Hast du die Karte schon **vorher** hingehalten (innerhalb der Anlernzeit), entfällt das Warten:
-Sie steht direkt als „neu, gelesen an Keypad um 18:04“ zur Auswahl. Ist keine Karte zu lesen,
-kannst du die Nummer auch eintippen.
+Am frient-Keypad reicht Hinhalten allein nicht – erst mit **Unscharf** schickt es die Nummer.
+Kommt 2 Minuten lang keine Karte, geht der Dialog ohne Karte weiter.
+
+Es zählt nur eine Karte, die **während** des Dialogs gelesen wird. Eine Karte aus einem früheren,
+abgebrochenen Versuch wird nicht vorausgewählt.
+
+**⌨️ Kartennummer eintippen:** ohne Warten. Hier stehen die zuletzt gelesenen unbekannten Karten
+(innerhalb der Anlernzeit) als „neu, gelesen an Keypad um 18:04“ zur Auswahl, oder du tippst die
+Nummer ein.
 
 **Beispiel:** Anna bekommt einen neuen Anhänger. Karten und Anhänger → Neue Karte anlernen →
 Anhänger ans Keypad im Flur halten, Unscharf drücken → „✅ Karte erkannt: 04C3D2E1“ → Name
@@ -256,7 +263,7 @@ sensor:
 2. **In Hauswacht:** Systemeinstellungen → Bedienteile → **RFID-/NFC-Leser hinzufügen** →
    Lesegerät „fingerabdruck-flur“ → Aktion z. B. „unscharf schalten“.
 3. **Finger dem Benutzer zuordnen** wie eine [Karte](#neue-karte-anlernen): alles unscharf,
-   Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen → Finger auflegen → „✅ Karte
+   Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen (hinhalten) → Finger auflegen → „✅ Karte
    erkannt: FINGER1“ → Name „Zeigefinger rechts“, Benutzer „Anna“ → speichern. Oder `FINGER1`
    eintippen.
 
@@ -399,13 +406,12 @@ angelernt – das ist der einfachste Weg zu einem Fingerabdruck an der Haustür.
 Wie bei [Karten](#karten-anlernen):
 
 1. Alle Bereiche unscharf.
-2. Mit der App, dem Keypad-Code oder dem Fingerabdruck **einmal aufschließen**.
-3. Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen: Der Dialog erkennt die Kennung
-   (oder sie steht als „Nuki-Benutzer 52653 (neu, gelesen an Haustür-Schloss um 18:04)“ zur
-   Auswahl) → Name z. B. „Nuki-App“, Benutzer wählen → speichern.
+2. Benutzer und PINs → Karten und Anhänger → **Neue Karte anlernen (hinhalten)**.
+3. Mit der App, dem Keypad-Code oder dem Fingerabdruck **einmal aufschließen** – der Dialog
+   erkennt die Kennung sofort → Name z. B. „Nuki-App“, Benutzer wählen → speichern.
 
-   Du kannst auch zuerst „Neue Karte anlernen“ öffnen und dann aufschließen – der Dialog wartet
-   bis zu 2 Minuten.
+Schon vorher aufgeschlossen? Dann „Kartennummer eintippen“: Dort steht die Kennung als
+„Nuki-Benutzer 52653 (neu, gelesen an Haustür-Schloss um 18:04)“ zur Auswahl.
 
 Am besten jede Person einzeln anlernen, damit klar ist, welche Kennung zu wem gehört. Jeder
 Keypad-Code und jeder App-Zugang ist eine eigene Kennung; ein Benutzer kann mehrere haben.

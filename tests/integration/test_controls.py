@@ -275,7 +275,7 @@ async def test_learn_name_disable_and_delete_card(
     assert state is not None
     assert state.attributes["code_failures"] == 1  # nur der PIN zählt, die Karte nicht
     flow = await _new_card_form(hass, entry)
-    assert flow["step_id"] == "card_new"  # schon gelesen: kein Warten
+    assert flow["step_id"] == "card_new"  # eintippen: zuletzt gelesene stehen zur Auswahl
     assert _offered(flow) == ["A1B2C3D4E5"]
     flow = await hass.config_entries.options.async_configure(
         flow["flow_id"], {"card": "A1B2C3D4E5", "name": " Schlüsselbund ", "user": "niklas"}
@@ -314,9 +314,11 @@ async def test_learn_card_by_holding_it_up(
     hass: HomeAssistant, mqtt_mock: MqttMockHAClient
 ) -> None:
     entry = await _setup_without_pin(hass)
-    flow = await _new_card_form(hass, entry)
+    # früher gelesene Karte (z. B. abgebrochener Versuch) wird NICHT vorausgewählt
+    await _press(hass, "disarm", "ffeeddccbb", 1)
+    flow = await _new_card_form(hass, entry, "__new__")
     assert flow["type"] == "progress"  # "Halte die Karte jetzt ans Keypad …"
-    await _press(hass, "disarm", "a1b2c3d4e5", 1)
+    await _press(hass, "disarm", "a1b2c3d4e5", 2)
     flow_id = flow["flow_id"]
     for _ in range(3):
         if flow["type"] == "form":
@@ -324,6 +326,7 @@ async def test_learn_card_by_holding_it_up(
         flow = await hass.config_entries.options.async_configure(flow_id)
     assert flow["step_id"] == "card_new"
     assert "A1B2C3D4E5" in flow["description_placeholders"]["found"]
+    assert _offered(flow) == ["A1B2C3D4E5"]  # nur die gerade erkannte
     flow = await hass.config_entries.options.async_configure(
         flow_id, {"card": "A1B2C3D4E5", "name": "Uhr", "user": "niklas"}
     )
@@ -419,14 +422,14 @@ async def test_reset_failed_attempts_admin_only(
     assert events[0].data["failures"] == 3
 
 
-async def _new_card_form(hass: HomeAssistant, entry: Any) -> Any:
-    """Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen."""
+async def _new_card_form(hass: HomeAssistant, entry: Any, choice: str = "__type__") -> Any:
+    """Benutzer und PINs → Karten und Anhänger → Kartennummer eintippen bzw. anlernen."""
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     for step in ("system", "users", "cards"):
         flow = await hass.config_entries.options.async_configure(
             flow["flow_id"], {"next_step_id": step}
         )
-    return await hass.config_entries.options.async_configure(flow["flow_id"], {"card": "__new__"})
+    return await hass.config_entries.options.async_configure(flow["flow_id"], {"card": choice})
 
 
 def _offered(flow: Any) -> list[str]:

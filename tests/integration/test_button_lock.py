@@ -282,7 +282,7 @@ async def test_unknown_lock_id_is_offered_for_learning(
         flow = await hass.config_entries.options.async_configure(
             flow["flow_id"], {"next_step_id": step}
         )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"card": "__new__"})
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"card": "__type__"})
     assert flow["step_id"] == "card_new"
     key = next(k for k in flow["data_schema"].schema if str(k) == "card")
     options = flow["data_schema"].schema[key].config["options"]
