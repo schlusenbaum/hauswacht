@@ -52,7 +52,7 @@ gilt. Ohne Technik und ohne Sicherheitsdetails.
 ### Was nie in der Übersicht steht
 
 - **PINs** – auch keine Teile oder Hashes; nur „PIN: ja/nein“.
-- **Kartennummern** nur gekürzt („…2880“).
+- **Kartennummern** nur gekürzt („…2880“), mit Namen davor („Schlüsselbund …2880“).
 - **Bedrohungs-PIN:** Wer einen hat, geht aus der Übersicht nicht hervor. Nur wenn er ohne
   Empfänger wirkungslos wäre, gibt es einen Prüfhinweis – ohne Namen.
 

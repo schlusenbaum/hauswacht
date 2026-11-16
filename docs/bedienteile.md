@@ -69,6 +69,28 @@ lernst du genauso an.
 3. Innerhalb der **Anlernzeit** (Standard 5 Minuten): Benutzer bearbeiten → „RFID-Karten und
    Schloss-Kennungen“ → die Karte steht dort als „neu, gelesen an Keypad um 18:04“ → auswählen,
    speichern.
+4. Danach fragt Hauswacht nach den **Namen der Karten** – z. B. „Schlüsselbund“. Leer lassen
+   geht auch.
+
+### Karten benennen – und eine verlorene Karte löschen
+
+Hat ein Benutzer Karten oder Schloss-Kennungen, folgt nach dem Speichern seiner Einstellungen
+das Formular **„Namen der Karten“**: ein Feld je Karte, beschriftet mit ihrer Kennung. Ein leeres
+Feld heißt: ohne Namen. Das gilt genauso für Finger am [Fingerabdruck-Leser](#fingerabdruck-leser-esphome)
+(„Daumen rechts“) und Schloss-Kennungen („Nuki-App“).
+
+Mit Namen
+
+- steht im Benutzer-Dialog **„Schlüsselbund (04A1B2C3)“** statt nur der Nummer,
+- zeigen Logbuch, Bedienfeld („Geändert von“) und Nachrichten, **welche** Karte benutzt wurde:
+  „Christian · Schlüsselbund (Keypad Flur)“,
+- zeigt die [Systemübersicht](uebersicht.md) „Schlüsselbund …B2C3“.
+
+**Beispiel – Karte verloren:** Christian hat zwei Anhänger, „Schlüsselbund“ und „Geldbörse“. Die
+Geldbörse ist weg. Benutzer bearbeiten → Christian → im Feld „RFID-Karten und Schloss-Kennungen“
+bei **„Geldbörse (…)“** auf das ✕ → speichern → das nächste Formular (Namen) einfach bestätigen.
+Die Karte schaltet ab sofort nichts mehr, ihr Name wird mit gelöscht. Wer sie findet und hinhält,
+wird als unbekannte Karte abgelehnt.
 
 - Die Anlernzeit ist einstellbar unter **Bedienteile → Anlernen neuer Karten** (1–60 Minuten,
   0 = Anlernen aus). Danach wird die Karte vergessen; wer zu spät speichert, bekommt einen

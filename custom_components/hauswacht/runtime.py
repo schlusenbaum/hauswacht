@@ -194,10 +194,12 @@ from .core.users import (
     allowed_in,
     find_by_ha_user,
     has_codes,
+    identity_label,
     match_pin,
     match_tag,
     parse_users,
     people_without_pin,
+    tag_credential,
 )
 from .core.users import label as users_label
 from .homecoming_observer import HomecomingObserver
@@ -912,7 +914,7 @@ class HauswachtRuntime:
         identity = await self.async_identify(code, action)
         if not identity.duress:
             self.check_allowed(identity.users, action)
-        return users_label(identity.users, self.lang)
+        return identity_label(identity, self.lang)
 
     def check_allowed(self, users: tuple[User, ...], action: Action) -> None:
         """Darf mindestens einer dieser Benutzer die Aktion in diesem Bereich?"""
@@ -940,7 +942,9 @@ class HauswachtRuntime:
         card = match_tag(code, self.users, timestamp)
         if card.users:
             self.main._code_guard = register_success(self.main._code_guard)
-            return Identity(kind="card", users=card.users)
+            return Identity(
+                kind="card", users=card.users, credential=tag_credential(code, card.users)
+            )
         # PBKDF2 ist absichtlich langsam: im Hintergrund, damit Home Assistant nicht hängt
         match = await self.hass.async_add_executor_job(match_pin, code, self.users, timestamp)
         if match.duress:

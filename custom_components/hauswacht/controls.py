@@ -66,8 +66,7 @@ from .core.controls import (
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
 from .core.texts import tr
-from .core.users import Action, Identity, find_by_ha_user, match_tag
-from .core.users import label as users_label
+from .core.users import Action, Identity, find_by_ha_user, identity_label, match_tag, tag_credential
 
 if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
@@ -285,7 +284,7 @@ class ControlManager:
     ) -> str:
         """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort."""
         if identity is not None:
-            actor = users_label(identity.users, self.runtime.lang)
+            actor = identity_label(identity, self.runtime.lang)
         changed_by = f"{actor} ({control.name})" if actor else control.name
         if action is Action.DISARM:
             targets = [a for a in self._areas(control) if not a.is_disarmed]
@@ -418,7 +417,7 @@ class ControlManager:
         if identity is None:
             return "rejected"
         result = self._execute(reader, action, reader.profile, identity)
-        self._confirm(reader, action, result, users_label(identity.users, self.runtime.lang))
+        self._confirm(reader, action, result, identity_label(identity, self.runtime.lang))
         return result
 
     def _confirm(self, control: Control, action: Action, result: str, who: str) -> None:
@@ -543,8 +542,8 @@ class ControlManager:
                 )
             self._fire("LockIgnored", control, intent=intent, reason="unknown_id")
             return "unknown"
-        found = Identity("lock", users)
-        who = users_label(users, lang)
+        found = Identity("lock", users, credential=tag_credential(identity, users))
+        who = identity_label(found, lang)
         if intent == UNLOCK:
             if not self._armed(control):
                 return "already_disarmed"

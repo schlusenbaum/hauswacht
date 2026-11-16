@@ -39,7 +39,7 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
 | Home-Assistant-Konto | ordnet Push-Knopf, Dashboard-Knöpfe und NFC-Aufkleber diesem Benutzer zu. Wird automatisch gesetzt, wenn als Name ein Home-Assistant-Benutzer gewählt wurde |
 | In der Alarmkarte PIN verlangen | für das Home-Assistant-Konto dieses Benutzers in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang), z. B. bei einem Tablet-Konto. Standard aus |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit sind die Ausweise gesperrt |
-| RFID-Karten/-Anhänger | beliebig viele, siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen) |
+| RFID-Karten/-Anhänger | beliebig viele, siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen). Nach dem Speichern lassen sich die Karten benennen (z. B. „Schlüsselbund“) – so weißt du beim Verlust, welche du löschst: [Karten benennen](bedienteile.md#karten-benennen--und-eine-verlorene-karte-löschen) |
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben („gemeinsamer PIN (Christian,
   Petra)“, bei englischer Sprache „shared PIN (…)“). Eine Aktion ist erlaubt, wenn **mindestens einer** dieser Benutzer sie darf.

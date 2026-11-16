@@ -242,6 +242,10 @@
         "title": "Rights per area",
         "description": "What may **{name}** do in which area? An area without a selection is locked for this user."
       },
+      "user_tag_names": {
+        "title": "Names of the cards",
+        "description": "Give the cards and tags of **{name}** names, e.g. “key ring” or “wallet”. Then you know which one to delete if one gets lost, and the logbook and messages show which card was used (“{name} · key ring”). Leave empty = no name."
+      },
       "system": {
         "title": "System settings",
         "menu_options": {

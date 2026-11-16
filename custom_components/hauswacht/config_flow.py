@@ -2530,7 +2530,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                     data["rights"] = RIGHTS_ALL
                     data.pop("areas", None)
                     data.pop("area_rights", None)
-                data["tags"] = tag_list
+                _set_tags(data, tag_list)
                 if user_input.get("remove_pin"):
                     data.pop("pin_salt", None)
                     data.pop("pin_digest", None)
@@ -2550,7 +2550,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 if scope == RIGHTS_PER_AREA:
                     self._user_pending = (new_id, new_options)
                     return await self.async_step_user_area_rights()
-                return await self._save(new_options, "users")
+                return await self._user_finish(new_id, new_options)
 
         status = []
         if current.get("pin_digest"):
@@ -2586,7 +2586,7 @@ class HauswachtOptionsFlow(OptionsFlow):
             new_options = dict(options)
             new_options[OPT_USERS] = users
             self._user_pending = None
-            return await self._save(new_options, "users")
+            return await self._user_finish(user_id, new_options)
         current = _area_rights_defaults(data, list(areas))
         fields: dict[Any, Any] = {
             vol.Optional(area.name, default=current[area.area_id]): SelectSelector(
@@ -2601,6 +2601,49 @@ class HauswachtOptionsFlow(OptionsFlow):
         }
         return self.async_show_form(
             step_id="user_area_rights",
+            data_schema=vol.Schema(fields),
+            description_placeholders={"name": str(data.get("name", user_id))},
+        )
+
+    async def _user_finish(self, user_id: str, options: dict[str, Any]) -> ConfigFlowResult:
+        """Speichern – bei Karten vorher noch ihre Namen abfragen."""
+        data = options[OPT_USERS][user_id]
+        if data.get("tags"):
+            self._user_pending = (user_id, options)
+            return await self.async_step_user_tag_names()
+        return await self._save(options, "users")
+
+    async def async_step_user_tag_names(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Namen für die Karten eines Benutzers (z. B. "Schlüsselbund"), damit man beim Verlust
+        weiß, welche man löscht. Ein Feld je Karte, leer = ohne Namen."""
+        assert self._user_pending is not None
+        user_id, options = self._user_pending
+        users = dict(options[OPT_USERS])
+        data = dict(users[user_id])
+        tags = [t for t in data.get("tags", []) if isinstance(t, str)]
+        lang = "de" if self._german() else "en"
+        fields_by_tag = {tag: lock_id_label(tag, lang) for tag in tags}
+        stored = data.get("tag_names")
+        names: dict[str, str] = dict(stored) if isinstance(stored, dict) else {}
+        if user_input is not None:
+            data["tag_names"] = {
+                tag: text
+                for tag, field in fields_by_tag.items()
+                if (text := str(user_input.get(field) or "").strip())
+            }
+            users[user_id] = data
+            new_options = dict(options)
+            new_options[OPT_USERS] = users
+            self._user_pending = None
+            return await self._save(new_options, "users")
+        fields: dict[Any, Any] = {
+            vol.Optional(field, description={"suggested_value": names.get(tag, "")}): TextSelector()
+            for tag, field in fields_by_tag.items()
+        }
+        return self.async_show_form(
+            step_id="user_tag_names",
             data_schema=vol.Schema(fields),
             description_placeholders={"name": str(data.get("name", user_id))},
         )
@@ -3103,7 +3146,17 @@ class HauswachtOptionsFlow(OptionsFlow):
         stored = current.get("tags", [])
         tags = [t for t in stored if isinstance(t, str)] if isinstance(stored, list) else []
         lang = "de" if self._german() else "en"
-        options = [SelectOptionDict(value=t, label=lock_id_label(t, lang)) for t in tags]
+        stored_names = current.get("tag_names")
+        names = stored_names if isinstance(stored_names, dict) else {}
+        options = [
+            SelectOptionDict(
+                value=t,
+                label=f"{names[t]} ({lock_id_label(t, lang)})"
+                if names.get(t)
+                else lock_id_label(t, lang),
+            )
+            for t in tags
+        ]
         unknown = self._unknown_cards()
         self._offered_new = set(unknown) - set(tags)
         de = self._german()
@@ -3394,6 +3447,14 @@ def _tag_input(value: Any) -> list[str]:
     """Karten aus der Auswahl (Liste) oder – wie früher – als Text mit Komma."""
     items = value if isinstance(value, list) else str(value or "").split(",")
     return list(dict.fromkeys(t for t in (normalize_tag(i) for i in items) if t))
+
+
+def _set_tags(data: dict[str, Any], tags: list[str]) -> None:
+    """Karten setzen; Namen entfernter Karten nicht aufbewahren."""
+    data["tags"] = tags
+    names = data.get("tag_names")
+    if isinstance(names, dict):
+        data["tag_names"] = {t: n for t, n in names.items() if t in tags}
 
 
 def _tag_owner(tags: list[str], user_id: str | None, stored: Mapping[str, Any]) -> str | None:

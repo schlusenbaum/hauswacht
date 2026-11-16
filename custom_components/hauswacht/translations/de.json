@@ -242,6 +242,10 @@
         "title": "Rechte je Bereich",
         "description": "Was darf **{name}** in welchem Bereich? Ein Bereich ohne Auswahl ist für diesen Benutzer gesperrt."
       },
+      "user_tag_names": {
+        "title": "Namen der Karten",
+        "description": "Gib den Karten und Anhängern von **{name}** Namen, z. B. „Schlüsselbund“ oder „Geldbörse“. So weißt du bei einem Verlust, welche du löschen musst, und Logbuch und Nachrichten zeigen, welche Karte benutzt wurde („{name} · Schlüsselbund“). Leer lassen = ohne Namen."
+      },
       "system": {
         "title": "Systemeinstellungen",
         "menu_options": {
