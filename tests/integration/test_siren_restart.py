@@ -1,7 +1,7 @@
 """Integrationstests: Sirenen, die vor einem Neustart an waren, werden danach ausgeschaltet.
 
-Der Zustand "vor dem Neustart" wird über den gespeicherten Zustand vorgegeben. Sirenen- und
-Schalter-Dienste sind ATTRAPPEN (async_mock_service); es wird nichts geschaltet.
+Der Zustand "vor dem Neustart" wird über den gespeicherten Zustand vorgegeben. Die
+Sirenen-Dienste sind ATTRAPPEN (async_mock_service); es wird nichts geschaltet.
 """
 
 from __future__ import annotations
@@ -24,14 +24,17 @@ from .conftest import PANEL, WINDOW, make_entry, set_sensor, setup_entry
 
 pytestmark = pytest.mark.parametrize("expected_lingering_timers", [True])
 
-RELAY = "switch.sirene_garage"
+# Sirene ohne eigene Laufzeit (nur ein/aus) – wie ein Relais. Als siren.…, weil Hauswacht die
+# switch-Plattform selbst lädt und damit Attrappen für switch.turn_off ersetzen würde.
+RELAY = "siren.sirene_garage"
+ON_OFF_ONLY = 3  # SirenEntityFeature.TURN_ON | TURN_OFF
 PHONE = "mobile_app_testhandy"
 
 
 class Mocks:
     def __init__(self, hass: HomeAssistant) -> None:
-        self.on: list[ServiceCall] = async_mock_service(hass, "switch", "turn_on")
-        self.off: list[ServiceCall] = async_mock_service(hass, "switch", "turn_off")
+        self.on: list[ServiceCall] = async_mock_service(hass, "siren", "turn_on")
+        self.off: list[ServiceCall] = async_mock_service(hass, "siren", "turn_off")
         self.push: list[ServiceCall] = async_mock_service(hass, "notify", PHONE)
 
 
@@ -53,7 +56,7 @@ async def _start(
     hass: HomeAssistant, hass_storage: dict[str, Any], saved: dict[str, Any], **options: Any
 ) -> Mocks:
     mocks = Mocks(hass)
-    hass.states.async_set(RELAY, "on")
+    hass.states.async_set(RELAY, "on", {"supported_features": ON_OFF_ONLY})
     entry = make_entry(_options(**options))
     _stored(hass_storage, entry.entry_id, saved)
     await setup_entry(hass, entry)
