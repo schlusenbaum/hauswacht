@@ -51,4 +51,4 @@ Gegenstück in der anderen Sprache.
 | **Bedienfeld** | Die Alarm-Entität in Home Assistant (`alarm_control_panel.hauswacht`) |
 | **Bedienteil** | Ein Gerät zum Bedienen: Keypad, NFC-Aufkleber, RFID-Leser, Taster, Türschloss |
 | **Ausweis** | PIN, RFID-Karte oder Schloss-Kennung eines Benutzers |
-| **Überbrückt** | Der offene Zustand eines Melders löst keinen Alarm aus (z. B. gekipptes Fenster nach „Trotzdem scharf“); sobald er schließt, ist er wieder normal überwacht |
+| **Überbrückt** | Ein Melder wird vorübergehend nicht überwacht: nach „Trotzdem scharf“ bis zum Unscharfschalten, nach „Alarm beenden“ oder einem Neustart bis zum Schließen |
