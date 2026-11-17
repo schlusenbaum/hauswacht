@@ -53,7 +53,7 @@ async def test_empty_lists_show_dash(hass: HomeAssistant) -> None:
     entry = make_entry()
     await setup_entry(hass, entry)
     users = (await _menu(hass, entry, "system", "users"))["description_placeholders"]["items"]
-    assert users.rstrip().endswith("–")
+    assert users.startswith("**Existing users:** –")
 
 
 async def test_master_pin_status_without_showing_a_user(hass: HomeAssistant) -> None:
