@@ -56,6 +56,11 @@ time, [My Home Assistant](https://my.home-assistant.io) asks once for its addres
 Or by hand: Settings → Devices & services → **Add integration → Hauswacht**. Hauswacht can be
 set up only once; several parts of a property are handled with [areas](profiles.md#areas).
 
+During setup Hauswacht asks whether the **[setup wizard](setup-wizard.md)** should help
+(recommended for getting started): a short introduction, then sensors, sensor groups or trigger
+rules and alarm profiles – every step can be skipped. Later you start it again under Configure →
+Setup wizard.
+
 ## The settings menu
 
 All settings are under **Settings → Devices & services → Hauswacht → Configure**. They can only
@@ -63,6 +68,7 @@ be changed while **all areas are disarmed**.
 
 | Menu | Content | Page |
 |---|---|---|
+| **Setup wizard** | Guided: sensors, sensor groups or trigger rules, alarm profiles | [Wizard](setup-wizard.md) |
 | **Alarm triggering** → Sensor groups | Group sensors and set their type | [Sensors](sensors.md) |
 | **Alarm triggering** → Trigger rules | Sequences of sensors ("door, then basement") | [Trigger rules](trigger-rules.md) |
 | **Alarm triggering** → Always active | Sensors that report even when disarmed | [Sensors](sensors.md#always-active-sensors) |
@@ -87,6 +93,8 @@ How the dialog works:
 - If the system is armed while the dialog is open, Hauswacht no longer saves anything.
 
 ## Five steps to the first arming
+
+Steps 1 and 2 are also done by the [setup wizard](setup-wizard.md). By hand it works like this:
 
 1. **Add a sensor group:** Alarm triggering → Sensor groups → Add sensor group, e.g. "Outside"
    with all door and window contacts. Then check the suggested [types](sensors.md#types) –

@@ -3,11 +3,87 @@
     "step": {
       "user": {
         "title": "Hauswacht",
-        "description": "Einbruchmeldeanlage Hauswacht einrichten. Die Anlage startet unscharf. Sirenen werden in dieser Version noch nicht angesteuert."
+        "description": "Einbruchmeldeanlage Hauswacht einrichten. Die Anlage startet **unscharf**.\n\nEmpfohlen: der **Einrichtungsassistent** – er erklärt kurz, wie Hauswacht arbeitet, und führt dich durch Melder, Meldergruppen und Alarmprofile. Jeden Schritt kannst du überspringen.",
+        "menu_options": {
+          "wizard": "Mit dem Einrichtungsassistenten (empfohlen)",
+          "plain": "Ohne Assistent – alles selbst im Einstellungsdialog"
+        }
+      },
+      "wizard": {
+        "title": "Einrichtungsassistent",
+        "description": "Der Assistent führt dich Schritt für Schritt durch die Einrichtung: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile.\n\n**Jeden Schritt kannst du überspringen** und später nachholen – im Einstellungsdialog oder indem du den Assistenten erneut startest. Was schon eingerichtet ist, bleibt erhalten; der Assistent ergänzt nur.\n\nEmpfänger, Sirenen und Benutzer folgen in einer späteren Version des Assistenten; bis dahin richtest du sie im Einstellungsdialog ein.",
+        "menu_options": {
+          "wizard_intro": "Kurze Einführung: So arbeitet Hauswacht",
+          "wizard_sensors": "Einführung überspringen – gleich loslegen"
+        }
+      },
+      "wizard_intro": {
+        "title": "So arbeitet Hauswacht",
+        "description": "- **Melder** – alles, was „offen/zu“ oder „Bewegung“ meldet. *Beispiel: Haustür, Fenster Küche, Bewegungsmelder Flur.*\n- **Meldergruppen** – Melder, die zusammengehören. *Beispiel: „Außen“ = alle Türen und Fenster, „Innen“ = die Bewegungsmelder.*\n- **Auslöseregeln** – für Fortgeschrittene: Alarm erst, wenn mehreres zusammenkommt. *Beispiel: Haustür auf und danach innerhalb einer Minute Bewegung im Keller.*\n- **Alarmprofile** – die Situationen, in denen du scharf schaltest. *Beispiel: „Abwesend“ überwacht alles, „Nacht“ nur außen – du kannst dich im Haus bewegen.*\n- **Sirenen und Empfänger** – wer oder was bei Alarm Lärm macht oder eine Nachricht bekommt. *Beispiel: Sirene Flur, Handy von Anna.*\n- **Benutzer und Bedienteile** – wer schalten darf und womit. *Beispiel: PIN, Karte, Keypad, App.*\n\n**Eingangstüren** bekommen eine Eingangsverzögerung: Wer heimkommt, hat ein paar Sekunden Zeit zum Unscharfschalten. Alle anderen Melder lösen sofort aus.\n\nJeden Schritt kannst du überspringen und später nachholen."
+      },
+      "wizard_sensors": {
+        "title": "Welche Melder sollen überwacht werden?",
+        "description": "Hauswacht hat in Home Assistant diese Türen, Fenster und Bewegungsmelder gefunden, die noch in keiner Meldergruppe stehen:\n\n{found}\n\nAlle Vorschläge sind ausgewählt – **nimm weg, was nicht überwacht werden soll**, oder füge Melder hinzu. Rauch-, Wasser- und Batterie-Sensoren schlägt Hauswacht nicht vor.\n\nLeer lassen = überspringen.",
+        "data": {
+          "sensors": "Melder"
+        }
+      },
+      "wizard_mode": {
+        "title": "Wie soll überwacht werden?",
+        "description": "- **Meldergruppen (einfach):** Jeder Melder in einer Gruppe löst im scharfen Profil Alarm aus. Für die meisten Häuser genau richtig.\n- **Nur Auslöseregeln:** Alarm erst, wenn mehrere Dinge zusammenkommen. Für Fortgeschrittene.\n- **Beides:** Gruppen für Türen und Fenster, Regeln zusätzlich, z. B. für Bewegungsmelder.\n- **Später:** jetzt nichts anlegen.",
+        "menu_options": {
+          "wizard_mode_zones": "Mit Meldergruppen (empfohlen)",
+          "wizard_mode_rules": "Nur mit Auslöseregeln",
+          "wizard_mode_both": "Mit Meldergruppen und Auslöseregeln",
+          "wizard_summary": "Später festlegen – zur Zusammenfassung"
+        }
+      },
+      "wizard_groups": {
+        "title": "Meldergruppen",
+        "description": "Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
+        "data": {
+          "outside_name": "Name der Gruppe für Türen und Fenster",
+          "outside": "Türen und Fenster",
+          "entry_doors": "Davon Eingangstüren",
+          "inside_name": "Name der Gruppe für Bewegungsmelder",
+          "inside": "Bewegungsmelder"
+        }
+      },
+      "wizard_rules_later": {
+        "title": "Auslöseregeln",
+        "description": "Auslöseregeln legst du nach der Installation an: **Konfigurieren → Einrichtungsassistent** (oder Alarmauslösung → Auslöseregeln). Dort hilft dir der Regel-Assistent.\n\nJetzt geht es weiter mit den Alarmprofilen."
+      },
+      "wizard_profiles": {
+        "title": "Alarmprofile",
+        "description": "Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "data": {
+          "away": "Profil „Abwesend“",
+          "away_zones": "Abwesend: Meldergruppen",
+          "away_rules": "Abwesend: Auslöseregeln",
+          "exit_delay": "Ausgangsverzögerung",
+          "entry_delay": "Eingangsverzögerung",
+          "night": "Profil „Nacht“",
+          "night_zones": "Nacht: Meldergruppen",
+          "night_rules": "Nacht: Auslöseregeln"
+        }
+      },
+      "wizard_summary": {
+        "title": "Zusammenfassung",
+        "description": "{summary}\n\nAlles, was hier fehlt, kannst du im Einstellungsdialog nachholen oder den Assistenten später erneut starten. Die Anlage startet **unscharf**."
       }
     },
     "abort": {
       "single_instance_allowed": "Hauswacht ist bereits eingerichtet."
+    },
+    "error": {
+      "zone_overlap": "Diese Sensoren sind schon in einer anderen Meldergruppe: {conflicts}. Ein Sensor kann nur in einer Meldergruppe sein – bitte dort entfernen oder hier abwählen.",
+      "zone_name_required": "Bitte einen Namen eingeben.",
+      "zone_empty": "Mindestens einen Sensor oder ein Label auswählen.",
+      "profile_name_required": "Bitte einen Namen eingeben.",
+      "profile_name_taken": "Ein Profil mit diesem Namen gibt es schon.",
+      "panel_mode_taken": "Dieser Knopf ist bereits einem anderen Profil zugeordnet.",
+      "excluded_not_in_groups": "Ausgenommene Melder müssen aus den gewählten Meldergruppen stammen.",
+      "wizard_profile_empty": "Wähle mindestens eine Meldergruppe oder Auslöseregel – oder wähle das Profil ab."
     }
   },
   "options": {
@@ -15,6 +91,7 @@
       "init": {
         "title": "Hauswacht-Optionen",
         "menu_options": {
+          "wizard": "Einrichtungsassistent",
           "triggering": "Alarmauslösung",
           "profiles": "Alarmprofile",
           "sirens": "Alarmgeber – Sirenen",
@@ -932,6 +1009,76 @@
           "action": "**Ereignis:** die Entität „Hauswacht Aktions-Code“ meldet ein Ereignis mit diesem Namen – in einer eigenen Automation als Auslöser verwenden. **Scharf schalten:** schaltet das gewählte Profil scharf. **Stiller Notruf:** wichtige Push-Nachricht an die Alarm-Empfänger, sonst nichts Sichtbares.",
           "code": "Nur Ziffern. Am Keypad: Code tippen, dann die Taste drücken. Während einer PIN-Sperre sind auch Aktions-Codes gesperrt."
         }
+      },
+      "wizard": {
+        "title": "Einrichtungsassistent",
+        "description": "Der Assistent führt dich Schritt für Schritt durch die Einrichtung: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile.\n\n**Jeden Schritt kannst du überspringen** und später nachholen – im Einstellungsdialog oder indem du den Assistenten erneut startest. Was schon eingerichtet ist, bleibt erhalten; der Assistent ergänzt nur.\n\nEmpfänger, Sirenen und Benutzer folgen in einer späteren Version des Assistenten; bis dahin richtest du sie im Einstellungsdialog ein.",
+        "menu_options": {
+          "wizard_intro": "Kurze Einführung: So arbeitet Hauswacht",
+          "wizard_sensors": "Einführung überspringen – gleich loslegen"
+        }
+      },
+      "wizard_intro": {
+        "title": "So arbeitet Hauswacht",
+        "description": "- **Melder** – alles, was „offen/zu“ oder „Bewegung“ meldet. *Beispiel: Haustür, Fenster Küche, Bewegungsmelder Flur.*\n- **Meldergruppen** – Melder, die zusammengehören. *Beispiel: „Außen“ = alle Türen und Fenster, „Innen“ = die Bewegungsmelder.*\n- **Auslöseregeln** – für Fortgeschrittene: Alarm erst, wenn mehreres zusammenkommt. *Beispiel: Haustür auf und danach innerhalb einer Minute Bewegung im Keller.*\n- **Alarmprofile** – die Situationen, in denen du scharf schaltest. *Beispiel: „Abwesend“ überwacht alles, „Nacht“ nur außen – du kannst dich im Haus bewegen.*\n- **Sirenen und Empfänger** – wer oder was bei Alarm Lärm macht oder eine Nachricht bekommt. *Beispiel: Sirene Flur, Handy von Anna.*\n- **Benutzer und Bedienteile** – wer schalten darf und womit. *Beispiel: PIN, Karte, Keypad, App.*\n\n**Eingangstüren** bekommen eine Eingangsverzögerung: Wer heimkommt, hat ein paar Sekunden Zeit zum Unscharfschalten. Alle anderen Melder lösen sofort aus.\n\nJeden Schritt kannst du überspringen und später nachholen."
+      },
+      "wizard_sensors": {
+        "title": "Welche Melder sollen überwacht werden?",
+        "description": "Hauswacht hat in Home Assistant diese Türen, Fenster und Bewegungsmelder gefunden, die noch in keiner Meldergruppe stehen:\n\n{found}\n\nAlle Vorschläge sind ausgewählt – **nimm weg, was nicht überwacht werden soll**, oder füge Melder hinzu. Rauch-, Wasser- und Batterie-Sensoren schlägt Hauswacht nicht vor.\n\nLeer lassen = überspringen.",
+        "data": {
+          "sensors": "Melder"
+        }
+      },
+      "wizard_mode": {
+        "title": "Wie soll überwacht werden?",
+        "description": "- **Meldergruppen (einfach):** Jeder Melder in einer Gruppe löst im scharfen Profil Alarm aus. Für die meisten Häuser genau richtig.\n- **Nur Auslöseregeln:** Alarm erst, wenn mehrere Dinge zusammenkommen. Für Fortgeschrittene.\n- **Beides:** Gruppen für Türen und Fenster, Regeln zusätzlich, z. B. für Bewegungsmelder.\n- **Später:** jetzt nichts anlegen.",
+        "menu_options": {
+          "wizard_mode_zones": "Mit Meldergruppen (empfohlen)",
+          "wizard_mode_rules": "Nur mit Auslöseregeln",
+          "wizard_mode_both": "Mit Meldergruppen und Auslöseregeln",
+          "wizard_summary": "Später festlegen – zur Zusammenfassung"
+        }
+      },
+      "wizard_groups": {
+        "title": "Meldergruppen",
+        "description": "Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
+        "data": {
+          "outside_name": "Name der Gruppe für Türen und Fenster",
+          "outside": "Türen und Fenster",
+          "entry_doors": "Davon Eingangstüren",
+          "inside_name": "Name der Gruppe für Bewegungsmelder",
+          "inside": "Bewegungsmelder"
+        }
+      },
+      "wizard_rules": {
+        "title": "Auslöseregeln",
+        "description": "Vorhandene Regeln: {rules}\n\nMit dem Regel-Assistenten legst du eine Regel an, z. B. „Haustür auf, danach innerhalb einer Minute Bewegung im Flur“. Danach kommst du hierher zurück und kannst weitere anlegen.",
+        "menu_options": {
+          "rule_add": "Neue Auslöseregel anlegen",
+          "wizard_profiles": "Weiter zu den Alarmprofilen"
+        }
+      },
+      "wizard_rules_later": {
+        "title": "Auslöseregeln",
+        "description": "Auslöseregeln legst du nach der Installation an: **Konfigurieren → Einrichtungsassistent** (oder Alarmauslösung → Auslöseregeln). Dort hilft dir der Regel-Assistent.\n\nJetzt geht es weiter mit den Alarmprofilen."
+      },
+      "wizard_profiles": {
+        "title": "Alarmprofile",
+        "description": "Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "data": {
+          "away": "Profil „Abwesend“",
+          "away_zones": "Abwesend: Meldergruppen",
+          "away_rules": "Abwesend: Auslöseregeln",
+          "exit_delay": "Ausgangsverzögerung",
+          "entry_delay": "Eingangsverzögerung",
+          "night": "Profil „Nacht“",
+          "night_zones": "Nacht: Meldergruppen",
+          "night_rules": "Nacht: Auslöseregeln"
+        }
+      },
+      "wizard_summary": {
+        "title": "Zusammenfassung",
+        "description": "{summary}\n\nAlles, was hier fehlt, kannst du im Einstellungsdialog nachholen oder den Assistenten später erneut starten."
       }
     },
     "error": {
@@ -989,7 +1136,8 @@
       "action_code_profile_missing": "Bitte ein Alarmprofil wählen.",
       "action_code_is_pin": "Dieser Code ist schon ein PIN oder Bedrohungs-PIN – bitte einen anderen wählen.",
       "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen.",
-      "control_keypad_topic": "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen."
+      "control_keypad_topic": "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen.",
+      "wizard_profile_empty": "Wähle mindestens eine Meldergruppe oder Auslöseregel – oder wähle das Profil ab."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

@@ -238,6 +238,7 @@ from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, parse_users, pin_conflicts
 from .names import display_name, plain_name
 from .runtime import device_class_of, entities_by_label
 from .siren_test import SirenTester
+from .wizard import WizardSteps
 
 SENSOR_DOMAIN = "binary_sensor"
 THRESHOLD_DOMAIN = "threshold"
@@ -291,13 +292,30 @@ CARD_TYPE = "__type__"
 CARD_WAIT_SECONDS = 120
 
 
-class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
+class HauswachtConfigFlow(ConfigFlow, WizardSteps, domain=DOMAIN):
+    """Erstinstallation: wahlweise gleich mit dem Einrichtungsassistenten (ADR 0009)."""
+
     VERSION = 5
 
+    _wiz_options: dict[str, Any] | None = None
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if user_input is not None:
-            return self.async_create_entry(title=NAME, data={}, options={})
-        return self.async_show_form(step_id="user")
+        return self.async_show_menu(step_id="user", menu_options=["wizard", "plain"])
+
+    async def async_step_plain(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_create_entry(title=NAME, data={}, options={})
+
+    def _wizard_options(self) -> Mapping[str, Any]:
+        return self._wiz_options or {}
+
+    async def _wizard_store(self, options: dict[str, Any], next_step: str) -> ConfigFlowResult:
+        self._wiz_options = options
+        step = getattr(self, f"async_step_{next_step}")
+        result: ConfigFlowResult = await step()
+        return result
+
+    async def _wizard_finish(self) -> ConfigFlowResult:
+        return self.async_create_entry(title=NAME, data={}, options=dict(self._wizard_options()))
 
     @staticmethod
     @callback
@@ -317,7 +335,7 @@ def _seconds(maximum: int, minimum: int = 0) -> NumberSelector:
     )
 
 
-class HauswachtOptionsFlow(OptionsFlow):
+class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     """Optionen: PIN und Profilzeiten. Nur im unscharfen Zustand änderbar."""
 
     def __init__(self) -> None:
@@ -443,8 +461,23 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self._is_disarmed():
             return self.async_abort(reason="disarm_first")
         return self._menu(
-            "init", ["triggering", "profiles", "sirens", "notifications", "system", "done"]
+            "init",
+            ["wizard", "triggering", "profiles", "sirens", "notifications", "system", "done"],
         )
+
+    # --- Einrichtungsassistent (wizard.py) -------------------------------------
+
+    def _wizard_options(self) -> Mapping[str, Any]:
+        return self.config_entry.options
+
+    async def _wizard_store(self, options: dict[str, Any], next_step: str) -> ConfigFlowResult:
+        return await self._save(options, next_step)
+
+    async def _wizard_finish(self) -> ConfigFlowResult:
+        return await self.async_step_init()
+
+    def _wizard_rules_possible(self) -> bool:
+        return True
 
     async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Schließen. Gespeichert wurde bereits nach jedem Formular."""
@@ -1075,6 +1108,12 @@ class HauswachtOptionsFlow(OptionsFlow):
         return self.async_show_form(step_id="always_active", data_schema=schema)
 
     async def async_step_rules(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self._wiz_return:
+            # Regel aus dem Einrichtungsassistenten heraus angelegt oder abgebrochen: dorthin zurück
+            self._saved = False
+            step = getattr(self, f"async_step_{self._wiz_return}")
+            result: ConfigFlowResult = await step()
+            return result
         saved, self._saved = self._saved, False
         return self.async_show_menu(
             step_id="rules",

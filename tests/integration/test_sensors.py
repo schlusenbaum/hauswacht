@@ -438,6 +438,7 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     flow = await hass.config_entries.options.async_init(entry.entry_id)
     assert flow["menu_options"] == [
+        "wizard",
         "triggering",
         "profiles",
         "sirens",

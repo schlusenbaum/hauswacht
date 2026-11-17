@@ -37,6 +37,7 @@ Assistant verbindet.
 | `core/siren_guard.py` | 0.1.0 | Entscheidet, welche Sirenenbefehle gesendet werden dürfen |
 | `core/models.py` | 0.3.0 | Profile, Zonen, Sensor-, Sirenen-, Personen-Register, Reaktionen |
 | `core/changes/` | 0.53.0 | Einstellungsregeln: Änderungen prüfen und anwenden, gemeinsam für Einstellungsdialog und Einrichtungsassistent ([ADR 0009](adr/0009-einrichtungsassistent.md)) |
+| `core/wizard.py`, `wizard.py` | 0.53.0 | Einrichtungsassistent: Vorschläge und Zusammenfassung (rein) und die Schritte als Mixin für Erstinstallation und Einstellungsdialog |
 | `store.py` | 0.2.0 | Persistenz im HA-Store, Schema-Version, Migrationen |
 | `config_flow.py` | 0.2.0 | Einrichtung und Optionen per Oberfläche |
 | `alarm_control_panel.py` | 0.2.0 | Standard-Entität für Bedienung und Status |

@@ -55,8 +55,11 @@ def _pin_options(pin: str = "4711", *, arm_required: bool = False) -> dict[str, 
 
 async def test_config_flow_creates_entry(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
-    assert result["type"] is FlowResultType.FORM
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.MENU
+    assert result["menu_options"] == ["wizard", "plain"]
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "plain"}
+    )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Hauswacht"
 
