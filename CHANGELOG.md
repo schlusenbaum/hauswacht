@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.53.1] - 2026-11-17
+
+### Geändert
+- **Menüs zeigen, was es schon gibt:** Oben in den Menüs Meldergruppen, Alarmprofile, Bereiche,
+  Benutzer, Bedienteile und Sirenen steht jetzt die Liste der vorhandenen Einträge – z. B.
+  „Außen (5 Melder)“, „Nacht – Außen“, „Anna (PIN ✓, 2 Karten)“, „Keypad Flur (Keypad)“; bei den
+  Sirenen dazu der Stand der Freigabe. Auslöseregeln, Karten, PINs und Aktions-Codes hatten ihre
+  Liste schon.
+- **Einrichtungsassistent:** Die Schritte Meldergruppen, Alarmprofile und Sirenen zeigen ebenfalls,
+  was schon eingerichtet ist.
+
+### Dokumentation
+- Installation (deutsch und englisch): Hinweis auf die Listen in den Menüs.
+
 ## [0.53.0] - 2026-11-17
 
 Getestet über die Vorabversionen 0.53.0b1 bis 0.53.0b3.

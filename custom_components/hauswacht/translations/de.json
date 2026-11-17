@@ -40,7 +40,7 @@
       },
       "wizard_groups": {
         "title": "Meldergruppen",
-        "description": "Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
+        "description": "{existing}Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
         "data": {
           "outside_name": "Name der Gruppe für Türen und Fenster",
           "outside": "Türen und Fenster",
@@ -55,7 +55,7 @@
       },
       "wizard_profiles": {
         "title": "Alarmprofile",
-        "description": "Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "description": "{existing}Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
         "data": {
           "away": "Profil „Abwesend“",
           "away_zones": "Abwesend: Meldergruppen",
@@ -88,7 +88,7 @@
       },
       "wizard_sirens": {
         "title": "Sirenen",
-        "description": "Welche Sirenen sollen bei einem Einbruch heulen? Hauswacht schlägt alle Sirenen aus Home Assistant vor.\n\n**Wichtig:** Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst (Alarmgeber – Sirenen → Sirenen und Freigabe). Bis dahin – und im Testmodus – heult keine Sirene. Der Assistent gibt nichts frei.\n\n**In diesen Profilen verwenden:** die gewählten Sirenen kommen zu den Sirenen dieser Profile dazu.\n\nNichts auswählen = überspringen.",
+        "description": "{existing}Welche Sirenen sollen bei einem Einbruch heulen? Hauswacht schlägt alle Sirenen aus Home Assistant vor.\n\n**Wichtig:** Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst (Alarmgeber – Sirenen → Sirenen und Freigabe). Bis dahin – und im Testmodus – heult keine Sirene. Der Assistent gibt nichts frei.\n\n**In diesen Profilen verwenden:** die gewählten Sirenen kommen zu den Sirenen dieser Profile dazu.\n\nNichts auswählen = überspringen.",
         "data": {
           "sirens": "Sirenen",
           "profiles": "In diesen Profilen verwenden"
@@ -247,7 +247,7 @@
           "zone_delete": "Meldergruppe löschen",
           "triggering": "← Zurück"
         },
-        "description": "{saved}Eine **Meldergruppe** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außen**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Meldergruppen scharf sind: „Zuhause“ = nur Außen, „Abwesend“ = Außen und Innen.\n\nJeder Sensor gehört zu **genau einer** Meldergruppe. Nur Sensoren in einer Meldergruppe überwacht Hauswacht."
+        "description": "{saved}{items}Eine **Meldergruppe** ist eine Gruppe von Sensoren, die immer gemeinsam überwacht werden – zum Beispiel:\n\n- **Außen**: alle Tür- und Fensterkontakte (mit ihren Manipulationssensoren)\n- **Innen** oder **Keller**: Bewegungs- und Präsenzmelder\n\nIn den **Profilen** wählst du dann, welche Meldergruppen scharf sind: „Zuhause“ = nur Außen, „Abwesend“ = Außen und Innen.\n\nJeder Sensor gehört zu **genau einer** Meldergruppe. Nur Sensoren in einer Meldergruppe überwacht Hauswacht."
       },
       "zone_add": {
         "title": "Meldergruppe anlegen",
@@ -303,7 +303,7 @@
           "profile_delete": "Alarmprofil löschen",
           "init": "← Zurück"
         },
-        "description": "{saved}"
+        "description": "{saved}{items}"
       },
       "profile_edit": {
         "title": "Profil bearbeiten",
@@ -328,7 +328,7 @@
       },
       "users": {
         "title": "Benutzer und PINs",
-        "description": "{saved}Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
+        "description": "{saved}{items}Mehrere Personen mit eigenem PIN. Mehrere Benutzer dürfen denselben PIN haben – dann zeigt Hauswacht „gemeinsamer PIN (…)“. Eine Aktion ist erlaubt, wenn mindestens einer der Benutzer mit diesem PIN sie darf.\n\n⚠️ **Wichtig:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (und Alexa) zum Unscharfschalten einen PIN – **von allen**. Wer keinen PIN hat, kann dann nur noch über Dashboard-Knöpfe (falls unter PIN-Regeln erlaubt) oder den Push-Knopf unscharf schalten. Also: entweder allen einen PIN geben (gemeinsamer PIN erlaubt) oder keinem.",
         "menu_options": {
           "user_add": "Benutzer anlegen",
           "user_edit": "Benutzer bearbeiten",
@@ -565,7 +565,7 @@
       },
       "areas": {
         "title": "Bereiche",
-        "description": "{saved}Bereiche lassen sich **unabhängig voneinander** scharf schalten – z. B. die Garage, während im Haus jemand ist. Namen sind frei wählbar.\n\nJedes Alarmprofil gehört zu genau einem Bereich (Auswahl im Alarmprofil). Meldergruppen und Auslöseregeln können in allen Bereichen verwendet werden. Ab zwei Bereichen gibt es je Bereich ein eigenes Bedienfeld und zusätzlich **„Alle Bereiche“**.\n\nDer erste Bereich (Standard „Haus“) ist die bisherige Anlage – er lässt sich umbenennen, aber nicht löschen. Immer aktive Melder, Heimkehr-Beobachtung und die Erinnerung „Alle weg“ gehören zu ihm.",
+        "description": "{saved}{items}Bereiche lassen sich **unabhängig voneinander** scharf schalten – z. B. die Garage, während im Haus jemand ist. Namen sind frei wählbar.\n\nJedes Alarmprofil gehört zu genau einem Bereich (Auswahl im Alarmprofil). Meldergruppen und Auslöseregeln können in allen Bereichen verwendet werden. Ab zwei Bereichen gibt es je Bereich ein eigenes Bedienfeld und zusätzlich **„Alle Bereiche“**.\n\nDer erste Bereich (Standard „Haus“) ist die bisherige Anlage – er lässt sich umbenennen, aber nicht löschen. Immer aktive Melder, Heimkehr-Beobachtung und die Erinnerung „Alle weg“ gehören zu ihm.",
         "menu_options": {
           "area_add": "Bereich anlegen",
           "area_edit": "Bereich bearbeiten / umbenennen",
@@ -826,7 +826,7 @@
       },
       "sirens": {
         "title": "Alarmgeber – Sirenen",
-        "description": "{saved}Sirenen auswählen und freigeben, Sirenen prüfen.",
+        "description": "{saved}{items}Sirenen auswählen und freigeben, Sirenen prüfen.",
         "menu_options": {
           "siren_settings": "Sirenen und Freigabe",
           "siren_from_switch": "Sirene aus Schalter erstellen (Assistent)",
@@ -878,7 +878,7 @@
       },
       "controls": {
         "title": "Bedienteile",
-        "description": "{saved}Bedienteile sind Keypads, NFC-Aufkleber, RFID-Leser, Taster und Türschlösser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN, RFID-Karte/-Anhänger oder Schloss-Kennung (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld. Ein Taster weist niemanden aus – deshalb schaltet er nur scharf.",
+        "description": "{saved}{items}Bedienteile sind Keypads, NFC-Aufkleber, RFID-Leser, Taster und Türschlösser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN, RFID-Karte/-Anhänger oder Schloss-Kennung (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld. Ein Taster weist niemanden aus – deshalb schaltet er nur scharf.",
         "menu_options": {
           "control_add_keypad": "Keypad hinzufügen (Zigbee2MQTT)",
           "control_add_sticker": "NFC-Aufkleber hinzufügen (Companion App)",
@@ -1101,7 +1101,7 @@
       },
       "wizard_groups": {
         "title": "Meldergruppen",
-        "description": "Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
+        "description": "{existing}Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
         "data": {
           "outside_name": "Name der Gruppe für Türen und Fenster",
           "outside": "Türen und Fenster",
@@ -1124,7 +1124,7 @@
       },
       "wizard_profiles": {
         "title": "Alarmprofile",
-        "description": "Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "description": "{existing}Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
         "data": {
           "away": "Profil „Abwesend“",
           "away_zones": "Abwesend: Meldergruppen",
@@ -1157,7 +1157,7 @@
       },
       "wizard_sirens": {
         "title": "Sirenen",
-        "description": "Welche Sirenen sollen bei einem Einbruch heulen? Hauswacht schlägt alle Sirenen aus Home Assistant vor.\n\n**Wichtig:** Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst (Alarmgeber – Sirenen → Sirenen und Freigabe). Bis dahin – und im Testmodus – heult keine Sirene. Der Assistent gibt nichts frei.\n\n**In diesen Profilen verwenden:** die gewählten Sirenen kommen zu den Sirenen dieser Profile dazu.\n\nNichts auswählen = überspringen.",
+        "description": "{existing}Welche Sirenen sollen bei einem Einbruch heulen? Hauswacht schlägt alle Sirenen aus Home Assistant vor.\n\n**Wichtig:** Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst (Alarmgeber – Sirenen → Sirenen und Freigabe). Bis dahin – und im Testmodus – heult keine Sirene. Der Assistent gibt nichts frei.\n\n**In diesen Profilen verwenden:** die gewählten Sirenen kommen zu den Sirenen dieser Profile dazu.\n\nNichts auswählen = überspringen.",
         "data": {
           "sirens": "Sirenen",
           "profiles": "In diesen Profilen verwenden"

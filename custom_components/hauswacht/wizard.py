@@ -40,6 +40,7 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.util import dt as dt_util
 
+from . import menu_lists
 from .const import DOMAIN
 from .core.areas import MAIN_AREA, parse_areas
 from .core.changes.areas import save_area
@@ -142,6 +143,9 @@ class WizardSteps:
         def async_show_menu(self, **kwargs: Any) -> ConfigFlowResult: ...
 
     # --- Hilfen ----------------------------------------------------------------
+
+    def _lang(self) -> str:
+        return "de" if self._de() else "en"
 
     def _de(self) -> bool:
         return (self.hass.config.language or "").startswith("de")
@@ -382,7 +386,10 @@ class WizardSteps:
             step_id="wizard_groups",
             data_schema=schema,
             errors=errors,
-            description_placeholders=placeholders,
+            description_placeholders={
+                **placeholders,
+                "existing": menu_lists.zones_text(self.hass, options, self._lang()),
+            },
         )
 
     # --- Auslöseregeln -----------------------------------------------------------
@@ -526,7 +533,10 @@ class WizardSteps:
                 self._rule_select(options)
             )
         return self.async_show_form(
-            step_id="wizard_profiles", data_schema=vol.Schema(fields), errors=errors
+            step_id="wizard_profiles",
+            data_schema=vol.Schema(fields),
+            errors=errors,
+            description_placeholders={"existing": menu_lists.profiles_text(options, self._lang())},
         )
 
     # --- Empfänger (Teil 2) -------------------------------------------------------
@@ -659,7 +669,13 @@ class WizardSteps:
                 ),
             }
         )
-        return self.async_show_form(step_id="wizard_sirens", data_schema=schema)
+        return self.async_show_form(
+            step_id="wizard_sirens",
+            data_schema=schema,
+            description_placeholders={
+                "existing": menu_lists.sirens_text(self.hass, options, self._lang())
+            },
+        )
 
     async def async_step_wizard_sirens_test(
         self, user_input: dict[str, Any] | None = None

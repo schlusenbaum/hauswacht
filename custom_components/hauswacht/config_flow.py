@@ -45,6 +45,7 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.util import dt as dt_util
 
+from . import menu_lists
 from .const import (
     DOMAIN,
     MASTER_USER_ID,
@@ -442,11 +443,33 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
 
     def _menu(self, step_id: str, menu_options: list[str]) -> ConfigFlowResult:
         saved, self._saved = self._saved, False
+        placeholders = {"saved": self._saved_text() if saved else ""}
+        items = self._menu_items(step_id)
+        if items is not None:
+            placeholders["items"] = items
         return self.async_show_menu(
             step_id=step_id,
             menu_options=menu_options,
-            description_placeholders={"saved": self._saved_text() if saved else ""},
+            description_placeholders=placeholders,
         )
+
+    def _menu_items(self, step_id: str) -> str | None:
+        """Was es schon gibt – oben in jedem Menü zum Anlegen/Bearbeiten/Löschen."""
+        options = self.config_entry.options
+        lang = "de" if self._german() else "en"
+        if step_id == "zones":
+            return menu_lists.zones_text(self.hass, options, lang)
+        if step_id == "profiles":
+            return menu_lists.profiles_text(options, lang)
+        if step_id == "areas":
+            return menu_lists.areas_text(options, lang)
+        if step_id == "users":
+            return menu_lists.users_text(options, lang)
+        if step_id == "controls":
+            return menu_lists.controls_text(options, lang)
+        if step_id == "sirens":
+            return menu_lists.sirens_text(self.hass, options, lang)
+        return None
 
     def _loaded(self) -> bool:
         return self.config_entry.state is ConfigEntryState.LOADED
