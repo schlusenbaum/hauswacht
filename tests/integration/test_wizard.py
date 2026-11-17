@@ -91,16 +91,17 @@ async def test_first_install_with_wizard(hass: HomeAssistant) -> None:
     )
     assert flow["step_id"] == "wizard_summary"
     summary = flow["description_placeholders"]["summary"]
-    assert "Abwesend" in summary or "Away" in summary
+    assert "Away" in summary
     flow = await _cfg(hass, flow, {})
     assert flow["type"] is FlowResultType.CREATE_ENTRY
     options = flow["result"].options
+    by_mode = {p["panel_mode"]: p for p in options["profiles"].values()}
     assert options["zones"]["aussen"]["entities"] == sorted([DOOR, WINDOW, TERRACE])
     assert options["sensor_types"] == {TERRACE: "other"}
-    assert options["profiles"]["abwesend"]["exit_delay"] == 45
-    assert options["profiles"]["abwesend"]["panel_mode"] == "away"
-    assert options["profiles"]["nacht"]["exit_delay"] == 0
-    assert options["profiles"]["nacht"]["zones"] == ["aussen"]
+    assert by_mode["away"]["exit_delay"] == 45
+    assert by_mode["away"]["name"] == "Away"  # Sprache von Home Assistant (Tests: Englisch)
+    assert by_mode["night"]["exit_delay"] == 0
+    assert by_mode["night"]["zones"] == ["aussen"]
     assert "sirens_hardware_enabled" not in options
 
 
@@ -178,7 +179,7 @@ async def test_wizard_in_settings_adds_and_returns_from_rule_wizard(
     )
     assert flow["step_id"] == "wizard_summary"
     profiles = entry.options["profiles"]
-    assert "abwesend" not in profiles
+    assert len(profiles) == 5  # nichts verdoppelt
     assert profiles["away"]["zones"] == ["aussen", "keller", "terrasse"]
     assert profiles["away"]["rules"] == ["terrasse_dann_keller"]
     assert profiles["night"]["zones"] == ["aussen", "keller"]  # abgewählt = unverändert

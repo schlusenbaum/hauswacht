@@ -37,7 +37,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import DOMAIN
-from .core.profiles import MAX_DELAY, profile_behaviour, profile_infos
+from .core.profiles import MAX_DELAY, profile_infos, profile_settings
 from .core.rules import parse_rules
 from .core.sensor_types import MONITORED_DOMAINS, SensorType, parse_types, sensor_type
 from .core.sensors import parse_zones
@@ -388,7 +388,7 @@ class WizardSteps:
                 return await self._wizard_store(current, "wizard_summary")
         existing = {i.panel_mode: i.profile_id for i in profile_infos(options)}
         away_id = existing.get(AWAY)
-        behaviour = profile_behaviour(options, away_id) if away_id else None
+        times = profile_settings(options, away_id) if away_id else None
         all_members = [e for z in zones.values() for e in z.entities]
         night_default = default_night_zones(
             options, self._classes(all_members), entities_by_label(self.hass)
@@ -414,13 +414,13 @@ class WizardSteps:
                 vol.Optional(
                     "exit_delay",
                     default=source.get(
-                        "exit_delay", behaviour.exit_delay if behaviour else DEFAULT_EXIT_DELAY
+                        "exit_delay", times["exit_delay"] if times else DEFAULT_EXIT_DELAY
                     ),
                 ): delay,
                 vol.Optional(
                     "entry_delay",
                     default=source.get(
-                        "entry_delay", behaviour.entry_delay if behaviour else DEFAULT_ENTRY_DELAY
+                        "entry_delay", times["entry_delay"] if times else DEFAULT_ENTRY_DELAY
                     ),
                 ): delay,
                 vol.Optional("night", default=source.get("night", True)): BooleanSelector(),
