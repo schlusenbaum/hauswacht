@@ -98,7 +98,7 @@ Die Regeln wandern in den reinen Kern (`core/`), als Funktionen nach dem Muster:
 ```python
 result = add_action_code(options, {"name": "Licht", "code": "7777", "key": "arm_day_zones"})
 result.options  # neue Einstellungen, fertig zum Speichern – oder
-result.errors   # {"code": "action_code_is_pin"}
+result.errors  # {"code": "action_code_is_pin"}
 ```
 
 Dialog und Assistent zeigen nur noch Formulare und rufen dieselben Funktionen auf. Eine Regel
