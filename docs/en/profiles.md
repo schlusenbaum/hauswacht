@@ -200,9 +200,11 @@ not armed automatically".
 
 **Switching it on:**
 
-- **Alarm card:** button **👥 Guest mode** → for how long: *until I switch it off*, *4 hours*,
-  *until tomorrow 10 am* or *3 days*. The card then shows "Guest mode on – until …" and the button
-  "End guest mode". Everyone who may use the card can switch it – without a PIN.
+- **Alarm card:** button **👥 Guest mode** → for how long: quickly *until I switch it off*,
+  *4 hours*, *until tomorrow 10 am* or *3 days* – or **freely**: choose date and time under "Or
+  until:" (suggested is tomorrow at the same hour) and "Apply". The card then shows "Guest mode
+  on – until …" and the button "End guest mode". Everyone who may use the card can switch it –
+  without a PIN.
 - **Switch** `switch.hauswacht_guest_mode`: on/off for **all** areas, until switched off.
 - **Action** `hauswacht.guest_mode` – also with an end time and for single areas:
 
@@ -218,6 +220,9 @@ data:
 **Areas:** the default is **all areas**. An alarm card with `bereich: granny_flat` switches the
 guest mode only for this area – so the granny flat can have guests while the house is armed
 automatically as usual.
+
+**Example with a free time:** the in-laws stay until Sunday 6 pm. 👥 Guest mode → Or until:
+*Sunday, 18:00* → Apply.
 
 **Example:** on Friday evening the babysitter comes. On the tablet: 👥 Guest mode → *until
 tomorrow 10 am*. The parents leave – Hauswacht does not arm "Away", and at 11 pm not "Night"

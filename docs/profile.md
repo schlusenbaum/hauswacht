@@ -206,9 +206,11 @@ die Nachricht „Gastmodus an – ‚Nacht‘ wurde nicht automatisch scharf ges
 
 **Einschalten:**
 
-- **Alarm-Karte:** Knopf **👥 Gastmodus** → wie lange: *bis ich ihn ausschalte*, *4 Stunden*,
-  *bis morgen 10 Uhr* oder *3 Tage*. Die Karte zeigt dann „Gastmodus an – bis …“ und den Knopf
-  „Gastmodus beenden“. Jeder, der die Karte bedienen darf, kann ihn schalten – ohne PIN.
+- **Alarm-Karte:** Knopf **👥 Gastmodus** → wie lange: schnell *bis ich ihn ausschalte*,
+  *4 Stunden*, *bis morgen 10 Uhr* oder *3 Tage* – oder **frei**: unter „Oder bis:“ Datum und
+  Uhrzeit wählen (vorgeschlagen ist morgen zur selben Stunde) und „Übernehmen“. Die Karte zeigt
+  dann „Gastmodus an – bis …“ und den Knopf „Gastmodus beenden“. Jeder, der die Karte bedienen
+  darf, kann ihn schalten – ohne PIN.
 - **Schalter** `switch.hauswacht_gastmodus`: an/aus für **alle** Bereiche, bis zum Ausschalten.
 - **Aktion** `hauswacht.guest_mode` – auch mit Ende-Zeitpunkt und für einzelne Bereiche:
 
@@ -224,6 +226,9 @@ data:
 **Bereiche:** Standard ist **alle Bereiche**. Eine Alarm-Karte mit `bereich: einliegerwohnung`
 schaltet den Gastmodus nur für diesen Bereich – so kann die Einliegerwohnung Gäste haben, während
 das Haus normal automatisch scharf wird.
+
+**Beispiel mit freier Zeit:** Die Schwiegereltern bleiben bis Sonntag 18 Uhr. 👥 Gastmodus → Oder
+bis: *Sonntag, 18:00* → Übernehmen.
 
 **Beispiel:** Freitagabend kommt die Babysitterin. Auf dem Tablet: 👥 Gastmodus → *bis morgen
 10 Uhr*. Die Eltern fahren los – Hauswacht schaltet nicht „Abwesend“, um 23 Uhr auch nicht
