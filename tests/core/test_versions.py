@@ -1,4 +1,7 @@
-"""Die Versionsangaben in README und Anleitung müssen zur Integration passen."""
+"""Die Versionsangaben in README und Anleitung müssen zur Integration passen.
+
+Vorabversionen haben die Form ``0.53.0b1``.
+"""
 
 from __future__ import annotations
 
@@ -22,34 +25,34 @@ def test_pyproject_matches_manifest() -> None:
 
 def test_readme_status_matches_manifest() -> None:
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    match = re.search(r"\*\*Status: (\d+\.\d+\.\d+)", text)
+    match = re.search(r"\*\*Status: (\d+\.\d+\.\d+(?:b\d+)?)", text)
     assert match is not None
     assert match.group(1) == _manifest_version()
 
 
 def test_english_readme_status_matches_manifest() -> None:
     text = (ROOT / "README.en.md").read_text(encoding="utf-8")
-    match = re.search(r"\*\*Status: (\d+\.\d+\.\d+)", text)
+    match = re.search(r"\*\*Status: (\d+\.\d+\.\d+(?:b\d+)?)", text)
     assert match is not None
     assert match.group(1) == _manifest_version()
 
 
 def test_english_installation_status_matches_manifest() -> None:
     text = (ROOT / "docs" / "en" / "installation.md").read_text(encoding="utf-8")
-    match = re.search(r"\*\*As of (\d+\.\d+\.\d+):", text)
+    match = re.search(r"\*\*As of (\d+\.\d+\.\d+(?:b\d+)?):", text)
     assert match is not None
     assert match.group(1) == _manifest_version()
 
 
 def test_installation_status_matches_manifest() -> None:
     text = (ROOT / "docs" / "installation.md").read_text(encoding="utf-8")
-    match = re.search(r"\*\*Stand (\d+\.\d+\.\d+):", text)
+    match = re.search(r"\*\*Stand (\d+\.\d+\.\d+(?:b\d+)?):", text)
     assert match is not None
     assert match.group(1) == _manifest_version()
 
 
 def test_changelog_has_current_version() -> None:
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    first = re.search(r"^## \[(\d+\.\d+\.\d+)\]", text, re.MULTILINE)
+    first = re.search(r"^## \[(\d+\.\d+\.\d+(?:b\d+)?)\]", text, re.MULTILINE)
     assert first is not None
     assert first.group(1) == _manifest_version()
