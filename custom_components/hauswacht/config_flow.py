@@ -737,8 +737,13 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 options[OPT_CARD_PIN_UNLINKED] = bool(user_input.get(OPT_CARD_PIN_UNLINKED, True))
                 return await self._save(options, "users")
         users = parse_users(options)
-        with_pin = sorted(u.name for u in users if u.pin is not None)
+        with_pin = sorted(
+            u.name for u in users if u.pin is not None and u.user_id != MASTER_USER_ID
+        )
         placeholders["pin_users"] = ", ".join(with_pin) or "–"
+        placeholders["master"] = menu_lists.master_pin_text(
+            options, "de" if self._german() else "en"
+        )
         schema = vol.Schema(
             {
                 vol.Optional("master_pin"): TextSelector(

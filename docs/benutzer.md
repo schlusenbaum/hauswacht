@@ -110,6 +110,8 @@ Benutzer das darf.
 | **Alarmkarte: PIN für Konten ohne Hauswacht-Benutzer verlangen** | Standard an. Gilt nur in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang); zugeordnete Konten schalten dort ohne PIN |
 | **Dashboard-Knöpfe trotz PIN erlauben** | „Unscharf schalten“, „Alarm beenden“ und die Scharf-Knöpfe funktionieren weiter. Der PIN schützt dann nur Bedienfeld, Keypads und Sprachassistenten – an die Knöpfe kommen ohnehin nur angemeldete Home-Assistant-Benutzer |
 
+- Ob ein Master-PIN eingerichtet ist, steht oben im Menü „Benutzer und PINs“ und in den
+  PIN-Regeln: „Master-PIN: ✅ eingerichtet“ bzw. „– keiner“. Der PIN selbst wird nie angezeigt.
 - PINs haben 4–8 Ziffern und werden nur als Hash gespeichert.
 - Ohne PIN darf die Anlage **nicht** für Sprachassistenten freigegeben werden.
 - Ein PIN aus Versionen vor 0.16.1 wurde beim Update zum Benutzer „Hauptbenutzer“.

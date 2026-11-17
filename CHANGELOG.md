@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.53.2] - 2026-11-17
+
+### Geändert
+- **Master-PIN sichtbar:** Das Menü „Benutzer und PINs“ und die PIN-Regeln zeigen jetzt, ob ein
+  Master-PIN eingerichtet ist („Master-PIN: ✅ eingerichtet“ bzw. „– keiner“) – ohne eigenen
+  Benutzer in der Liste und ohne den PIN selbst. In den PIN-Regeln steht der Master-PIN nicht mehr
+  zusätzlich unter „Benutzer mit PIN“.
+
+### Dokumentation
+- Benutzer und PINs (deutsch und englisch): Hinweis auf die Anzeige des Master-PINs.
+
 ## [0.53.1] - 2026-11-17
 
 ### Geändert

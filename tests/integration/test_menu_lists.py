@@ -6,6 +6,8 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
+from custom_components.hauswacht.core.pin import hash_pin
+
 from .conftest import make_entry, setup_entry
 
 
@@ -51,4 +53,30 @@ async def test_empty_lists_show_dash(hass: HomeAssistant) -> None:
     entry = make_entry()
     await setup_entry(hass, entry)
     users = (await _menu(hass, entry, "system", "users"))["description_placeholders"]["items"]
-    assert users.rstrip().endswith("–")
+    assert users.startswith("**Existing users:** –")
+
+
+async def test_master_pin_status_without_showing_a_user(hass: HomeAssistant) -> None:
+    pin = hash_pin("2468")
+    entry = make_entry(
+        {
+            "users": {
+                "master": {"name": "Master-PIN", "pin_salt": pin.salt, "pin_digest": pin.digest}
+            }
+        }
+    )
+    await setup_entry(hass, entry)
+    users = (await _menu(hass, entry, "system", "users"))["description_placeholders"]["items"]
+    assert "Master PIN:** ✅" in users
+    assert "Master-PIN (" not in users  # kein eigener Benutzer in der Liste
+    code = (await _menu(hass, entry, "system", "users", "code"))["description_placeholders"]
+    assert "✅" in code["master"]
+    assert code["pin_users"] == "–"
+    assert "2468" not in str(code)
+
+
+async def test_master_pin_none(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    users = (await _menu(hass, entry, "system", "users"))["description_placeholders"]["items"]
+    assert "Master PIN:** – none" in users

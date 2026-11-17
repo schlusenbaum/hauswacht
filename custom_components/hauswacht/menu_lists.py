@@ -112,7 +112,15 @@ def users_text(options: Mapping[str, Any], lang: str) -> str:
         elif not user.valid_at(now):
             marks.append("nicht gültig" if de else "not valid")
         lines.append(f"{user.name} ({', '.join(marks)})")
-    return _block("users", lang, lines)
+    return _block("users", lang, lines) + master_pin_text(options, lang) + "\n\n"
+
+
+def master_pin_text(options: Mapping[str, Any], lang: str) -> str:
+    """Nur ob es einen Master-PIN gibt – ohne Benutzer, ohne PIN."""
+    exists = any(u.user_id == MASTER_USER_ID and u.pin for u in parse_users(options))
+    if lang == "de":
+        return "**Master-PIN:** ✅ eingerichtet" if exists else "**Master-PIN:** – keiner"
+    return "**Master PIN:** ✅ set up" if exists else "**Master PIN:** – none"
 
 
 def controls_text(options: Mapping[str, Any], lang: str) -> str:
