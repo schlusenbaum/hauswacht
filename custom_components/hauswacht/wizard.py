@@ -186,6 +186,11 @@ class WizardSteps:
             step_id="wizard", menu_options=["wizard_intro", "wizard_area_question"]
         )
 
+    async def async_step_wizard_chapters(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_wizard()
+
     async def async_step_wizard_intro(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -780,6 +785,16 @@ class WizardSteps:
                 "total": str(len(lines)),
             },
         )
+
+    async def async_step_wizard_trial_ask(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_wizard_trial()
+
+    async def async_step_wizard_trial_run(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_wizard_trial()
 
     # --- Zusammenfassung ---------------------------------------------------------
 
