@@ -44,9 +44,11 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
+| next | setup wizard for beginners with a short introduction, skippable chapters and a trial run; for this, move the settings rules into the core ([ADR 0009](../entwicklung/adr/0009-einrichtungsassistent.md), German) |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |
+| last | own settings panel in the sidebar – only after the wizard, with its own concept |
 | 1.0.0 | stable, documentation complete, inclusion in the HACS default list |
 | some day | cameras: picture in the message, camera detection as its own sensor type – to be designed afresh |
 | 1.x | dedicated kind "fingerprint reader" (names per finger, minimum match) – already possible today via RFID reader or Nuki Keypad 2.0; further automation conditions, recurring guest mode times (e.g. every Tuesday 8–12) |

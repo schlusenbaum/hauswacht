@@ -44,9 +44,11 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| als Nächstes | Einrichtungsassistent für Einsteiger mit kurzer Einführung, überspringbaren Kapiteln und Probelauf; dafür die Einstellungsregeln in den Kern verlagern ([ADR 0009](entwicklung/adr/0009-einrichtungsassistent.md)) |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
+| ganz hinten | Eigenes Einstellungs-Panel in der Seitenleiste – erst nach dem Assistenten, mit eigenem Konzept |
 | 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
 | 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gastmodus-Zeiten (z. B. jeden Dienstag 8–12 Uhr) |

@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Konzept Einrichtungsassistent und gemeinsame Logikschicht
+  ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md)); Roadmap ergänzt.
+
 ## [0.52.0] - 2026-11-17
 
 ### Hinzugefügt

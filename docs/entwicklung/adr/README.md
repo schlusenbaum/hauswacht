@@ -12,3 +12,4 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0006](0006-regeln.md) | Auslöseregeln – Abfolgen von Meldern |
 | [0007](0007-bereiche.md) | Bereiche |
 | [0008](0008-verhalten-nach-neustart.md) | Verhalten nach Neustart einstellbar, Standard: wiederherstellen |
+| [0009](0009-einrichtungsassistent.md) | Einrichtungsassistent und gemeinsame Logikschicht (Konzept) |
