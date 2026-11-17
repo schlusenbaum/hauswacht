@@ -116,6 +116,7 @@ from .core.automation import (
     AutoConfig,
     parse_automation,
 )
+from .core.changes.zones import delete_zone, save_zone
 from .core.controls import ALL_AREAS as CONTROL_ALL_AREAS
 from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
 from .core.controls import (
@@ -208,7 +209,6 @@ from .core.sensors import (
     parse_zones,
     resolve_zones,
     slugify,
-    zone_conflicts,
 )
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS, is_fire_tone
 from .core.siren_test import DEFAULT_SECONDS as SIREN_DEFAULT_SECONDS
@@ -1534,34 +1534,20 @@ class HauswachtOptionsFlow(OptionsFlow):
     def _save_zone(
         self, zone_id: str | None, user_input: dict[str, Any]
     ) -> tuple[dict[str, Any] | None, dict[str, str], dict[str, str]]:
-        name = str(user_input.get("name") or "").strip()
-        entities = [str(e) for e in user_input.get("entities") or []]
-        label = user_input.get("label") or None
-        errors: dict[str, str] = {}
-        if not name:
-            errors["name"] = "zone_name_required"
-        elif not entities and not label:
-            errors["base"] = "zone_empty"
-        if errors:
-            return None, errors, {}
-        options = dict(self.config_entry.options)
-        zones = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
-        new_id = zone_id or slugify(name, existing=zones.keys())
-        new_zone = Zone(zone_id=new_id, name=name, entities=frozenset(entities), label=label)
-        conflicts = zone_conflicts(new_zone, parse_zones(options), entities_by_label(self.hass))
-        if conflicts:
+        change = save_zone(
+            self.config_entry.options,
+            zone_id,
+            user_input,
+            entities_by_label=entities_by_label(self.hass),
+        )
+        if not change.ok:
+            conflicts = change.details.get("conflicts") or {}
             text = ", ".join(
                 f"{display_name(self.hass, entity_id)} ({zone})"
                 for entity_id, zone in conflicts.items()
             )
-            return None, {"base": "zone_overlap"}, {"conflicts": text}
-        zones[new_id] = {
-            "name": name,
-            "entities": sorted(set(entities)),
-            "label": label,
-        }
-        options[OPT_ZONES] = zones
-        return options, {}, {}
+            return None, dict(change.errors), {"conflicts": text} if conflicts else {}
+        return change.options, {}, {}
 
     async def async_step_zone_add(
         self, user_input: dict[str, Any] | None = None
@@ -1668,17 +1654,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not zones:
             return self.async_abort(reason="no_zones")
         if user_input is not None:
-            zone_id = user_input["zone"]
-            options = dict(self.config_entry.options)
-            options[OPT_ZONES] = {
-                k: v for k, v in options.get(OPT_ZONES, {}).items() if k != zone_id
-            }
-            profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
-            for settings in profiles.values():
-                if "zones" in settings:
-                    settings["zones"] = [z for z in settings["zones"] if z != zone_id]
-            options[OPT_PROFILES] = profiles
-            return await self._save(options, "zones")
+            change = delete_zone(self.config_entry.options, user_input["zone"])
+            assert change.options is not None
+            return await self._save(change.options, "zones")
         return self.async_show_form(
             step_id="zone_delete",
             data_schema=vol.Schema({vol.Required("zone"): _zone_selector(zones)}),
