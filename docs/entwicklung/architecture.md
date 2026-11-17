@@ -36,6 +36,7 @@ Assistant verbindet.
 | `core/state_machine.py` | 0.1.0 | Einzige maßgebliche Instanz für den Anlagenzustand |
 | `core/siren_guard.py` | 0.1.0 | Entscheidet, welche Sirenenbefehle gesendet werden dürfen |
 | `core/models.py` | 0.3.0 | Profile, Zonen, Sensor-, Sirenen-, Personen-Register, Reaktionen |
+| `core/changes/` | 0.53.0 | Einstellungsregeln: Änderungen prüfen und anwenden, gemeinsam für Einstellungsdialog und Einrichtungsassistent ([ADR 0009](adr/0009-einrichtungsassistent.md)) |
 | `store.py` | 0.2.0 | Persistenz im HA-Store, Schema-Version, Migrationen |
 | `config_flow.py` | 0.2.0 | Einrichtung und Optionen per Oberfläche |
 | `alarm_control_panel.py` | 0.2.0 | Standard-Entität für Bedienung und Status |
@@ -57,6 +58,10 @@ Assistant verbindet.
    einzelnen Installation.
 5. **Sichere Seite bei Unklarheit.** Unbekannte Zustände führen zu Sperre oder Warnung, nie
    zu stillschweigendem Weiterlaufen.
+6. **Eine Stelle je Einstellungsregel.** Was gültig ist und wie gespeichert wird, steht in
+   `core/changes/` – Funktionen, die Einstellungen und Eingabe bekommen und ein `Change` liefern
+   (neue Einstellungen **oder** Fehler). Oberflächen zeigen nur Formulare und rufen diese
+   Funktionen auf. Der Umzug aus dem Einstellungsdialog geschieht Stück für Stück.
 
 ## Abbildung auf Home Assistant
 

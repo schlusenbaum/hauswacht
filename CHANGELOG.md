@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Intern
+- Beginn der gemeinsamen Logikschicht für Einstellungen (`core/changes/`, ADR 0009):
+  Meldergruppen anlegen, ändern und löschen. Der Einstellungsdialog verhält sich unverändert.
+
 ### Dokumentation
 - Konzept Einrichtungsassistent und gemeinsame Logikschicht
   ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md)); Roadmap ergänzt.
