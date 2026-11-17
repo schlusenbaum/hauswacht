@@ -1,6 +1,6 @@
 # ADR 0009: Einrichtungsassistent und gemeinsame Logikschicht
 
-- Status: vorgeschlagen (Konzept, noch nicht umgesetzt)
+- Status: angenommen (Konzept, noch nicht umgesetzt)
 - Datum: 2026-11-17
 
 ## Kontext
@@ -133,8 +133,11 @@ Das Einstellungs-Panel kommt frühestens danach und bekommt ein eigenes Konzept.
   Fortschrittsschritte). Der Probelauf wird deshalb eine Liste mit „Aktualisieren“ bzw. ein
   Warteschritt wie beim Anlernen von Karten.
 
-## Offene Fragen (vor dem Bau klären)
+## Geklärte Fragen
 
-- Soll der Assistent nach der Installation **automatisch** starten oder nur angeboten werden?
-- Soll der Probelauf den Testmodus selbst einschalten (mit Hinweis) oder darum bitten?
-- Bereiche im Assistenten nur als Ja/Nein-Frage oder vollständig?
+- **Start:** Bei einer **Erstinstallation** startet der Assistent automatisch; sonst wird er nur
+  angeboten (Menüpunkt und Hinweis).
+- **Testmodus beim Probelauf:** Der Assistent schaltet ihn **nicht** selbst ein, sondern bittet
+  darum und zeigt, wo der Schalter ist. Ohne Testmodus kein Probelauf.
+- **Bereiche:** Im Assistenten nur die Frage „Gibt es getrennte Wohnungen?“. Für jeden weiteren
+  Bereich ruft man den Assistenten erneut auf (Kapitel-Auswahl → neuer Bereich).
