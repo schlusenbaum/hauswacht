@@ -314,6 +314,9 @@ async def test_users_with_pin(hass: HomeAssistant) -> None:
     flow = await _opt(hass, flow, {})
     assert flow["step_id"] == "wizard_controls"
     flow = await _opt(hass, flow, {})
+    # Einstellungsdialog: Probelauf angeboten, Testmodus ist aus -> erst darum bitten
+    assert flow["step_id"] == "wizard_trial_ask"
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_summary"})
     assert flow["step_id"] == "wizard_summary"
 
 
