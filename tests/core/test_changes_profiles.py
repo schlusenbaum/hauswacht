@@ -118,9 +118,7 @@ def test_validation() -> None:
         "panel_mode": "panel_mode_taken"
     }
     excluded = _form(zones=["aussen"], excluded=[MOTION])
-    assert save_profile(_options(), None, excluded).errors == {
-        "excluded": "excluded_not_in_groups"
-    }
+    assert save_profile(_options(), None, excluded).errors == {"excluded": "excluded_not_in_groups"}
     arrival = _form(automation={"auto_arrival_mode": "auto"})
     assert save_profile(_options(), None, arrival).errors == {"base": "arrival_needs_persons"}
     # eigener Name und eigener Knopf beim Ändern erlaubt
