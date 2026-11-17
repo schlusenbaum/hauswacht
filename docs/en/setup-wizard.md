@@ -6,9 +6,9 @@ The setup wizard guides you step by step through the setup – no prior knowledg
 briefly explains how Hauswacht works, suggests sensors, sensor groups and alarm profiles, and
 shows at the end what is set up and what is still missing.
 
-> **Pre-release:** the wizard is new and appears in test versions first. So far it covers
-> sensors, sensor groups, trigger rules and alarm profiles. Recipients, sirens, users and a trial
-> run will follow; until then you set them up in the [settings dialog](installation.md#the-settings-menu).
+> **Pre-release:** the wizard is new and appears in test versions first. It covers sensors,
+> sensor groups, trigger rules, alarm profiles, recipients, sirens and users. A trial run in test
+> mode and the question about areas will follow.
 
 ## Starting
 
@@ -49,7 +49,7 @@ Hauswacht deliberately does not suggest smoke, water or battery sensors. Leave e
 | **With sensor groups (recommended)** | For most homes: every sensor in a group triggers an alarm in an armed profile. |
 | **With trigger rules only** | For advanced users: alarm only when several things come together ([trigger rules](trigger-rules.md)). |
 | **With both** | Groups for doors and windows, rules in addition, e.g. for motion sensors. |
-| **Decide later** | Create nothing now – go to the summary. |
+| **Decide later** | No groups and rules now – continue with recipients and sirens. |
 
 ### 4. Sensor groups
 
@@ -91,25 +91,68 @@ in the profile (sirens, recipients, automation …) stays as it is.
 
 A selected profile needs at least one sensor group or rule.
 
-### 7. Summary
+### 7. Recipients
+
+Who gets the messages from Hauswacht (alarm, armed, disarmed, faults)? Phones with the Home
+Assistant app (`mobile_app_…`) are preselected. Details such as recipients per event you set
+later under [notifications](notifications.md).
+
+Afterwards you can send a **test message** – only when you press the button. The wizard shows to
+whom it went and where it failed.
+
+*Example:* `mobile_app_annas_phone` selected → "Send test message" → the phone shows "Hauswacht:
+Test message from the setup wizard". If nothing arrives, check the app's notification settings.
+
+### 8. Sirens
+
+All sirens in Home Assistant are suggested. **Use in these profiles:** the chosen sirens are added
+to the sirens of these profiles (existing ones stay).
+
+Real siren control stays **locked** until you deliberately release it – under
+[Alarm devices – sirens → Sirens and release](sirens.md). The wizard releases nothing; in test
+mode no siren sounds anyway.
+
+In the settings dialog the wizard then offers the **siren test**: each siren individually,
+briefly and quietly, with a confirmation before each sound – like the [siren test](sirens.md).
+Afterwards you return to the wizard. During installation the siren test is not available yet.
+
+### 9. Users
+
+Name and – optionally – a **PIN** (4–8 digits). Afterwards you can add more users. If a user has
+the same name as a Home Assistant account, it is linked to it; the [alarm card](dashboard.md)
+then recognises them without a PIN.
+
+> **Note:** as soon as **one** PIN exists, the panel (and Alexa) requires a PIN to disarm – from
+> everyone. So give everyone a PIN or no one. More under [users and PINs](users.md).
+
+Rights per area, validity, cards and duress PIN you set later in the settings dialog. Leave the
+name empty = skip.
+
+### 10. Control devices
+
+Only a hint: keypads, cards, stickers, readers, buttons and door locks are set up under System
+settings → [control devices](control-devices.md).
+
+### 11. Summary
 
 Two lists:
 
 - **✅ Set up:** sensor groups, rules and for each profile what it watches.
-- **⚠️ Still open:** e.g. "No recipients – an alarm reaches nobody yet", "No sirens", "No users –
-  operated via the app only" – each with the menu where you add it.
+- **⚠️ Still open:** e.g. "No recipients – an alarm reaches nobody yet", "No sirens", "Sirens
+  added but not released yet", "No users – operated via the app only" – each with the menu where
+  you add it.
 
 The system starts or stays **disarmed**.
 
 ## What the wizard never does on the side
 
 - It does **not release sirens** and does not switch off test mode.
-- It switches **no devices** and sends no messages.
+- It switches **no devices**. Siren test and test message only happen when you press the button.
 - It does not change smoke detectors, automations or scripts.
 - It overwrites nothing: existing settings are only added to.
 
 ## Afterwards
 
-1. Add **recipients**: Notifications → Settings ([notifications](notifications.md)).
-2. **Try it in test mode** ([test mode](test-mode.md)).
-3. As needed [sirens](sirens.md), [users and PINs](users.md), [control devices](control-devices.md).
+1. **Try it in test mode** ([test mode](test-mode.md)).
+2. Once everything works: **release the sirens** ([sirens](sirens.md)).
+3. As needed refine [users and PINs](users.md), set up [control devices](control-devices.md).

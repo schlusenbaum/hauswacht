@@ -9,10 +9,14 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import async_mock_service
 
 from custom_components.hauswacht.const import DOMAIN
 
 from .conftest import DEVICE_CLASSES, DOOR, MOTION, WINDOW, make_entry, setup_entry
+
+PHONE = "mobile_app_annas_handy"
+SIREN = "siren.flur"
 
 TERRACE = "binary_sensor.terrassentuer"
 SMOKE = "binary_sensor.rauchmelder_flur"
@@ -35,6 +39,18 @@ async def _opt(hass: HomeAssistant, flow: dict[str, Any], data: dict[str, Any]) 
     return await hass.config_entries.options.async_configure(  # type: ignore[no-any-return]
         flow["flow_id"], data
     )
+
+
+async def _skip_part2(hass: HomeAssistant, flow: dict[str, Any], configure: Any) -> dict[str, Any]:
+    """Empfänger, Sirenen, Benutzer, Bedienteile überspringen."""
+    assert flow["step_id"] == "wizard_recipients"
+    flow = await configure(hass, flow, {"recipients": []})
+    assert flow["step_id"] == "wizard_sirens"
+    flow = await configure(hass, flow, {"sirens": []})
+    assert flow["step_id"] == "wizard_users"
+    flow = await configure(hass, flow, {})
+    assert flow["step_id"] == "wizard_controls"
+    return await configure(hass, flow, {})  # type: ignore[no-any-return]
 
 
 def _default(flow: dict[str, Any], key: str) -> Any:
@@ -89,6 +105,7 @@ async def test_first_install_with_wizard(hass: HomeAssistant) -> None:
             "night_zones": ["aussen"],
         },
     )
+    flow = await _skip_part2(hass, flow, _cfg)
     assert flow["step_id"] == "wizard_summary"
     summary = flow["description_placeholders"]["summary"]
     assert "Away" in summary
@@ -110,7 +127,8 @@ async def test_first_install_skip_everything(hass: HomeAssistant) -> None:
     flow = await _cfg(hass, flow, {"next_step_id": "wizard"})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_sensors"})
     flow = await _cfg(hass, flow, {"sensors": []})
-    flow = await _cfg(hass, flow, {"next_step_id": "wizard_summary"})
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard_recipients"})
+    flow = await _skip_part2(hass, flow, _cfg)
     assert flow["step_id"] == "wizard_summary"
     assert "⚠️" in flow["description_placeholders"]["summary"]
     flow = await _cfg(hass, flow, {})
@@ -127,8 +145,8 @@ async def test_rules_only_at_first_install_points_to_later(hass: HomeAssistant) 
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_mode_rules"})
     assert flow["step_id"] == "wizard_rules_later"
     flow = await _cfg(hass, flow, {})
-    # keine Gruppen, keine Regeln -> keine Profile möglich, gleich zur Zusammenfassung
-    assert flow["step_id"] == "wizard_summary"
+    # keine Gruppen, keine Regeln -> keine Profile möglich, weiter mit den Empfängern
+    assert flow["step_id"] == "wizard_recipients"
 
 
 async def test_wizard_in_settings_adds_and_returns_from_rule_wizard(
@@ -177,6 +195,7 @@ async def test_wizard_in_settings_adds_and_returns_from_rule_wizard(
             "night": False,
         },
     )
+    flow = await _skip_part2(hass, flow, _opt)
     assert flow["step_id"] == "wizard_summary"
     profiles = entry.options["profiles"]
     assert len(profiles) == 5  # nichts verdoppelt
@@ -216,3 +235,75 @@ async def test_zone_overlap_is_shown(hass: HomeAssistant) -> None:
     flow = await _opt(hass, flow, {"outside_name": "Tür", "outside": [DOOR], "inside": []})
     assert flow["errors"] == {"base": "zone_overlap"}
     assert "Außen" in flow["description_placeholders"]["conflicts"]
+
+
+async def _to_recipients(hass: HomeAssistant) -> tuple[Any, dict[str, Any]]:
+    _sensors(hass)
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard"})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_sensors"})
+    flow = await _opt(hass, flow, {"sensors": []})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_recipients"})
+    assert flow["step_id"] == "wizard_recipients"
+    return entry, flow
+
+
+async def test_recipients_and_test_message_only_on_request(hass: HomeAssistant) -> None:
+    pushes = async_mock_service(hass, "notify", PHONE)
+    entry, flow = await _to_recipients(hass)
+    assert _default(flow, "recipients") == [PHONE]  # Handy-App vorgewählt
+    flow = await _opt(hass, flow, {"recipients": [PHONE]})
+    assert flow["step_id"] == "wizard_recipients_test"
+    assert entry.options["notify_system"] == [PHONE]
+    assert pushes == []  # nichts ohne Knopfdruck
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_send_test"})
+    assert flow["step_id"] == "wizard_recipients_test"
+    assert len(pushes) == 1
+    assert PHONE in flow["description_placeholders"]["result"]
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_sirens"})
+    assert flow["step_id"] == "wizard_sirens"
+
+
+async def test_sirens_are_added_but_never_released(hass: HomeAssistant) -> None:
+    hass.states.async_set(SIREN, "off")
+    turn_on = async_mock_service(hass, "siren", "turn_on")
+    entry, flow = await _to_recipients(hass)
+    flow = await _opt(hass, flow, {"recipients": []})
+    assert _default(flow, "sirens") == [SIREN]
+    flow = await _opt(hass, flow, {"sirens": [SIREN], "profiles": ["away", "night"]})
+    # im Einstellungsdialog: Sirenentest anbieten (nur auf Knopfdruck)
+    assert flow["step_id"] == "wizard_sirens_test"
+    assert flow["menu_options"] == ["siren_test", "wizard_users"]
+    assert entry.options["sirens"] == [SIREN]
+    assert entry.options.get("sirens_hardware_enabled", False) is False
+    assert SIREN in entry.options["profiles"]["away"]["sirens"]
+    assert SIREN in entry.options["profiles"]["night"]["sirens"]
+    assert "sirens" not in entry.options["profiles"]["home"]
+    assert turn_on == []
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_users"})
+    assert flow["step_id"] == "wizard_users"
+
+
+async def test_users_with_pin(hass: HomeAssistant) -> None:
+    entry, flow = await _to_recipients(hass)
+    flow = await _opt(hass, flow, {"recipients": []})
+    flow = await _opt(hass, flow, {"sirens": []})
+    flow = await _opt(hass, flow, {"name": "Anna", "pin": "12"})
+    assert flow["errors"] == {"pin": "invalid_pin"}
+    assert not entry.options.get("users")
+    flow = await _opt(hass, flow, {"name": "Anna", "pin": "2468"})
+    assert flow["step_id"] == "wizard_users_more"
+    assert "Anna" in flow["description_placeholders"]["users"]
+    stored = next(iter(entry.options["users"].values()))
+    assert stored["name"] == "Anna"
+    assert "pin_digest" in stored
+    assert "2468" not in str(entry.options)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_users"})
+    flow = await _opt(hass, flow, {"name": "anna"})
+    assert flow["errors"] == {"name": "user_name_taken"}
+    flow = await _opt(hass, flow, {})
+    assert flow["step_id"] == "wizard_controls"
+    flow = await _opt(hass, flow, {})
+    assert flow["step_id"] == "wizard_summary"

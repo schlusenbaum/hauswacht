@@ -6,9 +6,9 @@ Der Einrichtungsassistent führt Schritt für Schritt durch die Einrichtung – 
 erklärt kurz, wie Hauswacht arbeitet, schlägt Melder, Meldergruppen und Alarmprofile vor und
 zeigt am Ende, was eingerichtet ist und was noch fehlt.
 
-> **Vorabversion:** Der Assistent ist neu und erscheint zuerst in Testversionen. Er deckt bisher
-> Melder, Meldergruppen, Auslöseregeln und Alarmprofile ab. Empfänger, Sirenen, Benutzer und ein
-> Probelauf folgen; bis dahin richtest du sie im [Einstellungsdialog](installation.md#das-einstellungsmenü) ein.
+> **Vorabversion:** Der Assistent ist neu und erscheint zuerst in Testversionen. Er deckt
+> Melder, Meldergruppen, Auslöseregeln, Alarmprofile, Empfänger, Sirenen und Benutzer ab. Ein
+> Probelauf im Testmodus und die Frage nach Bereichen folgen.
 
 ## Starten
 
@@ -51,7 +51,7 @@ Rauch-, Wasser- und Batterie-Sensoren schlägt Hauswacht bewusst nicht vor. Leer
 | **Mit Meldergruppen (empfohlen)** | Für die meisten Häuser: Jeder Melder in einer Gruppe löst im scharfen Profil Alarm aus. |
 | **Nur mit Auslöseregeln** | Für Fortgeschrittene: Alarm erst, wenn mehreres zusammenkommt ([Auslöseregeln](ausloeseregeln.md)). |
 | **Mit beidem** | Gruppen für Türen und Fenster, Regeln zusätzlich, z. B. für Bewegungsmelder. |
-| **Später festlegen** | Jetzt nichts anlegen – weiter zur Zusammenfassung. |
+| **Später festlegen** | Jetzt keine Gruppen und Regeln – weiter mit Empfängern und Sirenen. |
 
 ### 4. Meldergruppen
 
@@ -94,27 +94,71 @@ anzulegen. Alles andere am Profil (Sirenen, Empfänger, Automatik …) bleibt, w
 
 Ein ausgewähltes Profil braucht mindestens eine Meldergruppe oder Regel.
 
-### 7. Zusammenfassung
+### 7. Empfänger
+
+Wer bekommt die Nachrichten von Hauswacht (Alarm, scharf, unscharf, Störungen)? Handys mit der
+Home-Assistant-App (`mobile_app_…`) sind vorgewählt. Feinheiten wie Empfänger je Ereignis stellst
+du später unter [Benachrichtigungen](benachrichtigungen.md) ein.
+
+Danach kannst du eine **Test-Nachricht** schicken – nur, wenn du den Knopf drückst. Der
+Assistent zeigt, an wen sie ging und wo es nicht geklappt hat.
+
+*Beispiel:* `mobile_app_annas_handy` ausgewählt → „Test-Nachricht senden“ → auf dem Handy
+erscheint „Hauswacht: Test-Nachricht aus dem Einrichtungsassistenten“. Kommt nichts an, die
+Benachrichtigungen der App prüfen.
+
+### 8. Sirenen
+
+Vorgeschlagen werden alle Sirenen aus Home Assistant. **In diesen Profilen verwenden:** die
+gewählten Sirenen kommen zu den Sirenen dieser Profile dazu (vorhandene bleiben).
+
+Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst – unter
+[Alarmgeber – Sirenen → Sirenen und Freigabe](sirenen.md). Der Assistent gibt nichts frei; im
+Testmodus heult ohnehin keine Sirene.
+
+Im Einstellungsdialog bietet der Assistent danach den **Sirenentest** an: jede Sirene einzeln,
+kurz und leise, mit Bestätigung vor jedem Ton – wie im [Sirenentest](sirenen.md). Danach geht
+es zurück in den Assistenten. Bei der Installation gibt es den Sirenentest noch nicht.
+
+### 9. Benutzer
+
+Name und – optional – ein **PIN** (4–8 Ziffern). Danach kannst du weitere Benutzer anlegen.
+Heißt ein Benutzer wie ein Home-Assistant-Konto, wird er damit verknüpft; die
+[Alarmkarte](dashboard.md) erkennt ihn dann ohne PIN-Eingabe.
+
+> **Achtung:** Sobald **ein** PIN existiert, verlangt das Bedienfeld (auch Alexa) zum
+> Unscharfschalten einen PIN – von allen. Also allen einen PIN geben oder keinem. Mehr unter
+> [Benutzer und PINs](benutzer.md).
+
+Rechte je Bereich, Gültigkeit, Karten und Bedrohungs-PIN stellst du später im
+Einstellungsdialog ein. Name leer lassen = überspringen.
+
+### 10. Bedienteile
+
+Nur ein Hinweis: Keypads, Karten, Aufkleber, Leser, Taster und Türschlösser richtest du unter
+Systemeinstellungen → [Bedienteile](bedienteile.md) ein.
+
+### 11. Zusammenfassung
 
 Zwei Listen:
 
 - **✅ Eingerichtet:** Meldergruppen, Regeln und für jedes Profil, was es überwacht.
 - **⚠️ Noch offen:** z. B. „Keine Empfänger – ein Alarm erreicht noch niemanden“, „Keine
-  Sirenen“, „Keine Benutzer – bedient wird nur über die App“ – jeweils mit dem Menü, in dem du
-  es nachholst.
+  Sirenen“, „Sirenen eingetragen, aber noch nicht freigegeben“, „Keine Benutzer – bedient wird
+  nur über die App“ – jeweils mit dem Menü, in dem du es nachholst.
 
 Die Anlage startet bzw. bleibt **unscharf**.
 
 ## Was der Assistent nie nebenbei tut
 
 - Er gibt **keine Sirenen frei** und schaltet den Testmodus nicht aus.
-- Er schaltet **keine Geräte** und verschickt keine Nachrichten.
+- Er schaltet **keine Geräte**. Sirenentest und Test-Nachricht gibt es nur auf Knopfdruck.
 - Er ändert keine Rauchmelder, Automationen oder Skripte.
 - Er überschreibt nichts: Vorhandenes wird nur ergänzt.
 
 ## Danach
 
-1. **Empfänger** eintragen: Benachrichtigungen → Einstellungen ([Benachrichtigungen](benachrichtigungen.md)).
-2. **Im Testmodus ausprobieren** ([Testmodus](testmodus.md)).
-3. Nach Bedarf [Sirenen](sirenen.md), [Benutzer und PINs](benutzer.md),
-   [Bedienteile](bedienteile.md).
+1. **Im Testmodus ausprobieren** ([Testmodus](testmodus.md)).
+2. Wenn alles passt: **Sirenen freigeben** ([Sirenen](sirenen.md)).
+3. Nach Bedarf [Benutzer und PINs](benutzer.md) verfeinern, [Bedienteile](bedienteile.md)
+   einrichten.
