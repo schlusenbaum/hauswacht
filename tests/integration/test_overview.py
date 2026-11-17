@@ -80,6 +80,61 @@ async def test_overview_via_websocket(
     assert "9999" not in text
 
 
+async def test_overview_shows_guest_mode_action_codes_and_force_right(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    users = _users()
+    users["anna"]["can_force_arm"] = False
+    options = {
+        **OPTIONS,
+        "users": users,
+        "controls": {
+            "flur": {"name": "Keypad Flur", "kind": "keypad", "topic": "zigbee2mqtt/Keypad"}
+        },
+        "action_codes": {
+            "licht": {"name": "Außenlicht", "code": "7777", "key": "arm_day_zones"},
+            "weg": {
+                "name": "Weg",
+                "code": "12",
+                "key": "arm_all_zones",
+                "action": "arm",
+                "profile": "gibt_es_nicht",
+                "keypad": "flur",
+            },
+            "notruf": {
+                "name": "Notruf",
+                "code": "9111",
+                "key": "arm_night_zones",
+                "action": "silent_emergency",
+            },
+        },
+    }
+    await setup_entry(hass, make_entry(options))
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": "switch.hauswacht_guest_mode"}, blocking=True
+    )
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "hauswacht/overview"})
+    msg = await client.receive_json()
+    assert msg["success"], msg
+    data = msg["result"]
+    assert data["areas"][0]["guest"] is True
+    assert data["areas"][0]["guest_until"] is None
+    assert data["users"][0]["force_arm"] is False
+    codes = {c["name"]: c for c in data["action_codes"]}
+    assert codes["Außenlicht"]["code"] == "7777"
+    assert codes["Außenlicht"]["keypad"] is None
+    assert codes["Weg"]["keypad"] == "Keypad Flur"
+    assert codes["Weg"]["profile_missing"] is True
+    # Der Code eines stillen Notrufs steht nie in der (druckbaren) Übersicht
+    assert codes["Notruf"]["code"] == "••••"
+    assert "9111" not in json.dumps(data)
+    found = {f["code"] for f in data["findings"]}
+    assert {"guest_mode", "action_code_profile_missing"} <= found
+    # Empfänger für "Alarm" sind die allgemeinen -> stiller Notruf erreicht jemanden
+    assert "silent_emergency_no_targets" not in found
+
+
 async def test_overview_admin_only(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_read_only_access_token: str
 ) -> None:

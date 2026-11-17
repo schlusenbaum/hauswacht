@@ -36,6 +36,7 @@
 | 0.49 | Aktions-Codes: Code + Taste am Keypad startet eigene Automationen (Ereignis-Entität), schaltet Meldergruppen scharf oder löst einen stillen Notruf aus; Keypad als Gerät auswählen statt MQTT-Topic eintippen |
 | 0.50 | Scharf erzwingen am Keypad: bei offenen Meldern innerhalb von 10 s noch einmal bestätigen (Recht je Benutzer) |
 | 0.51 | Gastmodus (Schalter, Dienst, Alarmkarte; bis Uhrzeit oder bis aus) – keine Profil-Automatik und keine Erinnerungen; laufenden Alarm nach Neustart fortsetzen (Einstellung, Standard aus); „Alarm vor dem Neustart“ als wichtige Alarm-Nachricht |
+| 0.52 | Anlagenübersicht zeigt Gastmodus, Aktions-Codes und das Recht „Scharf erzwingen“; neue Prüfhinweise (stiller Notruf ohne Empfänger, Aktions-Code mit gelöschtem Profil/Keypad, Gastmodus an); Notfallblatt erklärt „trotzdem scharf“ am Keypad |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -43,7 +44,6 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| demnächst | Anlagenübersicht ergänzen: Gastmodus, Aktions-Codes, Recht „Scharf erzwingen“ |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |

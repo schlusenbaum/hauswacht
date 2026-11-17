@@ -290,7 +290,9 @@ conditions:
   Wer einen Aktions-Code zum Scharfschalten anlegt, will genau das.
 - **Stiller Notruf:** wichtige Push-Nachricht „Notruf am Keypad Flur“ an die Alarm-Empfänger –
   wie die SOS-Taste auf „still“, aber unauffällig über eine normale Taste. Keine Sirene, keine
-  Anzeige am Keypad.
+  Anzeige am Keypad. Hat das Ereignis „Alarm“ keinen Empfänger, meldet die
+  [Anlagenübersicht](uebersicht.md#prüfhinweise) das als wichtigen Hinweis (auch unter
+  Reparaturen). In der Übersicht und im Ausdruck steht dieser Code nur als „verborgen“.
 
 ## Karten anlernen
 

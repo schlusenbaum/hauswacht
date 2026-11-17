@@ -95,6 +95,17 @@ const LANG = {
     armCode: "PIN auch zum Scharfschalten",
     buttonsNoPin: "Dashboard-Knöpfe trotz PIN",
     cardPin: "PIN in der Alarmkarte",
+    forceArm: "Scharf erzwingen am Keypad",
+    guest: "Gastmodus",
+    guestOff: "bis zum Ausschalten",
+    guestUntil: "bis",
+    actionCodes: "Aktions-Codes",
+    code: "Code",
+    allKeypads: "alle Keypads",
+    keypad: "Keypad",
+    hiddenCode: "verborgen (stiller Notruf)",
+    sheetForce:
+      "Keypad meldet einen offenen Melder? Innerhalb von 10 Sekunden noch einmal dieselbe PIN bzw. Karte und dieselbe Taste – dann wird trotzdem scharf geschaltet, die offenen Melder bleiben bis zum Unscharfschalten überbrückt.",
     cardPinUnlinked: "Alarmkarte: PIN für Konten ohne Benutzer",
     topic: "MQTT-Topic",
     armOnly: "nur scharf",
@@ -228,6 +239,17 @@ const LANG = {
     armCode: "PIN also for arming",
     buttonsNoPin: "Dashboard buttons despite PIN",
     cardPin: "PIN in the alarm card",
+    forceArm: "Force arm at the keypad",
+    guest: "Guest mode",
+    guestOff: "until switched off",
+    guestUntil: "until",
+    actionCodes: "Action codes",
+    code: "Code",
+    allKeypads: "all keypads",
+    keypad: "Keypad",
+    hiddenCode: "hidden (silent emergency)",
+    sheetForce:
+      "The keypad reports an open sensor? Within 10 seconds, the same PIN or card and the same key again – then it arms anyway and the open sensors stay bypassed until disarming.",
     cardPinUnlinked: "Alarm card: PIN for accounts without user",
     topic: "MQTT topic",
     armOnly: "arms only",
@@ -298,7 +320,8 @@ const LABELS = {
     login: { pin_or_card: "PIN oder Karte", card: "Karte", card_and_pin: "Karte und PIN" },
     emergency: { off: "aus", silent: "still", alarm: "Alarm" },
     action: { disarm: "unscharf", arm: "scharf", toggle: "umschalten" },
-    key: { arm_day_zones: "Tag", arm_night_zones: "Nacht", arm_all_zones: "Alle" },
+    key: { arm_day_zones: "Tag", arm_night_zones: "Nacht", arm_all_zones: "Alle", disarm: "Unscharf" },
+    codeAction: { event: "Ereignis", arm: "scharf", silent_emergency: "stiller Notruf" },
     tone: { burglar: "Einbruch", emergency: "Notfall", police_panic: "Polizei-Panik", emergency_panic: "Notfall-Panik", fire: "Brand" },
     volume: { low: "leise", medium: "mittel", high: "laut", very_high: "sehr laut" },
     weekday: { mon: "Mo", tue: "Di", wed: "Mi", thu: "Do", fri: "Fr", sat: "Sa", sun: "So" },
@@ -327,7 +350,8 @@ const LABELS = {
     login: { pin_or_card: "PIN or card", card: "card", card_and_pin: "card and PIN" },
     emergency: { off: "off", silent: "silent", alarm: "alarm" },
     action: { disarm: "disarm", arm: "arm", toggle: "toggle" },
-    key: { arm_day_zones: "Day", arm_night_zones: "Night", arm_all_zones: "All" },
+    key: { arm_day_zones: "Day", arm_night_zones: "Night", arm_all_zones: "All", disarm: "Disarm" },
+    codeAction: { event: "event", arm: "arm", silent_emergency: "silent emergency" },
     tone: { burglar: "Burglar", emergency: "Emergency", police_panic: "Police panic", emergency_panic: "Emergency panic", fire: "Fire" },
     volume: { low: "low", medium: "medium", high: "high", very_high: "very high" },
     weekday: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
@@ -538,6 +562,18 @@ class HauswachtUebersichtCard extends HTMLElement {
     return `${u.valid_from ? this._when(u.valid_from) : "…"} – ${u.valid_until ? this._when(u.valid_until) : "…"}`;
   }
 
+  _guestText(a) {
+    if (!a.guest) return this._t("off");
+    return a.guest_until ? `${this._t("guestUntil")} ${this._when(a.guest_until)}` : this._t("guestOff");
+  }
+
+  _codeRow(c) {
+    const code = c.action === "silent_emergency" ? this._t("hiddenCode") : `${esc(c.code)} + ${esc(this._l("key", c.key))}`;
+    const what = `${esc(this._l("codeAction", c.action))}${c.profile ? ` (${esc(c.profile)})` : ""}${c.profile_missing ? " ⚠️" : ""}`;
+    const where = c.keypad ? `${esc(c.keypad)}${c.keypad_missing ? " ⚠️" : ""}` : this._t("allKeypads");
+    return { code, what, where };
+  }
+
   _sirenCaps(s) {
     const caps = [];
     if (s.tone_select) caps.push(s.tones?.length ? s.tones.map((t) => this._l("tone", t)).join("/") : this._t("tone"));
@@ -603,6 +639,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       : `<div class="ok">✓ ${this._t("noFindings")}</div>`;
     const statusRows = [
       ...d.areas.map((a) => [a.name, esc(this._l("alarm", a.state) + (a.profile ? ` · ${a.profile}` : ""))]),
+      ...d.areas.map((a) => [`${this._t("guest")}${d.areas.length > 1 ? ` (${a.name})` : ""}`, esc(this._guestText(a))]),
       [this._t("testMode"), this._yn(sys.test_mode)],
       [this._t("sirensEnabled"), this._yn(sys.sirens_enabled)],
       [this._t("systemStatus"), esc(this._l("status", sys.status))],
@@ -625,7 +662,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       .map((s) => `<div class="item"><div class="n">${esc(s.name)}</div>${this._kv([[this._t("tested"), esc(this._sirenTest(s))], [this._t("capabilities"), esc(this._sirenCaps(s))]])}</div>`)
       .join("");
     const users = d.users
-      .map((u) => `<div class="item"><div class="n">${esc(u.name)}</div>${this._kv([[this._t("pin"), this._yn(u.pin)], [this._t("cards"), u.cards.length ? esc(u.cards.join(", ")) : this._t("none")], [this._t("rights"), esc(this._userRights(u))], [this._t("validity"), esc(this._userValidity(u))], [this._t("haAccount"), this._yn(u.ha_account)], [this._t("cardPin"), this._yn(u.card_pin)]])}</div>`)
+      .map((u) => `<div class="item"><div class="n">${esc(u.name)}</div>${this._kv([[this._t("pin"), this._yn(u.pin)], [this._t("cards"), u.cards.length ? esc(u.cards.join(", ")) : this._t("none")], [this._t("rights"), esc(this._userRights(u))], [this._t("validity"), esc(this._userValidity(u))], [this._t("haAccount"), this._yn(u.ha_account)], [this._t("cardPin"), this._yn(u.card_pin)], [this._t("forceArm"), this._yn(u.force_arm !== false)]])}</div>`)
       .join("");
     const pr = d.pin_rules || {};
     const pinRules = this._kv([
@@ -637,6 +674,10 @@ class HauswachtUebersichtCard extends HTMLElement {
     ]);
     const controls = d.controls.length
       ? d.controls.map((c) => `<div class="item"><div class="n">${esc(c.name)} <span class="muted">${esc(this._l("kind", c.kind))}${c.area ? ` · ${esc(c.area)}` : ""}</span></div><div class="muted">${this._controlDetail(c)}</div></div>`).join("")
+      : this._t("none");
+    const codes = d.action_codes || [];
+    const codeHtml = codes.length
+      ? `<table><tr><th>${this._t("actionCodes")}</th><th>${this._t("code")}</th><th>${this._t("action")}</th><th>${this._t("keypad")}</th></tr>${codes.map((c) => { const r = this._codeRow(c); return `<tr><td>${esc(c.name)}</td><td>${r.code}</td><td>${r.what}</td><td>${r.where}</td></tr>`; }).join("")}</table>`
       : this._t("none");
     const n = d.notifications || {};
     const notify = `${this._kv([[this._t("general"), this._list(n.general)], [this._t("speakers"), this._list(n.speakers)], [this._t("quiet"), esc(n.quiet || this._t("off"))]])}<table><tr><th>${this._t("event")}</th><th>${this._t("recipients")}</th><th class="c">${this._t("speech")}</th></tr>${(n.events || []).map((e) => `<tr><td>${esc(this._l("event", e.event))}</td><td>${this._list(e.targets)}</td><td class="c">${e.speech ? "🔊" : ""}</td></tr>`).join("")}</table>`;
@@ -661,6 +702,7 @@ class HauswachtUebersichtCard extends HTMLElement {
       ${this._section(this._t("sirens"), d.sirens.length, sirens || this._t("none"))}
       ${this._section(this._t("users"), d.users.length, users + `<div class="item"><div class="n">${this._t("pinRules")}</div>${pinRules}</div>`)}
       ${this._section(this._t("controls"), d.controls.length, controls)}
+      ${this._section(this._t("actionCodes"), codes.length, codeHtml)}
       ${this._section(this._t("notifications"), (n.events || []).length, notify)}
       ${this._section(this._t("monitoring"), "", monitoring)}
     `;
@@ -717,6 +759,7 @@ class HauswachtUebersichtCard extends HTMLElement {
     out.push(
       this._table([
         ...d.areas.map((a) => [a.name, esc(this._l("alarm", a.state) + (a.profile ? ` · ${a.profile}` : ""))]),
+        ...d.areas.map((a) => [`${this._t("guest")}${d.areas.length > 1 ? ` (${a.name})` : ""}`, esc(this._guestText(a))]),
         [this._t("testMode"), this._yn(sys.test_mode)],
         [this._t("sirensEnabled"), this._yn(sys.sirens_enabled)],
         [this._t("systemStatus"), esc(this._l("status", sys.status))],
@@ -751,7 +794,7 @@ class HauswachtUebersichtCard extends HTMLElement {
     );
     out.push(`<h2>${this._t("users")}</h2>`);
     out.push(
-      `<table><tr><th>${this._t("users")}</th><th>${this._t("pin")}</th><th>${this._t("cards")}</th><th>${this._t("rights")}</th><th>${this._t("validity")}</th><th>${this._t("haAccount")}</th><th>${this._t("cardPin")}</th></tr>${d.users.map((u) => `<tr><td>${esc(u.name)}</td><td>${this._yn(u.pin)}</td><td>${u.cards.length ? esc(u.cards.join(", ")) : "–"}</td><td>${esc(this._userRights(u))}</td><td>${esc(this._userValidity(u))}</td><td>${this._yn(u.ha_account)}</td><td>${this._yn(u.card_pin)}</td></tr>`).join("")}</table>`
+      `<table><tr><th>${this._t("users")}</th><th>${this._t("pin")}</th><th>${this._t("cards")}</th><th>${this._t("rights")}</th><th>${this._t("validity")}</th><th>${this._t("haAccount")}</th><th>${this._t("cardPin")}</th><th>${this._t("forceArm")}</th></tr>${d.users.map((u) => `<tr><td>${esc(u.name)}</td><td>${this._yn(u.pin)}</td><td>${u.cards.length ? esc(u.cards.join(", ")) : "–"}</td><td>${esc(this._userRights(u))}</td><td>${esc(this._userValidity(u))}</td><td>${this._yn(u.ha_account)}</td><td>${this._yn(u.card_pin)}</td><td>${this._yn(u.force_arm !== false)}</td></tr>`).join("")}</table>`
     );
     const pr = d.pin_rules || {};
     out.push(`<h3>${this._t("pinRules")}</h3>${this._table([[this._t("masterPin"), this._yn(pr.master_pin)], [this._t("anyPin"), this._yn(pr.any_pin)], [this._t("armCode"), this._yn(pr.arm_requires_code)], [this._t("buttonsNoPin"), this._yn(pr.buttons_without_pin)], [this._t("cardPinUnlinked"), this._yn(pr.card_pin_unlinked)]])}`);
@@ -759,6 +802,13 @@ class HauswachtUebersichtCard extends HTMLElement {
     out.push(
       d.controls.length
         ? `<table>${d.controls.map((c) => `<tr><td>${esc(c.name)}<br>${esc(this._l("kind", c.kind))}${c.area ? ` · ${esc(c.area)}` : ""}</td><td>${this._controlDetail(c)}</td></tr>`).join("")}</table>`
+        : `<p>${this._t("none")}</p>`
+    );
+    const codes = d.action_codes || [];
+    out.push(`<h2>${this._t("actionCodes")}</h2>`);
+    out.push(
+      codes.length
+        ? `<table><tr><th>${this._t("actionCodes")}</th><th>${this._t("code")}</th><th>${this._t("action")}</th><th>${this._t("keypad")}</th></tr>${codes.map((c) => { const r = this._codeRow(c); return `<tr><td>${esc(c.name)}</td><td>${r.code}</td><td>${r.what}</td><td>${r.where}</td></tr>`; }).join("")}</table>`
         : `<p>${this._t("none")}</p>`
     );
     const n = d.notifications || {};
@@ -793,7 +843,11 @@ class HauswachtUebersichtCard extends HTMLElement {
     );
     const keypads = d.controls.some((c) => c.kind === "keypad");
     const keypad = keypads ? [this._t("sheetKeypad")] : [];
-    const armHow = [...keypad, this._t("sheetPanelArm")];
+    const force =
+      keypads && d.profiles.some((p) => p.open_policy === "confirm") && d.users.some((u) => u.force_arm !== false)
+        ? [this._t("sheetForce")]
+        : [];
+    const armHow = [...keypad, ...force, this._t("sheetPanelArm")];
     const howTo = [...keypad, this._t("sheetPanel")];
     const byDelay = {};
     for (const p of d.profiles) if (p.entry_delay > 0) (byDelay[p.entry_delay] = byDelay[p.entry_delay] || []).push(p.name);

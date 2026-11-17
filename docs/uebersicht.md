@@ -21,13 +21,14 @@ title: Übersicht   # optional
 | Abschnitt | Inhalt |
 |---|---|
 | **Prüfhinweise** | ganz oben, siehe [unten](#prüfhinweise) – bei Warnungen schon aufgeklappt |
-| Zustand | je Bereich, Testmodus, Sirenen freigegeben, Systemstatus, falsche Eingaben |
+| Zustand | je Bereich, [Gastmodus](profile.md#gastmodus) (aus / bis Uhrzeit / bis zum Ausschalten), Testmodus, Sirenen freigegeben, Systemstatus, falsche Eingaben |
 | Alarmprofile | je Profil: Knopf, Meldergruppen, Ausnahmen, Auslöseregeln, Zeiten, Verhalten, Sirenen, Empfänger, Automatik, Scharf durch Schließen |
 | Melder | Tabelle **Melder × Profil**: ✓ einzeln scharf, R nur in Auslöseregeln, – ausgenommen; dazu Typ, Zustand, Batterie |
 | Auslöseregeln | im Klartext, mit den Profilen, die sie verwenden |
 | Immer aktiv, Sirenen | Melder und Sirenen; was jede Sirene kann, letzter Test |
-| Benutzer | PIN ja/nein, Karten (gekürzt), Rechte je Bereich, Gültigkeit; PIN-Regeln |
+| Benutzer | PIN ja/nein, Karten (gekürzt), Rechte je Bereich, Gültigkeit, [Scharf erzwingen am Keypad](bedienteile.md#trotzdem-scharf-am-keypad) ja/nein; PIN-Regeln |
 | Bedienteile | Keypads mit Tastenbelegung, Aufkleber und Leser mit Aktion |
+| Aktions-Codes | je [Aktions-Code](bedienteile.md#aktions-codes): Name, Code + Taste, Aktion (bei „scharf“ mit Profil), Keypad oder „alle Keypads“; ⚠️ markiert ein gelöschtes Profil oder Keypad |
 | Benachrichtigungen | Empfänger je Ereignis, Ansagen, Nachtruhe |
 | Überwachung | Funkstille-Grenze mit Empfehlung, Funknetz und Gateways, Anlernzeit, Heimkehr-Beobachtung mit [Download](beobachtung.md) von Bericht und Tabelle |
 
@@ -46,13 +47,18 @@ geht auch „Als PDF speichern“. Gedruckt wird nur die Übersicht, nicht das D
 
 **Notfallblatt** druckt eine Seite für Familie und Gäste, z. B. für den Schrank neben dem Keypad:
 scharf und unscharf schalten (Keypad, App), welche Profile es gibt, wie viel Zeit nach dem
-Öffnen der Tür bleibt, was bei einem Alarm passiert, wer benachrichtigt wird und was bei Brand
+Öffnen der Tür bleibt, wie man am Keypad trotz offenem Fenster scharf schaltet (nur wenn ein
+Profil das erlaubt und mindestens ein Benutzer das Recht hat), was bei einem Alarm passiert, wer benachrichtigt wird und was bei Brand
 gilt. Ohne Technik und ohne Sicherheitsdetails.
 
 ### Was nie in der Übersicht steht
 
 - **PINs** – auch keine Teile oder Hashes; nur „PIN: ja/nein“.
 - **Kartennummern** nur gekürzt („…2880“), mit Namen davor („Schlüsselbund …2880“); deaktivierte Karten mit ⏸.
+- **Code eines stillen Notrufs:** Aktions-Codes mit der Aktion „stiller Notruf“ stehen nur als
+  „verborgen“ in der Übersicht – der Ausdruck soll niemandem verraten, mit welchem Code man
+  unbemerkt Hilfe ruft. Die anderen Aktions-Codes stehen im Klartext; sie sind kein Geheimnis
+  wie ein PIN.
 - **Bedrohungs-PIN:** Wer einen hat, geht aus der Übersicht nicht hervor. Nur wenn er ohne
   Empfänger wirkungslos wäre, gibt es einen Prüfhinweis – ohne Namen.
 
@@ -65,6 +71,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 |---|---|
 | Profil ohne Sirene **und** ohne Empfänger – ein Alarm erreicht niemanden | ⚠️ wichtig |
 | Bedrohungs-PIN eingerichtet, aber keine Empfänger | ⚠️ wichtig |
+| Aktions-Code „stiller Notruf“, aber für das Ereignis „Alarm“ kein Empfänger – der Notruf erreicht niemanden | ⚠️ wichtig |
 | Sirene kennt keinen Einbruchton – bliebe stumm ([Ton je Sirene](sirenen.md#ton-je-sirene)) | ⚠️ wichtig |
 | Melder **seit mehr als 24 Stunden** nicht verfügbar | ⚠️ wichtig |
 | Testmodus an | ⚠️ |
@@ -75,6 +82,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 | Sirene beim letzten Test nicht gehört | ⚠️ |
 | Brandton für Einbruch freigegeben ([Experten](sirenen.md#brandton-als-experten-freigabe)) | ⚠️ |
 | Störung eines überwachten Funknetzes/Gateways | ⚠️ |
+| Aktions-Code „scharf“, dessen Alarmprofil gelöscht wurde – der Code schaltet nichts | ⚠️ |
 | Profil ohne Sirene (nur Benachrichtigung) | ℹ️ |
 | Sirenen in Profilen, aber noch nicht freigegeben | ℹ️ |
 | Sirene nie getestet oder letzter Test älter als ein halbes Jahr | ℹ️ |
@@ -83,6 +91,8 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 | Funkstille-Erkennung aus bzw. knapper als empfohlen | ℹ️ |
 | Kein Funknetz/Gateway überwacht | ℹ️ |
 | Auslöseregel, die kein Profil verwendet | ℹ️ |
+| Aktions-Code für ein Keypad, das es nicht mehr gibt | ℹ️ |
+| Gastmodus ist an – mit Ende („bis 17.11. 18:30“) oder „bis zum Ausschalten“; Profil-Automatik und Erinnerungen ruhen | ℹ️ |
 
 Melder vom Typ **Technik** und immer aktive Melder gelten nicht als „ungenutzt“.
 
@@ -107,5 +117,5 @@ zum **Anhängen an ein [Issue](https://github.com/schlusenbaum/hauswacht/issues)
 kennt die genaue Einstellung, ohne zehnmal nachzufragen.
 
 Vor dem Erstellen entfernt Hauswacht automatisch: PINs und ihre Hashes, Kartennummern, die
-Benutzerliste, Empfänger, Personen, Lautsprecher, WLAN-Namen, MQTT-Topics und Geräte-IDs von
+Benutzerliste, Aktions-Codes, Empfänger, Personen, Lautsprecher, WLAN-Namen, MQTT-Topics und Geräte-IDs von
 Lesern. Melder- und Profilnamen bleiben drin – bitte vor dem Hochladen kurz drüberschauen.
