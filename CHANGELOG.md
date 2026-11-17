@@ -6,6 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.53.0b1] - 2026-11-17
+
+Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.
+
 ### Hinzugefügt
 - **Einrichtungsassistent, Teil 1** ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md),
   Anleitung: [Einrichtungsassistent](docs/assistent.md)):
