@@ -663,9 +663,13 @@ class HauswachtRuntime:
         self._send_restored(profile_id, plan, resume=resume)
         self._unsub_grace = async_at_started(self.hass, self._start_grace_timer)
         if resume:
-            self._unsub_resume = async_at_started(
-                self.hass, lambda _hass: self._resume_alarm(plan.trigger_sensor)
-            )
+            sensor = plan.trigger_sensor
+
+            @callback
+            def _resume(_hass: HomeAssistant) -> None:
+                self._resume_alarm(sensor)
+
+            self._unsub_resume = async_at_started(self.hass, _resume)
 
     @callback
     def _resume_alarm(self, sensor: str | None) -> None:
