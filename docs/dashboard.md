@@ -156,6 +156,7 @@ Im visuellen Editor (Karte bearbeiten) – oder in YAML:
 | Hinweis Testmodus | `zeige_testmodus: false` | an |
 | Ablaufender Balken bei Verzögerung | `zeige_balken: false` | an |
 | Knopf „Alle Bereiche unscharf“ | `zeige_alle_unscharf: false` | an |
+| Knopf „Gastmodus“ ([Gastmodus](profile.md#gastmodus)) | `zeige_gastmodus: false` | an |
 | Blinken bei Alarm | `blinken: false` | an |
 | **Farben** je Zustand | `farbe_unscharf`, `farbe_verzoegerung`, `farbe_scharf`, `farbe_alarm`, z. B. `"#1565c0"` | grün, orange, rot, leuchtend rot |
 | **Rückfrage** vor dem Scharfschalten („Nacht scharf schalten?“) | `rueckfrage_scharf: true` | aus |
@@ -172,6 +173,26 @@ Im visuellen Editor (Karte bearbeiten) – oder in YAML:
   ausblenden, und ob die Karte nach dem PIN fragt, steht nicht in der Karte, sondern in
   Hauswacht ([Ohne PIN-Zwang](#ohne-pin-zwang)) – die Kartenkonfiguration kann jeder ändern, der
   das Dashboard bearbeiten darf.
+
+### Eine Karte je Bereich (z. B. Einliegerwohnung)
+
+Jede Karte kann auf **einen Bereich** beschränkt werden. Beispiel: Das Haus hat die Bereiche
+„Haus“ und „Einliegerwohnung“, die Einliegerwohnung ein eigenes Dashboard:
+
+```yaml
+type: custom:hauswacht-alarm-card
+title: Einliegerwohnung
+bereich: einliegerwohnung   # Kennung oder Name des Bereichs
+```
+
+Die Karte zeigt und schaltet dann nur diesen Bereich – mit seinen Profilknöpfen, ohne „Alle
+Bereiche unscharf“; der Knopf „Gastmodus“ gilt nur für diesen Bereich.
+
+Wichtig: Ein eigenes Dashboard ist **kein Schutz**. Wer ein Home-Assistant-Konto hat, kann auch
+andere Dashboards öffnen. Wer was schalten darf, legst du in Hauswacht fest: den Bewohnern der
+Einliegerwohnung als [Benutzer](benutzer.md#rechte) Rechte **nur für ihren Bereich** geben
+(„Rechte je Bereich“). Dann können sie auf jeder Karte nur die Einliegerwohnung schalten.
+Ein Keypad in der Einliegerwohnung bekommt ebenfalls den Bereich „Einliegerwohnung“.
 
 ### Ohne PIN-Zwang
 

@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.50.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.51.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -141,7 +141,7 @@ Was gerade lief, als Home Assistant neu startete:
 | nichts (scharf) | scharf |
 | die **Ausgangsverzögerung** | scharf – ein Neustart dauert länger als die Verzögerung, wer gehen wollte, ist längst draußen |
 | die **Eingangsverzögerung** | die Eingangsverzögerung **beginnt neu**. Wer gerade heimkam, konnte während des Neustarts weder am Keypad noch in der App unscharf schalten – ohne neue Verzögerung gäbe es bei der ersten Bewegung im Flur sofort Alarm |
-| ein **Alarm** | **nicht fortgesetzt**: keine Sirenen, die Anlage ist scharf. Die Nachricht nennt, welcher Melder den Alarm ausgelöst hatte |
+| ein **Alarm** | **nicht fortgesetzt** (Standard): keine Sirenen, die Anlage ist scharf. Die Alarm-Empfänger bekommen eine **wichtige Nachricht** „Hauswacht: Alarm vor dem Neustart“ (durchbricht „Nicht stören“, mit Knopf „Unscharf“), die den auslösenden Melder nennt. Mit „Laufenden Alarm fortsetzen“ siehe unten |
 
 **Melder beim Hochfahren.** Nach einem Neustart melden sich Funkmelder erst nach und nach – viele
 sind kurz „nicht verfügbar“. Deshalb gibt es nach dem Wiederherstellen eine **Startphase von zwei
@@ -188,11 +188,32 @@ Ereignis „Scharfschaltung abgelehnt“ (Standard: an).
 > weil jemand zuhause war. Für ein bewohntes Haus ist deshalb „Wiederherstellen“ die bessere
 > Wahl.
 
+### Laufenden Alarm fortsetzen
+
+**Systemeinstellungen → Verhalten nach Neustart → „Laufenden Alarm fortsetzen“** (Standard aus,
+nur zusammen mit „Vorherigen Zustand wiederherstellen“).
+
+| | Aus (Standard) | An |
+|---|---|---|
+| Alarm lief noch (Sirenen an) | kein Alarm, Anlage scharf, wichtige Nachricht an die Alarm-Empfänger | sobald Home Assistant hochgefahren ist, wird der Alarm **erneut ausgelöst** – wie ein neuer Alarm mit der Reaktion des Profils, die Alarmzeit beginnt von vorn |
+| Alarm war schon vorbei (Sirenen aus, nur noch nicht quittiert) | kein Alarm, Nachricht | kein Alarm, Nachricht |
+
+Abwägung: „An“ ist richtig, wenn ein Einbruch auch nach einem Absturz von Home Assistant
+weiter laut gemeldet werden soll. „Aus“ verhindert, dass ein Fehlalarm nach einem nächtlichen
+Neustart (z. B. für ein Backup) die Sirenen ein zweites Mal startet. Auch mit „Aus“ ist die
+Anlage danach scharf: Bewegt sich jemand weiter im Haus, löst der nächste Melder sofort einen
+neuen Alarm aus.
+
+Auch beim Fortsetzen gilt: Sirenen nur über die üblichen Sperren – nicht im Testmodus, nicht
+ohne Sirenenfreigabe, nie bei Brand. Die [Übersicht](uebersicht.md) zeigt die Einstellung unter
+„Nach Neustart“.
+
 ### Immer gleich
 
 Unabhängig von der Einstellung gilt:
 
-- Ein früherer **Alarm wird nie fortgesetzt**, Sirenen gehen durch einen Neustart nie an.
+- Ein früherer **Alarm wird nicht fortgesetzt** – außer mit „Laufenden Alarm fortsetzen“
+  (siehe unten); sonst gehen Sirenen durch einen Neustart nie an.
   Sirenen, die Hauswacht für den Alarm eingeschaltet hatte und die noch laufen, schaltet es nach
   dem Hochfahren aus ([Details](sirenen.md#sirene-lief-beim-neustart-noch)).
 - Der **Testmodus** bleibt erhalten, simulierte Sensoren nicht.

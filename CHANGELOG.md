@@ -6,7 +6,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-11-17
+
+### Hinzugefügt
+- **Gastmodus:** Gäste, Babysitter oder Handwerker im Haus, aber ohne Ortung – solange der
+  Gastmodus an ist, schaltet Hauswacht **nicht automatisch** scharf (weder nach Uhrzeit noch
+  „wenn alle weg“ noch „immer scharf nach Neustart“); die Erinnerung „nicht scharf“ entfällt.
+  Von Hand scharf schalten geht weiter. Einschalten über die **Alarm-Karte** (Knopf „Gastmodus“
+  mit Dauer: bis zum Ausschalten, 4 Stunden, bis morgen 10 Uhr, 3 Tage – für jeden, ohne PIN),
+  den Schalter `switch.hauswacht_gastmodus` (alle Bereiche) oder die Aktion
+  `hauswacht.guest_mode` (mit Ende, je Bereich). Standard: alle Bereiche; eine Karte mit
+  `bereich:` schaltet nur ihren Bereich. Endet zum gewählten Zeitpunkt von selbst.
+- **Laufenden Alarm fortsetzen** (Verhalten nach Neustart, Standard aus): War beim Neustart ein
+  Alarm noch in der Reaktionsphase, wird er nach dem Hochfahren erneut ausgelöst – mit allen
+  Sirenen-Sperren.
+
+### Geändert
+- **Alarm vor dem Neustart** wird jetzt als **Alarm-Nachricht** an die Alarm-Empfänger gemeldet
+  (wichtig, mit „Unscharf“-Knopf) statt nur als System-Nachricht.
+- Systemübersicht: „Nach Neustart“ zeigt „laufenden Alarm fortsetzen“.
+
 ### Dokumentation
+- Installation (deutsch und englisch): Abschnitt „Laufenden Alarm fortsetzen“ mit Abwägung;
+  Sicherheitsregel Z1 und ADR 0008 ergänzt.
+- Profile (deutsch und englisch): Abschnitt „Gastmodus“ mit Beispiel; Dashboard: Knopf
+  „Gastmodus“ und neuer Abschnitt „Eine Karte je Bereich (z. B. Einliegerwohnung)“; Referenz um
+  Schalter, Attribute, Aktion und Ereignis ergänzt.
 - Referenz (deutsch und englisch): Werte des Attributs `phase` erklärt, Beispiel-Automation
   „Haustür abschließen, wenn scharf“ und „Bei Alarm Licht an“.
 

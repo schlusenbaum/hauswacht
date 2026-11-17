@@ -187,6 +187,45 @@ calculates this per person and suggests a value.
 The level "As before" corresponds to the former switch "Disarm on arrival"; existing settings
 are taken over.
 
+### Guest mode
+
+Guests, a babysitter or tradesmen are in the house but have no tracking – to Hauswacht the house
+looks empty. So that the automation does not arm then, there is the **guest mode**.
+
+**While it is on,** Hauswacht does **not arm** the area **automatically**: neither by time nor
+"when everyone is away" nor "always armed after restart". The reminder "nobody home, not armed"
+is not sent. Arming **by hand** (keypad, card, tablet, Alexa) still works; "Disarm on arrival"
+works normally. If the automation wants to arm, you get the message "Guest mode on – “Night” was
+not armed automatically".
+
+**Switching it on:**
+
+- **Alarm card:** button **👥 Guest mode** → for how long: *until I switch it off*, *4 hours*,
+  *until tomorrow 10 am* or *3 days*. The card then shows "Guest mode on – until …" and the button
+  "End guest mode". Everyone who may use the card can switch it – without a PIN.
+- **Switch** `switch.hauswacht_guest_mode`: on/off for **all** areas, until switched off.
+- **Action** `hauswacht.guest_mode` – also with an end time and for single areas:
+
+```yaml
+action: hauswacht.guest_mode
+target:
+  entity_id: alarm_control_panel.hauswacht   # or alarm_control_panel.hauswacht_all
+data:
+  "on": true
+  until: "2026-11-20 12:00:00"   # leave out = until switched off
+```
+
+**Areas:** the default is **all areas**. An alarm card with `bereich: granny_flat` switches the
+guest mode only for this area – so the granny flat can have guests while the house is armed
+automatically as usual.
+
+**Example:** on Friday evening the babysitter comes. On the tablet: 👥 Guest mode → *until
+tomorrow 10 am*. The parents leave – Hauswacht does not arm "Away", and at 11 pm not "Night"
+either. On Saturday at 10 am the guest mode ends by itself, the automation applies again.
+
+Switching on and off is in the logbook (event `GuestMode`) and is sent as a message via the event
+"Automation".
+
 ## Arm by closing the door
 
 In the profile, expandable under **"Arm by closing the door"**:

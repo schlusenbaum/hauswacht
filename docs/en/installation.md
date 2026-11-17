@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.50.0:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.51.0:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -136,7 +136,7 @@ What was running when Home Assistant restarted:
 | nothing (armed) | armed |
 | the **exit delay** | armed – a restart takes longer than the delay, whoever wanted to leave is long gone |
 | the **entry delay** | the entry delay **starts again**. Whoever just came home could not disarm during the restart, neither at the keypad nor in the app – without a new delay, the first movement in the hallway would cause an instant alarm |
-| an **alarm** | **not continued**: no sirens, the system is armed. The message names the sensor that had triggered the alarm |
+| an **alarm** | **not continued** (default): no sirens, the system is armed. The alarm recipients get an **important message** "Hauswacht: alarm before the restart" (breaks through Do Not Disturb, with a "Disarm" button) that names the triggering sensor. With "Resume a running alarm" see below |
 
 **Sensors at startup.** After a restart, radio sensors report back one by one – many are briefly
 "unavailable". That is why there is a **startup phase of two minutes** after restoring (counted
@@ -180,11 +180,31 @@ event "Arming rejected" (default: on).
 > "Always armed" also arms if the system was disarmed **before** the restart – e.g. because
 > someone was home. For an occupied house, "Restore" is therefore the better choice.
 
+### Resume a running alarm
+
+**System settings → Behaviour after restart → "Resume a running alarm"** (default off, only
+together with "Restore the previous state").
+
+| | Off (default) | On |
+|---|---|---|
+| Alarm was still running (sirens on) | no alarm, system armed, important message to the alarm recipients | as soon as Home Assistant has started, the alarm is **triggered again** – like a new alarm with the reaction of the profile, the alarm time starts over |
+| Alarm was already over (sirens off, only not yet acknowledged) | no alarm, message | no alarm, message |
+
+Trade-off: "On" is right if a burglary should keep being reported loudly even after Home
+Assistant crashed. "Off" prevents a false alarm from starting the sirens a second time after a
+nightly restart (e.g. for a backup). Even with "Off", the system is armed afterwards: if someone
+keeps moving in the house, the next sensor triggers a new alarm at once.
+
+When resuming, too: sirens only via the usual locks – not in test mode, not without the siren
+release, never during a fire. The [overview](overview.md) shows the setting under "After
+restart".
+
 ### Always the same
 
 Whatever the setting:
 
-- A previous **alarm is never continued**; sirens never go on because of a restart. Sirens that
+- A previous **alarm is not continued** – except with "Resume a running alarm" (see below);
+  otherwise sirens never go on because of a restart. Sirens that
   Hauswacht had switched on for the alarm and that are still sounding are switched off after
   startup ([details](sirens.md#siren-was-still-on-at-a-restart)).
 - **Test mode** is kept, simulated sensors are not.

@@ -1379,7 +1379,6 @@ class HauswachtRuntime:
         except ServiceValidationError as err:
             _LOGGER.info("Scharfschalten per Push-Knopf nicht möglich: %s", err)
 
-    @callback
     # --- Gastmodus ---------------------------------------------------------------
 
     @property
@@ -1463,6 +1462,7 @@ class HauswachtRuntime:
             NotifyEvent.AUTOMATION, tr(self.lang, "guest_title"), text, test_mode=self.ctx.test_mode
         )
 
+    @callback
     def set_test_mode(self, enabled: bool) -> None:
         """Testmodus gilt für alle Bereiche; umschalten nur, wenn alle unscharf sind."""
         if self.main is not self:

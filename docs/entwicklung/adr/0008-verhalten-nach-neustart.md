@@ -63,3 +63,21 @@ Entscheidung:
   Die Hardware-Freigabe sperrt Ausschalten nicht mehr (Sicherheitsregel S2 angepasst, S15 neu):
   Ausschalten ist die sichere Richtung.
 - Sirenen, die inzwischen ein neuer Alarm nutzt, werden nie ausgeschaltet.
+
+## Nachtrag 0.51: Laufenden Alarm fortsetzen (wählbar)
+
+Vergleich mit anderen Alarmanlagen-Integrationen: Manche setzen einen Alarm nach dem Neustart
+fort. Das ist bei einem echten Einbruch richtig, bei einem Fehlalarm und nächtlichem Neustart
+aber störend.
+
+Entscheidung:
+
+- Standard bleibt: nicht fortsetzen. Die Meldung „Alarm vor dem Neustart“ geht aber jetzt als
+  **Alarm-Nachricht** an die Alarm-Empfänger (wichtig, mit „Unscharf“-Knopf) statt nur als
+  System-Nachricht.
+- Neue Einstellung „Laufenden Alarm fortsetzen“ (Standard aus): War der Alarm noch in der
+  Reaktionsphase (`triggered`), wird er nach dem Hochfahren (`async_at_started`) erneut
+  ausgelöst – wie die Notruf-Taste mit Alarm, Reaktion des aktiven Profils, Sirenen nur über den
+  Guard. `alarm_hold` (Reaktion vorbei) wird nie fortgesetzt.
+- Reihenfolge: Das Fortsetzen läuft vor dem Ausschalten der eigenen Sirenen aus Nachtrag 0.46;
+  vom neuen Alarm wieder eingeschaltete Sirenen gehören diesem und werden nicht ausgeschaltet.
