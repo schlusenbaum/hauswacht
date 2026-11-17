@@ -16,6 +16,7 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
     async_fire_time_changed,
+    async_mock_service,
 )
 
 from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
@@ -124,6 +125,48 @@ async def test_restore_never_continues_alarm(
     assert not any(e.data["type"] == "ActivateReaction" for e in events)
     restored = [e for e in events if e.data["type"] == "RestoredAfterRestart"]
     assert restored[0].data["alarm_was_active"] is True
+
+
+async def test_alarm_before_restart_goes_to_alarm_recipients(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    push = async_mock_service(hass, "notify", "mobile_app_alarm")
+    entry = make_entry({"profiles": {"night": {"notify": ["mobile_app_alarm"]}}})
+    _stored(
+        hass_storage,
+        entry.entry_id,
+        {"restore": {"profile": "night", "state": "triggered", "trigger_sensor": WINDOW}},
+    )
+    await setup_entry(hass, entry)
+    await hass.async_block_till_done()
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert any("restart" in c.data["title"].lower() for c in push)
+
+
+async def test_restore_can_resume_alarm(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    entry = make_entry({"restart_continue_alarm": True})
+    _stored(
+        hass_storage,
+        entry.entry_id,
+        {"restore": {"profile": "night", "state": "triggered", "trigger_sensor": WINDOW}},
+    )
+    await setup_entry(hass, entry)
+    await hass.async_block_till_done()
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_resume_only_while_reaction_was_running(
+    hass: HomeAssistant, hass_storage: dict[str, Any]
+) -> None:
+    entry = make_entry({"restart_continue_alarm": True})
+    _stored(
+        hass_storage,
+        entry.entry_id,
+        {"restore": {"profile": "night", "state": "alarm_hold", "trigger_sensor": WINDOW}},
+    )
+    await setup_entry(hass, entry)
+    await hass.async_block_till_done()
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
 
 
 async def test_open_window_at_startup_is_bypassed_not_alarm(

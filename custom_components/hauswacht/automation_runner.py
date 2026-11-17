@@ -285,6 +285,17 @@ class AutomationRunner:
             # Nie über ein anderes (oder dasselbe) scharfe Profil hinweg umschalten
             self._event("AutoArmSkipped", profile_id, reason=reason)
             return
+        if runtime.guest_active:
+            # Gastmodus: Gäste sind im Haus, aber nicht geortet -> nicht automatisch scharf
+            self._event("AutoArmSkipped", profile_id, reason=reason, guest_mode=True)
+            runtime.notifier.notify(
+                NotifyEvent.AUTOMATION,
+                tr(runtime.lang, "guest_title"),
+                tr(runtime.lang, "guest_skipped", profile=name),
+                values={"profil": name, "grund": reason},
+                test_mode=runtime.ctx.test_mode,
+            )
+            return
         try:
             runtime.arm(profile_id, changed_by=tr(runtime.lang, "automation_actor"))
         except HomeAssistantError as err:

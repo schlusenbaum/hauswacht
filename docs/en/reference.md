@@ -22,6 +22,7 @@ e.g. `alarm_control_panel.hauswacht_garage`.
 | `button.hauswacht_disarm_now` | disarm immediately, also during an alarm |
 | `button.hauswacht_end_alarm` | only end the alarm, profile stays armed |
 | `switch.hauswacht_test_mode` | test mode |
+| `switch.hauswacht_guest_mode` | [guest mode](profiles.md#guest-mode) for all areas (on = no automatic arming); attribute `areas` with the end per area |
 | `event.hauswacht_action_code` | only with [action codes](control-devices.md#action-codes) with the action "event": event type = name of the code, attributes `keypad`, `test` |
 
 ### State and diagnostics
@@ -59,6 +60,7 @@ e.g. `alarm_control_panel.hauswacht_garage`.
 | `phase` | state independent of the profile: `disarmed`, `arming` (exit delay), `armed`, `pending` (entry delay), `triggered` (alarm), `alarm_hold` (alarm over, not yet acknowledged) – see [example](#example-automation-when-armed) |
 | `changed_by` | who switched last, e.g. "Anna (Keypad hallway)" |
 | `test_mode` | test mode active |
+| `guest_mode`, `guest_until` | guest mode active, end (empty = until switched off) |
 | `timer`, `timer_ends_at` | running delay and its end |
 | `trigger_sensor`, `alarm_cycles` | triggering sensor, number of alarm cycles |
 | `zones` | sensor groups with their actual sensors |
@@ -135,6 +137,7 @@ added here. `triggered` applies to the reaction phase; once it is over, `phase` 
 | Action | Fields | Purpose |
 |---|---|---|
 | `hauswacht.arm` | `profile`, `confirm`, `code` | arm a profile, optionally confirming open sensors |
+| `hauswacht.guest_mode` | `on`, `until` | [guest mode](profiles.md#guest-mode) on/off, optionally with an end; target one area or "All" |
 | `hauswacht.simulate_trigger` | `sensor` | test mode: trigger a sensor briefly |
 | `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `unavailable`, `real`) | test mode: simulate a sensor state |
 | `hauswacht.simulate_reset` | – | test mode: reset all simulations |
@@ -181,6 +184,7 @@ e.g.:
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | trigger rules |
 | `InvalidCode`, `CodeLockReset` | wrong entry (with `failures`, `lock_seconds`), counter reset |
 | `Panic`, `Emergency` | emergency key on the keypad |
+| `GuestMode` | guest mode on/off (with `area`, `on`, `until`, `by`) |
 | `ActionCode` | action code entered (with `name`, `action`, `control`, `test`) |
 | `SirenDecision`, `SirenTest` | siren decision (`action`: `activate`, `stop`, `stop_restored` = switch off after restart), steps of a siren test |
 | `SensorSimulated` | test mode: sensor simulated |

@@ -12,7 +12,8 @@
  *   profile: [night, away]      # optional: nur diese Profilknöpfe, in dieser Reihenfolge
  *   spalten: 2                  # optional: Knöpfe je Zeile (1–4), sonst automatisch
  *   zeige_zuletzt: false        # zeige_offen, zeige_nicht_erreichbar, zeige_testmodus,
- *                               # zeige_balken, zeige_alle_unscharf, blinken (Standard an)
+ *                               # zeige_balken, zeige_alle_unscharf, zeige_gastmodus,
+ *                               # blinken (Standard an)
  *   farbe_scharf: "#1565c0"     # farbe_unscharf, farbe_verzoegerung, farbe_alarm
  *   rueckfrage_scharf: true     # rueckfrage_unscharf (Standard aus)
  *
@@ -33,6 +34,16 @@ const TEXT = {
     disarm: "Unscharf schalten",
     endAlarm: "Alarm beenden",
     disarmAll: "Alle Bereiche unscharf",
+    guest: "Gastmodus",
+    guestOn: "Gastmodus an",
+    guestUntil: "bis",
+    guestUntilOff: "bis zum Ausschalten",
+    guestOff: "Gastmodus beenden",
+    guestAsk: "Gastmodus: Hauswacht schaltet nicht automatisch scharf (Uhrzeit, alle weg). Wie lange?",
+    guestForever: "Bis ich ihn ausschalte",
+    guest4h: "4 Stunden",
+    guestTomorrow: "Bis morgen 10 Uhr",
+    guest3d: "3 Tage",
     lastBy: "Zuletzt",
     open: "Offen",
     unavailableSensors: "Nicht erreichbar",
@@ -65,6 +76,16 @@ const TEXT = {
     disarm: "Disarm",
     endAlarm: "End alarm",
     disarmAll: "Disarm all areas",
+    guest: "Guest mode",
+    guestOn: "Guest mode on",
+    guestUntil: "until",
+    guestUntilOff: "until switched off",
+    guestOff: "End guest mode",
+    guestAsk: "Guest mode: Hauswacht does not arm automatically (time, everyone away). For how long?",
+    guestForever: "Until I switch it off",
+    guest4h: "4 hours",
+    guestTomorrow: "Until tomorrow 10 am",
+    guest3d: "3 days",
     lastBy: "Last",
     open: "Open",
     unavailableSensors: "Unreachable",
@@ -167,6 +188,7 @@ const STYLE = `
     font: inherit; padding: 12px 22px; border-radius: 12px; cursor: pointer; min-width: 120px;
     border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color);
   }
+  .row.guest { flex-wrap: wrap; }
   button.plain.primary { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
   .empty { padding: 20px; }
   /* Kompakt: eine Zeile Zustand, kleinere Knöpfe */
@@ -204,11 +226,12 @@ const DEFAULTS = {
   zeige_testmodus: true,
   zeige_balken: true,
   zeige_alle_unscharf: true,
+  zeige_gastmodus: true,
   blinken: true,
   rueckfrage_scharf: false,
   rueckfrage_unscharf: false,
 };
-const SHOW_KEYS = ["zeige_zuletzt", "zeige_offen", "zeige_nicht_erreichbar", "zeige_testmodus", "zeige_balken", "zeige_alle_unscharf", "blinken"];
+const SHOW_KEYS = ["zeige_zuletzt", "zeige_offen", "zeige_nicht_erreichbar", "zeige_testmodus", "zeige_balken", "zeige_alle_unscharf", "zeige_gastmodus", "blinken"];
 const COLORS = {
   farbe_unscharf: "--hw-ok",
   farbe_verzoegerung: "--hw-wait",
@@ -252,6 +275,7 @@ const EDITOR_TEXT = {
     zeige_testmodus: "Hinweis Testmodus",
     zeige_balken: "Ablaufender Balken bei Verzögerung",
     zeige_alle_unscharf: "Knopf „Alle Bereiche unscharf“",
+    zeige_gastmodus: "Knopf „Gastmodus“",
     blinken: "Blinken bei Alarm",
     secColors: "Farben",
     colorsHelp: "Leer = Standardfarbe",
@@ -283,6 +307,7 @@ const EDITOR_TEXT = {
     zeige_testmodus: "Test mode notice",
     zeige_balken: "Countdown bar during delays",
     zeige_alle_unscharf: "Button “Disarm all areas”",
+    zeige_gastmodus: "Button “Guest mode”",
     blinken: "Flash during alarm",
     secColors: "Colors",
     colorsHelp: "Empty = default color",
@@ -529,7 +554,67 @@ class HauswachtAlarmCard extends HTMLElement {
         ? `<div class="actions"><button class="act wide go" data-do="disarm-all"><ha-icon icon="mdi:shield-off"></ha-icon>${this._t("disarmAll")}</button></div>`
         : "";
     const msg = this._msg ? `<div class="msg ${this._msg.err ? "err" : ""}" role="status">${esc(this._msg.text)}</div>` : "";
-    return `${title}${blocks}${all}${msg}`;
+    return `${title}${blocks}${all}${this._guest(areas)}${msg}`;
+  }
+
+  // Gastmodus: für alle angezeigten Bereiche (mit "bereich:" nur für diesen)
+  _guest(areas) {
+    if (!this._opt("zeige_gastmodus")) return "";
+    const attrs = areas.map((a) => (this._hass.states[a.entity_id] || {}).attributes || {});
+    const on = attrs.filter((a) => a.guest_mode);
+    const busy = this._busy ? "disabled" : "";
+    if (this._ui && this._ui.kind === "guest") {
+      const choice = (until, label) => `<button class="plain" data-do="guest-set" data-until="${until}" ${busy}>${esc(label)}</button>`;
+      return `<div class="pad"><div class="what">${esc(this._t("guestAsk"))}</div>
+        <div class="row guest">${choice("off", this._t("guestForever"))}${choice("4h", this._t("guest4h"))}${choice("tomorrow", this._t("guestTomorrow"))}${choice("3d", this._t("guest3d"))}</div>
+        <div class="row"><button class="plain" data-do="cancel">${this._t("cancel")}</button></div></div>`;
+    }
+    if (on.length) {
+      const ends = on.map((a) => a.guest_until).filter(Boolean).sort();
+      const until = on.some((a) => !a.guest_until) || !ends.length
+        ? this._t("guestUntilOff")
+        : `${this._t("guestUntil")} ${this._when(ends[ends.length - 1])}`;
+      return `<div class="notes"><div class="note info"><ha-icon icon="mdi:account-group"></ha-icon><span><b>${this._t("guestOn")}</b> – ${esc(until)}</span></div></div>
+        <div class="actions"><button class="act wide" data-do="guest-off" ${busy}><ha-icon icon="mdi:account-group-outline"></ha-icon>${this._t("guestOff")}</button></div>`;
+    }
+    if (this._ui) return "";
+    return `<div class="actions"><button class="act wide" data-do="guest" ${busy}><ha-icon icon="mdi:account-group"></ha-icon>${this._t("guest")}</button></div>`;
+  }
+
+  _when(iso) {
+    try {
+      const d = new Date(iso);
+      const sameDay = d.toDateString() === new Date().toDateString();
+      const opts = sameDay ? { hour: "2-digit", minute: "2-digit" } : { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" };
+      return d.toLocaleString(this._hass.language, opts);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  async _setGuest(on, choice) {
+    let until = null;
+    if (on && choice === "4h") until = new Date(Date.now() + 4 * 3600 * 1000);
+    else if (on && choice === "3d") until = new Date(Date.now() + 3 * 24 * 3600 * 1000);
+    else if (on && choice === "tomorrow") {
+      until = new Date();
+      until.setDate(until.getDate() + 1);
+      until.setHours(10, 0, 0, 0);
+    }
+    this._busy = true;
+    this._ui = null;
+    this._render();
+    try {
+      const areas = (this._areas() || []).map((a) => a.id);
+      const msg = { type: "hauswacht/alarm/guest", areas, on };
+      if (until) msg.until = until.toISOString();
+      const result = await this._hass.callWS(msg);
+      this._msg = result.ok ? null : { err: true, text: result.message || this._t("guest") };
+    } catch (err) {
+      this._msg = { err: true, text: (err && err.message) || String(err) };
+    }
+    this._busy = false;
+    this._render();
   }
 
   _area(area, showName) {
@@ -673,6 +758,13 @@ class HauswachtAlarmCard extends HTMLElement {
       this._run({ ...ui, force: true });
     } else if (what === "disarm-all") {
       this._disarmAll();
+    } else if (what === "guest") {
+      this._ui = { kind: "guest", area: "__guest__" };
+      this._render();
+    } else if (what === "guest-set") {
+      this._setGuest(true, target.dataset.until);
+    } else if (what === "guest-off") {
+      this._setGuest(false);
     } else {
       this._start(target.dataset.area, what, target.dataset.profile);
     }

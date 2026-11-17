@@ -31,6 +31,7 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import (
     EventStateChangedData,
     async_call_later,
+    async_track_point_in_utc_time,
     async_track_state_change_event,
     async_track_time_interval,
 )
@@ -111,6 +112,7 @@ from .core.restart import (
     STARTUP_GRACE,
     RestartKind,
     RestartPlan,
+    continue_alarm,
     plan_restart,
     restart_behavior,
     restart_profile,
@@ -270,6 +272,10 @@ def effect_payload(effect: Effect) -> dict[str, Any]:
     return payload
 
 
+# Gastmodus "bis ich ausschalte" (gespeicherter Wert statt eines Zeitpunkts)
+GUEST_UNTIL_OFF = -1.0
+
+
 class HauswachtRuntime:
     """Hält den Zustand einer Hauswacht-Instanz und führt Effekte aus."""
 
@@ -297,6 +303,10 @@ class HauswachtRuntime:
         self.sirens.on_change = self._save_soon
         self.sirens.test_mode_now = lambda: self.ctx.test_mode
         self._unsub_siren_check: CALLBACK_TYPE | None = None
+        self._unsub_resume: CALLBACK_TYPE | None = None
+        # Gastmodus: keine automatische Scharfschaltung (None = aus; GUEST_UNTIL_OFF = bis aus)
+        self.guest_until: float | None = None
+        self._unsub_guest: CALLBACK_TYPE | None = None
         # Wann Karten ("card:<ID>") und PINs ("pin:<Benutzer>") zuletzt geschaltet haben
         # (nur im Hauptbereich gepflegt; gespeichert, nicht in den Einstellungen)
         self.last_used: dict[str, float] = {}
@@ -566,6 +576,12 @@ class HauswachtRuntime:
         hidden = data.get("code_entities_hidden")
         if isinstance(hidden, list):
             self.code_entities_hidden = [h for h in hidden if isinstance(h, str)]
+        guest = data.get("guest_until")
+        if isinstance(guest, (int, float)) and (
+            guest == GUEST_UNTIL_OFF or guest > dt_util.utcnow().timestamp()
+        ):
+            self.guest_until = float(guest)
+            self._schedule_guest_end()
         stored_used = data.get("last_used")
         if isinstance(stored_used, dict):
             self.last_used = {
@@ -643,8 +659,32 @@ class HauswachtRuntime:
             self._dispatch(BypassUntilClosed(sensors=open_now))
             self._startup_open |= open_now
         self._grace_until = time.monotonic() + STARTUP_GRACE
-        self._send_restored(profile_id, plan)
+        resume = plan.alarm_in_reaction and continue_alarm(self.entry.options)
+        self._send_restored(profile_id, plan, resume=resume)
         self._unsub_grace = async_at_started(self.hass, self._start_grace_timer)
+        if resume:
+            sensor = plan.trigger_sensor
+
+            @callback
+            def _resume(_hass: HomeAssistant) -> None:
+                self._resume_alarm(sensor)
+
+            self._unsub_resume = async_at_started(self.hass, _resume)
+
+    @callback
+    def _resume_alarm(self, sensor: str | None) -> None:
+        """Alarm von vor dem Neustart erneut auslösen (Einstellung "Laufenden Alarm
+        fortsetzen"). Wie ein neuer Alarm: Reaktion des aktiven Profils, Sirenen nur über den
+        Guard (Brandsperre, Testmodus, Freigabe)."""
+        self._unsub_resume = None
+        if self.ctx.state is not AlarmState.ARMED:
+            return  # inzwischen unscharf oder schon ein neuer Alarm
+        _LOGGER.warning("Alarm von vor dem Neustart wird fortgesetzt")
+        self._dispatch(
+            AlwaysActiveTriggered(
+                sensor_key=sensor or "restart", profile=always_runtime(self.always)
+            )
+        )
 
     @callback
     def _start_grace_timer(self, _hass: HomeAssistant) -> None:
@@ -676,16 +716,35 @@ class HauswachtRuntime:
     def _in_startup_grace(self) -> bool:
         return self._grace_until is not None and time.monotonic() < self._grace_until
 
-    def _send_restored(self, profile_id: str, plan: RestartPlan) -> None:
+    def _send_restored(self, profile_id: str, plan: RestartPlan, *, resume: bool) -> None:
         name = self.profile_name(profile_id)
         message = tr(self.lang, "restored", profile=name)
         if plan.entry_delay:
             message += tr(self.lang, "restored_entry")
+        title = tr(self.lang, "restored_title")
         if plan.alarm_was_active:
             sensor = display_name(self.hass, plan.trigger_sensor) if plan.trigger_sensor else "-"
-            message += tr(self.lang, "restored_alarm", sensor=sensor)
-        title = tr(self.lang, "restored_title")
-        self.notifier.send_system(title, message)
+            message += tr(
+                self.lang, "restored_alarm_resumed" if resume else "restored_alarm", sensor=sensor
+            )
+            # Wie ein Alarm an die Alarm-Empfänger (durchbricht "Nicht stören"), nicht nur als
+            # System-Nachricht – ein Alarm in der Nacht soll nicht im Neustart untergehen.
+            # Beim Fortsetzen meldet der neue Alarm selbst; hier nur der Hinweis.
+            if not resume:
+                self.notifier.notify(
+                    NotifyEvent.ALARM,
+                    tr(self.lang, "restored_alarm_title"),
+                    message,
+                    profile_targets=parse_reaction(self.entry.options, profile_id).notify,
+                    values={"melder": sensor, "profil": name, "regel": ""},
+                    test_mode=self.ctx.test_mode,
+                    data=self._push_actions(),
+                    speak=False,
+                )
+            else:
+                self.notifier.send_system(title, message)
+        else:
+            self.notifier.send_system(title, message)
         persistent_notification.async_create(
             self.hass, message, title=title, notification_id=NOTIFICATION_RESTART
         )
@@ -765,6 +824,12 @@ class HauswachtRuntime:
         if self._unsub_siren_check is not None:
             self._unsub_siren_check()
             self._unsub_siren_check = None
+        if self._unsub_resume is not None:
+            self._unsub_resume()
+            self._unsub_resume = None
+        if self._unsub_guest is not None:
+            self._unsub_guest()
+            self._unsub_guest = None
         self._cancel_timer()
         self._cancel_settle()
         self._cancel_speech_repeat()
@@ -1058,6 +1123,14 @@ class HauswachtRuntime:
     def area_name(self) -> str:
         return parse_areas(self.entry.options)[self.area_id].name
 
+    async def async_user_label(self, user_id: str | None) -> str | None:
+        """Name für Logbuch und Nachricht: zugeordneter Benutzer, sonst Home-Assistant-Konto."""
+        linked = find_by_ha_user(self.users, user_id)
+        if linked is not None:
+            return linked.name
+        user = await self.hass.auth.async_get_user(user_id) if user_id else None
+        return user.name if user is not None else None
+
     async def async_actor_for_user(self, user_id: str | None, action: Action) -> str | None:
         """Wer bedient ohne PIN (Dashboard-Knopf, Push)? Verknüpfter Benutzer mit Rechten,
         sonst der Name des Home-Assistant-Kontos (dann ist alles erlaubt, wie bisher)."""
@@ -1309,6 +1382,89 @@ class HauswachtRuntime:
             self.arm(profile_id, confirmed=prefix == PUSH_ARM_FORCE_PREFIX, changed_by=actor)
         except ServiceValidationError as err:
             _LOGGER.info("Scharfschalten per Push-Knopf nicht möglich: %s", err)
+
+    # --- Gastmodus ---------------------------------------------------------------
+
+    @property
+    def guest_active(self) -> bool:
+        """Gastmodus an: Hauswacht schaltet diesen Bereich nicht automatisch scharf."""
+        if self.guest_until is None:
+            return False
+        return self.guest_until == GUEST_UNTIL_OFF or self.guest_until > (
+            dt_util.utcnow().timestamp()
+        )
+
+    @property
+    def guest_ends_at(self) -> datetime | None:
+        if not self.guest_active or self.guest_until in (None, GUEST_UNTIL_OFF):
+            return None
+        return dt_util.utc_from_timestamp(self.guest_until)
+
+    @callback
+    def set_guest_mode(
+        self, enabled: bool, *, until: datetime | None = None, by: str | None = None
+    ) -> None:
+        """Gastmodus ein (bis ``until`` bzw. bis zum Ausschalten) oder aus."""
+        if enabled and until is not None and until <= dt_util.utcnow():
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="guest_until_past"
+            )
+        was = self.guest_active
+        self.guest_until = (
+            (until.timestamp() if until is not None else GUEST_UNTIL_OFF) if enabled else None
+        )
+        self._schedule_guest_end()
+        self._guest_changed(was, by=by)
+
+    def _schedule_guest_end(self) -> None:
+        if self._unsub_guest is not None:
+            self._unsub_guest()
+            self._unsub_guest = None
+        ends = self.guest_ends_at
+        if ends is None:
+            return
+
+        @callback
+        def _end(_now: datetime) -> None:
+            self._unsub_guest = None
+            self.guest_until = None
+            self._guest_changed(True, by=None)
+
+        self._unsub_guest = async_track_point_in_utc_time(self.hass, _end, ends)
+
+    def _guest_changed(self, was: bool, *, by: str | None) -> None:
+        now = self.guest_active
+        self._save_soon()
+        self._notify()
+        if self.main is not self:
+            self.main._notify()
+        if was == now and not now:
+            return
+        ends = self.guest_ends_at
+        self.hass.bus.async_fire(
+            EVENT_HAUSWACHT,
+            {
+                "type": "GuestMode",
+                "area": self.area_id,
+                "on": now,
+                "until": ends.isoformat() if ends else None,
+                "by": by,
+            },
+        )
+        until = (
+            dt_util.as_local(ends).strftime("%d.%m. %H:%M")
+            if ends
+            else tr(self.lang, "guest_until_off")
+        )
+        if now:
+            text = tr(self.lang, "guest_on", area=self.area_name, until=until)
+        else:
+            text = tr(self.lang, "guest_off", area=self.area_name)
+        if by:
+            text += f" ({by})"
+        self.notifier.notify(
+            NotifyEvent.AUTOMATION, tr(self.lang, "guest_title"), text, test_mode=self.ctx.test_mode
+        )
 
     @callback
     def set_test_mode(self, enabled: bool) -> None:
@@ -2186,6 +2342,7 @@ class HauswachtRuntime:
             "test_mode": self.ctx.test_mode,
             "sirens": self.sirens.snapshot(),
             "last_used": self.last_used,
+            "guest_until": self.guest_until,
             "code_entities_hidden": self.code_entities_hidden,
             "selected_profile": self._selected_profile,
             "edit_profile": self._edit_profile,

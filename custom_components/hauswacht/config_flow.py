@@ -162,7 +162,13 @@ from .core.reactions import parse_reaction
 from .core.restart import ARMED as RESTART_ARMED
 from .core.restart import BEHAVIORS as RESTART_BEHAVIORS
 from .core.restart import DEFAULT_BEHAVIOR as DEFAULT_RESTART_BEHAVIOR
-from .core.restart import OPT_RESTART_BEHAVIOR, OPT_RESTART_PROFILES, restart_behavior
+from .core.restart import (
+    OPT_RESTART_BEHAVIOR,
+    OPT_RESTART_CONTINUE_ALARM,
+    OPT_RESTART_PROFILES,
+    continue_alarm,
+    restart_behavior,
+)
 from .core.rules import DEFAULT_WITHIN as RULE_DEFAULT_WITHIN
 from .core.rules import MAX_STEPS as RULE_MAX_STEPS
 from .core.rules import MAX_UNLESS as RULE_MAX_UNLESS
@@ -484,11 +490,17 @@ class HauswachtOptionsFlow(OptionsFlow):
                 new = dict(options)
                 new[OPT_RESTART_BEHAVIOR] = behavior
                 new[OPT_RESTART_PROFILES] = chosen
+                new[OPT_RESTART_CONTINUE_ALARM] = bool(
+                    user_input.get(OPT_RESTART_CONTINUE_ALARM, False)
+                )
                 return await self._save(new, "system")
         fields: dict[Any, Any] = {
             vol.Required(OPT_RESTART_BEHAVIOR, default=restart_behavior(options)): _select(
                 list(RESTART_BEHAVIORS), "restart_behavior"
             ),
+            vol.Optional(
+                OPT_RESTART_CONTINUE_ALARM, default=continue_alarm(options)
+            ): BooleanSelector(),
         }
         for area_id, area in areas.items():
             infos = [

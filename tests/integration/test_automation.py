@@ -380,3 +380,68 @@ async def test_options_flow_saves_arrival_mode(hass: HomeAssistant) -> None:
     assert away["auto_arrival_mode"] == "door"
     assert away["auto_arrival_window"] == 3
     assert away["auto_disarm_on_arrival"] is False
+
+
+# --- Gastmodus ----------------------------------------------------------------
+
+
+async def test_guest_mode_blocks_automatic_arming(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=5)
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": "switch.hauswacht_guest_mode"}, blocking=True
+    )
+    state = hass.states.get("switch.hauswacht_guest_mode")
+    assert state is not None
+    assert state.state == "on"
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert panel.attributes["guest_mode"] is True
+    assert panel.attributes["guest_until"] is None  # bis zum Ausschalten
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _later(hass, 6)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    # von Hand geht weiterhin
+    await hass.services.async_call(
+        "hauswacht", "arm", {"entity_id": PANEL, "profile": "away"}, blocking=True
+    )
+    assert _state(hass) != AlarmControlPanelState.DISARMED
+
+
+async def test_guest_mode_until_ends_by_itself(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=5)
+    until = dt_util.now() + timedelta(hours=1)
+    await hass.services.async_call(
+        "hauswacht", "guest_mode", {"entity_id": PANEL, "until": until}, blocking=True
+    )
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert panel.attributes["guest_mode"] is True
+    assert panel.attributes["guest_until"] is not None
+    await _later(hass, 61)
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert panel.attributes["guest_mode"] is False
+    # danach greift die Automatik wieder
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _later(hass, 6)
+    assert _state(hass) != AlarmControlPanelState.DISARMED
+
+
+async def test_guest_mode_from_alarm_card(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    until = (dt_util.utcnow() + timedelta(hours=4)).isoformat()
+    await client.send_json({"id": 1, "type": "hauswacht/alarm/guest", "on": True, "until": until})
+    result = await client.receive_json()
+    assert result["result"]["ok"] is True
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert panel.attributes["guest_mode"] is True
+    await client.send_json({"id": 2, "type": "hauswacht/alarm/guest", "on": False})
+    result = await client.receive_json()
+    assert result["result"]["ok"] is True
+    panel = hass.states.get(PANEL)
+    assert panel is not None
+    assert panel.attributes["guest_mode"] is False

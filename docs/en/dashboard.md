@@ -160,6 +160,7 @@ English labels.
 | Test mode hint | `zeige_testmodus: false` | on |
 | Running bar during a delay | `zeige_balken: false` | on |
 | Button "Disarm all areas" | `zeige_alle_unscharf: false` | on |
+| Button "Guest mode" ([guest mode](profiles.md#guest-mode)) | `zeige_gastmodus: false` | on |
 | Blinking on alarm | `blinken: false` | on |
 | **Colours** per state | `farbe_unscharf` (disarmed), `farbe_verzoegerung` (delay), `farbe_scharf` (armed), `farbe_alarm`, e.g. `"#1565c0"` | green, orange, red, bright red |
 | **Confirmation** before arming ("Arm Night?") | `rueckfrage_scharf: true` | off |
@@ -175,6 +176,26 @@ English labels.
 - **Deliberately not configurable:** "Disarm" and "End alarm" cannot be hidden, and whether the
   card asks for a PIN is not set in the card but in Hauswacht ([No forced PIN](#no-forced-pin)) –
   anyone who may edit the dashboard can change the card configuration.
+
+### One card per area (e.g. granny flat)
+
+Every card can be limited to **one area**. Example: the house has the areas "House" and "Granny
+flat", the granny flat has its own dashboard:
+
+```yaml
+type: custom:hauswacht-alarm-card
+title: Granny flat
+bereich: granny_flat   # ID or name of the area
+```
+
+The card then only shows and switches this area – with its profile buttons, without "Disarm all
+areas"; the "Guest mode" button only applies to this area.
+
+Important: an own dashboard is **no protection**. Whoever has a Home Assistant account can also
+open other dashboards. Who may switch what is set in Hauswacht: give the residents of the granny
+flat as [users](users.md#rights) rights **only for their area** ("Rights per area"). Then they
+can only switch the granny flat on any card. A keypad in the granny flat also gets the area
+"Granny flat".
 
 ### No forced PIN
 

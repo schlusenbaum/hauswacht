@@ -193,6 +193,45 @@ rechnet das je Person aus und nennt einen Wert.
 Die Stufe „Wie bisher“ entspricht dem früheren Schalter „Unscharf beim Heimkommen“;
 bestehende Einstellungen werden übernommen.
 
+### Gastmodus
+
+Gäste, Babysitter oder Handwerker sind im Haus, haben aber keine Ortung – für Hauswacht sieht
+das Haus leer aus. Damit die Automatik dann nicht scharf schaltet, gibt es den **Gastmodus**.
+
+**Solange er an ist,** schaltet Hauswacht den Bereich **nicht automatisch** scharf: weder nach
+Uhrzeit noch „wenn alle weg“ noch „immer scharf nach Neustart“. Die Erinnerung „niemand zuhause,
+nicht scharf“ entfällt. **Von Hand** scharf schalten (Keypad, Karte, Tablet, Alexa) geht
+weiterhin; „Unscharf bei Rückkehr“ funktioniert normal. Will die Automatik scharf schalten, kommt
+die Nachricht „Gastmodus an – ‚Nacht‘ wurde nicht automatisch scharf geschaltet“.
+
+**Einschalten:**
+
+- **Alarm-Karte:** Knopf **👥 Gastmodus** → wie lange: *bis ich ihn ausschalte*, *4 Stunden*,
+  *bis morgen 10 Uhr* oder *3 Tage*. Die Karte zeigt dann „Gastmodus an – bis …“ und den Knopf
+  „Gastmodus beenden“. Jeder, der die Karte bedienen darf, kann ihn schalten – ohne PIN.
+- **Schalter** `switch.hauswacht_gastmodus`: an/aus für **alle** Bereiche, bis zum Ausschalten.
+- **Aktion** `hauswacht.guest_mode` – auch mit Ende-Zeitpunkt und für einzelne Bereiche:
+
+```yaml
+action: hauswacht.guest_mode
+target:
+  entity_id: alarm_control_panel.hauswacht   # oder alarm_control_panel.hauswacht_alle
+data:
+  "on": true
+  until: "2026-11-20 12:00:00"   # weglassen = bis zum Ausschalten
+```
+
+**Bereiche:** Standard ist **alle Bereiche**. Eine Alarm-Karte mit `bereich: einliegerwohnung`
+schaltet den Gastmodus nur für diesen Bereich – so kann die Einliegerwohnung Gäste haben, während
+das Haus normal automatisch scharf wird.
+
+**Beispiel:** Freitagabend kommt die Babysitterin. Auf dem Tablet: 👥 Gastmodus → *bis morgen
+10 Uhr*. Die Eltern fahren los – Hauswacht schaltet nicht „Abwesend“, um 23 Uhr auch nicht
+„Nacht“. Samstag um 10 Uhr endet der Gastmodus von selbst, die Automatik gilt wieder.
+
+Ein- und Ausschalten stehen im Logbuch (Ereignis `GuestMode`) und kommen als Nachricht über das
+Ereignis „Automatik“.
+
 ## Scharf durch Schließen der Tür
 
 Im Profil, aufklappbar unter **„Scharf durch Schließen der Tür“**:

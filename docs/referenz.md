@@ -20,6 +20,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `button.hauswacht_unscharf_schalten` | Sofort unscharf, auch während eines Alarms |
 | `button.hauswacht_alarm_beenden` | Nur den Alarm beenden, Profil bleibt scharf |
 | `switch.hauswacht_testmodus` | Testmodus |
+| `switch.hauswacht_gastmodus` | [Gastmodus](profile.md#gastmodus) für alle Bereiche (an = keine automatische Scharfschaltung); Attribut `areas` mit Ende je Bereich |
 | `event.hauswacht_aktions_code` | Nur mit [Aktions-Codes](bedienteile.md#aktions-codes) der Aktion „Ereignis“: Ereignistyp = Name des Codes, Attribute `keypad`, `test` |
 
 ### Zustand und Diagnose
@@ -57,6 +58,7 @@ z. B. `alarm_control_panel.hauswacht_garage`.
 | `phase` | Zustand unabhängig vom Profil: `disarmed` (unscharf), `arming` (Ausgangsverzögerung), `armed` (scharf), `pending` (Eingangsverzögerung), `triggered` (Alarm), `alarm_hold` (Alarm vorbei, noch nicht quittiert) – siehe [Beispiel](#beispiel-automation-wenn-scharf) |
 | `changed_by` | Wer zuletzt geschaltet hat, z. B. „Anna (Keypad Flur)“ |
 | `test_mode` | Testmodus aktiv |
+| `guest_mode`, `guest_until` | Gastmodus aktiv, Ende (leer = bis zum Ausschalten) |
 | `timer`, `timer_ends_at` | Laufende Verzögerung und ihr Ende |
 | `trigger_sensor`, `alarm_cycles` | Auslösender Melder, Anzahl Alarmzyklen |
 | `zones` | Meldergruppen mit ihren tatsächlichen Meldern |
@@ -134,6 +136,7 @@ Kamera-Schnappschüsse dazu. `triggered` gilt für die Reaktionsphase; ist sie v
 | Aktion | Felder | Zweck |
 |---|---|---|
 | `hauswacht.arm` | `profile`, `confirm`, `code` | Profil scharf schalten, optional mit Bestätigung offener Melder |
+| `hauswacht.guest_mode` | `on`, `until` | [Gastmodus](profile.md#gastmodus) ein/aus, optional mit Ende; Ziel ein Bereich oder „Alle“ |
 | `hauswacht.simulate_trigger` | `sensor` | Testmodus: Melder kurz auslösen |
 | `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `unavailable`, `real`) | Testmodus: Melderzustand simulieren |
 | `hauswacht.simulate_reset` | – | Testmodus: alle Simulationen zurück |
@@ -180,6 +183,7 @@ z. B.:
 | `RuleStep`, `RuleFired`, `RuleExpired`, `RuleConditionsNotMet`, `OpenRuleSensors` | Auslöseregeln |
 | `InvalidCode`, `CodeLockReset` | Falsche Eingabe (mit `failures`, `lock_seconds`), Zähler zurückgesetzt |
 | `Panic`, `Emergency` | Notruf-Taste am Keypad |
+| `GuestMode` | Gastmodus ein/aus (mit `area`, `on`, `until`, `by`) |
 | `ActionCode` | Aktions-Code eingegeben (mit `name`, `action`, `control`, `test`) |
 | `SirenDecision`, `SirenTest` | Sirenenentscheidung (`action`: `activate`, `stop`, `stop_restored` = nach Neustart ausschalten), Schritte eines Sirenentests |
 | `SensorSimulated` | Testmodus: Melder simuliert |
