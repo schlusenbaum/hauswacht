@@ -3,11 +3,147 @@
     "step": {
       "user": {
         "title": "Hauswacht",
-        "description": "Einbruchmeldeanlage Hauswacht einrichten. Die Anlage startet unscharf. Sirenen werden in dieser Version noch nicht angesteuert."
+        "description": "Einbruchmeldeanlage Hauswacht einrichten. Die Anlage startet **unscharf**.\n\nEmpfohlen: der **Einrichtungsassistent** – er erklärt kurz, wie Hauswacht arbeitet, und führt dich durch Melder, Meldergruppen und Alarmprofile. Jeden Schritt kannst du überspringen.",
+        "menu_options": {
+          "wizard": "Mit dem Einrichtungsassistenten (empfohlen)",
+          "plain": "Ohne Assistent – alles selbst im Einstellungsdialog"
+        }
+      },
+      "wizard": {
+        "title": "Einrichtungsassistent",
+        "description": "Der Assistent führt dich Schritt für Schritt durch die Einrichtung: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile, Empfänger, Sirenen und Benutzer.\n\n**Jeden Schritt kannst du überspringen** und später nachholen – im Einstellungsdialog oder indem du den Assistenten erneut startest. Was schon eingerichtet ist, bleibt erhalten; der Assistent ergänzt nur.\n\nDer Assistent gibt **keine Sirenen frei** und schaltet nichts.",
+        "menu_options": {
+          "wizard_intro": "Kurze Einführung: So arbeitet Hauswacht",
+          "wizard_area_question": "Einführung überspringen – gleich loslegen"
+        }
+      },
+      "wizard_intro": {
+        "title": "So arbeitet Hauswacht",
+        "description": "- **Melder** – alles, was „offen/zu“ oder „Bewegung“ meldet. *Beispiel: Haustür, Fenster Küche, Bewegungsmelder Flur.*\n- **Meldergruppen** – Melder, die zusammengehören. *Beispiel: „Außen“ = alle Türen und Fenster, „Innen“ = die Bewegungsmelder.*\n- **Auslöseregeln** – für Fortgeschrittene: Alarm erst, wenn mehreres zusammenkommt. *Beispiel: Haustür auf und danach innerhalb einer Minute Bewegung im Keller.*\n- **Alarmprofile** – die Situationen, in denen du scharf schaltest. *Beispiel: „Abwesend“ überwacht alles, „Nacht“ nur außen – du kannst dich im Haus bewegen.*\n- **Sirenen und Empfänger** – wer oder was bei Alarm Lärm macht oder eine Nachricht bekommt. *Beispiel: Sirene Flur, Handy von Anna.*\n- **Benutzer und Bedienteile** – wer schalten darf und womit. *Beispiel: PIN, Karte, Keypad, App.*\n\n**Eingangstüren** bekommen eine Eingangsverzögerung: Wer heimkommt, hat ein paar Sekunden Zeit zum Unscharfschalten. Alle anderen Melder lösen sofort aus.\n\nJeden Schritt kannst du überspringen und später nachholen."
+      },
+      "wizard_sensors": {
+        "title": "Welche Melder sollen überwacht werden?",
+        "description": "Hauswacht hat in Home Assistant diese Türen, Fenster und Bewegungsmelder gefunden, die noch in keiner Meldergruppe stehen:\n\n{found}\n\nAlle Vorschläge sind ausgewählt – **nimm weg, was nicht überwacht werden soll**, oder füge Melder hinzu. Rauch-, Wasser- und Batterie-Sensoren schlägt Hauswacht nicht vor.\n\nLeer lassen = überspringen.",
+        "data": {
+          "sensors": "Melder"
+        }
+      },
+      "wizard_mode": {
+        "title": "Wie soll überwacht werden?",
+        "description": "- **Meldergruppen (einfach):** Jeder Melder in einer Gruppe löst im scharfen Profil Alarm aus. Für die meisten Häuser genau richtig.\n- **Nur Auslöseregeln:** Alarm erst, wenn mehrere Dinge zusammenkommen. Für Fortgeschrittene.\n- **Beides:** Gruppen für Türen und Fenster, Regeln zusätzlich, z. B. für Bewegungsmelder.\n- **Später:** jetzt keine Gruppen und Regeln anlegen, weiter mit Empfängern und Sirenen.",
+        "menu_options": {
+          "wizard_mode_zones": "Mit Meldergruppen (empfohlen)",
+          "wizard_mode_rules": "Nur mit Auslöseregeln",
+          "wizard_mode_both": "Mit Meldergruppen und Auslöseregeln",
+          "wizard_recipients": "Später festlegen – weiter"
+        }
+      },
+      "wizard_groups": {
+        "title": "Meldergruppen",
+        "description": "Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
+        "data": {
+          "outside_name": "Name der Gruppe für Türen und Fenster",
+          "outside": "Türen und Fenster",
+          "entry_doors": "Davon Eingangstüren",
+          "inside_name": "Name der Gruppe für Bewegungsmelder",
+          "inside": "Bewegungsmelder"
+        }
+      },
+      "wizard_rules_later": {
+        "title": "Auslöseregeln",
+        "description": "Auslöseregeln legst du nach der Installation an: **Konfigurieren → Einrichtungsassistent** (oder Alarmauslösung → Auslöseregeln). Dort hilft dir der Regel-Assistent.\n\nJetzt geht es weiter mit den Alarmprofilen."
+      },
+      "wizard_profiles": {
+        "title": "Alarmprofile",
+        "description": "Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "data": {
+          "away": "Profil „Abwesend“",
+          "away_zones": "Abwesend: Meldergruppen",
+          "away_rules": "Abwesend: Auslöseregeln",
+          "exit_delay": "Ausgangsverzögerung",
+          "entry_delay": "Eingangsverzögerung",
+          "night": "Profil „Nacht“",
+          "night_zones": "Nacht: Meldergruppen",
+          "night_rules": "Nacht: Auslöseregeln"
+        }
+      },
+      "wizard_summary": {
+        "title": "Zusammenfassung",
+        "description": "{summary}\n\nAlles, was hier fehlt, kannst du im Einstellungsdialog nachholen oder den Assistenten später erneut starten. Die Anlage startet **unscharf**."
+      },
+      "wizard_recipients": {
+        "title": "Wer wird benachrichtigt?",
+        "description": "Diese Empfänger bekommen alle Nachrichten von Hauswacht – Alarm, scharf, unscharf, Störungen –, solange ein Ereignis keine eigenen Empfänger hat. Handys mit der Home-Assistant-App (`mobile_app_…`) sind vorgewählt.\n\nFeinheiten (Empfänger je Ereignis, eigene Texte, Ansagen) stellst du später unter Benachrichtigungen ein.\n\nNichts auswählen = überspringen.",
+        "data": {
+          "recipients": "Empfänger"
+        }
+      },
+      "wizard_recipients_test": {
+        "title": "Test-Nachricht",
+        "description": "Empfänger: {recipients}\n\nMöchtest du prüfen, ob Nachrichten ankommen? Die Test-Nachricht geht nur, wenn du den Knopf drückst.{result}",
+        "menu_options": {
+          "wizard_send_test": "Test-Nachricht senden",
+          "wizard_sirens": "Weiter zu den Sirenen"
+        }
+      },
+      "wizard_sirens": {
+        "title": "Sirenen",
+        "description": "Welche Sirenen sollen bei einem Einbruch heulen? Hauswacht schlägt alle Sirenen aus Home Assistant vor.\n\n**Wichtig:** Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst (Alarmgeber – Sirenen → Sirenen und Freigabe). Bis dahin – und im Testmodus – heult keine Sirene. Der Assistent gibt nichts frei.\n\n**In diesen Profilen verwenden:** die gewählten Sirenen kommen zu den Sirenen dieser Profile dazu.\n\nNichts auswählen = überspringen.",
+        "data": {
+          "sirens": "Sirenen",
+          "profiles": "In diesen Profilen verwenden"
+        }
+      },
+      "wizard_users": {
+        "title": "Benutzer",
+        "description": "Wer darf die Anlage bedienen? Vorhandene Benutzer: {users}\n\nEin **PIN** (4–8 Ziffern) ist optional. Achtung: Sobald **ein** PIN existiert, verlangt das Bedienfeld (auch Alexa) zum Unscharfschalten einen PIN – von allen. Also: allen einen PIN geben oder keinem.\n\nHeißt ein Benutzer so wie ein Home-Assistant-Konto, wird er damit verknüpft (Alarmkarte ohne PIN-Eingabe).\n\nName leer lassen = überspringen. Rechte, Gültigkeit, Karten und Bedrohungs-PIN: später unter Systemeinstellungen → Benutzer und PINs.{conflict}",
+        "data": {
+          "name": "Name",
+          "pin": "PIN (optional)"
+        }
+      },
+      "wizard_users_more": {
+        "title": "Benutzer",
+        "description": "Benutzer: {users}",
+        "menu_options": {
+          "wizard_users": "Weiteren Benutzer anlegen",
+          "wizard_controls": "Weiter"
+        }
+      },
+      "wizard_controls": {
+        "title": "Bedienteile",
+        "description": "Keypads, RFID-Karten, NFC-Aufkleber, Leser, Taster und Türschlösser richtest du unter **Systemeinstellungen → Bedienteile** ein – dort gibt es für jede Art eine eigene Anleitung. Ohne Bedienteil bedienst du Hauswacht über die App (Alarmkarte) oder per Sprachassistent.\n\nWeiter zur Zusammenfassung."
+      },
+      "wizard_area_question": {
+        "title": "Gibt es getrennte Wohnungen?",
+        "description": "Die meisten Häuser brauchen **einen** Bereich. Getrennte Bereiche sind sinnvoll, wenn Teile **unabhängig** scharf geschaltet werden – z. B. eine Einliegerwohnung oder eine Praxis im Haus.",
+        "menu_options": {
+          "wizard_sensors": "Nein – ein Haus bzw. eine Wohnung",
+          "wizard_area_hint": "Ja – es gibt getrennte Bereiche"
+        }
+      },
+      "wizard_area_hint": {
+        "title": "Getrennte Bereiche",
+        "description": "Richte jetzt zuerst den **Hauptbereich** ein (z. B. das Haus).\n\nDanach startest du den Assistenten erneut: **Konfigurieren → Einrichtungsassistent → Weiteren Bereich einrichten**. Für jeden weiteren Bereich wählst du dort Melder, Meldergruppen und Profile.\n\nMehr dazu: Anleitung „Alarmprofile und Bereiche“."
       }
     },
     "abort": {
       "single_instance_allowed": "Hauswacht ist bereits eingerichtet."
+    },
+    "error": {
+      "zone_overlap": "Diese Sensoren sind schon in einer anderen Meldergruppe: {conflicts}. Ein Sensor kann nur in einer Meldergruppe sein – bitte dort entfernen oder hier abwählen.",
+      "zone_name_required": "Bitte einen Namen eingeben.",
+      "zone_empty": "Mindestens einen Sensor oder ein Label auswählen.",
+      "profile_name_required": "Bitte einen Namen eingeben.",
+      "profile_name_taken": "Ein Profil mit diesem Namen gibt es schon.",
+      "panel_mode_taken": "Dieser Knopf ist bereits einem anderen Profil zugeordnet.",
+      "excluded_not_in_groups": "Ausgenommene Melder müssen aus den gewählten Meldergruppen stammen.",
+      "wizard_profile_empty": "Wähle mindestens eine Meldergruppe oder Auslöseregel – oder wähle das Profil ab.",
+      "user_name_taken": "Diesen Namen gibt es schon.",
+      "user_name_required": "Bitte einen Namen eingeben.",
+      "invalid_pin": "Der PIN muss aus 4 bis 8 Ziffern bestehen.",
+      "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen.",
+      "pin_is_duress": "Dieser PIN ist bereits ein Bedrohungs-PIN ({conflict})."
     }
   },
   "options": {
@@ -15,6 +151,7 @@
       "init": {
         "title": "Hauswacht-Optionen",
         "menu_options": {
+          "wizard": "Einrichtungsassistent",
           "triggering": "Alarmauslösung",
           "profiles": "Alarmprofile",
           "sirens": "Alarmgeber – Sirenen",
@@ -932,6 +1069,179 @@
           "action": "**Ereignis:** die Entität „Hauswacht Aktions-Code“ meldet ein Ereignis mit diesem Namen – in einer eigenen Automation als Auslöser verwenden. **Scharf schalten:** schaltet das gewählte Profil scharf. **Stiller Notruf:** wichtige Push-Nachricht an die Alarm-Empfänger, sonst nichts Sichtbares.",
           "code": "Nur Ziffern. Am Keypad: Code tippen, dann die Taste drücken. Während einer PIN-Sperre sind auch Aktions-Codes gesperrt."
         }
+      },
+      "wizard": {
+        "title": "Einrichtungsassistent",
+        "description": "Der Assistent führt dich Schritt für Schritt durch die Einrichtung: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile, Empfänger, Sirenen und Benutzer.\n\n**Jeden Schritt kannst du überspringen** und später nachholen – im Einstellungsdialog oder indem du den Assistenten erneut startest. Was schon eingerichtet ist, bleibt erhalten; der Assistent ergänzt nur.\n\nDer Assistent gibt **keine Sirenen frei** und schaltet nichts.",
+        "menu_options": {
+          "wizard_intro": "Kurze Einführung: So arbeitet Hauswacht",
+          "wizard_area_question": "Einführung überspringen – gleich loslegen"
+        }
+      },
+      "wizard_intro": {
+        "title": "So arbeitet Hauswacht",
+        "description": "- **Melder** – alles, was „offen/zu“ oder „Bewegung“ meldet. *Beispiel: Haustür, Fenster Küche, Bewegungsmelder Flur.*\n- **Meldergruppen** – Melder, die zusammengehören. *Beispiel: „Außen“ = alle Türen und Fenster, „Innen“ = die Bewegungsmelder.*\n- **Auslöseregeln** – für Fortgeschrittene: Alarm erst, wenn mehreres zusammenkommt. *Beispiel: Haustür auf und danach innerhalb einer Minute Bewegung im Keller.*\n- **Alarmprofile** – die Situationen, in denen du scharf schaltest. *Beispiel: „Abwesend“ überwacht alles, „Nacht“ nur außen – du kannst dich im Haus bewegen.*\n- **Sirenen und Empfänger** – wer oder was bei Alarm Lärm macht oder eine Nachricht bekommt. *Beispiel: Sirene Flur, Handy von Anna.*\n- **Benutzer und Bedienteile** – wer schalten darf und womit. *Beispiel: PIN, Karte, Keypad, App.*\n\n**Eingangstüren** bekommen eine Eingangsverzögerung: Wer heimkommt, hat ein paar Sekunden Zeit zum Unscharfschalten. Alle anderen Melder lösen sofort aus.\n\nJeden Schritt kannst du überspringen und später nachholen."
+      },
+      "wizard_sensors": {
+        "title": "Welche Melder sollen überwacht werden?",
+        "description": "Hauswacht hat in Home Assistant diese Türen, Fenster und Bewegungsmelder gefunden, die noch in keiner Meldergruppe stehen:\n\n{found}\n\nAlle Vorschläge sind ausgewählt – **nimm weg, was nicht überwacht werden soll**, oder füge Melder hinzu. Rauch-, Wasser- und Batterie-Sensoren schlägt Hauswacht nicht vor.\n\nLeer lassen = überspringen.",
+        "data": {
+          "sensors": "Melder"
+        }
+      },
+      "wizard_mode": {
+        "title": "Wie soll überwacht werden?",
+        "description": "- **Meldergruppen (einfach):** Jeder Melder in einer Gruppe löst im scharfen Profil Alarm aus. Für die meisten Häuser genau richtig.\n- **Nur Auslöseregeln:** Alarm erst, wenn mehrere Dinge zusammenkommen. Für Fortgeschrittene.\n- **Beides:** Gruppen für Türen und Fenster, Regeln zusätzlich, z. B. für Bewegungsmelder.\n- **Später:** jetzt keine Gruppen und Regeln anlegen, weiter mit Empfängern und Sirenen.",
+        "menu_options": {
+          "wizard_mode_zones": "Mit Meldergruppen (empfohlen)",
+          "wizard_mode_rules": "Nur mit Auslöseregeln",
+          "wizard_mode_both": "Mit Meldergruppen und Auslöseregeln",
+          "wizard_recipients": "Später festlegen – weiter"
+        }
+      },
+      "wizard_groups": {
+        "title": "Meldergruppen",
+        "description": "Vorschlag: Türen und Fenster in die Gruppe „Außen“, Bewegungsmelder in die Gruppe „Innen“. So kannst du nachts nur „Außen“ scharf schalten und dich trotzdem im Haus bewegen.\n\n**Eingangstüren:** Türen, durch die man heimkommt. Nur sie bekommen die Eingangsverzögerung – andere Türen (z. B. Terrasse) lösen sofort aus.\n\nEine leere Gruppe wird nicht angelegt. Ein Melder kann nur in einer Gruppe stehen.{conflicts}",
+        "data": {
+          "outside_name": "Name der Gruppe für Türen und Fenster",
+          "outside": "Türen und Fenster",
+          "entry_doors": "Davon Eingangstüren",
+          "inside_name": "Name der Gruppe für Bewegungsmelder",
+          "inside": "Bewegungsmelder"
+        }
+      },
+      "wizard_rules": {
+        "title": "Auslöseregeln",
+        "description": "Vorhandene Regeln: {rules}\n\nMit dem Regel-Assistenten legst du eine Regel an, z. B. „Haustür auf, danach innerhalb einer Minute Bewegung im Flur“. Danach kommst du hierher zurück und kannst weitere anlegen.",
+        "menu_options": {
+          "rule_add": "Neue Auslöseregel anlegen",
+          "wizard_profiles": "Weiter zu den Alarmprofilen"
+        }
+      },
+      "wizard_rules_later": {
+        "title": "Auslöseregeln",
+        "description": "Auslöseregeln legst du nach der Installation an: **Konfigurieren → Einrichtungsassistent** (oder Alarmauslösung → Auslöseregeln). Dort hilft dir der Regel-Assistent.\n\nJetzt geht es weiter mit den Alarmprofilen."
+      },
+      "wizard_profiles": {
+        "title": "Alarmprofile",
+        "description": "Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "data": {
+          "away": "Profil „Abwesend“",
+          "away_zones": "Abwesend: Meldergruppen",
+          "away_rules": "Abwesend: Auslöseregeln",
+          "exit_delay": "Ausgangsverzögerung",
+          "entry_delay": "Eingangsverzögerung",
+          "night": "Profil „Nacht“",
+          "night_zones": "Nacht: Meldergruppen",
+          "night_rules": "Nacht: Auslöseregeln"
+        }
+      },
+      "wizard_summary": {
+        "title": "Zusammenfassung",
+        "description": "{summary}\n\nAlles, was hier fehlt, kannst du im Einstellungsdialog nachholen oder den Assistenten später erneut starten."
+      },
+      "wizard_recipients": {
+        "title": "Wer wird benachrichtigt?",
+        "description": "Diese Empfänger bekommen alle Nachrichten von Hauswacht – Alarm, scharf, unscharf, Störungen –, solange ein Ereignis keine eigenen Empfänger hat. Handys mit der Home-Assistant-App (`mobile_app_…`) sind vorgewählt.\n\nFeinheiten (Empfänger je Ereignis, eigene Texte, Ansagen) stellst du später unter Benachrichtigungen ein.\n\nNichts auswählen = überspringen.",
+        "data": {
+          "recipients": "Empfänger"
+        }
+      },
+      "wizard_recipients_test": {
+        "title": "Test-Nachricht",
+        "description": "Empfänger: {recipients}\n\nMöchtest du prüfen, ob Nachrichten ankommen? Die Test-Nachricht geht nur, wenn du den Knopf drückst.{result}",
+        "menu_options": {
+          "wizard_send_test": "Test-Nachricht senden",
+          "wizard_sirens": "Weiter zu den Sirenen"
+        }
+      },
+      "wizard_sirens": {
+        "title": "Sirenen",
+        "description": "Welche Sirenen sollen bei einem Einbruch heulen? Hauswacht schlägt alle Sirenen aus Home Assistant vor.\n\n**Wichtig:** Die echte Sirenenansteuerung bleibt **gesperrt**, bis du sie bewusst freigibst (Alarmgeber – Sirenen → Sirenen und Freigabe). Bis dahin – und im Testmodus – heult keine Sirene. Der Assistent gibt nichts frei.\n\n**In diesen Profilen verwenden:** die gewählten Sirenen kommen zu den Sirenen dieser Profile dazu.\n\nNichts auswählen = überspringen.",
+        "data": {
+          "sirens": "Sirenen",
+          "profiles": "In diesen Profilen verwenden"
+        }
+      },
+      "wizard_sirens_test": {
+        "title": "Sirene testen?",
+        "description": "Du kannst jede Sirene einzeln **kurz und leise** testen – mit Bestätigung vor jedem Ton, wie unter Alarmgeber – Sirenen → Sirenentest. Danach kommst du hierher zurück.\n\nKein Test = einfach weiter.",
+        "menu_options": {
+          "siren_test": "Sirenentest starten",
+          "wizard_users": "Weiter zu den Benutzern"
+        }
+      },
+      "wizard_users": {
+        "title": "Benutzer",
+        "description": "Wer darf die Anlage bedienen? Vorhandene Benutzer: {users}\n\nEin **PIN** (4–8 Ziffern) ist optional. Achtung: Sobald **ein** PIN existiert, verlangt das Bedienfeld (auch Alexa) zum Unscharfschalten einen PIN – von allen. Also: allen einen PIN geben oder keinem.\n\nHeißt ein Benutzer so wie ein Home-Assistant-Konto, wird er damit verknüpft (Alarmkarte ohne PIN-Eingabe).\n\nName leer lassen = überspringen. Rechte, Gültigkeit, Karten und Bedrohungs-PIN: später unter Systemeinstellungen → Benutzer und PINs.{conflict}",
+        "data": {
+          "name": "Name",
+          "pin": "PIN (optional)"
+        }
+      },
+      "wizard_users_more": {
+        "title": "Benutzer",
+        "description": "Benutzer: {users}",
+        "menu_options": {
+          "wizard_users": "Weiteren Benutzer anlegen",
+          "wizard_controls": "Weiter"
+        }
+      },
+      "wizard_controls": {
+        "title": "Bedienteile",
+        "description": "Keypads, RFID-Karten, NFC-Aufkleber, Leser, Taster und Türschlösser richtest du unter **Systemeinstellungen → Bedienteile** ein – dort gibt es für jede Art eine eigene Anleitung. Ohne Bedienteil bedienst du Hauswacht über die App (Alarmkarte) oder per Sprachassistent.\n\nWeiter zur Zusammenfassung."
+      },
+      "wizard_chapters": {
+        "title": "Einrichtungsassistent",
+        "description": "Hauswacht ist schon (teilweise) eingerichtet. Wähle, wo du anfangen willst – von dort geht es Schritt für Schritt weiter, jeder Schritt bleibt überspringbar. Vorhandenes wird nur ergänzt.",
+        "menu_options": {
+          "wizard_intro": "Einführung: So arbeitet Hauswacht",
+          "wizard_sensors": "Neue Melder suchen",
+          "wizard_mode_zones": "Meldergruppen",
+          "wizard_mode_rules": "Auslöseregeln",
+          "wizard_profiles": "Alarmprofile",
+          "wizard_recipients": "Empfänger",
+          "wizard_sirens": "Sirenen",
+          "wizard_users": "Benutzer",
+          "wizard_new_area": "Weiteren Bereich einrichten (z. B. Einliegerwohnung)",
+          "wizard_trial": "Probelauf im Testmodus",
+          "wizard_summary": "Zusammenfassung"
+        }
+      },
+      "wizard_area_question": {
+        "title": "Gibt es getrennte Wohnungen?",
+        "description": "Die meisten Häuser brauchen **einen** Bereich. Getrennte Bereiche sind sinnvoll, wenn Teile **unabhängig** scharf geschaltet werden – z. B. eine Einliegerwohnung oder eine Praxis im Haus.",
+        "menu_options": {
+          "wizard_sensors": "Nein – ein Haus bzw. eine Wohnung",
+          "wizard_area_hint": "Ja – es gibt getrennte Bereiche"
+        }
+      },
+      "wizard_area_hint": {
+        "title": "Getrennte Bereiche",
+        "description": "Richte jetzt zuerst den **Hauptbereich** ein (z. B. das Haus).\n\nDanach startest du den Assistenten erneut: **Konfigurieren → Einrichtungsassistent → Weiteren Bereich einrichten**. Für jeden weiteren Bereich wählst du dort Melder, Meldergruppen und Profile.\n\nMehr dazu: Anleitung „Alarmprofile und Bereiche“."
+      },
+      "wizard_new_area": {
+        "title": "Weiterer Bereich",
+        "description": "Vorhandene Bereiche: {areas}\n\nEin Bereich hat ein eigenes Bedienfeld und eigene Alarmprofile, z. B. „Einliegerwohnung“. Danach wählst du Melder, Meldergruppen und Profile für diesen Bereich; die Profile bekommen den Bereich im Namen, z. B. „Abwesend (Einliegerwohnung)“.",
+        "data": {
+          "name": "Name des Bereichs"
+        }
+      },
+      "wizard_trial_ask": {
+        "title": "Probelauf",
+        "description": "Im Probelauf öffnest du Türen und Fenster und läufst an Bewegungsmeldern vorbei – Hauswacht hakt jeden Melder ab, den es erkennt.\n\nDafür muss der **Testmodus an** sein, damit nichts Echtes passiert. Der Assistent schaltet ihn nicht selbst ein: Schalte ihn auf der Karte „Hauswacht Test“ oder mit dem Schalter `switch.hauswacht_testmodus` ein und wähle dann „Testmodus ist an“.",
+        "menu_options": {
+          "wizard_trial": "Testmodus ist an – Probelauf starten",
+          "wizard_summary": "Probelauf überspringen"
+        }
+      },
+      "wizard_trial_run": {
+        "title": "Probelauf läuft",
+        "description": "Öffne jetzt nacheinander Türen und Fenster und geh an den Bewegungsmeldern vorbei. Dann **Aktualisieren**.\n\nErkannt: **{seen} von {total}**\n\n{sensors}\n\nBleibt ein Melder auf ⬜, obwohl du ihn ausgelöst hast: Batterie, Funkverbindung und Gerät in Home Assistant prüfen. Danach den Testmodus wieder ausschalten.",
+        "menu_options": {
+          "wizard_trial": "Aktualisieren",
+          "wizard_summary": "Fertig – zur Zusammenfassung"
+        }
       }
     },
     "error": {
@@ -989,7 +1299,8 @@
       "action_code_profile_missing": "Bitte ein Alarmprofil wählen.",
       "action_code_is_pin": "Dieser Code ist schon ein PIN oder Bedrohungs-PIN – bitte einen anderen wählen.",
       "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen.",
-      "control_keypad_topic": "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen."
+      "control_keypad_topic": "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen.",
+      "wizard_profile_empty": "Wähle mindestens eine Meldergruppe oder Auslöseregel – oder wähle das Profil ab."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

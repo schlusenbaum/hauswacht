@@ -6,9 +6,46 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.53.0] - 2026-11-17
+
+Getestet über die Vorabversionen 0.53.0b1 bis 0.53.0b3.
+
+### Hinzugefügt
+- **Einrichtungsassistent** ([Anleitung](docs/assistent.md),
+  [ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md)) – führt ohne Vorwissen durch
+  die Einrichtung; jeder Schritt ist überspringbar, Vorhandenes wird nur ergänzt:
+  - **Start:** Bei der Installation fragt Hauswacht „Mit dem Einrichtungsassistenten
+    (empfohlen)“ oder „Ohne Assistent“; später unter Konfigurieren → **Einrichtungsassistent**.
+    Ist schon etwas eingerichtet, gibt es eine **Kapitel-Auswahl**.
+  - Kurze **Einführung** „So arbeitet Hauswacht“.
+  - **Getrennte Bereiche?** Bei der ersten Einrichtung als Frage; weitere Bereiche über
+    „Weiteren Bereich einrichten“ mit eigenen Meldern, Gruppen und Profilen.
+  - **Melder-Vorschläge:** Türen, Fenster und Bewegungsmelder, die noch in keiner Gruppe stehen,
+    nach Etage und Raum.
+  - **Überwachungsart:** Meldergruppen, nur Auslöseregeln, beides oder später.
+  - **Meldergruppen** „Außen“ und „Innen“ mit Wahl der **Eingangstüren**; **Auslöseregeln** über
+    den Regel-Assistenten mit Rückkehr in den Assistenten.
+  - **Alarmprofile** „Abwesend“ und „Nacht“ – vorhandene Profile mit demselben Knopf werden
+    ergänzt statt verdoppelt.
+  - **Empfänger** (Handy-App vorgewählt) mit **Test-Nachricht** auf Knopfdruck.
+  - **Sirenen** eintragen und Profilen zuordnen – die **Freigabe bleibt gesperrt**; optional
+    der Sirenentest (einzeln, kurz, leise, mit Bestätigung).
+  - **Benutzer** mit optionalem PIN; Hinweis zu den **Bedienteilen**.
+  - **Probelauf im Testmodus:** Melder auslösen, Hauswacht hakt jeden erkannten ab. Der
+    Assistent bittet um den Testmodus, schaltet ihn aber nicht selbst ein.
+  - **Zusammenfassung:** was eingerichtet ist und was noch fehlt.
+  - Der Assistent gibt keine Sirenen frei, schaltet keine Geräte und sendet nur auf Knopfdruck.
+
+### Intern
+- Gemeinsame Logikschicht für Einstellungen (`core/changes/`): Meldergruppen, Alarmprofile,
+  Sirenen, Empfänger, Benutzer, PINs und Bereiche werden für Einstellungsdialog und Assistent an
+  einer Stelle geprüft und gespeichert. Der Einstellungsdialog verhält sich unverändert.
+- Versionsprüfung kennt Vorabversionen (`0.53.0b1`); CI läuft auch auf `entwicklung/**`.
+
 ### Dokumentation
-- Konzept Einrichtungsassistent und gemeinsame Logikschicht
-  ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md)); Roadmap ergänzt.
+- Neue Seite **Einrichtungsassistent** (deutsch und englisch); Installation, Übersicht der
+  Anleitung und Roadmap verweisen darauf.
+- ADR 0009 „Einrichtungsassistent und gemeinsame Logikschicht“ (umgesetzt).
 
 ## [0.52.0] - 2026-11-17
 

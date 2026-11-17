@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.52.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.53.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -59,6 +59,11 @@ Oder von Hand: Einstellungen → Geräte & Dienste → **Integration hinzufügen
 Hauswacht lässt sich nur einmal einrichten; mehrere Anlagenteile werden über
 [Bereiche](profile.md#bereiche) abgebildet.
 
+Beim Einrichten fragt Hauswacht, ob der **[Einrichtungsassistent](assistent.md)** helfen soll
+(empfohlen für den Einstieg): kurze Einführung, dann Melder, Meldergruppen oder Auslöseregeln und
+Alarmprofile – jeder Schritt überspringbar. Später startest du ihn erneut unter Konfigurieren →
+Einrichtungsassistent.
+
 ## Das Einstellungsmenü
 
 Alle Einstellungen liegen unter **Einstellungen → Geräte & Dienste → Hauswacht →
@@ -66,6 +71,7 @@ Konfigurieren**. Sie lassen sich nur ändern, wenn **alle Bereiche unscharf** si
 
 | Menü | Inhalt | Seite |
 |---|---|---|
+| **Einrichtungsassistent** | Geführt: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile | [Assistent](assistent.md) |
 | **Alarmauslösung** → Meldergruppen | Melder zusammenfassen und ihren Typ festlegen | [Melder](melder.md) |
 | **Alarmauslösung** → Auslöseregeln | Abfolgen von Meldern („Tür, dann Keller“) | [Auslöseregeln](ausloeseregeln.md) |
 | **Alarmauslösung** → Immer aktiv | Melder, die auch unscharf melden | [Melder](melder.md#immer-aktive-melder) |
@@ -91,6 +97,8 @@ So funktioniert der Dialog:
   mehr.
 
 ## In fünf Schritten zur ersten Scharfschaltung
+
+Schritt 1 und 2 erledigt auch der [Einrichtungsassistent](assistent.md). Von Hand geht es so:
 
 1. **Meldergruppe anlegen:** Alarmauslösung → Meldergruppen → Meldergruppe anlegen, z. B.
    „Außen“ mit allen Tür- und Fensterkontakten. Danach die vorgeschlagenen

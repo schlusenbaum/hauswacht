@@ -96,7 +96,6 @@ from .core.action_codes import (
     parse_action_codes,
 )
 from .core.always_active import (
-    DEFAULT_SETTLE,
     MAX_SETTLE,
     ArmOnClose,
     parse_always_active,
@@ -105,17 +104,27 @@ from .core.always_active import (
 from .core.areas import DEFAULT_ICON as DEFAULT_AREA_ICON
 from .core.areas import MAIN_AREA, multi_area, parse_areas, profile_area
 from .core.automation import (
-    ARRIVAL_AUTO_ONLY,
     ARRIVAL_MODES,
-    ARRIVAL_OFF,
-    DEFAULT_ARRIVAL_WINDOW,
-    DEFAULT_AWAY_DELAY,
     MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
     WEEKDAYS,
     AutoConfig,
     parse_automation,
 )
+from .core.changes.areas import save_area
+from .core.changes.notifications import save_notify_settings
+from .core.changes.profiles import delete_profile, save_profile
+from .core.changes.sirens import save_sirens
+from .core.changes.users import (
+    RIGHT_VALUES,
+    delete_user,
+    save_user,
+    set_area_rights,
+    set_pins,
+    unique_user_id,
+    validate_user_name,
+)
+from .core.changes.zones import delete_zone, save_zone
 from .core.controls import ALL_AREAS as CONTROL_ALL_AREAS
 from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
 from .core.controls import (
@@ -208,7 +217,6 @@ from .core.sensors import (
     parse_zones,
     resolve_zones,
     slugify,
-    zone_conflicts,
 )
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS, is_fire_tone
 from .core.siren_test import DEFAULT_SECONDS as SIREN_DEFAULT_SECONDS
@@ -227,10 +235,11 @@ from .core.state_machine import (
     OpenSensorPolicy,
     UnavailableSensorPolicy,
 )
-from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, Action, parse_users, pin_conflicts
+from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, parse_users, pin_conflicts
 from .names import display_name, plain_name
 from .runtime import device_class_of, entities_by_label
 from .siren_test import SirenTester
+from .wizard import WizardSteps
 
 SENSOR_DOMAIN = "binary_sensor"
 THRESHOLD_DOMAIN = "threshold"
@@ -284,13 +293,30 @@ CARD_TYPE = "__type__"
 CARD_WAIT_SECONDS = 120
 
 
-class HauswachtConfigFlow(ConfigFlow, domain=DOMAIN):
+class HauswachtConfigFlow(ConfigFlow, WizardSteps, domain=DOMAIN):
+    """Erstinstallation: wahlweise gleich mit dem Einrichtungsassistenten (ADR 0009)."""
+
     VERSION = 5
 
+    _wiz_options: dict[str, Any] | None = None
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        if user_input is not None:
-            return self.async_create_entry(title=NAME, data={}, options={})
-        return self.async_show_form(step_id="user")
+        return self.async_show_menu(step_id="user", menu_options=["wizard", "plain"])
+
+    async def async_step_plain(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_create_entry(title=NAME, data={}, options={})
+
+    def _wizard_options(self) -> Mapping[str, Any]:
+        return self._wiz_options or {}
+
+    async def _wizard_store(self, options: dict[str, Any], next_step: str) -> ConfigFlowResult:
+        self._wiz_options = options
+        step = getattr(self, f"async_step_{next_step}")
+        result: ConfigFlowResult = await step()
+        return result
+
+    async def _wizard_finish(self) -> ConfigFlowResult:
+        return self.async_create_entry(title=NAME, data={}, options=dict(self._wizard_options()))
 
     @staticmethod
     @callback
@@ -310,7 +336,7 @@ def _seconds(maximum: int, minimum: int = 0) -> NumberSelector:
     )
 
 
-class HauswachtOptionsFlow(OptionsFlow):
+class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     """Optionen: PIN und Profilzeiten. Nur im unscharfen Zustand änderbar."""
 
     def __init__(self) -> None:
@@ -436,8 +462,31 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self._is_disarmed():
             return self.async_abort(reason="disarm_first")
         return self._menu(
-            "init", ["triggering", "profiles", "sirens", "notifications", "system", "done"]
+            "init",
+            ["wizard", "triggering", "profiles", "sirens", "notifications", "system", "done"],
         )
+
+    # --- Einrichtungsassistent (wizard.py) -------------------------------------
+
+    def _wizard_options(self) -> Mapping[str, Any]:
+        return self.config_entry.options
+
+    async def _wizard_store(self, options: dict[str, Any], next_step: str) -> ConfigFlowResult:
+        return await self._save(options, next_step)
+
+    async def _wizard_finish(self) -> ConfigFlowResult:
+        return await self.async_step_init()
+
+    def _wizard_rules_possible(self) -> bool:
+        return True
+
+    def _wizard_siren_test_possible(self) -> bool:
+        return True
+
+    def _wizard_test_mode(self) -> bool | None:
+        if self.config_entry.state is not ConfigEntryState.LOADED:
+            return False
+        return bool(self.config_entry.runtime_data.ctx.test_mode)
 
     async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Schließen. Gespeichert wurde bereits nach jedem Formular."""
@@ -603,21 +652,11 @@ class HauswachtOptionsFlow(OptionsFlow):
         current = areas.get(area_id) if area_id else None
         errors: dict[str, str] = {}
         if user_input is not None:
-            name = str(user_input.get("name") or "").strip()
-            if not name:
-                errors["name"] = "area_name_required"
-            elif any(
-                a.name.casefold() == name.casefold() for a in areas.values() if a.area_id != area_id
-            ):
-                errors["name"] = "area_name_taken"
-            else:
-                stored = {k: dict(v) for k, v in options.get(OPT_AREAS, {}).items()}
-                new_id = area_id or slugify(name, existing=[*stored.keys(), MAIN_AREA])
-                data = stored.get(new_id, {})
-                data.update({"name": name, "icon": user_input.get("icon") or DEFAULT_AREA_ICON})
-                stored[new_id] = data
-                options[OPT_AREAS] = stored
-                return await self._save(options, "areas")
+            change = save_area(options, area_id, user_input)
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                return await self._save(change.options, "areas")
         source = user_input or {}
         return self.async_show_form(
             step_id="area_settings",
@@ -755,43 +794,13 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not profile_ids(self.config_entry.options):
             return self.async_abort(reason="no_profiles")
         if user_input is not None:
-            options = dict(self.config_entry.options)
-            options[OPT_PROFILES] = {
-                k: v for k, v in options.get(OPT_PROFILES, {}).items() if k != user_input["profile"]
-            }
-            return await self._save(options, "profiles")
+            change = delete_profile(self.config_entry.options, user_input["profile"])
+            assert change.options is not None
+            return await self._save(change.options, "profiles")
         return self.async_show_form(
             step_id="profile_delete",
             data_schema=vol.Schema({vol.Required("profile"): self._profile_selector()}),
         )
-
-    def _validate_profile(self, user_input: dict[str, Any]) -> dict[str, str]:
-        options = self.config_entry.options
-        others = [i for i in profile_infos(options) if i.profile_id != self._profile_id]
-        name = str(user_input.get("name") or "").strip()
-        errors: dict[str, str] = {}
-        if not name:
-            errors["name"] = "profile_name_required"
-        elif any(i.name.casefold() == name.casefold() for i in others):
-            errors["name"] = "profile_name_taken"
-        mode = user_input.get("panel_mode", PANEL_MODE_NONE)
-        area = user_input.get("area") or (
-            profile_area(options, self._profile_id) if self._profile_id else MAIN_AREA
-        )
-        same_area = [i for i in others if profile_area(options, i.profile_id) == area]
-        if mode != PANEL_MODE_NONE and any(i.panel_mode == mode for i in same_area):
-            errors["panel_mode"] = "panel_mode_taken"
-        chosen = resolve_zones(
-            user_input.get("zones") or [], parse_zones(options), entities_by_label(self.hass)
-        )
-        if set(user_input.get("excluded") or []) - chosen:
-            errors["excluded"] = "excluded_not_in_groups"
-        auto = user_input.get("automation") or {}
-        if auto.get("auto_arrival_mode", ARRIVAL_OFF) != ARRIVAL_OFF and not auto.get(
-            "auto_away_persons"
-        ):
-            errors["base"] = "arrival_needs_persons"
-        return errors
 
     async def async_step_profile_settings(
         self, user_input: dict[str, Any] | None = None
@@ -801,48 +810,18 @@ class HauswachtOptionsFlow(OptionsFlow):
         registered_sirens = [s for s in options.get(OPT_SIRENS, []) if isinstance(s, str)]
         errors: dict[str, str] = {}
         if user_input is not None and "name" in user_input:
-            errors = self._validate_profile(user_input)
-            if not errors:
-                profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
+            change = save_profile(
+                options,
+                self._profile_id,
+                user_input,
+                entities_by_label=entities_by_label(self.hass),
+            )
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                assert change.item_id is not None
+                options, profile_id = change.options, change.item_id
                 name = str(user_input["name"]).strip()
-                profile_id = self._profile_id or slugify(name, existing=profiles.keys())
-                mode = user_input.get("panel_mode", PANEL_MODE_NONE)
-                data = dict(profiles.get(profile_id, {}))  # unbekannte Schlüssel behalten
-                if "area" in user_input:
-                    data["area"] = user_input["area"]
-                data.update(
-                    {
-                        "name": name,
-                        "icon": user_input.get("icon") or DEFAULT_ICON,
-                        "panel_mode": None if mode == PANEL_MODE_NONE else mode,
-                        "exit_delay": int(user_input["exit_delay"]),
-                        "entry_delay": int(user_input["entry_delay"]),
-                        "reaction_time": int(user_input["reaction_time"]),
-                        "zones": [z for z in user_input.get("zones", []) if z in zones],
-                        "excluded": sorted(set(user_input.get("excluded") or [])),
-                        "rules": [
-                            r for r in user_input.get("rules", []) if r in parse_rules(options)
-                        ],
-                        "open_policy": user_input["open_policy"],
-                        "unavailable_policy": user_input["unavailable_policy"],
-                        "max_alarm_cycles": int(user_input["max_alarm_cycles"]),
-                        "tamper_triggers_alarm": bool(user_input["tamper_triggers_alarm"]),
-                        "sirens": [
-                            s for s in user_input.get("sirens", []) if s in registered_sirens
-                        ],
-                        "siren_tone": user_input["siren_tone"],
-                        "siren_volume": user_input["siren_volume"],
-                        "silent": bool(user_input["silent"]),
-                        "notify": list(user_input.get("notify", [])),
-                        "speakers": list(user_input.get("speakers") or []),
-                        **_automation_from_input(user_input.get("automation") or {}),
-                        "arm_on_close": _arm_on_close_from_input(
-                            user_input.get("arm_on_close") or {}
-                        ),
-                    }
-                )
-                profiles[profile_id] = data
-                options[OPT_PROFILES] = profiles
                 self._hints = self._profile_hints(options, profile_id)
                 armed_label = "Scharf in" if self._german() else "Armed in"
                 self._infos = [f"{armed_label} {name}: {self._armed_text(options, profile_id)}"]
@@ -1128,6 +1107,12 @@ class HauswachtOptionsFlow(OptionsFlow):
         return self.async_show_form(step_id="always_active", data_schema=schema)
 
     async def async_step_rules(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self._wiz_return:
+            # Regel aus dem Einrichtungsassistenten heraus angelegt oder abgebrochen: dorthin zurück
+            self._saved = False
+            step = getattr(self, f"async_step_{self._wiz_return}")
+            result: ConfigFlowResult = await step()
+            return result
         saved, self._saved = self._saved, False
         return self.async_show_menu(
             step_id="rules",
@@ -1534,34 +1519,20 @@ class HauswachtOptionsFlow(OptionsFlow):
     def _save_zone(
         self, zone_id: str | None, user_input: dict[str, Any]
     ) -> tuple[dict[str, Any] | None, dict[str, str], dict[str, str]]:
-        name = str(user_input.get("name") or "").strip()
-        entities = [str(e) for e in user_input.get("entities") or []]
-        label = user_input.get("label") or None
-        errors: dict[str, str] = {}
-        if not name:
-            errors["name"] = "zone_name_required"
-        elif not entities and not label:
-            errors["base"] = "zone_empty"
-        if errors:
-            return None, errors, {}
-        options = dict(self.config_entry.options)
-        zones = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
-        new_id = zone_id or slugify(name, existing=zones.keys())
-        new_zone = Zone(zone_id=new_id, name=name, entities=frozenset(entities), label=label)
-        conflicts = zone_conflicts(new_zone, parse_zones(options), entities_by_label(self.hass))
-        if conflicts:
+        change = save_zone(
+            self.config_entry.options,
+            zone_id,
+            user_input,
+            entities_by_label=entities_by_label(self.hass),
+        )
+        if not change.ok:
+            conflicts = change.details.get("conflicts") or {}
             text = ", ".join(
                 f"{display_name(self.hass, entity_id)} ({zone})"
                 for entity_id, zone in conflicts.items()
             )
-            return None, {"base": "zone_overlap"}, {"conflicts": text}
-        zones[new_id] = {
-            "name": name,
-            "entities": sorted(set(entities)),
-            "label": label,
-        }
-        options[OPT_ZONES] = zones
-        return options, {}, {}
+            return None, dict(change.errors), {"conflicts": text} if conflicts else {}
+        return change.options, {}, {}
 
     async def async_step_zone_add(
         self, user_input: dict[str, Any] | None = None
@@ -1668,17 +1639,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not zones:
             return self.async_abort(reason="no_zones")
         if user_input is not None:
-            zone_id = user_input["zone"]
-            options = dict(self.config_entry.options)
-            options[OPT_ZONES] = {
-                k: v for k, v in options.get(OPT_ZONES, {}).items() if k != zone_id
-            }
-            profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
-            for settings in profiles.values():
-                if "zones" in settings:
-                    settings["zones"] = [z for z in settings["zones"] if z != zone_id]
-            options[OPT_PROFILES] = profiles
-            return await self._save(options, "zones")
+            change = delete_zone(self.config_entry.options, user_input["zone"])
+            assert change.options is not None
+            return await self._save(change.options, "zones")
         return self.async_show_form(
             step_id="zone_delete",
             data_schema=vol.Schema({vol.Required("zone"): _zone_selector(zones)}),
@@ -1721,6 +1684,12 @@ class HauswachtOptionsFlow(OptionsFlow):
     # --- Sirenen -----------------------------------------------------------
 
     async def async_step_sirens(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self._wiz_return:
+            # Sirenentest aus dem Einrichtungsassistenten heraus: dorthin zurück
+            self._saved = False
+            step = getattr(self, f"async_step_{self._wiz_return}")
+            result: ConfigFlowResult = await step()
+            return result
         return self._menu(
             "sirens",
             [
@@ -1741,32 +1710,22 @@ class HauswachtOptionsFlow(OptionsFlow):
         allow_switch = bool(options.get(OPT_SIRENS_ALLOW_SWITCH, False))
         errors: dict[str, str] = {}
         if user_input is not None:
-            enable = bool(user_input.get(OPT_SIRENS_HARDWARE_ENABLED, False))
-            want_switch = bool(user_input.get(OPT_SIRENS_ALLOW_SWITCH, False))
-            if enable and not was_enabled and not user_input.get("confirm_hardware"):
-                errors["base"] = "confirm_hardware_required"
-            else:
-                sirens = sorted(set(user_input.get(OPT_SIRENS) or []))
-                if not want_switch:
-                    # Experten-Funktion aus: Schalter fallen aus der Liste
-                    sirens = [s for s in sirens if not s.startswith("switch.")]
-                options[OPT_SIRENS] = sirens
-                options[OPT_SIRENS_HARDWARE_ENABLED] = enable
-                options[OPT_SIRENS_ALLOW_SWITCH] = want_switch
-                tones = {
-                    k: v for k, v in dict(options.get(OPT_SIREN_TONES, {})).items() if k in sirens
-                }
-                options[OPT_SIREN_TONES] = tones
-                options[OPT_SIREN_FIRE_TONE_OK] = [
-                    x for x in options.get(OPT_SIREN_FIRE_TONE_OK, []) if x in sirens
-                ]
-                # Aus Profilen entfernen, was nicht mehr registriert ist
-                profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
-                for settings in profiles.values():
-                    if "sirens" in settings:
-                        settings["sirens"] = [s for s in settings["sirens"] if s in sirens]
-                options[OPT_PROFILES] = profiles
-                if want_switch and not allow_switch:
+            change = save_sirens(
+                options,
+                {
+                    **user_input,
+                    OPT_SIRENS: user_input.get(OPT_SIRENS) or [],
+                    OPT_SIRENS_HARDWARE_ENABLED: bool(
+                        user_input.get(OPT_SIRENS_HARDWARE_ENABLED, False)
+                    ),
+                    OPT_SIRENS_ALLOW_SWITCH: bool(user_input.get(OPT_SIRENS_ALLOW_SWITCH, False)),
+                },
+            )
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                options = change.options
+                if options[OPT_SIRENS_ALLOW_SWITCH] and not allow_switch:
                     # Gerade eingeschaltet: Formular erneut zeigen, jetzt mit Schaltern
                     self.hass.config_entries.async_update_entry(self.config_entry, options=options)
                     return await self.async_step_siren_settings()
@@ -2383,33 +2342,9 @@ class HauswachtOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         options = dict(self.config_entry.options)
         if user_input is not None:
-            options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
-            options[OPT_NOTIFY_IN_TEST_MODE] = bool(user_input.get(OPT_NOTIFY_IN_TEST_MODE))
-            options[OPT_PUSH_DISARM] = bool(user_input.get(OPT_PUSH_DISARM))
-            options[OPT_CRITICAL_ALERTS] = bool(user_input.get(OPT_CRITICAL_ALERTS, True))
-            options[OPT_DURESS_NOTIFY] = list(user_input.get(OPT_DURESS_NOTIFY) or [])
-            events: dict[str, dict[str, Any]] = {}
-            for event in NotifyEvent:
-                stored = user_input.get(f"event_{event.value}")
-                if isinstance(stored, dict):
-                    # Eigene Texte (title/message) behalten
-                    events[event.value] = {
-                        **options.get(OPT_EVENTS, {}).get(event.value, {}),
-                        "enabled": bool(stored.get("enabled")),
-                        "targets": list(stored.get("targets") or []),
-                    }
-                elif event.value in options.get(OPT_EVENTS, {}):
-                    events[event.value] = options[OPT_EVENTS][event.value]
-            options[OPT_EVENTS] = events
-            reminder = user_input.get("reminder")
-            if isinstance(reminder, dict):
-                options[OPT_REMINDER_PERSONS] = list(reminder.get(OPT_REMINDER_PERSONS) or [])
-                profile = reminder.get(OPT_REMINDER_PROFILE)
-                if profile:
-                    options[OPT_REMINDER_PROFILE] = profile
-                else:
-                    options.pop(OPT_REMINDER_PROFILE, None)
-                options[OPT_REMINDER_DELAY] = int(reminder.get(OPT_REMINDER_DELAY) or 15)
+            change = save_notify_settings(options, user_input)
+            assert change.options is not None
+            options = change.options
             return await self._save(options, "notifications")
 
         services = self._notify_services()
@@ -2511,11 +2446,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self.config_entry.options.get(OPT_USERS):
             return self.async_abort(reason="no_users")
         if user_input is not None:
-            options = dict(self.config_entry.options)
-            options[OPT_USERS] = {
-                k: v for k, v in options.get(OPT_USERS, {}).items() if k != user_input["user"]
-            }
-            return await self._save(options, "users")
+            change = delete_user(self.config_entry.options, user_input["user"])
+            assert change.options is not None
+            return await self._save(change.options, "users")
         return self.async_show_form(
             step_id="user_delete",
             data_schema=vol.Schema({vol.Required("user"): self._user_selector()}),
@@ -2547,37 +2480,24 @@ class HauswachtOptionsFlow(OptionsFlow):
         placeholders = {"conflict": ""}
         if user_input is not None:
             name = str(user_input.get("name") or "").strip()
-            errors, conflict = await self._validate_user(name, ("", ""), user_id, stored_all)
-            placeholders["conflict"] = conflict
+            errors = validate_user_name(options, user_id, name)
             if not errors:
-                data = dict(current)
-                data.update(
+                change = save_user(
+                    options,
+                    user_id,
                     {
-                        "name": name,
-                        "active": bool(user_input.get("active", True)),
-                        "can_arm": bool(user_input.get("can_arm", True)),
-                        "can_disarm": bool(user_input.get("can_disarm", True)),
-                        "can_end_alarm": bool(user_input.get("can_end_alarm", True)),
-                        "can_force_arm": bool(user_input.get("can_force_arm", True)),
-                        "ha_user": user_input.get("ha_user") or await self._ha_user_by_name(name),
-                        "card_pin": bool(user_input.get("card_pin", False)),
+                        **user_input,
                         "valid_from": _to_iso(user_input.get("valid_from")),
                         "valid_until": _to_iso(user_input.get("valid_until")),
-                    }
+                    },
+                    ha_user=user_input.get("ha_user") or await self._ha_user_by_name(name),
                 )
-                scope = user_input.get("rights", RIGHTS_ALL)
-                if scope == RIGHTS_ALL:
-                    data["rights"] = RIGHTS_ALL
-                    data.pop("areas", None)
-                    data.pop("area_rights", None)
-                new_id = user_id or _unique_id(name, stored_all)
-                stored_all[new_id] = data
-                new_options = dict(options)
-                new_options[OPT_USERS] = stored_all
-                if scope == RIGHTS_PER_AREA:
-                    self._user_pending = (new_id, new_options)
+                assert change.options is not None
+                assert change.item_id is not None
+                if user_input.get("rights", RIGHTS_ALL) == RIGHTS_PER_AREA:
+                    self._user_pending = (change.item_id, change.options)
                     return await self.async_step_user_area_rights()
-                return await self._save(new_options, "users")
+                return await self._save(change.options, "users")
 
         placeholders["status"] = self._credential_status(current)
         schema = await self._user_schema(current)
@@ -2598,17 +2518,14 @@ class HauswachtOptionsFlow(OptionsFlow):
         data = dict(users[user_id])
         areas = parse_areas(options)
         if user_input is not None:
-            data["rights"] = RIGHTS_PER_AREA
-            data["area_rights"] = {
-                area.area_id: [a for a in user_input.get(area.name, []) if a in RIGHT_VALUES]
-                for area in areas.values()
-            }
-            data.pop("areas", None)
-            users[user_id] = data
-            new_options = dict(options)
-            new_options[OPT_USERS] = users
+            change = set_area_rights(
+                options,
+                user_id,
+                {area.area_id: user_input.get(area.name, []) for area in areas.values()},
+            )
+            assert change.options is not None
             self._user_pending = None
-            return await self._save(new_options, "users")
+            return await self._save(change.options, "users")
         current = _area_rights_defaults(data, list(areas))
         fields: dict[Any, Any] = {
             vol.Optional(area.name, default=current[area.area_id]): SelectSelector(
@@ -2713,7 +2630,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 return await self._save(options, "action_codes")
             data, errors, conflict = await self._validate_action_code(user_input, code_id, stored)
             if not errors:
-                stored[code_id or _unique_id(data["name"], stored)] = data
+                stored[code_id or unique_user_id(data["name"], stored)] = data
                 options[OPT_ACTION_CODES] = stored
                 self._action_code = None
                 return await self._save(options, "action_codes")
@@ -3112,27 +3029,14 @@ class HauswachtOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         conflict = ""
         if user_input is not None:
-            new_pin = str(user_input.get("new_pin") or "").strip()
-            new_duress = str(user_input.get("new_duress_pin") or "").strip()
-            errors, conflict = await self._validate_user(
-                name, (new_pin, new_duress), user_id, stored_all
+            change = await self.hass.async_add_executor_job(
+                set_pins, self.config_entry.options, user_id, user_input
             )
-            if not errors:
-                if user_input.get("remove_pin"):
-                    data.pop("pin_salt", None)
-                    data.pop("pin_digest", None)
-                elif new_pin:
-                    hashed = await self.hass.async_add_executor_job(hash_pin, new_pin)
-                    data["pin_salt"], data["pin_digest"] = hashed.salt, hashed.digest
-                if user_input.get("remove_duress_pin"):
-                    data.pop("duress_salt", None)
-                    data.pop("duress_digest", None)
-                elif new_duress:
-                    hashed = await self.hass.async_add_executor_job(hash_pin, new_duress)
-                    data["duress_salt"], data["duress_digest"] = hashed.salt, hashed.digest
-                stored_all[user_id] = data
-                options[OPT_USERS] = stored_all
-                return await self._save(options, "pins")
+            errors = dict(change.errors)
+            conflict = str(change.details.get("conflict") or "")
+            if change.ok:
+                assert change.options is not None
+                return await self._save(change.options, "pins")
         schema = vol.Schema(
             {
                 vol.Optional("new_pin"): TextSelector(
@@ -3634,47 +3538,6 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
         return self.async_show_form(step_id="infrastructure", data_schema=schema)
 
-    async def _validate_user(
-        self, name: str, pins: tuple[str, str], user_id: str | None, stored_all: dict[str, Any]
-    ) -> tuple[dict[str, str], str]:
-        new_pin, new_duress = pins
-        errors: dict[str, str] = {}
-        conflict = ""
-        if not name:
-            errors["name"] = "user_name_required"
-        elif any(
-            str(d.get("name", "")).casefold() == name.casefold()
-            for uid, d in stored_all.items()
-            if uid != user_id
-        ):
-            errors["name"] = "user_name_taken"
-        if new_pin and not is_valid_pin_format(new_pin):
-            errors["new_pin"] = "invalid_pin"
-        if new_duress and not is_valid_pin_format(new_duress):
-            errors["new_duress_pin"] = "invalid_pin"
-        if new_pin and new_duress and new_pin == new_duress:
-            errors["new_duress_pin"] = "duress_equals_pin"
-        codes = parse_action_codes(self.config_entry.options)
-        for field, value in (("new_pin", new_pin), ("new_duress_pin", new_duress)):
-            if value and field not in errors and is_action_code(codes, value):
-                errors[field] = "pin_is_action_code"
-        users = parse_users(self.config_entry.options)
-        if not errors and new_pin:
-            found = await self.hass.async_add_executor_job(
-                lambda: pin_conflicts(new_pin, users, kind="pin")
-            )
-            if found:
-                errors["new_pin"] = "pin_is_duress"
-                conflict = ", ".join(found)
-        if not errors and new_duress:
-            found = await self.hass.async_add_executor_job(
-                lambda: pin_conflicts(new_duress, users, kind="duress", exclude=user_id)
-            )
-            if found:
-                errors["new_duress_pin"] = "duress_conflict"
-                conflict = ", ".join(found)
-        return errors, conflict
-
     def _new_card_options(self) -> list[SelectOptionDict]:
         """Zuletzt gelesene unbekannte Karten zum Anlernen ("neu, gelesen an … um …")."""
         lang = "de" if self._german() else "en"
@@ -3915,34 +3778,6 @@ def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:
     )
 
 
-def _arm_on_close_from_input(data: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "enabled": bool(data.get("enabled", False)),
-        "doors": [d for d in data.get("doors") or [] if isinstance(d, str)],
-        "settle": int(data.get("settle") or DEFAULT_SETTLE),
-    }
-
-
-def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:
-    mode = data.get("auto_arrival_mode")
-    if mode not in ARRIVAL_MODES:
-        mode = ARRIVAL_AUTO_ONLY if data.get("auto_disarm_on_arrival") else ARRIVAL_OFF
-    return {
-        "auto_arm_time": data.get("auto_arm_time") or None,
-        "auto_disarm_time": data.get("auto_disarm_time") or None,
-        "auto_weekdays": [d for d in data.get("auto_weekdays", []) if d in WEEKDAYS],
-        "auto_away_persons": list(data.get("auto_away_persons") or []),
-        "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
-        "auto_arrival_mode": mode,
-        "auto_arrival_window": int(data.get("auto_arrival_window") or DEFAULT_ARRIVAL_WINDOW),
-        # alter Schalter (bis 0.41) passend mitführen
-        "auto_disarm_on_arrival": mode == ARRIVAL_AUTO_ONLY,
-    }
-
-
-RIGHT_VALUES = (Action.ARM.value, Action.DISARM.value, Action.END_ALARM.value)
-
-
 def _tag_input(value: Any) -> list[str]:
     """Karten aus der Auswahl (Liste) oder – wie früher – als Text mit Komma."""
     items = value if isinstance(value, list) else str(value or "").split(",")
@@ -4083,11 +3918,3 @@ def _suggested_local(value: Any) -> dict[str, Any]:
     if parsed is None:
         return {}
     return {"suggested_value": dt_util.as_local(parsed).strftime("%Y-%m-%d %H:%M:%S")}
-
-
-def _unique_id(name: str, existing: dict[str, Any]) -> str:
-    base = "".join(c if c.isalnum() else "_" for c in name.casefold()).strip("_") or "benutzer"
-    candidate, n = base, 2
-    while candidate in existing:
-        candidate, n = f"{base}_{n}", n + 1
-    return candidate
