@@ -34,9 +34,15 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
     TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 
 from .const import DOMAIN
+from .core.changes.notifications import set_general_recipients
+from .core.changes.profiles import save_profile
+from .core.changes.sirens import save_sirens
+from .core.changes.users import save_user, set_pins
 from .core.profiles import MAX_DELAY, profile_infos, profile_settings
 from .core.rules import parse_rules
 from .core.sensor_types import MONITORED_DOMAINS, SensorType, parse_types, sensor_type
@@ -104,6 +110,7 @@ class WizardSteps:
     _wiz_sensors: list[str] | None = None
     _wiz_mode: str = MODE_ZONES
     _wiz_return: str | None = None
+    _wiz_test_result: str = ""
 
     # --- von der jeweiligen Flow-Klasse bereitgestellt ------------------------
 
@@ -207,7 +214,7 @@ class WizardSteps:
                 "wizard_mode_zones",
                 "wizard_mode_rules",
                 "wizard_mode_both",
-                "wizard_summary",
+                "wizard_recipients",
             ],
         )
 
@@ -353,7 +360,7 @@ class WizardSteps:
         zones = parse_zones(options)
         rules = parse_rules(options)
         if not zones and not rules:
-            return await self.async_step_wizard_summary()
+            return await self.async_step_wizard_recipients()
         errors: dict[str, str] = {}
         if user_input is not None:
             current: dict[str, Any] = dict(options)
@@ -385,7 +392,7 @@ class WizardSteps:
                 assert change.options is not None
                 current = change.options
             if not errors:
-                return await self._wizard_store(current, "wizard_summary")
+                return await self._wizard_store(current, "wizard_recipients")
         existing = {i.panel_mode: i.profile_id for i in profile_infos(options)}
         away_id = existing.get(AWAY)
         times = profile_settings(options, away_id) if away_id else None
@@ -437,6 +444,221 @@ class WizardSteps:
             step_id="wizard_profiles", data_schema=vol.Schema(fields), errors=errors
         )
 
+    # --- Empfänger (Teil 2) -------------------------------------------------------
+
+    def _notify_choices(self) -> list[str]:
+        services = self.hass.services.async_services_for_domain("notify")
+        return sorted(
+            s for s in services if s not in {"send_message", "notify", "persistent_notification"}
+        )
+
+    async def async_step_wizard_recipients(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = self._wizard_options()
+        choices = self._notify_choices()
+        if user_input is not None:
+            chosen = [t for t in user_input.get("recipients") or [] if t in choices]
+            if not chosen:
+                return await self.async_step_wizard_sirens()
+            change = set_general_recipients(options, chosen)
+            assert change.options is not None
+            return await self._wizard_store(change.options, "wizard_recipients_test")
+        current = [t for t in options.get("notify_system") or [] if t in choices]
+        default = current or [c for c in choices if c.startswith("mobile_app_")]
+        schema = vol.Schema(
+            {
+                vol.Optional("recipients", default=default): SelectSelector(
+                    SelectSelectorConfig(
+                        options=choices, multiple=True, mode=SelectSelectorMode.LIST
+                    )
+                )
+            }
+        )
+        return self.async_show_form(step_id="wizard_recipients", data_schema=schema)
+
+    async def async_step_wizard_recipients_test(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        targets = list(self._wizard_options().get("notify_system") or [])
+        return self.async_show_menu(
+            step_id="wizard_recipients_test",
+            menu_options=["wizard_send_test", "wizard_sirens"],
+            description_placeholders={
+                "recipients": ", ".join(targets) or "–",
+                "result": getattr(self, "_wiz_test_result", ""),
+            },
+        )
+
+    async def async_step_wizard_send_test(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Test-Nachricht – nur auf ausdrücklichen Knopfdruck."""
+        de = self._de()
+        title = "Hauswacht"
+        message = (
+            "Test-Nachricht aus dem Einrichtungsassistenten. Kommt sie an, erreichen dich auch "
+            "Alarm-Nachrichten."
+            if de
+            else "Test message from the setup wizard. If it arrives, alarm messages reach you too."
+        )
+        ok: list[str] = []
+        failed_targets: list[str] = []
+        for target in self._wizard_options().get("notify_system") or []:
+            try:
+                await self.hass.services.async_call(
+                    "notify", target, {"title": title, "message": message}, blocking=True
+                )
+                ok.append(target)
+            except Exception:
+                failed_targets.append(target)
+        lines = []
+        if ok:
+            lines.append(("✅ Gesendet an: " if de else "✅ Sent to: ") + ", ".join(ok))
+        if failed_targets:
+            lines.append(("⚠️ Fehlgeschlagen: " if de else "⚠️ Failed: ") + ", ".join(failed_targets))
+        self._wiz_test_result = "\n\n" + "\n".join(lines) if lines else ""
+        return await self.async_step_wizard_recipients_test()
+
+    # --- Sirenen (Teil 2) ----------------------------------------------------------
+
+    def _wizard_siren_test_possible(self) -> bool:
+        """Sirenentest gibt es nur im Einstellungsdialog (braucht die laufende Anlage)."""
+        return False
+
+    async def async_step_wizard_sirens(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._wiz_test_result = ""
+        options = self._wizard_options()
+        profiles = {i.profile_id: i.name for i in profile_infos(options)}
+        if user_input is not None:
+            chosen = [str(s) for s in user_input.get("sirens") or []]
+            if not chosen:
+                return await self.async_step_wizard_users()
+            change = save_sirens(options, {"sirens": chosen})
+            assert change.options is not None
+            current = change.options
+            for profile_id in user_input.get("profiles") or []:
+                if profile_id not in profiles:
+                    continue
+                stored = current.get("profiles", {}).get(profile_id, {})
+                merged = list(dict.fromkeys([*stored.get("sirens", []), *chosen]))
+                updated = save_profile(
+                    current,
+                    profile_id,
+                    {"name": profiles[profile_id], "sirens": merged},
+                    partial=True,
+                )
+                if updated.ok:
+                    assert updated.options is not None
+                    current = updated.options
+            nxt = "wizard_sirens_test" if self._wizard_siren_test_possible() else "wizard_users"
+            return await self._wizard_store(current, nxt)
+        found = sorted(self.hass.states.async_entity_ids("siren"))
+        default = list(options.get("sirens") or []) or found
+        schema = vol.Schema(
+            {
+                vol.Optional("sirens", default=default): EntitySelector(
+                    EntitySelectorConfig(domain="siren", multiple=True)
+                ),
+                vol.Optional("profiles", default=list(profiles)): SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SelectOptionDict(value=pid, label=name)
+                            for pid, name in profiles.items()
+                        ],
+                        multiple=True,
+                        mode=SelectSelectorMode.LIST,
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(step_id="wizard_sirens", data_schema=schema)
+
+    async def async_step_wizard_sirens_test(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        # Nach dem Sirenentest kommt der Einstellungsdialog hierher zurück
+        self._wiz_return = "wizard_sirens_test"
+        return self.async_show_menu(
+            step_id="wizard_sirens_test", menu_options=["siren_test", "wizard_users"]
+        )
+
+    # --- Benutzer (Teil 2) ---------------------------------------------------------
+
+    async def _ha_account(self, name: str) -> str | None:
+        for user in await self.hass.auth.async_get_users():
+            if (
+                user.is_active
+                and not user.system_generated
+                and (user.name or "").casefold() == (name.casefold())
+            ):
+                return user.id
+        return None
+
+    async def async_step_wizard_users(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._wiz_return = None
+        options = self._wizard_options()
+        errors: dict[str, str] = {}
+        placeholders = {"users": "", "conflict": ""}
+        if user_input is not None:
+            name = str(user_input.get("name") or "").strip()
+            if not name:
+                return await self.async_step_wizard_controls()
+            change = save_user(options, None, {"name": name}, ha_user=await self._ha_account(name))
+            errors = dict(change.errors)
+            pin = str(user_input.get("pin") or "").strip()
+            if change.ok and pin:
+                assert change.options is not None
+                assert change.item_id is not None
+                with_pin = await self.hass.async_add_executor_job(
+                    set_pins, change.options, change.item_id, {"new_pin": pin}
+                )
+                errors = {"pin" if k == "new_pin" else k: v for k, v in with_pin.errors.items()}
+                placeholders["conflict"] = str(with_pin.details.get("conflict") or "")
+                change = with_pin
+            if not errors:
+                assert change.options is not None
+                return await self._wizard_store(change.options, "wizard_users_more")
+        names = [str(d.get("name")) for d in (options.get("users") or {}).values()]
+        placeholders["users"] = ", ".join(names) or "–"
+        schema = vol.Schema(
+            {
+                vol.Optional("name"): TextSelector(),
+                vol.Optional("pin"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="wizard_users",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
+    async def async_step_wizard_users_more(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        names = [str(d.get("name")) for d in (self._wizard_options().get("users") or {}).values()]
+        return self.async_show_menu(
+            step_id="wizard_users_more",
+            menu_options=["wizard_users", "wizard_controls"],
+            description_placeholders={"users": ", ".join(names) or "–"},
+        )
+
+    # --- Bedienteile (Teil 2, nur Hinweis) -----------------------------------------
+
+    async def async_step_wizard_controls(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            return await self.async_step_wizard_summary()
+        return self.async_show_form(step_id="wizard_controls", data_schema=vol.Schema({}))
+
     # --- Zusammenfassung ---------------------------------------------------------
 
     def _summary_text(self) -> str:
@@ -473,6 +695,14 @@ class WizardSteps:
                 "(Benachrichtigungen → Einstellungen)."
                 if de
                 else "No recipients – an alarm reaches nobody yet (Notifications → Settings)."
+            )
+        if result.sirens and not result.sirens_released:
+            todo.append(
+                "Sirenen eingetragen, aber noch nicht freigegeben – bewusst unter Alarmgeber – "
+                "Sirenen → Sirenen und Freigabe, wenn alles passt."
+                if de
+                else "Sirens added but not released yet – deliberately under Alarm devices – "
+                "sirens → Sirens and release, once everything works."
             )
         if not result.sirens:
             todo.append(

@@ -206,6 +206,7 @@ class Status:
     recipients: bool
     sirens: bool
     users: bool
+    sirens_released: bool = False
 
 
 def status(options: Mapping[str, Any]) -> Status:
@@ -231,4 +232,5 @@ def status(options: Mapping[str, Any]) -> Status:
         recipients=recipients,
         sirens=bool(options.get("sirens")),
         users=bool(options.get("users")),
+        sirens_released=bool(options.get("sirens_hardware_enabled")),
     )

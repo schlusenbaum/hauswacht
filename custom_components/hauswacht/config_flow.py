@@ -479,6 +479,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     def _wizard_rules_possible(self) -> bool:
         return True
 
+    def _wizard_siren_test_possible(self) -> bool:
+        return True
+
     async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Schließen. Gespeichert wurde bereits nach jedem Formular."""
         return self.async_create_entry(data=dict(self.config_entry.options))
@@ -1685,6 +1688,12 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     # --- Sirenen -----------------------------------------------------------
 
     async def async_step_sirens(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self._wiz_return:
+            # Sirenentest aus dem Einrichtungsassistenten heraus: dorthin zurück
+            self._saved = False
+            step = getattr(self, f"async_step_{self._wiz_return}")
+            result: ConfigFlowResult = await step()
+            return result
         return self._menu(
             "sirens",
             [

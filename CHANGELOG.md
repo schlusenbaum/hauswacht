@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.53.0b2] - 2026-11-17
+
+Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.
+
+### Hinzugefügt
+- **Einrichtungsassistent, Teil 2:**
+  - **Empfänger:** Handys mit der Home-Assistant-App vorgewählt; danach **Test-Nachricht** nur
+    auf Knopfdruck, mit Ergebnis je Empfänger.
+  - **Sirenen:** alle Sirenen aus Home Assistant vorgeschlagen, wahlweise gleich in Profilen
+    verwenden. Die **Freigabe bleibt gesperrt** – der Assistent gibt nichts frei. Im
+    Einstellungsdialog danach optional der **Sirenentest** (einzeln, kurz, leise, mit
+    Bestätigung) mit Rückkehr in den Assistenten.
+  - **Benutzer** mit optionalem PIN, beliebig viele nacheinander; Verknüpfung mit dem
+    Home-Assistant-Konto gleichen Namens.
+  - **Bedienteile:** Hinweis, wo sie eingerichtet werden.
+  - Zusammenfassung nennt zusätzlich „Sirenen eingetragen, aber noch nicht freigegeben“.
+  - „Später festlegen“ bei der Überwachungsart führt jetzt weiter zu Empfängern und Sirenen.
+
 ## [0.53.0b1] - 2026-11-17
 
 Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.

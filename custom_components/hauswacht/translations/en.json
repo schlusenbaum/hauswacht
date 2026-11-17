@@ -11,7 +11,7 @@
       },
       "wizard": {
         "title": "Setup wizard",
-        "description": "The wizard guides you step by step through the setup: sensors, sensor groups or trigger rules, alarm profiles.\n\n**You can skip every step** and do it later – in the settings dialog or by starting the wizard again. Whatever is already set up is kept; the wizard only adds.\n\nRecipients, sirens and users will follow in a later version of the wizard; until then you set them up in the settings dialog.",
+        "description": "The wizard guides you step by step through the setup: sensors, sensor groups or trigger rules, alarm profiles, recipients, sirens and users.\n\n**You can skip every step** and do it later – in the settings dialog or by starting the wizard again. Whatever is already set up is kept; the wizard only adds.\n\nThe wizard **releases no sirens** and switches nothing.",
         "menu_options": {
           "wizard_intro": "Short introduction: how Hauswacht works",
           "wizard_sensors": "Skip the introduction – start right away"
@@ -30,12 +30,12 @@
       },
       "wizard_mode": {
         "title": "How should monitoring work?",
-        "description": "- **Sensor groups (simple):** every sensor in a group triggers an alarm in an armed profile. Just right for most homes.\n- **Trigger rules only:** alarm only when several things come together. For advanced users.\n- **Both:** groups for doors and windows, rules in addition, e.g. for motion sensors.\n- **Later:** set up nothing now.",
+        "description": "- **Sensor groups (simple):** every sensor in a group triggers an alarm in an armed profile. Just right for most homes.\n- **Trigger rules only:** alarm only when several things come together. For advanced users.\n- **Both:** groups for doors and windows, rules in addition, e.g. for motion sensors.\n- **Later:** create no groups and rules now, continue with recipients and sirens.",
         "menu_options": {
           "wizard_mode_zones": "With sensor groups (recommended)",
           "wizard_mode_rules": "With trigger rules only",
           "wizard_mode_both": "With sensor groups and trigger rules",
-          "wizard_summary": "Decide later – go to the summary"
+          "wizard_recipients": "Decide later – continue"
         }
       },
       "wizard_groups": {
@@ -70,6 +70,49 @@
       "wizard_summary": {
         "title": "Summary",
         "description": "{summary}\n\nWhatever is missing here you can add in the settings dialog, or start the wizard again later. The system starts **disarmed**."
+      },
+      "wizard_recipients": {
+        "title": "Who gets notified?",
+        "description": "These recipients get all messages from Hauswacht – alarm, armed, disarmed, faults – as long as an event has no recipients of its own. Phones with the Home Assistant app (`mobile_app_…`) are preselected.\n\nDetails (recipients per event, custom texts, announcements) you set later under Notifications.\n\nSelect nothing = skip.",
+        "data": {
+          "recipients": "Recipients"
+        }
+      },
+      "wizard_recipients_test": {
+        "title": "Test message",
+        "description": "Recipients: {recipients}\n\nDo you want to check that messages arrive? The test message is only sent when you press the button.{result}",
+        "menu_options": {
+          "wizard_send_test": "Send test message",
+          "wizard_sirens": "Continue to the sirens"
+        }
+      },
+      "wizard_sirens": {
+        "title": "Sirens",
+        "description": "Which sirens should sound on a burglary? Hauswacht suggests all sirens in Home Assistant.\n\n**Important:** real siren control stays **locked** until you deliberately release it (Alarm devices – sirens → Sirens and release). Until then – and in test mode – no siren sounds. The wizard releases nothing.\n\n**Use in these profiles:** the chosen sirens are added to the sirens of these profiles.\n\nSelect nothing = skip.",
+        "data": {
+          "sirens": "Sirens",
+          "profiles": "Use in these profiles"
+        }
+      },
+      "wizard_users": {
+        "title": "Users",
+        "description": "Who may operate the system? Existing users: {users}\n\nA **PIN** (4–8 digits) is optional. Note: as soon as **one** PIN exists, the panel (and Alexa) requires a PIN to disarm – from everyone. So: give everyone a PIN or no one.\n\nIf a user has the same name as a Home Assistant account, it is linked to it (alarm card without PIN entry).\n\nLeave the name empty = skip. Rights, validity, cards and duress PIN: later under System settings → Users and PINs.{conflict}",
+        "data": {
+          "name": "Name",
+          "pin": "PIN (optional)"
+        }
+      },
+      "wizard_users_more": {
+        "title": "Users",
+        "description": "Users: {users}",
+        "menu_options": {
+          "wizard_users": "Add another user",
+          "wizard_controls": "Continue"
+        }
+      },
+      "wizard_controls": {
+        "title": "Control devices",
+        "description": "Keypads, RFID cards, NFC stickers, readers, buttons and door locks are set up under **System settings → Control devices** – there is a guide for each kind. Without a control device you operate Hauswacht via the app (alarm card) or a voice assistant.\n\nContinue to the summary."
       }
     },
     "abort": {
@@ -83,7 +126,12 @@
       "profile_name_taken": "A profile with this name already exists.",
       "panel_mode_taken": "This button is already assigned to another profile.",
       "excluded_not_in_groups": "Excluded sensors must come from the selected sensor groups.",
-      "wizard_profile_empty": "Choose at least one sensor group or trigger rule – or untick the profile."
+      "wizard_profile_empty": "Choose at least one sensor group or trigger rule – or untick the profile.",
+      "user_name_taken": "This name already exists.",
+      "user_name_required": "Please enter a name.",
+      "invalid_pin": "The PIN must consist of 4 to 8 digits.",
+      "pin_is_action_code": "This PIN is already an action code – please choose another one.",
+      "pin_is_duress": "This PIN is already a duress PIN ({conflict})."
     }
   },
   "options": {
@@ -1012,7 +1060,7 @@
       },
       "wizard": {
         "title": "Setup wizard",
-        "description": "The wizard guides you step by step through the setup: sensors, sensor groups or trigger rules, alarm profiles.\n\n**You can skip every step** and do it later – in the settings dialog or by starting the wizard again. Whatever is already set up is kept; the wizard only adds.\n\nRecipients, sirens and users will follow in a later version of the wizard; until then you set them up in the settings dialog.",
+        "description": "The wizard guides you step by step through the setup: sensors, sensor groups or trigger rules, alarm profiles, recipients, sirens and users.\n\n**You can skip every step** and do it later – in the settings dialog or by starting the wizard again. Whatever is already set up is kept; the wizard only adds.\n\nThe wizard **releases no sirens** and switches nothing.",
         "menu_options": {
           "wizard_intro": "Short introduction: how Hauswacht works",
           "wizard_sensors": "Skip the introduction – start right away"
@@ -1031,12 +1079,12 @@
       },
       "wizard_mode": {
         "title": "How should monitoring work?",
-        "description": "- **Sensor groups (simple):** every sensor in a group triggers an alarm in an armed profile. Just right for most homes.\n- **Trigger rules only:** alarm only when several things come together. For advanced users.\n- **Both:** groups for doors and windows, rules in addition, e.g. for motion sensors.\n- **Later:** set up nothing now.",
+        "description": "- **Sensor groups (simple):** every sensor in a group triggers an alarm in an armed profile. Just right for most homes.\n- **Trigger rules only:** alarm only when several things come together. For advanced users.\n- **Both:** groups for doors and windows, rules in addition, e.g. for motion sensors.\n- **Later:** create no groups and rules now, continue with recipients and sirens.",
         "menu_options": {
           "wizard_mode_zones": "With sensor groups (recommended)",
           "wizard_mode_rules": "With trigger rules only",
           "wizard_mode_both": "With sensor groups and trigger rules",
-          "wizard_summary": "Decide later – go to the summary"
+          "wizard_recipients": "Decide later – continue"
         }
       },
       "wizard_groups": {
@@ -1079,6 +1127,57 @@
       "wizard_summary": {
         "title": "Summary",
         "description": "{summary}\n\nWhatever is missing here you can add in the settings dialog, or start the wizard again later."
+      },
+      "wizard_recipients": {
+        "title": "Who gets notified?",
+        "description": "These recipients get all messages from Hauswacht – alarm, armed, disarmed, faults – as long as an event has no recipients of its own. Phones with the Home Assistant app (`mobile_app_…`) are preselected.\n\nDetails (recipients per event, custom texts, announcements) you set later under Notifications.\n\nSelect nothing = skip.",
+        "data": {
+          "recipients": "Recipients"
+        }
+      },
+      "wizard_recipients_test": {
+        "title": "Test message",
+        "description": "Recipients: {recipients}\n\nDo you want to check that messages arrive? The test message is only sent when you press the button.{result}",
+        "menu_options": {
+          "wizard_send_test": "Send test message",
+          "wizard_sirens": "Continue to the sirens"
+        }
+      },
+      "wizard_sirens": {
+        "title": "Sirens",
+        "description": "Which sirens should sound on a burglary? Hauswacht suggests all sirens in Home Assistant.\n\n**Important:** real siren control stays **locked** until you deliberately release it (Alarm devices – sirens → Sirens and release). Until then – and in test mode – no siren sounds. The wizard releases nothing.\n\n**Use in these profiles:** the chosen sirens are added to the sirens of these profiles.\n\nSelect nothing = skip.",
+        "data": {
+          "sirens": "Sirens",
+          "profiles": "Use in these profiles"
+        }
+      },
+      "wizard_sirens_test": {
+        "title": "Test a siren?",
+        "description": "You can test each siren individually, **briefly and quietly** – with a confirmation before each sound, as under Alarm devices – sirens → Siren test. Afterwards you come back here.\n\nNo test = just continue.",
+        "menu_options": {
+          "siren_test": "Start siren test",
+          "wizard_users": "Continue to the users"
+        }
+      },
+      "wizard_users": {
+        "title": "Users",
+        "description": "Who may operate the system? Existing users: {users}\n\nA **PIN** (4–8 digits) is optional. Note: as soon as **one** PIN exists, the panel (and Alexa) requires a PIN to disarm – from everyone. So: give everyone a PIN or no one.\n\nIf a user has the same name as a Home Assistant account, it is linked to it (alarm card without PIN entry).\n\nLeave the name empty = skip. Rights, validity, cards and duress PIN: later under System settings → Users and PINs.{conflict}",
+        "data": {
+          "name": "Name",
+          "pin": "PIN (optional)"
+        }
+      },
+      "wizard_users_more": {
+        "title": "Users",
+        "description": "Users: {users}",
+        "menu_options": {
+          "wizard_users": "Add another user",
+          "wizard_controls": "Continue"
+        }
+      },
+      "wizard_controls": {
+        "title": "Control devices",
+        "description": "Keypads, RFID cards, NFC stickers, readers, buttons and door locks are set up under **System settings → Control devices** – there is a guide for each kind. Without a control device you operate Hauswacht via the app (alarm card) or a voice assistant.\n\nContinue to the summary."
       }
     },
     "error": {
