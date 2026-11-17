@@ -111,6 +111,7 @@ from .core.automation import (
     AutoConfig,
     parse_automation,
 )
+from .core.changes.areas import save_area
 from .core.changes.notifications import save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sirens import save_sirens
@@ -482,6 +483,11 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     def _wizard_siren_test_possible(self) -> bool:
         return True
 
+    def _wizard_test_mode(self) -> bool | None:
+        if self.config_entry.state is not ConfigEntryState.LOADED:
+            return False
+        return bool(self.config_entry.runtime_data.ctx.test_mode)
+
     async def async_step_done(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Schließen. Gespeichert wurde bereits nach jedem Formular."""
         return self.async_create_entry(data=dict(self.config_entry.options))
@@ -646,21 +652,11 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         current = areas.get(area_id) if area_id else None
         errors: dict[str, str] = {}
         if user_input is not None:
-            name = str(user_input.get("name") or "").strip()
-            if not name:
-                errors["name"] = "area_name_required"
-            elif any(
-                a.name.casefold() == name.casefold() for a in areas.values() if a.area_id != area_id
-            ):
-                errors["name"] = "area_name_taken"
-            else:
-                stored = {k: dict(v) for k, v in options.get(OPT_AREAS, {}).items()}
-                new_id = area_id or slugify(name, existing=[*stored.keys(), MAIN_AREA])
-                data = stored.get(new_id, {})
-                data.update({"name": name, "icon": user_input.get("icon") or DEFAULT_AREA_ICON})
-                stored[new_id] = data
-                options[OPT_AREAS] = stored
-                return await self._save(options, "areas")
+            change = save_area(options, area_id, user_input)
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                return await self._save(change.options, "areas")
         source = user_input or {}
         return self.async_show_form(
             step_id="area_settings",

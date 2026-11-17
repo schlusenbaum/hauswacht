@@ -6,9 +6,7 @@ The setup wizard guides you step by step through the setup – no prior knowledg
 briefly explains how Hauswacht works, suggests sensors, sensor groups and alarm profiles, and
 shows at the end what is set up and what is still missing.
 
-> **Pre-release:** the wizard is new and appears in test versions first. It covers sensors,
-> sensor groups, trigger rules, alarm profiles, recipients, sirens and users. A trial run in test
-> mode and the question about areas will follow.
+> **Pre-release:** the wizard is new and appears in test versions first.
 
 ## Starting
 
@@ -21,6 +19,14 @@ shows at the end what is set up and what is still missing.
 Whatever is already set up is kept – the wizard **only adds**. You can start it as often as you
 like, e.g. when new windows are added.
 
+**Starting again:** if something is already set up, the wizard first shows a **chapter
+selection** – introduction, look for new sensors, sensor groups, trigger rules, alarm profiles,
+recipients, sirens, users, set up another area, trial run, summary. From there it goes on step by
+step; every step can still be skipped.
+
+*Example:* two new window contacts were added → setup wizard → "Look for new sensors" → both
+windows are suggested → sensor groups → new group or skip.
+
 **You can skip every step.** Whatever is missing appears in the summary at the end.
 
 ## The steps
@@ -31,7 +37,14 @@ A page "How Hauswacht works": one sentence and one example per building block �
 groups, trigger rules, alarm profiles, sirens and recipients, users and control devices. If you
 know this, choose "Skip the introduction".
 
-### 2. Sensors
+### 2. Separate areas? (first setup only)
+
+"Are there separate flats?" – most homes need **one** area. With "Yes" (e.g. a granny flat that is
+armed independently) you first set up the main area and then start the wizard again with **"Set
+up another area"**: name of the area, then sensors, sensor groups and profiles for it. The
+profiles are then called e.g. "Away (Granny flat)". More under [areas](profiles.md#areas).
+
+### 2a. Sensors
 
 Hauswacht looks in Home Assistant for all **doors, windows and motion sensors** that are not in a
 sensor group yet and lists them by floor and room. All suggestions are selected – remove what
@@ -133,7 +146,21 @@ name empty = skip.
 Only a hint: keypads, cards, stickers, readers, buttons and door locks are set up under System
 settings → [control devices](control-devices.md).
 
-### 11. Summary
+### 11. Trial run (settings dialog only)
+
+In the trial run you open doors and windows and walk past motion sensors – Hauswacht ticks off
+every sensor of the sensor groups it detects (✅), with "Detected: 3 of 5". **Refresh** shows the
+new status.
+
+For this **test mode must be on**. The wizard does **not** switch it on itself but asks you to:
+in the card ["Hauswacht Test"](test-mode.md#card-hauswacht-test) or with the switch "Test mode".
+Then "Test mode is on – start the trial run". The trial run only reads; it does not arm and
+triggers no alarm.
+
+If a sensor stays ⬜ although you triggered it: check battery, radio connection and the device in
+Home Assistant. After the trial run switch test mode off again.
+
+### 12. Summary
 
 Two lists:
 
@@ -153,6 +180,7 @@ The system starts or stays **disarmed**.
 
 ## Afterwards
 
-1. **Try it in test mode** ([test mode](test-mode.md)).
+1. **Try it in test mode** – with the trial run and by arming once for real
+   ([test mode](test-mode.md)).
 2. Once everything works: **release the sirens** ([sirens](sirens.md)).
 3. As needed refine [users and PINs](users.md), set up [control devices](control-devices.md).

@@ -50,7 +50,10 @@ async def _skip_part2(hass: HomeAssistant, flow: dict[str, Any], configure: Any)
     assert flow["step_id"] == "wizard_users"
     flow = await configure(hass, flow, {})
     assert flow["step_id"] == "wizard_controls"
-    return await configure(hass, flow, {})  # type: ignore[no-any-return]
+    flow = await configure(hass, flow, {})
+    if flow["step_id"] == "wizard_trial_ask":  # Einstellungsdialog: Probelauf angeboten
+        flow = await configure(hass, flow, {"next_step_id": "wizard_summary"})
+    return flow  # type: ignore[no-any-return]
 
 
 def _default(flow: dict[str, Any], key: str) -> Any:
@@ -65,9 +68,12 @@ async def test_first_install_with_wizard(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard"})
     assert flow["step_id"] == "wizard"
+    assert flow["menu_options"] == ["wizard_intro", "wizard_area_question"]
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_intro"})
     assert flow["step_id"] == "wizard_intro"
     flow = await _cfg(hass, flow, {})
+    assert flow["step_id"] == "wizard_area_question"
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard_sensors"})
     assert flow["step_id"] == "wizard_sensors"
     # Vorschlag: Türen, Fenster, Bewegung – kein Rauchmelder
     suggested = _default(flow, "sensors")
@@ -125,6 +131,7 @@ async def test_first_install_with_wizard(hass: HomeAssistant) -> None:
 async def test_first_install_skip_everything(hass: HomeAssistant) -> None:
     flow = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard"})
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard_area_question"})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_sensors"})
     flow = await _cfg(hass, flow, {"sensors": []})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_recipients"})
@@ -140,6 +147,7 @@ async def test_rules_only_at_first_install_points_to_later(hass: HomeAssistant) 
     _sensors(hass)
     flow = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard"})
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard_area_question"})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_sensors"})
     flow = await _cfg(hass, flow, {"sensors": [DOOR]})
     flow = await _cfg(hass, flow, {"next_step_id": "wizard_mode_rules"})
@@ -306,4 +314,89 @@ async def test_users_with_pin(hass: HomeAssistant) -> None:
     flow = await _opt(hass, flow, {})
     assert flow["step_id"] == "wizard_controls"
     flow = await _opt(hass, flow, {})
+    assert flow["step_id"] == "wizard_summary"
+
+
+async def test_area_question_at_first_install(hass: HomeAssistant) -> None:
+    flow = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard"})
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard_area_question"})
+    assert flow["menu_options"] == ["wizard_sensors", "wizard_area_hint"]
+    flow = await _cfg(hass, flow, {"next_step_id": "wizard_area_hint"})
+    assert flow["step_id"] == "wizard_area_hint"
+    flow = await _cfg(hass, flow, {})
+    assert flow["step_id"] == "wizard_sensors"
+
+
+async def test_restart_offers_chapters_and_new_area(hass: HomeAssistant) -> None:
+    _sensors(hass)
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard"})
+    assert flow["step_id"] == "wizard_chapters"
+    assert "wizard_trial" in flow["menu_options"]
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_new_area"})
+    flow = await _opt(hass, flow, {"name": "Einliegerwohnung"})
+    assert flow["step_id"] == "wizard_sensors"
+    assert entry.options["areas"]["einliegerwohnung"]["name"] == "Einliegerwohnung"
+    flow = await _opt(hass, flow, {"sensors": [TERRACE]})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_mode_zones"})
+    flow = await _opt(
+        hass,
+        flow,
+        {"outside_name": "Wohnung", "outside": [TERRACE], "entry_doors": [TERRACE], "inside": []},
+    )
+    flow = await _opt(
+        hass,
+        flow,
+        {
+            "away": True,
+            "away_zones": ["wohnung"],
+            "exit_delay": 30,
+            "entry_delay": 30,
+            "night": False,
+        },
+    )
+    assert flow["step_id"] == "wizard_recipients"
+    new = [p for p in entry.options["profiles"].values() if p.get("area") == "einliegerwohnung"]
+    assert len(new) == 1
+    assert new[0]["panel_mode"] == "away"
+    assert new[0]["zones"] == ["wohnung"]
+    assert "Einliegerwohnung" in new[0]["name"]
+    # Hauptbereich unverändert
+    assert entry.options["profiles"]["away"]["zones"] == ["aussen", "keller"]
+    # Name doppelt
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard"})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_new_area"})
+    flow = await _opt(hass, flow, {"name": "einliegerwohnung"})
+    assert flow["errors"] == {"name": "area_name_taken"}
+
+
+async def test_trial_run_asks_for_test_mode_and_ticks_sensors(hass: HomeAssistant) -> None:
+    _sensors(hass)
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard"})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_trial"})
+    # Testmodus aus: bitten, nicht selbst einschalten
+    assert flow["step_id"] == "wizard_trial_ask"
+    test_mode = "switch.hauswacht_test_mode"
+    state = hass.states.get(test_mode)
+    assert state is not None
+    assert state.state == "off"
+    await hass.services.async_call("switch", "turn_on", {"entity_id": test_mode}, blocking=True)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_trial"})
+    assert flow["step_id"] == "wizard_trial_run"
+    assert flow["description_placeholders"]["seen"] == "0"
+    total = int(flow["description_placeholders"]["total"])
+    assert total >= 3
+    hass.states.async_set(DOOR, "on", {"device_class": "door"})
+    await hass.async_block_till_done()
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_trial"})
+    assert flow["description_placeholders"]["seen"] == "1"
+    assert "✅" in flow["description_placeholders"]["sensors"]
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_summary"})
     assert flow["step_id"] == "wizard_summary"
