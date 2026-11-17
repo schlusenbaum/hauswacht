@@ -40,7 +40,7 @@
       },
       "wizard_groups": {
         "title": "Sensor groups",
-        "description": "Suggestion: doors and windows in the group “Outside”, motion sensors in the group “Inside”. At night you can then arm only “Outside” and still move around the house.\n\n**Entry doors:** doors through which you come home. Only they get the entry delay – other doors (e.g. terrace) trigger immediately.\n\nAn empty group is not created. A sensor can only be in one group.{conflicts}",
+        "description": "{existing}Suggestion: doors and windows in the group “Outside”, motion sensors in the group “Inside”. At night you can then arm only “Outside” and still move around the house.\n\n**Entry doors:** doors through which you come home. Only they get the entry delay – other doors (e.g. terrace) trigger immediately.\n\nAn empty group is not created. A sensor can only be in one group.{conflicts}",
         "data": {
           "outside_name": "Name of the group for doors and windows",
           "outside": "Doors and windows",
@@ -55,7 +55,7 @@
       },
       "wizard_profiles": {
         "title": "Alarm profiles",
-        "description": "An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
+        "description": "{existing}An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
         "data": {
           "away": "Profile “Away”",
           "away_zones": "Away: sensor groups",
@@ -88,7 +88,7 @@
       },
       "wizard_sirens": {
         "title": "Sirens",
-        "description": "Which sirens should sound on a burglary? Hauswacht suggests all sirens in Home Assistant.\n\n**Important:** real siren control stays **locked** until you deliberately release it (Alarm devices – sirens → Sirens and release). Until then – and in test mode – no siren sounds. The wizard releases nothing.\n\n**Use in these profiles:** the chosen sirens are added to the sirens of these profiles.\n\nSelect nothing = skip.",
+        "description": "{existing}Which sirens should sound on a burglary? Hauswacht suggests all sirens in Home Assistant.\n\n**Important:** real siren control stays **locked** until you deliberately release it (Alarm devices – sirens → Sirens and release). Until then – and in test mode – no siren sounds. The wizard releases nothing.\n\n**Use in these profiles:** the chosen sirens are added to the sirens of these profiles.\n\nSelect nothing = skip.",
         "data": {
           "sirens": "Sirens",
           "profiles": "Use in these profiles"
@@ -247,7 +247,7 @@
           "zone_delete": "Delete sensor group",
           "triggering": "← Back"
         },
-        "description": "{saved}A **sensor group** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which sensor groups are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** sensor group. Hauswacht only monitors sensors that are in a sensor group."
+        "description": "{saved}{items}A **sensor group** is a group of sensors that are always monitored together – for example:\n\n- **Perimeter**: all door and window contacts (with their tamper sensors)\n- **Inside** or **Basement**: motion and presence sensors\n\nIn the **profiles** you then choose which sensor groups are armed: \"Home\" = perimeter only, \"Away\" = perimeter and inside.\n\nEvery sensor belongs to **exactly one** sensor group. Hauswacht only monitors sensors that are in a sensor group."
       },
       "zone_add": {
         "title": "Add sensor group",
@@ -303,7 +303,7 @@
           "profile_delete": "Delete alarm profile",
           "init": "← Back"
         },
-        "description": "{saved}"
+        "description": "{saved}{items}"
       },
       "profile_edit": {
         "title": "Edit profile",
@@ -328,7 +328,7 @@
       },
       "users": {
         "title": "Users and PINs",
-        "description": "{saved}Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
+        "description": "{saved}{items}Several people with their own PIN. Several users may share a PIN – Hauswacht then shows “shared PIN (…)”. An action is allowed if at least one user with that PIN may do it.\n\n⚠️ **Important:** As soon as **one** PIN exists, the panel (and Alexa) require a PIN to disarm – **from everyone**. People without a PIN can then only disarm via dashboard buttons (if allowed under PIN rules) or the push button. So: give everyone a PIN (shared PIN allowed) or no one.",
         "menu_options": {
           "user_add": "Add user",
           "user_edit": "Edit user",
@@ -565,7 +565,7 @@
       },
       "areas": {
         "title": "Areas",
-        "description": "{saved}Areas can be armed **independently** – e.g. the garage while someone is in the house. Names are free.\n\nEach alarm profile belongs to exactly one area (chosen in the alarm profile). Sensor groups and trigger rules can be used in all areas. With two or more areas, each area gets its own panel plus **“All areas”**.\n\nThe first area (default “Haus”) is the existing system – it can be renamed but not deleted. Always-active sensors, homecoming observation and the “everyone left” reminder belong to it.",
+        "description": "{saved}{items}Areas can be armed **independently** – e.g. the garage while someone is in the house. Names are free.\n\nEach alarm profile belongs to exactly one area (chosen in the alarm profile). Sensor groups and trigger rules can be used in all areas. With two or more areas, each area gets its own panel plus **“All areas”**.\n\nThe first area (default “Haus”) is the existing system – it can be renamed but not deleted. Always-active sensors, homecoming observation and the “everyone left” reminder belong to it.",
         "menu_options": {
           "area_add": "Add area",
           "area_edit": "Edit / rename area",
@@ -826,7 +826,7 @@
       },
       "sirens": {
         "title": "Alarm devices – sirens",
-        "description": "{saved}Choose and enable sirens, test sirens.",
+        "description": "{saved}{items}Choose and enable sirens, test sirens.",
         "menu_options": {
           "siren_settings": "Sirens and enabling",
           "siren_from_switch": "Create siren from switch (wizard)",
@@ -878,7 +878,7 @@
       },
       "controls": {
         "title": "Control devices",
-        "description": "{saved}Controls are keypads, NFC tags, RFID readers, buttons and door locks. Identification uses the **users' credentials**: PIN, RFID card/fob or lock ID (under Users and PINs). Rights, validity, lockout after wrong entries and duress PIN apply as on the alarm panel. A button identifies nobody – so it only arms.",
+        "description": "{saved}{items}Controls are keypads, NFC tags, RFID readers, buttons and door locks. Identification uses the **users' credentials**: PIN, RFID card/fob or lock ID (under Users and PINs). Rights, validity, lockout after wrong entries and duress PIN apply as on the alarm panel. A button identifies nobody – so it only arms.",
         "menu_options": {
           "control_add_keypad": "Add keypad (Zigbee2MQTT)",
           "control_add_sticker": "Add NFC sticker (companion app)",
@@ -1101,7 +1101,7 @@
       },
       "wizard_groups": {
         "title": "Sensor groups",
-        "description": "Suggestion: doors and windows in the group “Outside”, motion sensors in the group “Inside”. At night you can then arm only “Outside” and still move around the house.\n\n**Entry doors:** doors through which you come home. Only they get the entry delay – other doors (e.g. terrace) trigger immediately.\n\nAn empty group is not created. A sensor can only be in one group.{conflicts}",
+        "description": "{existing}Suggestion: doors and windows in the group “Outside”, motion sensors in the group “Inside”. At night you can then arm only “Outside” and still move around the house.\n\n**Entry doors:** doors through which you come home. Only they get the entry delay – other doors (e.g. terrace) trigger immediately.\n\nAn empty group is not created. A sensor can only be in one group.{conflicts}",
         "data": {
           "outside_name": "Name of the group for doors and windows",
           "outside": "Doors and windows",
@@ -1124,7 +1124,7 @@
       },
       "wizard_profiles": {
         "title": "Alarm profiles",
-        "description": "An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
+        "description": "{existing}An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
         "data": {
           "away": "Profile “Away”",
           "away_zones": "Away: sensor groups",
@@ -1157,7 +1157,7 @@
       },
       "wizard_sirens": {
         "title": "Sirens",
-        "description": "Which sirens should sound on a burglary? Hauswacht suggests all sirens in Home Assistant.\n\n**Important:** real siren control stays **locked** until you deliberately release it (Alarm devices – sirens → Sirens and release). Until then – and in test mode – no siren sounds. The wizard releases nothing.\n\n**Use in these profiles:** the chosen sirens are added to the sirens of these profiles.\n\nSelect nothing = skip.",
+        "description": "{existing}Which sirens should sound on a burglary? Hauswacht suggests all sirens in Home Assistant.\n\n**Important:** real siren control stays **locked** until you deliberately release it (Alarm devices – sirens → Sirens and release). Until then – and in test mode – no siren sounds. The wizard releases nothing.\n\n**Use in these profiles:** the chosen sirens are added to the sirens of these profiles.\n\nSelect nothing = skip.",
         "data": {
           "sirens": "Sirens",
           "profiles": "Use in these profiles"
