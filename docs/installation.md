@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.53.1:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.53.2:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -93,7 +93,8 @@ So funktioniert der Dialog:
 - Untermenüs haben **„← Zurück“**, das Hauptmenü **„Fertig – schließen“**.
 - Menüs zum Anlegen, Bearbeiten und Löschen zeigen oben, **was es schon gibt** – z. B.
   Meldergruppen mit der Zahl ihrer Melder, Alarmprofile mit dem, was sie überwachen, Benutzer mit
-  „PIN ✓“ und Karten, Sirenen mit dem Stand der Freigabe. Der Einrichtungsassistent zeigt das in
+  „PIN ✓“ und Karten (dazu, ob ein Master-PIN eingerichtet ist), Sirenen mit dem Stand der
+  Freigabe. Der Einrichtungsassistent zeigt das in
   seinen Schritten ebenso.
 - Formulare haben in Home Assistant keinen Zurück-Knopf: unverändert bestätigen oder den Dialog
   schließen – bereits Gespeichertes bleibt.

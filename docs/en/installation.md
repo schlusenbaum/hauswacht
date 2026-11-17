@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.53.1:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.53.2:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -90,7 +90,7 @@ How the dialog works:
 - Submenus have **"← Back"**, the main menu has **"Done – close"**.
 - Menus for adding, editing and deleting show at the top **what already exists** – e.g. sensor
   groups with the number of their sensors, alarm profiles with what they watch, users with
-  "PIN ✓" and cards, sirens with the release status. The setup wizard shows this in its steps
+  "PIN ✓" and cards (plus whether a master PIN is set up), sirens with the release status. The setup wizard shows this in its steps
   too.
 - Forms in Home Assistant have no back button: submit unchanged or close the dialog – what was
   already saved stays.

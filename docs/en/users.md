@@ -107,6 +107,8 @@ A keypad for all areas only disarms the areas in which the user may do so.
 | **Alarm card: require PIN for Home Assistant accounts without a Hauswacht user** | default on. Only applies in the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin); linked accounts switch there without PIN |
 | **Allow dashboard buttons despite PIN** | "Disarm now", "End alarm" and the arm buttons keep working. The PIN then only protects the alarm panel, keypads and voice assistants – only logged-in Home Assistant users get to the buttons anyway |
 
+- Whether a master PIN is set up is shown at the top of the menu "Users and PINs" and in the PIN
+  rules: "Master PIN: ✅ set up" or "– none". The PIN itself is never shown.
 - PINs have 4–8 digits and are stored as a hash only.
 - Without a PIN, the system must **not** be exposed to voice assistants.
 - A PIN from versions before 0.16.1 became the user "Main user" during the update.
