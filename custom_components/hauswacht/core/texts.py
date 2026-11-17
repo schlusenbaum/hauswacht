@@ -120,6 +120,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "restored_entry": " Vor dem Neustart lief die Eingangsverzögerung; sie beginnt neu.",
         "restored_alarm": " Vor dem Neustart lief ein Alarm (ausgelöst von {sensor}). Er wird "
         "nicht fortgesetzt, die Sirenen bleiben aus; die Anlage ist scharf.",
+        "restored_alarm_resumed": " Vor dem Neustart lief ein Alarm (ausgelöst von {sensor}). Er "
+        "wird fortgesetzt, sobald Home Assistant hochgefahren ist.",
+        "restored_alarm_title": "Hauswacht: Alarm vor dem Neustart",
         "restored_open_title": "Hauswacht: offen nach Neustart",
         "restored_open": "Beim Hochfahren offen und deshalb bis zum Schließen überbrückt: "
         "{sensors}.",
@@ -163,6 +166,12 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "tpl_format": "{field}: keine Formatangaben erlaubt",
         "reason_time": "Uhrzeit",
         "automation_actor": "Automatik",
+        "guest_title": "Hauswacht: Gastmodus",
+        "guest_on": "Gastmodus an für {area} – bis {until}. Hauswacht schaltet bis dahin nicht "
+        "automatisch scharf.",
+        "guest_off": "Gastmodus aus für {area} – die Automatik schaltet wieder scharf.",
+        "guest_until_off": "zum Ausschalten",
+        "guest_skipped": "Gastmodus an – „{profile}“ wurde nicht automatisch scharf geschaltet.",
         "reason_away": "alle weg",
         "reason_arrival": "Rückkehr",
         "reason_arrival_door": "Rückkehr mit Türbeleg",
@@ -306,6 +315,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "restored_entry": " The entry delay was running before the restart; it starts again.",
         "restored_alarm": " An alarm was running before the restart (triggered by {sensor}). It "
         "is not continued and the sirens stay off; the system is armed.",
+        "restored_alarm_resumed": " An alarm was running before the restart (triggered by "
+        "{sensor}). It is resumed as soon as Home Assistant has started.",
+        "restored_alarm_title": "Hauswacht: alarm before the restart",
         "restored_open_title": "Hauswacht: open after restart",
         "restored_open": "Open at startup and therefore bypassed until closed: {sensors}.",
         "restart_actor": "restart",
@@ -344,6 +356,12 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "tpl_format": "{field}: no format specifications allowed",
         "reason_time": "time",
         "automation_actor": "Automation",
+        "guest_title": "Hauswacht: guest mode",
+        "guest_on": "Guest mode on for {area} – until {until}. Until then Hauswacht does not arm "
+        "automatically.",
+        "guest_off": "Guest mode off for {area} – the automation arms again.",
+        "guest_until_off": "switched off",
+        "guest_skipped": "Guest mode on – “{profile}” was not armed automatically.",
         "reason_away": "everyone away",
         "reason_arrival": "return",
         "reason_arrival_door": "return with door opening",

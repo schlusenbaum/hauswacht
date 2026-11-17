@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
 WS_INFO = f"{DOMAIN}/alarm/info"
 WS_ACTION = f"{DOMAIN}/alarm/action"
+WS_GUEST = "hauswacht/alarm/guest"
 DATA_WS = f"{DOMAIN}_alarm_ws_registered"
 ACTIONS = ("arm", "disarm", "end_alarm")
 _IN_ALARM = (AlarmState.TRIGGERED, AlarmState.ALARM_HOLD)
@@ -241,10 +242,45 @@ async def ws_action(
     connection.send_result(msg["id"], {"ok": True})
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): WS_GUEST,
+        vol.Optional("areas"): [str],
+        vol.Required("on"): bool,
+        vol.Optional("until"): vol.Any(str, None),
+    }
+)
+@websocket_api.async_response
+async def ws_guest(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Gastmodus von der Karte: ohne PIN, für jeden, der die Karte bedienen darf."""
+    main = _main(hass)
+    if main is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
+        return
+    wanted = msg.get("areas") or list(main.areas)
+    areas = [
+        main.areas[a]
+        for a in wanted
+        if a in main.areas and _may_control(hass, connection.user, main.areas[a]) is not None
+    ]
+    until = dt_util.parse_datetime(msg["until"]) if msg.get("until") else None
+    by = await main.async_user_label(connection.user.id)
+    try:
+        for area in areas:
+            area.set_guest_mode(msg["on"], until=until, by=by)
+    except HomeAssistantError as err:
+        connection.send_result(msg["id"], {"ok": False, "message": str(err)})
+        return
+    connection.send_result(msg["id"], {"ok": bool(areas)})
+
+
 @callback
 def async_register_alarm_websocket(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS):
         return
     websocket_api.async_register_command(hass, ws_info)
     websocket_api.async_register_command(hass, ws_action)
+    websocket_api.async_register_command(hass, ws_guest)
     hass.data[DATA_WS] = True

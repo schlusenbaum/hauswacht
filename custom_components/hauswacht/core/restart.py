@@ -5,7 +5,9 @@ Einstellung unter Systemeinstellungen → Verhalten nach Neustart:
 - ``restore`` (Standard): Zustand von vorher wiederherstellen. War die Anlage scharf, ist sie
   es sofort wieder – mit demselben Profil und denselben überbrückten Meldern, ohne Prüfung und
   ohne Ausgangsverzögerung. Lief eine Eingangsverzögerung, beginnt sie neu. Ein laufender Alarm
-  wird nie fortgesetzt (keine Sirenen); die Anlage ist danach scharf und meldet ihn.
+  wird nicht fortgesetzt (keine Sirenen); die Anlage ist danach scharf und meldet ihn als
+  Alarm-Nachricht. Mit ``restart_continue_alarm`` (Standard aus) wird ein Alarm, der noch in
+  der Reaktionsphase war, nach dem Hochfahren erneut ausgelöst.
 - ``armed``: immer mit einem festen Profil je Bereich scharf schalten – normal, mit Prüfung
   offener Melder, sobald Home Assistant hochgefahren ist. Bereiche ohne Profil bleiben unscharf.
 - ``disarmed``: immer unscharf (Verhalten bis 0.44), mit Nachricht, wenn vorher scharf war.
@@ -28,6 +30,7 @@ DEFAULT_BEHAVIOR = RESTORE
 
 OPT_RESTART_BEHAVIOR = "restart_behavior"
 OPT_RESTART_PROFILES = "restart_profiles"  # {Bereichs-ID: Profil-ID} für "armed"
+OPT_RESTART_CONTINUE_ALARM = "restart_continue_alarm"  # laufenden Alarm fortsetzen (Standard aus)
 
 # So lange nach dem Wiederherstellen gelten Melder, die erst beim Hochfahren melden, als
 # "Startphase": keine Ausfallmeldungen, offen vorgefundene Melder werden überbrückt.
@@ -51,7 +54,8 @@ class RestartPlan:
     kind: RestartKind
     profile_id: str | None = None
     entry_delay: bool = False  # Eingangsverzögerung lief -> neu starten
-    alarm_was_active: bool = False  # Alarm lief -> nicht fortsetzen, nur melden
+    alarm_was_active: bool = False  # Alarm lief (Reaktionsphase oder noch nicht quittiert)
+    alarm_in_reaction: bool = False  # Alarm war noch in der Reaktionsphase (Sirenen liefen)
     trigger_sensor: str | None = None
     bypassed: frozenset[str] = frozenset()
     bypassed_until_closed: frozenset[str] = frozenset()
@@ -64,6 +68,11 @@ class RestartPlan:
 def restart_behavior(options: Mapping[str, Any]) -> str:
     value = options.get(OPT_RESTART_BEHAVIOR)
     return str(value) if value in BEHAVIORS else DEFAULT_BEHAVIOR
+
+
+def continue_alarm(options: Mapping[str, Any]) -> bool:
+    """Laufenden Alarm nach dem Neustart fortsetzen? (nur bei "wiederherstellen")"""
+    return bool(options.get(OPT_RESTART_CONTINUE_ALARM, False))
 
 
 def restart_profile(options: Mapping[str, Any], area_id: str) -> str | None:
@@ -139,6 +148,7 @@ def plan_restart(
         profile_id=profile_id,
         entry_delay=state in _ENTRY_STATES,
         alarm_was_active=state in _ALARM_STATES,
+        alarm_in_reaction=state == "triggered",
         trigger_sensor=trigger if isinstance(trigger, str) else None,
         bypassed=_ids(data.get("bypassed")),
         bypassed_until_closed=_ids(data.get("bypassed_until_closed")),

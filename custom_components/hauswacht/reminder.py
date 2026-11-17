@@ -102,6 +102,8 @@ class ReminderRunner:
         self._timer = None
         if self._sent or not self._all_away() or self.profile_id is None:
             return
+        if self.runtime.guest_active:
+            return  # Gäste im Haus: "niemand da, nicht scharf" wäre falsch
         if self.runtime.ctx.state is not AlarmState.DISARMED:
             return
         self._sent = True

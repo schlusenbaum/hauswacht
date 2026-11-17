@@ -899,11 +899,13 @@
         "description": "Was Hauswacht macht, wenn Home Assistant neu startet (z. B. nach einem Update oder einer nächtlichen Sicherung) oder Hauswacht neu geladen wird.\n\n**Vorherigen Zustand wiederherstellen (Standard):** War die Anlage scharf, ist sie sofort wieder scharf – mit demselben Profil und denselben überbrückten Meldern, ohne erneute Prüfung und ohne Ausgangsverzögerung. War sie unscharf, bleibt sie unscharf.\n- Lief gerade die **Eingangsverzögerung**, beginnt sie neu – wer heimkam, konnte während des Neustarts nicht unscharf schalten.\n- Ein laufender **Alarm wird nie fortgesetzt**: keine Sirenen, die Anlage ist scharf, eine Nachricht nennt den Auslöser.\n- Melder, die beim Hochfahren **offen** gemeldet werden, werden bis zum Schließen überbrückt (Eingangstüren starten stattdessen die Eingangsverzögerung) und gemeldet.\n\n**Immer scharf:** etwa eine Minute nach dem Hochfahren wird das gewählte Profil normal scharf geschaltet – mit Prüfung offener Melder. Für Ferienhaus oder unbewohnte Bereiche. Bereiche ohne Profil bleiben unscharf.\n\n**Immer unscharf:** wie bis Version 0.44; war die Anlage scharf, kommt die Nachricht „nach Neustart unscharf“.",
         "data": {
           "restart_behavior": "Nach einem Neustart",
+          "restart_continue_alarm": "Laufenden Alarm fortsetzen",
           "restart_profile": "Alarmprofil für „immer scharf“"
         },
         "data_description": {
           "restart_behavior": "Standard: vorherigen Zustand wiederherstellen.",
-          "restart_profile": "Nur für „immer scharf“."
+          "restart_profile": "Nur für „immer scharf“.",
+          "restart_continue_alarm": "Nur bei „Vorherigen Zustand wiederherstellen“: Lief beim Neustart ein Alarm noch in der Reaktionsphase (Sirenen an), wird er nach dem Hochfahren erneut ausgelöst – wie ein neuer Alarm, Sirenen nur, wenn kein Rauchmelder Brand meldet. Aus (Standard): kein Alarm, die Anlage ist scharf, und die Alarm-Empfänger bekommen eine wichtige Nachricht."
         }
       },
       "action_codes": {
@@ -1200,6 +1202,9 @@
       },
       "setting_tamper_triggers_alarm": {
         "name": "Sabotage löst Alarm aus"
+      },
+      "guest_mode": {
+        "name": "Gastmodus"
       }
     },
     "sensor": {
@@ -1414,6 +1419,9 @@
     },
     "card_no_access": {
       "message": "Dieses Konto darf das Bedienfeld dieses Bereichs nicht steuern."
+    },
+    "guest_until_past": {
+      "message": "Der Zeitpunkt für das Ende des Gastmodus liegt in der Vergangenheit."
     }
   },
   "services": {
@@ -1506,6 +1514,20 @@
     "reset_code_lock": {
       "name": "Falscheingaben zurücksetzen",
       "description": "Setzt den Zähler falscher PIN-/Karteneingaben und eine laufende PIN-Sperre zurück. Nur für Administratoren."
+    },
+    "guest_mode": {
+      "name": "Gastmodus",
+      "description": "Gastmodus ein- oder ausschalten: Solange er an ist, schaltet Hauswacht den Bereich nicht automatisch scharf (weder nach Uhrzeit noch wenn alle weg sind). Von Hand scharf schalten geht weiter. Ziel „Alle Bereiche“ = alle.",
+      "fields": {
+        "on": {
+          "name": "An",
+          "description": "An oder aus."
+        },
+        "until": {
+          "name": "Bis",
+          "description": "Endet automatisch zu diesem Zeitpunkt. Leer = bis zum Ausschalten."
+        }
+      }
     }
   },
   "issues": {

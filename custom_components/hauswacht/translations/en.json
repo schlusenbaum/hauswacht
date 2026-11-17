@@ -899,11 +899,13 @@
         "description": "What Hauswacht does when Home Assistant restarts (e.g. after an update or a nightly backup) or Hauswacht is reloaded.\n\n**Restore the previous state (default):** if the system was armed, it is armed again right away – with the same profile and the same bypassed sensors, without a new check and without exit delay. If it was disarmed, it stays disarmed.\n- If the **entry delay** was running, it starts again – whoever came home could not disarm during the restart.\n- A running **alarm is never continued**: no sirens, the system is armed, a message names the trigger.\n- Sensors reported **open** at startup are bypassed until closed (entry doors start the entry delay instead) and reported.\n\n**Always armed:** about one minute after startup, the chosen profile is armed normally – with the check for open sensors. For holiday homes or unoccupied areas. Areas without a profile stay disarmed.\n\n**Always disarmed:** as up to version 0.44; if the system was armed, you get the message “disarmed after restart”.",
         "data": {
           "restart_behavior": "After a restart",
+          "restart_continue_alarm": "Resume a running alarm",
           "restart_profile": "Alarm profile for “always armed”"
         },
         "data_description": {
           "restart_behavior": "Default: restore the previous state.",
-          "restart_profile": "Only for “always armed”."
+          "restart_profile": "Only for “always armed”.",
+          "restart_continue_alarm": "Only with “Restore the previous state”: if an alarm was still in its reaction phase (sirens on) at the restart, it is triggered again after startup – like a new alarm, sirens only if no smoke detector reports fire. Off (default): no alarm, the system is armed, and the alarm recipients get an important message."
         }
       },
       "action_codes": {
@@ -1200,6 +1202,9 @@
       },
       "setting_tamper_triggers_alarm": {
         "name": "Tamper triggers alarm"
+      },
+      "guest_mode": {
+        "name": "Guest mode"
       }
     },
     "sensor": {
@@ -1414,6 +1419,9 @@
     },
     "card_no_access": {
       "message": "This account may not control the panel of this area."
+    },
+    "guest_until_past": {
+      "message": "The end of the guest mode is in the past."
     }
   },
   "services": {
@@ -1506,6 +1514,20 @@
     "reset_code_lock": {
       "name": "Reset failed attempts",
       "description": "Resets the counter of wrong PIN/card entries and a running PIN lock. Administrators only."
+    },
+    "guest_mode": {
+      "name": "Guest mode",
+      "description": "Switch the guest mode on or off: while it is on, Hauswacht does not arm the area automatically (neither by time nor when everyone is away). Arming by hand still works. Target “All areas” = all.",
+      "fields": {
+        "on": {
+          "name": "On",
+          "description": "On or off."
+        },
+        "until": {
+          "name": "Until",
+          "description": "Ends automatically at this time. Empty = until switched off."
+        }
+      }
     }
   },
   "issues": {

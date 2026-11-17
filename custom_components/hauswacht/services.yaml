@@ -129,3 +129,17 @@ reset_code_lock:
     entity:
       integration: hauswacht
       domain: alarm_control_panel
+
+guest_mode:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    "on":
+      default: true
+      selector:
+        boolean:
+    until:
+      selector:
+        datetime:

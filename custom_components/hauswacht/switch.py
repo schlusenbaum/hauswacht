@@ -25,7 +25,11 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     async_add_entities(
-        [HauswachtTestModeSwitch(entry), *(ProfileSwitch(entry, key) for key in SWITCHES)]
+        [
+            HauswachtTestModeSwitch(entry),
+            HauswachtGuestModeSwitch(entry),
+            *(ProfileSwitch(entry, key) for key in SWITCHES),
+        ]
     )
 
 
@@ -45,6 +49,50 @@ class HauswachtTestModeSwitch(HauswachtEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         self.runtime.set_test_mode(False)
+
+
+class HauswachtGuestModeSwitch(HauswachtEntity, SwitchEntity):
+    """Gastmodus für alle Bereiche: an = keine automatische Scharfschaltung (bis zum Ausschalten).
+
+    Mit Ende-Zeitpunkt oder für einzelne Bereiche: Aktion ``hauswacht.guest_mode`` oder die
+    Alarm-Karte.
+    """
+
+    _attr_translation_key = "guest_mode"
+    _attr_icon = "mdi:account-group"
+    _platform_domain = "switch"
+
+    def __init__(self, entry: HauswachtConfigEntry) -> None:
+        super().__init__(entry, "guest_mode")
+        self._keep_object_id("hauswacht_gastmodus", "hauswacht_guest_mode")
+
+    @property
+    def is_on(self) -> bool:
+        return any(a.guest_active for a in self.runtime.areas.values())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "areas": {
+                a.area_id: (ends.isoformat() if (ends := a.guest_ends_at) else "off")
+                for a in self.runtime.areas.values()
+                if a.guest_active
+            }
+        }
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        by = await self.runtime.async_user_label(self._user_id)
+        for area in self.runtime.areas.values():
+            area.set_guest_mode(True, by=by)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        by = await self.runtime.async_user_label(self._user_id)
+        for area in self.runtime.areas.values():
+            area.set_guest_mode(False, by=by)
+
+    @property
+    def _user_id(self) -> str | None:
+        return self._context.user_id if self._context else None
 
 
 SWITCH_ICONS = {

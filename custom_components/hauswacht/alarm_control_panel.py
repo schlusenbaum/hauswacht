@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 import voluptuous as vol
@@ -18,6 +19,7 @@ from homeassistant.helpers.entity_platform import (
     AddConfigEntryEntitiesCallback,
     async_get_current_platform,
 )
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .core.areas import ALL_PANEL_KEY
@@ -88,6 +90,11 @@ async def async_setup_entry(
     )
     async_get_current_platform().async_register_entity_service(
         "simulate_reset", {}, "async_simulate_reset"
+    )
+    async_get_current_platform().async_register_entity_service(
+        "guest_mode",
+        {vol.Optional("on", default=True): cv.boolean, vol.Optional("until"): cv.datetime},
+        "async_guest_mode",
     )
     async_get_current_platform().async_register_entity_service(
         "siren_test",
@@ -200,6 +207,7 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
         ctx = self.runtime.ctx
         ends_at = self.runtime.delay_ends_at
         readiness = self.runtime.readiness_for(self.runtime.candidates)
+        guest_ends = self.runtime.guest_ends_at
         return {
             "area": self.runtime.area_id,
             "area_name": self.runtime.area_name,
@@ -209,6 +217,8 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
             else None,
             "phase": ctx.state.value,
             "test_mode": ctx.test_mode,
+            "guest_mode": self.runtime.guest_active,
+            "guest_until": guest_ends.isoformat() if guest_ends else None,
             "timer": ctx.timer_kind.value if ctx.timer_kind else None,
             "timer_ends_at": ends_at.isoformat() if ends_at else None,
             "trigger_sensor": ctx.trigger_sensor,
@@ -258,6 +268,16 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
     ) -> None:
         """Dienst hauswacht.arm: Profil scharf schalten, optional mit Bestätigung."""
         await self._arm(profile, code, confirm=confirm)
+
+    def _guest_areas(self) -> list[HauswachtRuntime]:
+        return [self.runtime]
+
+    async def async_guest_mode(self, on: bool = True, until: Any = None) -> None:
+        """Dienst hauswacht.guest_mode: Gastmodus ein (optional bis ``until``) oder aus."""
+        ends = dt_util.as_utc(until) if isinstance(until, datetime) else None
+        by = await self.runtime.async_user_label(self._context.user_id if self._context else None)
+        for area in self._guest_areas():
+            area.set_guest_mode(on, until=ends, by=by)
 
     async def async_simulate_trigger(self, sensor: str) -> None:
         """Dienst hauswacht.simulate_trigger: Sensorauslösung simulieren (nur Testmodus)."""
@@ -414,6 +434,16 @@ class HauswachtAllPanel(_SirenTestMixin, AlarmControlPanelEntity):
             else:
                 done.append(area.area_name)
         self._raise_partial(failed, done)
+
+    def _guest_areas(self) -> list[HauswachtRuntime]:
+        return list(self.runtime.areas.values())
+
+    async def async_guest_mode(self, on: bool = True, until: Any = None) -> None:
+        """Dienst hauswacht.guest_mode: Gastmodus ein (optional bis ``until``) oder aus."""
+        ends = dt_util.as_utc(until) if isinstance(until, datetime) else None
+        by = await self.runtime.async_user_label(self._context.user_id if self._context else None)
+        for area in self._guest_areas():
+            area.set_guest_mode(on, until=ends, by=by)
 
     async def async_arm_profile(
         self, profile: str, confirm: bool = False, code: str | None = None

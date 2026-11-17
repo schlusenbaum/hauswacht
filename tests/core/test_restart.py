@@ -78,7 +78,15 @@ def test_restore_never_continues_alarm() -> None:
         )
         assert plan.kind is RestartKind.RESTORE
         assert plan.alarm_was_active
+        assert plan.alarm_in_reaction is (state == "triggered")
         assert not plan.entry_delay
+
+
+def test_continue_alarm_option() -> None:
+    from custom_components.hauswacht.core.restart import continue_alarm  # noqa: PLC0415
+
+    assert not continue_alarm({})
+    assert continue_alarm({"restart_continue_alarm": True})
 
 
 def test_restore_from_older_version_without_details() -> None:

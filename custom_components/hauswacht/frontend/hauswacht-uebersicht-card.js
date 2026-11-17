@@ -35,6 +35,7 @@ const LANG = {
     notifications: "Benachrichtigungen",
     monitoring: "Überwachung",
     restartRow: "Nach Neustart",
+    restartContinue: "laufenden Alarm fortsetzen",
     pinRules: "PIN-Regeln",
     yes: "ja",
     no: "nein",
@@ -167,6 +168,7 @@ const LANG = {
     notifications: "Notifications",
     monitoring: "Monitoring",
     restartRow: "After restart",
+    restartContinue: "resume a running alarm",
     pinRules: "PIN rules",
     yes: "yes",
     no: "no",
@@ -779,7 +781,8 @@ class HauswachtUebersichtCard extends HTMLElement {
   _restartText(r) {
     if (!r) return "–";
     const text = esc(this._l("restart", r.behavior));
-    return r.behavior === "armed" && r.profiles?.length ? `${text} (${r.profiles.map(esc).join(", ")})` : text;
+    const base = r.behavior === "armed" && r.profiles?.length ? `${text} (${r.profiles.map(esc).join(", ")})` : text;
+    return r.behavior === "restore" && r.continue_alarm ? `${base} · ${esc(this._t("restartContinue"))}` : base;
   }
 
   _sheetHtml() {
