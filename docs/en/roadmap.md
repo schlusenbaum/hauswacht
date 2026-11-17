@@ -30,6 +30,12 @@
 | 0.43 | button as control device (arms only), door lock as control device (Nuki via MQTT or generic: disarm when a known user unlocks, optionally arm when locking) |
 | 0.44 | documentation in English (user guide and safety rules), English README |
 | 0.45 | configurable behaviour after restart: restore the previous state (default), always armed, always disarmed |
+| 0.46 | sirens that were on before a restart are switched off afterwards (not during a fire) |
+| 0.47 | names for RFID cards, fingers and lock IDs ("key ring") – in messages, logbook and system overview |
+| 0.48 | separate dialogs "Cards" and "PINs" with an overview of who has what, disable cards, "last used", learn a new card at the keypad without waiting; the keypad's code entity is disabled automatically (it showed the entered code in plain text) |
+| 0.49 | action codes: code + key at the keypad starts your own automations (event entity), arms sensor groups or triggers a silent emergency; pick the keypad as a device instead of typing the MQTT topic |
+| 0.50 | force arm at the keypad: with open sensors, confirm again within 10 s (right per user) |
+| 0.51 | guest mode (switch, service, alarm card; until a time or until switched off) – no profile automation and no reminders; resume a running alarm after a restart (setting, default off); "alarm before the restart" as an important alarm message |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -37,18 +43,22 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
+| soon | system overview: add guest mode, action codes, right "Force arm" |
+| soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |
 | 1.0.0 | stable, documentation complete, inclusion in the HACS default list |
 | some day | cameras: picture in the message, camera detection as its own sensor type – to be designed afresh |
-| 1.x | dedicated kind "fingerprint reader" (names per finger, minimum match) – already possible today via RFID reader or Nuki Keypad 2.0; further automation conditions, recurring guest times |
+| 1.x | dedicated kind "fingerprint reader" (names per finger, minimum match) – already possible today via RFID reader or Nuki Keypad 2.0; further automation conditions, recurring guest mode times (e.g. every Tuesday 8–12) |
 
 ## Principles
 
 - **Hauswacht switches no devices** – except sirens (after release; for experts also switches
   added as sirens) and the state displays of configured keypads.
-- **Fire alarm has priority**, test mode locks sirens technically, an alarm is never continued
-  after a restart.
+- **Fire alarm has priority**, test mode locks sirens technically. By default an alarm is not
+  continued after a restart; if you want that, switch on "Resume a running alarm" – even then
+  sirens only go on through all siren locks.
+- **Action codes never disarm** and never count as a failed attempt.
 - **PIN optional**, voice assistants only with PIN. Exposure to Alexa & co. via the normal entity
   exposure of Home Assistant.
 - Larger building blocks first get a concept, then are implemented. Decisions with their reasons

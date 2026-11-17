@@ -137,7 +137,8 @@ class RestoreRequested:
 
     Ohne Prüfung und ohne Ausgangsverzögerung: Die Anlage war schon scharf. Lief eine
     Eingangsverzögerung, beginnt sie neu – wer gerade heimkam, konnte während des Neustarts
-    nicht unscharf schalten. Ein laufender Alarm wird nie fortgesetzt.
+    nicht unscharf schalten. Ein laufender Alarm wird hier nicht fortgesetzt; das optionale
+    Fortsetzen (ab 0.51) löst danach einen neuen Alarm aus (siehe core/restart.py).
     """
 
     profile: ProfileRuntime

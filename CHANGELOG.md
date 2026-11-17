@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.51.2] - 2026-11-17
+
+### Geändert
+- **Einstellung „Verhalten nach Neustart“:** Der Hilfetext sagte noch, ein laufender Alarm werde
+  „nie fortgesetzt“. Seit 0.51 ist das einstellbar („Laufenden Alarm fortsetzen“, Standard aus) –
+  der Text sagt das jetzt, und dass die Alarm-Empfänger eine wichtige Nachricht bekommen.
+
+### Dokumentation
+- **Roadmap** (deutsch und englisch) auf den Stand 0.51 gebracht: Versionen 0.46 bis 0.51
+  ergänzt, Grundsatz zum Neustart korrigiert (Fortsetzen ist optional), Grundsatz „Aktions-Codes
+  schalten nie unscharf“ ergänzt, Geplantes aktualisiert (Systemübersicht um Gastmodus,
+  Aktions-Codes und „Scharf erzwingen“ ergänzen; HmIP-ASIR-Ton je Anlass; wiederkehrende
+  Gastmodus-Zeiten).
+
 ## [0.51.1] - 2026-11-17
 
 ### Geändert
