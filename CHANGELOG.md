@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.51.1] - 2026-11-17
+
+### Geändert
+- **Gastmodus auf der Alarm-Karte mit freier Zeit:** Neben den schnellen Auswahlen gibt es jetzt
+  „Oder bis:“ mit Datum und Uhrzeit nach Wahl (Vorschlag: morgen zur selben Stunde) und
+  „Übernehmen“. Ein Zeitpunkt in der Vergangenheit wird abgelehnt.
+
+### Dokumentation
+- Profile (deutsch und englisch): Gastmodus mit freier Zeit, Beispiel „bis Sonntag 18 Uhr“.
+
 ## [0.51.0] - 2026-11-17
 
 ### Hinzugefügt

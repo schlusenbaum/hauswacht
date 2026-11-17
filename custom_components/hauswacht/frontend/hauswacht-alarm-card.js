@@ -44,6 +44,9 @@ const TEXT = {
     guest4h: "4 Stunden",
     guestTomorrow: "Bis morgen 10 Uhr",
     guest3d: "3 Tage",
+    guestUntilFree: "Oder bis:",
+    guestApply: "Übernehmen",
+    guestPast: "Bitte einen Zeitpunkt in der Zukunft wählen.",
     lastBy: "Zuletzt",
     open: "Offen",
     unavailableSensors: "Nicht erreichbar",
@@ -86,6 +89,9 @@ const TEXT = {
     guest4h: "4 hours",
     guestTomorrow: "Until tomorrow 10 am",
     guest3d: "3 days",
+    guestUntilFree: "Or until:",
+    guestApply: "Apply",
+    guestPast: "Please choose a time in the future.",
     lastBy: "Last",
     open: "Open",
     unavailableSensors: "Unreachable",
@@ -188,7 +194,9 @@ const STYLE = `
     font: inherit; padding: 12px 22px; border-radius: 12px; cursor: pointer; min-width: 120px;
     border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color);
   }
-  .row.guest { flex-wrap: wrap; }
+  .row.guest { flex-wrap: wrap; align-items: center; }
+  label.until { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+  input.guest-until { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--divider-color, #ccc); background: var(--card-background-color, #fff); color: var(--primary-text-color); }
   button.plain.primary { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
   .empty { padding: 20px; }
   /* Kompakt: eine Zeile Zustand, kleinere Knöpfe */
@@ -531,6 +539,13 @@ class HauswachtAlarmCard extends HTMLElement {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
+      // Gewählte Zeit merken, damit ein Neuzeichnen (Zustandsänderung) sie nicht verwirft
+      this.shadowRoot.addEventListener("change", (ev) => {
+        const el = ev.composedPath()[0];
+        if (el && el.classList && el.classList.contains("guest-until") && this._ui && this._ui.kind === "guest") {
+          this._ui.until = el.value;
+        }
+      });
     }
     const classes = [this._opt("groesse") === "kompakt" ? "compact" : "", this._opt("blinken") ? "" : "no-pulse"].join(" ").trim();
     const colors = Object.entries(COLORS)
@@ -567,6 +582,9 @@ class HauswachtAlarmCard extends HTMLElement {
       const choice = (until, label) => `<button class="plain" data-do="guest-set" data-until="${until}" ${busy}>${esc(label)}</button>`;
       return `<div class="pad"><div class="what">${esc(this._t("guestAsk"))}</div>
         <div class="row guest">${choice("off", this._t("guestForever"))}${choice("4h", this._t("guest4h"))}${choice("tomorrow", this._t("guestTomorrow"))}${choice("3d", this._t("guest3d"))}</div>
+        <div class="row guest"><label class="until">${esc(this._t("guestUntilFree"))}
+          <input type="datetime-local" class="guest-until" value="${esc(this._ui.until || this._localInput(this._guestDefault()))}" min="${esc(this._localInput(new Date()))}"></label>
+          <button class="plain primary" data-do="guest-custom" ${busy}>${esc(this._t("guestApply"))}</button></div>
         <div class="row"><button class="plain" data-do="cancel">${this._t("cancel")}</button></div></div>`;
     }
     if (on.length) {
@@ -592,8 +610,33 @@ class HauswachtAlarmCard extends HTMLElement {
     }
   }
 
+  // Vorschlag für die freie Wahl: morgen zur selben Uhrzeit (volle Stunde)
+  _guestDefault() {
+    const d = new Date(Date.now() + 24 * 3600 * 1000);
+    d.setMinutes(0, 0, 0);
+    return d;
+  }
+
+  // Datum für <input type="datetime-local"> (lokale Zeit, ohne Zeitzone)
+  _localInput(d) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  _setGuestCustom() {
+    const input = this.shadowRoot && this.shadowRoot.querySelector(".guest-until");
+    const value = input && input.value;
+    const until = value ? new Date(value) : null;
+    if (!until || isNaN(until.getTime()) || until.getTime() <= Date.now()) {
+      this._msg = { err: true, text: this._t("guestPast") };
+      this._render();
+      return;
+    }
+    this._setGuest(true, until);
+  }
+
   async _setGuest(on, choice) {
-    let until = null;
+    let until = choice instanceof Date ? choice : null;
     if (on && choice === "4h") until = new Date(Date.now() + 4 * 3600 * 1000);
     else if (on && choice === "3d") until = new Date(Date.now() + 3 * 24 * 3600 * 1000);
     else if (on && choice === "tomorrow") {
@@ -763,6 +806,8 @@ class HauswachtAlarmCard extends HTMLElement {
       this._render();
     } else if (what === "guest-set") {
       this._setGuest(true, target.dataset.until);
+    } else if (what === "guest-custom") {
+      this._setGuestCustom();
     } else if (what === "guest-off") {
       this._setGuest(false);
     } else {
