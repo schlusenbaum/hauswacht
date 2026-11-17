@@ -111,7 +111,18 @@ from .core.automation import (
     AutoConfig,
     parse_automation,
 )
+from .core.changes.notifications import save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
+from .core.changes.sirens import save_sirens
+from .core.changes.users import (
+    RIGHT_VALUES,
+    delete_user,
+    save_user,
+    set_area_rights,
+    set_pins,
+    unique_user_id,
+    validate_user_name,
+)
 from .core.changes.zones import delete_zone, save_zone
 from .core.controls import ALL_AREAS as CONTROL_ALL_AREAS
 from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
@@ -223,7 +234,7 @@ from .core.state_machine import (
     OpenSensorPolicy,
     UnavailableSensorPolicy,
 )
-from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, Action, parse_users, pin_conflicts
+from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, parse_users, pin_conflicts
 from .names import display_name, plain_name
 from .runtime import device_class_of, entities_by_label
 from .siren_test import SirenTester
@@ -1655,32 +1666,22 @@ class HauswachtOptionsFlow(OptionsFlow):
         allow_switch = bool(options.get(OPT_SIRENS_ALLOW_SWITCH, False))
         errors: dict[str, str] = {}
         if user_input is not None:
-            enable = bool(user_input.get(OPT_SIRENS_HARDWARE_ENABLED, False))
-            want_switch = bool(user_input.get(OPT_SIRENS_ALLOW_SWITCH, False))
-            if enable and not was_enabled and not user_input.get("confirm_hardware"):
-                errors["base"] = "confirm_hardware_required"
-            else:
-                sirens = sorted(set(user_input.get(OPT_SIRENS) or []))
-                if not want_switch:
-                    # Experten-Funktion aus: Schalter fallen aus der Liste
-                    sirens = [s for s in sirens if not s.startswith("switch.")]
-                options[OPT_SIRENS] = sirens
-                options[OPT_SIRENS_HARDWARE_ENABLED] = enable
-                options[OPT_SIRENS_ALLOW_SWITCH] = want_switch
-                tones = {
-                    k: v for k, v in dict(options.get(OPT_SIREN_TONES, {})).items() if k in sirens
-                }
-                options[OPT_SIREN_TONES] = tones
-                options[OPT_SIREN_FIRE_TONE_OK] = [
-                    x for x in options.get(OPT_SIREN_FIRE_TONE_OK, []) if x in sirens
-                ]
-                # Aus Profilen entfernen, was nicht mehr registriert ist
-                profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
-                for settings in profiles.values():
-                    if "sirens" in settings:
-                        settings["sirens"] = [s for s in settings["sirens"] if s in sirens]
-                options[OPT_PROFILES] = profiles
-                if want_switch and not allow_switch:
+            change = save_sirens(
+                options,
+                {
+                    **user_input,
+                    OPT_SIRENS: user_input.get(OPT_SIRENS) or [],
+                    OPT_SIRENS_HARDWARE_ENABLED: bool(
+                        user_input.get(OPT_SIRENS_HARDWARE_ENABLED, False)
+                    ),
+                    OPT_SIRENS_ALLOW_SWITCH: bool(user_input.get(OPT_SIRENS_ALLOW_SWITCH, False)),
+                },
+            )
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                options = change.options
+                if options[OPT_SIRENS_ALLOW_SWITCH] and not allow_switch:
                     # Gerade eingeschaltet: Formular erneut zeigen, jetzt mit Schaltern
                     self.hass.config_entries.async_update_entry(self.config_entry, options=options)
                     return await self.async_step_siren_settings()
@@ -2297,33 +2298,9 @@ class HauswachtOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         options = dict(self.config_entry.options)
         if user_input is not None:
-            options[OPT_NOTIFY_SYSTEM] = list(user_input.get(OPT_NOTIFY_SYSTEM) or [])
-            options[OPT_NOTIFY_IN_TEST_MODE] = bool(user_input.get(OPT_NOTIFY_IN_TEST_MODE))
-            options[OPT_PUSH_DISARM] = bool(user_input.get(OPT_PUSH_DISARM))
-            options[OPT_CRITICAL_ALERTS] = bool(user_input.get(OPT_CRITICAL_ALERTS, True))
-            options[OPT_DURESS_NOTIFY] = list(user_input.get(OPT_DURESS_NOTIFY) or [])
-            events: dict[str, dict[str, Any]] = {}
-            for event in NotifyEvent:
-                stored = user_input.get(f"event_{event.value}")
-                if isinstance(stored, dict):
-                    # Eigene Texte (title/message) behalten
-                    events[event.value] = {
-                        **options.get(OPT_EVENTS, {}).get(event.value, {}),
-                        "enabled": bool(stored.get("enabled")),
-                        "targets": list(stored.get("targets") or []),
-                    }
-                elif event.value in options.get(OPT_EVENTS, {}):
-                    events[event.value] = options[OPT_EVENTS][event.value]
-            options[OPT_EVENTS] = events
-            reminder = user_input.get("reminder")
-            if isinstance(reminder, dict):
-                options[OPT_REMINDER_PERSONS] = list(reminder.get(OPT_REMINDER_PERSONS) or [])
-                profile = reminder.get(OPT_REMINDER_PROFILE)
-                if profile:
-                    options[OPT_REMINDER_PROFILE] = profile
-                else:
-                    options.pop(OPT_REMINDER_PROFILE, None)
-                options[OPT_REMINDER_DELAY] = int(reminder.get(OPT_REMINDER_DELAY) or 15)
+            change = save_notify_settings(options, user_input)
+            assert change.options is not None
+            options = change.options
             return await self._save(options, "notifications")
 
         services = self._notify_services()
@@ -2425,11 +2402,9 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not self.config_entry.options.get(OPT_USERS):
             return self.async_abort(reason="no_users")
         if user_input is not None:
-            options = dict(self.config_entry.options)
-            options[OPT_USERS] = {
-                k: v for k, v in options.get(OPT_USERS, {}).items() if k != user_input["user"]
-            }
-            return await self._save(options, "users")
+            change = delete_user(self.config_entry.options, user_input["user"])
+            assert change.options is not None
+            return await self._save(change.options, "users")
         return self.async_show_form(
             step_id="user_delete",
             data_schema=vol.Schema({vol.Required("user"): self._user_selector()}),
@@ -2461,37 +2436,24 @@ class HauswachtOptionsFlow(OptionsFlow):
         placeholders = {"conflict": ""}
         if user_input is not None:
             name = str(user_input.get("name") or "").strip()
-            errors, conflict = await self._validate_user(name, ("", ""), user_id, stored_all)
-            placeholders["conflict"] = conflict
+            errors = validate_user_name(options, user_id, name)
             if not errors:
-                data = dict(current)
-                data.update(
+                change = save_user(
+                    options,
+                    user_id,
                     {
-                        "name": name,
-                        "active": bool(user_input.get("active", True)),
-                        "can_arm": bool(user_input.get("can_arm", True)),
-                        "can_disarm": bool(user_input.get("can_disarm", True)),
-                        "can_end_alarm": bool(user_input.get("can_end_alarm", True)),
-                        "can_force_arm": bool(user_input.get("can_force_arm", True)),
-                        "ha_user": user_input.get("ha_user") or await self._ha_user_by_name(name),
-                        "card_pin": bool(user_input.get("card_pin", False)),
+                        **user_input,
                         "valid_from": _to_iso(user_input.get("valid_from")),
                         "valid_until": _to_iso(user_input.get("valid_until")),
-                    }
+                    },
+                    ha_user=user_input.get("ha_user") or await self._ha_user_by_name(name),
                 )
-                scope = user_input.get("rights", RIGHTS_ALL)
-                if scope == RIGHTS_ALL:
-                    data["rights"] = RIGHTS_ALL
-                    data.pop("areas", None)
-                    data.pop("area_rights", None)
-                new_id = user_id or _unique_id(name, stored_all)
-                stored_all[new_id] = data
-                new_options = dict(options)
-                new_options[OPT_USERS] = stored_all
-                if scope == RIGHTS_PER_AREA:
-                    self._user_pending = (new_id, new_options)
+                assert change.options is not None
+                assert change.item_id is not None
+                if user_input.get("rights", RIGHTS_ALL) == RIGHTS_PER_AREA:
+                    self._user_pending = (change.item_id, change.options)
                     return await self.async_step_user_area_rights()
-                return await self._save(new_options, "users")
+                return await self._save(change.options, "users")
 
         placeholders["status"] = self._credential_status(current)
         schema = await self._user_schema(current)
@@ -2512,17 +2474,14 @@ class HauswachtOptionsFlow(OptionsFlow):
         data = dict(users[user_id])
         areas = parse_areas(options)
         if user_input is not None:
-            data["rights"] = RIGHTS_PER_AREA
-            data["area_rights"] = {
-                area.area_id: [a for a in user_input.get(area.name, []) if a in RIGHT_VALUES]
-                for area in areas.values()
-            }
-            data.pop("areas", None)
-            users[user_id] = data
-            new_options = dict(options)
-            new_options[OPT_USERS] = users
+            change = set_area_rights(
+                options,
+                user_id,
+                {area.area_id: user_input.get(area.name, []) for area in areas.values()},
+            )
+            assert change.options is not None
             self._user_pending = None
-            return await self._save(new_options, "users")
+            return await self._save(change.options, "users")
         current = _area_rights_defaults(data, list(areas))
         fields: dict[Any, Any] = {
             vol.Optional(area.name, default=current[area.area_id]): SelectSelector(
@@ -2627,7 +2586,7 @@ class HauswachtOptionsFlow(OptionsFlow):
                 return await self._save(options, "action_codes")
             data, errors, conflict = await self._validate_action_code(user_input, code_id, stored)
             if not errors:
-                stored[code_id or _unique_id(data["name"], stored)] = data
+                stored[code_id or unique_user_id(data["name"], stored)] = data
                 options[OPT_ACTION_CODES] = stored
                 self._action_code = None
                 return await self._save(options, "action_codes")
@@ -3026,27 +2985,14 @@ class HauswachtOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         conflict = ""
         if user_input is not None:
-            new_pin = str(user_input.get("new_pin") or "").strip()
-            new_duress = str(user_input.get("new_duress_pin") or "").strip()
-            errors, conflict = await self._validate_user(
-                name, (new_pin, new_duress), user_id, stored_all
+            change = await self.hass.async_add_executor_job(
+                set_pins, self.config_entry.options, user_id, user_input
             )
-            if not errors:
-                if user_input.get("remove_pin"):
-                    data.pop("pin_salt", None)
-                    data.pop("pin_digest", None)
-                elif new_pin:
-                    hashed = await self.hass.async_add_executor_job(hash_pin, new_pin)
-                    data["pin_salt"], data["pin_digest"] = hashed.salt, hashed.digest
-                if user_input.get("remove_duress_pin"):
-                    data.pop("duress_salt", None)
-                    data.pop("duress_digest", None)
-                elif new_duress:
-                    hashed = await self.hass.async_add_executor_job(hash_pin, new_duress)
-                    data["duress_salt"], data["duress_digest"] = hashed.salt, hashed.digest
-                stored_all[user_id] = data
-                options[OPT_USERS] = stored_all
-                return await self._save(options, "pins")
+            errors = dict(change.errors)
+            conflict = str(change.details.get("conflict") or "")
+            if change.ok:
+                assert change.options is not None
+                return await self._save(change.options, "pins")
         schema = vol.Schema(
             {
                 vol.Optional("new_pin"): TextSelector(
@@ -3548,47 +3494,6 @@ class HauswachtOptionsFlow(OptionsFlow):
         )
         return self.async_show_form(step_id="infrastructure", data_schema=schema)
 
-    async def _validate_user(
-        self, name: str, pins: tuple[str, str], user_id: str | None, stored_all: dict[str, Any]
-    ) -> tuple[dict[str, str], str]:
-        new_pin, new_duress = pins
-        errors: dict[str, str] = {}
-        conflict = ""
-        if not name:
-            errors["name"] = "user_name_required"
-        elif any(
-            str(d.get("name", "")).casefold() == name.casefold()
-            for uid, d in stored_all.items()
-            if uid != user_id
-        ):
-            errors["name"] = "user_name_taken"
-        if new_pin and not is_valid_pin_format(new_pin):
-            errors["new_pin"] = "invalid_pin"
-        if new_duress and not is_valid_pin_format(new_duress):
-            errors["new_duress_pin"] = "invalid_pin"
-        if new_pin and new_duress and new_pin == new_duress:
-            errors["new_duress_pin"] = "duress_equals_pin"
-        codes = parse_action_codes(self.config_entry.options)
-        for field, value in (("new_pin", new_pin), ("new_duress_pin", new_duress)):
-            if value and field not in errors and is_action_code(codes, value):
-                errors[field] = "pin_is_action_code"
-        users = parse_users(self.config_entry.options)
-        if not errors and new_pin:
-            found = await self.hass.async_add_executor_job(
-                lambda: pin_conflicts(new_pin, users, kind="pin")
-            )
-            if found:
-                errors["new_pin"] = "pin_is_duress"
-                conflict = ", ".join(found)
-        if not errors and new_duress:
-            found = await self.hass.async_add_executor_job(
-                lambda: pin_conflicts(new_duress, users, kind="duress", exclude=user_id)
-            )
-            if found:
-                errors["new_duress_pin"] = "duress_conflict"
-                conflict = ", ".join(found)
-        return errors, conflict
-
     def _new_card_options(self) -> list[SelectOptionDict]:
         """Zuletzt gelesene unbekannte Karten zum Anlernen ("neu, gelesen an … um …")."""
         lang = "de" if self._german() else "en"
@@ -3829,9 +3734,6 @@ def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:
     )
 
 
-RIGHT_VALUES = (Action.ARM.value, Action.DISARM.value, Action.END_ALARM.value)
-
-
 def _tag_input(value: Any) -> list[str]:
     """Karten aus der Auswahl (Liste) oder – wie früher – als Text mit Komma."""
     items = value if isinstance(value, list) else str(value or "").split(",")
@@ -3972,11 +3874,3 @@ def _suggested_local(value: Any) -> dict[str, Any]:
     if parsed is None:
         return {}
     return {"suggested_value": dt_util.as_local(parsed).strftime("%Y-%m-%d %H:%M:%S")}
-
-
-def _unique_id(name: str, existing: dict[str, Any]) -> str:
-    base = "".join(c if c.isalnum() else "_" for c in name.casefold()).strip("_") or "benutzer"
-    candidate, n = base, 2
-    while candidate in existing:
-        candidate, n = f"{base}_{n}", n + 1
-    return candidate

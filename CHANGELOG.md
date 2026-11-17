@@ -8,8 +8,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Intern
 - Beginn der gemeinsamen Logikschicht für Einstellungen (`core/changes/`, ADR 0009):
-  Meldergruppen und Alarmprofile anlegen, ändern und löschen (Profile auch teilweise, für den
-  Assistenten). Der Einstellungsdialog verhält sich unverändert.
+  Meldergruppen, Alarmprofile, Sirenen, Empfänger, Benutzer und PINs (Profile auch teilweise,
+  für den Assistenten). Der Einstellungsdialog verhält sich unverändert.
 
 ### Dokumentation
 - Konzept Einrichtungsassistent und gemeinsame Logikschicht
