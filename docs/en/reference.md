@@ -100,6 +100,36 @@ actions:
 The profile names must be written exactly as in Hauswacht. Better do **not** couple unlocking
 automatically to disarming: whoever disarms by mistake would otherwise also have opened the door.
 
+**On alarm: all lights on and an extra message** – Hauswacht itself only switches sirens;
+everything else is done by your own automation:
+
+```yaml
+alias: Lights on at intrusion alarm
+triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.hauswacht
+    attribute: phase
+    to: triggered
+conditions:
+  # switch nothing in test mode
+  - condition: state
+    entity_id: alarm_control_panel.hauswacht
+    attribute: test_mode
+    state: false
+actions:
+  - action: light.turn_on
+    target:
+      area_id: [living_room, hallway, kitchen]
+  - action: notify.telegram_family
+    data:
+      message: >
+        Intrusion alarm ({{ state_attr('alarm_control_panel.hauswacht', 'profile_name') }})!
+```
+
+Adapt lights, areas and the notification service to yours. Later, e.g. camera snapshots would be
+added here. `triggered` applies to the reaction phase; once it is over, `phase` changes to
+`alarm_hold` (alarm not yet acknowledged).
+
 ## Actions
 
 | Action | Fields | Purpose |

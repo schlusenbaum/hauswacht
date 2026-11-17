@@ -99,6 +99,36 @@ Die Profilnamen müssen genau so geschrieben sein wie in Hauswacht. Das **Aufsch
 nicht automatisch an das Unscharfschalten koppeln: Wer fälschlich unscharf schaltet, hätte sonst
 zusätzlich die Tür geöffnet.
 
+**Bei Alarm: alle Lichter an und eine zusätzliche Nachricht** – Hauswacht schaltet selbst nur
+Sirenen; alles andere erledigt eine eigene Automation:
+
+```yaml
+alias: Bei Einbruchalarm Licht an
+triggers:
+  - trigger: state
+    entity_id: alarm_control_panel.hauswacht
+    attribute: phase
+    to: triggered
+conditions:
+  # im Testmodus nichts schalten
+  - condition: state
+    entity_id: alarm_control_panel.hauswacht
+    attribute: test_mode
+    state: false
+actions:
+  - action: light.turn_on
+    target:
+      area_id: [wohnzimmer, flur, kueche]
+  - action: notify.telegram_familie
+    data:
+      message: >
+        Einbruchalarm ({{ state_attr('alarm_control_panel.hauswacht', 'profile_name') }})!
+```
+
+Lichter, Bereiche und den Benachrichtigungsdienst an deine anpassen. Später kämen hier z. B.
+Kamera-Schnappschüsse dazu. `triggered` gilt für die Reaktionsphase; ist sie vorbei, wechselt
+`phase` auf `alarm_hold` (Alarm noch nicht quittiert).
+
 ## Aktionen
 
 | Aktion | Felder | Zweck |
