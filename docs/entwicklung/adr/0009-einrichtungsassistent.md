@@ -1,6 +1,6 @@
 # ADR 0009: Einrichtungsassistent und gemeinsame Logikschicht
 
-- Status: angenommen (Konzept, noch nicht umgesetzt)
+- Status: angenommen (Umsetzung auf dem Entwicklungszweig `entwicklung/assistent`)
 - Datum: 2026-11-17
 
 ## Kontext
@@ -141,3 +141,15 @@ Das Einstellungs-Panel kommt frühestens danach und bekommt ein eigenes Konzept.
   darum und zeigt, wo der Schalter ist. Ohne Testmodus kein Probelauf.
 - **Bereiche:** Im Assistenten nur die Frage „Gibt es getrennte Wohnungen?“. Für jeden weiteren
   Bereich ruft man den Assistenten erneut auf (Kapitel-Auswahl → neuer Bereich).
+
+## Entwicklung
+
+- Der Umbau geschieht auf dem Zweig **`entwicklung/assistent`**, nicht direkt auf `main`. Pull
+  Requests gehen in diesen Zweig und laufen durch dieselbe CI.
+- `main` bleibt bis zum Abschluss releasefähig. Fehlerbehebungen gehen weiter auf `main`, werden
+  normal veröffentlicht und regelmäßig in den Entwicklungszweig übernommen.
+- Testversionen erscheinen als **Vorabversion** (z. B. `0.53.0b1`, auf GitHub als „Pre-release“).
+  HACS zeigt sie nur bei eingeschalteten Beta-Versionen.
+- Getestet wird auf dem Produktivsystem des Maintainers; vor jeder Vorabversion eine Sicherung,
+  damit sich der alte Stand in Minuten wiederherstellen lässt.
+- Gemergt wird erst, wenn alles getestet ist und läuft.
