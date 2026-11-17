@@ -1,6 +1,6 @@
 # ADR 0009: Einrichtungsassistent und gemeinsame Logikschicht
 
-- Status: angenommen (Umsetzung auf dem Entwicklungszweig `entwicklung/assistent`)
+- Status: umgesetzt in 0.53.0 (entwickelt auf dem Zweig `entwicklung/assistent`, getestet über die Vorabversionen 0.53.0b1–b3)
 - Datum: 2026-11-17
 
 ## Kontext

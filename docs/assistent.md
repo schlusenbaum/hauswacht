@@ -6,8 +6,6 @@ Der Einrichtungsassistent führt Schritt für Schritt durch die Einrichtung – 
 erklärt kurz, wie Hauswacht arbeitet, schlägt Melder, Meldergruppen und Alarmprofile vor und
 zeigt am Ende, was eingerichtet ist und was noch fehlt.
 
-> **Vorabversion:** Der Assistent ist neu und erscheint zuerst in Testversionen.
-
 ## Starten
 
 - **Bei der Installation:** Nach „Integration hinzufügen → Hauswacht“ fragt Hauswacht

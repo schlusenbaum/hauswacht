@@ -6,8 +6,6 @@ The setup wizard guides you step by step through the setup – no prior knowledg
 briefly explains how Hauswacht works, suggests sensors, sensor groups and alarm profiles, and
 shows at the end what is set up and what is still missing.
 
-> **Pre-release:** the wizard is new and appears in test versions first.
-
 ## Starting
 
 - **During installation:** after "Add integration → Hauswacht", Hauswacht asks "With the setup

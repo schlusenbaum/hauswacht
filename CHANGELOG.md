@@ -6,72 +6,46 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.53.0b3] - 2026-11-17
+## [0.53.0] - 2026-11-17
 
-Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.
-
-### Hinzugefügt
-- **Einrichtungsassistent, Teil 3:**
-  - **Kapitel-Auswahl beim erneuten Start:** Ist schon etwas eingerichtet, springst du direkt zu
-    Neue Melder suchen, Meldergruppen, Auslöseregeln, Profilen, Empfängern, Sirenen, Benutzern,
-    Weiterem Bereich, Probelauf oder Zusammenfassung.
-  - **Probelauf im Testmodus:** Türen und Fenster öffnen, an Bewegungsmeldern vorbeigehen –
-    Hauswacht hakt jeden erkannten Melder ab („Erkannt: 3 von 5“). Der Assistent bittet um den
-    Testmodus, schaltet ihn aber nicht selbst ein; der Probelauf liest nur.
-  - **Getrennte Bereiche:** Bei der ersten Einrichtung die Frage „Gibt es getrennte
-    Wohnungen?“; weitere Bereiche über „Weiteren Bereich einrichten“ – mit Meldern, Gruppen und
-    Profilen für diesen Bereich (z. B. „Abwesend (Einliegerwohnung)“).
-
-### Intern
-- Logikschicht um Bereiche ergänzt (`core/changes/areas.py`).
-
-## [0.53.0b2] - 2026-11-17
-
-Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.
+Getestet über die Vorabversionen 0.53.0b1 bis 0.53.0b3.
 
 ### Hinzugefügt
-- **Einrichtungsassistent, Teil 2:**
-  - **Empfänger:** Handys mit der Home-Assistant-App vorgewählt; danach **Test-Nachricht** nur
-    auf Knopfdruck, mit Ergebnis je Empfänger.
-  - **Sirenen:** alle Sirenen aus Home Assistant vorgeschlagen, wahlweise gleich in Profilen
-    verwenden. Die **Freigabe bleibt gesperrt** – der Assistent gibt nichts frei. Im
-    Einstellungsdialog danach optional der **Sirenentest** (einzeln, kurz, leise, mit
-    Bestätigung) mit Rückkehr in den Assistenten.
-  - **Benutzer** mit optionalem PIN, beliebig viele nacheinander; Verknüpfung mit dem
-    Home-Assistant-Konto gleichen Namens.
-  - **Bedienteile:** Hinweis, wo sie eingerichtet werden.
-  - Zusammenfassung nennt zusätzlich „Sirenen eingetragen, aber noch nicht freigegeben“.
-  - „Später festlegen“ bei der Überwachungsart führt jetzt weiter zu Empfängern und Sirenen.
-
-## [0.53.0b1] - 2026-11-17
-
-Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.
-
-### Hinzugefügt
-- **Einrichtungsassistent, Teil 1** ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md),
-  Anleitung: [Einrichtungsassistent](docs/assistent.md)):
-  - Bei der **Installation** fragt Hauswacht „Mit dem Einrichtungsassistenten (empfohlen)“ oder
-    „Ohne Assistent“; später unter Konfigurieren → **Einrichtungsassistent**.
-  - Kurze **Einführung** „So arbeitet Hauswacht“ (überspringbar).
+- **Einrichtungsassistent** ([Anleitung](docs/assistent.md),
+  [ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md)) – führt ohne Vorwissen durch
+  die Einrichtung; jeder Schritt ist überspringbar, Vorhandenes wird nur ergänzt:
+  - **Start:** Bei der Installation fragt Hauswacht „Mit dem Einrichtungsassistenten
+    (empfohlen)“ oder „Ohne Assistent“; später unter Konfigurieren → **Einrichtungsassistent**.
+    Ist schon etwas eingerichtet, gibt es eine **Kapitel-Auswahl**.
+  - Kurze **Einführung** „So arbeitet Hauswacht“.
+  - **Getrennte Bereiche?** Bei der ersten Einrichtung als Frage; weitere Bereiche über
+    „Weiteren Bereich einrichten“ mit eigenen Meldern, Gruppen und Profilen.
   - **Melder-Vorschläge:** Türen, Fenster und Bewegungsmelder, die noch in keiner Gruppe stehen,
     nach Etage und Raum.
   - **Überwachungsart:** Meldergruppen, nur Auslöseregeln, beides oder später.
-  - **Meldergruppen** „Außen“ und „Innen“ mit Wahl der **Eingangstüren**.
-  - **Auslöseregeln** über den Regel-Assistenten, mit Rückkehr in den Assistenten.
+  - **Meldergruppen** „Außen“ und „Innen“ mit Wahl der **Eingangstüren**; **Auslöseregeln** über
+    den Regel-Assistenten mit Rückkehr in den Assistenten.
   - **Alarmprofile** „Abwesend“ und „Nacht“ – vorhandene Profile mit demselben Knopf werden
     ergänzt statt verdoppelt.
+  - **Empfänger** (Handy-App vorgewählt) mit **Test-Nachricht** auf Knopfdruck.
+  - **Sirenen** eintragen und Profilen zuordnen – die **Freigabe bleibt gesperrt**; optional
+    der Sirenentest (einzeln, kurz, leise, mit Bestätigung).
+  - **Benutzer** mit optionalem PIN; Hinweis zu den **Bedienteilen**.
+  - **Probelauf im Testmodus:** Melder auslösen, Hauswacht hakt jeden erkannten ab. Der
+    Assistent bittet um den Testmodus, schaltet ihn aber nicht selbst ein.
   - **Zusammenfassung:** was eingerichtet ist und was noch fehlt.
-  - Jeder Schritt ist überspringbar; der Assistent gibt keine Sirenen frei, schaltet nichts und
-    überschreibt nichts.
+  - Der Assistent gibt keine Sirenen frei, schaltet keine Geräte und sendet nur auf Knopfdruck.
 
 ### Intern
-- Beginn der gemeinsamen Logikschicht für Einstellungen (`core/changes/`, ADR 0009):
-  Meldergruppen, Alarmprofile, Sirenen, Empfänger, Benutzer und PINs (Profile auch teilweise,
-  für den Assistenten). Der Einstellungsdialog verhält sich unverändert.
+- Gemeinsame Logikschicht für Einstellungen (`core/changes/`): Meldergruppen, Alarmprofile,
+  Sirenen, Empfänger, Benutzer, PINs und Bereiche werden für Einstellungsdialog und Assistent an
+  einer Stelle geprüft und gespeichert. Der Einstellungsdialog verhält sich unverändert.
+- Versionsprüfung kennt Vorabversionen (`0.53.0b1`); CI läuft auch auf `entwicklung/**`.
 
 ### Dokumentation
-- Konzept Einrichtungsassistent und gemeinsame Logikschicht
-  ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md)); Roadmap ergänzt.
+- Neue Seite **Einrichtungsassistent** (deutsch und englisch); Installation, Übersicht der
+  Anleitung und Roadmap verweisen darauf.
+- ADR 0009 „Einrichtungsassistent und gemeinsame Logikschicht“ (umgesetzt).
 
 ## [0.52.0] - 2026-11-17
 

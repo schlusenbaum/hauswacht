@@ -14,7 +14,7 @@ ones of the English interface.
 | Page | Content |
 |---|---|
 | [Installation and first steps](installation.md) | requirements, installation via Marketplace or HACS, the settings menu, the shortest way to the first arming, updates |
-| [Setup wizard](setup-wizard.md) | guided setup with a short introduction: sensors, sensor groups or trigger rules, alarm profiles – every step can be skipped (pre-release) |
+| [Setup wizard](setup-wizard.md) | guided setup with a short introduction: sensors, sensor groups or trigger rules, alarm profiles – every step can be skipped |
 | [Sensors and sensor groups](sensors.md) | which sensors work, sensor groups, types (door, window, motion …), always-active sensors, radio silence, radio networks and gateways |
 | [Alarm profiles and areas](profiles.md) | creating profiles, delays, reaction, automation and presence, disarm on arrival, arm by closing the door, several areas (e.g. house and garage) |
 | [Trigger rules](trigger-rules.md) | sequences like "door, then basement", exceptions, conditions, YAML expert mode |
