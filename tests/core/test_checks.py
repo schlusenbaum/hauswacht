@@ -252,3 +252,57 @@ def test_expert_fire_tone_is_shown() -> None:
     assert _codes(findings) == ["siren_fire_tone"]
     assert "fire" in findings[0]["text"]
     assert findings[0]["important"] is False
+
+
+def test_guest_mode_is_shown_with_end() -> None:
+    areas = [
+        {"name": "Haus", "guest": True, "guest_until": "2026-11-17T18:30:00+01:00"},
+        {"name": "Einliegerwohnung", "guest": True, "guest_until": None},
+        {"name": "Garage", "guest": False, "guest_until": None},
+    ]
+    findings = run_checks(_overview(areas=areas), now=NOW)
+    assert _codes(findings) == ["guest_mode", "guest_mode"]
+    assert findings[0]["severity"] == "info"
+    assert "bis 17.11. 18:30" in findings[0]["text"]
+    assert "bis zum Ausschalten" in findings[1]["text"]
+    english = run_checks(_overview(areas=areas[1:2]), "en", now=NOW)
+    assert "until switched off" in english[0]["text"]
+
+
+def _code(**changes: Any) -> dict[str, Any]:
+    return {
+        "name": "Außenlicht",
+        "code": "7777",
+        "key": "arm_all_zones",
+        "keypad": None,
+        "keypad_missing": False,
+        "action": "event",
+        "profile": None,
+        "profile_missing": False,
+        **changes,
+    }
+
+
+def test_action_code_hints() -> None:
+    assert run_checks(_overview(action_codes=[_code()]), now=NOW) == []
+    broken = [
+        _code(name="Nacht", action="arm", profile="night", profile_missing=True),
+        _code(name="Alt", keypad="keypad_alt", keypad_missing=True),
+    ]
+    findings = run_checks(_overview(action_codes=broken), now=NOW)
+    assert sorted(_codes(findings)) == ["action_code_keypad_missing", "action_code_profile_missing"]
+    profile = next(f for f in findings if f["code"] == "action_code_profile_missing")
+    assert profile["severity"] == "warning"
+
+
+def test_silent_emergency_without_recipient_is_important() -> None:
+    emergency = [_code(name="Hilfe", code="••••", action="silent_emergency")]
+    nobody = _overview(action_codes=emergency, notifications={"events": []})
+    findings = run_checks(nobody, now=NOW)
+    assert _codes(findings) == ["silent_emergency_no_targets"]
+    assert findings[0]["important"] is True
+    reached = _overview(
+        action_codes=emergency,
+        notifications={"events": [{"event": "alarm", "targets": ["Handy Anna"]}]},
+    )
+    assert run_checks(reached, now=NOW) == []

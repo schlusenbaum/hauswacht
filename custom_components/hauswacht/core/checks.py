@@ -7,8 +7,8 @@ Rein und ohne Home Assistant: Eingabe ist die Anlagenübersicht (ein JSON-artige
      "text": "...", "where": "..."}
 
 ``important`` = auch als Reparatur-Hinweis in Home Assistant zeigen. Das bleibt bewusst wenigen
-Fällen vorbehalten (Alarm erreicht niemanden, Bedrohungs-PIN wirkungslos, Melder lange
-ausgefallen), damit die Reparaturliste nicht zugemüllt wird.
+Fällen vorbehalten (Alarm erreicht niemanden, Bedrohungs-PIN oder stiller Notruf wirkungslos,
+Melder lange ausgefallen), damit die Reparaturliste nicht zugemüllt wird.
 """
 
 from __future__ import annotations
@@ -173,6 +173,51 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
     "infrastructure_fault": {
         "de": ("Störung: {name}.", "Gateway prüfen"),
         "en": ("Fault: {name}.", "Check the gateway"),
+    },
+    "guest_mode": {
+        "de": (
+            "Gastmodus ist an ({area}, {until}) – die Profil-Automatik schaltet nicht scharf, "
+            "Erinnerungen ruhen.",
+            "Alarm-Karte / Schalter Gastmodus",
+        ),
+        "en": (
+            "Guest mode is on ({area}, {until}) – the profile automation does not arm, reminders "
+            "are paused.",
+            "Alarm card / guest mode switch",
+        ),
+    },
+    "action_code_profile_missing": {
+        "de": (
+            "Aktions-Code {name}: das Alarmprofil gibt es nicht mehr – der Code schaltet nichts "
+            "scharf.",
+            "Bedienteile – Aktions-Codes",
+        ),
+        "en": (
+            "Action code {name}: the alarm profile no longer exists – the code arms nothing.",
+            "Control devices – action codes",
+        ),
+    },
+    "action_code_keypad_missing": {
+        "de": (
+            "Aktions-Code {name}: das Keypad gibt es nicht mehr – der Code wirkt nirgends.",
+            "Bedienteile – Aktions-Codes",
+        ),
+        "en": (
+            "Action code {name}: the keypad no longer exists – the code works nowhere.",
+            "Control devices – action codes",
+        ),
+    },
+    "silent_emergency_no_targets": {
+        "de": (
+            "Aktions-Code {name} löst einen stillen Notruf aus, aber für „Alarm“ ist kein "
+            "Empfänger eingetragen – der Notruf erreicht niemanden.",
+            "Benachrichtigungen",
+        ),
+        "en": (
+            "Action code {name} triggers a silent emergency, but “Alarm” has no recipient – "
+            "the emergency reaches nobody.",
+            "Notifications",
+        ),
     },
     "rule_unused": {
         "de": ("Auslöseregel {name} wird in keinem Profil verwendet.", "Alarmprofile"),
@@ -363,6 +408,52 @@ def _monitoring(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
     return found
 
 
+def _guest(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
+    found = []
+    for area in overview.get("areas", []):
+        if not area.get("guest"):
+            continue
+        until = _parse(area.get("guest_until"))
+        if until is None:
+            text = "bis zum Ausschalten" if lang == "de" else "until switched off"
+        else:
+            # guest_until kommt in Ortszeit (mit Versatz) aus der Übersicht
+            fmt = "%d.%m. %H:%M" if lang == "de" else "%d %b %H:%M"
+            text = ("bis " if lang == "de" else "until ") + until.strftime(fmt)
+        found.append(_finding("guest_mode", lang, key=area["name"], area=area["name"], until=text))
+    return found
+
+
+def _action_codes(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
+    found = []
+    alarm = next(
+        (e for e in overview.get("notifications", {}).get("events", []) if e["event"] == "alarm"),
+        None,
+    )
+    for code in overview.get("action_codes", []):
+        name = code["name"]
+        if code.get("profile_missing"):
+            found.append(
+                _finding(
+                    "action_code_profile_missing", lang, severity="warning", key=name, name=name
+                )
+            )
+        if code.get("keypad_missing"):
+            found.append(_finding("action_code_keypad_missing", lang, key=name, name=name))
+        if code.get("action") == "silent_emergency" and not (alarm and alarm.get("targets")):
+            found.append(
+                _finding(
+                    "silent_emergency_no_targets",
+                    lang,
+                    severity="warning",
+                    important=True,
+                    key=name,
+                    name=name,
+                )
+            )
+    return found
+
+
 def _rules(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
     return [
         _finding("rule_unused", lang, key=rule["name"], name=rule["name"])
@@ -388,6 +479,8 @@ def run_checks(
         *_sirens(overview, language, now),
         *_monitoring(overview, language),
         *_rules(overview, language),
+        *_guest(overview, language),
+        *_action_codes(overview, language),
     ]
     order = {"warning": 0, "info": 1}
     return sorted(found, key=lambda f: (not f["important"], order.get(f["severity"], 2)))

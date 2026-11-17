@@ -280,7 +280,9 @@ conditions:
   for arming wants exactly that.
 - **Silent emergency:** important push message "emergency at Keypad hallway" to the alarm
   recipients – like the SOS key on "silent", but inconspicuously via a normal key. No siren, no
-  display on the keypad.
+  display on the keypad. If the event "Alarm" has no recipient, the
+  [system overview](overview.md#check-hints) reports this as an important hint (also under
+  repairs). In the overview and its printout this code only appears as "hidden".
 
 ## Learning cards
 

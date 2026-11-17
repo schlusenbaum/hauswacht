@@ -6,6 +6,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-11-17
+
+### Hinzugefügt
+- **Anlagenübersicht kennt die neuen Funktionen:**
+  - **Zustand:** Gastmodus je Bereich – aus, „bis 17.11.2026, 18:30“ oder „bis zum Ausschalten“.
+  - **Benutzer:** neue Zeile „Scharf erzwingen am Keypad“ (ja/nein), auch im Ausdruck.
+  - **Neuer Abschnitt „Aktions-Codes“:** Name, Code + Taste, Aktion (bei „scharf“ mit Profil),
+    Keypad oder „alle Keypads“. Der Code eines **stillen Notrufs** steht nur als „verborgen“ da –
+    der Ausdruck soll niemandem verraten, mit welchem Code man unbemerkt Hilfe ruft.
+- **Neue Prüfhinweise:**
+  - ⚠️ wichtig (auch unter Reparaturen): Aktions-Code „stiller Notruf“, aber das Ereignis „Alarm“
+    hat keinen Empfänger – der Notruf erreicht niemanden.
+  - ⚠️ Aktions-Code „scharf“, dessen Alarmprofil gelöscht wurde.
+  - ℹ️ Aktions-Code für ein Keypad, das es nicht mehr gibt.
+  - ℹ️ Gastmodus ist an (mit Ende) – Profil-Automatik und Erinnerungen ruhen.
+- **Notfallblatt:** erklärt, wie man am Keypad trotz offenem Fenster scharf schaltet (noch einmal
+  dieselbe PIN/Karte und Taste innerhalb von 10 Sekunden) – nur wenn ein Profil das erlaubt und
+  mindestens ein Benutzer das Recht hat.
+
+### Geändert
+- **Diagnose-Datei:** Aktions-Codes werden auch in der Übersicht entfernt.
+
+### Dokumentation
+- Anlagenübersicht (deutsch und englisch): neue Abschnitte, Prüfhinweise und „Was nie in der
+  Übersicht steht“ ergänzt; Bedienteile: Hinweis beim stillen Notruf; Roadmap.
+
 ## [0.51.2] - 2026-11-17
 
 ### Geändert

@@ -24,6 +24,7 @@ from .const import (
     OPT_PUSH_DISARM,
     OPT_SIRENS_HARDWARE_ENABLED,
 )
+from .core.action_codes import ALL_KEYPADS, CodeAction, parse_action_codes
 from .core.always_active import parse_always_active, parse_arm_on_close
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
@@ -319,6 +320,7 @@ def _users(main: HauswachtRuntime) -> list[dict[str, Any]]:
                 "ha_account": user.ha_user is not None,
                 "card_pin": user.card_pin,
                 "rights": rights,
+                "force_arm": user.can_force_arm,
             }
         )
     return rows
@@ -351,6 +353,35 @@ def _controls(main: HauswachtRuntime) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def _action_codes(main: HauswachtRuntime) -> list[dict[str, Any]]:
+    """Aktions-Codes. Der Code eines stillen Notrufs wird nicht gezeigt (Ausdruck!)."""
+    options = main.entry.options
+    keypads = {c.control_id: c.name for c in parse_controls(options).values()}
+    rows = []
+    for code in parse_action_codes(options):
+        silent = code.action is CodeAction.SILENT_EMERGENCY
+        profile_ok = True
+        profile = None
+        if code.action is CodeAction.ARM and code.profile:
+            profile_ok = code.profile in (options.get("profiles") or {})
+            profile = profile_info(options, code.profile).name if profile_ok else code.profile
+        rows.append(
+            {
+                "name": code.name,
+                "code": "•" * len(code.code) if silent else code.code,
+                "key": code.key,
+                "keypad": None
+                if code.keypad == ALL_KEYPADS
+                else keypads.get(code.keypad, code.keypad),
+                "keypad_missing": code.keypad != ALL_KEYPADS and code.keypad not in keypads,
+                "action": code.action.value,
+                "profile": profile,
+                "profile_missing": not profile_ok,
+            }
+        )
+    return sorted(rows, key=lambda r: str(r["name"]).casefold())
 
 
 def _notifications(main: HauswachtRuntime) -> dict[str, Any]:
@@ -441,6 +472,11 @@ def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
                 "profile": area.profile_name(area.ctx.profile.profile_id)
                 if area.ctx.profile is not None
                 else None,
+                "guest": area.guest_active,
+                # Ortszeit, damit der Prüfhinweis die Uhrzeit richtig nennt
+                "guest_until": dt_util.as_local(area.guest_ends_at).isoformat()
+                if area.guest_ends_at is not None
+                else None,
             }
             for area in main.areas.values()
         ],
@@ -461,6 +497,7 @@ def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
             "card_pin_unlinked": main.card_unlinked_pin,
         },
         "controls": _controls(main),
+        "action_codes": _action_codes(main),
         "notifications": _notifications(main),
         "monitoring": _monitoring(main),
     }

@@ -21,13 +21,14 @@ title: Overview   # optional
 | Section | Content |
 |---|---|
 | **Check hints** | at the very top, see [below](#check-hints) – already expanded if there are warnings |
-| State | per area, test mode, sirens enabled, system status, wrong entries |
+| State | per area, [guest mode](profiles.md#guest-mode) (off / until a time / until switched off), test mode, sirens enabled, system status, wrong entries |
 | Alarm profiles | per profile: button, sensor groups, exceptions, trigger rules, times, behaviour, sirens, recipients, automation, arm by closing the door |
 | Sensors | table **sensor × profile**: ✓ armed individually, R only in trigger rules, – excluded; plus type, state, battery |
 | Trigger rules | in plain language, with the profiles that use them |
 | Always active, sirens | sensors and sirens; what each siren can do, last test |
-| Users | PIN yes/no, cards (shortened), rights per area, validity; PIN rules |
+| Users | PIN yes/no, cards (shortened), rights per area, validity, [force arm at the keypad](control-devices.md#arm-anyway-at-the-keypad) yes/no; PIN rules |
 | Control devices | keypads with key assignment, stickers and readers with action, buttons with press types, door locks with source |
+| Action codes | per [action code](control-devices.md#action-codes): name, code + key, action (for "arm" with profile), keypad or "all keypads"; ⚠️ marks a deleted profile or keypad |
 | Notifications | recipients per event, announcements, quiet hours |
 | Monitoring | radio silence limit with recommendation, radio networks and gateways, learning time, homecoming observation with [download](observations.md) of report and table |
 
@@ -46,13 +47,17 @@ too. Only the overview is printed, not the dashboard.
 
 **Emergency sheet** prints one page for family and guests, e.g. for the cupboard next to the
 keypad: arming and disarming (keypad, app), which profiles exist, how much time remains after the
-door is opened, what happens on an alarm, who is notified and what applies in case of fire.
+door is opened, how to arm at the keypad despite an open window (only if a profile allows it and
+at least one user has the right), what happens on an alarm, who is notified and what applies in case of fire.
 Without technical details and without security details.
 
 ### What never appears in the overview
 
 - **PINs** – not even parts or hashes; only "PIN: yes/no".
 - **Card numbers** only shortened ("…2880"), with the name in front ("key ring …2880"); disabled cards with ⏸.
+- **Code of a silent emergency:** action codes with the action "silent emergency" only appear
+  as "hidden" – the printout should not tell anyone which code calls for help unnoticed. The
+  other action codes appear in plain text; they are not a secret like a PIN.
 - **Duress PIN:** whether someone has one does not show in the overview. Only if it would have no
   effect without recipients is there a check hint – without names.
 
@@ -65,6 +70,7 @@ contradictions. Every hint says **where** to change it.
 |---|---|
 | profile without siren **and** without recipients – an alarm reaches nobody | ⚠️ important |
 | duress PIN set up, but no recipients | ⚠️ important |
+| action code "silent emergency", but no recipient for the event "Alarm" – the emergency reaches nobody | ⚠️ important |
 | siren knows no burglar tone – would stay silent ([Tone per siren](sirens.md#tone-per-siren)) | ⚠️ important |
 | sensor unavailable **for more than 24 hours** | ⚠️ important |
 | test mode on | ⚠️ |
@@ -75,6 +81,7 @@ contradictions. Every hint says **where** to change it.
 | siren not heard in the last test | ⚠️ |
 | fire tone released for burglary ([experts](sirens.md#fire-tone-as-expert-release)) | ⚠️ |
 | fault of a monitored radio network/gateway | ⚠️ |
+| action code "arm" whose alarm profile was deleted – the code arms nothing | ⚠️ |
 | profile without siren (notification only) | ℹ️ |
 | sirens in profiles, but not enabled yet | ℹ️ |
 | siren never tested or last test older than half a year | ℹ️ |
@@ -83,6 +90,8 @@ contradictions. Every hint says **where** to change it.
 | radio silence detection off or tighter than recommended | ℹ️ |
 | no radio network/gateway monitored | ℹ️ |
 | trigger rule that no profile uses | ℹ️ |
+| action code for a keypad that no longer exists | ℹ️ |
+| guest mode is on – with its end ("until 17 Nov 18:30") or "until switched off"; profile automation and reminders are paused | ℹ️ |
 
 Sensors of type **Technical** and always-active sensors do not count as "unused".
 
@@ -107,5 +116,5 @@ with the settings and the overview. It is not meant for reading but for **attach
 configuration without asking ten times.
 
 Before creating it, Hauswacht automatically removes: PINs and their hashes, card numbers, the user
-list, recipients, persons, speakers, Wi-Fi names, MQTT topics and device IDs of readers. Sensor
+list, action codes, recipients, persons, speakers, Wi-Fi names, MQTT topics and device IDs of readers. Sensor
 and profile names stay in – please have a quick look before uploading.

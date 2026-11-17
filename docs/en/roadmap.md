@@ -36,6 +36,7 @@
 | 0.49 | action codes: code + key at the keypad starts your own automations (event entity), arms sensor groups or triggers a silent emergency; pick the keypad as a device instead of typing the MQTT topic |
 | 0.50 | force arm at the keypad: with open sensors, confirm again within 10 s (right per user) |
 | 0.51 | guest mode (switch, service, alarm card; until a time or until switched off) – no profile automation and no reminders; resume a running alarm after a restart (setting, default off); "alarm before the restart" as an important alarm message |
+| 0.52 | system overview shows guest mode, action codes and the right "Force arm"; new check hints (silent emergency without recipient, action code with deleted profile/keypad, guest mode on); emergency sheet explains "arm anyway" at the keypad |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -43,7 +44,6 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| soon | system overview: add guest mode, action codes, right "Force arm" |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |
