@@ -30,6 +30,12 @@
 | 0.43 | Taster als Bedienteil (nur scharf), Türschloss als Bedienteil (Nuki über MQTT oder allgemein: unscharf beim Aufschließen durch einen bekannten Benutzer, optional scharf beim Abschließen) |
 | 0.44 | Dokumentation auf Englisch (Anleitung und Sicherheitsregeln), englisches README |
 | 0.45 | Verhalten nach Neustart einstellbar: vorherigen Zustand wiederherstellen (Standard), immer scharf, immer unscharf |
+| 0.46 | Sirenen, die vor einem Neustart liefen, werden danach ausgeschaltet (nicht während eines Brandes) |
+| 0.47 | Namen für RFID-Karten, Finger und Schloss-Kennungen („Schlüsselbund“) – in Nachrichten, Logbuch und Systemübersicht |
+| 0.48 | Eigene Dialoge „Karten“ und „PINs“ mit Übersicht wer was hat, Karten deaktivieren, „zuletzt benutzt“, neue Karte am Keypad anlernen ohne Warten; die Code-Entität des Keypads wird automatisch deaktiviert (der eingegebene Code stand dort im Klartext) |
+| 0.49 | Aktions-Codes: Code + Taste am Keypad startet eigene Automationen (Ereignis-Entität), schaltet Meldergruppen scharf oder löst einen stillen Notruf aus; Keypad als Gerät auswählen statt MQTT-Topic eintippen |
+| 0.50 | Scharf erzwingen am Keypad: bei offenen Meldern innerhalb von 10 s noch einmal bestätigen (Recht je Benutzer) |
+| 0.51 | Gastmodus (Schalter, Dienst, Alarmkarte; bis Uhrzeit oder bis aus) – keine Profil-Automatik und keine Erinnerungen; laufenden Alarm nach Neustart fortsetzen (Einstellung, Standard aus); „Alarm vor dem Neustart“ als wichtige Alarm-Nachricht |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -37,18 +43,22 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| demnächst | Anlagenübersicht ergänzen: Gastmodus, Aktions-Codes, Recht „Scharf erzwingen“ |
+| demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
 | 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
-| 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gäste-Zeiten |
+| 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gastmodus-Zeiten (z. B. jeden Dienstag 8–12 Uhr) |
 
 ## Grundsätze
 
 - **Hauswacht schaltet keine Geräte** – außer Sirenen (nach Freigabe; für Experten auch als
   Sirene eingetragene Schalter) und den Zustandsanzeigen eingerichteter Keypads.
-- **Brandalarm hat Vorrang**, Testmodus sperrt Sirenen technisch, ein Alarm wird nach einem
-  Neustart nie fortgesetzt.
+- **Brandalarm hat Vorrang**, Testmodus sperrt Sirenen technisch. Ein Alarm wird nach einem
+  Neustart standardmäßig nicht fortgesetzt; wer das will, schaltet „Laufenden Alarm fortsetzen“
+  ein – auch dann gehen Sirenen nur über alle Sirenen-Sperren.
+- **Aktions-Codes schalten nie unscharf** und zählen nie als Fehlversuch.
 - **PIN optional**, Sprachassistenten nur mit PIN. Freigabe für Alexa & Co. über die normale
   Entitätsfreigabe von Home Assistant.
 - Größere Bausteine erst mit Konzept, dann umsetzen. Entscheidungen mit Begründung stehen in den
