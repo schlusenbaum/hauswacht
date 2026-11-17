@@ -37,6 +37,7 @@
 | 0.50 | force arm at the keypad: with open sensors, confirm again within 10 s (right per user) |
 | 0.51 | guest mode (switch, service, alarm card; until a time or until switched off) – no profile automation and no reminders; resume a running alarm after a restart (setting, default off); "alarm before the restart" as an important alarm message |
 | 0.52 | system overview shows guest mode, action codes and the right "Force arm"; new check hints (silent emergency without recipient, action code with deleted profile/keypad, guest mode on); emergency sheet explains "arm anyway" at the keypad |
+| 0.53 | [setup wizard](setup-wizard.md): short introduction, sensor suggestions by floor and room, sensor groups or trigger rules, profiles, recipients with test message, sirens (without release), users, trial run in test mode, further areas, chapter selection – every step can be skipped; settings rules in the core ([ADR 0009](../entwicklung/adr/0009-einrichtungsassistent.md), German) |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -44,7 +45,6 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| next | setup wizard for beginners with a short introduction, skippable chapters and a trial run; for this, move the settings rules into the core ([ADR 0009](../entwicklung/adr/0009-einrichtungsassistent.md), German) |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |

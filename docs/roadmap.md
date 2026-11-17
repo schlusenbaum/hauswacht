@@ -37,6 +37,7 @@
 | 0.50 | Scharf erzwingen am Keypad: bei offenen Meldern innerhalb von 10 s noch einmal bestätigen (Recht je Benutzer) |
 | 0.51 | Gastmodus (Schalter, Dienst, Alarmkarte; bis Uhrzeit oder bis aus) – keine Profil-Automatik und keine Erinnerungen; laufenden Alarm nach Neustart fortsetzen (Einstellung, Standard aus); „Alarm vor dem Neustart“ als wichtige Alarm-Nachricht |
 | 0.52 | Anlagenübersicht zeigt Gastmodus, Aktions-Codes und das Recht „Scharf erzwingen“; neue Prüfhinweise (stiller Notruf ohne Empfänger, Aktions-Code mit gelöschtem Profil/Keypad, Gastmodus an); Notfallblatt erklärt „trotzdem scharf“ am Keypad |
+| 0.53 | [Einrichtungsassistent](assistent.md): kurze Einführung, Melder-Vorschläge nach Etage und Raum, Meldergruppen oder Auslöseregeln, Profile, Empfänger mit Test-Nachricht, Sirenen (ohne Freigabe), Benutzer, Probelauf im Testmodus, weitere Bereiche, Kapitel-Auswahl – jeder Schritt überspringbar; Einstellungsregeln im Kern ([ADR 0009](entwicklung/adr/0009-einrichtungsassistent.md)) |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -44,7 +45,6 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| als Nächstes | Einrichtungsassistent für Einsteiger mit kurzer Einführung, überspringbaren Kapiteln und Probelauf; dafür die Einstellungsregeln in den Kern verlagern ([ADR 0009](entwicklung/adr/0009-einrichtungsassistent.md)) |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
