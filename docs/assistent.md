@@ -6,9 +6,7 @@ Der Einrichtungsassistent führt Schritt für Schritt durch die Einrichtung – 
 erklärt kurz, wie Hauswacht arbeitet, schlägt Melder, Meldergruppen und Alarmprofile vor und
 zeigt am Ende, was eingerichtet ist und was noch fehlt.
 
-> **Vorabversion:** Der Assistent ist neu und erscheint zuerst in Testversionen. Er deckt
-> Melder, Meldergruppen, Auslöseregeln, Alarmprofile, Empfänger, Sirenen und Benutzer ab. Ein
-> Probelauf im Testmodus und die Frage nach Bereichen folgen.
+> **Vorabversion:** Der Assistent ist neu und erscheint zuerst in Testversionen.
 
 ## Starten
 
@@ -22,6 +20,14 @@ zeigt am Ende, was eingerichtet ist und was noch fehlt.
 Was schon eingerichtet ist, bleibt erhalten – der Assistent **ergänzt nur**. Du kannst ihn so oft
 starten, wie du willst, z. B. wenn neue Fenster dazukommen.
 
+**Erneuter Start:** Ist schon etwas eingerichtet, zeigt der Assistent zuerst eine
+**Kapitel-Auswahl** – Einführung, Neue Melder suchen, Meldergruppen, Auslöseregeln, Alarmprofile,
+Empfänger, Sirenen, Benutzer, Weiteren Bereich einrichten, Probelauf, Zusammenfassung. Von dort
+geht es Schritt für Schritt weiter; jeder Schritt bleibt überspringbar.
+
+*Beispiel:* Zwei neue Fensterkontakte sind dazugekommen → Einrichtungsassistent → „Neue Melder
+suchen“ → die beiden Fenster sind vorgeschlagen → Meldergruppen → neue Gruppe oder überspringen.
+
 **Jeden Schritt kannst du überspringen.** Was fehlt, steht am Ende in der Zusammenfassung.
 
 ## Die Schritte
@@ -32,7 +38,15 @@ Eine Seite „So arbeitet Hauswacht“: je Baustein ein Satz und ein Beispiel �
 Meldergruppen, Auslöseregeln, Alarmprofile, Sirenen und Empfänger, Benutzer und Bedienteile.
 Wer das kennt, wählt „Einführung überspringen“.
 
-### 2. Melder
+### 2. Getrennte Bereiche? (nur bei der ersten Einrichtung)
+
+„Gibt es getrennte Wohnungen?“ – die meisten Häuser brauchen **einen** Bereich. Bei „Ja“ (z. B.
+eine Einliegerwohnung, die unabhängig scharf geschaltet wird) richtest du zuerst den
+Hauptbereich ein und startest den Assistenten danach erneut mit **„Weiteren Bereich
+einrichten“**: Name des Bereichs, dann Melder, Meldergruppen und Profile für ihn. Die Profile
+heißen dann z. B. „Abwesend (Einliegerwohnung)“. Mehr unter [Bereiche](profile.md#bereiche).
+
+### 2a. Melder
 
 Hauswacht sucht in Home Assistant alle **Türen, Fenster und Bewegungsmelder**, die noch in keiner
 Meldergruppe stehen, und listet sie nach Etage und Raum auf. Alle Vorschläge sind ausgewählt –
@@ -138,7 +152,21 @@ Einstellungsdialog ein. Name leer lassen = überspringen.
 Nur ein Hinweis: Keypads, Karten, Aufkleber, Leser, Taster und Türschlösser richtest du unter
 Systemeinstellungen → [Bedienteile](bedienteile.md) ein.
 
-### 11. Zusammenfassung
+### 11. Probelauf (nur im Einstellungsdialog)
+
+Im Probelauf öffnest du Türen und Fenster und läufst an Bewegungsmeldern vorbei – Hauswacht hakt
+jeden Melder der Meldergruppen ab, den es erkennt (✅), mit „Erkannt: 3 von 5“. **Aktualisieren**
+zeigt den neuen Stand.
+
+Dafür muss der **Testmodus an** sein. Der Assistent schaltet ihn **nicht** selbst ein, sondern
+bittet darum: auf der Karte [„Hauswacht Test“](testmodus.md#karte-hauswacht-test) oder mit dem
+Schalter „Testmodus“. Danach „Testmodus ist an – Probelauf starten“. Der Probelauf liest nur;
+er schaltet nichts scharf und löst keinen Alarm aus.
+
+Bleibt ein Melder auf ⬜, obwohl du ihn ausgelöst hast: Batterie, Funkverbindung und das Gerät in
+Home Assistant prüfen. Nach dem Probelauf den Testmodus wieder ausschalten.
+
+### 12. Zusammenfassung
 
 Zwei Listen:
 
@@ -158,7 +186,8 @@ Die Anlage startet bzw. bleibt **unscharf**.
 
 ## Danach
 
-1. **Im Testmodus ausprobieren** ([Testmodus](testmodus.md)).
+1. **Im Testmodus ausprobieren** – mit dem Probelauf und einmal richtig scharf schalten
+   ([Testmodus](testmodus.md)).
 2. Wenn alles passt: **Sirenen freigeben** ([Sirenen](sirenen.md)).
 3. Nach Bedarf [Benutzer und PINs](benutzer.md) verfeinern, [Bedienteile](bedienteile.md)
    einrichten.

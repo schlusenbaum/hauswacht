@@ -14,7 +14,7 @@
         "description": "The wizard guides you step by step through the setup: sensors, sensor groups or trigger rules, alarm profiles, recipients, sirens and users.\n\n**You can skip every step** and do it later – in the settings dialog or by starting the wizard again. Whatever is already set up is kept; the wizard only adds.\n\nThe wizard **releases no sirens** and switches nothing.",
         "menu_options": {
           "wizard_intro": "Short introduction: how Hauswacht works",
-          "wizard_sensors": "Skip the introduction – start right away"
+          "wizard_area_question": "Skip the introduction – start right away"
         }
       },
       "wizard_intro": {
@@ -113,6 +113,18 @@
       "wizard_controls": {
         "title": "Control devices",
         "description": "Keypads, RFID cards, NFC stickers, readers, buttons and door locks are set up under **System settings → Control devices** – there is a guide for each kind. Without a control device you operate Hauswacht via the app (alarm card) or a voice assistant.\n\nContinue to the summary."
+      },
+      "wizard_area_question": {
+        "title": "Are there separate flats?",
+        "description": "Most homes need **one** area. Separate areas make sense if parts are armed **independently** – e.g. a granny flat or a practice in the house.",
+        "menu_options": {
+          "wizard_sensors": "No – one house or one flat",
+          "wizard_area_hint": "Yes – there are separate areas"
+        }
+      },
+      "wizard_area_hint": {
+        "title": "Separate areas",
+        "description": "First set up the **main area** now (e.g. the house).\n\nAfterwards start the wizard again: **Configure → Setup wizard → Set up another area**. For each further area you choose sensors, sensor groups and profiles there.\n\nMore: guide “Alarm profiles and areas”."
       }
     },
     "abort": {
@@ -1063,7 +1075,7 @@
         "description": "The wizard guides you step by step through the setup: sensors, sensor groups or trigger rules, alarm profiles, recipients, sirens and users.\n\n**You can skip every step** and do it later – in the settings dialog or by starting the wizard again. Whatever is already set up is kept; the wizard only adds.\n\nThe wizard **releases no sirens** and switches nothing.",
         "menu_options": {
           "wizard_intro": "Short introduction: how Hauswacht works",
-          "wizard_sensors": "Skip the introduction – start right away"
+          "wizard_area_question": "Skip the introduction – start right away"
         }
       },
       "wizard_intro": {
@@ -1178,6 +1190,58 @@
       "wizard_controls": {
         "title": "Control devices",
         "description": "Keypads, RFID cards, NFC stickers, readers, buttons and door locks are set up under **System settings → Control devices** – there is a guide for each kind. Without a control device you operate Hauswacht via the app (alarm card) or a voice assistant.\n\nContinue to the summary."
+      },
+      "wizard_chapters": {
+        "title": "Setup wizard",
+        "description": "Hauswacht is already (partly) set up. Choose where you want to start – from there it goes on step by step, every step can still be skipped. Existing settings are only added to.",
+        "menu_options": {
+          "wizard_intro": "Introduction: how Hauswacht works",
+          "wizard_sensors": "Look for new sensors",
+          "wizard_mode_zones": "Sensor groups",
+          "wizard_mode_rules": "Trigger rules",
+          "wizard_profiles": "Alarm profiles",
+          "wizard_recipients": "Recipients",
+          "wizard_sirens": "Sirens",
+          "wizard_users": "Users",
+          "wizard_new_area": "Set up another area (e.g. granny flat)",
+          "wizard_trial": "Trial run in test mode",
+          "wizard_summary": "Summary"
+        }
+      },
+      "wizard_area_question": {
+        "title": "Are there separate flats?",
+        "description": "Most homes need **one** area. Separate areas make sense if parts are armed **independently** – e.g. a granny flat or a practice in the house.",
+        "menu_options": {
+          "wizard_sensors": "No – one house or one flat",
+          "wizard_area_hint": "Yes – there are separate areas"
+        }
+      },
+      "wizard_area_hint": {
+        "title": "Separate areas",
+        "description": "First set up the **main area** now (e.g. the house).\n\nAfterwards start the wizard again: **Configure → Setup wizard → Set up another area**. For each further area you choose sensors, sensor groups and profiles there.\n\nMore: guide “Alarm profiles and areas”."
+      },
+      "wizard_new_area": {
+        "title": "Another area",
+        "description": "Existing areas: {areas}\n\nAn area has its own alarm panel and its own alarm profiles, e.g. “Granny flat”. Afterwards you choose sensors, sensor groups and profiles for this area; the profiles get the area in their name, e.g. “Away (Granny flat)”.",
+        "data": {
+          "name": "Name of the area"
+        }
+      },
+      "wizard_trial_ask": {
+        "title": "Trial run",
+        "description": "In the trial run you open doors and windows and walk past motion sensors – Hauswacht ticks off every sensor it detects.\n\nFor this **test mode must be on**, so that nothing real happens. The wizard does not switch it on itself: switch it on in the card “Hauswacht Test” or with the switch `switch.hauswacht_test_mode`, then choose “Test mode is on”.",
+        "menu_options": {
+          "wizard_trial": "Test mode is on – start the trial run",
+          "wizard_summary": "Skip the trial run"
+        }
+      },
+      "wizard_trial_run": {
+        "title": "Trial run in progress",
+        "description": "Now open doors and windows one after another and walk past the motion sensors. Then **Refresh**.\n\nDetected: **{seen} of {total}**\n\n{sensors}\n\nIf a sensor stays ⬜ although you triggered it: check battery, radio connection and the device in Home Assistant. Afterwards switch test mode off again.",
+        "menu_options": {
+          "wizard_trial": "Refresh",
+          "wizard_summary": "Done – go to the summary"
+        }
       }
     },
     "error": {

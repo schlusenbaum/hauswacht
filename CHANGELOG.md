@@ -6,6 +6,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.53.0b3] - 2026-11-17
+
+Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.
+
+### Hinzugefügt
+- **Einrichtungsassistent, Teil 3:**
+  - **Kapitel-Auswahl beim erneuten Start:** Ist schon etwas eingerichtet, springst du direkt zu
+    Neue Melder suchen, Meldergruppen, Auslöseregeln, Profilen, Empfängern, Sirenen, Benutzern,
+    Weiterem Bereich, Probelauf oder Zusammenfassung.
+  - **Probelauf im Testmodus:** Türen und Fenster öffnen, an Bewegungsmeldern vorbeigehen –
+    Hauswacht hakt jeden erkannten Melder ab („Erkannt: 3 von 5“). Der Assistent bittet um den
+    Testmodus, schaltet ihn aber nicht selbst ein; der Probelauf liest nur.
+  - **Getrennte Bereiche:** Bei der ersten Einrichtung die Frage „Gibt es getrennte
+    Wohnungen?“; weitere Bereiche über „Weiteren Bereich einrichten“ – mit Meldern, Gruppen und
+    Profilen für diesen Bereich (z. B. „Abwesend (Einliegerwohnung)“).
+
+### Intern
+- Logikschicht um Bereiche ergänzt (`core/changes/areas.py`).
+
 ## [0.53.0b2] - 2026-11-17
 
 Vorabversion (Beta) vom Entwicklungszweig `entwicklung/assistent` – zum Testen.

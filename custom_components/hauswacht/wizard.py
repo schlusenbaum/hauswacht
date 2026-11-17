@@ -13,6 +13,7 @@ Die Schritte stehen in einer Mixin-Klasse und werden sowohl von der Erstinstalla
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
@@ -37,8 +38,11 @@ from homeassistant.helpers.selector import (
     TextSelectorConfig,
     TextSelectorType,
 )
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
+from .core.areas import MAIN_AREA, parse_areas
+from .core.changes.areas import save_area
 from .core.changes.notifications import set_general_recipients
 from .core.changes.profiles import save_profile
 from .core.changes.sirens import save_sirens
@@ -46,7 +50,7 @@ from .core.changes.users import save_user, set_pins
 from .core.profiles import MAX_DELAY, profile_infos, profile_settings
 from .core.rules import parse_rules
 from .core.sensor_types import MONITORED_DOMAINS, SensorType, parse_types, sensor_type
-from .core.sensors import parse_zones
+from .core.sensors import parse_zones, resolve_zones
 from .core.wizard import (
     AWAY,
     DEFAULT_ENTRY_DELAY,
@@ -56,7 +60,9 @@ from .core.wizard import (
     MODE_ZONES,
     NIGHT,
     Candidate,
+    configured,
     default_night_zones,
+    profile_with_mode,
     save_groups,
     save_wizard_profile,
     set_entry_doors,
@@ -110,6 +116,8 @@ class WizardSteps:
     _wiz_sensors: list[str] | None = None
     _wiz_mode: str = MODE_ZONES
     _wiz_return: str | None = None
+    _wiz_area: str = MAIN_AREA
+    _wiz_trial_start: datetime | None = None
     _wiz_test_result: str = ""
 
     # --- von der jeweiligen Flow-Klasse bereitgestellt ------------------------
@@ -147,19 +155,88 @@ class WizardSteps:
 
     # --- Start -----------------------------------------------------------------
 
+    def _wizard_test_mode(self) -> bool | None:
+        """Testmodus an? ``None`` = kein Probelauf möglich (Erstinstallation)."""
+        return None
+
     async def async_step_wizard(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         self._wiz_sensors = None
         self._wiz_return = None
+        self._wiz_area = MAIN_AREA
+        self._wiz_trial_start = None
+        if configured(self._wizard_options()):
+            # Erneuter Start: gleich zum gewünschten Kapitel
+            return self.async_show_menu(
+                step_id="wizard_chapters",
+                menu_options=[
+                    "wizard_intro",
+                    "wizard_sensors",
+                    "wizard_mode_zones",
+                    "wizard_mode_rules",
+                    "wizard_profiles",
+                    "wizard_recipients",
+                    "wizard_sirens",
+                    "wizard_users",
+                    "wizard_new_area",
+                    *(["wizard_trial"] if self._wizard_test_mode() is not None else []),
+                    "wizard_summary",
+                ],
+            )
         return self.async_show_menu(
-            step_id="wizard", menu_options=["wizard_intro", "wizard_sensors"]
+            step_id="wizard", menu_options=["wizard_intro", "wizard_area_question"]
         )
+
+    async def async_step_wizard_chapters(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_wizard()
 
     async def async_step_wizard_intro(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
-            return await self.async_step_wizard_sensors()
+            if configured(self._wizard_options()):
+                return await self.async_step_wizard_sensors()
+            return await self.async_step_wizard_area_question()
         return self.async_show_form(step_id="wizard_intro", data_schema=vol.Schema({}))
+
+    # --- Bereiche ----------------------------------------------------------------
+
+    async def async_step_wizard_area_question(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="wizard_area_question",
+            menu_options=["wizard_sensors", "wizard_area_hint"],
+        )
+
+    async def async_step_wizard_area_hint(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            return await self.async_step_wizard_sensors()
+        return self.async_show_form(step_id="wizard_area_hint", data_schema=vol.Schema({}))
+
+    async def async_step_wizard_new_area(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Weiterer Bereich: anlegen, dann Melder, Gruppen und Profile für ihn."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            change = save_area(self._wizard_options(), None, user_input)
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                assert change.item_id is not None
+                self._wiz_area = change.item_id
+                return await self._wizard_store(change.options, "wizard_sensors")
+        areas = ", ".join(a.name for a in parse_areas(self._wizard_options()).values())
+        return self.async_show_form(
+            step_id="wizard_new_area",
+            data_schema=vol.Schema({vol.Required("name"): TextSelector()}),
+            errors=errors,
+            description_placeholders={"areas": areas},
+        )
 
     # --- Melder ----------------------------------------------------------------
 
@@ -267,7 +344,11 @@ class WizardSteps:
             if listed:
                 head = "Schon in einer anderen Gruppe" if de else "Already in another group"
                 placeholders["conflicts"] = f"\n\n⚠️ {head}: {listed}"
-        sensors = self._wiz_sensors or []
+        if self._wiz_sensors is None:
+            # Direkt aus der Kapitel-Auswahl: Vorschläge wie im Schritt "Melder"
+            found = suggest_sensors(candidates(self.hass), options, entities_by_label(self.hass))
+            self._wiz_sensors = [c.entity_id for c in found]
+        sensors = self._wiz_sensors
         outside, inside = split_outside_inside(sensors, self._classes(sensors), options)
         types = parse_types(options)
         doors = [
@@ -381,7 +462,12 @@ class WizardSteps:
                 change = save_wizard_profile(
                     current,
                     mode,
-                    {"zones": chosen_zones, "rules": chosen_rules, **delays},
+                    {
+                        "zones": chosen_zones,
+                        "rules": chosen_rules,
+                        **delays,
+                        **({"area": self._wiz_area} if self._wiz_area != MAIN_AREA else {}),
+                    },
                     language="de" if self._de() else "en",
                     labels=entities_by_label(self.hass),
                     new_only={"exit_delay": 0} if mode == NIGHT else None,
@@ -393,8 +479,7 @@ class WizardSteps:
                 current = change.options
             if not errors:
                 return await self._wizard_store(current, "wizard_recipients")
-        existing = {i.panel_mode: i.profile_id for i in profile_infos(options)}
-        away_id = existing.get(AWAY)
+        away_id = profile_with_mode(options, AWAY, self._wiz_area)
         times = profile_settings(options, away_id) if away_id else None
         all_members = [e for z in zones.values() for e in z.entities]
         night_default = default_night_zones(
@@ -656,8 +741,60 @@ class WizardSteps:
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
+            if self._wizard_test_mode() is not None:
+                self._wiz_trial_start = None
+                return await self.async_step_wizard_trial()
             return await self.async_step_wizard_summary()
         return self.async_show_form(step_id="wizard_controls", data_schema=vol.Schema({}))
+
+    # --- Probelauf (Teil 3, nur im Einstellungsdialog) -----------------------------
+
+    def _trial_sensors(self) -> list[str]:
+        options = self._wizard_options()
+        zones = parse_zones(options)
+        members = resolve_zones(zones, zones, entities_by_label(self.hass))
+        return sorted(members, key=lambda e: display_name(self.hass, e).casefold())
+
+    async def async_step_wizard_trial(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Probelauf: Melder auslösen und sehen, dass Hauswacht sie erkennt. Nur lesen."""
+        if not self._wizard_test_mode():
+            # Testmodus nicht an: darum bitten, nicht selbst einschalten
+            self._wiz_trial_start = None
+            return self.async_show_menu(
+                step_id="wizard_trial_ask", menu_options=["wizard_trial", "wizard_summary"]
+            )
+        now = dt_util.utcnow()
+        if self._wiz_trial_start is None:
+            self._wiz_trial_start = now
+        start = self._wiz_trial_start
+        lines: list[str] = []
+        seen = 0
+        for entity_id in self._trial_sensors():
+            state = self.hass.states.get(entity_id)
+            hit = state is not None and state.last_changed > start
+            seen += hit
+            lines.append(f"{'✅' if hit else '⬜'} {display_name(self.hass, entity_id)}")
+        return self.async_show_menu(
+            step_id="wizard_trial_run",
+            menu_options=["wizard_trial", "wizard_summary"],
+            description_placeholders={
+                "sensors": "\n".join(lines) or "–",
+                "seen": str(seen),
+                "total": str(len(lines)),
+            },
+        )
+
+    async def async_step_wizard_trial_ask(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_wizard_trial()
+
+    async def async_step_wizard_trial_run(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_wizard_trial()
 
     # --- Zusammenfassung ---------------------------------------------------------
 

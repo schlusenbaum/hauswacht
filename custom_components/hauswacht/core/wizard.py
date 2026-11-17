@@ -10,7 +10,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from .areas import MAIN_AREA, profile_area
+from .areas import MAIN_AREA, parse_areas, profile_area
 from .changes import Change
 from .changes.profiles import save_profile
 from .changes.zones import save_zone
@@ -137,9 +137,10 @@ def set_entry_doors(
     return new
 
 
-def _main_profile_with_mode(options: Mapping[str, Any], mode: str) -> str | None:
+def profile_with_mode(options: Mapping[str, Any], mode: str, area: str = MAIN_AREA) -> str | None:
+    """Profil mit diesem Bedienfeld-Knopf im Bereich (oder None)."""
     for info in profile_infos(options):
-        if info.panel_mode == mode and profile_area(options, info.profile_id) == MAIN_AREA:
+        if info.panel_mode == mode and profile_area(options, info.profile_id) == area:
             return info.profile_id
     return None
 
@@ -156,8 +157,11 @@ def save_wizard_profile(  # noqa: PLR0913
     """Vorgeschlagenes Profil (``away``/``night``) anlegen – oder das vorhandene mit demselben
     Bedienfeld-Knopf ergänzen statt ein zweites anzulegen. Nur übergebene Felder ändern sich;
     ``new_only`` gilt nur für ein neu angelegtes Profil (z. B. Ausgangsverzögerung 0 bei Nacht).
+    ``data["area"]``: Bereich (fehlt = Hauptbereich); ein neues Profil eines weiteren Bereichs
+    heißt z. B. „Abwesend (Einliegerwohnung)“.
     """
-    existing = _main_profile_with_mode(options, mode)
+    area = str(data.get("area") or MAIN_AREA)
+    existing = profile_with_mode(options, mode, area)
     if existing is not None:
         name = profile_info(options, existing).name
         return save_profile(
@@ -165,6 +169,9 @@ def save_wizard_profile(  # noqa: PLR0913
         )
     texts = PROFILE_TEXTS[mode]["de" if language == "de" else "en"]
     name, icon = texts
+    if area != MAIN_AREA:
+        areas = parse_areas(options)
+        name = f"{name} ({areas[area].name if area in areas else area})"
     taken = {i.name.casefold() for i in profile_infos(options)}
     if name.casefold() in taken:
         name = f"{name} 2"
@@ -233,4 +240,12 @@ def status(options: Mapping[str, Any]) -> Status:
         sirens=bool(options.get("sirens")),
         users=bool(options.get("users")),
         sirens_released=bool(options.get("sirens_hardware_enabled")),
+    )
+
+
+def configured(options: Mapping[str, Any]) -> bool:
+    """Ist schon etwas eingerichtet? Dann bietet der Assistent die Kapitel-Auswahl an."""
+    return any(
+        options.get(key)
+        for key in ("zones", "rules", "profiles", "notify_system", "sirens", "users")
     )
