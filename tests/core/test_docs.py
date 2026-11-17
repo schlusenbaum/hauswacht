@@ -69,6 +69,7 @@ def test_every_doc_page_is_linked_from_the_index() -> None:
 PAGES = {
     "README.md": "README.md",
     "installation.md": "installation.md",
+    "assistent.md": "setup-wizard.md",
     "melder.md": "sensors.md",
     "profile.md": "profiles.md",
     "ausloeseregeln.md": "trigger-rules.md",

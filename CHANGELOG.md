@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Hinzugefügt
+- **Einrichtungsassistent, Teil 1** ([ADR 0009](docs/entwicklung/adr/0009-einrichtungsassistent.md),
+  Anleitung: [Einrichtungsassistent](docs/assistent.md)):
+  - Bei der **Installation** fragt Hauswacht „Mit dem Einrichtungsassistenten (empfohlen)“ oder
+    „Ohne Assistent“; später unter Konfigurieren → **Einrichtungsassistent**.
+  - Kurze **Einführung** „So arbeitet Hauswacht“ (überspringbar).
+  - **Melder-Vorschläge:** Türen, Fenster und Bewegungsmelder, die noch in keiner Gruppe stehen,
+    nach Etage und Raum.
+  - **Überwachungsart:** Meldergruppen, nur Auslöseregeln, beides oder später.
+  - **Meldergruppen** „Außen“ und „Innen“ mit Wahl der **Eingangstüren**.
+  - **Auslöseregeln** über den Regel-Assistenten, mit Rückkehr in den Assistenten.
+  - **Alarmprofile** „Abwesend“ und „Nacht“ – vorhandene Profile mit demselben Knopf werden
+    ergänzt statt verdoppelt.
+  - **Zusammenfassung:** was eingerichtet ist und was noch fehlt.
+  - Jeder Schritt ist überspringbar; der Assistent gibt keine Sirenen frei, schaltet nichts und
+    überschreibt nichts.
+
 ### Intern
 - Beginn der gemeinsamen Logikschicht für Einstellungen (`core/changes/`, ADR 0009):
   Meldergruppen, Alarmprofile, Sirenen, Empfänger, Benutzer und PINs (Profile auch teilweise,
