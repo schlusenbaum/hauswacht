@@ -96,7 +96,6 @@ from .core.action_codes import (
     parse_action_codes,
 )
 from .core.always_active import (
-    DEFAULT_SETTLE,
     MAX_SETTLE,
     ArmOnClose,
     parse_always_active,
@@ -105,17 +104,14 @@ from .core.always_active import (
 from .core.areas import DEFAULT_ICON as DEFAULT_AREA_ICON
 from .core.areas import MAIN_AREA, multi_area, parse_areas, profile_area
 from .core.automation import (
-    ARRIVAL_AUTO_ONLY,
     ARRIVAL_MODES,
-    ARRIVAL_OFF,
-    DEFAULT_ARRIVAL_WINDOW,
-    DEFAULT_AWAY_DELAY,
     MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
     WEEKDAYS,
     AutoConfig,
     parse_automation,
 )
+from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.zones import delete_zone, save_zone
 from .core.controls import ALL_AREAS as CONTROL_ALL_AREAS
 from .core.controls import ARM_KEYS as CONTROL_ARM_KEYS
@@ -755,43 +751,13 @@ class HauswachtOptionsFlow(OptionsFlow):
         if not profile_ids(self.config_entry.options):
             return self.async_abort(reason="no_profiles")
         if user_input is not None:
-            options = dict(self.config_entry.options)
-            options[OPT_PROFILES] = {
-                k: v for k, v in options.get(OPT_PROFILES, {}).items() if k != user_input["profile"]
-            }
-            return await self._save(options, "profiles")
+            change = delete_profile(self.config_entry.options, user_input["profile"])
+            assert change.options is not None
+            return await self._save(change.options, "profiles")
         return self.async_show_form(
             step_id="profile_delete",
             data_schema=vol.Schema({vol.Required("profile"): self._profile_selector()}),
         )
-
-    def _validate_profile(self, user_input: dict[str, Any]) -> dict[str, str]:
-        options = self.config_entry.options
-        others = [i for i in profile_infos(options) if i.profile_id != self._profile_id]
-        name = str(user_input.get("name") or "").strip()
-        errors: dict[str, str] = {}
-        if not name:
-            errors["name"] = "profile_name_required"
-        elif any(i.name.casefold() == name.casefold() for i in others):
-            errors["name"] = "profile_name_taken"
-        mode = user_input.get("panel_mode", PANEL_MODE_NONE)
-        area = user_input.get("area") or (
-            profile_area(options, self._profile_id) if self._profile_id else MAIN_AREA
-        )
-        same_area = [i for i in others if profile_area(options, i.profile_id) == area]
-        if mode != PANEL_MODE_NONE and any(i.panel_mode == mode for i in same_area):
-            errors["panel_mode"] = "panel_mode_taken"
-        chosen = resolve_zones(
-            user_input.get("zones") or [], parse_zones(options), entities_by_label(self.hass)
-        )
-        if set(user_input.get("excluded") or []) - chosen:
-            errors["excluded"] = "excluded_not_in_groups"
-        auto = user_input.get("automation") or {}
-        if auto.get("auto_arrival_mode", ARRIVAL_OFF) != ARRIVAL_OFF and not auto.get(
-            "auto_away_persons"
-        ):
-            errors["base"] = "arrival_needs_persons"
-        return errors
 
     async def async_step_profile_settings(
         self, user_input: dict[str, Any] | None = None
@@ -801,48 +767,18 @@ class HauswachtOptionsFlow(OptionsFlow):
         registered_sirens = [s for s in options.get(OPT_SIRENS, []) if isinstance(s, str)]
         errors: dict[str, str] = {}
         if user_input is not None and "name" in user_input:
-            errors = self._validate_profile(user_input)
-            if not errors:
-                profiles = {k: dict(v) for k, v in options.get(OPT_PROFILES, {}).items()}
+            change = save_profile(
+                options,
+                self._profile_id,
+                user_input,
+                entities_by_label=entities_by_label(self.hass),
+            )
+            errors = dict(change.errors)
+            if change.ok:
+                assert change.options is not None
+                assert change.item_id is not None
+                options, profile_id = change.options, change.item_id
                 name = str(user_input["name"]).strip()
-                profile_id = self._profile_id or slugify(name, existing=profiles.keys())
-                mode = user_input.get("panel_mode", PANEL_MODE_NONE)
-                data = dict(profiles.get(profile_id, {}))  # unbekannte Schlüssel behalten
-                if "area" in user_input:
-                    data["area"] = user_input["area"]
-                data.update(
-                    {
-                        "name": name,
-                        "icon": user_input.get("icon") or DEFAULT_ICON,
-                        "panel_mode": None if mode == PANEL_MODE_NONE else mode,
-                        "exit_delay": int(user_input["exit_delay"]),
-                        "entry_delay": int(user_input["entry_delay"]),
-                        "reaction_time": int(user_input["reaction_time"]),
-                        "zones": [z for z in user_input.get("zones", []) if z in zones],
-                        "excluded": sorted(set(user_input.get("excluded") or [])),
-                        "rules": [
-                            r for r in user_input.get("rules", []) if r in parse_rules(options)
-                        ],
-                        "open_policy": user_input["open_policy"],
-                        "unavailable_policy": user_input["unavailable_policy"],
-                        "max_alarm_cycles": int(user_input["max_alarm_cycles"]),
-                        "tamper_triggers_alarm": bool(user_input["tamper_triggers_alarm"]),
-                        "sirens": [
-                            s for s in user_input.get("sirens", []) if s in registered_sirens
-                        ],
-                        "siren_tone": user_input["siren_tone"],
-                        "siren_volume": user_input["siren_volume"],
-                        "silent": bool(user_input["silent"]),
-                        "notify": list(user_input.get("notify", [])),
-                        "speakers": list(user_input.get("speakers") or []),
-                        **_automation_from_input(user_input.get("automation") or {}),
-                        "arm_on_close": _arm_on_close_from_input(
-                            user_input.get("arm_on_close") or {}
-                        ),
-                    }
-                )
-                profiles[profile_id] = data
-                options[OPT_PROFILES] = profiles
                 self._hints = self._profile_hints(options, profile_id)
                 armed_label = "Scharf in" if self._german() else "Armed in"
                 self._infos = [f"{armed_label} {name}: {self._armed_text(options, profile_id)}"]
@@ -3891,31 +3827,6 @@ def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:
             vol.Optional("settle", default=current.settle): _seconds(MAX_SETTLE, minimum=1),
         }
     )
-
-
-def _arm_on_close_from_input(data: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "enabled": bool(data.get("enabled", False)),
-        "doors": [d for d in data.get("doors") or [] if isinstance(d, str)],
-        "settle": int(data.get("settle") or DEFAULT_SETTLE),
-    }
-
-
-def _automation_from_input(data: dict[str, Any]) -> dict[str, Any]:
-    mode = data.get("auto_arrival_mode")
-    if mode not in ARRIVAL_MODES:
-        mode = ARRIVAL_AUTO_ONLY if data.get("auto_disarm_on_arrival") else ARRIVAL_OFF
-    return {
-        "auto_arm_time": data.get("auto_arm_time") or None,
-        "auto_disarm_time": data.get("auto_disarm_time") or None,
-        "auto_weekdays": [d for d in data.get("auto_weekdays", []) if d in WEEKDAYS],
-        "auto_away_persons": list(data.get("auto_away_persons") or []),
-        "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
-        "auto_arrival_mode": mode,
-        "auto_arrival_window": int(data.get("auto_arrival_window") or DEFAULT_ARRIVAL_WINDOW),
-        # alter Schalter (bis 0.41) passend mitführen
-        "auto_disarm_on_arrival": mode == ARRIVAL_AUTO_ONLY,
-    }
 
 
 RIGHT_VALUES = (Action.ARM.value, Action.DISARM.value, Action.END_ALARM.value)
