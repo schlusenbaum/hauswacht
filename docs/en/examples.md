@@ -467,6 +467,60 @@ actions:
       entity_id: light.hallway
 ```
 
+## Interconnecting smoke detectors
+
+Many wireless smoke detectors (e.g. via Zigbee) are **not** connected with each other: if there
+is a fire in the living room, only the living room detector beeps – upstairs in the bedroom you
+may not hear it. A small automation of your own then makes **all** detectors sound on smoke.
+
+> **This is deliberately not a Hauswacht feature.** Fire protection must not depend on anything –
+> not on test mode, not on the siren release, not on an update of the alarm system. An automation
+> of your own with a few lines has none of these dependencies. Hauswacht stays out of it: if any
+> smoke detector reports fire, Hauswacht switches no siren on and none off (see
+> [fire protection](sirens.md#fire-protection)).
+
+```yaml
+alias: Smoke detectors – alert all detectors on smoke
+mode: single
+triggers:
+  - trigger: state
+    entity_id:
+      - binary_sensor.smoke_detector_living_room_smoke
+      - binary_sensor.smoke_detector_hallway_smoke
+      - binary_sensor.smoke_detector_bedroom_smoke
+    to: "on"
+actions:
+  - action: siren.turn_on
+    continue_on_error: true
+    target:
+      entity_id:
+        - siren.smoke_detector_living_room
+        - siren.smoke_detector_hallway
+        - siren.smoke_detector_bedroom
+  - action: notify.mobile_app_annas_phone
+    data:
+      title: Fire!
+      message: "{{ trigger.to_state.name }} reports smoke."
+```
+
+**Very important – check yourself before use:**
+
+- **The right tone:** many smoke detector sirens have several tones (e.g. fire and burglary).
+  Which ones exist is shown by Developer tools → States → the siren → attribute
+  `available_tones`. Then enter the fire tone under `data:` with `tone:`.
+- **The test button:** if the test button on the detector also sets the smoke sensor to "on", all
+  detectors beep when testing. Then exclude the test button sensor with a condition or live with
+  it.
+- **Trial run:** try it once, announced to everyone in the house – with the test button or test
+  spray, depending on the detector's manual.
+- **`continue_on_error: true`** makes sure a failed detector does not stop the others.
+- **No replacement for the detectors themselves:** every detector still beeps on its own. The
+  interconnection via Home Assistant is only added on top – and only works as long as Home
+  Assistant and the radio network are running.
+- **Switching off** on a false alarm: e.g. a script with `siren.turn_off` on all detectors. With
+  real smoke the affected detector simply triggers again. This script is **only** for fire alarms
+  – you end a burglary alarm via Hauswacht.
+
 ## What you better not automate
 
 - **Do not unlock automatically** when disarming – whoever disarms by mistake would also have

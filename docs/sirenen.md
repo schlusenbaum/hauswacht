@@ -270,6 +270,9 @@ Testknopf-Sensoren automatisch.
 - Ein Rauchmelder spielt bei Einbruch nie seinen Brandton – auch nicht mit der
   [Experten-Freigabe](#brandton-als-experten-freigabe).
 - Fremde Abschalt-Skripte (z. B. „alle Rauchmelder aus“) verwendet Hauswacht nie.
+- Rauchmelder **untereinander vernetzen** (bei Rauch piepen alle) macht Hauswacht bewusst nicht –
+  das ist eine kleine eigene Automation, siehe
+  [Beispiele](beispiele.md#rauchmelder-untereinander-vernetzen).
 
 ## Sirene lief beim Neustart noch
 

@@ -37,6 +37,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Aktions-Codes ergänzt; Schnellstart mit dem Assistenten; „Grenzen, ehrlich gesagt“ (läuft nur
   mit Home Assistant, keine Notrufleitstelle, Funkstörung nur indirekt).
 
+- **Beispiele:** neuer Abschnitt **„Rauchmelder untereinander vernetzen“** (deutsch und
+  englisch) – eigene Automation, die bei Rauch alle Melder piepen lässt, mit Prüfliste (Feuerton,
+  Testknopf, Probelauf) und Begründung, warum das bewusst keine Hauswacht-Funktion ist. Verweis
+  darauf auf der Seite Sirenen unter Brandschutz.
+
 ### Intern
 - Neuer Test `tests/core/test_reference.py`: Jedes Ereignis, jede Aktion und jedes Attribut des
   Bedienfelds muss in der Referenz stehen (deutsch und englisch) – sonst wird die CI rot.

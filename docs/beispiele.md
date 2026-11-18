@@ -469,6 +469,60 @@ actions:
       entity_id: light.flur
 ```
 
+## Rauchmelder untereinander vernetzen
+
+Viele Funk-Rauchmelder (z. B. über Zigbee) sind **nicht** untereinander verbunden: Brennt es im
+Wohnzimmer, piept nur der Melder im Wohnzimmer – oben im Schlafzimmer hört man ihn vielleicht
+nicht. Eine kleine eigene Automation lässt dann bei Rauch **alle** Melder mitlaufen.
+
+> **Das ist bewusst keine Funktion von Hauswacht.** Brandschutz darf von nichts abhängen – nicht
+> vom Testmodus, nicht von der Freigabe der Sirenen, nicht von einem Update der Alarmanlage. Eine
+> eigene Automation mit wenigen Zeilen hat diese Abhängigkeiten nicht. Hauswacht hält sich dabei
+> heraus: Meldet irgendein Rauchmelder Brand, schaltet Hauswacht keine Sirene ein und keine aus
+> (siehe [Brandschutz](sirenen.md#brandschutz)).
+
+```yaml
+alias: Rauchmelder – bei Rauch alle Melder alarmieren
+mode: single
+triggers:
+  - trigger: state
+    entity_id:
+      - binary_sensor.rauchmelder_wohnzimmer_smoke
+      - binary_sensor.rauchmelder_flur_smoke
+      - binary_sensor.rauchmelder_schlafzimmer_smoke
+    to: "on"
+actions:
+  - action: siren.turn_on
+    continue_on_error: true
+    target:
+      entity_id:
+        - siren.rauchmelder_wohnzimmer
+        - siren.rauchmelder_flur
+        - siren.rauchmelder_schlafzimmer
+  - action: notify.mobile_app_annas_handy
+    data:
+      title: Feuer!
+      message: "{{ trigger.to_state.name }} meldet Rauch."
+```
+
+**Ganz wichtig – vor dem Einsatz selbst prüfen:**
+
+- **Der richtige Ton:** Viele Rauchmelder-Sirenen haben mehrere Töne (z. B. Feuer und Einbruch).
+  Welche es gibt, zeigt Entwicklerwerkzeuge → Zustände → die Sirene → Attribut
+  `available_tones`. Den Feuerton dann unter `data:` mit `tone:` eintragen.
+- **Der Testknopf:** Setzt der Testknopf am Melder auch den Rauch-Sensor auf „an“, piepen beim
+  Testen alle Melder. Dann den Testknopf-Sensor als Bedingung ausschließen oder damit leben.
+- **Probelauf:** Einmal mit Ankündigung an alle im Haus ausprobieren – mit Testknopf oder
+  Prüfspray, je nach Anleitung des Melders.
+- **`continue_on_error: true`** sorgt dafür, dass ein ausgefallener Melder die anderen nicht
+  aufhält.
+- **Kein Ersatz für die Melder selbst:** Jeder Melder piept weiterhin von sich aus. Die
+  Vernetzung über Home Assistant kommt nur dazu – und funktioniert nur, solange Home Assistant und
+  das Funknetz laufen.
+- **Abschalten** bei Fehlalarm: z. B. ein Skript mit `siren.turn_off` auf alle Melder. Bei echtem
+  Rauch löst der betroffene Melder einfach wieder aus. Dieses Skript ist **nur** für Brandalarm –
+  einen Einbruchalarm beendest du über Hauswacht.
+
 ## Was du lieber nicht automatisierst
 
 - **Nicht automatisch aufschließen**, wenn unscharf geschaltet wird – wer fälschlich unscharf
