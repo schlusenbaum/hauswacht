@@ -11,7 +11,9 @@
 
 **Intrusion alarm system for Home Assistant** ("Hauswacht" means "house watch") – freely
 definable alarm profiles, trigger rules like "door, then basement", users with PIN and RFID card,
-Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can go off.
+Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can go off. And because
+Hauswacht provides everything it knows as entities, attributes and events, you connect it with
+**everything Home Assistant can do** – lights, cameras, shutters, heating, speakers.
 
 > **Status: 0.54.1 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
@@ -33,10 +35,14 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
 
 ## What Hauswacht can do
 
+- **Setup wizard** – guides you through the setup without prior knowledge: short introduction,
+  sensor suggestions by room, sensor groups, profiles, recipients, sirens, users and a trial run
+  in test mode; every step can be skipped.
 - **Alarm profiles instead of fixed modes** – "Home", "Night", "Vacation" … as many as you like,
   each with its own sensor groups, delays, sirens and recipients. Automatic arming by time or when
   everyone has left – with presence from several signals per person (Wi-Fi, Bluetooth, router,
-  proximity …) – and disarm on arrival with door proof.
+  proximity …) – and disarm on arrival with door proof. Different times per weekday via a
+  schedule; **guest mode** so visitors are not locked out.
 - **Trigger rules** – alarm only on a sequence ("door, then basement within 2 minutes"), with
   exceptions and conditions; in a wizard or as YAML.
 - **Alarm card without forced PIN** – a large card for the tablet: state with countdown, one
@@ -47,7 +53,8 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
   guests with validity, duress PIN with silent emergency call, lockout against guessing.
 - **Control devices** – Zigbee keypads via Zigbee2MQTT with feedback on the device, learning
   cards directly at the keypad, NFC stickers with the Home Assistant app, RFID readers, buttons
-  (arm only) and door locks (e.g. Nuki: disarm when a known user unlocks).
+  (arm only) and door locks (e.g. Nuki: disarm when a known user unlocks). **Action codes** at
+  the keypad (e.g. 7777 + Home) start your own automations or a silent emergency call.
 - **Notifications** – per event with their own recipients and texts, critical alerts break
   through Do Not Disturb, buttons "Disarm" and "Arm anyway" in the push message, announcements
   via speakers (e.g. Echo).
@@ -64,6 +71,25 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
 - **Observe instead of guess** – homecoming and radio silence observation deliver numbers before
   you automate anything.
 
+## Open to everything: Hauswacht as a building block
+
+Hauswacht itself only switches sirens and sends messages – but it **provides everything an alarm
+system knows**, so that you can connect whatever you like with your own automations:
+
+| Hauswacht provides | For example |
+|---|---|
+| **Alarm panel** per area with state and attributes: `phase` (disarmed, arming, armed, entry delay, **alarm**, alarm over), active profile, triggering sensor, who switched, test mode, guest mode | "On alarm: lights on" |
+| **Events** `hauswacht_event` for almost everything: armed, disarmed, alarm, tampering, sensor failed, wrong PIN, button, action code, time automation … | "On tampering: critical push message" |
+| **Entities**: open sensors, system status, test and guest mode, buttons, profile settings, action code event | "Status light red while armed" |
+| **Actions** and **buttons**: arm with profile (also "arm anyway"), disarm, end alarm, guest mode, siren test, simulate sensors in test mode | "Guest mode from the calendar" |
+
+This makes Hauswacht the core of much an alarm system should do: on alarm **lights on** and back
+as before afterwards, **camera image to the phone**, **shutters up**, music off, **heating down**
+while away, welcome light when coming home, lock the front door when arming – each with a
+ready-made template in the **[examples](docs/en/examples.md)**, all entities, attributes and
+events in the **[reference](docs/en/reference.md)**. In test mode this stays silent thanks to the
+attribute `test_mode`.
+
 ## Quick start
 
 1. **Add the repository** and download Hauswacht, then restart Home Assistant:
@@ -78,8 +104,8 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
 
    [![Set up Hauswacht](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)
 
-3. **Configure:** add a sensor group with the door and window contacts, add an alarm profile (e.g.
-   "Night"), enter your phone as recipient.
+3. **With the setup wizard** (offered during setup): choose sensors, accept sensor groups and
+   profiles, enter your phone as recipient. Alternatively everything by hand under Configure.
 4. Put the card **"Hauswacht Test"** on a dashboard, test mode on, play it through.
 5. Test mode off – done. Enable sirens only once everything works.
 
@@ -90,6 +116,7 @@ In detail: [Installation and first steps](docs/en/installation.md).
 | | |
 |---|---|
 | [Installation and first steps](docs/en/installation.md) | installation, menu, the first five steps |
+| [Setup wizard](docs/en/setup-wizard.md) | guided setup, every step can be skipped, trial run |
 | [Sensors and sensor groups](docs/en/sensors.md) | which sensors, types, always active, radio silence |
 | [Alarm profiles and areas](docs/en/profiles.md) | profiles, automation, presence, disarm on arrival, arm by closing the door, areas |
 | [Trigger rules](docs/en/trigger-rules.md) | sequences, exceptions, conditions, YAML |
@@ -99,6 +126,7 @@ In detail: [Installation and first steps](docs/en/installation.md).
 | [Sirens](docs/en/sirens.md) | compatibility, release, tone per siren, siren from switch, siren test, "why didn't it sound?", fire protection |
 | [Notifications](docs/en/notifications.md) | events, custom texts, speech |
 | [System overview](docs/en/overview.md) | overview, printing, emergency sheet, check hints |
+| [Examples](docs/en/examples.md) | connect other devices: lights, camera, shutters, status light, heating … |
 | [Test mode](docs/en/test-mode.md) · [Observations](docs/en/observations.md) · [Reference](docs/en/reference.md) · [Troubleshooting](docs/en/troubleshooting.md) | |
 
 Everything at a glance: [docs/en/](docs/en/README.md).
@@ -130,6 +158,15 @@ The binding rules: [Safety rules](docs/en/development/safety.md).
 > **Note:** Hauswacht is a hobby project and **not a certified security system** (no VdS or EN
 > 50131 certification). It replaces neither a professional intrusion alarm system nor tested smoke
 > detectors.
+
+**Limits, honestly:**
+
+- Hauswacht only works **while Home Assistant is running** – without power, network or radio
+  there is no alarm. A UPS for Home Assistant, router and radio gateway makes sense; sirens with
+  their own battery keep sounding once they are running.
+- **No monitoring centre:** Hauswacht notifies you and your recipients – it does not call a
+  security service by itself (possible with your own automations, e.g. telephony services).
+- Hauswacht detects **radio jamming** only indirectly – via radio silence and failed sensors.
 
 ## How Hauswacht came about
 
