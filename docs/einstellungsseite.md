@@ -3,10 +3,10 @@
 **Deutsch** | [English](en/settings-page.md)
 
 > **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an;
-> **Melder**, **Alarmprofile**, **Alarmgeber** und **Benachrichtigungen** bearbeitest du schon
-> direkt auf der Seite. Auslöseregeln, Personen und System bearbeitest du noch im
-> Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) – das folgt in den nächsten
-> Stufen.
+> **Melder**, **Alarmprofile**, **Auslöseregeln**, **Alarmgeber** und **Benachrichtigungen**
+> bearbeitest du schon direkt auf der Seite. Personen und System bearbeitest du noch im
+> Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) – das folgt in der nächsten
+> Stufe.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -108,6 +108,49 @@ Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgab
 
 Es gelten dieselben Regeln wie im Dialog: Name nötig und eindeutig, jeder Knopf nur einmal je
 Bereich, „Unscharf bei Rückkehr“ nur mit Personen. **Löschen** fragt einmal nach.
+
+## Auslöseregeln bearbeiten
+
+Im Reiter **Auslöseregeln** steht jede Regel als Satz, darunter die Profile, in denen sie gilt
+(„in keinem Profil – wirkt nicht“, wenn keins). **„Bearbeiten“** öffnet das Seitenblatt,
+**„+ Auslöseregel anlegen“** ein neues mit zwei leeren Schritten. Was eine Auslöseregel ist, steht
+unter [Auslöseregeln](ausloeseregeln.md).
+
+Oben im Blatt schaltest du um zwischen **Formular** und **YAML**. Darunter steht beim Bearbeiten
+immer, **was die Regel bewirkt**, z. B. „Haustür, dann innerhalb von 90 s Meldergruppe Keller →
+sofort Alarm“ – und was nicht passt (z. B. „Ein Melder steht in Schritt 2 und im Schritt davor.“).
+
+**Formular** – für einfache Regeln:
+
+| Feld | Inhalt |
+|---|---|
+| **Name, Ergebnis** | Sofort Alarm · Eingangsverzögerung, dann Alarm · Nur Benachrichtigung |
+| **Schritt 1, 2, …** | „Was muss passieren?“ – einer davon / alle davon / mindestens … davon; dazu Meldergruppen (Haken) und einzelne Melder (Namen tippen oder aus der Liste wählen). „Zeit bis zum nächsten Schritt“ in Sekunden. Mit ↑ ↓ verschieben, mit ✕ entfernen, „+ Schritt“ für weitere (bis 10) |
+| **Nicht, wenn vorher …** | Haken setzen, Melder oder Gruppen wählen und den Zeitraum davor – siehe [Ausnahme](ausloeseregeln.md#ausnahme-nicht-wenn-vorher-) |
+| **Gilt in den Profilen** | Haken je Profil – dasselbe wie „Auslöseregeln“ im Profil |
+
+**YAML** – für alles, auch komplexe Regeln (verschachtelte Ausdrücke, Bedingungen „nur wenn …“).
+Aufbau wie im [Expertenmodus](ausloeseregeln.md#expertenmodus-yaml): Meldergruppen per Name,
+Melder per Entitäts-ID. Beispiel:
+
+```yaml
+name: Tür dann Keller
+result: alarm
+steps:
+  - any:
+      - sensor: binary_sensor.haustuer
+    within: 90
+  - any:
+      - group: Keller
+```
+
+- Vom Formular zu YAML geht immer. Zurück zum Formular geht nur, wenn die Regel einfach genug ist.
+- **Komplexe Regeln gehen nur als YAML** – der Knopf „Formular“ ist dann ausgegraut, und in der
+  Liste steht „(nur YAML)“.
+- **Bedingungen** („nur wenn …“) zeigt das Formular an; ändern lassen sie sich nur im YAML.
+- Gespeichert wird nur, was auch der Dialog speichern würde: Name nötig und eindeutig, kein
+  leerer Schritt, nicht derselbe Melder in zwei Schritten hintereinander. **Löschen** fragt einmal
+  nach und nimmt die Regel auch aus allen Profilen.
 
 ## Alarmgeber bearbeiten
 

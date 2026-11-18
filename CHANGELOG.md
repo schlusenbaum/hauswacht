@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b9] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Hinzugefügt
+- **Auslöseregeln auf der Einstellungsseite bearbeiten**: anlegen, ändern, löschen, mit
+  Umschalter **Formular / YAML**. Im Formular: Name, Ergebnis, Schritte (einer / alle /
+  mindestens … davon, Meldergruppen und einzelne Melder, Zeit bis zum nächsten Schritt,
+  verschieben und entfernen), „Nicht, wenn vorher …“ und in welchen Profilen die Regel gilt.
+  Komplexe Regeln (verschachtelte Ausdrücke) gehen nur als YAML; Bedingungen („nur wenn …“)
+  ändert man im YAML.
+- Beim Bearbeiten steht immer als Satz da, was die Regel bewirkt, dazu die Prüfhinweise wie im
+  Dialog.
+
 ## [0.57.0b8] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).

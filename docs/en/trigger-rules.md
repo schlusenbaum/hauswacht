@@ -43,6 +43,9 @@ Step 1 fulfilled ──(time of step 1)──▶ Step 2 fulfilled ──(time of
 
 ## Creating with the wizard
 
+> It is easier on the [settings page](settings-page.md#editing-trigger-rules): everything on one
+> sheet, with a switch form / YAML.
+
 Name and result → step 1 → overview with "Add another step", "Edit a step", "Remove last step",
 "Done – save" (up to 10 steps). Above each step and in the overview, the trigger rule is shown
 as a sentence, e.g. "one of front door / back door, then within 120 s sensor group Basement →

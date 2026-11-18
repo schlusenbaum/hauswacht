@@ -3,9 +3,9 @@
 [Deutsch](../einstellungsseite.md) | **English**
 
 > **Pre-release:** the page grows in stages. It **shows** the whole setup; you already edit
-> **sensors**, **alarm profiles**, **alarm devices** and **notifications** directly on the page.
-> Trigger rules, people and system are still edited in the settings dialog (button "Edit in the
-> dialog" at the top right) – that follows in the next stages.
+> **sensors**, **alarm profiles**, **trigger rules**, **alarm devices** and **notifications**
+> directly on the page. People and system are still edited in the settings dialog (button "Edit
+> in the dialog" at the top right) – that follows in the next stage.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -106,6 +106,48 @@ sections match the dialog:
 
 The same rules as in the dialog apply: a name is needed and must be unique, every button only
 once per area, "disarm on arrival" only with persons. **Delete** asks once.
+
+## Editing trigger rules
+
+The tab **Trigger rules** lists every rule as a sentence, below it the profiles in which it applies
+("in no profile – no effect" if none). **"Edit"** opens the side sheet, **"+ Add trigger rule"** a
+new one with two empty steps. What a trigger rule is: see [trigger rules](trigger-rules.md).
+
+At the top of the sheet you switch between **Form** and **YAML**. Below, while editing, it always
+says **what the rule does**, e.g. "front door, then within 90 s group Basement → alarm
+immediately" – and what does not fit (e.g. "A sensor is in step 2 and in the step before.").
+
+**Form** – for simple rules:
+
+| Field | Content |
+|---|---|
+| **Name, result** | Alarm immediately · Entry delay, then alarm · Notification only |
+| **Step 1, 2, …** | "What has to happen?" – one of them / all of them / at least … of them; plus sensor groups (ticks) and single sensors (type a name or pick from the list). "Time until the next step" in seconds. Move with ↑ ↓, remove with ✕, "+ Step" for more (up to 10) |
+| **Not if before …** | Tick, choose sensors or groups and the period before – see [exception](trigger-rules.md#exception-not-if-before-) |
+| **Applies in the profiles** | A tick per profile – the same as "trigger rules" in the profile |
+
+**YAML** – for everything, including complex rules (nested expressions, conditions "only if …").
+Structure as in [expert mode](trigger-rules.md#expert-mode-yaml): sensor groups by name, sensors by
+entity ID. Example:
+
+```yaml
+name: Door then basement
+result: alarm
+steps:
+  - any:
+      - sensor: binary_sensor.front_door
+    within: 90
+  - any:
+      - group: Basement
+```
+
+- From form to YAML always works. Back to the form only if the rule is simple enough.
+- **Complex rules are YAML only** – the "Form" button is greyed out, and the list says
+  "(YAML only)".
+- **Conditions** ("only if …") are shown in the form; they can only be changed in YAML.
+- Only what the dialog would save is saved: a name is needed and must be unique, no empty step,
+  not the same sensor in two consecutive steps. **Delete** asks once and also removes the rule
+  from all profiles.
 
 ## Editing alarm devices
 

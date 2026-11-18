@@ -17,7 +17,9 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import label_registry as lr
+from homeassistant.util.yaml import parse_yaml
 
 from .alarm_notify_settings_ws import build_alarm_notify_settings
 from .const import DOMAIN
@@ -25,6 +27,7 @@ from .core.always_active import parse_always_active
 from .core.changes import Change, options_revision
 from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
+from .core.changes.rules import delete_rule, save_rule
 from .core.changes.sensors import (
     remove_group,
     remove_strength,
@@ -41,6 +44,7 @@ from .core.tilt import effective_types, parse_tilt_sources
 from .core.vibration import parse_vibration_sources, rule_for_zone_id
 from .names import display_name
 from .profile_settings_ws import build_profile_settings
+from .rule_settings_ws import build_rule_settings, ws_rule_check
 from .runtime import device_class_of, entities_by_label
 
 WS_GET = f"{DOMAIN}/settings/get"
@@ -73,6 +77,8 @@ ACTIONS = (
     "sirens_save",
     "notify_save",
     "notify_text_save",
+    "rule_save",
+    "rule_delete",
 )
 
 
@@ -169,6 +175,7 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
         "entities": sorted(entities, key=lambda e: str(e["name"]).casefold()),
         "profile_edit": build_profile_settings(hass, main),
         **build_alarm_notify_settings(hass, main),
+        "rule_edit": build_rule_settings(hass, main),
     }
 
 
@@ -214,6 +221,23 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
             str(data.get("message") or ""),
             lang=lang,
         )
+    if action == "rule_save":
+        raw: Any = data.get("rule")
+        if data.get("yaml") is not None:
+            try:
+                raw = parse_yaml(str(data["yaml"]))
+            except HomeAssistantError as err:
+                return Change(errors={"base": "rule_yaml_invalid"}, details={"message": str(err)})
+        profiles = data.get("profiles")
+        return save_rule(
+            options,
+            data.get("id") or None,
+            raw,
+            labels=labels,
+            profiles=list(profiles) if isinstance(profiles, list) else None,
+        )
+    if action == "rule_delete":
+        return delete_rule(options, str(data.get("id")))
     if action == "profile_delete":
         if data.get("id") not in options.get("profiles", {}):
             return Change(errors={"base": "unknown_profile"})
@@ -287,4 +311,5 @@ def async_register_settings_websocket(hass: HomeAssistant) -> None:
         return
     websocket_api.async_register_command(hass, ws_settings_get)
     websocket_api.async_register_command(hass, ws_settings_apply)
+    websocket_api.async_register_command(hass, ws_rule_check)
     hass.data[DATA_WS] = True

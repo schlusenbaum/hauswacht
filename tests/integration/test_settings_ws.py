@@ -317,3 +317,93 @@ async def test_notify_settings_and_event_text(hass: HomeAssistant, hass_ws_clien
     text = next(e for e in fresh["notify"]["events"] if e["event"] == "armed")
     assert text["preview"]
     assert "{" not in text["preview"]
+
+
+async def test_rule_check_converts_between_form_and_yaml(
+    hass: HomeAssistant, hass_ws_client: Any
+) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert "rules" in data["rule_edit"]
+    form = {
+        "name": "Tür dann Keller",
+        "result": "alarm",
+        "steps": [
+            {"any": [{"sensor": DOOR}], "within": 90},
+            {"any": [{"group": "Keller"}], "within": 60},
+        ],
+    }
+    checked = await _ws(hass_ws_client, hass, type="hauswacht/settings/rule_check", rule=form)
+    assert checked["ok"] is True, checked
+    assert checked["ui"] is True
+    assert "Keller" in checked["yaml"]
+    assert "90" in checked["text"]
+    # YAML zurück ins Formular
+    back = await _ws(
+        hass_ws_client, hass, type="hauswacht/settings/rule_check", yaml=checked["yaml"]
+    )
+    assert back["rule"] == checked["rule"]
+    # Verschachtelt: nur YAML
+    nested = (
+        "name: Komplex\nsteps:\n  - all:\n      - any:\n          - group: Keller\n"
+        f"      - sensor: {DOOR}\n"
+    )
+    complex_rule = await _ws(
+        hass_ws_client, hass, type="hauswacht/settings/rule_check", yaml=nested
+    )
+    assert complex_rule["parsed"] is True
+    assert complex_rule["ui"] is False
+    broken = await _ws(
+        hass_ws_client, hass, type="hauswacht/settings/rule_check", yaml="name: [kaputt"
+    )
+    assert broken["parsed"] is False
+    assert broken["messages"]
+
+
+async def test_apply_rule_save_yaml_and_delete(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    text = (
+        "name: Tür dann Keller\nresult: notify\nsteps:\n"
+        f"  - any:\n      - sensor: {DOOR}\n    within: 90\n"
+        "  - any:\n      - group: Keller\n"
+    )
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="rule_save",
+        data={"yaml": text, "profiles": ["night"]},
+    )
+    assert result["ok"] is True, result
+    rule_id = result["id"]
+    await hass.async_block_till_done()
+    options = _options(hass)
+    assert options["rules"][rule_id]["result"] == "notify"
+    assert options["rules"][rule_id]["steps"][1]["any"] == [{"group": "keller"}]
+    assert rule_id in options["profiles"]["night"]["rules"]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    listed = next(r for r in data["rule_edit"]["rules"] if r["id"] == rule_id)
+    assert listed["profiles"] == ["night"]
+    taken = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="rule_save",
+        data={"rule": listed["rule"]},
+    )
+    assert taken["errors"] == {"name": "rule_name_taken"}
+    deleted = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="rule_delete",
+        data={"id": rule_id},
+    )
+    assert deleted["ok"] is True
+    await hass.async_block_till_done()
+    assert rule_id not in _options(hass)["rules"]
+    assert rule_id not in _options(hass)["profiles"]["night"].get("rules", [])
