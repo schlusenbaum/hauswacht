@@ -26,6 +26,7 @@ ones of the English interface.
 | [Test mode and test card](test-mode.md) | play everything through safely: simulate sensors, no siren |
 | [Observations](observations.md) | homecoming observation and "door open to disarmed" – measure before automating |
 | [System overview](overview.md) | card with the whole configuration, printing, emergency sheet, check hints, diagnostics file |
+| [Examples](examples.md) | connect Hauswacht to other devices: lights on alarm and back as before, camera image to the phone, shutters, status light, heating while away, guest mode from the calendar … |
 | [Reference](reference.md) | all entities, attributes, actions and events |
 | [Troubleshooting](troubleshooting.md) | common questions and problems |
 

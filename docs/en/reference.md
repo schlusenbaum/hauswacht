@@ -128,8 +128,9 @@ actions:
         Intrusion alarm ({{ state_attr('alarm_control_panel.hauswacht', 'profile_name') }})!
 ```
 
-Adapt lights, areas and the notification service to yours. Later, e.g. camera snapshots would be
-added here. `triggered` applies to the reaction phase; once it is over, `phase` changes to
+Adapt lights, areas and the notification service to yours. Many more ready-made examples – lights
+back as before afterwards, camera image to the phone, shutters, status light, heating while away –
+are under [examples](examples.md). `triggered` applies to the reaction phase; once it is over, `phase` changes to
 `alarm_hold` (alarm not yet acknowledged).
 
 ## Actions
