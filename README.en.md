@@ -6,7 +6,7 @@
 
 [![Release](https://img.shields.io/github/v/release/schlusenbaum/hauswacht?include_prereleases&sort=semver)](https://github.com/schlusenbaum/hauswacht/releases)
 [![Downloads](https://img.shields.io/github/downloads/schlusenbaum/hauswacht/total?label=Downloads)](https://github.com/schlusenbaum/hauswacht/releases)
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
+[![Marketplace](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 [![CI](https://github.com/schlusenbaum/hauswacht/actions/workflows/ci.yml/badge.svg)](https://github.com/schlusenbaum/hauswacht/actions/workflows/ci.yml)
 
 **Intrusion alarm system for Home Assistant** ("Hauswacht" means "house watch") – freely
@@ -15,7 +15,7 @@ Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can g
 Hauswacht provides everything it knows as entities, attributes and events, you connect it with
 **everything Home Assistant can do** – lights, cameras, shutters, heating, speakers.
 
-> **Status: 0.55.2 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.55.3 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -94,12 +94,12 @@ attribute `test_mode`.
 ## Quick start
 
 1. **Add the repository** and download Hauswacht, then restart Home Assistant:
-   - **Marketplace** (from Home Assistant 2026.11): Settings → Marketplace → *Add from link* →
-     `https://github.com/schlusenbaum/hauswacht`
+   - **Marketplace** (from Home Assistant 2026.11): [open directly](https://my.home-assistant.io/redirect/marketplace_repository/?owner=schlusenbaum&repository=hauswacht&category=integration) or Settings →
+     Marketplace → *Add from link* → `https://github.com/schlusenbaum/hauswacht`
    - **HACS** (up to 2026.10): HACS → ⋮ → **Custom repositories** →
      `https://github.com/schlusenbaum/hauswacht`, type **Integration**
 
-   Hauswacht is not (yet) in the catalogue, hence the detour via the link –
+   Hauswacht is not (yet) in the catalogue (inclusion requested), hence the detour via the link –
    [step by step](docs/en/installation.md#installation).
 2. Set up Hauswacht:
 

@@ -6,6 +6,9 @@
     "http",
     "mqtt"
   ],
+  "categories": [
+    "security_safety.alarm_systems"
+  ],
   "codeowners": [
     "@schlusenbaum"
   ],
@@ -19,5 +22,5 @@
   "issue_tracker": "https://github.com/schlusenbaum/hauswacht/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.55.2"
+  "version": "0.55.3"
 }

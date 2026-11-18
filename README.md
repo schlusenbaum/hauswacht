@@ -6,7 +6,7 @@
 
 [![Release](https://img.shields.io/github/v/release/schlusenbaum/hauswacht?include_prereleases&sort=semver)](https://github.com/schlusenbaum/hauswacht/releases)
 [![Downloads](https://img.shields.io/github/downloads/schlusenbaum/hauswacht/total?label=Downloads)](https://github.com/schlusenbaum/hauswacht/releases)
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
+[![Marketplace](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 [![CI](https://github.com/schlusenbaum/hauswacht/actions/workflows/ci.yml/badge.svg)](https://github.com/schlusenbaum/hauswacht/actions/workflows/ci.yml)
 
 **Einbruchmeldeanlage für Home Assistant** – frei definierbare Alarmprofile, Auslöseregeln wie
@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.55.2 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.55.3 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -91,12 +91,12 @@ das dank des Attributs `test_mode` still.
 ## Schnellstart
 
 1. **Repository einbinden** und Hauswacht herunterladen, danach Home Assistant neu starten:
-   - **Marketplace** (ab Home Assistant 2026.11): Einstellungen → Marketplace → hinzufügen per Link
-     (*Add from link*) → `https://github.com/schlusenbaum/hauswacht`
+   - **Marketplace** (ab Home Assistant 2026.11): [direkt öffnen](https://my.home-assistant.io/redirect/marketplace_repository/?owner=schlusenbaum&repository=hauswacht&category=integration) oder Einstellungen →
+     Marketplace → hinzufügen per Link (*Add from link*) → `https://github.com/schlusenbaum/hauswacht`
    - **HACS** (bis 2026.10): HACS → ⋮ → **Benutzerdefinierte Repositories** → `https://github.com/schlusenbaum/hauswacht`,
      Typ **Integration**
 
-   Hauswacht steht (noch) nicht im Katalog, daher der Umweg über den Link –
+   Hauswacht steht (noch) nicht im Katalog (Aufnahme beantragt), daher der Umweg über den Link –
    [Schritt für Schritt](docs/installation.md#installation).
 2. Hauswacht einrichten:
 

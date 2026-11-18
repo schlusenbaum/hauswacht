@@ -50,7 +50,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
 | ganz hinten | Eigenes Einstellungs-Panel in der Seitenleiste – erst nach dem Assistenten, mit eigenem Konzept |
-| 1.0.0 | Stabil, Doku vollständig, Aufnahme in die HACS-Standardliste |
+| 1.0.0 | Stabil, Doku vollständig (Aufnahme in den Katalog von Marketplace/HACS ist seit 0.55.3 beantragt) |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
 | 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gastmodus-Zeiten (z. B. jeden Dienstag 8–12 Uhr) |
 

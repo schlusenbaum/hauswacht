@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.55.2:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.55.3:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -18,8 +18,14 @@ Hauswacht braucht keine Cloud und keine weiteren Integrationen.
 
 ## Installation
 
-Hauswacht steht (noch) nicht im Katalog von Marketplace bzw. HACS. Das Repository wird deshalb
-einmal über seinen Link eingebunden; danach kommen Updates wie gewohnt.
+Hauswacht steht (noch) nicht im Katalog von Marketplace bzw. HACS – die Aufnahme ist beantragt,
+die Prüfung dauert erfahrungsgemäß Monate. Bis dahin wird das Repository einmal über seinen Link
+eingebunden; danach kommen Updates wie gewohnt. Ist Hauswacht im Katalog, genügt es, im
+Marketplace nach „Hauswacht“ zu suchen.
+
+**Am schnellsten:** [Hauswacht im Marketplace öffnen](https://my.home-assistant.io/redirect/marketplace_repository/?owner=schlusenbaum&repository=hauswacht&category=integration) – der Link öffnet die eigene
+Home-Assistant-Instanz direkt bei Hauswacht (beim ersten Mal fragt My Home Assistant einmal nach
+deren Adresse). Oder von Hand:
 
 **Marketplace** (Home Assistant 2026.11 und neuer):
 
