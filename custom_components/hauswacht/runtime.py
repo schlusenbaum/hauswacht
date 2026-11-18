@@ -399,6 +399,8 @@ class HauswachtRuntime:
         # Nach dem Wiederherstellen: Startphase (keine Ausfallmeldungen, offene Melder überbrücken)
         self._grace_until: float | None = None
         self._unsub_grace: CALLBACK_TYPE | None = None
+        # "Nach Neustart scharf": eigener Timer (Warten auf den Start, dann ARM_AFTER_START)
+        self._unsub_restart_arm: CALLBACK_TYPE | None = None
         self._startup_open: frozenset[str] = frozenset()
         # Push-Knopf "Unscharf schalten": gilt nur für die laufende Scharfschaltung
         self.push_disarm = bool(entry.options.get(OPT_PUSH_DISARM, False))
@@ -849,14 +851,18 @@ class HauswachtRuntime:
 
         @callback
         def _later(_hass: HomeAssistant) -> None:
-            self._unsub_grace = async_call_later(self.hass, ARM_AFTER_START, _arm)
+            self._unsub_restart_arm = async_call_later(self.hass, ARM_AFTER_START, _arm)
 
         @callback
         def _arm(_now: Any) -> None:
-            self._unsub_grace = None
+            self._unsub_restart_arm = None
             self.automation.auto_arm(profile_id, REASON_RESTART)
 
-        self._unsub_grace = async_at_started(self.hass, _later)
+        # Läuft Home Assistant schon, ruft async_at_started _later sofort auf – dann steht der
+        # Timer bereits in _unsub_restart_arm und darf nicht überschrieben werden.
+        waiting = async_at_started(self.hass, _later)
+        if self._unsub_restart_arm is None:
+            self._unsub_restart_arm = waiting
 
     @callback
     def async_stop(self) -> None:
@@ -864,6 +870,9 @@ class HauswachtRuntime:
         if self._unsub_grace is not None:
             self._unsub_grace()
             self._unsub_grace = None
+        if self._unsub_restart_arm is not None:
+            self._unsub_restart_arm()
+            self._unsub_restart_arm = None
         if self._unsub_siren_check is not None:
             self._unsub_siren_check()
             self._unsub_siren_check = None

@@ -22,6 +22,11 @@ Teil 2 – damit sind alle Stufen umgesetzt).
 - **Bedienteile** löschen und die Anlernzeit für Karten einstellen. Bedienteile anlegen und Karten
   anlernen bleibt im Dialog, weil dort am Gerät angelernt wird.
 
+### Behoben
+- „Nach Neustart immer scharf“: Wurde Hauswacht neu geladen (z. B. nach dem Speichern von
+  Einstellungen), lief der Timer fürs Scharfschalten der alten Instanz weiter und ließ sich beim
+  Entladen nicht stoppen. Jetzt hat er einen eigenen Timer, der beim Entladen sicher endet.
+
 ## [0.57.0b10] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,
