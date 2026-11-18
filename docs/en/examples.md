@@ -469,6 +469,12 @@ actions:
 
 ## Interconnecting smoke detectors
 
+> **Only relevant if you use smoke detectors as alarm devices** – i.e. you also use the siren of
+> your smoke detectors as a [siren for Hauswacht](sirens.md). Then the smoke detectors are part of
+> your alarm system, and this section shows how fire and burglary alarms stay cleanly separated.
+> If you have separate sirens and nothing to do with smoke detectors in Hauswacht, you can skip
+> this section – interconnecting is then purely a Home Assistant topic.
+
 Many wireless smoke detectors (e.g. via Zigbee) are **not** connected with each other: if there
 is a fire in the living room, only the living room detector beeps – upstairs in the bedroom you
 may not hear it. A small automation of your own then makes **all** detectors sound on smoke.

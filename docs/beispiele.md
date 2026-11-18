@@ -471,6 +471,12 @@ actions:
 
 ## Rauchmelder untereinander vernetzen
 
+> **Nur wichtig, wenn du Rauchmelder als Alarmgeber verwendest** – also die Sirene deiner
+> Rauchmelder auch als [Sirene für Hauswacht](sirenen.md) nutzt. Dann gehören die Rauchmelder zu
+> deiner Alarmanlage, und hier steht, wie Brand- und Einbruchalarm sauber getrennt bleiben. Hast
+> du eigene Sirenen und mit Rauchmeldern in Hauswacht nichts zu tun, kannst du diesen Abschnitt
+> überspringen – das Vernetzen ist dann ein reines Home-Assistant-Thema.
+
 Viele Funk-Rauchmelder (z. B. über Zigbee) sind **nicht** untereinander verbunden: Brennt es im
 Wohnzimmer, piept nur der Melder im Wohnzimmer – oben im Schlafzimmer hört man ihn vielleicht
 nicht. Eine kleine eigene Automation lässt dann bei Rauch **alle** Melder mitlaufen.
