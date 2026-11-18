@@ -14,6 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .core.profile_settings import SWITCHES, read_switch
+from .core.tilt import parse_tilt_sources
 from .entity import HauswachtEntity
 from .profile_setting_entities import ProfileSettingEntity
 from .runtime import HauswachtConfigEntry
@@ -28,7 +29,12 @@ async def async_setup_entry(
         [
             HauswachtTestModeSwitch(entry),
             HauswachtGuestModeSwitch(entry),
-            *(ProfileSwitch(entry, key) for key in SWITCHES),
+            *(
+                ProfileSwitch(entry, key)
+                for key in SWITCHES
+                # "Gekippte Fenster erlaubt" nur, wenn es Melder mit Kippstellung gibt
+                if key != "tilt_allowed" or parse_tilt_sources(entry.options)
+            ),
         ]
     )
 
@@ -98,6 +104,7 @@ class HauswachtGuestModeSwitch(HauswachtEntity, SwitchEntity):
 SWITCH_ICONS = {
     "silent": "mdi:volume-off",
     "tamper_triggers_alarm": "mdi:shield-alert-outline",
+    "tilt_allowed": "mdi:window-open-variant",
 }
 
 

@@ -186,6 +186,18 @@ class SensorTriggered:
 
 
 @dataclass(frozen=True)
+class BypassedSensorOpened:
+    """Ein überbrückter Melder mit Kippstellung wurde von gekippt ganz geöffnet (ADR 0010).
+
+    Überbrückt war er nur in der Stellung "gekippt" – ganz offen ist ein neuer Vorgang: Die
+    Überbrückung endet und der Melder löst wie jeder andere aus.
+    """
+
+    sensor_key: str
+    role: SensorRole
+
+
+@dataclass(frozen=True)
 class AlwaysActiveTriggered:
     """Ein immer aktiver Melder hat ausgelöst (auch im unscharfen Zustand).
 
@@ -225,6 +237,7 @@ Event = (
     | BypassUntilClosed
     | DisarmRequested
     | SensorTriggered
+    | BypassedSensorOpened
     | AlwaysActiveTriggered
     | SensorClosed
     | ExitDelayElapsed
@@ -692,6 +705,21 @@ def _on_sensor(ctx: AlarmContext, event: SensorTriggered, now: float) -> Result:
     return _trigger(ctx, event.sensor_key, now, f"{event.role.value}_sensor")
 
 
+def _on_bypassed_opened(ctx: AlarmContext, event: BypassedSensorOpened, now: float) -> Result:
+    if event.sensor_key not in ctx.bypassed or ctx.state is AlarmState.DISARMED:
+        return ctx, (Ignored(reason="not_bypassed"),)
+    ended = frozenset({event.sensor_key})
+    ctx = replace(
+        ctx,
+        bypassed=ctx.bypassed - ended,
+        bypassed_until_closed=ctx.bypassed_until_closed - ended,
+    )
+    ctx, effects = _on_sensor(
+        ctx, SensorTriggered(sensor_key=event.sensor_key, role=event.role), now
+    )
+    return ctx, (SensorsRestored(sensors=ended), *effects)
+
+
 def _on_tamper(ctx: AlarmContext, event: SensorTriggered, now: float) -> Result:
     detected = TamperDetected(sensor_key=event.sensor_key, state=ctx.state)
     armed_states = (AlarmState.ARMED, AlarmState.PENDING, AlarmState.ALARM_HOLD)
@@ -784,6 +812,8 @@ def step(ctx: AlarmContext, event: Event, now: float) -> Result:
             return _on_disarm(ctx, event)
         case SensorTriggered():
             return _on_sensor(ctx, event, now)
+        case BypassedSensorOpened():
+            return _on_bypassed_opened(ctx, event, now)
         case AlwaysActiveTriggered():
             return _on_always_active(ctx, event, now)
         case SensorClosed():

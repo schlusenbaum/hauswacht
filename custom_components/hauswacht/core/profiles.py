@@ -151,6 +151,7 @@ class ProfileBehaviour:
     unavailable_policy: UnavailableSensorPolicy = UnavailableSensorPolicy.REFUSE
     max_alarm_cycles: int = DEFAULT_ALARM_CYCLES
     tamper_triggers_alarm: bool = False
+    tilt_allowed: bool = False  # Melder mit Kippstellung: gekippt zählt als zu (ADR 0010)
 
 
 def _enum[E: (OpenSensorPolicy, UnavailableSensorPolicy)](
@@ -177,6 +178,7 @@ def profile_behaviour(options: Mapping[str, Any], profile_id: str) -> ProfileBeh
             stored.get("max_alarm_cycles"), DEFAULT_ALARM_CYCLES, 1, MAX_ALARM_CYCLES
         ),
         tamper_triggers_alarm=bool(stored.get("tamper_triggers_alarm", False)),
+        tilt_allowed=bool(stored.get("tilt_allowed", False)),
     )
 
 

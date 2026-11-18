@@ -197,6 +197,7 @@
           "unavailable_policy": "Ausgefallene Sensoren beim Scharfschalten",
           "max_alarm_cycles": "Maximale Alarmzyklen",
           "tamper_triggers_alarm": "Manipulation löst Alarm aus",
+          "tilt_allowed": "Gekippte Fenster erlaubt",
           "sirens": "Sirenen in diesem Profil",
           "siren_tone": "Sirenenton",
           "siren_volume": "Lautstärke",
@@ -244,7 +245,8 @@
           "rules": "Zusätzlich gelten diese Auslöseregeln. Melder, die nur in Auslöseregeln vorkommen, verhindern das Scharfschalten nicht; ein offenes Fenster zählt erst, wenn es zu und wieder auf geht.",
           "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei.",
           "speakers": "Für Alarm, Eingangsverzögerung und „Alarm beendet“ dieses Profils statt der Standard-Lautsprecher.",
-          "excluded": "Melder aus den gewählten Meldergruppen, die in diesem Profil **nicht** einzeln auslösen (z. B. der Bewegungsmelder im Flur in „Nacht“). In Auslöseregeln zählen sie weiter."
+          "excluded": "Melder aus den gewählten Meldergruppen, die in diesem Profil **nicht** einzeln auslösen (z. B. der Bewegungsmelder im Flur in „Nacht“). In Auslöseregeln zählen sie weiter.",
+          "tilt_allowed": "Nur für Melder mit Kippstellung: Ein gekipptes Fenster zählt in diesem Profil als zu – erst ganz öffnen löst aus. Aus: gekippt zählt wie offen (empfohlen bei Abwesenheit)."
         }
       },
       "zones": {
@@ -263,10 +265,12 @@
         "data": {
           "name": "Name der Meldergruppe (z. B. Türen, Fenster, Keller)",
           "entities": "Sensoren dieser Meldergruppe",
+          "tilt_entities": "Melder mit Kippstellung",
           "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
         },
         "data_description": {
           "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
+          "tilt_entities": "Unter Alarmauslösung → Besondere Melder angelegte Fenster mit Kippstellung.",
           "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
         }
       },
@@ -282,10 +286,12 @@
         "data": {
           "name": "Name der Meldergruppe (z. B. Türen, Fenster, Keller)",
           "entities": "Sensoren dieser Meldergruppe",
+          "tilt_entities": "Melder mit Kippstellung",
           "label": "Zusätzlich alle Sensoren mit diesem Label (optional)"
         },
         "data_description": {
           "entities": "Tür-, Fenster-, Bewegungs-, Präsenz- und Manipulationssensoren (Binärsensoren).",
+          "tilt_entities": "Unter Alarmauslösung → Besondere Melder angelegte Fenster mit Kippstellung.",
           "label": "Praktisch bei vielen Sensoren: Label direkt an die Sensor-Entität hängen (nicht ans Gerät); neue Sensoren mit dem Label gehören dann automatisch dazu."
         }
       },
@@ -538,6 +544,7 @@
           "zones": "Meldergruppen – welche Melder zusammengehören",
           "rules": "Auslöseregeln – Abfolgen von Meldern",
           "always_active": "Immer aktiv – Melder, die auch unscharf auslösen",
+          "special_sensors": "Besondere Melder – Fenster mit Kippstellung",
           "helper_create": "Melder aus anderem Sensor erstellen (z. B. Temperatur → Frostwarnung)",
           "init": "← Zurück"
         }
@@ -1256,6 +1263,55 @@
           "wizard_trial": "Aktualisieren",
           "wizard_summary": "Fertig – zur Zusammenfassung"
         }
+      },
+      "special_sensors": {
+        "title": "Besondere Melder",
+        "description": "{saved}{items}Hier richtest du Melder ein, die mehr als „offen/zu“ können.\n\n**Melder mit Kippstellung** melden drei Stellungen: **zu**, **gekippt** und **offen** – z. B. Fenstersensoren im Falz, Fenstergriffe oder ein Auswahl-Helfer zum Ausprobieren. In jedem Alarmprofil legst du dann fest, ob **gekippte Fenster erlaubt** sind (z. B. nachts) oder wie offen zählen (Standard).\n\nNach dem Anlegen den Melder wie jeden anderen in eine **Meldergruppe** nehmen.",
+        "menu_options": {
+          "tilt_add": "Melder mit Kippstellung anlegen",
+          "tilt_edit": "Melder mit Kippstellung bearbeiten",
+          "tilt_delete": "Melder mit Kippstellung entfernen",
+          "triggering": "← Zurück"
+        }
+      },
+      "tilt_add": {
+        "title": "Melder mit Kippstellung anlegen",
+        "description": "**Schritt 1 von 2:** Woher kommt die Stellung?\n\n- **Sensor mit Text-Zustand**, z. B. `sensor.fenster_bad_opening_state` mit `open` / `tilted` / `closed` → nur die Entität wählen.\n- **Attribut einer Entität**, z. B. Fenstergriff mit Attribut `window_state` → Entität wählen und den Namen des Attributs eintragen.\n- **Zum Ausprobieren ohne Hardware:** einen Helfer „Auswahl“ (Dropdown) mit den Werten *offen*, *gekippt*, *zu* anlegen und hier wählen.\n\nWelche Attribute es gibt, siehst du unter Entwicklerwerkzeuge → Zustände.",
+        "data": {
+          "entity": "Entität",
+          "attribute": "Attribut (optional)"
+        },
+        "data_description": {
+          "entity": "Sensor, Auswahl-Helfer oder die Entität mit dem Attribut.",
+          "attribute": "Leer lassen, wenn der Zustand selbst die Stellung ist."
+        }
+      },
+      "tilt_map": {
+        "title": "Werte zuordnen",
+        "description": "**Schritt 2 von 2** für **{sensor}**.\n\nBekannte Werte: {values} – gerade: {current}.\n\nWähle, welche Werte **zu** und welche **gekippt** bedeuten. **Alles andere zählt als offen** – auch Werte, die das Gerät erst später meldet (sichere Seite). Fehlt ein Wert in der Liste, tippe ihn ein.",
+        "data": {
+          "closed": "Bedeutet zu",
+          "tilted": "Bedeutet gekippt",
+          "target": "In Meldergruppe aufnehmen"
+        },
+        "data_description": {
+          "closed": "Mindestens ein Wert.",
+          "tilted": "Leer lassen, wenn das Gerät keine Kippstellung meldet.",
+          "target": "Optional – geht auch später unter Meldergruppen."
+        }
+      },
+      "tilt_edit": {
+        "title": "Melder mit Kippstellung bearbeiten",
+        "data": {
+          "sensor": "Melder"
+        }
+      },
+      "tilt_delete": {
+        "title": "Melder mit Kippstellung entfernen",
+        "description": "Entfernt die Zuordnung und nimmt den Melder aus allen Meldergruppen. Das Gerät selbst bleibt unverändert.",
+        "data": {
+          "sensor": "Melder"
+        }
       }
     },
     "error": {
@@ -1314,7 +1370,12 @@
       "action_code_is_pin": "Dieser Code ist schon ein PIN oder Bedrohungs-PIN – bitte einen anderen wählen.",
       "pin_is_action_code": "Dieser PIN ist schon ein Aktions-Code – bitte einen anderen wählen.",
       "control_keypad_topic": "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen.",
-      "wizard_profile_empty": "Wähle mindestens eine Meldergruppe oder Auslöseregel – oder wähle das Profil ab."
+      "wizard_profile_empty": "Wähle mindestens eine Meldergruppe oder Auslöseregel – oder wähle das Profil ab.",
+      "tilt_entity_missing": "Diese Entität gibt es (gerade) nicht.",
+      "tilt_attribute_missing": "Die Entität hat dieses Attribut nicht. Unter Entwicklerwerkzeuge → Zustände nachsehen.",
+      "tilt_attribute_needed": "Bei dieser Entität steht die Stellung in einem Attribut – bitte den Namen des Attributs eintragen.",
+      "tilt_no_closed": "Mindestens ein Wert muss „zu“ bedeuten.",
+      "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1386,6 +1447,7 @@
       "options": {
         "on": "Offen / ausgelöst",
         "off": "Zu / ruhig",
+        "tilted": "Gekippt (nur Melder mit Kippstellung)",
         "unavailable": "Nicht verfügbar",
         "real": "Echt (zurücksetzen)"
       }
@@ -1527,6 +1589,9 @@
       },
       "setting_tamper_triggers_alarm": {
         "name": "Sabotage löst Alarm aus"
+      },
+      "setting_tilt_allowed": {
+        "name": "Gekippte Fenster erlaubt"
       },
       "guest_mode": {
         "name": "Gastmodus"

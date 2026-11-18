@@ -208,14 +208,15 @@ from .core.sensor_types import (
     MONITORED_DOMAINS,
     SensorType,
     default_type,
+    domain_of,
     excluded_sensors,
-    parse_types,
     sensor_type,
 )
 from .core.sensors import (
     Zone,
     all_configured_sensors,
     parse_zones,
+    resolve_zone,
     resolve_zones,
     slugify,
 )
@@ -236,6 +237,16 @@ from .core.state_machine import (
     OpenSensorPolicy,
     UnavailableSensorPolicy,
 )
+from .core.tilt import (
+    OPT_TILT_SENSORS,
+    delete_tilt_source,
+    known_values,
+    parse_tilt_sources,
+    save_tilt_source,
+    suggest,
+    types_with_tilt,
+)
+from .core.tilt import STATE_DOMAINS as TILT_STATE_DOMAINS
 from .core.users import RIGHTS_ALL, RIGHTS_PER_AREA, parse_users, pin_conflicts
 from .names import display_name, plain_name
 from .runtime import device_class_of, entities_by_label
@@ -249,6 +260,7 @@ SWITCH_AS_X_DOMAIN = "switch_as_x"
 AUTO_TONE = "_auto"  # Ton je Sirene: Standard-Einbruchton
 _LOGGER = logging.getLogger(__name__)
 TARGET_ALWAYS = "__always__"
+TARGET_NONE = "__none__"
 
 FINDING_TEXTS_DE = {
     "rule_no_steps": "Auslöseregel „{rule}“ hat keinen Schritt mit Meldern.",
@@ -343,6 +355,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     def __init__(self) -> None:
         self._profile_id: str | None = None
         self._zone_id: str | None = None
+        self._tilt_draft: dict[str, Any] = {}
         self._saved = False
         self._hints: list[str] = []
         self._rule_id: str | None = None
@@ -405,7 +418,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         )
 
     def _type_of(self, options: Mapping[str, Any], entity_id: str) -> SensorType:
-        return sensor_type(entity_id, device_class_of(self.hass, entity_id), parse_types(options))
+        return sensor_type(
+            entity_id, device_class_of(self.hass, entity_id), types_with_tilt(options)
+        )
 
     def _profile_armed(self, options: Mapping[str, Any], profile_id: str) -> list[str]:
         """Melder, die im Profil einzeln auslösen (Gruppen ohne Technik, ohne Ausnahmen)."""
@@ -469,6 +484,8 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             return menu_lists.controls_text(options, lang)
         if step_id == "sirens":
             return menu_lists.sirens_text(self.hass, options, lang)
+        if step_id == "special_sensors":
+            return menu_lists.tilt_text(self.hass, options, lang)
         return None
 
     def _loaded(self) -> bool:
@@ -934,6 +951,16 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 vol.Required(
                     "tamper_triggers_alarm", default=behaviour.tamper_triggers_alarm
                 ): BooleanSelector(),
+                # Nur mit Meldern mit Kippstellung (ADR 0010)
+                **(
+                    {
+                        vol.Required(
+                            "tilt_allowed", default=behaviour.tilt_allowed
+                        ): BooleanSelector()
+                    }
+                    if parse_tilt_sources(options)
+                    else {}
+                ),
                 vol.Optional("sirens", default=list(reaction.sirens)): _list_selector(
                     registered_sirens, multiple=True
                 ),
@@ -979,7 +1006,192 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     ) -> ConfigFlowResult:
         """Alarmauslösung: Meldergruppen und Auslöseregeln."""
         return self._menu(
-            "triggering", ["zones", "rules", "always_active", "helper_create", "init"]
+            "triggering",
+            ["zones", "rules", "always_active", "special_sensors", "helper_create", "init"],
+        )
+
+    # --- Besondere Melder (ADR 0010) ------------------------------------------
+
+    async def async_step_special_sensors(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Melder mit Kippstellung (und später Erschütterungsstärke)."""
+        items = ["tilt_add"]
+        if parse_tilt_sources(self.config_entry.options):
+            items += ["tilt_edit", "tilt_delete"]
+        return self._menu("special_sensors", [*items, "triggering"])
+
+    def _tilt_source_selector(self) -> SelectSelector:
+        sources = parse_tilt_sources(self.config_entry.options)
+        return SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=e, label=display_name(self.hass, e))
+                    for e in sorted(sources, key=lambda e: display_name(self.hass, e).casefold())
+                ],
+                mode=SelectSelectorMode.DROPDOWN,
+            )
+        )
+
+    async def async_step_tilt_add(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Schritt 1: Quelle wählen (Entität, optional Attribut)."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            entity_id = user_input["entity"]
+            attribute = str(user_input.get("attribute") or "").strip() or None
+            state = self.hass.states.get(entity_id)
+            if state is None:
+                errors["entity"] = "tilt_entity_missing"
+            elif attribute is not None and attribute not in state.attributes:
+                errors["attribute"] = "tilt_attribute_missing"
+            elif attribute is None and domain_of(entity_id) not in TILT_STATE_DOMAINS:
+                errors["attribute"] = "tilt_attribute_needed"
+            else:
+                self._tilt_draft = {"entity": entity_id, "attribute": attribute}
+                return await self.async_step_tilt_map()
+        defaults = user_input or {}
+        return self.async_show_form(
+            step_id="tilt_add",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("entity", default=defaults.get("entity", vol.UNDEFINED)): (
+                        EntitySelector(
+                            EntitySelectorConfig(
+                                domain=[*TILT_STATE_DOMAINS, "binary_sensor", "lock", "cover"]
+                            )
+                        )
+                    ),
+                    vol.Optional(
+                        "attribute", description={"suggested_value": defaults.get("attribute")}
+                    ): TextSelector(),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_tilt_edit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        sources = parse_tilt_sources(self.config_entry.options)
+        if not sources:
+            return await self.async_step_special_sensors()
+        if user_input is not None:
+            source = sources[user_input["sensor"]]
+            self._tilt_draft = {"entity": source.entity_id, "attribute": source.attribute}
+            return await self.async_step_tilt_map()
+        return self.async_show_form(
+            step_id="tilt_edit",
+            data_schema=vol.Schema({vol.Required("sensor"): self._tilt_source_selector()}),
+        )
+
+    async def async_step_tilt_delete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if not parse_tilt_sources(self.config_entry.options):
+            return await self.async_step_special_sensors()
+        if user_input is not None:
+            options = delete_tilt_source(self.config_entry.options, user_input["sensor"])
+            return await self._save(options, "special_sensors")
+        return self.async_show_form(
+            step_id="tilt_delete",
+            data_schema=vol.Schema({vol.Required("sensor"): self._tilt_source_selector()}),
+        )
+
+    async def async_step_tilt_map(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Schritt 2: Welche Werte bedeuten zu, welche gekippt? Der Rest zählt als offen."""
+        draft = self._tilt_draft
+        entity_id, attribute = draft["entity"], draft["attribute"]
+        options = dict(self.config_entry.options)
+        zones = parse_zones(options)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            closed = list(user_input.get("closed") or [])
+            tilted = list(user_input.get("tilted") or [])
+            if not closed:
+                errors["closed"] = "tilt_no_closed"
+            elif {v.casefold() for v in closed} & {v.casefold() for v in tilted}:
+                errors["tilted"] = "tilt_overlap"
+            else:
+                options = save_tilt_source(
+                    options, entity_id, attribute=attribute, closed=closed, tilted=tilted
+                )
+                target = user_input.get("target") or TARGET_NONE
+                if target in zones and not any(
+                    entity_id in resolve_zone(z, entities_by_label(self.hass))
+                    for z in zones.values()
+                ):
+                    stored = {k: dict(v) for k, v in options.get(OPT_ZONES, {}).items()}
+                    stored[target]["entities"] = sorted(
+                        {*stored[target].get("entities", []), entity_id}
+                    )
+                    options[OPT_ZONES] = stored
+                return await self._save(options, "special_sensors")
+        state = self.hass.states.get(entity_id)
+        values = known_values(
+            state.state if state else None, state.attributes if state else None, attribute
+        )
+        current = parse_tilt_sources(options).get(entity_id)
+        if current is not None:
+            stored = options.get(OPT_TILT_SENSORS, {}).get(entity_id, {})
+            closed_default = list(stored.get("closed", []))
+            tilted_default = list(stored.get("tilted", []))
+        else:
+            closed_default, tilted_default = suggest(values)
+        choices = sorted(
+            {*values, *closed_default, *tilted_default}, key=lambda v: str(v).casefold()
+        )
+        member_of = next(
+            (
+                z.zone_id
+                for z in zones.values()
+                if entity_id in resolve_zone(z, entities_by_label(self.hass))
+            ),
+            None,
+        )
+        targets = [TARGET_NONE, *zones]
+
+        def value_selector() -> SelectSelector:
+            return SelectSelector(
+                SelectSelectorConfig(
+                    options=choices, multiple=True, custom_value=True, mode=SelectSelectorMode.LIST
+                )
+            )
+
+        schema: dict[Any, Any] = {
+            vol.Optional("closed", default=closed_default): value_selector(),
+            vol.Optional("tilted", default=tilted_default): value_selector(),
+        }
+        if member_of is None:
+            schema[vol.Optional("target", default=TARGET_NONE)] = SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(
+                            value=t,
+                            label=(
+                                ("Noch in keine Meldergruppe" if self._german() else "No group yet")
+                                if t == TARGET_NONE
+                                else zones[t].name
+                            ),
+                        )
+                        for t in targets
+                    ],
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            )
+        return self.async_show_form(
+            step_id="tilt_map",
+            data_schema=vol.Schema(schema),
+            errors=errors,
+            description_placeholders={
+                "sensor": display_name(self.hass, entity_id)
+                + (f" ({attribute})" if attribute else ""),
+                "values": ", ".join(f"`{v}`" for v in values) or "–",
+                "current": f"`{_current_value(state, attribute)}`" if state else "–",
+            },
         )
 
     async def async_step_helper_create(
@@ -1549,9 +1761,35 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 vol.Optional("entities", default=defaults.get("entities", [])): EntitySelector(
                     EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
                 ),
+                # Melder mit Kippstellung (Sensoren mit Text-Zustand passen nicht in die Auswahl
+                # oben) – nur, wenn es welche gibt
+                **(
+                    {
+                        vol.Optional(
+                            "tilt_entities", default=defaults.get("tilt_entities", [])
+                        ): SelectSelector(
+                            SelectSelectorConfig(
+                                options=[
+                                    SelectOptionDict(value=e, label=display_name(self.hass, e))
+                                    for e in sorted(tilt)
+                                ],
+                                multiple=True,
+                            )
+                        )
+                    }
+                    if (tilt := parse_tilt_sources(self.config_entry.options))
+                    else {}
+                ),
                 label_key: LabelSelector(),
             }
         )
+
+    def _zone_input(self, user_input: dict[str, Any]) -> dict[str, Any]:
+        """Melder mit Kippstellung aus ihrem eigenen Feld zu den Sensoren der Gruppe nehmen."""
+        merged = dict(user_input)
+        tilt = list(merged.pop("tilt_entities", None) or [])
+        merged["entities"] = sorted({*(merged.get("entities") or []), *tilt})
+        return merged
 
     def _save_zone(
         self, zone_id: str | None, user_input: dict[str, Any]
@@ -1577,6 +1815,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         errors: dict[str, str] = {}
         placeholders: dict[str, str] = {"conflicts": ""}
         if user_input is not None:
+            user_input = self._zone_input(user_input)
             options, errors, extra = self._save_zone(None, user_input)
             if options is not None:
                 return await self._zone_types_start(options, user_input)
@@ -1609,14 +1848,17 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         errors: dict[str, str] = {}
         placeholders: dict[str, str] = {"conflicts": ""}
         if user_input is not None and "name" in user_input:
+            user_input = self._zone_input(user_input)
             options, errors, extra = self._save_zone(self._zone_id, user_input)
             if options is not None:
                 return await self._zone_types_start(options, user_input)
             placeholders.update(extra)
         zone = parse_zones(self.config_entry.options)[self._zone_id]
+        tilt = parse_tilt_sources(self.config_entry.options)
         defaults = user_input or {
             "name": zone.name,
-            "entities": sorted(zone.entities),
+            "entities": sorted(e for e in zone.entities if domain_of(e) in MONITORED_DOMAINS),
+            "tilt_entities": sorted(e for e in zone.entities if e in tilt),
             "label": zone.label,
         }
         return self.async_show_form(
@@ -3803,6 +4045,11 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
             ),
         }
     )
+
+
+def _current_value(state: Any, attribute: str | None) -> Any:
+    """Aktueller Wert einer Quelle mit Kippstellung (Zustand oder Attribut)."""
+    return state.state if attribute is None else state.attributes.get(attribute)
 
 
 def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:

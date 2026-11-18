@@ -75,6 +75,7 @@ SELECTS: Mapping[str, SelectSetting] = {
 SWITCHES: Mapping[str, bool] = {
     "silent": False,
     "tamper_triggers_alarm": False,
+    "tilt_allowed": False,
 }
 
 TIMES: tuple[str, ...] = ("auto_arm_time", "auto_disarm_time")

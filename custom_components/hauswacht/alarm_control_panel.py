@@ -84,7 +84,7 @@ async def async_setup_entry(
         "simulate_state",
         {
             vol.Required("sensor"): cv.entity_id,
-            vol.Required("state"): vol.In(["on", "off", "unavailable", "real"]),
+            vol.Required("state"): vol.In(["on", "off", "tilted", "unavailable", "real"]),
         },
         "async_simulate_state",
     )
@@ -228,6 +228,7 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
             "monitored_sensors": sorted(self.runtime.armed_sensors),
             "open_rule_sensors": sorted(self.runtime.open_rule_sensors()),
             "open_sensors": sorted(readiness.open_sensors),
+            "tilted_sensors": sorted(self.runtime.tilted_sensors()),
             "unavailable_sensors": sorted(readiness.unavailable_sensors),
             "zones": self.runtime.zone_members(),
             "last_contact": self.runtime.last_contacts(),

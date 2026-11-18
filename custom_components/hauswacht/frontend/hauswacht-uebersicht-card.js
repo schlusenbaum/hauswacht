@@ -308,7 +308,7 @@ const LABELS = {
     button: { home: "Zuhause", night: "Nacht", away: "Abwesend", vacation: "Urlaub", custom: "Benutzerdefiniert" },
     policy: { refuse: "verweigern", confirm: "nach Bestätigung", bypass_auto: "automatisch überbrücken" },
     type: { door: "Tür", window: "Fenster", motion: "Bewegung", tamper: "Manipulation", technical: "Technik", other: "Sonstiges" },
-    state: { open: "offen", closed: "zu", unavailable: "nicht verfügbar" },
+    state: { open: "offen", closed: "zu", tilted: "gekippt", unavailable: "nicht verfügbar" },
     alarm: {
       disarmed: "unscharf", arming: "Ausgangsverzögerung", armed: "scharf", pending: "Eingangsverzögerung",
       triggered: "Alarm", alarm_hold: "Alarm (Sirenen aus)",
@@ -338,7 +338,7 @@ const LABELS = {
     button: { home: "Home", night: "Night", away: "Away", vacation: "Vacation", custom: "Custom" },
     policy: { refuse: "refuse", confirm: "after confirmation", bypass_auto: "bypass automatically" },
     type: { door: "Door", window: "Window", motion: "Motion", tamper: "Tamper", technical: "Technical", other: "Other" },
-    state: { open: "open", closed: "closed", unavailable: "unavailable" },
+    state: { open: "open", closed: "closed", tilted: "tilted", unavailable: "unavailable" },
     alarm: {
       disarmed: "disarmed", arming: "exit delay", armed: "armed", pending: "entry delay",
       triggered: "alarm", alarm_hold: "alarm (sirens off)",

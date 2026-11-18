@@ -55,7 +55,8 @@ const TEXT = {
     tamper: ["Manipulation", "OK"],
     other: ["Ein", "Aus"],
     states: { on: "ein", off: "aus", unavailable: "nicht verfügbar", unknown: "unbekannt" },
-    openStates: { on: "offen", off: "zu" },
+    openStates: { on: "offen", off: "zu", tilted: "gekippt" },
+    tiltLabel: "Gekippt",
     motionStates: { on: "Bewegung", off: "Ruhe" },
     tamperStates: { on: "Manipulation", off: "OK" },
     lock: ["Entriegelt", "Verriegelt"],
@@ -124,7 +125,8 @@ const TEXT = {
     tamper: ["Tamper", "OK"],
     other: ["On", "Off"],
     states: { on: "on", off: "off", unavailable: "unavailable", unknown: "unknown" },
-    openStates: { on: "open", off: "closed" },
+    openStates: { on: "open", off: "closed", tilted: "tilted" },
+    tiltLabel: "Tilted",
     motionStates: { on: "motion", off: "clear" },
     tamperStates: { on: "tamper", off: "OK" },
     lock: ["Unlocked", "Locked"],
@@ -285,6 +287,7 @@ class HauswachtTestCard extends HTMLElement {
   }
 
   _kind(sensor) {
+    if (sensor.tilt) return "open";
     if (sensor.kind === "lock") return "lock";
     if (sensor.kind === "cover") return "open";
     if (sensor.role === "tamper_24h" || sensor.device_class === "tamper") return "tamper";
@@ -530,12 +533,11 @@ class HauswachtTestCard extends HTMLElement {
     const seg = document.createElement("div");
     seg.className = "seg";
     const buttons = {};
-    for (const [value, label] of [
-      ["on", labels[0]],
-      ["off", labels[1]],
-      ["unavailable", this._t("gone")],
-      ["real", this._t("real")],
-    ]) {
+    const choices = [["on", labels[0]]];
+    // Melder mit Kippstellung: dritte Stellung "gekippt"
+    if (sensor.tilt) choices.push(["tilted", this._t("tiltLabel")]);
+    choices.push(["off", labels[1]], ["unavailable", this._t("gone")], ["real", this._t("real")]);
+    for (const [value, label] of choices) {
       const button = document.createElement("button");
       button.textContent = label;
       button.addEventListener("click", () =>

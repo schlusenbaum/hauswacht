@@ -197,6 +197,7 @@
           "unavailable_policy": "Unavailable sensors when arming",
           "max_alarm_cycles": "Maximum alarm cycles",
           "tamper_triggers_alarm": "Tampering triggers alarm",
+          "tilt_allowed": "Tilted windows allowed",
           "sirens": "Sirens for this profile",
           "siren_tone": "Siren tone",
           "siren_volume": "Volume",
@@ -244,7 +245,8 @@
           "rules": "These trigger rules apply in addition. Sensors that only appear in trigger rules do not prevent arming; an open window only counts once it closes and opens again.",
           "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area.",
           "speakers": "For alarm, entry delay and “alarm ended” of this profile instead of the default speakers.",
-          "excluded": "Sensors from the selected groups that do **not** trigger on their own in this profile (e.g. the hallway motion sensor in “Night”). They still count in trigger rules."
+          "excluded": "Sensors from the selected groups that do **not** trigger on their own in this profile (e.g. the hallway motion sensor in “Night”). They still count in trigger rules.",
+          "tilt_allowed": "Only for sensors with tilt position: a tilted window counts as closed in this profile – only opening it fully triggers. Off: tilted counts as open (recommended when away)."
         }
       },
       "zones": {
@@ -263,10 +265,12 @@
         "data": {
           "name": "Sensor group name (e.g. Doors, Windows, Basement)",
           "entities": "Sensors in this sensor group",
+          "tilt_entities": "Sensors with tilt position",
           "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
+          "tilt_entities": "Windows with tilt position created under Alarm triggering → Special sensors.",
           "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the sensor group automatically."
         }
       },
@@ -282,10 +286,12 @@
         "data": {
           "name": "Sensor group name (e.g. Doors, Windows, Basement)",
           "entities": "Sensors in this sensor group",
+          "tilt_entities": "Sensors with tilt position",
           "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
+          "tilt_entities": "Windows with tilt position created under Alarm triggering → Special sensors.",
           "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the sensor group automatically."
         }
       },
@@ -538,6 +544,7 @@
           "zones": "Sensor groups – which sensors belong together",
           "rules": "Trigger rules – sequences of sensors",
           "always_active": "Always active – sensors that trigger even when disarmed",
+          "special_sensors": "Special sensors – windows with tilt position",
           "helper_create": "Create a sensor from another sensor (e.g. temperature → frost warning)",
           "init": "← Back"
         }
@@ -1256,6 +1263,55 @@
           "wizard_trial": "Refresh",
           "wizard_summary": "Done – go to the summary"
         }
+      },
+      "special_sensors": {
+        "title": "Special sensors",
+        "description": "{saved}{items}Set up sensors that can do more than \"open/closed\" here.\n\n**Sensors with tilt position** report three positions: **closed**, **tilted** and **open** – e.g. window sensors in the rebate, window handles or a select helper for trying it out. In every alarm profile you then decide whether **tilted windows are allowed** (e.g. at night) or count as open (default).\n\nAfter creating it, add the sensor to a **sensor group** like any other.",
+        "menu_options": {
+          "tilt_add": "Add sensor with tilt position",
+          "tilt_edit": "Edit sensor with tilt position",
+          "tilt_delete": "Remove sensor with tilt position",
+          "triggering": "← Back"
+        }
+      },
+      "tilt_add": {
+        "title": "Add sensor with tilt position",
+        "description": "**Step 1 of 2:** Where does the position come from?\n\n- **Sensor with a text state**, e.g. `sensor.window_bathroom_opening_state` with `open` / `tilted` / `closed` → just choose the entity.\n- **Attribute of an entity**, e.g. a window handle with the attribute `window_state` → choose the entity and enter the attribute name.\n- **To try it without hardware:** create a \"Dropdown\" (select) helper with the values *open*, *tilted*, *closed* and choose it here.\n\nWhich attributes exist is shown under Developer tools → States.",
+        "data": {
+          "entity": "Entity",
+          "attribute": "Attribute (optional)"
+        },
+        "data_description": {
+          "entity": "Sensor, select helper or the entity with the attribute.",
+          "attribute": "Leave empty if the state itself is the position."
+        }
+      },
+      "tilt_map": {
+        "title": "Assign values",
+        "description": "**Step 2 of 2** for **{sensor}**.\n\nKnown values: {values} – currently: {current}.\n\nChoose which values mean **closed** and which mean **tilted**. **Everything else counts as open** – including values the device only reports later (safe side). If a value is missing from the list, type it in.",
+        "data": {
+          "closed": "Means closed",
+          "tilted": "Means tilted",
+          "target": "Add to sensor group"
+        },
+        "data_description": {
+          "closed": "At least one value.",
+          "tilted": "Leave empty if the device does not report a tilt position.",
+          "target": "Optional – can also be done later under sensor groups."
+        }
+      },
+      "tilt_edit": {
+        "title": "Edit sensor with tilt position",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "tilt_delete": {
+        "title": "Remove sensor with tilt position",
+        "description": "Removes the assignment and takes the sensor out of all sensor groups. The device itself stays unchanged.",
+        "data": {
+          "sensor": "Sensor"
+        }
       }
     },
     "error": {
@@ -1314,7 +1370,12 @@
       "action_code_is_pin": "This code is already a PIN or duress PIN – please choose another one.",
       "pin_is_action_code": "This PIN is already an action code – please choose another one.",
       "control_keypad_topic": "Please choose the keypad device or enter the MQTT topic.",
-      "wizard_profile_empty": "Choose at least one sensor group or trigger rule – or untick the profile."
+      "wizard_profile_empty": "Choose at least one sensor group or trigger rule – or untick the profile.",
+      "tilt_entity_missing": "This entity does not exist (right now).",
+      "tilt_attribute_missing": "The entity does not have this attribute. Check under Developer tools → States.",
+      "tilt_attribute_needed": "For this entity the position is in an attribute – please enter the attribute name.",
+      "tilt_no_closed": "At least one value must mean \"closed\".",
+      "tilt_overlap": "A value cannot mean both closed and tilted."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1386,6 +1447,7 @@
       "options": {
         "on": "Open / triggered",
         "off": "Closed / idle",
+        "tilted": "Tilted (only sensors with tilt position)",
         "unavailable": "Unavailable",
         "real": "Real (reset)"
       }
@@ -1527,6 +1589,9 @@
       },
       "setting_tamper_triggers_alarm": {
         "name": "Tamper triggers alarm"
+      },
+      "setting_tilt_allowed": {
+        "name": "Tilted windows allowed"
       },
       "guest_mode": {
         "name": "Guest mode"
