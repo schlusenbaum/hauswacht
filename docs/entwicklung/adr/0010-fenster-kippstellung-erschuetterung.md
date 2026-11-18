@@ -1,6 +1,6 @@
 # ADR 0010: Fenster richtig überwachen – Kippstellung und Erschütterung
 
-- Status: vorgeschlagen (Entwicklung auf dem Zweig `entwicklung/gekippt`)
+- Status: umgesetzt in 0.56.0 (entwickelt auf dem Zweig `entwicklung/gekippt`, getestet über die Vorabversionen 0.56.0b1 und b2)
 - Datum: 2026-11-18
 
 ## Kontext
