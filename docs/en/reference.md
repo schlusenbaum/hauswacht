@@ -162,11 +162,16 @@ Good to know:
         type: TamperDetected
         area: garage
   ```
+
+  For control devices (keypad, button, door lock, emergency key) `area` is the area of the
+  **control device** – a control device "for all areas" reports `all`.
 - **Sensors** are given as entity ID in `sensor_key` or as a list in `sensors`, `open_sensors` …;
   the display name is returned by `state_attr(…, 'friendly_name')`.
 - Sets (e.g. `open_sensors`) come as a **list**.
 
 ### State and alarm
+
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
 
 | `type` | When | Fields |
 |---|---|---|
@@ -193,12 +198,16 @@ aborted), `always_alarm_ended`, `restored` (after restart), `startup`.
 
 ### Restart
 
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
+
 | `type` | When | Fields |
 |---|---|---|
-| `RestoredAfterRestart` | Restored after a restart | `area`, `profile_id`, `entry_delay`, `alarm_was_active` |
+| `RestoredAfterRestart` | Restored after a restart | `profile_id`, `entry_delay`, `alarm_was_active` |
 | `RestartedDisarmed` | Disarmed after a restart (setting "always disarmed" or profile deleted) | `previous_profile_id` |
 
 ### Profile automation and presence
+
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
 
 `reason` names the occasion (in German, as stored): `Uhrzeit` (time), `Zeitplan` (schedule),
 `alle weg` (everyone left), `Rückkehr` (arrival), `Rückkehr mit Türbeleg` (arrival with door
@@ -218,6 +227,8 @@ proof), `Neustart` (restart).
 
 ### Operation
 
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
+
 | `type` | When | Fields |
 |---|---|---|
 | `InvalidCode` | Wrong PIN or unknown card | `failures` (number in a row), `lock_seconds` (lockout, 0 = none) |
@@ -226,11 +237,13 @@ proof), `Neustart` (restart).
 | `ButtonPressed` | [Button](control-devices.md#button) pressed | `control`, `press` (`single`, `double`, `long`), `profile` (empty = press type not assigned) |
 | `LockIdentified` | [Door lock](control-devices.md#door-lock-eg-nuki): ID received | `control`, `intent` (`UNLOCK`, `LOCK` or empty), `identity`, `reason` (`ok`, `not_by_person`, `no_id`) |
 | `LockIgnored` | Door lock: ID not used | `control`, `intent`, `reason` (`unknown_id`, `disabled_id`) |
-| `GuestMode` | [Guest mode](profiles.md#guest-mode) on/off | `area`, `on`, `until` (empty = until switched off), `by` |
+| `GuestMode` | [Guest mode](profiles.md#guest-mode) on/off | `on`, `until` (empty = until switched off), `by` |
 | `Panic` | Emergency key with alarm | `control` |
 | `Emergency` | Emergency key pressed (before the reaction) | `control`, `mode` (`off`, `silent`, `alarm`) |
 
 ### Faults
+
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
 
 | `type` | When | Fields |
 |---|---|---|
@@ -239,6 +252,8 @@ proof), `Neustart` (restart).
 | `InfrastructureRecovered` | … fine again | `indicator`, `armed` |
 
 ### Trigger rules
+
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
 
 | `type` | When | Fields |
 |---|---|---|
@@ -250,12 +265,16 @@ proof), `Neustart` (restart).
 
 ### Sirens
 
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
+
 | `type` | When | Fields |
 |---|---|---|
 | `SirenDecision` | Hauswacht decided about sirens | `action` (`activate`, `stop`, `stop_restored` = off after restart), `sent` (sirens controlled), `blocked` (siren → reason: `test_mode`, `hardware_disabled`, `fire_lock`, `unknown_device`, `not_allowed_for_burglar`, `no_burglar_tone`, …) |
 | `SirenTest` | Step of a [siren test](sirens.md) | `step` (`started`, `stopped`, `blocked`, `result`), `siren`, depending on the step `by`, `seconds`, `volume`, `reason`, `heard` |
 
 ### For troubleshooting
+
+*In addition in every event: `area`, `area_name` (see [above](#events)).*
 
 These events show internal processes. They rarely make good triggers for automations.
 

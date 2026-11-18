@@ -349,6 +349,44 @@ actions:
 Was genau im Ereignis steht, zeigt Entwicklerwerkzeuge → Ereignisse → `hauswacht_event` →
 „Zuhören starten“.
 
+### Mehrere Bereiche: Sabotage in der Garage
+
+Mit [Bereichen](profile.md#bereiche) nennt jedes Ereignis seinen Bereich in `area` (Kennung) und
+`area_name` (Anzeigename). Hier geht Sabotage **nur in der Garage** an Peters Handy, und das
+Garagenlicht geht an. Sabotage im Haus löst diese Automation nicht aus.
+
+```yaml
+alias: Hauswacht – Sabotage Garage
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: TamperDetected
+      area: garage
+conditions:
+  - condition: state
+    entity_id: alarm_control_panel.hauswacht_garage
+    attribute: test_mode
+    state: false
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.garage
+  - action: notify.mobile_app_peters_handy
+    data:
+      title: "Sabotage – {{ trigger.event.data.area_name }}"
+      message: >
+        {{ state_attr(trigger.event.data.sensor_key, 'friendly_name')
+           or trigger.event.data.sensor_key }} meldet Sabotage.
+```
+
+- Die Kennung (`garage`) steht in der [Referenz](referenz.md#ereignisse) bzw. beim Zuhören auf
+  `hauswacht_event`; sie bleibt gleich, auch wenn du den Bereich umbenennst.
+- `area: all` haben Ereignisse der ganzen Anlage (z. B. Funknetz gestört) und Bedienteile für alle
+  Bereiche. Wer **alle** Bereiche meinen will, lässt `area` einfach weg.
+- Das Bedienfeld des Bereichs heißt z. B. `alarm_control_panel.hauswacht_garage` – im Zweifel
+  unter Einstellungen → Entitäten nachsehen.
+
 ### Anlage gestört: Lampe orange
 
 ```yaml

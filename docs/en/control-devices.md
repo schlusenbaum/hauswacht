@@ -179,7 +179,13 @@ data:
   action: event
   control: Keypad hallway
   test: false
+  area: all            # keypad for all areas; otherwise the keypad's area, e.g. garage
+  area_name: All areas
 ```
+
+`area` is the area of the **control device**: a keypad "for all areas" reports `all`, one for the
+garage `garage`. Whoever filters by `area` in the trigger must therefore use the keypad's area –
+not the area the code arms.
 
 This event `hauswacht_event` comes with **every** action code – also with "arm" and "silent
 emergency". As a trigger it is often simpler than the entity, because a single trigger is
@@ -544,6 +550,9 @@ Good to know:
 - If the PIN rules **require a PIN for arming**, the button does **not** arm – it cannot enter a
   PIN. Hauswacht then sends a system message.
 - If the button comes back after a radio outage, that does not count as a press.
+- Every press reports the event `ButtonPressed` (see [reference](reference.md#operation-1)).
+  Its field `area` is the area of the button – for a button "for all areas" it is `all`. The same
+  applies to the door lock and the emergency key.
 - A button **outside** at the door is not forbidden, but then anyone passing by can arm (and
   whoever is inside triggers the alarm later). Better mount it inside.
 

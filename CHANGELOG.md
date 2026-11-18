@@ -26,6 +26,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - Neue Seite **„Automationen: was nehme ich wofür?“** (deutsch und englisch): Spickzettel
   „Ich will reagieren, wenn … → nimm …“, „Ich will etwas tun …“ und häufige Stolperfallen.
 - Referenz, Spickzettel, Beispiele und README: Feld `area` in jedem Ereignis, mit Beispiel.
+  Über jeder Ereignis-Tabelle der Referenz der Hinweis auf `area`/`area_name`; neues Beispiel
+  **„Mehrere Bereiche: Sabotage in der Garage“** (nur Garage → bestimmtes Handy + Garagenlicht);
+  Bedienteile-Seite: Keypad-, Taster-, Türschloss-Ereignisse melden den Bereich des Bedienteils
+  (`all` bei „für alle Bereiche“).
 - **README** (deutsch und englisch): neuer Abschnitt **„Offen für alles: Hauswacht als
   Baustein“** – was Hauswacht an Bedienfeld-Attributen, Ereignissen, Entitäten, Aktionen und
   Knöpfen bereitstellt und was man damit baut (Licht, Kamera, Rollläden, Heizung …), mit Verweis
