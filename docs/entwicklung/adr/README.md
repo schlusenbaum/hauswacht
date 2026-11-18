@@ -13,4 +13,4 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0007](0007-bereiche.md) | Bereiche |
 | [0008](0008-verhalten-nach-neustart.md) | Verhalten nach Neustart einstellbar, Standard: wiederherstellen |
 | [0009](0009-einrichtungsassistent.md) | Einrichtungsassistent und gemeinsame Logikschicht |
-| [0010](0010-gekippt.md) | Melder mit Kippstellung („gekippt“), Bewertung je Profil |
+| [0010](0010-fenster-kippstellung-erschuetterung.md) | Fenster richtig überwachen: Kippstellung („gekippt“) je Profil und Erschütterung als eigener Typ |

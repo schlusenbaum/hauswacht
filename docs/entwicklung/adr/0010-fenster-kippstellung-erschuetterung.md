@@ -1,4 +1,4 @@
-# ADR 0010: Melder mit Kippstellung („gekippt“)
+# ADR 0010: Fenster richtig überwachen – Kippstellung und Erschütterung
 
 - Status: vorgeschlagen (Entwicklung auf dem Zweig `entwicklung/gekippt`)
 - Datum: 2026-11-18
@@ -21,7 +21,24 @@ Hersteller. Heute geht das nur über einen Template-Helfer, und der hat zwei Sch
    gekippte Fenster ist im Alltag der häufigste Fall: nachts im Schlafzimmer gekippt ist gewollt,
    beim Verlassen des Hauses nicht.
 
+Ähnlich lieblos laufen heute **Erschütterungssensoren** (Geräteklasse `vibration`, z. B. Aqara
+oder Tuya über Zigbee2MQTT): Sie landen beim Typ „Sonstiges“ und
+
+- lösen bei **jeder einzelnen** Meldung sofort aus – Erschütterungssensoren sind aber
+  fehlalarmanfällig (zugeschlagene Tür, Lkw, Gewitter, Haustier),
+- **blockieren das Scharfschalten**, solange sie noch „an“ stehen (viele halten „an“ eine Minute),
+  als wären sie ein offenes Fenster,
+- heißen in Nachrichten „geöffnet“,
+- und Sensoren, die nur eine **Stärke als Zahl** liefern (z. B. Senoro `vibration`), gehen nur
+  über den Umweg „Melder aus anderem Sensor erstellen“.
+
+Kippstellung und Erschütterung gehören zusammen: Nachts darf das Fenster gekippt sein – wer daran
+hebelt, soll trotzdem Alarm auslösen, **bevor** es offen ist.
+
 ## Entscheidung
+
+Der Baustein hat zwei Teile, die nacheinander gebaut und getestet werden: **A – Kippstellung**
+(Abschnitte 1–5) und **B – Erschütterung** (Abschnitt 6).
 
 ### 1. Neue Melderart „Melder mit Kippstellung“
 
@@ -109,14 +126,59 @@ Melder von gekippt nach **offen**, löst er aus. Zu → Ende der Überbrückung 
   Nachtprofil „Gekippte Fenster erlauben?“.
 - **Diagnose** und Übersicht: Stellung und Zuordnung je Melder.
 - **Doku (deutsch und englisch):** Melder, Profile, Referenz (Attribut, Feld `position`,
-  Profil-Entität), Spickzettel Automationen, Beispiele (z. B. „Gekippt und es regnet“),
-  Assistent, Testkarte, README-Funktionsliste.
+  Profil-Entität, neuer Typ), Spickzettel Automationen, Beispiele (z. B. „Gekippt und es regnet“,
+  „Erschütterung, dann Fenster offen“), Assistent, Testkarte, README-Funktionsliste.
 
-### 6. Nicht Teil dieses Bausteins
+### 6. Teil B: Erschütterung als eigener Melder-Typ
+
+**Neuer Typ „Erschütterung“** neben Tür, Fenster, Bewegung, Manipulation, Technik und Sonstiges.
+Vorschlag automatisch für die Geräteklasse `vibration`, änderbar in der Meldergruppe wie jeder Typ.
+
+| Eigenschaft | Verhalten |
+|---|---|
+| Reaktion | sofort (wie Fenster) – im scharfen Profil, Eingangsverzögerung gilt nicht |
+| Scharfschalten | **blockiert nie**: Erschütterung ist ein Vorgang, kein offener Zustand. Ein *ausgefallener* Erschütterungssensor zählt aber wie jeder ausgefallene Melder |
+| Zählen | jede **Meldung** zählt einmal: beim Binärsensor jeder Wechsel nach „an“, bei einer Stärke als Zahl jede Meldung über der Schwelle |
+| Texte | „Erschütterung am Fenster Bad“ statt „geöffnet“ |
+| Unscharf | nichts – wer auch unscharf informiert werden will, nimmt wie bisher **Immer aktiv** (dann Benachrichtigung) |
+
+**Fehlalarmschutz je Meldergruppe:** „Alarm bei **N** Meldungen eines Erschütterungsmelders
+innerhalb von **S** Sekunden“.
+
+- **Standard: 1 Meldung** – damit ist nichts schwächer, als man es von einem Melder erwartet.
+- **Empfehlung im Formular: 2 Meldungen innerhalb von 60 Sekunden**, mit Erklärung: Ein
+  einzelner Stoß (Tür knallt, Lkw, Ball gegen die Scheibe) löst dann keinen Alarm aus – wer ein
+  Fenster aufhebelt oder eine Scheibe einschlägt, erzeugt fast immer mehrere Stöße kurz
+  hintereinander. Der Preis: ein einzelner, sehr kräftiger Schlag allein löst nicht aus.
+- Gezählt wird **je Melder** (nicht über die ganze Gruppe) – ein Gewitter, das alle Fenster
+  gleichzeitig einmal anstößt, ergibt so keinen Alarm.
+- **Hinweis zur Haltezeit:** Viele Binärsensoren bleiben nach einer Erschütterung eine Weile
+  „an“ und melden in dieser Zeit keine zweite. Die Haltezeit muss deshalb deutlich kürzer sein als
+  das Zeitfenster (bei Zigbee2MQTT oft als Geräteoption einstellbar). Das steht im Formular und in
+  der Doku.
+
+**Stärke als Zahl direkt:** Unter „Melder mit Kippstellung“ (heißt dann **„Besondere Melder“**)
+gibt es als zweite Art **„Erschütterungsstärke“**: Zahlensensor (z. B. Senoro `vibration`) oder
+`input_number` zum Testen wählen, Schwelle festlegen – fertig, ohne Helfer. Jede gemeldete Zahl
+über der Schwelle zählt als eine Meldung, auch wenn der Wert gleich bleibt (Home Assistant meldet
+auch unveränderte Werte). Ausfall wird wie bei jedem Melder erkannt.
+
+**Bestehende Einrichtungen:** Sensoren mit Geräteklasse `vibration`, deren Typ nie geändert wurde,
+werden zum Typ Erschütterung. Unterschied zu vorher: Sie blockieren das Scharfschalten nicht mehr
+und heißen in Texten „Erschütterung“; ausgelöst wird bei 1 Meldung wie bisher. Wer den Typ selbst
+auf „Sonstiges“ gestellt hat, behält ihn. Das steht im CHANGELOG.
+
+**Testen ohne Hardware:** im Testmodus über die Testkarte eine Erschütterung simulieren, oder
+`input_number` als Stärke-Quelle.
+
+**Zusammenspiel:** Mit Auslöseregeln geht zusätzlich „Erschütterung, dann innerhalb einer Minute
+Fenster offen“ – das bleibt wie es ist und wird in den Beispielen gezeigt.
+
+### 7. Nicht Teil dieses Bausteins
 
 - Ausnahme je Meldergruppe („gekippt erlaubt nur im Obergeschoss“) – später, falls gebraucht.
-- Erschütterung/Glasbruch des Senoro – geht schon heute über „Melder aus anderem Sensor
-  erstellen“; wird in der Doku als Beispiel gezeigt.
+- Glasbruchmelder mit eigener Geräteklasse – laufen als Erschütterung oder Sonstiges, je nach
+  Gerät.
 - Weitere Zwischenstellungen (z. B. „Spaltlüftung“): werden der Stellung gekippt oder offen
   zugeordnet.
 
@@ -127,6 +189,10 @@ Melder von gekippt nach **offen**, löst er aus. Zu → Ende der Überbrückung 
 - **Gekippt als eigener Melder-Typ:** vermischt *wie* ein Melder reagiert (Typ) mit *was* er
   meldet (Stellung). Verworfen – die Stellung ist eine Eigenschaft der Quelle, die Bewertung eine
   des Profils.
+- **Erschütterung über Auslöseregeln statt eigenem Typ:** Regeln können „zweimal derselbe
+  Melder“ nicht sauber abbilden und blockieren das Scharfschalten nicht weg. Verworfen.
+- **Zählen über die ganze Gruppe:** fängt Täter, die an zwei Fenstern rütteln, aber auch jedes
+  Gewitter. Verworfen zugunsten „je Melder“.
 - **Einstellung je Melder statt je Profil:** zu fein für den Anfang und schwer zu überblicken. Je
   Profil deckt den Hauptfall (nachts erlaubt) ab.
 
@@ -135,5 +201,8 @@ Melder von gekippt nach **offen**, löst er aus. Zu → Ende der Überbrückung 
 - Bestehende Einrichtungen bleiben unverändert: keine Migration, neue Optionen nur zusätzlich.
 - Der Kern bekommt einen kleinen zusätzlichen Schritt (Bewertung im Profil); alle bisherigen
   Pfade arbeiten weiter auf `on`/`off` und bleiben durch die vorhandenen Tests abgesichert.
-- Entwicklung auf `entwicklung/gekippt`, Vorabversionen 0.56.0b1 …, getestet mit einem
-  `input_select`-Helfer als Testfenster; Merge erst nach Freigabe.
+- Erschütterungssensoren mit Geräteklasse `vibration` blockieren das Scharfschalten nicht mehr
+  (siehe Teil B) – die einzige Verhaltensänderung für bestehende Einrichtungen.
+- Entwicklung auf `entwicklung/gekippt`, erst Teil A, dann Teil B, Vorabversionen 0.56.0b1 …,
+  getestet mit `input_select` (Testfenster) und `input_number` (Erschütterungsstärke) bzw. dem
+  Testmodus; Merge erst nach Freigabe.
