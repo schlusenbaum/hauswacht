@@ -122,6 +122,13 @@ from .core.changes.controls import control_data as _control_data
 from .core.changes.controls import validate_control
 from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
+from .core.changes.sensors import (
+    STALE_DEFAULT,
+    STALE_HOURS,
+    STALE_MODES,
+    STALE_OFF,
+    save_stale_override,
+)
 from .core.changes.sirens import save_sirens
 from .core.changes.users import (
     RIGHT_VALUES,
@@ -175,6 +182,7 @@ from .core.profiles import (
     profile_infos,
     profile_settings,
     stale_after_seconds,
+    stale_override_hours,
 )
 from .core.reactions import parse_reaction
 from .core.restart import ARMED as RESTART_ARMED
@@ -228,6 +236,7 @@ from .core.sensors import (
     resolve_zones,
     slugify,
 )
+from .core.silence import format_duration as format_silence
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS, is_fire_tone
 from .core.siren_test import DEFAULT_SECONDS as SIREN_DEFAULT_SECONDS
 from .core.siren_test import DEFAULT_TONE as SIREN_DEFAULT_TONE
@@ -2143,6 +2152,12 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         options = dict(self.config_entry.options)
         if user_input is not None:
             options[OPT_STALE_AFTER_HOURS] = int(user_input.get(OPT_STALE_AFTER_HOURS) or 0)
+            sensor = user_input.get("stale_sensor")
+            if sensor:
+                # Erst den allgemeinen Wert übernehmen, dann den Melder einstellen
+                self.hass.config_entries.async_update_entry(self.config_entry, options=options)
+                self._stale_sensor = str(sensor)
+                return await self.async_step_stale_sensor()
             return await self._save(options, "system")
         current = stale_after_seconds(options)
         schema = vol.Schema(
@@ -2158,6 +2173,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
+                vol.Optional("stale_sensor"): EntitySelector(
+                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS))
+                ),
             }
         )
         silence = self.config_entry.runtime_data.silence if self._loaded() else None
@@ -2165,7 +2183,87 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         return self.async_show_form(
             step_id="sensor_behaviour",
             data_schema=schema,
-            description_placeholders={"observation": observed},
+            description_placeholders={
+                "observation": observed,
+                "own": self._stale_overrides_text(),
+            },
+        )
+
+    def _stale_overrides_text(self) -> str:
+        """Melder mit eigener Funkstille-Grenze, z. B. "Hintertür: 24 h, Keller: nie prüfen"."""
+        own = stale_override_hours(self.config_entry.options)
+        if not own:
+            return "–"
+        never = "nie prüfen" if self._german() else "never check"
+        return ", ".join(
+            f"{display_name(self.hass, e)}: {f'{h} h' if h else never}" for e, h in own.items()
+        )
+
+    async def async_step_stale_sensor(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Funkstille für einen Melder: wie allgemein, eigene Stunden oder nie prüfen."""
+        options = dict(self.config_entry.options)
+        entity_id = getattr(self, "_stale_sensor", "") or ""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            change = save_stale_override(
+                options, entity_id, str(user_input.get("mode")), user_input.get("hours")
+            )
+            # Feld heißt im Dialog "hours"
+            errors = {("hours" if k == "stale_hours" else k): v for k, v in change.errors.items()}
+            if change.ok and change.options is not None:
+                return await self._save(change.options, "system")
+        own = stale_override_hours(options).get(entity_id)
+        mode = STALE_DEFAULT if own is None else (STALE_OFF if own == 0 else STALE_HOURS)
+        silence = self.config_entry.runtime_data.silence if self._loaded() else None
+        german = self._german()
+        record = silence.records.get(entity_id) if silence is not None else None
+        advice_hours = silence.sensor_advice(entity_id) if silence is not None else None
+        if record is None:
+            observed = (
+                "Für diesen Melder gibt es noch keine Beobachtung."
+                if german
+                else "No observation for this sensor yet."
+            )
+        else:
+            days = f"{silence.days():.1f}" if silence is not None else "0"
+            pause = format_silence(record.longest)
+            observed = (
+                f"Längste Pause {pause} bei {record.contacts} Meldungen in {days} Tagen."
+                if german
+                else f"Longest pause {pause} with {record.contacts} reports in {days} days."
+            )
+            if advice_hours:
+                observed += (
+                    f" **Empfehlung: {advice_hours} h.**"
+                    if german
+                    else f" **Recommendation: {advice_hours} h.**"
+                )
+        schema = vol.Schema(
+            {
+                vol.Required("mode", default=mode): _select(list(STALE_MODES), "stale_mode"),
+                vol.Optional(
+                    "hours", description={"suggested_value": own or advice_hours}
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=1,
+                        max=MAX_STALE_HOURS,
+                        step=1,
+                        unit_of_measurement="h",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="stale_sensor",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "sensor": display_name(self.hass, entity_id),
+                "observation": observed,
+            },
         )
 
     # --- Sirenen -----------------------------------------------------------

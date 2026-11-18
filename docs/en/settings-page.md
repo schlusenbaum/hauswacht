@@ -69,7 +69,7 @@ applies immediately, **Cancel** or a click next to it discards.
 
 | What | Where | What you set |
 |---|---|---|
-| **Single sensor** | Click the sensor's **name** in the table | **Sensor group** (move it or take it out), **type**, **always active** and per profile whether it **triggers on its own** there – untick = excluded in this profile (e.g. hallway motion sensor at night). If the sensor is in its group via a label, change the group via the label on the entity |
+| **Single sensor** | Click the sensor's **name** in the table | **Sensor group** (move it or take it out), **type**, **always active** and per profile whether it **triggers on its own** there – untick = excluded in this profile (e.g. hallway motion sensor at night). Plus the **radio silence** of this sensor (as general, own value, never check) with observation and "use recommendation" – see [own limit per sensor](sensors.md#own-limit-per-sensor). If the sensor is in its group via a label, change the group via the label on the entity |
 | **Sensor group** | "+ Add sensor group" or "Edit" at the group | Name, sensors (search field → click), **type per sensor**, additionally a label. If vibration sensors are included, the **false alarm protection** appears (reports until alarm, time window) with the button "Use recommendation" (2 in 60 s). Deleting also removes the group from all profiles |
 | **Sensor with tilt position** | Special sensors → "+ Add tilt position" or "Edit" | Source (search field), optionally an attribute, then for every known value **open / tilted / closed** – type further values and press Enter. Optionally add it to a group right away |
 | **Vibration strength** | Special sensors → "+ Add vibration strength" | Sensor (search field, the current value is shown) and threshold; optionally add it to a group right away |
@@ -204,7 +204,7 @@ Below it one card per topic with **"Edit"**:
 | Card | Content |
 |---|---|
 | **Behaviour after restart** | Restore the previous state · always armed (with a profile per area) · always disarmed; "continue a running alarm" – see [behaviour after a restart](installation.md#behaviour-after-a-restart) |
-| **Sensor radio silence** | Hours until "failed" (0 = off), plus the observation – see [radio silence](sensors.md#sensor-radio-silence) |
+| **Sensor radio silence** | General value (hours until "failed", 0 = off) and a table **per sensor**: longest gap, recommendation, own value – click a sensor to give it an own value. See [radio silence](sensors.md#sensor-radio-silence) |
 | **Radio networks and gateways** | Status sensors, e.g. the Zigbee2MQTT bridge – see [radio networks](sensors.md#monitor-radio-networks-and-gateways) |
 | **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation) |
 | **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |

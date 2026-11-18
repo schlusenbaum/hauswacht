@@ -146,6 +146,18 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
         ),
         "en": ("Silence detection is off{advice}.", "System settings → sensor silence"),
     },
+    "silence_tight_sensor": {
+        "de": (
+            "„{name}“: eigene Funkstille-Grenze {hours} h, die Beobachtung empfiehlt für diesen "
+            "Melder {advice} h – sonst drohen Fehlmeldungen „ausgefallen“.",
+            "Einstellungsseite → Melder (oder Systemeinstellungen → Funkstille von Sensoren)",
+        ),
+        "en": (
+            "“{name}”: own silence limit {hours} h, observation recommends {advice} h for this "
+            "sensor – expect false 'unavailable' reports.",
+            "Settings page → sensors (or system settings → sensor silence)",
+        ),
+    },
     "silence_tight": {
         "de": (
             "Funkstille-Grenze {hours} h, die Beobachtung empfiehlt {advice} h – sonst drohen "
@@ -391,6 +403,19 @@ def _monitoring(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
         found.append(_finding("silence_off", lang, advice=text))
     elif advice and hours < advice:
         found.append(_finding("silence_tight", lang, hours=hours, advice=advice))
+    for own in monitoring.get("stale_overrides", []):
+        own_hours, own_advice = own.get("hours") or 0, own.get("recommended")
+        if own_hours and own_advice and own_hours < own_advice:
+            found.append(
+                _finding(
+                    "silence_tight_sensor",
+                    lang,
+                    key=own["name"],
+                    name=own["name"],
+                    hours=own_hours,
+                    advice=own_advice,
+                )
+            )
     infrastructure = monitoring.get("infrastructure", [])
     if not infrastructure:
         found.append(_finding("no_infrastructure", lang))

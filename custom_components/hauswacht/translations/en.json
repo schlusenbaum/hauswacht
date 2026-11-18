@@ -466,9 +466,13 @@
       },
       "sensor_behaviour": {
         "title": "Sensor radio silence",
-        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.\n\n**Observation:** {observation}",
+        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.\n\n**Observation:** {observation}\n\n**Own values per sensor:** {own}\n\nIf a single sensor reports less often (e.g. a battery door contact that only reports on changes), give it an own value instead of raising the general one: choose the sensor below.",
         "data": {
-          "stale_after_hours": "Maximum radio silence"
+          "stale_after_hours": "Maximum radio silence",
+          "stale_sensor": "Set an own value for a sensor (optional)"
+        },
+        "data_description": {
+          "stale_sensor": "After saving, you continue with this sensor."
         }
       },
       "rules": {
@@ -1361,6 +1365,14 @@
         "data": {
           "enabled": "Show the page “Hauswacht” in the sidebar"
         }
+      },
+      "stale_sensor": {
+        "title": "Radio silence for {sensor}",
+        "description": "**Observation:** {observation}\n\n**As general:** the general value applies. **Own value:** own hours for this sensor – it then no longer counts for the general recommendation. **Never check:** for sensors that only report on changes – they never count as failed because of silence (“unavailable” is still detected).",
+        "data": {
+          "mode": "Radio silence",
+          "hours": "Own value"
+        }
       }
     },
     "error": {
@@ -1424,7 +1436,8 @@
       "tilt_attribute_missing": "The entity does not have this attribute. Check under Developer tools → States.",
       "tilt_attribute_needed": "For this entity the position is in an attribute – please enter the attribute name.",
       "tilt_no_closed": "At least one value must mean \"closed\".",
-      "tilt_overlap": "A value cannot mean both closed and tilted."
+      "tilt_overlap": "A value cannot mean both closed and tilted.",
+      "stale_hours_invalid": "Please enter 1 to 168 hours."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1626,6 +1639,13 @@
         "event": "Event for your own automation",
         "arm": "Arm with profile …",
         "silent_emergency": "Silent emergency"
+      }
+    },
+    "stale_mode": {
+      "options": {
+        "default": "As general",
+        "hours": "Own value (hours)",
+        "off": "Never check"
       }
     }
   },

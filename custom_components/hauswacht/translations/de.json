@@ -466,9 +466,13 @@
       },
       "sensor_behaviour": {
         "title": "Funkstille von Sensoren",
-        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.\n\n**Beobachtung:** {observation}",
+        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.\n\n**Beobachtung:** {observation}\n\n**Eigene Werte je Melder:** {own}\n\nMeldet sich ein einzelner Melder seltener (z. B. ein Batterie-Türkontakt, der sich nur bei Änderungen meldet), gib ihm einen eigenen Wert statt den allgemeinen hochzusetzen: unten den Melder wählen.",
         "data": {
-          "stale_after_hours": "Maximale Funkstille"
+          "stale_after_hours": "Maximale Funkstille",
+          "stale_sensor": "Eigenen Wert für einen Melder einstellen (optional)"
+        },
+        "data_description": {
+          "stale_sensor": "Nach dem Speichern geht es mit diesem Melder weiter."
         }
       },
       "rules": {
@@ -1361,6 +1365,14 @@
         "data": {
           "enabled": "Seite „Hauswacht“ in der Seitenleiste anzeigen"
         }
+      },
+      "stale_sensor": {
+        "title": "Funkstille für {sensor}",
+        "description": "**Beobachtung:** {observation}\n\n**Wie allgemein:** es gilt der allgemeine Wert. **Eigener Wert:** eigene Stunden für diesen Melder – er zählt dann auch nicht mehr für die allgemeine Empfehlung. **Nie prüfen:** für Melder, die sich nur bei Änderungen melden – sie gelten nie wegen Funkstille als ausgefallen (ausgefallen = „nicht verfügbar“ wird weiter erkannt).",
+        "data": {
+          "mode": "Funkstille",
+          "hours": "Eigener Wert"
+        }
       }
     },
     "error": {
@@ -1424,7 +1436,8 @@
       "tilt_attribute_missing": "Die Entität hat dieses Attribut nicht. Unter Entwicklerwerkzeuge → Zustände nachsehen.",
       "tilt_attribute_needed": "Bei dieser Entität steht die Stellung in einem Attribut – bitte den Namen des Attributs eintragen.",
       "tilt_no_closed": "Mindestens ein Wert muss „zu“ bedeuten.",
-      "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten."
+      "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten.",
+      "stale_hours_invalid": "Bitte 1 bis 168 Stunden angeben."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1626,6 +1639,13 @@
         "event": "Ereignis für eigene Automation",
         "arm": "Scharf schalten mit Profil …",
         "silent_emergency": "Stiller Notruf"
+      }
+    },
+    "stale_mode": {
+      "options": {
+        "default": "Wie allgemein",
+        "hours": "Eigener Wert (Stunden)",
+        "off": "Nie prüfen"
       }
     }
   },

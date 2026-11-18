@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b13] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Hinzugefügt
+- **Funkstille je Melder**: Jeder Melder kann einen eigenen Wert bekommen (eigene Stunden oder
+  „nie prüfen“ für Melder, die sich nur bei Änderungen melden) – auf der Einstellungsseite im
+  Blatt des Melders und im Dialog unter Funkstille von Sensoren. Der allgemeine Wert gilt für alle
+  übrigen.
+- **Beobachtung und Empfehlung je Melder**: längste Pause und Empfehlung für genau diesen Melder,
+  mit „Empfehlung übernehmen“; im Reiter System als Tabelle aller Melder.
+- Prüfhinweis, wenn ein eigener Wert unter der Empfehlung für diesen Melder liegt.
+
+### Geändert
+- Melder mit eigenem Wert zählen für die allgemeine Empfehlung nicht mehr mit – ein einzelner
+  selten meldender Melder zieht die Grenze nicht mehr für alle hoch.
+
 ## [0.57.0b12] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`). Alles, was der

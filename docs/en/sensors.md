@@ -282,7 +282,32 @@ example:
 The recommendation is the longest gap × 1.5, rounded up to full hours – at the earliest after 3
 days of observation. You enter the value yourself; the observation changes nothing. The
 diagnostic sensor `sensor.hauswacht_radio_silence_observation` shows the recommendation and the
-gaps.
+gaps – also the **recommendation per sensor** (`recommended_hours`).
+
+### Own limit per sensor
+
+If a single sensor reports much less often than the others – e.g. a battery door contact that
+only transmits on changes – it would pull the general value up for everyone. A failed motion
+sensor would then only be noticed after many hours. Better: give this sensor an **own value**.
+
+| Setting | Effect |
+|---|---|
+| **As general** | The general value applies (default) |
+| **Own value** | Own hours (1–168) for exactly this sensor |
+| **Never check** | For sensors that only report on changes. They never count as failed because of silence; "unavailable" is still detected |
+
+- **Settings page:** tab sensors → click the sensor → **radio silence**. It shows the observation
+  for exactly this sensor and the button **"use recommendation"**. In the tab system, the card
+  "sensor radio silence" shows all sensors with longest gap, recommendation and own value (⚠️ if
+  the own value is below the recommendation). In the sensor table an own value appears as
+  "⏱ 24 h" or "⏱ never check" after the name.
+- **Dialog:** system settings → sensor radio silence → below, choose "set an own value for a
+  sensor".
+- Sensors with an own value no longer count for the **general recommendation**. Example: the back
+  door stays silent for up to 16 hours, all others at most 2 hours. With an own value for the back
+  door (24 h), the observation recommends 3 h in general instead of 24 h.
+- If an own value is below the recommendation for this sensor, the
+  [system overview](overview.md#check-hints) reports it as a check hint.
 
 ## Monitor radio networks and gateways
 

@@ -220,7 +220,8 @@ def save_sensor(
     """Einen Melder bearbeiten: Gruppe, Typ, Immer aktiv, ausgenommen je Profil.
 
     ``data``: ``group`` (ID oder leer = keine), ``type``, ``always`` (bool), ``excluded``
-    (Liste der Profile, in denen der Melder nicht allein auslöst).
+    (Liste der Profile, in denen der Melder nicht allein auslöst), ``stale`` (eigene
+    Funkstille-Grenze, siehe :func:`save_stale_override`).
     Kommt der Melder über ein Label in eine Gruppe, lässt sich die Gruppe hier nicht wechseln.
     """
     if "." not in entity_id:
@@ -266,6 +267,49 @@ def save_sensor(
             if current or "excluded" in profile:
                 profile["excluded"] = sorted(current)
         new["profiles"] = profiles
+    if isinstance(data.get("stale"), Mapping):
+        stale = data["stale"]
+        change = save_stale_override(new, entity_id, str(stale.get("mode")), stale.get("hours"))
+        if not change.ok or change.options is None:
+            return change
+        new = change.options
+    return Change(options=new, item_id=entity_id)
+
+
+STALE_DEFAULT = "default"  # allgemeiner Wert
+STALE_HOURS = "hours"  # eigene Stunden
+STALE_OFF = "off"  # nie prüfen
+STALE_MODES = (STALE_DEFAULT, STALE_HOURS, STALE_OFF)
+
+
+def save_stale_override(
+    options: Mapping[str, Any], entity_id: str, mode: str, hours: Any = None
+) -> Change:
+    """Funkstille je Melder: allgemeiner Wert, eigene Stunden (1–168) oder nie prüfen.
+
+    Gespeichert in ``stale_overrides`` = {Melder: Stunden}, 0 = nie prüfen.
+    """
+    from ..profiles import MAX_STALE_HOURS, OPT_STALE_OVERRIDES  # noqa: PLC0415
+
+    if "." not in entity_id:
+        return failed({"base": "required"})
+    if mode not in STALE_MODES:
+        return failed({"stale": "invalid"})
+    overrides = {
+        str(k): v for k, v in (options.get(OPT_STALE_OVERRIDES) or {}).items() if k != entity_id
+    }
+    if mode == STALE_OFF:
+        overrides[entity_id] = 0
+    elif mode == STALE_HOURS:
+        try:
+            value = int(hours)
+        except (TypeError, ValueError):
+            return failed({"stale_hours": "stale_hours_invalid"})
+        if not 1 <= value <= MAX_STALE_HOURS:
+            return failed({"stale_hours": "stale_hours_invalid"})
+        overrides[entity_id] = value
+    new = copy_options(options)
+    new[OPT_STALE_OVERRIDES] = dict(sorted(overrides.items()))
     return Change(options=new, item_id=entity_id)
 
 

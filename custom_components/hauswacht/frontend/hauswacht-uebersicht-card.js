@@ -122,6 +122,7 @@ const LANG = {
     quiet: "Nachtruhe",
     staleAfter: "Funkstille-Grenze",
     recommended: "Empfehlung",
+    ownLimits: "eigene Grenzen",
     observed: "beobachtet",
     days: "Tage",
     off: "aus",
@@ -267,6 +268,7 @@ const LANG = {
     quiet: "Quiet hours",
     staleAfter: "Silence limit",
     recommended: "Recommended",
+    ownLimits: "own limits",
     observed: "observed",
     days: "days",
     off: "off",
@@ -614,7 +616,9 @@ class HauswachtUebersichtCard extends HTMLElement {
   _staleText(m) {
     const now = m.stale_after_hours ? `${m.stale_after_hours} h` : this._t("off");
     const rec = m.recommended_hours ? ` · ${this._t("recommended")}: ${m.recommended_hours} h` : "";
-    return `${now}${rec} (${this._t("observed")} ${m.observed_days} ${this._t("days")})`;
+    const own = (m.stale_overrides || []).map((o) => `${o.name}: ${o.hours ? `${o.hours} h` : this._t("off")}`);
+    const ownText = own.length ? ` · ${this._t("ownLimits")}: ${own.join(", ")}` : "";
+    return `${now}${rec} (${this._t("observed")} ${m.observed_days} ${this._t("days")})${ownText}`;
   }
 
   // --- Bildschirm ---------------------------------------------------------------

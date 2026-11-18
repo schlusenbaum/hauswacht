@@ -12,7 +12,7 @@ Ausgangspunkt genommen.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -44,9 +44,23 @@ def recommend_hours(longest: float) -> int:
     return max(MIN_HOURS, math.ceil(longest * SAFETY_FACTOR / 3600))
 
 
-def advice(records: Mapping[str, SilenceRecord], days: float) -> int | None:
-    """Empfohlene maximale Funkstille in Stunden (None = noch zu wenig Daten)."""
-    longest = max((r.longest for r in records.values()), default=0.0)
+def sensor_advice(record: SilenceRecord | None, days: float) -> int | None:
+    """Empfehlung für einen einzelnen Melder (None = noch zu wenig Daten)."""
+    if record is None or days < MIN_DAYS_FOR_ADVICE or record.longest <= 0:
+        return None
+    return recommend_hours(record.longest)
+
+
+def advice(
+    records: Mapping[str, SilenceRecord], days: float, *, skip: Iterable[str] = ()
+) -> int | None:
+    """Empfohlene allgemeine Funkstille in Stunden (None = noch zu wenig Daten).
+
+    ``skip``: Melder mit eigener Grenze – sie bestimmen den allgemeinen Wert nicht mit (sonst
+    zieht ein einzelner, selten meldender Melder die Grenze für alle hoch).
+    """
+    skipped = set(skip)
+    longest = max((r.longest for e, r in records.items() if e not in skipped), default=0.0)
     if days < MIN_DAYS_FOR_ADVICE or longest <= 0:
         return None
     return recommend_hours(longest)

@@ -197,16 +197,21 @@ def evaluate_readiness(
     *,
     now: float,
     stale_after: float | None = None,
+    stale_overrides: Mapping[str, float | None] | None = None,
 ) -> Readiness:
     """Bereitschaft für eine Menge von Sensoren.
 
     Offen heißt: Zustand "on" (Tür/Fenster offen, Bewegung erkannt, Manipulation aktiv).
+    ``stale_overrides``: eigene Funkstille-Grenze je Melder (None = nie prüfen) – Vorrang vor
+    ``stale_after``.
     """
     open_sensors: set[str] = set()
     unavailable: set[str] = set()
+    overrides = stale_overrides or {}
     for entity_id in entity_ids:
         snapshot = snapshots.get(entity_id) or SensorSnapshot(entity_id=entity_id, state=None)
-        if is_unavailable(snapshot, now, stale_after):
+        limit = overrides.get(entity_id, stale_after)  # eigener Wert, auch None = nie
+        if is_unavailable(snapshot, now, limit):
             unavailable.add(entity_id)
         elif snapshot.state == TRIGGER_STATE:
             open_sensors.add(entity_id)

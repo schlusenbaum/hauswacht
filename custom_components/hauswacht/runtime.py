@@ -100,6 +100,7 @@ from .core.profiles import (
     profile_info,
     profile_infos,
     stale_after_seconds,
+    stale_overrides_seconds,
 )
 from .core.reactions import (
     alarm_message,
@@ -355,6 +356,8 @@ class HauswachtRuntime:
         self.sensor_types = effective_types(entry.options)
         self.role_overrides = role_overrides(self.sensor_types)
         self.stale_after = stale_after_seconds(entry.options)
+        # Eigene Funkstille-Grenzen je Melder (None = nie prüfen)
+        self.stale_overrides = stale_overrides_seconds(entry.options)
         # Funknetz/Gateways überwacht nur der Hauptbereich (sonst doppelte Meldungen)
         self.infrastructure: frozenset[str] = frozenset(
             str(e)
@@ -1660,6 +1663,7 @@ class HauswachtRuntime:
             self.snapshots(entity_ids, tilt_allowed=tilt_allowed),
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
+            stale_overrides=self.stale_overrides,
         )
         # Erschütterung ist ein Vorgang, kein offener Zustand: blockiert das Scharfschalten nie
         open_sensors = frozenset(e for e in readiness.open_sensors if not self.is_vibration(e))
@@ -1704,6 +1708,7 @@ class HauswachtRuntime:
             self.snapshots(self.candidates),
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
+            stale_overrides=self.stale_overrides,
         )
         return system_report(
             self._infrastructure_states(),

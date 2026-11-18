@@ -59,6 +59,15 @@ const TEXTS = {
     behaviors: { restore: "Vorherigen Zustand wiederherstellen", armed: "Immer scharf", disarmed: "Immer unscharf" },
     continueAlarm: "laufender Alarm wird fortgesetzt",
     silence: "Funkstille von Sensoren",
+    staleOwnTitle: "eigene Funkstille-Grenze",
+    staleNever: "nie prüfen",
+    staleGeneralL: "Allgemein",
+    staleAdviceL: "Empfehlung {h} h (ohne Melder mit eigenem Wert)",
+    staleTableHint: "Beobachtung je Melder seit {d} Tagen. Auf einen Melder klicken, um ihm einen eigenen Wert zu geben.",
+    staleSensor: "Melder",
+    staleLongest: "Längste Pause",
+    staleAdviceCol: "Empfehlung",
+    staleOwnCol: "Eigener Wert",
     silenceOff: "aus",
     hoursN: "{h} Stunden",
     network: "Funknetz und Gateways",
@@ -168,6 +177,15 @@ const TEXTS = {
     behaviors: { restore: "Restore the previous state", armed: "Always armed", disarmed: "Always disarmed" },
     continueAlarm: "a running alarm continues",
     silence: "Sensor radio silence",
+    staleOwnTitle: "own radio silence limit",
+    staleNever: "never check",
+    staleGeneralL: "General",
+    staleAdviceL: "recommendation {h} h (without sensors with an own value)",
+    staleTableHint: "Observation per sensor for {d} days. Click a sensor to give it an own value.",
+    staleSensor: "Sensor",
+    staleLongest: "Longest pause",
+    staleAdviceCol: "Recommendation",
+    staleOwnCol: "Own value",
     silenceOff: "off",
     hoursN: "{h} hours",
     network: "Radio networks and gateways",
@@ -621,6 +639,23 @@ class HauswachtPanel extends HTMLElement {
     editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null, typeLabel: (t) => (view ? view._l("type", t) : t) });
   }
 
+  _silenceHtml(sil) {
+    // Allgemeiner Wert und Beobachtung je Melder mit Empfehlung und eigenem Wert
+    const general = `<div>${escHtml(this._t("staleGeneralL"))}: ${escHtml(sil.hours ? this._fmt("hoursN", { h: sil.hours }) : this._t("silenceOff"))}${sil.advice ? ` · ${escHtml(this._fmt("staleAdviceL", { h: sil.advice }))}` : ""}</div>`;
+    const rows = Object.entries(sil.sensors || {})
+      .map(([id, o]) => {
+        const own = id in sil.overrides ? (sil.overrides[id] ? `${sil.overrides[id]} h` : this._t("staleNever")) : "–";
+        const tight = sil.overrides[id] && o.advice && sil.overrides[id] < o.advice ? " ⚠️" : "";
+        const label = this._canEdit ? `<a class="lnk" data-edit="sensor:${escHtml(id)}">${escHtml(o.name)}</a>` : escHtml(o.name);
+        return `<tr><td>${label}</td><td class="nw">${escHtml(o.longest)}</td><td class="nw">${o.advice ? `${o.advice} h` : "–"}</td><td class="nw">${escHtml(own)}${tight}</td></tr>`;
+      })
+      .join("");
+    const table = rows
+      ? `<div class="muted" style="margin-top:8px">${escHtml(this._fmt("staleTableHint", { d: sil.days }))}</div><div class="scroll"><table><tr><th>${escHtml(this._t("staleSensor"))}</th><th>${escHtml(this._t("staleLongest"))}</th><th>${escHtml(this._t("staleAdviceCol"))}</th><th>${escHtml(this._t("staleOwnCol"))}</th></tr>${rows}</table></div>`
+      : `<div class="muted">${escHtml(sil.observation || "")}</div>`;
+    return general + table;
+  }
+
   _systemTab(view) {
     const parts = view._parts();
     const sys = this._settings?.system;
@@ -646,7 +681,7 @@ class HauswachtPanel extends HTMLElement {
     return (
       status +
       this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
-      this._card(this._t("silence"), `<div>${escHtml(sys.silence.hours ? this._fmt("hoursN", { h: sys.silence.hours }) : this._t("silenceOff"))}</div>${sys.silence.observation ? `<div class="muted">${escHtml(sys.silence.observation)}</div>` : ""}${edit("silence")}`, "silence") +
+      this._card(this._t("silence"), this._silenceHtml(sys.silence) + edit("silence"), "silence") +
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
       this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
@@ -805,8 +840,14 @@ class HauswachtPanel extends HTMLElement {
       this._canEdit && s.entity_id
         ? `<a class="lnk" data-edit="sensor:${escHtml(s.entity_id)}">${escHtml(s.name)}</a>`
         : escHtml(s.name);
+    const overrides = this._settings?.system?.silence?.overrides || {};
+    const staleMark = (s) => {
+      if (!s.entity_id || !(s.entity_id in overrides)) return "";
+      const h = overrides[s.entity_id];
+      return ` <span class="muted" title="${escHtml(this._t("staleOwnTitle"))}">⏱ ${escHtml(h ? `${h} h` : this._t("staleNever"))}</span>`;
+    };
     const row = (s) =>
-      `<tr><td>${name(s)}${s.always_active ? ` <span class="muted">(${escHtml(view._t("always"))})</span>` : ""}</td><td>${escHtml(view._l("type", s.type))}</td><td class="${s.state === "unavailable" ? "warn" : ""}">${escHtml(view._l("state", s.state))}</td><td class="nw">${s.battery != null ? `${s.battery} %` : ""}</td>${d.profiles.map((p) => `<td class="c">${view._sensorRole((s.profiles || {})[p.id])}</td>`).join("")}</tr>`;
+      `<tr><td>${name(s)}${s.always_active ? ` <span class="muted">(${escHtml(view._t("always"))})</span>` : ""}${staleMark(s)}</td><td>${escHtml(view._l("type", s.type))}</td><td class="${s.state === "unavailable" ? "warn" : ""}">${escHtml(view._l("state", s.state))}</td><td class="nw">${s.battery != null ? `${s.battery} %` : ""}</td>${d.profiles.map((p) => `<td class="c">${view._sensorRole((s.profiles || {})[p.id])}</td>`).join("")}</tr>`;
     let body = "";
     for (const g of groups) {
       const members = byGroup.get(g.name) || [];

@@ -30,8 +30,9 @@ from .core.controls import (
     lock_id_label,
     parse_controls,
 )
-from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info
+from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info, stale_override_hours
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
+from .core.silence import format_duration
 from .names import display_name
 
 
@@ -146,6 +147,21 @@ def build_cards(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     }
 
 
+def _silence_sensors(hass: HomeAssistant, silence: Any) -> dict[str, dict[str, Any]]:
+    if silence is None:
+        return {}
+    return {
+        entity: {
+            "name": display_name(hass, entity),
+            "longest": format_duration(record.longest),
+            "longest_s": round(record.longest),
+            "contacts": record.contacts,
+            "advice": silence.sensor_advice(entity),
+        }
+        for entity, record in sorted(silence.records.items(), key=lambda i: -i[1].longest)
+    }
+
+
 def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     areas = parse_areas(options)
@@ -175,6 +191,12 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "hours": int(stale or 0),
             "max": MAX_STALE_HOURS,
             "observation": observation,
+            "advice": silence.advice_hours() if silence is not None else None,
+            "days": round(silence.days(), 1) if silence is not None else 0,
+            # Eigene Grenzen je Melder: Stunden, 0 = nie prüfen
+            "overrides": stale_override_hours(options),
+            # Beobachtung je Melder: längste Pause und Empfehlung für genau diesen Melder
+            "sensors": _silence_sensors(hass, silence),
         },
         "network": {
             "entities": list(options.get("infrastructure", [])),

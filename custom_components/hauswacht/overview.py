@@ -31,7 +31,13 @@ from .core.automation import parse_automation
 from .core.checks import run_checks
 from .core.controls import learn_minutes, parse_controls
 from .core.notify_events import NotifyEvent, enabled, route
-from .core.profiles import profile_behaviour, profile_info, profile_settings, stale_after_seconds
+from .core.profiles import (
+    profile_behaviour,
+    profile_info,
+    profile_settings,
+    stale_after_seconds,
+    stale_override_hours,
+)
 from .core.reactions import parse_reaction
 from .core.restart import OPT_RESTART_PROFILES, continue_alarm, restart_behavior
 from .core.rules import build_engine, describe_rule, profile_rule_ids
@@ -437,6 +443,15 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
     return {
         "stale_after_hours": round(stale / 3600) if stale else 0,
         "recommended_hours": silence.advice_hours() if silence is not None else None,
+        # Eigene Grenzen je Melder (0 = nie prüfen) mit der Empfehlung für diesen Melder
+        "stale_overrides": [
+            {
+                "name": _name(hass, entity),
+                "hours": hours,
+                "recommended": silence.sensor_advice(entity) if silence is not None else None,
+            }
+            for entity, hours in stale_override_hours(options).items()
+        ],
         "observed_days": round(silence.days(), 1) if silence is not None else 0,
         "infrastructure": [
             {

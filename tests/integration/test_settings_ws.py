@@ -628,3 +628,19 @@ async def test_control_card_speech_always(hass: HomeAssistant, hass_ws_client: A
     assert stored_always["sirens_enabled"] is True
     assert stored_always["siren_tone"] == "burglar"  # Brandton hier nie
     assert stored_always["reaction_time"] == 60
+
+
+async def test_sensor_stale_limit_on_page(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    result = await _apply(
+        hass_ws_client,
+        hass,
+        "sensor_save",
+        {"entity": MOTION, "group": "keller", "type": "motion", "stale": {"mode": "off"}},
+    )
+    assert result["ok"] is True, result
+    assert _options(hass)["stale_overrides"] == {MOTION: 0}
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert data["system"]["silence"]["overrides"] == {MOTION: 0}
+    overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
+    assert overview["monitoring"]["stale_overrides"][0]["hours"] == 0

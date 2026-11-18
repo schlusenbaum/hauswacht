@@ -67,10 +67,22 @@ const ET = {
     sensorGroup: "Meldergruppe",
     viaLabel: "Kommt über das Label der Gruppe – die Gruppe änderst du über das Label an der Entität.",
     always: "Immer aktiv (meldet auch unscharf)",
+    staleTitle: "Funkstille",
+    staleHint: "Wie lange dieser Melder schweigen darf, bevor er beim Scharfschalten als ausgefallen gilt.",
+    staleGeneral: "Wie allgemein ({h} h)",
+    staleGeneralOff: "Wie allgemein (aus)",
+    staleOwn: "Eigener Wert",
+    staleOff: "Nie prüfen (meldet sich nur bei Änderungen)",
+    staleObserved: "Beobachtet: längste Pause {p} bei {n} Meldungen in {d} Tagen.",
+    staleAdvice: "Empfehlung für diesen Melder: {h} h.",
+    staleAdviceLater: "Eine Empfehlung gibt es nach 3 Tagen Beobachtung.",
+    staleNoData: "Für diesen Melder gibt es noch keine Beobachtung.",
+    staleTake: "Empfehlung übernehmen ({h} h)",
     profilesTitle: "Löst allein aus in den Profilen",
     profilesHint: "Haken weg = in diesem Profil ausgenommen (zählt nur noch in Auslöseregeln).",
     noProfiles: "Kein Profil nutzt diese Gruppe.",
     errors: {
+      stale_hours_invalid: "Bitte 1 bis 168 Stunden angeben.",
       zone_name_required: "Bitte einen Namen eingeben.",
       zone_empty: "Mindestens einen Melder oder ein Label wählen.",
       zone_overlap: "Diese Melder stecken schon in einer anderen Gruppe:",
@@ -146,10 +158,22 @@ const ET = {
     sensorGroup: "Sensor group",
     viaLabel: "Comes in via the group's label – change the group via the label on the entity.",
     always: "Always active (also reports when disarmed)",
+    staleTitle: "Radio silence",
+    staleHint: "How long this sensor may stay silent before it counts as failed when arming.",
+    staleGeneral: "As general ({h} h)",
+    staleGeneralOff: "As general (off)",
+    staleOwn: "Own value",
+    staleOff: "Never check (only reports on changes)",
+    staleObserved: "Observed: longest pause {p} with {n} reports in {d} days.",
+    staleAdvice: "Recommendation for this sensor: {h} h.",
+    staleAdviceLater: "A recommendation is available after 3 days of observation.",
+    staleNoData: "No observation for this sensor yet.",
+    staleTake: "Use recommendation ({h} h)",
     profilesTitle: "Triggers on its own in the profiles",
     profilesHint: "Untick = excluded in this profile (then only counts in trigger rules).",
     noProfiles: "No profile uses this group.",
     errors: {
+      stale_hours_invalid: "Please enter 1 to 168 hours.",
       zone_name_required: "Please enter a name.",
       zone_empty: "Choose at least one sensor or a label.",
       zone_overlap: "These sensors are already in another group:",
@@ -274,6 +298,7 @@ class HauswachtSensorEditor extends HTMLElement {
         type: s.sensor_types[id] || this._entity(id).suggested || "other",
         always: (s.always.sensors || []).includes(id),
         excluded: s.profiles.filter((p) => (p.excluded || []).includes(id)).map((p) => p.id),
+        ...this._staleInitial(id),
       };
     }
     if (this.kind === "strength") {
@@ -444,6 +469,39 @@ class HauswachtSensorEditor extends HTMLElement {
       ${d.existing ? "" : `<label>${e(this._t("group"))}</label>${this._groupSelect("group", d.group)}`}`;
   }
 
+  // Funkstille je Melder: allgemeiner Wert, eigene Stunden oder nie prüfen
+  _staleInitial(id) {
+    const own = this.settings.system?.silence?.overrides?.[id];
+    if (own === undefined) return { stale_mode: "default", stale_hours: "" };
+    return own === 0 ? { stale_mode: "off", stale_hours: "" } : { stale_mode: "hours", stale_hours: own };
+  }
+
+  _staleHtml() {
+    const d = this._draft;
+    const sil = this.settings.system?.silence;
+    if (!sil) return "";
+    const obs = sil.sensors?.[d.entity];
+    const general = sil.hours ? this._t("staleGeneral").replace("{h}", sil.hours) : this._t("staleGeneralOff");
+    const modes = [["default", general], ["hours", this._t("staleOwn")], ["off", this._t("staleOff")]]
+      .map(([v, l]) => `<option value="${v}" ${d.stale_mode === v ? "selected" : ""}>${e(l)}</option>`)
+      .join("");
+    let observed;
+    if (!obs) observed = this._t("staleNoData");
+    else {
+      observed = this._t("staleObserved").replace("{p}", obs.longest).replace("{n}", obs.contacts).replace("{d}", sil.days);
+      observed += obs.advice ? ` ${this._t("staleAdvice").replace("{h}", obs.advice)}` : ` ${this._t("staleAdviceLater")}`;
+    }
+    const take = obs?.advice
+      ? `<button class="b" data-a="stale-take">${e(this._t("staleTake").replace("{h}", obs.advice))}</button>`
+      : "";
+    return `<div class="box"><b>${e(this._t("staleTitle"))}</b>
+      <div class="muted">${e(this._t("staleHint"))}</div>
+      <div class="inline"><div style="flex:1"><select data-f="stale_mode">${modes}</select></div>
+      ${d.stale_mode === "hours" ? `<div><input class="small" type="number" min="1" max="${sil.max}" data-f="stale_hours" value="${e(d.stale_hours)}"> h</div>` : ""}</div>
+      ${this._err("stale_hours")}
+      <div class="muted" style="margin-top:6px">${e(observed)}</div>${take}</div>`;
+  }
+
   _sensorForm() {
     const d = this._draft;
     const x = this._entity(d.entity);
@@ -463,7 +521,8 @@ class HauswachtSensorEditor extends HTMLElement {
       <label>${e(this._t("sensorGroup"))}</label>${groupSel}${this._err("group")}
       <label>${e(this._t("type"))}</label><select data-f="type">${types}</select>${this._err("type")}
       <div class="chk" style="margin-top:12px"><input type="checkbox" data-f-check="always" ${d.always ? "checked" : ""}><span>${e(this._t("always"))}</span></div>
-      <label>${e(this._t("profilesTitle"))}</label>${profileHtml}${this._err("base")}`;
+      <label>${e(this._t("profilesTitle"))}</label>${profileHtml}${this._err("base")}
+      ${this._staleHtml()}`;
   }
 
   _alwaysForm() {
@@ -558,7 +617,17 @@ class HauswachtSensorEditor extends HTMLElement {
     }
     if (this.kind === "sensor") {
       const label = this.settings.groups.find((g) => (this.settings.label_members?.[g.id] || []).includes(d.entity));
-      return ["sensor_save", { entity: d.entity, group: label ? label.id : d.group || null, type: d.type, always: d.always, excluded: d.excluded }];
+      return [
+        "sensor_save",
+        {
+          entity: d.entity,
+          group: label ? label.id : d.group || null,
+          type: d.type,
+          always: d.always,
+          excluded: d.excluded,
+          stale: { mode: d.stale_mode, hours: d.stale_hours === "" ? null : Number(d.stale_hours) },
+        },
+      ];
     }
     return [
       "always_save",
@@ -643,6 +712,13 @@ class HauswachtSensorEditor extends HTMLElement {
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();
     };
+    const staleMode = root.querySelector('[data-f="stale_mode"]');
+    if (staleMode) {
+      staleMode.addEventListener("change", () => {
+        this._collect();
+        this._render();
+      });
+    }
     const sirensOn = root.querySelector('[data-f-check="sirens_enabled"]');
     if (sirensOn) {
       sirensOn.addEventListener("change", () => {
@@ -659,6 +735,11 @@ class HauswachtSensorEditor extends HTMLElement {
           this._apply(...this._payload());
         } else if (a === "delete") {
           if (window.confirm(this._t("deleteConfirm"))) this._apply(...this._deleteAction());
+        } else if (a === "stale-take") {
+          this._collect();
+          const obs = this.settings.system?.silence?.sensors?.[this._draft.entity];
+          if (obs?.advice) Object.assign(this._draft, { stale_mode: "hours", stale_hours: obs.advice });
+          this._render();
         } else if (a === "recommend") {
           this._collect();
           this._draft.vibration_count = 2;

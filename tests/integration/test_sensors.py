@@ -504,6 +504,29 @@ async def test_sensor_behaviour_keeps_types(hass: HomeAssistant) -> None:
     assert entry.options["stale_after_hours"] == 12
 
 
+async def test_stale_limit_per_sensor_in_dialog(hass: HomeAssistant) -> None:
+    entry = make_entry()
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    for step in ("system", "sensor_behaviour"):
+        flow = await hass.config_entries.options.async_configure(
+            flow["flow_id"], {"next_step_id": step}
+        )
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"stale_after_hours": 3, "stale_sensor": WINDOW}
+    )
+    assert flow["step_id"] == "stale_sensor"
+    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"mode": "hours"})
+    assert flow["errors"] == {"hours": "stale_hours_invalid"}
+    flow = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"mode": "hours", "hours": 24}
+    )
+    assert flow["type"] is FlowResultType.MENU
+    await hass.async_block_till_done()
+    assert entry.options["stale_after_hours"] == 3
+    assert entry.options["stale_overrides"] == {WINDOW: 24}
+
+
 async def test_options_back_save_and_done(hass: HomeAssistant) -> None:
     entry = make_entry()
     await setup_entry(hass, entry)
