@@ -898,12 +898,21 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                         multiple=True,
                     )
                 ),
-                vol.Optional(
-                    "rules",
-                    default=[
-                        r for r in profile_rule_ids(options, pid) if r in parse_rules(options)
-                    ],
-                ): self._rule_selector(multiple=True),
+                # Auslöseregeln nur zeigen, wenn es welche gibt (sonst stünde der Hinweis leer da)
+                **(
+                    {
+                        vol.Optional(
+                            "rules",
+                            default=[
+                                r
+                                for r in profile_rule_ids(options, pid)
+                                if r in parse_rules(options)
+                            ],
+                        ): self._rule_selector(multiple=True)
+                    }
+                    if parse_rules(options)
+                    else {}
+                ),
                 vol.Required("exit_delay", default=current["exit_delay"]): _seconds(MAX_DELAY),
                 vol.Required("entry_delay", default=current["entry_delay"]): _seconds(MAX_DELAY),
                 vol.Required("reaction_time", default=current["reaction_time"]): _seconds(

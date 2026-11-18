@@ -19,7 +19,7 @@ you need, e.g. "Home", "Night", "Away", "Vacation".
 | Area | Only with several [areas](#areas) |
 | Sensor groups – each sensor triggers alone | Each sensor of these groups triggers on its own (door with entry delay, window instantly …) |
 | Excluded sensors | Sensors of these groups that do **not** trigger on their own in this profile (e.g. upstairs hallway motion in "Night"); they still count in trigger rules |
-| Trigger rules | In addition: sequences of sensors, see [Trigger rules](trigger-rules.md) |
+| Trigger rules | In addition: sequences of sensors, see [Trigger rules](trigger-rules.md). The field only appears once trigger rules exist |
 | Exit / entry delay | Time to leave, or to disarm after entering (default 30 s each) |
 | Alarm reaction time | How long one alarm cycle lasts (default 180 s) |
 | Open sensors when arming | refuse · allow after confirmation · bypass automatically. Confirm: "Arm anyway" in the card or push – or at the keypad [the same key once more](control-devices.md#arm-anyway-at-the-keypad) |

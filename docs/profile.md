@@ -19,7 +19,7 @@ an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub
 | Bereich | Nur bei mehreren [Bereichen](#bereiche) |
 | Meldergruppen – jeder Melder löst allein aus | Jeder Melder dieser Gruppen löst für sich aus (Tür mit Eingangsverzögerung, Fenster sofort …) |
 | Ausgenommene Melder | Melder dieser Gruppen, die in diesem Profil **nicht** einzeln auslösen (z. B. Bewegung Flur OG in „Nacht“); in Auslöseregeln zählen sie weiter |
-| Auslöseregeln | Zusätzlich: Abfolgen von Meldern, siehe [Auslöseregeln](ausloeseregeln.md) |
+| Auslöseregeln | Zusätzlich: Abfolgen von Meldern, siehe [Auslöseregeln](ausloeseregeln.md). Das Feld erscheint erst, wenn es Auslöseregeln gibt |
 | Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten (Standard je 30 s) |
 | Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert (Standard 180 s) |
 | Offene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben · automatisch überbrücken. Bestätigen: „Trotzdem scharf“ in Karte oder Push – oder am Keypad [dieselbe Taste noch einmal](bedienteile.md#trotzdem-scharf-am-keypad) |

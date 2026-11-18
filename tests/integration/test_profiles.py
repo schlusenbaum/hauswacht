@@ -262,3 +262,18 @@ async def test_profile_form_can_be_submitted_unchanged(hass: HomeAssistant, prof
 
     flow = await hass.config_entries.options.async_configure(flow["flow_id"], data)
     assert flow["type"] is FlowResultType.MENU
+
+
+async def test_rules_field_only_when_rules_exist(hass: HomeAssistant) -> None:
+    entry = await _setup_plain(hass, {"zones": ZONES})
+    flow = await _open_profile_form(hass, entry)
+    keys = {str(m) for m in flow["data_schema"].schema}
+    assert "rules" not in keys
+    assert "zones" in keys
+
+
+async def test_rules_field_shown_with_rules(hass: HomeAssistant) -> None:
+    rules = {"r": {"name": "Tür dann Flur", "steps": [{"sensors": [DOOR]}, {"sensors": [WINDOW]}]}}
+    entry = await _setup_plain(hass, {"zones": ZONES, "rules": rules})
+    flow = await _open_profile_form(hass, entry)
+    assert "rules" in {str(m) for m in flow["data_schema"].schema}
