@@ -257,21 +257,37 @@ Dieselbe Entscheidung kommt als Ereignis `hauswacht_event` mit `type: SirenDecis
 
 ## Brandschutz
 
-Sind die Sirenen zugleich Rauchmelder, erkennt Hauswacht deren Rauch- und
-Testknopf-Sensoren automatisch.
+Brand hat immer Vorrang vor Einbruch. Hauswacht achtet deshalb auf Brandmeldungen – **auch wenn
+du eigene Sirenen hast und kein einziger Rauchmelder in Hauswacht eingetragen ist.**
 
-- Meldet **irgendein** Rauchmelder in Home Assistant Brand, schaltet Hauswacht keine Sirene
-  ein und keine aus.
-- Ist der Brandzustand einer **registrierten** Sirene unklar (Sensor nicht verfügbar oder
-  deaktiviert), gilt dasselbe.
+### Gilt immer
+
+- Bevor Hauswacht eine Sirene schaltet, sieht es **alle** Binärsensoren in Home Assistant an. Ist
+  einer mit der Geräteklasse **Rauch, Gas, Kohlenmonoxid oder Hitze** gerade „an“, herrscht
+  Brandsperre. Der Melder muss dafür **nicht** in Hauswacht eingetragen sein.
+- Während der Brandsperre schaltet Hauswacht **keine Sirene ein und keine aus** – auch keine
+  Einbruchsirene. So übertönt eine Einbruchsirene nie den Feueralarm.
+- Der Einbruchalarm selbst läuft trotzdem: Das Bedienfeld zeigt Alarm, Benachrichtigungen gehen
+  raus, eigene Automationen springen an. Nur die Sirenen bleiben aus.
 - Wurde während eines Einbruchalarms Brand gemeldet, schaltet auch das Unscharfschalten keine
   Sirene ab. Sirenen mit eigener Laufzeit verstummen nach ihrer Höchstdauer. Alle anderen
   schaltet Hauswacht aus, sobald kein Brand mehr gemeldet wird (Prüfung jede Minute).
+- Fremde Abschalt-Skripte (z. B. „alle Rauchmelder aus“) verwendet Hauswacht nie.
+- **Grenze:** Hauswacht weiß nur von Bränden, die ein Melder **in Home Assistant** meldet. Ist ein
+  Melder nicht eingebunden oder gerade nicht erreichbar, bekommt Hauswacht davon nichts mit – der
+  Melder selbst piept natürlich trotzdem.
+
+### Zusätzlich, wenn Rauchmelder deine Alarmgeber sind
+
+Nutzt du die Sirene eines Rauchmelders auch als Sirene für Hauswacht, erkennt Hauswacht dessen
+Rauch- und Testknopf-Sensoren automatisch. Dann gilt außerdem:
+
+- Ist der Brandzustand einer **eingetragenen** Sirene unklar (Sensor nicht verfügbar oder
+  deaktiviert), herrscht ebenfalls Brandsperre.
 - Ein Rauchmelder spielt bei Einbruch nie seinen Brandton – auch nicht mit der
   [Experten-Freigabe](#brandton-als-experten-freigabe).
-- Fremde Abschalt-Skripte (z. B. „alle Rauchmelder aus“) verwendet Hauswacht nie.
-- Verwendest du Rauchmelder als Alarmgeber: Rauchmelder **untereinander vernetzen** (bei Rauch
-  piepen alle) macht Hauswacht bewusst nicht – das ist eine kleine eigene Automation, siehe
+- Rauchmelder **untereinander vernetzen** (bei Rauch piepen alle) macht Hauswacht bewusst nicht –
+  das ist eine kleine eigene Automation, siehe
   [Beispiele](beispiele.md#rauchmelder-untereinander-vernetzen).
 
 ## Sirene lief beim Neustart noch

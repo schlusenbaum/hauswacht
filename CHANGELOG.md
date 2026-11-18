@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.55.2] - 2026-11-18
+
+### Dokumentation
+- **Sirenen → Brandschutz** klarer gegliedert: zuerst, was **immer** gilt – auch mit eigenen
+  Sirenen und ohne einen in Hauswacht eingetragenen Rauchmelder (Hauswacht prüft alle Rauch-,
+  Gas-, Kohlenmonoxid- und Hitzemelder in Home Assistant; bei Brand schaltet es keine Sirene ein
+  oder aus, der Einbruchalarm selbst samt Benachrichtigungen läuft weiter; Grenze: nur Melder, die
+  in Home Assistant eingebunden und erreichbar sind). Danach, was **zusätzlich** gilt, wenn
+  Rauchmelder die Alarmgeber sind. Bisher klang der Abschnitt so, als gelte die Brandsperre nur
+  mit Rauchmeldern als Sirenen.
+
 ## [0.55.1] - 2026-11-18
 
 ### Dokumentation
