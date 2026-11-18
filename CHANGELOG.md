@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.55.3] - 2026-11-18
+
+### Geändert
+- **Bereit für den Katalog von Marketplace/HACS:** Die Integration nennt jetzt ihre Kategorie
+  (*Sicherheit → Alarmanlagen*), damit sie im Marketplace dort zu finden ist. Die Aufnahme in den
+  Katalog wird beantragt; bis dahin bleibt die Installation per Link.
+
+### Dokumentation
+- Installation (deutsch und englisch) und README: Link, der Hauswacht direkt im Marketplace der
+  eigenen Home-Assistant-Instanz öffnet; Hinweis, dass die Aufnahme in den Katalog beantragt ist
+  und dann die Suche nach „Hauswacht“ genügt. Badge „Marketplace“ statt „HACS“. Roadmap
+  angepasst.
+
+### Intern
+- CI prüft zusätzlich mit der HACS-Action (Kategorie Integration) – Voraussetzung für die
+  Aufnahme in den Katalog.
+
 ## [0.55.2] - 2026-11-18
 
 ### Dokumentation

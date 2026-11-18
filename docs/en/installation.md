@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.55.2:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.55.3:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -18,8 +18,14 @@ Hauswacht needs no cloud and no other integrations.
 
 ## Installation
 
-Hauswacht is not (yet) in the Marketplace or HACS catalogue. You therefore add the repository
-once via its link; after that, updates arrive as usual.
+Hauswacht is not (yet) in the Marketplace or HACS catalogue – inclusion has been requested, and
+the review usually takes months. Until then you add the repository once via its link; after that,
+updates arrive as usual. Once Hauswacht is in the catalogue, simply search for "Hauswacht" in the
+Marketplace.
+
+**Quickest:** [open Hauswacht in the Marketplace](https://my.home-assistant.io/redirect/marketplace_repository/?owner=schlusenbaum&repository=hauswacht&category=integration) – the link opens your own Home
+Assistant instance directly at Hauswacht (the first time, My Home Assistant asks once for its
+address). Or by hand:
 
 **Marketplace** (Home Assistant 2026.11 and newer):
 

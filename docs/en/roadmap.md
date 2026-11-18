@@ -50,7 +50,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |
 | last | own settings panel in the sidebar – only after the wizard, with its own concept |
-| 1.0.0 | stable, documentation complete, inclusion in the HACS default list |
+| 1.0.0 | stable, documentation complete (inclusion in the Marketplace/HACS catalogue requested since 0.55.3) |
 | some day | cameras: picture in the message, camera detection as its own sensor type – to be designed afresh |
 | 1.x | dedicated kind "fingerprint reader" (names per finger, minimum match) – already possible today via RFID reader or Nuki Keypad 2.0; further automation conditions, recurring guest mode times (e.g. every Tuesday 8–12) |
 
