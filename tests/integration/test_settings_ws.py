@@ -116,14 +116,16 @@ async def test_apply_special_and_always(hass: HomeAssistant, hass_ws_client: Any
     assert result["ok"] is True
     await hass.async_block_till_done()
     assert "input_number.test" in _options(hass)["zones"]["keller"]["entities"]
+    # Nach dem Neuladen holt die Seite die Einstellungen (und die Revision) neu
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
     result = await _ws(
         hass_ws_client,
         hass,
         type="hauswacht/settings/apply",
-        revision=result["revision"],
+        revision=data["revision"],
         action="always_save",
         data={"zones": [], "sensors": [WINDOW]},
     )
-    assert result["ok"] is True
+    assert result["ok"] is True, result
     await hass.async_block_till_done()
     assert _options(hass)["always_active"]["sensors"] == [WINDOW]
