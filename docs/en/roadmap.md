@@ -41,7 +41,7 @@
 | 0.54 | profile automation by schedule helper: different times per weekday without a second profile; docs page [examples](examples.md) for your own automations (lights, camera, shutters …) |
 | 0.55 | Every event names its area (`area`, `area_name`); complete [reference](reference.md) and cheat sheet [automations](automations.md); ready for the Marketplace/HACS catalogue |
 | 0.56 | [Tilted windows](sensors.md#sensors-with-tilt-position-tilted) allowed per profile or counted as open; [vibration sensors](sensors.md#vibration-sensors) with false alarm protection, also as a number ([ADR 0010](../entwicklung/adr/0010-fenster-kippstellung-erschuetterung.md)) |
-| 0.57 (in progress) | [Settings page](settings-page.md) in the sidebar: everything at a glance, matrix "sensor × profile", edit everything directly (sensors, profiles, trigger rules as form or YAML, sirens with tone, notifications, people, cards, control devices, PIN rules, action codes, system), tab documentation and "?" at every section ([ADR 0011](../entwicklung/adr/0011-einstellungsseite.md)) |
+| 0.57 | [Settings page](settings-page.md) in the sidebar: everything at a glance, matrix "sensor × profile", edit everything directly (sensors, profiles, trigger rules as form or YAML, sirens with tone, notifications, people, cards, control devices, PIN rules, action codes, system), tab documentation and "?" at every section; [radio silence per sensor](sensors.md#own-limit-per-sensor); "behaviour after restart" only on a real restart ([ADR 0011](../entwicklung/adr/0011-einstellungsseite.md)) |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -52,7 +52,6 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |
-| next | Version 0.57.0 with the [settings page](settings-page.md), once the pre-releases work in everyday use |
 | 1.0.0 | stable, documentation complete (inclusion in the Marketplace/HACS catalogue requested since 0.55.3) |
 | some day | cameras: picture in the message, camera detection as its own sensor type – to be designed afresh |
 | 1.x | dedicated kind "fingerprint reader" (names per finger, minimum match) – already possible today via RFID reader or Nuki Keypad 2.0; further automation conditions, recurring guest mode times (e.g. every Tuesday 8–12) |

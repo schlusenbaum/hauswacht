@@ -6,241 +6,64 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.57.0b14] - 2026-11-18
+## [0.57.0] - 2026-11-18
 
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+**Einstellungsseite „Hauswacht“ in der Seitenleiste** – die ganze Einrichtung auf einen Blick und
+alles direkt bearbeiten, zusätzlich zum Einstellungsdialog (ADR 0011, getestet über die
+Vorabversionen 0.57.0b1 bis b14).
+
+### Hinzugefügt
+- **Einstellungsseite** (nur Administratoren) mit den Reitern Übersicht, Melder, Profile,
+  Auslöseregeln, Alarmgeber, Benachrichtigungen, Personen und Bedienteile, System und
+  Dokumentation. Bearbeitet wird in Seitenblättern rechts – mit denselben Regeln und Prüfungen
+  wie im Dialog. Gespeichert wird nur, wenn alle Bereiche unscharf sind; hat jemand zwischendurch
+  woanders etwas geändert, wird nichts überschrieben. Ausblenden unter System →
+  Einstellungsseite.
+- **Melder:** Matrix „Melder × Profile“ nach Meldergruppen; Meldergruppen mit Typ je Melder,
+  Label und Fehlalarmschutz; einzelnen Melder bearbeiten (Gruppe, Typ, Immer aktiv, Ausnahmen je
+  Profil); Melder mit Kippstellung, Erschütterungsstärken, Immer aktiv mit Sirenen für den
+  unscharfen Zustand, Melder aus Messwert erstellen. Die Melder-Auswahl zeigt sofort alle
+  passenden Melder, ohne Namen kennen zu müssen.
+- **Profile:** anlegen, ändern, löschen – alle Einstellungen wie im Dialog, mit Link zum Anlegen
+  eines Zeitplans.
+- **Auslöseregeln** mit Umschalter **Formular / YAML**; komplexe Regeln nur als YAML. Beim
+  Bearbeiten steht immer als Satz da, was die Regel bewirkt.
+- **Alarmgeber:** Sirenen und Freigabe (nur mit Bestätigung), Ton je Sirene mit Brandton-Sperre,
+  Sirenentest-Erinnerung, Sirene aus Schalter erstellen. Die Seite schaltet nie eine Sirene; der
+  Sirenentest bleibt in der Testkarte.
+- **Benachrichtigungen:** Empfänger, Ereignisse, Erinnerung; **eigene Texte** starten mit dem Text
+  von Hauswacht als Vorlage, mit Vorschau und „↺ Standardtext“; **Sprachausgabe** mit
+  Lautsprechern, Nachtruhe und Text je Ereignis.
+- **Personen** mit Rechten je Bereich, Gültigkeit und PINs (nie sichtbar); **Karten anlernen** auf
+  der Seite (hinhalten oder Nummer eintippen); **Bedienteile** anlegen und einstellen; PIN-Regeln
+  und Master-PIN; Aktions-Codes.
+- **System:** Verhalten nach Neustart, Funkstille, Funknetz, Anwesenheit und Heimkehr, Bereiche.
+- **Funkstille je Melder:** eigene Grenze oder „nie prüfen“, Beobachtung und Empfehlung je Melder
+  („Empfehlung übernehmen“) – auf der Seite und im Dialog. Melder mit eigenem Wert zählen für die
+  allgemeine Empfehlung nicht mehr mit. Neuer Prüfhinweis, wenn ein eigener Wert zu knapp ist.
+- **„?“ an jedem Abschnitt** öffnet die Anleitung an der passenden Stelle – für genau die
+  installierte Version; Reiter **Dokumentation** mit allen Seiten.
+- Übersicht auf der Seite mit **Drucken**, **Notfallblatt** und Download des Heimkehr-Berichts.
 
 ### Geändert
 - **„Verhalten nach Neustart“ gilt nur noch nach einem echten Neustart von Home Assistant.** Wird
-  nur Hauswacht neu geladen – etwa nach dem Speichern von Einstellungen –, bleibt der Zustand,
-  wie er war. Bisher schaltete „immer scharf“ eine Minute nach jeder Änderung der Einstellungen
-  scharf, und „immer unscharf“ schaltete bei einem Neuladen unscharf.
-
-## [0.57.0b13] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
-
-### Hinzugefügt
-- **Funkstille je Melder**: Jeder Melder kann einen eigenen Wert bekommen (eigene Stunden oder
-  „nie prüfen“ für Melder, die sich nur bei Änderungen melden) – auf der Einstellungsseite im
-  Blatt des Melders und im Dialog unter Funkstille von Sensoren. Der allgemeine Wert gilt für alle
-  übrigen.
-- **Beobachtung und Empfehlung je Melder**: längste Pause und Empfehlung für genau diesen Melder,
-  mit „Empfehlung übernehmen“; im Reiter System als Tabelle aller Melder.
-- Prüfhinweis, wenn ein eigener Wert unter der Empfehlung für diesen Melder liegt.
-
-### Geändert
-- Melder mit eigenem Wert zählen für die allgemeine Empfehlung nicht mehr mit – ein einzelner
-  selten meldender Melder zieht die Grenze nicht mehr für alle hoch.
-
-## [0.57.0b12] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`). Alles, was der
-Einstellungsdialog kann, geht jetzt auch auf der Seite – nur der Sirenentest bleibt bewusst in
-der Testkarte.
-
-### Hinzugefügt
-- **Ton je Sirene** auf der Seite, mit Brandton-Sperre wie im Dialog (Experten-Freigabe mit
-  Bestätigung, nie für Rauchmelder), **Sirenentest-Erinnerung und Vorwarnung** und **Sirene aus
-  Schalter erstellen**.
-- **Bedienteile anlegen und einstellen**: Keypad, NFC-Aufkleber, RFID-Leser, Taster (mit
-  Druckarten) und Türschloss.
-- **Karten anlernen auf der Seite**: Karte hinhalten – sie erscheint von selbst – oder Nummer
-  eintippen; Karten umbenennen, anderer Person geben, deaktivieren, löschen.
-- **Sprachausgabe**: Lautsprecher, Wiederholung, Nachtruhe und je Ereignis Art, Lautsprecher und
-  Text (mit Vorschau und „↺ Standardtext“).
-- **Immer aktiv**: Sirenen, Ton, Lautstärke und Dauer für Auslösungen im unscharfen Zustand.
-- **Melder aus Messwert erstellen** (Schwellenwert-Helfer) auf der Seite.
-- Übersicht: Knöpfe **Drucken** und **Notfallblatt**.
-
-### Geändert
-- Aktions-Codes stehen als Liste mit Code, Taste, Keypad und Aktion.
-- Das Suchfeld über der Melder-Matrix ist entfallen.
+  nur Hauswacht neu geladen (z. B. nach dem Speichern von Einstellungen), bleibt der Zustand, wie
+  er war.
+- Platzhalter-Texte räumen leere Klammern besser auf (kein Leerzeichen mehr vor dem Punkt).
 
 ### Behoben
-- System → Überwachung: Die Knöpfe „Heimkehr-Bericht“ und „Tabelle“ taten auf der Seite nichts.
-- Veraltete Hinweise „im Dialog einstellen“ auf der Seite entfernt.
-
-## [0.57.0b11] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,
-Teil 2 – damit sind alle Stufen umgesetzt).
-
-### Hinzugefügt
-- **Reiter System bearbeiten**: Verhalten nach Neustart, Funkstille, Funknetz und Gateways,
-  Anwesenheit und Heimkehr-Beobachtung (mit Signalen je Person), Bereiche anlegen, ändern und
-  löschen, Einstellungsseite ausblenden.
-- **PIN-Regeln und Master-PIN** auf der Seite (Reiter Personen und Bedienteile). Der Master-PIN
-  wird nie angezeigt.
-- **Aktions-Codes** anlegen, ändern und löschen – mit denselben Prüfungen wie im Dialog (kein
-  PIN, Code + Taste nicht doppelt).
-- **Bedienteile** löschen und die Anlernzeit für Karten einstellen. Bedienteile anlegen und Karten
-  anlernen bleibt im Dialog, weil dort am Gerät angelernt wird.
-
-### Behoben
-- „Nach Neustart immer scharf“: Wurde Hauswacht neu geladen (z. B. nach dem Speichern von
-  Einstellungen), lief der Timer fürs Scharfschalten der alten Instanz weiter und ließ sich beim
-  Entladen nicht stoppen. Jetzt hat er einen eigenen Timer, der beim Entladen sicher endet.
-
-## [0.57.0b10] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,
-Teil 1).
-
-### Hinzugefügt
-- **Personen auf der Einstellungsseite bearbeiten**: anlegen, ändern, löschen – Name (mit
-  Vorschlägen aus den Home-Assistant-Konten), aktiv, Rechte für alle Bereiche oder je Bereich,
-  „Trotzdem scharf am Keypad“, PIN in der Alarmkarte, Gültig ab/bis, verknüpftes Konto, PIN und
-  Bedrohungs-PIN setzen oder entfernen. PINs werden nie angezeigt; es gelten dieselben PIN-Regeln
-  wie im Dialog.
-- **Reiter Dokumentation**: alle Seiten der Anleitung mit kurzer Beschreibung.
-- **„?“ an jedem Abschnitt und Seitenblatt**: öffnet die Anleitung direkt an der passenden
-  Stelle – für genau die installierte Version, deutsch oder englisch.
-
-## [0.57.0b9] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
-
-### Hinzugefügt
-- **Auslöseregeln auf der Einstellungsseite bearbeiten**: anlegen, ändern, löschen, mit
-  Umschalter **Formular / YAML**. Im Formular: Name, Ergebnis, Schritte (einer / alle /
-  mindestens … davon, Meldergruppen und einzelne Melder, Zeit bis zum nächsten Schritt,
-  verschieben und entfernen), „Nicht, wenn vorher …“ und in welchen Profilen die Regel gilt.
-  Komplexe Regeln (verschachtelte Ausdrücke) gehen nur als YAML; Bedingungen („nur wenn …“)
-  ändert man im YAML.
-- Beim Bearbeiten steht immer als Satz da, was die Regel bewirkt, dazu die Prüfhinweise wie im
-  Dialog.
-
-## [0.57.0b8] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
-
-### Geändert
-- **Eigene Texte starten mit dem Text von Hauswacht**: Beim Bearbeiten stehen Titel und Text von
-  Hauswacht als Vorlage mit Platzhaltern im Feld (z. B. `Profil {profil} scharf geschaltet
-  ({wer}).`) – auf der Einstellungsseite und im Dialog. Unverändert gespeichert bleibt es beim
-  Text von Hauswacht.
-- Einstellungsseite: Knopf **„↺ Standardtext“** setzt einen eigenen Text zurück; die Vorschau mit
-  Beispielwerten ändert sich beim Tippen mit.
-- Platzhalter-Texte räumen leere Klammern besser auf (kein Leerzeichen mehr vor dem Punkt, wenn
-  z. B. `({wer})` leer bleibt).
-
-## [0.57.0b7] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 4).
-
-### Hinzugefügt
-- **Alarmgeber auf der Einstellungsseite bearbeiten**: Sirenen eintragen und austragen, echte
-  Sirenenansteuerung freigeben (nur mit ausdrücklicher Bestätigung, wie im Dialog), Schalter als
-  Sirene erlauben. Ton je Sirene bleibt im Dialog, ein Sirenentest nur in der Testkarte – die
-  Seite schaltet keine Sirene.
-- **Benachrichtigungen auf der Einstellungsseite bearbeiten**: allgemeine Empfänger, Testmodus,
-  Push-Knopf, „Nicht stören“ durchbrechen, Bedrohungs-PIN, jedes Ereignis an/aus mit eigenen
-  Empfängern, Erinnerung „Alle weg“.
-- **Eigene Texte je Ereignis** auf der Seite: Titel und Text mit Platzhalterhilfe, Prüfung auf
-  Tippfehler und Vorschau mit Beispielwerten.
-
-## [0.57.0b6] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
-
-### Behoben
-- **Einstellungsseite zeigte nach dem Speichern manchmal noch den alten Stand** (z. B. die
-  gerade gewählten Personen der Automatik fehlten in der Profil-Übersicht): Die Seite holte die
-  Übersicht, bevor Hauswacht mit den neuen Einstellungen neu gestartet war. Jetzt wartet sie, bis
-  Hauswacht mit genau dem gespeicherten Stand läuft.
-
-### Hinzugefügt
-- Profil bearbeiten → Automatik: **„Zeitplan anlegen ↗“** öffnet die Helfer in einem neuen
-  Fenster, **„Liste aktualisieren“** holt neue Zeitpläne und Personen, ohne die Eingaben im
-  Profil zu verlieren.
-
-## [0.57.0b5] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 3).
-
-### Hinzugefügt
-- **Alarmprofile auf der Einstellungsseite bearbeiten** (Reiter Profile): anlegen, ändern,
-  löschen – alle Einstellungen wie im Dialog, in Abschnitten (Allgemein, Was wird überwacht,
-  Zeiten, Beim Scharfschalten, Reaktion bei Alarm, Automatik, Scharf durch Schließen der Tür).
-  „Ausgenommen“ und „Ausgangstüren“ zeigen genau die Melder der angehakten Gruppen. Dieselbe
-  Prüfung wie im Dialog (`save_profile`).
+- „Nach Neustart immer scharf“: Beim Neuladen lief der Timer der alten Instanz weiter und ließ sich
+  nicht stoppen.
 
 ### Dokumentation
-- Einstellungsseite: neuer Abschnitt „Profile bearbeiten“; README, Roadmap – deutsch und
-  englisch.
-
-## [0.57.0b4] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
-
-### Hinzugefügt
-- **Einzelnen Melder bearbeiten:** Klick auf den Namen in der Tabelle öffnet „Melder
-  bearbeiten“ – Meldergruppe wechseln oder herausnehmen, Typ, Immer aktiv und je Profil, ob er
-  dort allein auslöst (Haken weg = ausgenommen).
-
-### Geändert
-- **Melder hinzufügen ohne Namen zu kennen:** Die Auswahl zeigt sofort alle passenden Melder
-  (nach Geräteklasse, sortiert nach Raum), das Suchfeld grenzt nur ein. Schalter für „auch
-  andere Entitäten“ und „auch Melder, die schon in einer Gruppe sind“ (mit Gruppenname). Für
-  Kippstellung und Erschütterungsstärke werden passende Quellen vorgeschlagen.
-
-### Dokumentation
-- Einstellungsseite: einzelnen Melder bearbeiten, Melder finden; Roadmap (0.55–0.57, als Nächstes
-  Profile), Architektur – deutsch und englisch.
-
-## [0.57.0b3] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 2).
-
-### Hinzugefügt
-- **Melder direkt auf der Einstellungsseite bearbeiten** (Reiter Melder, Seitenblatt rechts):
-  Meldergruppen anlegen, ändern und löschen – mit Melder-Suche, Typ je Melder, Label und
-  Fehlalarmschutz für Erschütterung („Empfehlung übernehmen“); Melder mit Kippstellung (Werte je
-  Zeile offen/gekippt/zu zuordnen); Erschütterungsstärken; Immer aktiv (Gruppen und Melder).
-- Dieselben Prüfungen wie im Dialog, Meldungen direkt am Feld. Speichern nur, wenn alle Bereiche
-  unscharf sind; hat jemand zwischendurch woanders etwas geändert, wird nicht überschrieben,
-  sondern neu geladen.
-
-### Dokumentation
-- Einstellungsseite: neuer Abschnitt „Melder bearbeiten“ (deutsch und englisch); README.
+- Neue Seite „Einstellungsseite“; Melder (Funkstille je Melder), Benachrichtigungen (eigene Texte
+  als Vorlage), Installation (Neustart), Auslöseregeln, README, Roadmap – deutsch und englisch.
 
 ### Intern
-- Neue Websocket-Befehle `hauswacht/settings/get` und `hauswacht/settings/apply` (nur
-  Administratoren, mit Revision); Logikschicht `core/changes/sensors.py`; eigenes Element
-  `hauswacht-sensor-editor` mit eigener Melder-Suche (keine internen Formular-Bausteine von Home
-  Assistant). Kern- und Integrationstests.
-
-## [0.57.0b2] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
-
-### Behoben
-- **Einstellungsseite blieb bei „Lade …“ stehen und die Reiter ließen sich nicht wechseln**, wenn
-  der Browser nach einem Update noch die alte Übersichtskarte geladen hatte. Die Seite kommt jetzt
-  auch damit zurecht; geht doch einmal etwas schief, steht ein Hinweis da („Browser bzw. App
-  einmal neu laden“) statt eines stillen Hängers.
-
-## [0.57.0b1] - 2026-11-18
-
-Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 1).
-
-### Hinzugefügt
-- **Einstellungsseite „Hauswacht“ in der Seitenleiste** (nur Administratoren, zusätzlich zum
-  Dialog): die ganze Einrichtung auf einen Blick in Reitern – Übersicht mit Prüfhinweisen,
-  Melder, Profile, Auslöseregeln, Alarmgeber, Benachrichtigungen, Personen und Bedienteile,
-  System. Im Reiter Melder die **Matrix „Melder × Profile“** nach Meldergruppen mit Suchfeld,
-  Fehlalarmschutz je Gruppe und den Besonderen Meldern. In dieser Stufe nur Anzeige; der Knopf
-  „Im Dialog bearbeiten“ führt in den Einstellungsdialog.
-- Unter System → **Einstellungsseite in der Seitenleiste** lässt sich die Seite ausblenden.
-
-### Dokumentation
-- Neue Seite „Einstellungsseite“ (deutsch und englisch); Installation, README.
-
-### Intern
-- ADR 0011 „Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog“. Die Übersichtskarte
-  liefert ihre Abschnitte einzeln (`_parts`), die Seite nutzt dieselben Texte und Daten
-  (`hauswacht/overview`, ergänzt um Meldergruppen und Besondere Melder).
+- Logikschicht erweitert (`core/changes/`: Regeln, Sirenen, Sprachausgabe, Karten, Bedienteile,
+  System, Aktions-Codes, Benutzer); Karten und Bedienteile nutzt jetzt auch der Dialog.
+  Websocket-Befehle `hauswacht/settings/get`, `…/apply`, `…/rule_check`, `…/new_cards` (nur
+  Administratoren). Kern- und Integrationstests; Test, dass jeder Doku-Link der Seite existiert.
 
 ## [0.56.0] - 2026-11-18
 

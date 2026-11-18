@@ -3,8 +3,7 @@
 Liefert die Werte für die Seitenblätter. Gespeichert wird über ``core.changes.system`` und
 ``core.changes.action_codes`` – dieselben Regeln wie im Dialog.
 
-Bedienteile anlegen und einstellen bleibt im Dialog: Kennungen, Karten und Tastendrücke werden
-dort am Gerät angelernt. Auf der Seite lassen sie sich ansehen und löschen.
+Bedienteile und Karten lassen sich auf der Seite anlegen, einstellen und anlernen.
 """
 
 from __future__ import annotations

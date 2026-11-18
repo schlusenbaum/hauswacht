@@ -2,7 +2,7 @@
 
 [Deutsch](../einstellungsseite.md) | **English**
 
-> **Pre-release:** the page **shows** the whole setup and you edit **everything** directly on it.
+> The page **shows** the whole setup and you edit **everything** directly on it.
 > The settings dialog (button "Edit in the dialog" at the top right) stays as a second way. Only
 > the **siren test** is deliberately started in the card "Hauswacht Test" – the page never
 > switches a siren.

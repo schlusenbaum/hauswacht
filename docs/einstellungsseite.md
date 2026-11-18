@@ -2,8 +2,7 @@
 
 **Deutsch** | [English](en/settings-page.md)
 
-> **Vorabversion:** Die Seite **zeigt** die ganze Einrichtung und du bearbeitest **alles** direkt
-> auf ihr. Der Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) bleibt als zweiter
+> Die Seite **zeigt** die ganze Einrichtung und du bearbeitest **alles** direkt auf ihr. Der Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) bleibt als zweiter
 > Weg. Nur den **Sirenentest** startest du bewusst in der Karte „Hauswacht Test“ – die Seite
 > schaltet nie eine Sirene.
 
