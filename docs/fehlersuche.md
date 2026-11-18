@@ -25,6 +25,20 @@ Es wurde beim Hochfahren offen gemeldet. Hauswacht kann nicht unterscheiden, ob 
 offen war, und überbrückt es deshalb, statt Alarm auszulösen. Sobald es geschlossen ist, wird es
 wieder normal überwacht.
 
+**Der Zeitplan schaltet nicht scharf (oder nicht unscharf).**
+- Scharf nur aus **unscharf** heraus – war schon ein anderes Profil scharf, passiert nichts.
+- Im **Gastmodus** schaltet Hauswacht nicht automatisch scharf (Nachricht „übersprungen“).
+- **Offene Fenster** werden nie automatisch bestätigt – dann kommt die Meldung „nicht scharf
+  geschaltet“.
+- Unscharf nur, wenn **genau dieses Profil** scharf ist, und nie während Eingangsverzögerung oder
+  Alarm.
+- **Neustart** während eines Blockwechsels: Der Zeitplan holt nichts nach; es gilt das Verhalten
+  nach Neustart.
+- Den Zeitplan selbst prüfen: Entwicklerwerkzeuge → Zustände → `schedule.…` muss zur
+  gewünschten Zeit von `off` auf `on` wechseln. Ereignisse `AutoArmed`/`AutoArmSkipped` mit
+  `reason: Zeitplan` zeigen, was Hauswacht daraus gemacht hat.
+  Mehr: [Je Wochentag andere Zeiten](profile.md#je-wochentag-andere-zeiten-zeitplan).
+
 **Einstellungen lassen sich nicht ändern.**
 Nur möglich, wenn **alle Bereiche unscharf** sind.
 

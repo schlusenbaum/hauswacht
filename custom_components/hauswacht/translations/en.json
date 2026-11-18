@@ -55,7 +55,7 @@
       },
       "wizard_profiles": {
         "title": "Alarm profiles",
-        "description": "{existing}An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
+        "description": "{existing}An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\n**Different times per weekday?** Optionally choose a **schedule helper**: when a time block starts, the profile is armed; when it ends, disarmed – e.g. “Night” Mon–Thu 22:30–6:00, Fri–Sat 0:30–8:00. You create the schedule yourself (Settings → Devices & services → Helpers → Schedule); this also works later.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
         "data": {
           "away": "Profile “Away”",
           "away_zones": "Away: sensor groups",
@@ -64,7 +64,13 @@
           "entry_delay": "Entry delay",
           "night": "Profile “Night”",
           "night_zones": "Night: sensor groups",
-          "night_rules": "Night: trigger rules"
+          "night_rules": "Night: trigger rules",
+          "away_schedule": "Away: by schedule (optional)",
+          "night_schedule": "Night: by schedule (optional)"
+        },
+        "data_description": {
+          "night_schedule": "For **different times per weekday**: choose a schedule helper – start of a block = armed, end = disarmed. Create it under Settings → Devices & services → Helpers → Create helper → Schedule. Empty = no time control.",
+          "away_schedule": "Like for “Night”, e.g. for fixed working hours. Empty = no time control."
         }
       },
       "wizard_summary": {
@@ -1126,7 +1132,7 @@
       },
       "wizard_profiles": {
         "title": "Alarm profiles",
-        "description": "{existing}An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
+        "description": "{existing}An alarm profile is a situation in which you arm. Suggestion:\n\n- **Away** – nobody is home: everything is monitored. After arming you have the **exit delay** to leave the house; when coming home the **entry delay** to disarm.\n- **Night** – everyone is asleep: only doors and windows, so you can move around the house. No exit delay.\n\n**Different times per weekday?** Optionally choose a **schedule helper**: when a time block starts, the profile is armed; when it ends, disarmed – e.g. “Night” Mon–Thu 22:30–6:00, Fri–Sat 0:30–8:00. You create the schedule yourself (Settings → Devices & services → Helpers → Schedule); this also works later.\n\nIf a profile with the same button already exists, the wizard adds to it instead of creating a second one. Unticked = not created.",
         "data": {
           "away": "Profile “Away”",
           "away_zones": "Away: sensor groups",
@@ -1135,7 +1141,13 @@
           "entry_delay": "Entry delay",
           "night": "Profile “Night”",
           "night_zones": "Night: sensor groups",
-          "night_rules": "Night: trigger rules"
+          "night_rules": "Night: trigger rules",
+          "away_schedule": "Away: by schedule (optional)",
+          "night_schedule": "Night: by schedule (optional)"
+        },
+        "data_description": {
+          "night_schedule": "For **different times per weekday**: choose a schedule helper – start of a block = armed, end = disarmed. Create it under Settings → Devices & services → Helpers → Create helper → Schedule. Empty = no time control.",
+          "away_schedule": "Like for “Night”, e.g. for fixed working hours. Empty = no time control."
         }
       },
       "wizard_summary": {

@@ -55,7 +55,7 @@
       },
       "wizard_profiles": {
         "title": "Alarmprofile",
-        "description": "{existing}Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "description": "{existing}Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\n**Je Wochentag andere Zeiten?** Optional einen **Zeitplan-Helfer** wählen: Beginnt ein Zeitblock, wird das Profil scharf; endet er, unscharf – z. B. „Nacht“ Mo–Do 22:30–6:00, Fr–Sa 0:30–8:00. Den Zeitplan legst du selbst an (Einstellungen → Geräte & Dienste → Helfer → Zeitplan); das geht auch später.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
         "data": {
           "away": "Profil „Abwesend“",
           "away_zones": "Abwesend: Meldergruppen",
@@ -64,7 +64,13 @@
           "entry_delay": "Eingangsverzögerung",
           "night": "Profil „Nacht“",
           "night_zones": "Nacht: Meldergruppen",
-          "night_rules": "Nacht: Auslöseregeln"
+          "night_rules": "Nacht: Auslöseregeln",
+          "away_schedule": "Abwesend: nach Zeitplan (optional)",
+          "night_schedule": "Nacht: nach Zeitplan (optional)"
+        },
+        "data_description": {
+          "night_schedule": "Für **je Wochentag andere Zeiten**: einen Zeitplan-Helfer wählen – Blockbeginn = scharf, Blockende = unscharf. Anlegen unter Einstellungen → Geräte & Dienste → Helfer → Helfer erstellen → Zeitplan. Leer = keine Zeitsteuerung.",
+          "away_schedule": "Wie bei „Nacht“, z. B. für feste Arbeitszeiten. Leer = keine Zeitsteuerung."
         }
       },
       "wizard_summary": {
@@ -1126,7 +1132,7 @@
       },
       "wizard_profiles": {
         "title": "Alarmprofile",
-        "description": "{existing}Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
+        "description": "{existing}Ein Alarmprofil ist eine Situation, in der du scharf schaltest. Vorschlag:\n\n- **Abwesend** – niemand ist zu Hause: alles wird überwacht. Nach dem Scharfschalten hast du die **Ausgangsverzögerung**, um das Haus zu verlassen; beim Heimkommen die **Eingangsverzögerung** zum Unscharfschalten.\n- **Nacht** – alle schlafen: nur Türen und Fenster, damit du dich im Haus bewegen kannst. Keine Ausgangsverzögerung.\n\n**Je Wochentag andere Zeiten?** Optional einen **Zeitplan-Helfer** wählen: Beginnt ein Zeitblock, wird das Profil scharf; endet er, unscharf – z. B. „Nacht“ Mo–Do 22:30–6:00, Fr–Sa 0:30–8:00. Den Zeitplan legst du selbst an (Einstellungen → Geräte & Dienste → Helfer → Zeitplan); das geht auch später.\n\nGibt es schon ein Profil mit demselben Knopf, ergänzt der Assistent dieses statt ein zweites anzulegen. Abwählen = nicht anlegen.",
         "data": {
           "away": "Profil „Abwesend“",
           "away_zones": "Abwesend: Meldergruppen",
@@ -1135,7 +1141,13 @@
           "entry_delay": "Eingangsverzögerung",
           "night": "Profil „Nacht“",
           "night_zones": "Nacht: Meldergruppen",
-          "night_rules": "Nacht: Auslöseregeln"
+          "night_rules": "Nacht: Auslöseregeln",
+          "away_schedule": "Abwesend: nach Zeitplan (optional)",
+          "night_schedule": "Nacht: nach Zeitplan (optional)"
+        },
+        "data_description": {
+          "night_schedule": "Für **je Wochentag andere Zeiten**: einen Zeitplan-Helfer wählen – Blockbeginn = scharf, Blockende = unscharf. Anlegen unter Einstellungen → Geräte & Dienste → Helfer → Helfer erstellen → Zeitplan. Leer = keine Zeitsteuerung.",
+          "away_schedule": "Wie bei „Nacht“, z. B. für feste Arbeitszeiten. Leer = keine Zeitsteuerung."
         }
       },
       "wizard_summary": {

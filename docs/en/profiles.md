@@ -112,7 +112,12 @@ different days**, use a Home Assistant **schedule helper** instead of a second p
 
 1. Settings → Devices & services → **Helpers** → Create helper → **Schedule**, name e.g. "Night".
 2. In the schedule, drag the time blocks per weekday during which the profile should be armed.
-3. In the profile under **Automation → Or by schedule (helper)** choose the schedule.
+3. In the profile under **Automation → Or by schedule (helper)** choose the schedule – or in the
+   [setup wizard](setup-wizard.md) in the step alarm profiles.
+
+You create the schedule yourself: Home Assistant offers integrations no official way to create
+schedules, and Hauswacht does not reach into internal parts that may change with updates. Later
+you change the times directly in the schedule – you don't need to open Hauswacht for that.
 
 *Example "Night":*
 

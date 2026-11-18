@@ -370,6 +370,13 @@ actions:
 faulty. (With German as Home Assistant language the entity is called
 `sensor.hauswacht_systemstatus`.)
 
+## Time control
+
+For "armed at certain times" you need no automation of your own: the profile automation supports
+fixed times and – for **different times per weekday** – a schedule helper, see
+[different times per weekday](profiles.md#different-times-per-weekday-schedule). The safety rules
+of the automation (guest mode, open windows, never during an alarm) then apply by themselves.
+
 ## Operating in other ways
 
 ### Guest mode from the calendar

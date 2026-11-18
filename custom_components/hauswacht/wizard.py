@@ -43,6 +43,7 @@ from homeassistant.util import dt as dt_util
 from . import menu_lists
 from .const import DOMAIN
 from .core.areas import MAIN_AREA, parse_areas
+from .core.automation import parse_automation
 from .core.changes.areas import save_area
 from .core.changes.notifications import set_general_recipients
 from .core.changes.profiles import save_profile
@@ -440,6 +441,21 @@ class WizardSteps:
             )
         )
 
+    @staticmethod
+    def _schedule_select() -> EntitySelector:
+        return EntitySelector(EntitySelectorConfig(domain="schedule"))
+
+    def _schedule_key(
+        self, options: Mapping[str, Any], mode: str, key: str, source: Mapping[str, Any]
+    ) -> vol.Optional:
+        """Zeitplan-Feld; vorbelegt mit dem Zeitplan des vorhandenen Profils."""
+        current = source.get(key)
+        if current is None:
+            existing = profile_with_mode(options, mode, self._wiz_area)
+            if existing:
+                current = parse_automation(options, existing).schedule
+        return vol.Optional(key, description={"suggested_value": current} if current else {})
+
     async def async_step_wizard_profiles(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -463,6 +479,7 @@ class WizardSteps:
                     continue
                 chosen_zones = list(user_input.get(f"{key}_zones") or [])
                 chosen_rules = list(user_input.get(f"{key}_rules") or [])
+                schedule = user_input.get(f"{key}_schedule")
                 if not chosen_zones and not chosen_rules:
                     errors[f"{key}_zones"] = "wizard_profile_empty"
                     continue
@@ -473,6 +490,7 @@ class WizardSteps:
                         "zones": chosen_zones,
                         "rules": chosen_rules,
                         **delays,
+                        **({"auto_schedule": schedule} if schedule else {}),
                         **({"area": self._wiz_area} if self._wiz_area != MAIN_AREA else {}),
                     },
                     language="de" if self._de() else "en",
@@ -508,6 +526,7 @@ class WizardSteps:
             fields[vol.Optional("away_rules", default=source.get("away_rules", list(rules)))] = (
                 self._rule_select(options)
             )
+        fields[self._schedule_key(options, AWAY, "away_schedule", source)] = self._schedule_select()
         fields.update(
             {
                 vol.Optional(
@@ -532,6 +551,9 @@ class WizardSteps:
             fields[vol.Optional("night_rules", default=source.get("night_rules", []))] = (
                 self._rule_select(options)
             )
+        fields[self._schedule_key(options, NIGHT, "night_schedule", source)] = (
+            self._schedule_select()
+        )
         return self.async_show_form(
             step_id="wizard_profiles",
             data_schema=vol.Schema(fields),

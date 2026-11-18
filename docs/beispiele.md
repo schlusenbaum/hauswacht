@@ -373,6 +373,13 @@ actions:
 `ok` = alles in Ordnung, `degraded` = ein Melder ist ausgefallen, `fault` = Funknetz oder Gateway
 gestört.
 
+## Zeitsteuerung
+
+Für „scharf zu bestimmten Zeiten“ brauchst du keine eigene Automation: Die Profil-Automatik kann
+feste Uhrzeiten und – für **je Wochentag andere Zeiten** – einen Zeitplan-Helfer, siehe
+[Je Wochentag andere Zeiten](profile.md#je-wochentag-andere-zeiten-zeitplan). Dabei gelten die
+Sicherheitsregeln der Automatik (Gastmodus, offene Fenster, nie während eines Alarms) von selbst.
+
 ## Bedienen auf anderen Wegen
 
 ### Gastmodus aus dem Kalender

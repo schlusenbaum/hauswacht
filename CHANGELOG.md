@@ -16,6 +16,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   (nur aus „unscharf“, Gastmodus, offene Fenster werden nie bestätigt, nie während eines Alarms).
   Blöcke über Mitternacht (bis 24:00 + ab 0:00) gelten als durchgehend; nach einem Neustart holt
   der Zeitplan nichts nach. Die Anlagenübersicht zeigt den Zeitplan im Profil.
+- **Einrichtungsassistent:** Im Schritt Alarmprofile lässt sich für „Abwesend“ und „Nacht“
+  optional gleich ein Zeitplan wählen (vorbelegt mit dem vorhandenen; leer = unverändert).
 
 ### Dokumentation
 - Neue Seite **Beispiele** (deutsch und englisch): Hauswacht mit anderen Geräten verbinden –
@@ -24,7 +26,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Willkommenslicht, Sabotage als kritische Benachrichtigung, Störungslampe, Gastmodus aus dem
   Kalender, Taster mit Zusatzfunktion – und was man besser nicht automatisiert.
 - Alarmprofile (deutsch und englisch): neuer Abschnitt „Je Wochentag andere Zeiten (Zeitplan)“
-  mit Beispiel.
+  mit Beispiel und Schritt-für-Schritt-Anleitung zum Anlegen des Helfers; ebenso im
+  Einrichtungsassistenten, unter Beispiele („Zeitsteuerung“) und in der Fehlersuche („Der Zeitplan
+  schaltet nicht“).
 
 ## [0.53.2] - 2026-11-17
 
