@@ -24,7 +24,7 @@ anpassen → Speichern.
 
 > **Bedienfeld:** In den Beispielen heißt es `alarm_control_panel.hauswacht`. Mit
 > [Bereichen](profile.md#bereiche) hat jeder Bereich sein eigenes Bedienfeld – dann das passende
-> eintragen.
+> eintragen. Jedes Ereignis nennt seinen Bereich im Feld `area` (z. B. `garage`).
 
 ## Bei Alarm
 

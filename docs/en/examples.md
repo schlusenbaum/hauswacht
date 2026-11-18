@@ -22,7 +22,8 @@ YAML** → paste the example → adjust entities, areas and services to yours �
 | Event **`hauswacht_event`** | Special occurrences, field `type`: e.g. `TamperDetected`, `SensorUnavailable`, `ButtonPressed`, `ActionCode` | see [reference](reference.md#events) |
 
 > **Panel:** the examples use `alarm_control_panel.hauswacht`. With [areas](profiles.md#areas)
-> every area has its own panel – then use the matching one.
+> every area has its own panel – then use the matching one. Every event names its area in the
+> field `area` (e.g. `garage`).
 
 ## On alarm
 

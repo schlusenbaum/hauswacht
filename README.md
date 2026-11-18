@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.54.1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.55.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -76,7 +76,7 @@ was eine Alarmanlage weiß**, damit du mit eigenen Automationen anschließt, was
 | Hauswacht liefert | Zum Beispiel |
 |---|---|
 | **Bedienfeld** je Bereich mit Zustand und Attributen: `phase` (unscharf, wird scharf, scharf, Eingangsverzögerung, **Alarm**, Alarm vorbei), aktives Profil, auslösender Melder, wer geschaltet hat, Testmodus, Gastmodus | „Wenn Alarm: Licht an“ |
-| **Ereignisse** `hauswacht_event` für fast alles: scharf, unscharf, Alarm, Sabotage, Melder ausgefallen, falscher PIN, Taster, Aktions-Code, Zeitautomatik … | „Bei Sabotage: kritische Push-Nachricht“ |
+| **Ereignisse** `hauswacht_event` für fast alles, jeweils mit Bereich: scharf, unscharf, Alarm, Sabotage, Melder ausgefallen, falscher PIN, Taster, Aktions-Code, Zeitautomatik … | „Bei Sabotage: kritische Push-Nachricht“ |
 | **Entitäten**: offene Melder, Systemstatus, Test- und Gastmodus, Knöpfe, Profil-Einstellungen, Aktions-Code-Ereignis | „Statuslicht rot, solange scharf“ |
 | **Aktionen** und **Knöpfe**: scharf schalten mit Profil (auch „trotzdem scharf“), unscharf, Alarm beenden, Gastmodus, Sirenentest, Melder im Testmodus simulieren | „Gastmodus aus dem Kalender“ |
 

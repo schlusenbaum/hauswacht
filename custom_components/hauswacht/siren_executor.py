@@ -63,6 +63,10 @@ class SirenExecutor:
         owners: dict[str, set[str]] | None = None,
     ) -> None:
         self.hass = hass
+        # hauswacht_event mit Bereich; die Runtime setzt ihre Funktion ein
+        self.fire_event: Callable[[Mapping[str, Any]], None] = lambda data: (
+            self.hass.bus.async_fire(EVENT_HAUSWACHT, dict(data))
+        )
         # Bereiche teilen Sirenen: Wer eine Sirene noch braucht, verhindert das Ausschalten
         # durch einen anderen Bereich (gilt nur zwischen Bereichen, nie gegen die Brandsperre).
         self.owner = owner
@@ -365,4 +369,4 @@ class SirenExecutor:
             "sent": [c.entity_id for c in decision.commands],
             "blocked": {b.device_key: b.reason.value for b in decision.blocked},
         }
-        self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "SirenDecision", **self.last_result})
+        self.fire_event({"type": "SirenDecision", **self.last_result})

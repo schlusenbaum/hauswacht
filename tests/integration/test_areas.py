@@ -13,8 +13,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import async_capture_events
 
-from custom_components.hauswacht.const import DOMAIN
+from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
 from custom_components.hauswacht.core.pin import hash_pin
 
 from .conftest import PANEL, WINDOW, ZONE_OPTIONS, make_entry, set_sensor, setup_entry
@@ -358,3 +359,36 @@ async def test_area_device_hangs_below_main_device(hass: HomeAssistant) -> None:
     assert main is not None
     assert area is not None
     assert area.via_device_id == main.id
+
+
+async def test_every_event_names_its_area(hass: HomeAssistant) -> None:
+    """Jedes hauswacht_event trägt area und area_name – wichtig für Automationen je Bereich."""
+    await _setup(hass)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=GARAGE_PANEL)
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=GARAGE_PANEL)
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
+    assert events
+    assert all("area" in e.data and "area_name" in e.data for e in events), [
+        e.data for e in events if "area" not in e.data
+    ]
+    garage = [
+        e.data for e in events if e.data["type"] == "StateChanged" and e.data["area"] == "garage"
+    ]
+    house = [
+        e.data for e in events if e.data["type"] == "StateChanged" and e.data["area"] == "main"
+    ]
+    assert garage
+    assert house
+    assert garage[0]["area_name"] == "Garage"
+
+
+async def test_system_wide_events_use_all(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await hass.services.async_call(
+        "hauswacht", "reset_code_lock", {"entity_id": PANEL}, blocking=True
+    )
+    reset = next(e.data for e in events if e.data["type"] == "CodeLockReset")
+    assert reset["area"] == "all"

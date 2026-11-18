@@ -9,6 +9,8 @@ NAME: Final = "Hauswacht"
 
 STORAGE_VERSION: Final = 1
 EVENT_HAUSWACHT: Final = "hauswacht_event"
+# Feld "area" in hauswacht_event für Ereignisse der ganzen Anlage (kein einzelner Bereich)
+EVENT_AREA_ALL: Final = "all"
 
 # Optionen
 OPT_PIN_SALT: Final = "pin_salt"

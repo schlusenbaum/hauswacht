@@ -89,8 +89,9 @@ Die Beispiele nennen das Bedienfeld `alarm_control_panel.hauswacht` – mit
   `switch.hauswacht_test_mode`) – im Zweifel unter Einstellungen → Entitäten nachsehen.
 - **Ereignisse kommen auch im Testmodus** – ohne die Testmodus-Bedingung gehen beim Probelauf
   Lichter an und Kameras zeichnen auf.
-- **Mehrere Bereiche:** Nicht jedes Ereignis nennt den Bereich – für Zustände das Bedienfeld des
-  Bereichs nehmen.
+- **Mehrere Bereiche:** Jedes Ereignis hat `area` (z. B. `garage`, `main`, `all` für die ganze
+  Anlage) – im Auslöser unter `event_data` mit angeben; für Zustände das Bedienfeld des Bereichs
+  nehmen.
 - **Selbst nachsehen:** Entwicklerwerkzeuge → Ereignisse → `hauswacht_event` abonnieren →
   „Zuhören starten“ zeigt jedes Ereignis mit allen Feldern; Entwicklerwerkzeuge → Zustände zeigt
   die Attribute des Bedienfelds.

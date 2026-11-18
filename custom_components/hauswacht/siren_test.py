@@ -17,7 +17,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, EVENT_HAUSWACHT
+from .const import DOMAIN
 from .core.notify_events import NotifyEvent
 from .core.siren_guard import ActivateRequest, GuardDecision, decide_activation
 from .core.siren_test import (
@@ -202,9 +202,14 @@ class SirenTester:
         self.runtime._notify()
 
     def _event(self, siren: str, step: str, **data: Any) -> None:
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
-            {"type": "SirenTest", "step": step, "siren": siren, **data},
+        self.runtime.fire_event(
+            {
+                "type": "SirenTest",
+                "step": step,
+                "siren": siren,
+                **data,
+                **self.runtime.all_areas_event(),
+            }
         )
         _LOGGER.info("Sirenentest %s: %s %s", siren, step, data)
 

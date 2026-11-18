@@ -26,7 +26,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.util import dt as dt_util
 
-from .const import EVENT_HAUSWACHT, OPT_HOMECOMING_SIGNALS, OPT_HOMECOMING_SSIDS
+from .const import OPT_HOMECOMING_SIGNALS, OPT_HOMECOMING_SSIDS
 from .core.automation import (
     ARRIVAL_AUTO_ONLY,
     AutoConfig,
@@ -393,4 +393,4 @@ class AutomationRunner:
 
     @callback
     def _event(self, kind: str, profile_id: str, **data: Any) -> None:
-        self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": kind, "profile_id": profile_id, **data})
+        self.runtime.fire_event({"type": kind, "profile_id": profile_id, **data})

@@ -42,6 +42,7 @@ from homeassistant.util import dt as dt_util
 from .automation_runner import REASON_RESTART, AutomationRunner
 from .const import (
     DOMAIN,
+    EVENT_AREA_ALL,
     EVENT_HAUSWACHT,
     ISSUE_PIN_COVERAGE,
     ISSUE_PIN_MASTER_ONLY,
@@ -301,6 +302,7 @@ class HauswachtRuntime:
         self.siren_owners: dict[str, set[str]] = self.main.siren_owners if main else {}
         self.sirens = SirenExecutor(hass, entry.options, owner=area_id, owners=self.siren_owners)
         self.sirens.on_change = self._save_soon
+        self.sirens.fire_event = self.fire_event
         self.sirens.test_mode_now = lambda: self.ctx.test_mode
         self._unsub_siren_check: CALLBACK_TYPE | None = None
         self._unsub_resume: CALLBACK_TYPE | None = None
@@ -327,6 +329,7 @@ class HauswachtRuntime:
         self.notifier = Notifier(
             hass, entry.options, label=areas[area_id].name if len(areas) > 1 else None
         )
+        self.notifier.fire_event = self.fire_event
         self.reminder = ReminderRunner(self)
         self.zones = parse_zones(entry.options)
         self.sensor_types = parse_types(entry.options)
@@ -748,8 +751,7 @@ class HauswachtRuntime:
         persistent_notification.async_create(
             self.hass, message, title=title, notification_id=NOTIFICATION_RESTART
         )
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.fire_event(
             {
                 "type": "RestoredAfterRestart",
                 "area": self.area_id,
@@ -758,6 +760,21 @@ class HauswachtRuntime:
                 "alarm_was_active": plan.alarm_was_active,
             },
         )
+
+    @property
+    def event_area(self) -> dict[str, Any]:
+        """Bereich für jedes hauswacht_event (Feld ``area`` und ``area_name``)."""
+        return {"area": self.area_id, "area_name": self.area_name}
+
+    def all_areas_event(self) -> dict[str, Any]:
+        """Bereich für Ereignisse der ganzen Anlage (Funknetz, Sirenentest, Bedienteile für
+        alle Bereiche)."""
+        return {"area": EVENT_AREA_ALL, "area_name": tr(self.lang, "event_all_areas")}
+
+    @callback
+    def fire_event(self, data: Mapping[str, Any]) -> None:
+        """hauswacht_event auslösen – immer mit Bereich. Ein ``area`` in ``data`` hat Vorrang."""
+        self.hass.bus.async_fire(EVENT_HAUSWACHT, {**self.event_area, **data})
 
     @callback
     def note_used(self, key: str) -> None:
@@ -1077,8 +1094,7 @@ class HauswachtRuntime:
         self.main._code_guard = result.state
         self.main._notify()
         failures = result.state.failures
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.fire_event(
             {"type": "InvalidCode", "failures": failures, "lock_seconds": result.lock_seconds},
         )
         if result.warn:
@@ -1108,8 +1124,8 @@ class HauswachtRuntime:
         """Falscheingabezähler und Sperre zurücksetzen (nur Administratoren)."""
         failures = current_failures(self.main._code_guard, time.monotonic())
         self.main._code_guard = CodeGuardState()
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT, {"type": "CodeLockReset", "by": by, "failures": failures}
+        self.fire_event(
+            {"type": "CodeLockReset", "by": by, "failures": failures, **self.all_areas_event()}
         )
         _LOGGER.info("Falscheingaben zurückgesetzt (%s Fehlversuche) von %s", failures, by)
         for area in self.main.areas.values():
@@ -1441,8 +1457,7 @@ class HauswachtRuntime:
         if was == now and not now:
             return
         ends = self.guest_ends_at
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.fire_event(
             {
                 "type": "GuestMode",
                 "area": self.area_id,
@@ -1619,15 +1634,23 @@ class HauswachtRuntime:
         armed = self.ctx.state is not AlarmState.DISARMED
         for entity_id in sorted(new_faults):
             _LOGGER.warning("Infrastruktur gestört: %s", entity_id)
-            self.hass.bus.async_fire(
-                EVENT_HAUSWACHT,
-                {"type": "InfrastructureFault", "indicator": entity_id, "armed": armed},
+            self.fire_event(
+                {
+                    "type": "InfrastructureFault",
+                    "indicator": entity_id,
+                    "armed": armed,
+                    **self.all_areas_event(),
+                },
             )
         for entity_id in sorted(recovered):
             _LOGGER.info("Infrastruktur wieder verfügbar: %s", entity_id)
-            self.hass.bus.async_fire(
-                EVENT_HAUSWACHT,
-                {"type": "InfrastructureRecovered", "indicator": entity_id, "armed": armed},
+            self.fire_event(
+                {
+                    "type": "InfrastructureRecovered",
+                    "indicator": entity_id,
+                    "armed": armed,
+                    **self.all_areas_event(),
+                },
             )
         if faulty and armed and new_faults:
             self.notifier.notify(
@@ -1649,9 +1672,7 @@ class HauswachtRuntime:
     def _always_triggered(self, entity_id: str) -> None:
         """Unscharf: Benachrichtigung (oder Alarm mit eigener Sirene), scharf: sofort Alarm."""
         name = display_name(self.hass, entity_id)
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT, {"type": "AlwaysActiveTriggered", "sensor_key": entity_id}
-        )
+        self.fire_event({"type": "AlwaysActiveTriggered", "sensor_key": entity_id})
         # Technik-Melder: auch scharf nie Einbruchalarm, nur die Reaktion "immer aktiv"
         technical_only = entity_id in self.technical_sensors and not self.always.sirens_enabled
         if technical_only or (
@@ -1682,7 +1703,7 @@ class HauswachtRuntime:
     def panic(self, key: str, name: str) -> None:
         """Notruf-Taste mit Alarm: sofortiger Alarm (unscharf mit der Reaktion "immer aktiv",
         scharf mit der des aktiven Profils). Sirenen nur über den Guard."""
-        self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "Panic", "control": name})
+        self.fire_event({"type": "Panic", "control": name})
         self._dispatch(AlwaysActiveTriggered(sensor_key=key, profile=always_runtime(self.always)))
 
     # --- Scharf durch Schließen der Tür -------------------------------------
@@ -1711,7 +1732,7 @@ class HauswachtRuntime:
             if any(s.state == "on" for s in states.values()):
                 return
             _LOGGER.info("Ausgangstür geschlossen – Ausgangsverzögerung endet vorzeitig")
-            self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "ArmedByClosingDoor"})
+            self.fire_event({"type": "ArmedByClosingDoor"})
             self._cancel_timer()
             self._dispatch(
                 ExitDelayElapsed(token=self.ctx.timer_token, readiness=self._readiness())
@@ -1756,19 +1777,17 @@ class HauswachtRuntime:
         for rule in recorded:
             if rule not in fired:
                 _LOGGER.info("Regel %s erfüllt, Bedingungen aber nicht – kein Alarm", rule.name)
-                self.hass.bus.async_fire(
-                    EVENT_HAUSWACHT,
+                self.fire_event(
                     {"type": "RuleConditionsNotMet", "rule": rule.rule_id, "sensor_key": entity_id},
                 )
         if not fired:
-            self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": "RuleStep", "sensor_key": entity_id})
+            self.fire_event({"type": "RuleStep", "sensor_key": entity_id})
             self._update_partials(now)
             return
         # Bei mehreren erfüllten Regeln gilt das strengere Ergebnis
         rule = max(fired, key=lambda r: STRICTNESS[r.result])
         if rule.result is RuleResult.NOTIFY:
-            self.hass.bus.async_fire(
-                EVENT_HAUSWACHT,
+            self.fire_event(
                 {
                     "type": "RuleFired",
                     "rule": rule.rule_id,
@@ -1793,8 +1812,7 @@ class HauswachtRuntime:
             return
         self._fired_rule = rule.name
         _LOGGER.warning("Regel erfüllt: %s (durch %s)", rule.name, entity_id)
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.fire_event(
             {"type": "RuleFired", "rule": rule.rule_id, "name": rule.name, "sensor_key": entity_id},
         )
         self._reset_rules(keep_fired=True)
@@ -1840,8 +1858,7 @@ class HauswachtRuntime:
         name = rule.name if rule else progress.rule_id
         first = display_name(self.hass, progress.first_sensor)
         _LOGGER.info("Regel %s nur teilweise erfüllt (%s)", name, progress.first_sensor)
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.fire_event(
             {"type": "RuleExpired", "rule": progress.rule_id, "sensor_key": progress.first_sensor},
         )
         self.notifier.notify(
@@ -1973,8 +1990,7 @@ class HauswachtRuntime:
         else:
             self._simulated[entity_id] = value
             new = value
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.fire_event(
             {"type": "SensorSimulated", "sensor_key": entity_id, "state": value},
         )
         device_class = real.attributes.get("device_class") if real else None
@@ -2077,9 +2093,7 @@ class HauswachtRuntime:
         state = self.hass.states.get(entity_id)
         device_class = state.attributes.get("device_class") if state else None
         role = sensor_role(entity_id, device_class, self.role_overrides)
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT, {"type": "SensorSimulated", "sensor_key": entity_id}
-        )
+        self.fire_event({"type": "SensorSimulated", "sensor_key": entity_id})
         armed = self.ctx.state is not AlarmState.DISARMED
         if (role is SensorRole.TAMPER_24H and self._tamper_mine(entity_id)) or (
             armed and entity_id in self.armed_sensors
@@ -2234,9 +2248,7 @@ class HauswachtRuntime:
     @callback
     def _on_sensor_lost(self, entity_id: str) -> None:
         _LOGGER.warning("Überwachter Sensor nicht mehr verfügbar: %s", entity_id)
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT, {"type": "SensorUnavailable", "sensor_key": entity_id}
-        )
+        self.fire_event({"type": "SensorUnavailable", "sensor_key": entity_id})
         self.notifier.notify(
             NotifyEvent.FAULT,
             *sensor_lost_message(entity_id, self.lang),
@@ -2350,7 +2362,7 @@ class HauswachtRuntime:
 
     @callback
     def _apply(self, effect: Effect) -> None:
-        self.hass.bus.async_fire(EVENT_HAUSWACHT, effect_payload(effect))
+        self.fire_event(effect_payload(effect))
 
         match effect:
             case StartTimer():
@@ -2446,9 +2458,7 @@ class HauswachtRuntime:
             profile=self.profile_name(self.ctx.profile.profile_id),
             items="; ".join(lines),
         )
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT, {"type": "OpenRuleSensors", "sensors": list(open_sensors)}
-        )
+        self.fire_event({"type": "OpenRuleSensors", "sensors": list(open_sensors)})
         self.notifier.notify(
             NotifyEvent.ARM_HINT,
             tr(lang, "arm_hint_title"),
