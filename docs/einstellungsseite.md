@@ -2,10 +2,10 @@
 
 **Deutsch** | [English](en/settings-page.md)
 
-> **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an, und die
-> **Melder** bearbeitest du schon direkt auf der Seite. Profile und alles andere bearbeitest du
-> noch im Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) – das folgt in den
-> nächsten Stufen.
+> **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an; **Melder**
+> und **Alarmprofile** bearbeitest du schon direkt auf der Seite. Auslöseregeln, Alarmgeber,
+> Benachrichtigungen, Personen und System bearbeitest du noch im Einstellungsdialog (Knopf „Im
+> Dialog bearbeiten“ oben rechts) – das folgt in den nächsten Stufen.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -88,6 +88,25 @@ So sicher wie der Dialog:
   geändert, speichert die Seite nicht, sondern lädt neu – dann einfach noch einmal.
 - Nach dem Speichern lädt Hauswacht seine Einstellungen neu (ein, zwei Sekunden), danach zeigt
   die Seite den neuen Stand mit „✓ Gespeichert.“
+
+## Profile bearbeiten
+
+Im Reiter **Profile** steht jedes Profil mit seinen Werten; **„Bearbeiten“** öffnet das
+Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgaben (30 s Verzögerung,
+180 s Alarm …). Die Abschnitte entsprechen dem Dialog:
+
+| Abschnitt | Inhalt |
+|---|---|
+| **Allgemein** | Name, Symbol (z. B. `mdi:weather-night`), Knopf am Bedienfeld, Bereich (nur bei mehreren Bereichen) |
+| **Was wird überwacht** | Meldergruppen (jeder Melder löst allein aus), **Ausgenommene** – die Liste zeigt genau die Melder der angehakten Gruppen –, Auslöseregeln, „Gekippte Fenster erlaubt“ (nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt)) |
+| **Zeiten** | Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Höchstzahl Alarmzyklen |
+| **Beim Scharfschalten** | Offene Melder, ausgefallene Melder, Manipulation löst Alarm aus |
+| **Reaktion bei Alarm** | Sirenen (die unter Alarmgeber eingetragenen), Ton, Lautstärke, stiller Alarm, Empfänger, zusätzliche Lautsprecher |
+| **Automatik** | Scharf um / unscharf um, Wochentage, Zeitplan, Personen („alle weg“), Wartezeit, unscharf bei Rückkehr, Türbeleg-Fenster – siehe [Automatik](profile.md#automatik) |
+| **Scharf durch Schließen der Tür** | An/aus, Ausgangstüren (die Melder vom Typ Tür in den gewählten Gruppen), Beruhigungszeit |
+
+Es gelten dieselben Regeln wie im Dialog: Name nötig und eindeutig, jeder Knopf nur einmal je
+Bereich, „Unscharf bei Rückkehr“ nur mit Personen. **Löschen** fragt einmal nach.
 
 ## Gut zu wissen
 

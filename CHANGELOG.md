@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b5] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 3).
+
+### Hinzugefügt
+- **Alarmprofile auf der Einstellungsseite bearbeiten** (Reiter Profile): anlegen, ändern,
+  löschen – alle Einstellungen wie im Dialog, in Abschnitten (Allgemein, Was wird überwacht,
+  Zeiten, Beim Scharfschalten, Reaktion bei Alarm, Automatik, Scharf durch Schließen der Tür).
+  „Ausgenommen“ und „Ausgangstüren“ zeigen genau die Melder der angehakten Gruppen. Dieselbe
+  Prüfung wie im Dialog (`save_profile`).
+
+### Dokumentation
+- Einstellungsseite: neuer Abschnitt „Profile bearbeiten“; README, Roadmap – deutsch und
+  englisch.
+
 ## [0.57.0b4] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).

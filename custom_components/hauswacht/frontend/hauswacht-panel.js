@@ -11,10 +11,11 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick. Melder bearbeitest du hier direkt; Profile und der Rest folgen – bis dahin über „Im Dialog bearbeiten“.",
+    hint: "Die ganze Einrichtung auf einen Blick. Melder und Profile bearbeitest du hier direkt; der Rest folgt – bis dahin über „Im Dialog bearbeiten“.",
     edit: "Bearbeiten",
     clickHint: "Auf einen Melder klicken: Gruppe, Typ, Immer aktiv und Ausnahmen je Profil ändern.",
     addGroup: "Meldergruppe anlegen",
+    addProfile: "Alarmprofil anlegen",
     addTilt: "Kippstellung hinzufügen",
     addStrength: "Erschütterungsstärke hinzufügen",
     armedNote: "Ändern geht nur, wenn alle Bereiche unscharf sind.",
@@ -51,10 +52,11 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance. You edit sensors right here; profiles and the rest follow – until then use “Edit in the dialog”.",
+    hint: "The whole setup at a glance. You edit sensors and profiles right here; the rest follows – until then use “Edit in the dialog”.",
     edit: "Edit",
     clickHint: "Click a sensor: change group, type, always active and exclusions per profile.",
     addGroup: "Add sensor group",
+    addProfile: "Add alarm profile",
     addTilt: "Add tilt position",
     addStrength: "Add vibration strength",
     armedNote: "Changes are only possible while all areas are disarmed.",
@@ -189,6 +191,7 @@ class HauswachtPanel extends HTMLElement {
     }
     try {
       await import(`/hauswacht/hauswacht-panel-edit.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-profile.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -248,6 +251,35 @@ class HauswachtPanel extends HTMLElement {
     });
   }
 
+  _openProfileEditor(profileId) {
+    if (!customElements.get("hauswacht-profile-editor") || !this._settings?.profile_edit) return;
+    const editor = document.createElement("hauswacht-profile-editor");
+    editor.addEventListener("hw-close", () => this._closeEditor());
+    editor.addEventListener("hw-saved", () => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave();
+    });
+    editor.addEventListener("hw-stale", () => this._reloadAfterSave());
+    this._editor = editor;
+    this.shadowRoot.appendChild(editor);
+    editor.open({ hass: this._hass, settings: this._settings, profile: profileId || null });
+  }
+
+  _profilesTab(view) {
+    const d = this._data;
+    const tools = this._settings && !this._settings.editable
+      ? `<div class="muted">${escHtml(this._t("armedNote"))}</div>`
+      : `<div class="tool">${this._btn("profile:", "+ " + this._t("addProfile"))}</div>`;
+    const cards = d.profiles
+      .map((p) => {
+        const head = `${escHtml(p.name)}${p.button ? ` <span class="muted">· ${escHtml(view._l("button", p.button))}</span>` : ""}`;
+        return `<ha-card><div class="wrap"><div class="head"><div class="t">${head}</div>${this._btn(`profile:${p.id}`, this._t("edit"))}</div>${view._kv(view._profileRows(p))}</div></ha-card>`;
+      })
+      .join("");
+    return `<ha-card><div class="wrap">${tools}</div></ha-card>${cards}`;
+  }
+
   _closeEditor() {
     if (this._editor) this._editor.remove();
     this._editor = null;
@@ -261,6 +293,7 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "strength") this._openEditor("strength", id ? s.strength.find((x) => x.entity === id) : null);
     else if (kind === "always") this._openEditor("always", null);
     else if (kind === "sensor") this._openEditor("sensor", { entity: spec.slice(7) });
+    else if (kind === "profile") this._openProfileEditor(id);
   }
 
   get _canEdit() {
@@ -375,6 +408,7 @@ class HauswachtPanel extends HTMLElement {
       return `<ha-card><div class="wrap muted">${escHtml(this._t("reloadHint"))}</div></ha-card>`;
     }
     if (this._tab === "sensors") return this._sensorsTab(view);
+    if (this._tab === "profiles") return this._profilesTab(view);
     const parts = view._parts();
     const items = TAB_PARTS[this._tab] || [];
     const asOf = this._tab === "overview" ? parts.asOf : "";

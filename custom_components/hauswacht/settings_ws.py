@@ -24,6 +24,7 @@ from homeassistant.helpers import label_registry as lr
 from .const import DOMAIN
 from .core.always_active import parse_always_active
 from .core.changes import Change
+from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sensors import (
     remove_group,
     remove_strength,
@@ -38,6 +39,7 @@ from .core.sensor_types import SensorType, default_type
 from .core.tilt import effective_types, parse_tilt_sources
 from .core.vibration import parse_vibration_sources, rule_for_zone_id
 from .names import display_name
+from .profile_settings_ws import build_profile_settings
 from .runtime import device_class_of, entities_by_label
 
 WS_GET = f"{DOMAIN}/settings/get"
@@ -65,6 +67,8 @@ ACTIONS = (
     "strength_delete",
     "always_save",
     "sensor_save",
+    "profile_save",
+    "profile_delete",
 )
 
 
@@ -159,6 +163,7 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             for label in lr.async_get(hass).async_list_labels()
         ],
         "entities": sorted(entities, key=lambda e: str(e["name"]).casefold()),
+        "profile_edit": build_profile_settings(hass, main),
     }
 
 
@@ -180,6 +185,13 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
         return save_sensor(
             options, entity_id, data, labels=labels, device_class=device_class_of(hass, entity_id)
         )
+    if action == "profile_save":
+        payload = {k: v for k, v in data.items() if k != "id"}
+        return save_profile(options, data.get("id") or None, payload, entities_by_label=labels)
+    if action == "profile_delete":
+        if data.get("id") not in options.get("profiles", {}):
+            return Change(errors={"base": "unknown_profile"})
+        return delete_profile(options, str(data.get("id")))
     if action == "group_delete":
         return remove_group(options, str(data.get("id")))
     if action == "tilt_save":

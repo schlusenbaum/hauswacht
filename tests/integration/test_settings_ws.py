@@ -146,3 +146,61 @@ async def test_apply_sensor_excluded_in_profile(hass: HomeAssistant, hass_ws_cli
     assert result["ok"] is True, result
     await hass.async_block_till_done()
     assert _options(hass)["profiles"]["night"]["excluded"] == [MOTION]
+
+
+async def test_apply_profile_save_new_and_delete(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    edit = data["profile_edit"]
+    night = next(p for p in edit["profiles"] if p["id"] == "night")
+    changed = {**night, "entry_delay": 45, "excluded": [MOTION]}
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data=changed,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    stored = _options(hass)["profiles"]["night"]
+    assert stored["entry_delay"] == 45
+    assert stored["excluded"] == [MOTION]
+    # Neues Profil aus den Vorgaben; gleicher Knopf wie "Nacht" wird abgelehnt
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    new = {**data["profile_edit"]["defaults"], "name": "Garten", "panel_mode": "night"}
+    refused = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data=new,
+    )
+    assert refused["errors"] == {"panel_mode": "panel_mode_taken"}
+    new["panel_mode"] = "none"
+    new["zones"] = ["aussen"]
+    created = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data=new,
+    )
+    assert created["ok"] is True, created
+    await hass.async_block_till_done()
+    assert _options(hass)["profiles"]["garten"]["zones"] == ["aussen"]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    deleted = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_delete",
+        data={"id": "garten"},
+    )
+    assert deleted["ok"] is True
+    await hass.async_block_till_done()
+    assert "garten" not in _options(hass)["profiles"]

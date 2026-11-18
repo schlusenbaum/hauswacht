@@ -2,9 +2,10 @@
 
 [Deutsch](../einstellungsseite.md) | **English**
 
-> **Pre-release:** the page grows in stages. It **shows** the whole setup, and you already edit
-> **sensors** directly on the page. Profiles and everything else are still edited in the settings
-> dialog (button "Edit in the dialog" at the top right) – that follows in the next stages.
+> **Pre-release:** the page grows in stages. It **shows** the whole setup; you already edit
+> **sensors** and **alarm profiles** directly on the page. Trigger rules, alarm devices,
+> notifications, people and system are still edited in the settings dialog (button "Edit in the
+> dialog" at the top right) – that follows in the next stages.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -86,6 +87,25 @@ As safe as the dialog:
   in the meantime, the page does not save but reloads – then simply try again.
 - After saving, Hauswacht reloads its settings (a second or two), then the page shows the new
   state with "✓ Saved."
+
+## Editing profiles
+
+The tab **Profiles** lists every profile with its values; **"Edit"** opens the side sheet,
+**"+ Add alarm profile"** an empty one with the usual defaults (30 s delay, 180 s alarm …). The
+sections match the dialog:
+
+| Section | Content |
+|---|---|
+| **General** | Name, icon (e.g. `mdi:weather-night`), button on the alarm panel, area (only with several areas) |
+| **What is monitored** | Sensor groups (every sensor triggers on its own), **excluded** – the list shows exactly the sensors of the ticked groups –, trigger rules, "Tilted windows allowed" (only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted)) |
+| **Times** | Exit and entry delay, duration of the alarm reaction, maximum alarm cycles |
+| **When arming** | Open sensors, failed sensors, tampering triggers an alarm |
+| **Reaction on alarm** | Sirens (those registered under alarm devices), tone, volume, silent alarm, recipients, additional speakers |
+| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time, disarm on arrival, door-proof window – see [automation](profiles.md#automation) |
+| **Arm by closing the door** | On/off, exit doors (the sensors of type door in the chosen groups), settle time |
+
+The same rules as in the dialog apply: a name is needed and must be unique, every button only
+once per area, "disarm on arrival" only with persons. **Delete** asks once.
 
 ## Good to know
 

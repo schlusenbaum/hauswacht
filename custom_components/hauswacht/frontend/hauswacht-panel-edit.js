@@ -666,3 +666,6 @@ class HauswachtSensorEditor extends HTMLElement {
 if (!customElements.get("hauswacht-sensor-editor")) {
   customElements.define("hauswacht-sensor-editor", HauswachtSensorEditor);
 }
+
+// Für weitere Seitenblätter (Profile …): dieselbe Gestaltung
+window.HauswachtEditStyle = window.HauswachtEditStyle || EDIT_STYLE;

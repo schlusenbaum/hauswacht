@@ -24,6 +24,8 @@ CARD_FILES = (EDITOR_FILE, CARD_FILE, TEST_CARD_FILE, OVERVIEW_CARD_FILE, ALARM_
 # Einstellungsseite in der Seitenleiste (ADR 0011) – nur bereitgestellt, nicht auf jeder Seite
 PANEL_FILE = "hauswacht-panel.js"
 PANEL_EDIT_FILE = "hauswacht-panel-edit.js"
+PANEL_PROFILE_FILE = "hauswacht-panel-profile.js"
+PANEL_FILES = (PANEL_FILE, PANEL_EDIT_FILE, PANEL_PROFILE_FILE)
 PANEL_URL_PATH = "hauswacht-settings"
 PANEL_ELEMENT = "hauswacht-panel"
 URL_BASE = "/hauswacht"
@@ -43,7 +45,7 @@ async def async_register_card(hass: HomeAssistant, version: str) -> None:
     await hass.http.async_register_static_paths(
         [
             StaticPathConfig(f"{URL_BASE}/{name}", str(folder / name), cache_headers=False)
-            for name in (*CARD_FILES, PANEL_FILE, PANEL_EDIT_FILE)
+            for name in (*CARD_FILES, *PANEL_FILES)
         ]
     )
     # Version im Pfad: Nach einem Update lädt der Browser die neue Karte statt der alten
