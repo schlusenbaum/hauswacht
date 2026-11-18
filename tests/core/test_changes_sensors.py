@@ -11,6 +11,7 @@ from custom_components.hauswacht.core.changes.sensors import (
     remove_tilt,
     save_always,
     save_group,
+    save_sensor,
     save_strength,
     save_tilt,
 )
@@ -142,3 +143,52 @@ def test_always_keeps_siren_settings() -> None:
         "sirens_enabled": True,
         "zones": ["aussen"],
     }
+
+
+def test_save_sensor_moves_group_type_always_and_excluded() -> None:
+    options = {
+        **_options(),
+        "zones": {
+            "aussen": {"name": "Außen", "entities": [DOOR], "label": None},
+            "innen": {"name": "Innen", "entities": [], "label": None},
+        },
+        "profiles": {
+            "weg": {"name": "Weg", "zones": ["aussen", "innen"]},
+            "nacht": {"name": "Nacht", "zones": ["aussen"], "excluded": [DOOR]},
+        },
+    }
+    change = save_sensor(
+        options,
+        DOOR,
+        {"group": "innen", "type": "window", "always": True, "excluded": ["weg", "nacht"]},
+        labels={},
+        device_class="door",
+    )
+    assert change.ok
+    new = change.options
+    assert new is not None
+    assert new["zones"]["aussen"]["entities"] == []
+    assert new["zones"]["innen"]["entities"] == [DOOR]
+    assert new["sensor_types"] == {DOOR: "window"}
+    assert new["always_active"]["sensors"] == [DOOR]
+    # "nacht" enthält die Gruppe "innen" nicht – dort wird nichts ausgenommen
+    assert new["profiles"]["weg"]["excluded"] == [DOOR]
+    assert new["profiles"]["nacht"]["excluded"] == []
+
+
+def test_save_sensor_errors() -> None:
+    assert save_sensor(_options(), DOOR, {"group": "nix"}, labels={}, device_class=None).errors == {
+        "group": "unknown_group"
+    }
+    labelled = {
+        **_options(),
+        "zones": {"aussen": {"name": "Außen", "entities": [], "label": "alarm"}},
+    }
+    labels = {"alarm": frozenset({DOOR})}
+    assert save_sensor(
+        labelled, DOOR, {"group": None}, labels=labels, device_class=None
+    ).errors == {"group": "group_by_label"}
+    ok = save_sensor(labelled, DOOR, {"group": "aussen"}, labels=labels, device_class=None)
+    assert ok.ok
+    assert ok.options is not None
+    assert ok.options["zones"]["aussen"]["entities"] == []  # bleibt über das Label drin

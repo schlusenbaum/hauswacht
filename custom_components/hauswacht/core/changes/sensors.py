@@ -179,3 +179,63 @@ def save_always(
     always["zones"] = [z for z in zones if z in known]
     always["sensors"] = sorted({str(s) for s in sensors if "." in str(s)})
     return Change(options={**options, "always_active": always})
+
+
+def save_sensor(
+    options: Mapping[str, Any],
+    entity_id: str,
+    data: Mapping[str, Any],
+    *,
+    labels: Mapping[str, frozenset[str]],
+    device_class: str | None,
+) -> Change:
+    """Einen Melder bearbeiten: Gruppe, Typ, Immer aktiv, ausgenommen je Profil.
+
+    ``data``: ``group`` (ID oder leer = keine), ``type``, ``always`` (bool), ``excluded``
+    (Liste der Profile, in denen der Melder nicht allein auslöst).
+    Kommt der Melder über ein Label in eine Gruppe, lässt sich die Gruppe hier nicht wechseln.
+    """
+    if "." not in entity_id:
+        return failed({"base": "required"})
+    zones = parse_zones(options)
+    group = data.get("group") or None
+    if group is not None and group not in zones:
+        return failed({"group": "unknown_group"})
+    by_label = [
+        z.zone_id for z in zones.values() if z.label and entity_id in labels.get(z.label, ())
+    ]
+    if by_label and group not in by_label:
+        return failed({"group": "group_by_label"})
+    new: dict[str, Any] = dict(options)
+    stored = {k: dict(v) for k, v in options.get("zones", {}).items()}
+    for zone_id, zone in stored.items():
+        entities = [e for e in zone.get("entities", []) if e != entity_id]
+        if zone_id == group and not by_label:
+            entities = sorted({*entities, entity_id})
+        zone["entities"] = entities
+    new["zones"] = stored
+    kind = data.get("type")
+    if kind:
+        try:
+            SensorType(kind)
+        except ValueError:
+            return failed({"type": "unknown_type"})
+        new = apply_types(new, {entity_id: kind}, {entity_id: device_class})
+    if "always" in data:
+        always = dict(new.get("always_active", {}) or {})
+        sensors = {s for s in always.get("sensors", []) if s != entity_id}
+        if data.get("always"):
+            sensors.add(entity_id)
+        always["sensors"] = sorted(sensors)
+        new["always_active"] = always
+    if "excluded" in data:
+        excluded = set(data.get("excluded") or [])
+        profiles = {k: dict(v) for k, v in new.get("profiles", {}).items()}
+        for profile_id, profile in profiles.items():
+            current = {e for e in profile.get("excluded", []) or [] if e != entity_id}
+            if profile_id in excluded and group in (profile.get("zones") or []):
+                current.add(entity_id)
+            if current or "excluded" in profile:
+                profile["excluded"] = sorted(current)
+        new["profiles"] = profiles
+    return Change(options=new, item_id=entity_id)

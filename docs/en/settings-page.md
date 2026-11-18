@@ -55,10 +55,25 @@ applies immediately, **Cancel** or a click next to it discards.
 
 | What | Where | What you set |
 |---|---|---|
+| **Single sensor** | Click the sensor's **name** in the table | **Sensor group** (move it or take it out), **type**, **always active** and per profile whether it **triggers on its own** there – untick = excluded in this profile (e.g. hallway motion sensor at night). If the sensor is in its group via a label, change the group via the label on the entity |
 | **Sensor group** | "+ Add sensor group" or "Edit" at the group | Name, sensors (search field → click), **type per sensor**, additionally a label. If vibration sensors are included, the **false alarm protection** appears (reports until alarm, time window) with the button "Use recommendation" (2 in 60 s). Deleting also removes the group from all profiles |
 | **Sensor with tilt position** | Special sensors → "+ Add tilt position" or "Edit" | Source (search field), optionally an attribute, then for every known value **open / tilted / closed** – type further values and press Enter. Optionally add it to a group right away |
 | **Vibration strength** | Special sensors → "+ Add vibration strength" | Sensor (search field, the current value is shown) and threshold; optionally add it to a group right away |
 | **Always active** | "Edit" under always active | Tick whole groups, add or remove single sensors. Sirens for "always active" stay in the dialog |
+
+**Finding sensors without knowing their names:** when adding, the list immediately shows all
+**suitable** sensors (door, window, motion, vibration, water … as well as locks and garage doors),
+sorted by room – ready to click. The search field only narrows the list. Below it are two
+switches:
+
+- **Also show other entities** – e.g. binary sensors without a suitable device class
+  (connectivity, update …), which are hidden otherwise.
+- **Also show sensors that are already in a group** – with the group named ("in Outside").
+  Normally hidden, because a sensor belongs to exactly one group.
+
+For special sensors the list shows suitable sources: for the tilt position select helpers and
+sensors with values like "tilted" or names with "window", "handle" …; for the vibration strength
+number helpers and sensors with "vibration" in their name.
 
 As safe as the dialog:
 

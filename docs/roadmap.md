@@ -39,6 +39,9 @@
 | 0.52 | Anlagenübersicht zeigt Gastmodus, Aktions-Codes und das Recht „Scharf erzwingen“; neue Prüfhinweise (stiller Notruf ohne Empfänger, Aktions-Code mit gelöschtem Profil/Keypad, Gastmodus an); Notfallblatt erklärt „trotzdem scharf“ am Keypad |
 | 0.53 | [Einrichtungsassistent](assistent.md): kurze Einführung, Melder-Vorschläge nach Etage und Raum, Meldergruppen oder Auslöseregeln, Profile, Empfänger mit Test-Nachricht, Sirenen (ohne Freigabe), Benutzer, Probelauf im Testmodus, weitere Bereiche, Kapitel-Auswahl – jeder Schritt überspringbar; Einstellungsregeln im Kern ([ADR 0009](entwicklung/adr/0009-einrichtungsassistent.md)) |
 | 0.54 | Profil-Automatik nach Zeitplan-Helfer: je Wochentag andere Zeiten ohne zweites Profil; Doku-Seite [Beispiele](beispiele.md) für eigene Automationen (Licht, Kamera, Rollläden …) |
+| 0.55 | Jedes Ereignis nennt seinen Bereich (`area`, `area_name`); vollständige [Referenz](referenz.md) und Spickzettel [Automationen](automationen.md); bereit für den Katalog von Marketplace/HACS |
+| 0.56 | [Gekippte Fenster](melder.md#melder-mit-kippstellung-gekippt) je Profil erlaubt oder wie offen; [Erschütterungsmelder](melder.md#erschütterungsmelder) mit Fehlalarmschutz, auch als Zahl ([ADR 0010](entwicklung/adr/0010-fenster-kippstellung-erschuetterung.md)) |
+| 0.57 (in Arbeit) | [Einstellungsseite](einstellungsseite.md) in der Seitenleiste: alles auf einen Blick, Matrix „Melder × Profile“, Melder direkt bearbeiten ([ADR 0011](entwicklung/adr/0011-einstellungsseite.md)) |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -49,7 +52,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
-| ganz hinten | Eigenes Einstellungs-Panel in der Seitenleiste – erst nach dem Assistenten, mit eigenem Konzept |
+| als Nächstes | [Einstellungsseite](einstellungsseite.md): Profile bearbeiten, dann Auslöseregeln, Alarmgeber, Benachrichtigungen, Personen und Bedienteile, System – Stufe für Stufe ([ADR 0011](entwicklung/adr/0011-einstellungsseite.md)) |
 | 1.0.0 | Stabil, Doku vollständig (Aufnahme in den Katalog von Marketplace/HACS ist seit 0.55.3 beantragt) |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
 | 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gastmodus-Zeiten (z. B. jeden Dienstag 8–12 Uhr) |

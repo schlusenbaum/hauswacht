@@ -57,10 +57,25 @@ Seitenblatt; **Speichern** übernimmt sofort, **Abbrechen** oder ein Klick daneb
 
 | Was | Wo | Was du einstellst |
 |---|---|---|
+| **Einzelner Melder** | Auf den **Namen** des Melders in der Tabelle klicken | **Meldergruppe** (verschieben oder herausnehmen), **Typ**, **Immer aktiv** und je Profil, ob er dort **allein auslöst** – Haken weg = in diesem Profil ausgenommen (z. B. Bewegungsmelder Flur nachts). Steckt der Melder über ein Label in seiner Gruppe, wechselst du die Gruppe über das Label an der Entität |
 | **Meldergruppe** | „+ Meldergruppe anlegen“ bzw. „Bearbeiten“ an der Gruppe | Name, Melder (Suchfeld → anklicken), **Typ je Melder**, zusätzlich ein Label. Sind Erschütterungsmelder dabei, erscheint der **Fehlalarmschutz** (Meldungen bis zum Alarm, Zeitfenster) mit Knopf „Empfehlung übernehmen“ (2 in 60 s). Löschen nimmt die Gruppe auch aus allen Profilen |
 | **Melder mit Kippstellung** | Besondere Melder → „+ Kippstellung hinzufügen“ bzw. „Bearbeiten“ | Quelle (Suchfeld), optional Attribut, dann je bekanntem Wert **offen / gekippt / zu** – weitere Werte eintippen und Enter. Optional gleich in eine Gruppe |
 | **Erschütterungsstärke** | Besondere Melder → „+ Erschütterungsstärke hinzufügen“ | Sensor (Suchfeld, der aktuelle Wert steht daneben) und Schwelle; optional gleich in eine Gruppe |
 | **Immer aktiv** | „Bearbeiten“ unter Immer aktiv | Ganze Gruppen ankreuzen, einzelne Melder hinzufügen oder entfernen. Sirenen für „Immer aktiv“ bleiben im Dialog |
+
+**Melder finden, ohne ihre Namen zu kennen:** Beim Hinzufügen zeigt die Liste sofort alle
+**passenden** Melder (Tür, Fenster, Bewegung, Erschütterung, Wasser … sowie Schlösser und
+Garagentore), sortiert nach Raum – zum Anklicken. Das Suchfeld grenzt die Liste nur ein.
+Darunter zwei Schalter:
+
+- **Auch andere Entitäten zeigen** – z. B. Binärsensoren ohne passende Geräteklasse (Verbindung,
+  Update …), die sonst ausgeblendet sind.
+- **Auch Melder zeigen, die schon in einer Gruppe sind** – mit Angabe der Gruppe („in Außen“).
+  Normalerweise ausgeblendet, denn ein Melder gehört zu genau einer Gruppe.
+
+Bei Besonderen Meldern zeigt die Liste passende Quellen: für die Kippstellung Auswahl-Helfer und
+Sensoren mit Werten wie „tilted“ oder Namen mit „Fenster“, „Griff“ …; für die
+Erschütterungsstärke Zahlenwert-Helfer und Sensoren mit „vibration“ im Namen.
 
 So sicher wie der Dialog:
 

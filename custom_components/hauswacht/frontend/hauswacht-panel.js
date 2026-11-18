@@ -13,6 +13,7 @@ const TEXTS = {
     dialog: "Im Dialog bearbeiten",
     hint: "Die ganze Einrichtung auf einen Blick. Melder bearbeitest du hier direkt; Profile und der Rest folgen – bis dahin über „Im Dialog bearbeiten“.",
     edit: "Bearbeiten",
+    clickHint: "Auf einen Melder klicken: Gruppe, Typ, Immer aktiv und Ausnahmen je Profil ändern.",
     addGroup: "Meldergruppe anlegen",
     addTilt: "Kippstellung hinzufügen",
     addStrength: "Erschütterungsstärke hinzufügen",
@@ -52,6 +53,7 @@ const TEXTS = {
     dialog: "Edit in the dialog",
     hint: "The whole setup at a glance. You edit sensors right here; profiles and the rest follow – until then use “Edit in the dialog”.",
     edit: "Edit",
+    clickHint: "Click a sensor: change group, type, always active and exclusions per profile.",
     addGroup: "Add sensor group",
     addTilt: "Add tilt position",
     addStrength: "Add vibration strength",
@@ -118,6 +120,8 @@ const PANEL_STYLE = `
   .tool { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
   button.e { font: inherit; font-size: .85rem; padding: 4px 12px; border-radius: 16px; cursor: pointer;
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-color); }
+  a.lnk { color: var(--primary-color); cursor: pointer; }
+  a.lnk:hover { text-decoration: underline; }
   tr.grp button.e { margin-left: 8px; padding: 1px 10px; }
   .item button.e { float: right; }
   .ok { color: var(--success-color, #43a047); margin: 0 0 10px; }
@@ -256,6 +260,7 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "tilt") this._openEditor("tilt", id ? s.tilt.find((x) => x.entity === id) : null);
     else if (kind === "strength") this._openEditor("strength", id ? s.strength.find((x) => x.entity === id) : null);
     else if (kind === "always") this._openEditor("always", null);
+    else if (kind === "sensor") this._openEditor("sensor", { entity: spec.slice(7) });
   }
 
   get _canEdit() {
@@ -295,8 +300,12 @@ class HauswachtPanel extends HTMLElement {
       else loose.push(s);
     }
     const cols = d.profiles.length + 4;
+    const name = (s) =>
+      this._canEdit && s.entity_id
+        ? `<a class="lnk" data-edit="sensor:${escHtml(s.entity_id)}">${escHtml(s.name)}</a>`
+        : escHtml(s.name);
     const row = (s) =>
-      `<tr><td>${escHtml(s.name)}${s.always_active ? ` <span class="muted">(${escHtml(view._t("always"))})</span>` : ""}</td><td>${escHtml(view._l("type", s.type))}</td><td class="${s.state === "unavailable" ? "warn" : ""}">${escHtml(view._l("state", s.state))}</td><td class="nw">${s.battery != null ? `${s.battery} %` : ""}</td>${d.profiles.map((p) => `<td class="c">${view._sensorRole((s.profiles || {})[p.id])}</td>`).join("")}</tr>`;
+      `<tr><td>${name(s)}${s.always_active ? ` <span class="muted">(${escHtml(view._t("always"))})</span>` : ""}</td><td>${escHtml(view._l("type", s.type))}</td><td class="${s.state === "unavailable" ? "warn" : ""}">${escHtml(view._l("state", s.state))}</td><td class="nw">${s.battery != null ? `${s.battery} %` : ""}</td>${d.profiles.map((p) => `<td class="c">${view._sensorRole((s.profiles || {})[p.id])}</td>`).join("")}</tr>`;
     let body = "";
     for (const g of groups) {
       const members = byGroup.get(g.name) || [];
@@ -313,7 +322,7 @@ class HauswachtPanel extends HTMLElement {
     if (!body) body = `<tr><td colspan="${cols}" class="muted">${escHtml(this._t("noMatch"))}</td></tr>`;
     const tools = this._settings && !this._settings.editable
       ? `<div class="muted">${escHtml(this._t("armedNote"))}</div>`
-      : `<div class="tool">${this._btn("group:", "+ " + this._t("addGroup"))}</div>`;
+      : `<div class="tool">${this._btn("group:", "+ " + this._t("addGroup"))}</div>${this._canEdit ? `<div class="muted">${escHtml(this._t("clickHint"))}</div>` : ""}`;
     const matrix = `${tools}
       <input class="search" type="search" placeholder="${escHtml(this._t("search"))}" value="${escHtml(this._search)}">
       <div class="muted">${escHtml(view._t("legend"))}</div>

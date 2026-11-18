@@ -129,3 +129,20 @@ async def test_apply_special_and_always(hass: HomeAssistant, hass_ws_client: Any
     assert result["ok"] is True, result
     await hass.async_block_till_done()
     assert _options(hass)["always_active"]["sensors"] == [WINDOW]
+
+
+async def test_apply_sensor_excluded_in_profile(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert {p["id"] for p in data["profiles"]} >= {"home", "night"}
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="sensor_save",
+        data={"entity": MOTION, "group": "keller", "type": "motion", "excluded": ["night"]},
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    assert _options(hass)["profiles"]["night"]["excluded"] == [MOTION]

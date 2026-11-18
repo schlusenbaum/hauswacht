@@ -30,6 +30,7 @@ from .core.changes.sensors import (
     remove_tilt,
     save_always,
     save_group,
+    save_sensor,
     save_strength,
     save_tilt,
 )
@@ -63,6 +64,7 @@ ACTIONS = (
     "strength_save",
     "strength_delete",
     "always_save",
+    "sensor_save",
 )
 
 
@@ -84,6 +86,11 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     types = effective_types(options)
     always = parse_always_active(options)
+    labels = entities_by_label(hass)
+    excluded_by_profile = {
+        pid: list(data.get("excluded", []) or [])
+        for pid, data in options.get("profiles", {}).items()
+    }
     entities = []
     for state in hass.states.async_all(PICKER_DOMAINS):
         entity_id = state.entity_id
@@ -132,6 +139,21 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             for s in parse_vibration_sources(options).values()
         ],
         "always": {"zones": list(always.zones), "sensors": sorted(always.sensors)},
+        # Melder, die über ein Label in einer Gruppe stecken (dort nicht verschiebbar)
+        "label_members": {
+            zone_id: sorted(labels.get(data["label"], frozenset()))
+            for zone_id, data in options.get("zones", {}).items()
+            if data.get("label")
+        },
+        "profiles": [
+            {
+                "id": pid,
+                "name": data.get("name", pid),
+                "zones": list(data.get("zones", []) or []),
+                "excluded": excluded_by_profile[pid],
+            }
+            for pid, data in options.get("profiles", {}).items()
+        ],
         "labels": [
             {"id": label.label_id, "name": label.name}
             for label in lr.async_get(hass).async_list_labels()
@@ -152,6 +174,11 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
             data,
             labels=labels,
             device_classes={e: device_class_of(hass, e) for e in members},
+        )
+    if action == "sensor_save":
+        entity_id = str(data.get("entity") or "")
+        return save_sensor(
+            options, entity_id, data, labels=labels, device_class=device_class_of(hass, entity_id)
         )
     if action == "group_delete":
         return remove_group(options, str(data.get("id")))

@@ -6,6 +6,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b4] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Hinzugefügt
+- **Einzelnen Melder bearbeiten:** Klick auf den Namen in der Tabelle öffnet „Melder
+  bearbeiten“ – Meldergruppe wechseln oder herausnehmen, Typ, Immer aktiv und je Profil, ob er
+  dort allein auslöst (Haken weg = ausgenommen).
+
+### Geändert
+- **Melder hinzufügen ohne Namen zu kennen:** Die Auswahl zeigt sofort alle passenden Melder
+  (nach Geräteklasse, sortiert nach Raum), das Suchfeld grenzt nur ein. Schalter für „auch
+  andere Entitäten“ und „auch Melder, die schon in einer Gruppe sind“ (mit Gruppenname). Für
+  Kippstellung und Erschütterungsstärke werden passende Quellen vorgeschlagen.
+
+### Dokumentation
+- Einstellungsseite: einzelnen Melder bearbeiten, Melder finden; Roadmap (0.55–0.57, als Nächstes
+  Profile), Architektur – deutsch und englisch.
+
 ## [0.57.0b3] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 2).

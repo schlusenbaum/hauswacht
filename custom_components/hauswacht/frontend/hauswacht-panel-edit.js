@@ -49,6 +49,18 @@ const ET = {
     alwaysGroups: "Ganze Meldergruppen",
     alwaysSensors: "Einzelne Melder",
     chosen: "gewählt",
+    showAll: "Auch andere Entitäten zeigen (nicht nur passende)",
+    showAssigned: "Auch Melder zeigen, die schon in einer Gruppe sind",
+    inGroup: "in",
+    more: "… weitere – Suchfeld eingrenzen",
+    nothing: "Nichts gefunden.",
+    sensorTitle: "Melder bearbeiten",
+    sensorGroup: "Meldergruppe",
+    viaLabel: "Kommt über das Label der Gruppe – die Gruppe änderst du über das Label an der Entität.",
+    always: "Immer aktiv (meldet auch unscharf)",
+    profilesTitle: "Löst allein aus in den Profilen",
+    profilesHint: "Haken weg = in diesem Profil ausgenommen (zählt nur noch in Auslöseregeln).",
+    noProfiles: "Kein Profil nutzt diese Gruppe.",
     errors: {
       zone_name_required: "Bitte einen Namen eingeben.",
       zone_empty: "Mindestens einen Melder oder ein Label wählen.",
@@ -61,6 +73,7 @@ const ET = {
       disarm_first: "Erst alle Bereiche unscharf schalten – dann lässt sich speichern.",
       changed_elsewhere: "Inzwischen wurde woanders etwas geändert. Die Seite lädt neu – bitte noch einmal.",
       unknown_group: "Diese Gruppe gibt es nicht mehr.",
+      group_by_label: "Dieser Melder kommt über ein Label in seine Gruppe.",
       failed: "Speichern fehlgeschlagen.",
     },
   },
@@ -106,6 +119,18 @@ const ET = {
     alwaysGroups: "Whole sensor groups",
     alwaysSensors: "Single sensors",
     chosen: "chosen",
+    showAll: "Also show other entities (not only suitable ones)",
+    showAssigned: "Also show sensors that are already in a group",
+    inGroup: "in",
+    more: "… more – narrow down the search",
+    nothing: "Nothing found.",
+    sensorTitle: "Edit sensor",
+    sensorGroup: "Sensor group",
+    viaLabel: "Comes in via the group's label – change the group via the label on the entity.",
+    always: "Always active (also reports when disarmed)",
+    profilesTitle: "Triggers on its own in the profiles",
+    profilesHint: "Untick = excluded in this profile (then only counts in trigger rules).",
+    noProfiles: "No profile uses this group.",
     errors: {
       zone_name_required: "Please enter a name.",
       zone_empty: "Choose at least one sensor or a label.",
@@ -118,6 +143,7 @@ const ET = {
       disarm_first: "Disarm all areas first – then saving works.",
       changed_elsewhere: "Something was changed elsewhere in the meantime. The page reloads – please try again.",
       unknown_group: "This group no longer exists.",
+      group_by_label: "This sensor comes into its group via a label.",
       failed: "Saving failed.",
     },
   },
@@ -127,6 +153,13 @@ const SENSOR_DOMAINS = ["binary_sensor", "lock", "cover"];
 const TILT_DOMAINS = ["sensor", "input_select", "select", "binary_sensor", "lock", "cover"];
 const STRENGTH_DOMAINS = ["sensor", "input_number", "number"];
 const KNOWN_CLOSED = ["closed", "close", "geschlossen", "zu"];
+// Was ein Melder sein kann – der Rest (Verbindung, Update, Batterie …) nur auf Wunsch
+const SENSOR_CLASSES = [
+  "door", "window", "opening", "garage_door", "motion", "occupancy", "presence", "moving", "tamper",
+  "vibration", "moisture", "gas", "heat", "cold", "carbon_monoxide", "safety", "sound",
+];
+const TILT_WORDS = ["tilt", "kipp", "opening", "window", "fenster", "griff", "handle"];
+const STRENGTH_WORDS = ["vibration", "erschuetter", "erschütter", "strength", "shock"];
 const KNOWN_TILTED = ["tilted", "tilt", "gekippt", "kippstellung"];
 
 const EDIT_STYLE = `
@@ -172,6 +205,8 @@ class HauswachtSensorEditor extends HTMLElement {
     this._details = {};
     this._busy = false;
     this._query = "";
+    this._showAll = false;
+    this._showAssigned = false;
     this._draft = this._initial();
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     this._render();
@@ -212,6 +247,17 @@ class HauswachtSensorEditor extends HTMLElement {
       for (const v of t?.tilted || []) map[v] = "tilted";
       return { entity: t?.entity || "", attribute: t?.attribute || "", map, group: "", existing: !!t };
     }
+    if (this.kind === "sensor") {
+      const id = this.item.entity;
+      const group = this._groupOf(id);
+      return {
+        entity: id,
+        group: group ? group.id : "",
+        type: s.sensor_types[id] || this._entity(id).suggested || "other",
+        always: (s.always.sensors || []).includes(id),
+        excluded: s.profiles.filter((p) => (p.excluded || []).includes(id)).map((p) => p.id),
+      };
+    }
     if (this.kind === "strength") {
       const v = this.item;
       return { entity: v?.entity || "", threshold: v?.threshold ?? "", group: "", existing: !!v };
@@ -221,17 +267,56 @@ class HauswachtSensorEditor extends HTMLElement {
 
   // --- Auswahl --------------------------------------------------------------------
 
-  _pickerHtml(domains, exclude, extraIds = []) {
-    const q = this._query.trim().toLowerCase();
-    let list = "";
-    if (q) {
-      const hits = (this.settings.entities || [])
-        .filter((x) => (domains.includes(x.domain) || extraIds.includes(x.id)) && !exclude.includes(x.id))
-        .filter((x) => x.name.toLowerCase().includes(q) || x.id.toLowerCase().includes(q))
-        .slice(0, 40);
-      list = `<div class="results">${hits.map((x) => `<div data-pick="${e(x.id)}">${e(x.name)}<br><small>${e(x.id)} · ${e(x.state)}</small></div>`).join("") || `<div class="muted">–</div>`}</div>`;
+  // Gruppe, in der ein Melder steckt (direkt oder über das Label)
+  _groupOf(id) {
+    for (const g of this.settings.groups) {
+      if ((g.entities || []).includes(id) || (this.settings.label_members?.[g.id] || []).includes(id)) return g;
     }
-    return `<input class="q" type="search" placeholder="${e(this._t("search"))}" value="${e(this._query)}">${list}`;
+    return null;
+  }
+
+  _suitable(x, mode) {
+    const words = (x.id + " " + x.name).toLowerCase();
+    if (mode === "tilt") {
+      if (["input_select", "select"].includes(x.domain)) return true;
+      const st = this.hass.states[x.id];
+      const values = [x.state, ...((st && st.attributes.options) || [])].map((v) => String(v).toLowerCase());
+      return values.some((v) => KNOWN_TILTED.includes(v)) || TILT_WORDS.some((w) => words.includes(w));
+    }
+    if (mode === "strength") {
+      if (["input_number", "number"].includes(x.domain)) return true;
+      return STRENGTH_WORDS.some((w) => words.includes(w)) && !isNaN(Number(x.state));
+    }
+    return ["lock", "cover"].includes(x.domain) || SENSOR_CLASSES.includes(x.device_class);
+  }
+
+  // Liste zum Anklicken – ohne Eingabe alle passenden, mit Eingabe gefiltert
+  _pickerHtml(domains, exclude, extraIds = [], mode = "sensor") {
+    const q = this._query.trim().toLowerCase();
+    const ownGroup = this.kind === "group" ? this._draft.id : null;
+    const candidates = (this.settings.entities || [])
+      .filter((x) => (domains.includes(x.domain) || extraIds.includes(x.id)) && !exclude.includes(x.id))
+      .filter((x) => this._showAll || extraIds.includes(x.id) || this._suitable(x, mode))
+      .filter((x) => {
+        if (mode !== "sensor" || this._showAssigned) return true;
+        const g = this._groupOf(x.id);
+        return !g || g.id === ownGroup;
+      })
+      .filter((x) => !q || x.name.toLowerCase().includes(q) || x.id.toLowerCase().includes(q));
+    const shown = candidates.slice(0, 150);
+    const rows = shown
+      .map((x) => {
+        const g = mode === "sensor" ? this._groupOf(x.id) : null;
+        const where = g && g.id !== ownGroup ? ` · ${e(this._t("inGroup"))} ${e(g.name)}` : "";
+        return `<div data-pick="${e(x.id)}">${e(x.name)}<br><small>${e(x.id)} · ${e(x.state)}${where}</small></div>`;
+      })
+      .join("");
+    const more = candidates.length > shown.length ? `<div class="muted">${e(this._t("more"))}</div>` : "";
+    const toggles = `<div class="chk"><input type="checkbox" data-toggle="all" ${this._showAll ? "checked" : ""}><span>${e(this._t("showAll"))}</span></div>${
+      mode === "sensor" ? `<div class="chk"><input type="checkbox" data-toggle="assigned" ${this._showAssigned ? "checked" : ""}><span>${e(this._t("showAssigned"))}</span></div>` : ""
+    }`;
+    return `<input class="q" type="search" placeholder="${e(this._t("search"))}" value="${e(this._query)}">
+      <div class="results">${rows || `<div class="muted">${e(this._t("nothing"))}</div>`}${more}</div>${toggles}`;
   }
 
   _groupSelect(name, current) {
@@ -309,7 +394,7 @@ class HauswachtSensorEditor extends HTMLElement {
       .join("");
     const source = d.entity
       ? `<div class="row"><div class="n">${e(this._entity(d.entity).name)}<small>${e(d.entity)}</small></div>${d.existing ? "" : `<button class="x" data-a="clear-entity">✕</button>`}</div>`
-      : this._pickerHtml(TILT_DOMAINS, []);
+      : this._pickerHtml(TILT_DOMAINS, [], [], "tilt");
     return `
       <h2>${e(this._t("tiltNew"))}</h2>
       <label>${e(this._t("tiltEntity"))}</label>${source}${this._err("entity")}
@@ -324,12 +409,34 @@ class HauswachtSensorEditor extends HTMLElement {
     const st = d.entity && this.hass.states[d.entity];
     const source = d.entity
       ? `<div class="row"><div class="n">${e(this._entity(d.entity).name)}<small>${e(d.entity)} · ${e(this._t("current"))}: ${e(st ? st.state : "–")}</small></div>${d.existing ? "" : `<button class="x" data-a="clear-entity">✕</button>`}</div>`
-      : this._pickerHtml(STRENGTH_DOMAINS, []);
+      : this._pickerHtml(STRENGTH_DOMAINS, [], [], "strength");
     return `
       <h2>${e(this._t("strengthNew"))}</h2>
       <label>${e(this._t("strengthEntity"))}</label>${source}${this._err("entity")}
       <label>${e(this._t("threshold"))}</label><input class="small" type="number" step="any" data-f="threshold" value="${e(d.threshold)}">${this._err("threshold")}
       ${d.existing ? "" : `<label>${e(this._t("group"))}</label>${this._groupSelect("group", d.group)}`}`;
+  }
+
+  _sensorForm() {
+    const d = this._draft;
+    const x = this._entity(d.entity);
+    const label = this.settings.groups.find((g) => (this.settings.label_members?.[g.id] || []).includes(d.entity));
+    const groupSel = label
+      ? `<div class="row"><div class="n">${e(label.name)}<small>${e(this._t("viaLabel"))}</small></div></div>`
+      : this._groupSelect("group", d.group);
+    const types = this.settings.types.map((t) => `<option value="${t}" ${d.type === t ? "selected" : ""}>${e(this.typeLabel(t))}</option>`).join("");
+    const group = label ? label.id : d.group;
+    const profiles = this.settings.profiles.filter((p) => group && p.zones.includes(group));
+    const profileHtml = profiles.length
+      ? profiles.map((p) => `<div class="chk"><input type="checkbox" data-profile="${e(p.id)}" ${d.excluded.includes(p.id) ? "" : "checked"}><span>${e(p.name)}</span></div>`).join("") + `<div class="muted">${e(this._t("profilesHint"))}</div>`
+      : `<div class="muted">${e(this._t("noProfiles"))}</div>`;
+    return `
+      <h2>${e(this._t("sensorTitle"))}</h2>
+      <div class="row"><div class="n">${e(x.name)}<small>${e(d.entity)} · ${e(x.state || "")}</small></div></div>
+      <label>${e(this._t("sensorGroup"))}</label>${groupSel}${this._err("group")}
+      <label>${e(this._t("type"))}</label><select data-f="type">${types}</select>${this._err("type")}
+      <div class="chk" style="margin-top:12px"><input type="checkbox" data-f-check="always" ${d.always ? "checked" : ""}><span>${e(this._t("always"))}</span></div>
+      <label>${e(this._t("profilesTitle"))}</label>${profileHtml}${this._err("base")}`;
   }
 
   _alwaysForm() {
@@ -365,6 +472,15 @@ class HauswachtSensorEditor extends HTMLElement {
     if (this.kind === "always") {
       d.zones = [...root.querySelectorAll("[data-zone]")].filter((el) => el.checked).map((el) => el.dataset.zone);
     }
+    if (this.kind === "sensor") {
+      const always = root.querySelector('[data-f-check="always"]');
+      if (always) d.always = always.checked;
+      const boxes = [...root.querySelectorAll("[data-profile]")];
+      if (boxes.length) {
+        const shown = boxes.map((el) => el.dataset.profile);
+        d.excluded = [...d.excluded.filter((p) => !shown.includes(p)), ...boxes.filter((el) => !el.checked).map((el) => el.dataset.profile)];
+      }
+    }
   }
 
   _payload() {
@@ -386,6 +502,10 @@ class HauswachtSensorEditor extends HTMLElement {
     }
     if (this.kind === "strength") {
       return ["strength_save", { entity: d.entity, threshold: d.threshold === "" ? null : Number(d.threshold), group: d.group || null }];
+    }
+    if (this.kind === "sensor") {
+      const label = this.settings.groups.find((g) => (this.settings.label_members?.[g.id] || []).includes(d.entity));
+      return ["sensor_save", { entity: d.entity, group: label ? label.id : d.group || null, type: d.type, always: d.always, excluded: d.excluded }];
     }
     return ["always_save", { zones: d.zones, sensors: d.sensors }];
   }
@@ -421,7 +541,15 @@ class HauswachtSensorEditor extends HTMLElement {
 
   _render() {
     const body =
-      this.kind === "group" ? this._groupForm() : this.kind === "tilt" ? this._tiltForm() : this.kind === "strength" ? this._strengthForm() : this._alwaysForm();
+      this.kind === "group"
+        ? this._groupForm()
+        : this.kind === "tilt"
+          ? this._tiltForm()
+          : this.kind === "strength"
+            ? this._strengthForm()
+            : this.kind === "sensor"
+              ? this._sensorForm()
+              : this._alwaysForm();
     const del = this._deleteAction();
     this.shadowRoot.innerHTML = `<style>${EDIT_STYLE}</style><div class="sheet">${body}
       <div class="bar"><button class="b p" data-a="save" ${this._busy ? "disabled" : ""}>${e(this._busy ? this._t("saving") : this._t("save"))}</button>
@@ -503,6 +631,17 @@ class HauswachtSensorEditor extends HTMLElement {
       })
     );
     root.querySelectorAll("[data-type]").forEach((el) => el.addEventListener("change", () => this._rerender()));
+    root.querySelectorAll("[data-toggle]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (el.dataset.toggle === "all") this._showAll = el.checked;
+        else this._showAssigned = el.checked;
+        this._rerender();
+      })
+    );
+    if (this.kind === "sensor") {
+      const g = root.querySelector('[data-f="group"]');
+      if (g) g.addEventListener("change", () => this._rerender());
+    }
     const attr = root.querySelector('[data-f="attribute"]');
     if (attr && this.kind === "tilt") attr.addEventListener("change", () => this._rerender());
     const more = root.querySelector('[data-f="more"]');
