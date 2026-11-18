@@ -3,10 +3,9 @@
 [Deutsch](../einstellungsseite.md) | **English**
 
 > **Pre-release:** the page grows in stages. It **shows** the whole setup; you already edit
-> **sensors**, **alarm profiles**, **trigger rules**, **alarm devices**, **notifications** and
-> **people** directly on the page. Control devices, action codes, master PIN and system are still
-> edited in the settings dialog (button "Edit in the dialog" at the top right) – that follows
-> next.
+> almost everything directly on the page. Only **adding and setting up control devices** and
+> **learning cards** stay in the settings dialog (button "Edit in the dialog" at the top right) –
+> there Hauswacht waits for holding a card or pressing keys at the device.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -27,8 +26,8 @@ which profile they are armed, who gets which message.
 | **Trigger rules** | Every rule as a sentence and where it applies |
 | **Alarm devices** | Sirens with their capabilities and the last test |
 | **Notifications** | Recipients per event, speakers, quiet time |
-| **People and control devices** | Users with rights and credentials (PINs are never shown), control devices, action codes |
-| **System** | Radio silence, radio network, learning, restart, homecoming |
+| **People and control devices** | People with rights and credentials (PINs are never shown), PIN rules and master PIN, control devices, action codes |
+| **System** | Monitoring, restart, radio silence, radio networks, presence and homecoming, areas, settings page |
 | **Documentation** | All pages of this documentation with a short description |
 
 The page remembers the last selected tab (in this browser only).
@@ -184,9 +183,30 @@ people, PINs and rights are: see [users, PINs and lockout](users.md).
 - The [PIN rules](users.md#pin-rules) apply as in the dialog: a PIN must not be another person's
   duress PIN or an action code. If something does not fit, **nothing** is saved and the field
   shows the reason.
-- Learning **cards**, the **master PIN** and the **PIN rules** stay in the dialog (system settings
-  → users and PINs).
+- Learning **cards** stays in the dialog (system settings → users and PINs → cards and tags).
 - **Delete** asks once.
+
+Further down in the same tab:
+
+| Section | On the page |
+|---|---|
+| **PIN rules and master PIN** | PIN also to arm, end an alarm without PIN, dashboard buttons despite PIN, PIN in the alarm card for accounts without a person; set or remove the [master PIN](users.md#pins) (never visible) |
+| **Control devices** | view and **delete**; set the **learning time for cards**. Adding and setting up (topic, keys, IDs) in the dialog, because learning happens at the device there |
+| **[Action codes](control-devices.md#action-codes)** | add, change, delete: name, code (2–8 digits), key, keypad, action (event, arm with profile, silent emergency). Only with a keypad. An action code must not equal a PIN – this is checked |
+
+## Editing the system
+
+The tab **System** shows the monitoring state at the top, below it one card per topic with
+**"Edit"**:
+
+| Card | Content |
+|---|---|
+| **Behaviour after restart** | Restore the previous state · always armed (with a profile per area) · always disarmed; "continue a running alarm" – see [behaviour after a restart](installation.md#behaviour-after-a-restart) |
+| **Sensor radio silence** | Hours until "failed" (0 = off), plus the observation – see [radio silence](sensors.md#sensor-radio-silence) |
+| **Radio networks and gateways** | Status sensors, e.g. the Zigbee2MQTT bridge – see [radio networks](sensors.md#monitor-radio-networks-and-gateways) |
+| **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation) |
+| **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |
+| **Settings page** | hide this page. It then disappears; to show it again: in the dialog under system settings → settings page |
 
 ## Editing alarm devices
 

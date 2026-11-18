@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b11] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,
+Teil 2 – damit sind alle Stufen umgesetzt).
+
+### Hinzugefügt
+- **Reiter System bearbeiten**: Verhalten nach Neustart, Funkstille, Funknetz und Gateways,
+  Anwesenheit und Heimkehr-Beobachtung (mit Signalen je Person), Bereiche anlegen, ändern und
+  löschen, Einstellungsseite ausblenden.
+- **PIN-Regeln und Master-PIN** auf der Seite (Reiter Personen und Bedienteile). Der Master-PIN
+  wird nie angezeigt.
+- **Aktions-Codes** anlegen, ändern und löschen – mit denselben Prüfungen wie im Dialog (kein
+  PIN, Code + Taste nicht doppelt).
+- **Bedienteile** löschen und die Anlernzeit für Karten einstellen. Bedienteile anlegen und Karten
+  anlernen bleibt im Dialog, weil dort am Gerät angelernt wird.
+
 ## [0.57.0b10] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,

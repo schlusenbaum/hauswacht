@@ -38,12 +38,19 @@ def test_help_keys_used_by_panel_exist() -> None:
     keys = set(re.findall(r"^  (\w+): \[", script, flags=re.MULTILINE))
     frontend = SCRIPT.parent
     used: set[str] = set()
-    for name in ("hauswacht-panel.js", "hauswacht-panel-alarm.js", "hauswacht-panel-rules.js"):
+    for name in (
+        "hauswacht-panel.js",
+        "hauswacht-panel-alarm.js",
+        "hauswacht-panel-rules.js",
+        "hauswacht-panel-people.js",
+        "hauswacht-panel-system.js",
+    ):
         text = (frontend / name).read_text(encoding="utf-8")
         text = re.sub(r'===\s*"\w+"', "", text)  # Vergleiche sind keine Schlüssel
         for line in re.findall(r"(?:decorate\(|const help = |helpKey: )[^\n]*", text):
             used |= set(re.findall(r'"(\w+)"', line))
-        for block in re.findall(r"(?:PART_HELP|EDITOR_HELP) = \{([^}]*)\}", text, flags=re.DOTALL):
+        maps = r"(?:PART_HELP|EDITOR_HELP|HELP) = \{([^}]*)\}"
+        for block in re.findall(maps, text, flags=re.DOTALL):
             used |= set(re.findall(r':\s*"(\w+)"', block))
     panel = (frontend / "hauswacht-panel.js").read_text(encoding="utf-8")
     used |= set(re.findall(r'_card\([^;]*?,\s*"(\w+)"\)', panel))

@@ -44,6 +44,7 @@ const DOC_LINKS = {
   findings: ["uebersicht.md#prüfhinweise", "overview.md#check-hints"],
   testMode: ["testmodus.md", "test-mode.md"],
   troubleshooting: ["fehlersuche.md", "troubleshooting.md"],
+  restart: ["installation.md#verhalten-nach-einem-neustart", "installation.md#behaviour-after-a-restart"],
 };
 
 // Reiter „Dokumentation“: [Schlüssel/Seite de, Seite en, Titel de, Titel en, Inhalt de, Inhalt en]

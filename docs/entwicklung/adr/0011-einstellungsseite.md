@@ -1,6 +1,7 @@
 # ADR 0011: Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog
 
-- Status: vorgeschlagen (Konzept auf dem Zweig `entwicklung/einstellungsseite`)
+- Status: umgesetzt in den Vorabversionen 0.57.0b1–b11 (alle fünf Stufen; Bedienteile anlegen und
+  Karten anlernen bleiben bewusst im Dialog, weil dort am Gerät angelernt wird)
 - Datum: 2026-11-18
 
 ## Kontext

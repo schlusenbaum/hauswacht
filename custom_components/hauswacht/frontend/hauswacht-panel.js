@@ -13,7 +13,7 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick. Melder, Profile, Auslöseregeln, Alarmgeber, Benachrichtigungen und Personen bearbeitest du hier direkt; der Rest folgt – bis dahin über „Im Dialog bearbeiten“.",
+    hint: "Die ganze Einrichtung auf einen Blick – und fast alles direkt hier bearbeiten. Bedienteile anlegen und Karten anlernen geht im Dialog („Im Dialog bearbeiten“), weil dort am Gerät angelernt wird.",
     addRule: "Auslöseregel anlegen",
     addPerson: "Person anlegen",
     noPeople: "Noch keine Person. Ohne Personen schaltet jeder ohne PIN – mit Personen bekommt jede ihren PIN, ihre Karten und ihre Rechte.",
@@ -23,7 +23,31 @@ const TEXTS = {
     cardsN: "Karten",
     allRights: "alle Rechte",
     perArea: "Rechte je Bereich",
-    dialogOnly: "Anlernen und Ändern im Dialog („Im Dialog bearbeiten“ → Systemeinstellungen → Bedienteile).",
+    dialogOnly: "Anlegen und Einstellen im Dialog („Im Dialog bearbeiten“ → Systemeinstellungen → Bedienteile) – dort wird am Gerät angelernt. Hier: ansehen und löschen.",
+    pinRules: "PIN-Regeln und Master-PIN",
+    masterSet: "Master-PIN gesetzt",
+    masterNone: "kein Master-PIN",
+    pinArm: "PIN auch zum Scharfschalten",
+    addCode: "Aktions-Code anlegen",
+    noKeypad: "Aktions-Codes gibt es nur mit Keypad – erst ein Keypad im Dialog einrichten.",
+    noCodes: "Noch kein Aktions-Code.",
+    learnTime: "Anlernzeit für Karten: {m} min",
+    remove: "Löschen …",
+    restart: "Verhalten nach Neustart",
+    behaviors: { restore: "Vorherigen Zustand wiederherstellen", armed: "Immer scharf", disarmed: "Immer unscharf" },
+    continueAlarm: "laufender Alarm wird fortgesetzt",
+    silence: "Funkstille von Sensoren",
+    silenceOff: "aus",
+    hoursN: "{h} Stunden",
+    network: "Funknetz und Gateways",
+    homecoming: "Anwesenheit und Heimkehr-Beobachtung",
+    observeOn: "Beobachtung läuft",
+    observeOff: "Beobachtung aus",
+    ssidsL: "Heim-WLAN",
+    areas: "Bereiche",
+    addArea: "Bereich anlegen",
+    page: "Einstellungsseite",
+    pageOn: "in der Seitenleiste sichtbar",
     noRules: "Noch keine Auslöseregel. Eine Regel löst erst bei einer Abfolge aus, z. B. „Haustür, dann innerhalb von 60 s Keller“.",
     yamlOnly: "nur YAML",
     inProfiles: "Profile",
@@ -77,7 +101,7 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance. You edit sensors, profiles, trigger rules, alarm devices, notifications and people right here; the rest follows – until then use “Edit in the dialog”.",
+    hint: "The whole setup at a glance – and edit almost everything right here. Adding control devices and learning cards happens in the dialog (“Edit in the dialog”), because learning happens at the device there.",
     addRule: "Add trigger rule",
     addPerson: "Add person",
     noPeople: "No person yet. Without people anyone operates without a PIN – with people, each gets their PIN, cards and rights.",
@@ -87,7 +111,31 @@ const TEXTS = {
     cardsN: "cards",
     allRights: "all rights",
     perArea: "rights per area",
-    dialogOnly: "Learning and changing in the dialog (“Edit in the dialog” → system settings → control devices).",
+    dialogOnly: "Adding and setting up in the dialog (“Edit in the dialog” → system settings → control devices) – learning happens at the device there. Here: view and delete.",
+    pinRules: "PIN rules and master PIN",
+    masterSet: "master PIN set",
+    masterNone: "no master PIN",
+    pinArm: "PIN also to arm",
+    addCode: "Add action code",
+    noKeypad: "Action codes need a keypad – set up a keypad in the dialog first.",
+    noCodes: "No action code yet.",
+    learnTime: "Learning time for cards: {m} min",
+    remove: "Delete …",
+    restart: "Behaviour after restart",
+    behaviors: { restore: "Restore the previous state", armed: "Always armed", disarmed: "Always disarmed" },
+    continueAlarm: "a running alarm continues",
+    silence: "Sensor radio silence",
+    silenceOff: "off",
+    hoursN: "{h} hours",
+    network: "Radio networks and gateways",
+    homecoming: "Presence and homecoming observation",
+    observeOn: "observation running",
+    observeOff: "observation off",
+    ssidsL: "Home Wi-Fi",
+    areas: "Areas",
+    addArea: "Add area",
+    page: "Settings page",
+    pageOn: "visible in the sidebar",
     noRules: "No trigger rule yet. A rule only triggers on a sequence, e.g. “front door, then basement within 60 s”.",
     yamlOnly: "YAML only",
     inProfiles: "Profiles",
@@ -264,6 +312,7 @@ class HauswachtPanel extends HTMLElement {
       await import(`/hauswacht/hauswacht-panel-alarm.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-rules.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-people.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-system.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -441,10 +490,88 @@ class HauswachtPanel extends HTMLElement {
       users = this._card(parts.users[0], parts.users[2], "users");
     }
     const note = `<div class="muted">${escHtml(this._t("dialogOnly"))}</div>`;
+    const sys = this._settings?.system;
+    if (!sys) {
+      return (
+        users +
+        this._card(parts.controls[0], note + parts.controls[2], "controls") +
+        this._card(parts.actionCodes[0], parts.actionCodes[2], "actionCodes")
+      );
+    }
+    const r = sys.pin_rules;
+    const pinRules = this._card(
+      this._t("pinRules"),
+      `<div class="muted">${escHtml([r.master ? this._t("masterSet") : this._t("masterNone"), r.code_arm_required ? this._t("pinArm") : null].filter(Boolean).join(" · "))}</div>` +
+        this._armedOr(`<div class="tool">${this._btn("sys:pinrules", this._t("edit"))}</div>`),
+      "pinRules"
+    );
+    const ctrlButtons = sys.controls.items.map((c) => `<span>${this._btn(`sys:control:${c.id}`, `${c.name} – ${this._t("remove")}`)}</span>`).join("");
+    const controls = this._card(
+      parts.controls[0],
+      note + parts.controls[2] +
+        this._armedOr(`<div class="tool">${ctrlButtons}</div>`) +
+        `<div class="muted">${escHtml(this._fmt("learnTime", { m: sys.controls.learn_minutes }))} ${this._btn("sys:learn", this._t("edit"))}</div>`,
+      "controls"
+    );
+    const ac = sys.action_codes;
+    const codeList = ac.codes.length
+      ? parts.actionCodes[2] + `<div class="tool">${ac.codes.map((c) => this._btn(`sys:actioncode:${c.id}`, `${c.name} – ${this._t("edit")}`)).join("")}</div>`
+      : `<div class="muted">${escHtml(this._t("noCodes"))}</div>`;
+    const codes = this._card(
+      parts.actionCodes[0],
+      ac.keypads.length
+        ? codeList + this._armedOr(`<div class="tool">${this._btn("sys:actioncode:", "+ " + this._t("addCode"))}</div>`)
+        : `<div class="muted">${escHtml(this._t("noKeypad"))}</div>`,
+      "actionCodes"
+    );
+    return users + pinRules + controls + codes;
+  }
+
+  _openSystemEditor(kind, item) {
+    if (!customElements.get("hauswacht-system-editor") || !this._settings?.system) return;
+    const editor = document.createElement("hauswacht-system-editor");
+    editor.addEventListener("hw-close", () => this._closeEditor());
+    editor.addEventListener("hw-saved", (ev) => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave(ev.detail?.revision);
+    });
+    editor.addEventListener("hw-stale", () => this._reloadAfterSave());
+    this._editor = editor;
+    this.shadowRoot.appendChild(editor);
+    editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null });
+  }
+
+  _systemTab(view) {
+    const parts = view._parts();
+    const sys = this._settings?.system;
+    const status = this._card(parts.monitoring[0], parts.monitoring[2], "network");
+    if (!sys) return status;
+    const edit = (kind) => this._armedOr(`<div class="tool">${this._btn(`sys:${kind}`, this._t("edit"))}</div>`);
+    const profileName = (id) => (sys.profiles.find((p) => p.id === id) || { name: id }).name;
+    const restartText = [
+      this._t("behaviors")[sys.restart.behavior],
+      sys.restart.behavior === "armed" ? Object.values(sys.restart.profiles).map(profileName).join(", ") : null,
+      sys.restart.behavior === "restore" && sys.restart.continue_alarm ? this._t("continueAlarm") : null,
+    ].filter(Boolean).join(" · ");
+    const name = (list, id) => (list.find((c) => c.id === id) || { name: id }).name;
+    const h = sys.homecoming;
+    const homeText = [
+      h.observe ? this._t("observeOn") : this._t("observeOff"),
+      h.persons.map((p) => name(h.person_choices, p)).join(", ") || null,
+      h.ssids.length ? `${this._t("ssidsL")}: ${h.ssids.join(", ")}` : null,
+    ].filter(Boolean).join(" · ");
+    const areas = sys.areas
+      .map((a) => `<div class="item">${this._btn(`sys:area:${a.id}`, this._t("edit"))}<div class="n">${escHtml(a.name)}</div><div class="muted">${escHtml(a.profiles.join(", ") || "–")}</div></div>`)
+      .join("");
     return (
-      users +
-      this._card(parts.controls[0], note + parts.controls[2], "controls") +
-      this._card(parts.actionCodes[0], parts.actionCodes[2], "actionCodes")
+      status +
+      this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
+      this._card(this._t("silence"), `<div>${escHtml(sys.silence.hours ? this._fmt("hoursN", { h: sys.silence.hours }) : this._t("silenceOff"))}</div>${sys.silence.observation ? `<div class="muted">${escHtml(sys.silence.observation)}</div>` : ""}${edit("silence")}`, "silence") +
+      this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
+      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}`, "homecoming") +
+      this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
+      this._card(this._t("page"), `<div>${escHtml(this._t("pageOn"))}</div>${edit("page")}`, "settingsPage")
     );
   }
 
@@ -513,6 +640,7 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "profile") this._openProfileEditor(id);
     else if (kind === "rule") this._openRuleEditor(id);
     else if (kind === "person") this._openPersonEditor(id);
+    else if (kind === "sys") this._openSystemEditor(id, spec.split(":").slice(2).join(":"));
     else if (kind === "sirens") this._openAlarmEditor("sirens");
     else if (kind === "notify") this._openAlarmEditor("notify");
     else if (kind === "text") this._openAlarmEditor("text", id);
@@ -635,6 +763,7 @@ class HauswachtPanel extends HTMLElement {
     if (this._tab === "rules") return this._rulesTab(view);
     if (this._tab === "docs") return this._docsTab();
     if (this._tab === "people") return this._peopleTab(view);
+    if (this._tab === "system") return this._systemTab(view);
     if (this._tab === "sirens") return this._sirensTab(view);
     if (this._tab === "notifications") return this._notificationsTab(view);
     const parts = view._parts();

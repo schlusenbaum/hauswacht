@@ -3,10 +3,9 @@
 **Deutsch** | [English](en/settings-page.md)
 
 > **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an;
-> **Melder**, **Alarmprofile**, **Auslöseregeln**, **Alarmgeber**, **Benachrichtigungen** und
-> **Personen** bearbeitest du schon direkt auf der Seite. Bedienteile, Aktions-Codes, Master-PIN
-> und System bearbeitest du noch im Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben
-> rechts) – das folgt als Nächstes.
+> Fast alles bearbeitest du direkt auf der Seite. Nur **Bedienteile anlegen und einstellen** und
+> **Karten anlernen** geht weiter im Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben
+> rechts) – dort wartet Hauswacht auf das Hinhalten oder Tippen am Gerät.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -28,8 +27,8 @@ Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
 | **Auslöseregeln** | Jede Regel als Satz und wo sie gilt |
 | **Alarmgeber** | Sirenen mit ihren Fähigkeiten und dem letzten Test |
 | **Benachrichtigungen** | Empfänger je Ereignis, Lautsprecher, Ruhezeit |
-| **Personen und Bedienteile** | Benutzer mit Rechten und Ausweisen (PINs werden nie angezeigt), Bedienteile, Aktions-Codes |
-| **System** | Funkstille, Funknetz, Anlernen, Neustart, Heimkehr |
+| **Personen und Bedienteile** | Personen mit Rechten und Ausweisen (PINs werden nie angezeigt), PIN-Regeln und Master-PIN, Bedienteile, Aktions-Codes |
+| **System** | Überwachung, Neustart, Funkstille, Funknetz, Anwesenheit und Heimkehr, Bereiche, Einstellungsseite |
 | **Dokumentation** | Alle Seiten dieser Anleitung mit kurzer Beschreibung |
 
 Die Seite merkt sich den zuletzt gewählten Reiter (nur in diesem Browser).
@@ -187,9 +186,31 @@ leeres. Was Personen, PINs und Rechte sind, steht unter [Benutzer, PINs und Sper
 - Es gelten die [PIN-Regeln](benutzer.md#pin-regeln) wie im Dialog: Ein PIN darf keine
   Bedrohungs-PIN einer anderen Person und kein Aktions-Code sein. Passt etwas nicht, wird **gar
   nichts** gespeichert und das Feld zeigt den Grund.
-- **Karten** anlernen, den **Master-PIN** und die **PIN-Regeln** stellst du weiter im Dialog ein
-  (Systemeinstellungen → Benutzer und PINs).
+- **Karten** anlernen geht weiter im Dialog (Systemeinstellungen → Benutzer und PINs → Karten und
+  Anhänger).
 - **Löschen** fragt einmal nach.
+
+Im selben Reiter darunter:
+
+| Abschnitt | Auf der Seite |
+|---|---|
+| **PIN-Regeln und Master-PIN** | PIN auch zum Scharfschalten, Alarm beenden ohne PIN, Dashboard-Knöpfe trotz PIN, PIN in der Alarmkarte für Konten ohne Person; [Master-PIN](benutzer.md#pins) setzen oder entfernen (nie sichtbar) |
+| **Bedienteile** | ansehen und **löschen**; die **Anlernzeit für Karten** einstellen. Anlegen und einstellen (Topic, Tasten, Kennungen) im Dialog, weil dort am Gerät angelernt wird |
+| **[Aktions-Codes](bedienteile.md#aktions-codes)** | anlegen, ändern, löschen: Name, Code (2–8 Ziffern), Taste, Keypad, Aktion (Ereignis, Scharf schalten mit Profil, stiller Notruf). Gibt es nur mit Keypad. Ein Aktions-Code darf keinem PIN gleichen – das wird geprüft |
+
+## System bearbeiten
+
+Im Reiter **System** steht oben der Zustand der Überwachung, darunter je Thema eine Karte mit
+**„Bearbeiten“**:
+
+| Karte | Inhalt |
+|---|---|
+| **Verhalten nach Neustart** | Vorherigen Zustand wiederherstellen · immer scharf (mit Profil je Bereich) · immer unscharf; „Laufenden Alarm fortsetzen“ – siehe [Verhalten nach einem Neustart](installation.md#verhalten-nach-einem-neustart) |
+| **Funkstille von Sensoren** | Stunden bis „ausgefallen“ (0 = aus), dazu die Beobachtung – siehe [Funkstille](melder.md#funkstille-von-sensoren) |
+| **Funknetz und Gateways** | Statussensoren, z. B. die Zigbee2MQTT-Bridge – siehe [Funknetz](melder.md#funknetz-und-gateways-überwachen) |
+| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung) |
+| **Bereiche** | anlegen, umbenennen, Symbol, löschen (nur ohne Profile) – siehe [Bereiche](profile.md#bereiche) |
+| **Einstellungsseite** | diese Seite ausblenden. Danach verschwindet sie; wieder einblenden im Dialog unter Systemeinstellungen → Einstellungsseite |
 
 ## Alarmgeber bearbeiten
 

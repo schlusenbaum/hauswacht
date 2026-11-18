@@ -451,3 +451,61 @@ async def test_person_save_with_pin_and_delete(hass: HomeAssistant, hass_ws_clie
     assert deleted["ok"] is True
     await hass.async_block_till_done()
     assert result["id"] not in _options(hass).get("users", {})
+
+
+async def _apply(
+    hass_ws_client: Any, hass: HomeAssistant, action: str, data: dict[str, Any]
+) -> dict[str, Any]:
+    current = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=current["revision"],
+        action=action,
+        data=data,
+    )
+    await hass.async_block_till_done()
+    return result
+
+
+async def test_system_settings(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert data["system"]["restart"]["behavior"] == "restore"
+    refused = await _apply(hass_ws_client, hass, "restart_save", {"behavior": "armed"})
+    assert refused["errors"] == {"base": "restart_needs_profile"}
+    ok = await _apply(
+        hass_ws_client,
+        hass,
+        "restart_save",
+        {"behavior": "armed", "profiles": {"main": "night"}},
+    )
+    assert ok["ok"] is True, ok
+    assert _options(hass)["restart_profiles"] == {"main": "night"}
+    assert (await _apply(hass_ws_client, hass, "silence_save", {"hours": 12}))["ok"]
+    assert _options(hass)["stale_after_hours"] == 12
+    area = await _apply(hass_ws_client, hass, "area_save", {"name": "Garage"})
+    assert area["ok"] is True, area
+    assert "garage" in _options(hass)["areas"]
+    gone = await _apply(hass_ws_client, hass, "area_delete", {"id": area["id"]})
+    assert gone["ok"] is True
+    assert area["id"] not in _options(hass).get("areas", {})
+
+
+async def test_pin_rules_master_pin(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    bad = await _apply(hass_ws_client, hass, "pin_rules_save", {"master_pin": "12"})
+    assert bad["errors"] == {"master_pin": "invalid_pin"}
+    ok = await _apply(
+        hass_ws_client,
+        hass,
+        "pin_rules_save",
+        {"master_pin": "123456", "buttons_without_pin": True},
+    )
+    assert ok["ok"] is True, ok
+    assert _options(hass)["users"]["master"]["pin_digest"]
+    assert _options(hass)["buttons_without_pin"] is True
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert data["system"]["pin_rules"]["master"] is True
+    assert "123456" not in str(data)

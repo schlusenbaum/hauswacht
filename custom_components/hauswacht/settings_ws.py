@@ -25,6 +25,8 @@ from .alarm_notify_settings_ws import build_alarm_notify_settings
 from .const import DOMAIN
 from .core.always_active import parse_always_active
 from .core.changes import Change, options_revision
+from .core.changes.action_codes import delete_action_code, save_action_code
+from .core.changes.areas import save_area
 from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.rules import delete_rule, save_rule
@@ -39,6 +41,17 @@ from .core.changes.sensors import (
     save_tilt,
 )
 from .core.changes.sirens import save_sirens
+from .core.changes.system import (
+    delete_area,
+    delete_control,
+    save_homecoming,
+    save_infrastructure,
+    save_learn_minutes,
+    save_pin_rules,
+    save_restart,
+    save_settings_page,
+    save_silence,
+)
 from .core.changes.users import delete_user, save_person
 from .core.sensor_types import SensorType, default_type
 from .core.tilt import effective_types, parse_tilt_sources
@@ -48,6 +61,7 @@ from .people_settings_ws import build_people_settings, ha_user_choices, to_iso
 from .profile_settings_ws import build_profile_settings
 from .rule_settings_ws import build_rule_settings, ws_rule_check
 from .runtime import device_class_of, entities_by_label
+from .system_settings_ws import build_system_settings
 
 WS_GET = f"{DOMAIN}/settings/get"
 WS_APPLY = f"{DOMAIN}/settings/apply"
@@ -83,9 +97,43 @@ ACTIONS = (
     "rule_delete",
     "user_save",
     "user_delete",
+    "restart_save",
+    "silence_save",
+    "network_save",
+    "homecoming_save",
+    "area_save",
+    "area_delete",
+    "settings_page_save",
+    "pin_rules_save",
+    "action_code_save",
+    "action_code_delete",
+    "control_delete",
+    "learn_save",
 )
-# Brauchen Rechenzeit (PIN-Hashes) – laufen im Executor
-SLOW_ACTIONS = ("user_save",)
+# Brauchen Rechenzeit (PIN-Hashes) – laufen im Executor, nur mit reiner Logik
+SLOW_ACTIONS = {
+    "user_save": lambda o, d: save_person(o, d.get("id") or None, d, ha_user=d.get("ha_user")),
+    "pin_rules_save": save_pin_rules,
+    "action_code_save": lambda o, d: save_action_code(o, d.get("id") or None, d),
+}
+# Einfache Änderungen ohne Home Assistant: Aktion -> Funktion(Einstellungen, Daten)
+SIMPLE_ACTIONS = {
+    "user_delete": lambda o, d: (
+        delete_user(o, str(d.get("id")))
+        if d.get("id") in o.get("users", {})
+        else Change(errors={"base": "unknown_user"})
+    ),
+    "restart_save": save_restart,
+    "silence_save": lambda o, d: save_silence(o, d.get("hours")),
+    "network_save": lambda o, d: save_infrastructure(o, d.get("entities")),
+    "homecoming_save": save_homecoming,
+    "area_save": lambda o, d: save_area(o, d.get("id") or None, d),
+    "area_delete": lambda o, d: delete_area(o, str(d.get("id"))),
+    "settings_page_save": lambda o, d: save_settings_page(o, bool(d.get("enabled"))),
+    "action_code_delete": lambda o, d: delete_action_code(o, str(d.get("id"))),
+    "control_delete": lambda o, d: delete_control(o, str(d.get("id"))),
+    "learn_save": lambda o, d: save_learn_minutes(o, d.get("minutes")),
+}
 
 
 def revision(options: Mapping[str, Any]) -> str:
@@ -185,6 +233,7 @@ def build_settings(
         **build_alarm_notify_settings(hass, main),
         "rule_edit": build_rule_settings(hass, main),
         "people": build_people_settings(options, ha_users or []),
+        "system": build_system_settings(hass, main),
     }
 
 
@@ -245,12 +294,10 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
             labels=labels,
             profiles=list(profiles) if isinstance(profiles, list) else None,
         )
-    if action == "user_save":
-        return save_person(options, data.get("id") or None, data, ha_user=data.get("ha_user"))
-    if action == "user_delete":
-        if data.get("id") not in options.get("users", {}):
-            return Change(errors={"base": "unknown_user"})
-        return delete_user(options, str(data.get("id")))
+    if action in SIMPLE_ACTIONS:
+        return SIMPLE_ACTIONS[action](options, data)
+    if action in SLOW_ACTIONS:
+        return SLOW_ACTIONS[action](options, data)
     if action == "rule_delete":
         return delete_rule(options, str(data.get("id")))
     if action == "profile_delete":
@@ -321,9 +368,8 @@ async def ws_settings_apply(
     if msg["action"] in SLOW_ACTIONS:
         # Nur reine Logik im Executor (keine Zugriffe auf Home Assistant)
         options = entry.options
-        change = await hass.async_add_executor_job(
-            lambda: save_person(options, data.get("id") or None, data, ha_user=data.get("ha_user"))
-        )
+        slow = SLOW_ACTIONS[msg["action"]]
+        change = await hass.async_add_executor_job(slow, options, data)
         # Während des Rechnens kann sich etwas geändert haben
         if not main.all_disarmed or msg["revision"] != revision(entry.options):
             connection.send_result(
