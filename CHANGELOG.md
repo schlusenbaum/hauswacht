@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b6] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Behoben
+- **Einstellungsseite zeigte nach dem Speichern manchmal noch den alten Stand** (z. B. die
+  gerade gewählten Personen der Automatik fehlten in der Profil-Übersicht): Die Seite holte die
+  Übersicht, bevor Hauswacht mit den neuen Einstellungen neu gestartet war. Jetzt wartet sie, bis
+  Hauswacht mit genau dem gespeicherten Stand läuft.
+
+### Hinzugefügt
+- Profil bearbeiten → Automatik: **„Zeitplan anlegen ↗“** öffnet die Helfer in einem neuen
+  Fenster, **„Liste aktualisieren“** holt neue Zeitpläne und Personen, ohne die Eingaben im
+  Profil zu verlieren.
+
 ## [0.57.0b5] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 3).

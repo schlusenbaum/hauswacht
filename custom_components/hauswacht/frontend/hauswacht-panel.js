@@ -213,13 +213,16 @@ class HauswachtPanel extends HTMLElement {
     this._render();
   }
 
-  async _reloadAfterSave() {
-    // Nach dem Speichern lädt Hauswacht neu – kurz warten, dann bis zu 10 s erneut versuchen
-    for (let i = 0; i < 10; i++) {
-      await new Promise((r) => setTimeout(r, 1000));
+  async _reloadAfterSave(expected) {
+    // Nach dem Speichern lädt Hauswacht neu. Erst wenn es mit dem neuen Stand läuft
+    // (loaded_revision), die Übersicht holen – sonst käme noch der alte Stand (bis 15 s).
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 750));
       try {
+        const settings = await this._hass.callWS({ type: "hauswacht/settings/get" });
+        if (expected && settings.loaded_revision !== expected && i < 19) continue;
+        this._settings = settings;
         this._data = await this._hass.callWS({ type: "hauswacht/overview" });
-        this._settings = await this._hass.callWS({ type: "hauswacht/settings/get" });
         this._error = null;
         break;
       } catch (_err) {
@@ -229,15 +232,16 @@ class HauswachtPanel extends HTMLElement {
     this._render();
   }
 
+
   _openEditor(kind, item) {
     if (!customElements.get("hauswacht-sensor-editor") || !this._settings) return;
     const view = this._view();
     const editor = document.createElement("hauswacht-sensor-editor");
     editor.addEventListener("hw-close", () => this._closeEditor());
-    editor.addEventListener("hw-saved", () => {
+    editor.addEventListener("hw-saved", (ev) => {
       this._closeEditor();
       this._flash = this._t("saved");
-      this._reloadAfterSave();
+      this._reloadAfterSave(ev.detail?.revision);
     });
     editor.addEventListener("hw-stale", () => this._reloadAfterSave());
     this._editor = editor;
@@ -255,10 +259,10 @@ class HauswachtPanel extends HTMLElement {
     if (!customElements.get("hauswacht-profile-editor") || !this._settings?.profile_edit) return;
     const editor = document.createElement("hauswacht-profile-editor");
     editor.addEventListener("hw-close", () => this._closeEditor());
-    editor.addEventListener("hw-saved", () => {
+    editor.addEventListener("hw-saved", (ev) => {
       this._closeEditor();
       this._flash = this._t("saved");
-      this._reloadAfterSave();
+      this._reloadAfterSave(ev.detail?.revision);
     });
     editor.addEventListener("hw-stale", () => this._reloadAfterSave());
     this._editor = editor;

@@ -101,7 +101,7 @@ sections match the dialog:
 | **Times** | Exit and entry delay, duration of the alarm reaction, maximum alarm cycles |
 | **When arming** | Open sensors, failed sensors, tampering triggers an alarm |
 | **Reaction on alarm** | Sirens (those registered under alarm devices), tone, volume, silent alarm, recipients, additional speakers |
-| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time, disarm on arrival, door-proof window – see [automation](profiles.md#automation) |
+| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time, disarm on arrival, door-proof window – see [automation](profiles.md#automation). **"Create schedule ↗"** opens the helpers in a new window ("Create helper" → "Schedule"); then **"Refresh list"** – your entries in the profile are kept |
 | **Arm by closing the door** | On/off, exit doors (the sensors of type door in the chosen groups), settle time |
 
 The same rules as in the dialog apply: a name is needed and must be unique, every button only

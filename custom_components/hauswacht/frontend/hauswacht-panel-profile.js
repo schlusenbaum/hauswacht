@@ -48,6 +48,9 @@ const PT = {
     weekdays: "An diesen Tagen (keiner = täglich)",
     schedule: "Oder nach Zeitplan",
     noSchedule: "– kein Zeitplan –",
+    scheduleCreate: "Zeitplan anlegen ↗",
+    scheduleHint: "Öffnet die Helfer in einem neuen Fenster: „Helfer erstellen“ → „Zeitplan“. Danach hier „Liste aktualisieren“ – deine Eingaben bleiben erhalten.",
+    refreshLists: "↻ Liste aktualisieren",
     persons: "Scharf, wenn alle diese Personen weg sind",
     awayDelay: "Wartezeit, wenn alle weg sind (min)",
     arrival: "Unscharf bei Rückkehr",
@@ -118,6 +121,9 @@ const PT = {
     weekdays: "On these days (none = daily)",
     schedule: "Or by schedule",
     noSchedule: "– no schedule –",
+    scheduleCreate: "Create schedule ↗",
+    scheduleHint: "Opens the helpers in a new window: “Create helper” → “Schedule”. Then “Refresh list” here – your entries are kept.",
+    refreshLists: "↻ Refresh list",
     persons: "Arm when all these persons are away",
     awayDelay: "Waiting time when everyone is away (min)",
     arrival: "Disarm on arrival",
@@ -152,6 +158,8 @@ const PROFILE_STYLE = `
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
   .days { display: flex; gap: 10px; flex-wrap: wrap; }
   .days .chk { padding: 2px 0; }
+  .tool { display: flex; gap: 8px; flex-wrap: wrap; }
+  a.b { text-decoration: none; font-size: .9rem; padding: 6px 14px; }
 `;
 
 const pe = (value) =>
@@ -267,6 +275,8 @@ class HauswachtProfileEditor extends HTMLElement {
       <div><label>${pe(this._t("disarmTime"))}</label><input type="time" data-a="auto_disarm_time" value="${pe(a.auto_disarm_time || "")}"></div></div>
       <label>${pe(this._t("weekdays"))}</label><div class="days">${c.weekdays.map((w) => `<div class="chk"><input type="checkbox" data-am="auto_weekdays" value="${w}" ${a.auto_weekdays.includes(w) ? "checked" : ""}><span>${pe(t("days", w))}</span></div>`).join("")}</div>
       <label>${pe(this._t("schedule"))}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
+      <div class="tool" style="margin-top:6px"><a class="b" href="/config/helpers" target="_blank" rel="noopener">${pe(this._t("scheduleCreate"))}</a><button class="b" data-act="refresh">${pe(this._t("refreshLists"))}</button></div>
+      <div class="muted">${pe(this._t("scheduleHint"))}</div>
       <label>${pe(this._t("persons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
       <div class="two"><div><label>${pe(this._t("awayDelay"))}</label><input type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}"></div>
       <div><label>${pe(this._t("arrivalWindow"))}</label><input type="number" min="1" max="${lim.arrival_window}" data-a="auto_arrival_window" data-num="1" value="${pe(a.auto_arrival_window)}"></div></div>
@@ -321,7 +331,7 @@ class HauswachtProfileEditor extends HTMLElement {
     }
     this._busy = false;
     if (result.ok) {
-      this.dispatchEvent(new CustomEvent("hw-saved", { bubbles: true, composed: true }));
+      this.dispatchEvent(new CustomEvent("hw-saved", { bubbles: true, composed: true, detail: { revision: result.revision } }));
       return;
     }
     this._errors = result.errors || { base: "failed" };
@@ -351,6 +361,7 @@ class HauswachtProfileEditor extends HTMLElement {
       btn.addEventListener("click", () => {
         const act = btn.dataset.act;
         if (act === "cancel") this._close();
+        else if (act === "refresh") this._refreshChoices();
         else if (act === "save") {
           this._collect();
           this._apply("profile_save", this._payload());
@@ -368,6 +379,21 @@ class HauswachtProfileEditor extends HTMLElement {
         this.shadowRoot.querySelector(".sheet").scrollTop = top;
       })
     );
+  }
+
+  async _refreshChoices() {
+    // Auswahllisten neu holen (z. B. neuer Zeitplan) – Eingaben bleiben
+    this._collect();
+    try {
+      const fresh = await this.hass.callWS({ type: "hauswacht/settings/get" });
+      this.settings.profile_edit.choices = fresh.profile_edit.choices;
+      this.settings.entities = fresh.entities;
+    } catch (_err) {
+      // bleibt bei der alten Liste
+    }
+    const top = this.shadowRoot.querySelector(".sheet").scrollTop;
+    this._render();
+    this.shadowRoot.querySelector(".sheet").scrollTop = top;
   }
 
   _close() {

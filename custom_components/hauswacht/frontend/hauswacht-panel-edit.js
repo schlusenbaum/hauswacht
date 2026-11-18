@@ -521,7 +521,7 @@ class HauswachtSensorEditor extends HTMLElement {
     }
     this._busy = false;
     if (result.ok) {
-      this.dispatchEvent(new CustomEvent("hw-saved", { bubbles: true, composed: true }));
+      this.dispatchEvent(new CustomEvent("hw-saved", { bubbles: true, composed: true, detail: { revision: result.revision } }));
       return;
     }
     this._errors = result.errors || { base: "failed" };

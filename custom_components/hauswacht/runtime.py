@@ -78,6 +78,7 @@ from .core.always_active import (
     parse_arm_on_close,
 )
 from .core.areas import MAIN_AREA, area_options, parse_areas
+from .core.changes import options_revision
 from .core.code_guard import (
     CodeGuardState,
     current_failures,
@@ -343,6 +344,8 @@ class HauswachtRuntime:
         self.reminder = ReminderRunner(self)
         self.zones = parse_zones(entry.options)
         # Melder mit Kippstellung (ADR 0010): drei Stellungen, Bewertung je Profil
+        # Stand der Einstellungen, mit dem dieser Lauf gestartet ist (Einstellungsseite)
+        self.loaded_revision = options_revision(entry.options)
         self.tilt_sources = parse_tilt_sources(entry.options)
         # Erschütterungsstärke als Zahl und Fehlalarmschutz je Meldergruppe (ADR 0010 Teil B)
         self.vibration_sources = parse_vibration_sources(entry.options)

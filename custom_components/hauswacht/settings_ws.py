@@ -11,8 +11,6 @@ Diese Befehle schalten nichts – sie ändern nur Einstellungen.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from collections.abc import Mapping
 from typing import Any
 
@@ -23,7 +21,7 @@ from homeassistant.helpers import label_registry as lr
 
 from .const import DOMAIN
 from .core.always_active import parse_always_active
-from .core.changes import Change
+from .core.changes import Change, options_revision
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sensors import (
     remove_group,
@@ -73,9 +71,7 @@ ACTIONS = (
 
 
 def revision(options: Mapping[str, Any]) -> str:
-    """Prüfsumme der Einstellungen – ändert sich mit jeder Änderung, egal von wo."""
-    raw = json.dumps(options, sort_keys=True, default=str, ensure_ascii=False)
-    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+    return options_revision(options)
 
 
 def _main(hass: HomeAssistant) -> Any:
@@ -111,6 +107,8 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
         )
     return {
         "revision": revision(options),
+        # Stand, mit dem Hauswacht gerade läuft – nach dem Speichern erst nach dem Neuladen gleich
+        "loaded_revision": main.loaded_revision,
         "editable": bool(main.all_disarmed),
         "types": [t.value for t in SensorType],
         "groups": [
@@ -251,7 +249,7 @@ def ws_settings_apply(
         return
     hass.config_entries.async_update_entry(entry, options=change.options)
     connection.send_result(
-        msg["id"], {"ok": True, "revision": revision(change.options), "id": change.item_id}
+        msg["id"], {"ok": True, "revision": revision(entry.options), "id": change.item_id}
     )
 
 

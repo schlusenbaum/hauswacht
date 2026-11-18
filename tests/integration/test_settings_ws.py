@@ -204,3 +204,29 @@ async def test_apply_profile_save_new_and_delete(hass: HomeAssistant, hass_ws_cl
     assert deleted["ok"] is True
     await hass.async_block_till_done()
     assert "garten" not in _options(hass)["profiles"]
+
+
+async def test_profile_persons_show_in_overview_after_reload(
+    hass: HomeAssistant, hass_ws_client: Any
+) -> None:
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    night = next(p for p in data["profile_edit"]["profiles"] if p["id"] == "night")
+    night["automation"]["auto_away_persons"] = ["person.anna"]
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data=night,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    # Nach dem Neuladen läuft Hauswacht mit genau dem gespeicherten Stand
+    fresh = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert fresh["loaded_revision"] == result["revision"] == fresh["revision"]
+    overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
+    profile = next(p for p in overview["profiles"] if p["id"] == "night")
+    assert profile["auto"]["away_persons"] == ["Anna"]
