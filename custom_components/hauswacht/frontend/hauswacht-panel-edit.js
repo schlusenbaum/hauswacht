@@ -555,6 +555,7 @@ class HauswachtSensorEditor extends HTMLElement {
       <div class="bar"><button class="b p" data-a="save" ${this._busy ? "disabled" : ""}>${e(this._busy ? this._t("saving") : this._t("save"))}</button>
       <button class="b" data-a="cancel">${e(this._t("cancel"))}</button>
       ${del ? `<button class="b d" data-a="delete">${e(this._t("delete"))}</button>` : ""}</div></div>`;
+    window.HauswachtDocs?.decorate(this.shadowRoot, this.helpKey, this._lang);
     this._wire();
   }
 

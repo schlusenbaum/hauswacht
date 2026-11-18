@@ -407,3 +407,47 @@ async def test_apply_rule_save_yaml_and_delete(hass: HomeAssistant, hass_ws_clie
     await hass.async_block_till_done()
     assert rule_id not in _options(hass)["rules"]
     assert rule_id not in _options(hass)["profiles"]["night"].get("rules", [])
+
+
+async def test_person_save_with_pin_and_delete(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert "people" in data
+    bad = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="user_save",
+        data={"name": "Anna", "new_pin": "12"},
+    )
+    assert bad["errors"] == {"new_pin": "invalid_pin"}
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="user_save",
+        data={"name": "Anna", "new_pin": "4711", "valid_until": "2030-01-01T18:00"},
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    anna = _options(hass)["users"][result["id"]]
+    assert anna["pin_digest"]
+    assert anna["valid_until"].startswith("2030-01-01T18:00")
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    listed = next(u for u in data["people"]["users"] if u["id"] == result["id"])
+    assert listed["has_pin"] is True
+    assert "4711" not in str(data)
+    assert listed["valid_until"] == "2030-01-01T18:00"
+    deleted = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="user_delete",
+        data={"id": result["id"]},
+    )
+    assert deleted["ok"] is True
+    await hass.async_block_till_done()
+    assert result["id"] not in _options(hass).get("users", {})

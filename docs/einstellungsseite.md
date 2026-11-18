@@ -3,10 +3,10 @@
 **Deutsch** | [English](en/settings-page.md)
 
 > **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an;
-> **Melder**, **Alarmprofile**, **Auslöseregeln**, **Alarmgeber** und **Benachrichtigungen**
-> bearbeitest du schon direkt auf der Seite. Personen und System bearbeitest du noch im
-> Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) – das folgt in der nächsten
-> Stufe.
+> **Melder**, **Alarmprofile**, **Auslöseregeln**, **Alarmgeber**, **Benachrichtigungen** und
+> **Personen** bearbeitest du schon direkt auf der Seite. Bedienteile, Aktions-Codes, Master-PIN
+> und System bearbeitest du noch im Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben
+> rechts) – das folgt als Nächstes.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -30,8 +30,21 @@ Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
 | **Benachrichtigungen** | Empfänger je Ereignis, Lautsprecher, Ruhezeit |
 | **Personen und Bedienteile** | Benutzer mit Rechten und Ausweisen (PINs werden nie angezeigt), Bedienteile, Aktions-Codes |
 | **System** | Funkstille, Funknetz, Anlernen, Neustart, Heimkehr |
+| **Dokumentation** | Alle Seiten dieser Anleitung mit kurzer Beschreibung |
 
 Die Seite merkt sich den zuletzt gewählten Reiter (nur in diesem Browser).
+
+## Anleitung direkt aus der Seite
+
+Neben jeder Überschrift – auf der Seite und in jedem Seitenblatt – steht ein kleines **„?“**. Es
+öffnet die Anleitung in einem neuen Fenster, genau an der passenden Stelle: das „?“ bei „Immer
+aktiv“ zum Beispiel bei [Immer aktive Melder](melder.md#immer-aktive-melder), das im Blatt einer
+Auslöseregel bei [Auslöseregeln](ausloeseregeln.md) (im YAML-Modus beim
+[Expertenmodus](ausloeseregeln.md#expertenmodus-yaml)).
+
+Der Reiter **Dokumentation** listet alle Seiten. Die Links zeigen auf die Anleitung **genau der
+installierten Version** (auf GitHub, deutsch oder englisch nach der Sprache von Home Assistant) –
+du liest also nie über etwas, das deine Version noch nicht kann.
 
 ## Die Matrix „Melder × Profile“
 
@@ -151,6 +164,32 @@ steps:
 - Gespeichert wird nur, was auch der Dialog speichern würde: Name nötig und eindeutig, kein
   leerer Schritt, nicht derselbe Melder in zwei Schritten hintereinander. **Löschen** fragt einmal
   nach und nimmt die Regel auch aus allen Profilen.
+
+## Personen bearbeiten
+
+Im Reiter **Personen und Bedienteile** steht jede Person mit ihren Rechten und Ausweisen („alle
+Rechte · PIN · 2 Karten“). **„Bearbeiten“** öffnet das Seitenblatt, **„+ Person anlegen“** ein
+leeres. Was Personen, PINs und Rechte sind, steht unter [Benutzer, PINs und Sperre](benutzer.md).
+
+| Feld | Inhalt |
+|---|---|
+| **Name** | Vorschläge aus den Home-Assistant-Konten. Heißt die Person wie ein Konto, wird sie damit verknüpft (wie im Dialog) |
+| **Aktiv** | Aus = die Person kann nichts schalten (z. B. vorübergehend gesperrt) |
+| **Darf …** | scharf schalten, unscharf schalten, Alarm beenden. Bei mehreren Bereichen wahlweise **je Bereich** – dann ein Kasten je Bereich |
+| **Trotzdem scharf am Keypad** | offene Melder überbrücken, siehe [Trotzdem scharf am Keypad](bedienteile.md#trotzdem-scharf-am-keypad) |
+| **PIN in der Alarmkarte** | z. B. für ein Wandtablet, das immer angemeldet ist |
+| **Gültig ab / bis** | für Gäste oder Handwerker; außerhalb der Zeit wird die Person abgewiesen |
+| **Home-Assistant-Konto** | ausdrücklich verknüpfen (sonst automatisch nach Name) |
+| **PIN** | Neuer PIN und neue [Bedrohungs-PIN](benutzer.md#bedrohungs-pin), jeweils 4 bis 8 Ziffern; leer = nicht ändern. Gesetzte PINs lassen sich hier entfernen |
+
+- **PINs werden nie angezeigt** – auch hier nicht. Die Seite zeigt nur „PIN gesetzt“ oder „Kein
+  PIN“.
+- Es gelten die [PIN-Regeln](benutzer.md#pin-regeln) wie im Dialog: Ein PIN darf keine
+  Bedrohungs-PIN einer anderen Person und kein Aktions-Code sein. Passt etwas nicht, wird **gar
+  nichts** gespeichert und das Feld zeigt den Grund.
+- **Karten** anlernen, den **Master-PIN** und die **PIN-Regeln** stellst du weiter im Dialog ein
+  (Systemeinstellungen → Benutzer und PINs).
+- **Löschen** fragt einmal nach.
 
 ## Alarmgeber bearbeiten
 

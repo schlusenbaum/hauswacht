@@ -27,7 +27,17 @@ PANEL_EDIT_FILE = "hauswacht-panel-edit.js"
 PANEL_PROFILE_FILE = "hauswacht-panel-profile.js"
 PANEL_ALARM_FILE = "hauswacht-panel-alarm.js"
 PANEL_RULES_FILE = "hauswacht-panel-rules.js"
-PANEL_FILES = (PANEL_FILE, PANEL_EDIT_FILE, PANEL_PROFILE_FILE, PANEL_ALARM_FILE, PANEL_RULES_FILE)
+PANEL_DOCS_FILE = "hauswacht-panel-docs.js"
+PANEL_PEOPLE_FILE = "hauswacht-panel-people.js"
+PANEL_FILES = (
+    PANEL_FILE,
+    PANEL_EDIT_FILE,
+    PANEL_PROFILE_FILE,
+    PANEL_ALARM_FILE,
+    PANEL_RULES_FILE,
+    PANEL_DOCS_FILE,
+    PANEL_PEOPLE_FILE,
+)
 PANEL_URL_PATH = "hauswacht-settings"
 PANEL_ELEMENT = "hauswacht-panel"
 URL_BASE = "/hauswacht"

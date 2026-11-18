@@ -12,6 +12,7 @@ from custom_components.hauswacht.core.changes.notifications import (
 from custom_components.hauswacht.core.changes.sirens import save_sirens
 from custom_components.hauswacht.core.changes.users import (
     delete_user,
+    save_person,
     save_user,
     set_area_rights,
     set_pins,
@@ -216,3 +217,39 @@ def test_set_and_remove_pins() -> None:
     removed = set_pins(change.options, "anna", {"remove_pin": True})
     assert removed.options is not None
     assert "pin_digest" not in removed.options["users"]["anna"]
+
+
+def test_save_person_with_pins_and_area_rights() -> None:
+    options: dict[str, Any] = {
+        "users": {},
+        "areas": {"garage": {"name": "Garage"}},
+    }
+    change = save_person(
+        options,
+        None,
+        {
+            "name": "Anna",
+            "rights": "per_area",
+            "area_rights": {"main": ["arm", "disarm", "nonsense"], "garage": []},
+            "new_pin": "4711",
+            "new_duress_pin": "4712",
+        },
+    )
+    assert change.ok, change.errors
+    assert change.options is not None
+    anna = change.options["users"][change.item_id]
+    assert anna["rights"] == "per_area"
+    assert anna["area_rights"] == {"main": ["arm", "disarm"], "garage": []}
+    assert anna["pin_digest"]
+    assert anna["duress_digest"]
+    assert "4711" not in str(anna)
+    # PIN-Fehler: nichts wird gespeichert, Name und PIN werden gemeinsam gemeldet
+    bad = save_person(change.options, None, {"name": "Anna", "new_pin": "12"})
+    assert bad.errors == {"name": "user_name_taken", "new_pin": "invalid_pin"}
+    # PIN entfernen, Rest bleibt
+    removed = save_person(change.options, change.item_id, {"name": "Anna", "remove_pin": True})
+    assert removed.options is not None
+    stored = removed.options["users"][change.item_id]
+    assert "pin_digest" not in stored
+    assert stored["duress_digest"]
+    assert save_person(options, "gibtsnicht", {"name": "X"}).errors == {"base": "unknown_user"}

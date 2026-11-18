@@ -340,6 +340,8 @@ class HauswachtAlarmEditor extends HTMLElement {
       <div class="bar"><button class="b p" data-act="save" ${this._busy ? "disabled" : ""}>${ae(this._busy ? this._t("saving") : this._t("save"))}</button>
       <button class="b" data-act="cancel">${ae(this._t("cancel"))}</button></div></div>`;
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
+    const help = { sirens: "sirens", notify: "notifications", text: "texts" }[this.kind];
+    window.HauswachtDocs?.decorate(this.shadowRoot, help, this._lang);
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();
     };

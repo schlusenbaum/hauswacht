@@ -13,8 +13,17 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick. Melder, Profile, Auslöseregeln, Alarmgeber und Benachrichtigungen bearbeitest du hier direkt; der Rest folgt – bis dahin über „Im Dialog bearbeiten“.",
+    hint: "Die ganze Einrichtung auf einen Blick. Melder, Profile, Auslöseregeln, Alarmgeber, Benachrichtigungen und Personen bearbeitest du hier direkt; der Rest folgt – bis dahin über „Im Dialog bearbeiten“.",
     addRule: "Auslöseregel anlegen",
+    addPerson: "Person anlegen",
+    noPeople: "Noch keine Person. Ohne Personen schaltet jeder ohne PIN – mit Personen bekommt jede ihren PIN, ihre Karten und ihre Rechte.",
+    inactive: "inaktiv",
+    pin: "PIN",
+    duressPin: "Bedrohungs-PIN",
+    cardsN: "Karten",
+    allRights: "alle Rechte",
+    perArea: "Rechte je Bereich",
+    dialogOnly: "Anlernen und Ändern im Dialog („Im Dialog bearbeiten“ → Systemeinstellungen → Bedienteile).",
     noRules: "Noch keine Auslöseregel. Eine Regel löst erst bei einer Abfolge aus, z. B. „Haustür, dann innerhalb von 60 s Keller“.",
     yamlOnly: "nur YAML",
     inProfiles: "Profile",
@@ -44,7 +53,10 @@ const TEXTS = {
       notifications: "Benachrichtigungen",
       people: "Personen und Bedienteile",
       system: "System",
+      docs: "Dokumentation",
     },
+    docsIntro: "Die Anleitung zu deiner Version ({v}) – öffnet sich in einem neuen Fenster. Das „?“ an jedem Abschnitt springt direkt an die passende Stelle.",
+    docsAll: "Alle Seiten im Überblick",
     search: "Melder suchen …",
     noGroup: "Ohne Meldergruppe",
     sensorsCount: "Melder",
@@ -65,8 +77,17 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance. You edit sensors, profiles, trigger rules, alarm devices and notifications right here; the rest follows – until then use “Edit in the dialog”.",
+    hint: "The whole setup at a glance. You edit sensors, profiles, trigger rules, alarm devices, notifications and people right here; the rest follows – until then use “Edit in the dialog”.",
     addRule: "Add trigger rule",
+    addPerson: "Add person",
+    noPeople: "No person yet. Without people anyone operates without a PIN – with people, each gets their PIN, cards and rights.",
+    inactive: "inactive",
+    pin: "PIN",
+    duressPin: "duress PIN",
+    cardsN: "cards",
+    allRights: "all rights",
+    perArea: "rights per area",
+    dialogOnly: "Learning and changing in the dialog (“Edit in the dialog” → system settings → control devices).",
     noRules: "No trigger rule yet. A rule only triggers on a sequence, e.g. “front door, then basement within 60 s”.",
     yamlOnly: "YAML only",
     inProfiles: "Profiles",
@@ -96,7 +117,10 @@ const TEXTS = {
       notifications: "Notifications",
       people: "People and control devices",
       system: "System",
+      docs: "Documentation",
     },
+    docsIntro: "The documentation for your version ({v}) – opens in a new window. The “?” on every section jumps straight to the right place.",
+    docsAll: "All pages at a glance",
     search: "Search sensors …",
     noGroup: "Without sensor group",
     sensorsCount: "sensors",
@@ -114,7 +138,7 @@ const TEXTS = {
   },
 };
 
-const TABS = ["overview", "sensors", "profiles", "rules", "sirens", "notifications", "people", "system"];
+const TABS = ["overview", "sensors", "profiles", "rules", "sirens", "notifications", "people", "system", "docs"];
 // Welche Abschnitte der Übersicht in welchem Reiter stehen
 const TAB_PARTS = {
   overview: ["findings", "status"],
@@ -125,6 +149,20 @@ const TAB_PARTS = {
   people: ["users", "controls", "actionCodes"],
   system: ["monitoring"],
 };
+// Welche Stelle der Anleitung das „?“ eines Abschnitts öffnet (siehe hauswacht-panel-docs.js)
+const PART_HELP = {
+  findings: "findings",
+  status: "status",
+  profiles: "profiles",
+  rules: "rules",
+  sirens: "sirens",
+  notifications: "notifications",
+  users: "users",
+  controls: "controls",
+  actionCodes: "actionCodes",
+  monitoring: "network",
+};
+const EDITOR_HELP = { group: "groups", tilt: "tilt", strength: "strength", always: "always", sensor: "types" };
 const STORE_KEY = "hauswacht-panel-tab";
 
 const PANEL_STYLE = `
@@ -213,11 +251,19 @@ class HauswachtPanel extends HTMLElement {
         // bleibt leer; _load meldet den Fehler
       }
     }
+    const version = this._panel?.config?.version || "0";
+    try {
+      await import(`/hauswacht/hauswacht-panel-docs.js?v=${version}`);
+      if (window.HauswachtDocs) window.HauswachtDocs.version = version;
+    } catch (_err) {
+      // ohne Verweise auf die Anleitung weiter nutzbar
+    }
     try {
       await import(`/hauswacht/hauswacht-panel-edit.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-profile.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-alarm.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-rules.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-people.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -278,6 +324,7 @@ class HauswachtPanel extends HTMLElement {
       typeLabel: (t) => (view ? view._l("type", t) : t),
       kind,
       item,
+      helpKey: EDITOR_HELP[kind],
     });
   }
 
@@ -338,7 +385,7 @@ class HauswachtPanel extends HTMLElement {
     const edit = this._settings?.rule_edit;
     if (!edit) {
       const parts = view._parts();
-      return this._card(parts.rules[0], parts.rules[2]);
+      return this._card(parts.rules[0], parts.rules[2], "rules");
     }
     const names = Object.fromEntries(edit.rule_choices.profiles.map((p) => [p.id, p.name]));
     const tools = this._armedOr(`<div class="tool">${this._btn("rule:", "+ " + this._t("addRule"))}</div>`);
@@ -352,7 +399,65 @@ class HauswachtPanel extends HTMLElement {
           })
           .join("")
       : `<div class="muted">${escHtml(this._t("noRules"))}</div>`;
-    return this._card(this._t("tabs").rules, tools + list);
+    return this._card(this._t("tabs").rules, tools + list, "rules");
+  }
+
+  _openPersonEditor(personId) {
+    if (!customElements.get("hauswacht-person-editor") || !this._settings?.people) return;
+    const editor = document.createElement("hauswacht-person-editor");
+    editor.addEventListener("hw-close", () => this._closeEditor());
+    editor.addEventListener("hw-saved", (ev) => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave(ev.detail?.revision);
+    });
+    editor.addEventListener("hw-stale", () => this._reloadAfterSave());
+    this._editor = editor;
+    this.shadowRoot.appendChild(editor);
+    editor.open({ hass: this._hass, settings: this._settings, person: personId || null });
+  }
+
+  _peopleTab(view) {
+    const parts = view._parts();
+    const people = this._settings?.people;
+    let users;
+    if (people) {
+      const tools = this._armedOr(`<div class="tool">${this._btn("person:", "+ " + this._t("addPerson"))}</div>`);
+      const list = people.users.length
+        ? people.users
+            .map((u) => {
+              const bits = [
+                u.rights === "per_area" ? this._t("perArea") : this._t("allRights"),
+                u.has_pin ? this._t("pin") : null,
+                u.has_duress ? this._t("duressPin") : null,
+                u.cards ? `${u.cards} ${this._t("cardsN")}` : null,
+              ].filter(Boolean);
+              return `<div class="item">${this._btn(`person:${u.id}`, this._t("edit"))}<div class="n">${escHtml(u.name)}${u.active ? "" : ` <span class="warn">(${escHtml(this._t("inactive"))})</span>`}</div><div class="muted">${escHtml(bits.join(" · "))}</div></div>`;
+            })
+            .join("")
+        : `<div class="muted">${escHtml(this._t("noPeople"))}</div>`;
+      users = this._card(parts.users[0], tools + list, "users");
+    } else {
+      users = this._card(parts.users[0], parts.users[2], "users");
+    }
+    const note = `<div class="muted">${escHtml(this._t("dialogOnly"))}</div>`;
+    return (
+      users +
+      this._card(parts.controls[0], note + parts.controls[2], "controls") +
+      this._card(parts.actionCodes[0], parts.actionCodes[2], "actionCodes")
+    );
+  }
+
+  _docsTab() {
+    const docs = window.HauswachtDocs;
+    if (!docs) return `<ha-card><div class="wrap muted">${escHtml(this._t("reloadHint"))}</div></ha-card>`;
+    const de = this._lang === "de";
+    const list = docs.pages
+      .map(([pde, pen, tde, ten, cde, cen]) => `<div class="item"><div class="n"><a class="lnk" href="${escHtml(docs.page(pde, pen, this._lang))}" target="_blank" rel="noreferrer">${escHtml(de ? tde : ten)} ↗</a></div><div class="muted">${escHtml(de ? cde : cen)}</div></div>`)
+      .join("");
+    const intro = `<div class="muted">${escHtml(this._fmt("docsIntro", { v: docs.version }))}</div>`;
+    const all = `<div class="tool"><a class="lnk" href="${escHtml(docs.url("index", this._lang))}" target="_blank" rel="noreferrer">${escHtml(this._t("docsAll"))} ↗</a></div>`;
+    return this._card(this._t("tabs").docs, intro + list + all);
   }
 
   _armedOr(html) {
@@ -362,7 +467,7 @@ class HauswachtPanel extends HTMLElement {
   _sirensTab(view) {
     const parts = view._parts();
     const tools = this._armedOr(`<div class="tool">${this._btn("sirens:", this._t("editSirens"))}</div>`);
-    return this._card(parts.sirens[0], tools + parts.sirens[2]);
+    return this._card(parts.sirens[0], tools + parts.sirens[2], "sirens");
   }
 
   _notificationsTab(view) {
@@ -373,8 +478,8 @@ class HauswachtPanel extends HTMLElement {
       .map((e) => `<div class="item">${this._btn(`text:${e.event}`, this._t("edit"))}<div class="n">${escHtml(view._l("event", e.event))}</div><div class="muted">${escHtml(e.message || e.title ? `${this._t("ownText")}: ${e.title ? e.title + " – " : ""}${e.preview || e.message}` : this._t("defaultText"))}</div></div>`)
       .join("");
     return (
-      this._card(parts.notifications[0], tools + parts.notifications[2]) +
-      (events.length ? this._card(this._t("texts"), `<div class="muted">${escHtml(this._t("textsHint"))}</div>${texts}`) : "")
+      this._card(parts.notifications[0], tools + parts.notifications[2], "notifications") +
+      (events.length ? this._card(this._t("texts"), `<div class="muted">${escHtml(this._t("textsHint"))}</div>${texts}`, "texts") : "")
     );
   }
 
@@ -389,7 +494,7 @@ class HauswachtPanel extends HTMLElement {
         return `<ha-card><div class="wrap"><div class="head"><div class="t">${head}</div>${this._btn(`profile:${p.id}`, this._t("edit"))}</div>${view._kv(view._profileRows(p))}</div></ha-card>`;
       })
       .join("");
-    return `<ha-card><div class="wrap">${tools}</div></ha-card>${cards}`;
+    return this._card(this._t("tabs").profiles, tools, "profiles") + cards;
   }
 
   _closeEditor() {
@@ -407,6 +512,7 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "sensor") this._openEditor("sensor", { entity: spec.slice(7) });
     else if (kind === "profile") this._openProfileEditor(id);
     else if (kind === "rule") this._openRuleEditor(id);
+    else if (kind === "person") this._openPersonEditor(id);
     else if (kind === "sirens") this._openAlarmEditor("sirens");
     else if (kind === "notify") this._openAlarmEditor("notify");
     else if (kind === "text") this._openAlarmEditor("text", id);
@@ -493,14 +599,15 @@ class HauswachtPanel extends HTMLElement {
     const specialTools = `<div class="tool">${this._btn("tilt:", "+ " + this._t("addTilt"))}${this._btn("strength:", "+ " + this._t("addStrength"))}</div>`;
     const parts = view._parts();
     return (
-      this._card(view._t("sensors"), matrix) +
-      this._card(this._t("special"), specialHtml + specialTools) +
-      this._card(parts.always[0], parts.always[2] + `<div class="tool">${this._btn("always:", this._t("edit"))}</div>`)
+      this._card(view._t("sensors"), matrix, "sensors") +
+      this._card(this._t("special"), specialHtml + specialTools, "tilt") +
+      this._card(parts.always[0], parts.always[2] + `<div class="tool">${this._btn("always:", this._t("edit"))}</div>`, "always")
     );
   }
 
-  _card(title, body) {
-    return `<ha-card><div class="wrap"><div class="head"><div class="t">${escHtml(title)}</div></div>${body}</div></ha-card>`;
+  _card(title, body, help) {
+    const link = help && window.HauswachtDocs ? window.HauswachtDocs.help(help, this._lang) : "";
+    return `<ha-card><div class="wrap"><div class="head"><div class="t">${escHtml(title)}${link}</div></div>${body}</div></ha-card>`;
   }
 
   _tabBody() {
@@ -526,12 +633,14 @@ class HauswachtPanel extends HTMLElement {
     if (this._tab === "sensors") return this._sensorsTab(view);
     if (this._tab === "profiles") return this._profilesTab(view);
     if (this._tab === "rules") return this._rulesTab(view);
+    if (this._tab === "docs") return this._docsTab();
+    if (this._tab === "people") return this._peopleTab(view);
     if (this._tab === "sirens") return this._sirensTab(view);
     if (this._tab === "notifications") return this._notificationsTab(view);
     const parts = view._parts();
     const items = TAB_PARTS[this._tab] || [];
     const asOf = this._tab === "overview" ? parts.asOf : "";
-    return asOf + items.map((key) => this._card(parts[key][0], parts[key][2])).join("");
+    return asOf + items.map((key) => this._card(parts[key][0], parts[key][2], PART_HELP[key])).join("");
   }
 
   _render() {
@@ -541,7 +650,7 @@ class HauswachtPanel extends HTMLElement {
       ? `<button data-a="menu" title="Menu"><ha-icon icon="mdi:menu"></ha-icon></button>`
       : "";
     this.shadowRoot.innerHTML = `
-      <style>${shared}${PANEL_STYLE}</style>
+      <style>${shared}${PANEL_STYLE}${window.HauswachtDocs?.style || ""}</style>
       <div class="top">
         ${menu}
         <div class="t"><ha-icon icon="mdi:shield-home"></ha-icon>${escHtml(this._t("title"))}</div>

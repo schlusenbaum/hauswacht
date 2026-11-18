@@ -354,6 +354,7 @@ class HauswachtProfileEditor extends HTMLElement {
       <div class="bar"><button class="b p" data-act="save" ${this._busy ? "disabled" : ""}>${pe(this._busy ? this._t("saving") : this._t("save"))}</button>
       <button class="b" data-act="cancel">${pe(this._t("cancel"))}</button>
       ${this.profile ? `<button class="b d" data-act="delete">${pe(this._t("delete"))}</button>` : ""}</div></div>`;
+    window.HauswachtDocs?.decorate(this.shadowRoot, this.helpKey || "profiles", this._lang);
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();
     };

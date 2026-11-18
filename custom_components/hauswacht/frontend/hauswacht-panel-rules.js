@@ -439,6 +439,7 @@ class HauswachtRuleEditor extends HTMLElement {
         ${this._ruleId ? `<button class="b d" data-act="delete">${re(this._sure ? this._t("delSure") : this._t("del"))}</button>` : ""}</div>
     </div>`;
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
+    window.HauswachtDocs?.decorate(this.shadowRoot, this._mode === "yaml" ? "rulesYaml" : "rules", this._lang);
     this._wire();
     if (!this._checkedOnce) {
       this._checkedOnce = true;

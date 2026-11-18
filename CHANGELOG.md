@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b10] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,
+Teil 1).
+
+### Hinzugefügt
+- **Personen auf der Einstellungsseite bearbeiten**: anlegen, ändern, löschen – Name (mit
+  Vorschlägen aus den Home-Assistant-Konten), aktiv, Rechte für alle Bereiche oder je Bereich,
+  „Trotzdem scharf am Keypad“, PIN in der Alarmkarte, Gültig ab/bis, verknüpftes Konto, PIN und
+  Bedrohungs-PIN setzen oder entfernen. PINs werden nie angezeigt; es gelten dieselben PIN-Regeln
+  wie im Dialog.
+- **Reiter Dokumentation**: alle Seiten der Anleitung mit kurzer Beschreibung.
+- **„?“ an jedem Abschnitt und Seitenblatt**: öffnet die Anleitung direkt an der passenden
+  Stelle – für genau die installierte Version, deutsch oder englisch.
+
 ## [0.57.0b9] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).

@@ -3,9 +3,10 @@
 [Deutsch](../einstellungsseite.md) | **English**
 
 > **Pre-release:** the page grows in stages. It **shows** the whole setup; you already edit
-> **sensors**, **alarm profiles**, **trigger rules**, **alarm devices** and **notifications**
-> directly on the page. People and system are still edited in the settings dialog (button "Edit
-> in the dialog" at the top right) – that follows in the next stage.
+> **sensors**, **alarm profiles**, **trigger rules**, **alarm devices**, **notifications** and
+> **people** directly on the page. Control devices, action codes, master PIN and system are still
+> edited in the settings dialog (button "Edit in the dialog" at the top right) – that follows
+> next.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -28,8 +29,21 @@ which profile they are armed, who gets which message.
 | **Notifications** | Recipients per event, speakers, quiet time |
 | **People and control devices** | Users with rights and credentials (PINs are never shown), control devices, action codes |
 | **System** | Radio silence, radio network, learning, restart, homecoming |
+| **Documentation** | All pages of this documentation with a short description |
 
 The page remembers the last selected tab (in this browser only).
+
+## Documentation straight from the page
+
+Next to every heading – on the page and in every side sheet – there is a small **"?"**. It opens
+the documentation in a new window, right at the matching place: the "?" at "Always active" for
+example at [always-active sensors](sensors.md#always-active-sensors), the one in the sheet of a
+trigger rule at [trigger rules](trigger-rules.md) (in YAML mode at
+[expert mode](trigger-rules.md#expert-mode-yaml)).
+
+The tab **Documentation** lists all pages. The links point to the documentation of **exactly the
+installed version** (on GitHub, German or English by the language of Home Assistant) – so you
+never read about something your version cannot do yet.
 
 ## The matrix "sensor × profile"
 
@@ -148,6 +162,31 @@ steps:
 - Only what the dialog would save is saved: a name is needed and must be unique, no empty step,
   not the same sensor in two consecutive steps. **Delete** asks once and also removes the rule
   from all profiles.
+
+## Editing people
+
+The tab **People and control devices** lists every person with their rights and credentials ("all
+rights · PIN · 2 cards"). **"Edit"** opens the side sheet, **"+ Add person"** an empty one. What
+people, PINs and rights are: see [users, PINs and lockout](users.md).
+
+| Field | Content |
+|---|---|
+| **Name** | Suggestions from the Home Assistant accounts. If the person has the same name as an account, they are linked (as in the dialog) |
+| **Active** | Off = the person cannot switch anything (e.g. temporarily blocked) |
+| **May …** | arm, disarm, end an alarm. With several areas optionally **per area** – then one box per area |
+| **Arm anyway at the keypad** | bypass open sensors, see [arm anyway at the keypad](control-devices.md#arm-anyway-at-the-keypad) |
+| **PIN in the alarm card** | e.g. for a wall tablet that is always logged in |
+| **Valid from / until** | for guests or tradespeople; outside this time the person is refused |
+| **Home Assistant account** | link explicitly (otherwise automatically by name) |
+| **PIN** | New PIN and new [duress PIN](users.md#duress-pin), 4 to 8 digits each; empty = keep. Set PINs can be removed here |
+
+- **PINs are never shown** – not even here. The page only shows "PIN set" or "No PIN".
+- The [PIN rules](users.md#pin-rules) apply as in the dialog: a PIN must not be another person's
+  duress PIN or an action code. If something does not fit, **nothing** is saved and the field
+  shows the reason.
+- Learning **cards**, the **master PIN** and the **PIN rules** stay in the dialog (system settings
+  → users and PINs).
+- **Delete** asks once.
 
 ## Editing alarm devices
 

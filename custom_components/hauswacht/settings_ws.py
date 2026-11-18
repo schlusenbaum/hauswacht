@@ -39,10 +39,12 @@ from .core.changes.sensors import (
     save_tilt,
 )
 from .core.changes.sirens import save_sirens
+from .core.changes.users import delete_user, save_person
 from .core.sensor_types import SensorType, default_type
 from .core.tilt import effective_types, parse_tilt_sources
 from .core.vibration import parse_vibration_sources, rule_for_zone_id
 from .names import display_name
+from .people_settings_ws import build_people_settings, ha_user_choices, to_iso
 from .profile_settings_ws import build_profile_settings
 from .rule_settings_ws import build_rule_settings, ws_rule_check
 from .runtime import device_class_of, entities_by_label
@@ -79,7 +81,11 @@ ACTIONS = (
     "notify_text_save",
     "rule_save",
     "rule_delete",
+    "user_save",
+    "user_delete",
 )
+# Brauchen Rechenzeit (PIN-Hashes) – laufen im Executor
+SLOW_ACTIONS = ("user_save",)
 
 
 def revision(options: Mapping[str, Any]) -> str:
@@ -94,7 +100,9 @@ def _main(hass: HomeAssistant) -> Any:
     return None
 
 
-def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
+def build_settings(
+    hass: HomeAssistant, main: Any, ha_users: list[dict[str, str]] | None = None
+) -> dict[str, Any]:
     options = main.entry.options
     types = effective_types(options)
     always = parse_always_active(options)
@@ -176,6 +184,7 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
         "profile_edit": build_profile_settings(hass, main),
         **build_alarm_notify_settings(hass, main),
         "rule_edit": build_rule_settings(hass, main),
+        "people": build_people_settings(options, ha_users or []),
     }
 
 
@@ -236,6 +245,12 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
             labels=labels,
             profiles=list(profiles) if isinstance(profiles, list) else None,
         )
+    if action == "user_save":
+        return save_person(options, data.get("id") or None, data, ha_user=data.get("ha_user"))
+    if action == "user_delete":
+        if data.get("id") not in options.get("users", {}):
+            return Change(errors={"base": "unknown_user"})
+        return delete_user(options, str(data.get("id")))
     if action == "rule_delete":
         return delete_rule(options, str(data.get("id")))
     if action == "profile_delete":
@@ -257,15 +272,16 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
 
 @websocket_api.require_admin
 @websocket_api.websocket_command({vol.Required("type"): WS_GET})
-@callback
-def ws_settings_get(
+@websocket_api.async_response
+async def ws_settings_get(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
+    ha_users = await ha_user_choices(hass)
     main = _main(hass)
     if main is None:
         connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
         return
-    connection.send_result(msg["id"], build_settings(hass, main))
+    connection.send_result(msg["id"], build_settings(hass, main, ha_users))
 
 
 @websocket_api.require_admin
@@ -277,8 +293,8 @@ def ws_settings_get(
         vol.Optional("data", default={}): dict,
     }
 )
-@callback
-def ws_settings_apply(
+@websocket_api.async_response
+async def ws_settings_apply(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     main = _main(hass)
@@ -286,13 +302,36 @@ def ws_settings_apply(
         connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
         return
     entry = main.entry
+    data = dict(msg["data"])
+    if msg["action"] == "user_save":
+        data["valid_from"] = to_iso(data.get("valid_from"))
+        data["valid_until"] = to_iso(data.get("valid_until"))
+    if msg["action"] == "user_save" and not data.get("ha_user"):
+        # Wie im Dialog: heißt der Benutzer wie ein Home-Assistant-Konto, wird er verknüpft
+        name = str(data.get("name") or "").strip().casefold()
+        data["ha_user"] = next(
+            (u["id"] for u in await ha_user_choices(hass) if u["name"].casefold() == name), None
+        )
     if not main.all_disarmed:
         connection.send_result(msg["id"], {"ok": False, "errors": {"base": "disarm_first"}})
         return
     if msg["revision"] != revision(entry.options):
         connection.send_result(msg["id"], {"ok": False, "errors": {"base": "changed_elsewhere"}})
         return
-    change = apply_change(hass, main, msg["action"], msg["data"])
+    if msg["action"] in SLOW_ACTIONS:
+        # Nur reine Logik im Executor (keine Zugriffe auf Home Assistant)
+        options = entry.options
+        change = await hass.async_add_executor_job(
+            lambda: save_person(options, data.get("id") or None, data, ha_user=data.get("ha_user"))
+        )
+        # Während des Rechnens kann sich etwas geändert haben
+        if not main.all_disarmed or msg["revision"] != revision(entry.options):
+            connection.send_result(
+                msg["id"], {"ok": False, "errors": {"base": "changed_elsewhere"}}
+            )
+            return
+    else:
+        change = apply_change(hass, main, msg["action"], data)
     if not change.ok or change.options is None:
         connection.send_result(
             msg["id"],
