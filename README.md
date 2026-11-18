@@ -11,7 +11,9 @@
 
 **Einbruchmeldeanlage für Home Assistant** – frei definierbare Alarmprofile, Auslöseregeln wie
 „Tür, dann Keller“, Benutzer mit PIN und RFID-Karte, Zigbee-Keypads, Sirenen mit Brandsperre
-und ein Testmodus, in dem garantiert keine Sirene losgeht.
+und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht alles, was es weiß,
+als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
+Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
 > **Status: 0.54.1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
@@ -30,10 +32,14 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
 ## Was Hauswacht kann
 
+- **Einrichtungsassistent** – führt ohne Vorwissen durch die Einrichtung: kurze Einführung,
+  Melder-Vorschläge nach Raum, Meldergruppen, Profile, Empfänger, Sirenen, Benutzer und ein
+  Probelauf im Testmodus; jeder Schritt überspringbar.
 - **Alarmprofile statt fester Modi** – „Zuhause“, „Nacht“, „Urlaub“ … beliebig viele, jedes mit
   eigenen Meldergruppen, Verzögerungen, Sirenen und Empfängern. Automatisch scharf nach Uhrzeit
   oder wenn alle weg sind – mit Anwesenheit aus mehreren Signalen je Person (WLAN, Bluetooth,
-  Router, Nähe …) – und unscharf bei Rückkehr mit Türbeleg.
+  Router, Nähe …) – und unscharf bei Rückkehr mit Türbeleg. Je Wochentag andere Zeiten über einen
+  Zeitplan; **Gastmodus**, damit Besuch nicht ausgesperrt wird.
 - **Auslöseregeln** – Alarm erst bei einer Abfolge („Tür, dann Keller innerhalb von 2 Minuten“),
   mit Ausnahmen und Bedingungen; im Assistenten oder als YAML.
 - **Alarmkarte ohne PIN-Zwang** – große Karte fürs Tablet: Zustand mit Countdown, ein Knopf je
@@ -45,6 +51,8 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 - **Bedienteile** – Zigbee-Keypads über Zigbee2MQTT mit Rückmeldung am Gerät, Karten direkt am
   Keypad anlernen, NFC-Aufkleber mit der Home-Assistant-App, RFID-Leser, Taster (nur scharf)
   und Türschlösser (z. B. Nuki: unscharf, wenn ein bekannter Benutzer aufschließt).
+  **Aktions-Codes** am Keypad (z. B. 7777 + Haus) starten eigene Automationen oder einen stillen
+  Notruf.
 - **Benachrichtigungen** – pro Ereignis mit eigenen Empfängern und Texten, wichtige Hinweise
   durchbrechen „Nicht stören“, Knöpfe „Unscharf schalten“ und „Trotzdem scharf“ in der
   Push-Nachricht, Ansagen über Lautsprecher (z. B. Echo).
@@ -60,6 +68,25 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 - **Beobachten statt raten** – Heimkehr- und Funkstille-Beobachtung liefern Zahlen, bevor man
   etwas automatisiert.
 
+## Offen für alles: Hauswacht als Baustein
+
+Hauswacht schaltet selbst nur Sirenen und verschickt Nachrichten – aber es **stellt alles bereit,
+was eine Alarmanlage weiß**, damit du mit eigenen Automationen anschließt, was immer du willst:
+
+| Hauswacht liefert | Zum Beispiel |
+|---|---|
+| **Bedienfeld** je Bereich mit Zustand und Attributen: `phase` (unscharf, wird scharf, scharf, Eingangsverzögerung, **Alarm**, Alarm vorbei), aktives Profil, auslösender Melder, wer geschaltet hat, Testmodus, Gastmodus | „Wenn Alarm: Licht an“ |
+| **Ereignisse** `hauswacht_event` für fast alles: scharf, unscharf, Alarm, Sabotage, Melder ausgefallen, falscher PIN, Taster, Aktions-Code, Zeitautomatik … | „Bei Sabotage: kritische Push-Nachricht“ |
+| **Entitäten**: offene Melder, Systemstatus, Test- und Gastmodus, Knöpfe, Profil-Einstellungen, Aktions-Code-Ereignis | „Statuslicht rot, solange scharf“ |
+| **Aktionen** und **Knöpfe**: scharf schalten mit Profil (auch „trotzdem scharf“), unscharf, Alarm beenden, Gastmodus, Sirenentest, Melder im Testmodus simulieren | „Gastmodus aus dem Kalender“ |
+
+Damit wird Hauswacht zum Kern für vieles, was eine Alarmanlage können soll: bei Alarm **Licht an**
+und danach wieder wie vorher, **Kamerabild aufs Handy**, **Rollläden hoch**, Musik aus,
+**Heizung runter** bei Abwesenheit, Willkommenslicht beim Heimkommen, Haustür abschließen beim
+Scharfschalten – jeweils mit fertiger Vorlage in den **[Beispielen](docs/beispiele.md)**, alle
+Entitäten, Attribute und Ereignisse in der **[Referenz](docs/referenz.md)**. Im Testmodus bleibt
+das dank des Attributs `test_mode` still.
+
 ## Schnellstart
 
 1. **Repository einbinden** und Hauswacht herunterladen, danach Home Assistant neu starten:
@@ -74,8 +101,9 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht.
 
    [![Hauswacht einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)
 
-3. **Konfigurieren:** eine Meldergruppe mit den Tür- und Fensterkontakten anlegen, ein
-   Alarmprofil (z. B. „Nacht“) anlegen, das Handy als Empfänger eintragen.
+3. **Mit dem Einrichtungsassistenten** (wird beim Einrichten angeboten): Melder auswählen,
+   Meldergruppen und Profile übernehmen, das Handy als Empfänger eintragen. Alternativ alles von
+   Hand unter Konfigurieren.
 4. Karte **„Hauswacht Test“** aufs Dashboard, Testmodus an, durchspielen.
 5. Testmodus aus – fertig. Sirenen erst freigeben, wenn alles passt.
 
@@ -86,6 +114,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | | |
 |---|---|
 | [Installation und erste Schritte](docs/installation.md) | Installation, Menü, die ersten fünf Schritte |
+| [Einrichtungsassistent](docs/assistent.md) | Geführte Einrichtung, jeder Schritt überspringbar, Probelauf |
 | [Melder und Meldergruppen](docs/melder.md) | Welche Sensoren, Typen, immer aktiv, Funkstille |
 | [Alarmprofile und Bereiche](docs/profile.md) | Profile, Automatik, Scharf durch Türschließen, Bereiche |
 | [Auslöseregeln](docs/ausloeseregeln.md) | Abfolgen, Ausnahmen, Bedingungen, YAML |
@@ -95,6 +124,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Ton je Sirene, Sirene aus Schalter, Sirenentest, „Warum hat sie nicht geklingelt?“, Brandschutz |
 | [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
 | [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |
+| [Beispiele](docs/beispiele.md) | Mit anderen Geräten verbinden: Licht, Kamera, Rollläden, Statuslicht, Heizung … |
 | [Testmodus](docs/testmodus.md) · [Beobachtungen](docs/beobachtung.md) · [Referenz](docs/referenz.md) · [Fehlersuche](docs/fehlersuche.md) | |
 
 Alles auf einen Blick: [docs/](docs/README.md). Die Anleitung gibt es auch
@@ -127,6 +157,16 @@ Die verbindlichen Regeln: [Sicherheitsregeln](docs/entwicklung/safety.md).
 > **Hinweis:** Hauswacht ist ein Hobbyprojekt und **kein zertifiziertes Sicherheitssystem**
 > (keine VdS- oder EN-50131-Zertifizierung). Es ersetzt weder eine professionelle
 > Einbruchmeldeanlage noch geprüfte Rauchwarnmelder.
+
+**Grenzen, ehrlich gesagt:**
+
+- Hauswacht läuft **nur, solange Home Assistant läuft** – ohne Strom, Netzwerk oder Funk keine
+  Alarmierung. Eine USV für Home Assistant, Router und Funk-Gateway ist sinnvoll; Sirenen mit
+  eigener Batterie heulen weiter, wenn sie schon laufen.
+- **Keine Notrufleitstelle:** Hauswacht benachrichtigt dich und deine Empfänger – einen
+  Wachdienst ruft es nicht von selbst (über eigene Automationen, z. B. Telefonie-Dienste, aber
+  möglich).
+- **Funkstörung** erkennt Hauswacht nur indirekt – über Funkstille und ausgefallene Melder.
 
 ## Wie Hauswacht entstanden ist
 

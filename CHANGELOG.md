@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- **README** (deutsch und englisch): neuer Abschnitt **„Offen für alles: Hauswacht als
+  Baustein“** – was Hauswacht an Bedienfeld-Attributen, Ereignissen, Entitäten, Aktionen und
+  Knöpfen bereitstellt und was man damit baut (Licht, Kamera, Rollläden, Heizung …), mit Verweis
+  auf Beispiele und Referenz. Funktionsliste um Einrichtungsassistent, Zeitplan, Gastmodus und
+  Aktions-Codes ergänzt; Schnellstart mit dem Assistenten; „Grenzen, ehrlich gesagt“ (läuft nur
+  mit Home Assistant, keine Notrufleitstelle, Funkstörung nur indirekt).
+
 ## [0.54.1] - 2026-11-18
 
 ### Behoben
