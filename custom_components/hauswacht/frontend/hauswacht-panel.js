@@ -37,6 +37,7 @@ const TEXTS = {
     group: "Gruppe",
     none: "keine",
     noMatch: "Kein Melder passt zur Suche.",
+    reloadHint: "Die Seite konnte nicht angezeigt werden. Bitte den Browser bzw. die App einmal neu laden (nach einem Update hält der Browser oft noch die alte Version).",
   },
   en: {
     title: "Hauswacht",
@@ -69,6 +70,7 @@ const TEXTS = {
     group: "Group",
     none: "none",
     noMatch: "No sensor matches the search.",
+    reloadHint: "The page could not be shown. Please reload the browser or app once (after an update the browser often still holds the old version).",
   },
 };
 
@@ -154,7 +156,8 @@ class HauswachtPanel extends HTMLElement {
   async _start() {
     this._render();
     // Die Abschnitte stammen aus der Übersichtskarte – sie wird beim Start mitgeladen
-    if (!window.HauswachtOverviewView) {
+    if (!window.HauswachtOverviewView || typeof window.HauswachtOverviewView.prototype._parts !== "function") {
+      window.HauswachtOverviewView = undefined;
       const version = this._panel?.config?.version || "0";
       try {
         await import(`/hauswacht/hauswacht-uebersicht-card.js?v=${version}`);
@@ -181,7 +184,9 @@ class HauswachtPanel extends HTMLElement {
     // Zeichen-Helfer der Übersichtskarte, ohne sie anzuzeigen
     const View = window.HauswachtOverviewView;
     if (!View || !this._data) return null;
-    const view = new View();
+    // Ohne Konstruktor: Die Klasse kann aus einem zweiten Laden der Karte stammen (z. B. nach
+    // einem Update ohne Neuladen des Browsers) – dann wäre "new" ein Fehler.
+    const view = Object.create(View.prototype);
     view._hass = this._hass;
     view._config = {};
     view._data = this._data;
@@ -251,9 +256,25 @@ class HauswachtPanel extends HTMLElement {
   }
 
   _tabBody() {
+    try {
+      return this._tabContent();
+    } catch (err) {
+      // Nie still hängen bleiben: Fehler sichtbar machen
+      console.error("Hauswacht-Seite:", err);
+      return `<ha-card><div class="wrap muted">${escHtml(this._t("reloadHint"))}<br>${escHtml(err?.message || err)}</div></ha-card>`;
+    }
+  }
+
+  _tabContent() {
     if (this._error) return `<ha-card><div class="wrap muted">${escHtml(this._error)}</div></ha-card>`;
+    if (this._data && !window.HauswachtOverviewView) {
+      return `<ha-card><div class="wrap muted">${escHtml(this._t("reloadHint"))}</div></ha-card>`;
+    }
     const view = this._view();
     if (!view) return `<div class="note">${escHtml(this._t("loading"))}</div>`;
+    if (typeof view._parts !== "function") {
+      return `<ha-card><div class="wrap muted">${escHtml(this._t("reloadHint"))}</div></ha-card>`;
+    }
     if (this._tab === "sensors") return this._sensorsTab(view);
     const parts = view._parts();
     const items = TAB_PARTS[this._tab] || [];

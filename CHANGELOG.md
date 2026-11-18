@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b2] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Behoben
+- **Einstellungsseite blieb bei „Lade …“ stehen und die Reiter ließen sich nicht wechseln**, wenn
+  der Browser nach einem Update noch die alte Übersichtskarte geladen hatte. Die Seite kommt jetzt
+  auch damit zurecht; geht doch einmal etwas schief, steht ein Hinweis da („Browser bzw. App
+  einmal neu laden“) statt eines stillen Hängers.
+
 ## [0.57.0b1] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 1).
