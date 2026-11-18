@@ -2239,7 +2239,9 @@ class HauswachtRuntime:
         self.automation.refresh_doors()
         if self.vibration_sources and self._unsub_reported is None:
             self._unsub_reported = self.hass.bus.async_listen(
-                EVENT_STATE_REPORTED, self._on_vibration_reported
+                EVENT_STATE_REPORTED,
+                self._on_vibration_reported,
+                event_filter=self._is_vibration_report,
             )
         if wanted == self._subscribed and self._unsub_states is not None:
             return
@@ -2373,6 +2375,11 @@ class HauswachtRuntime:
             )
             self._notify()
         return reached
+
+    @callback
+    def _is_vibration_report(self, event_data: Mapping[str, Any]) -> bool:
+        """Nur Meldungen der Erschütterungsstärken (Home Assistant verlangt den Filter)."""
+        return event_data.get("entity_id") in self.vibration_sources
 
     @callback
     def _on_vibration_reported(self, event: HaEventAny[Any]) -> None:
