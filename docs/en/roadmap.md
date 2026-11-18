@@ -38,6 +38,7 @@
 | 0.51 | guest mode (switch, service, alarm card; until a time or until switched off) – no profile automation and no reminders; resume a running alarm after a restart (setting, default off); "alarm before the restart" as an important alarm message |
 | 0.52 | system overview shows guest mode, action codes and the right "Force arm"; new check hints (silent emergency without recipient, action code with deleted profile/keypad, guest mode on); emergency sheet explains "arm anyway" at the keypad |
 | 0.53 | [setup wizard](setup-wizard.md): short introduction, sensor suggestions by floor and room, sensor groups or trigger rules, profiles, recipients with test message, sirens (without release), users, trial run in test mode, further areas, chapter selection – every step can be skipped; settings rules in the core ([ADR 0009](../entwicklung/adr/0009-einrichtungsassistent.md), German) |
+| 0.54 | profile automation by schedule helper: different times per weekday without a second profile; docs page [examples](examples.md) for your own automations (lights, camera, shutters …) |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 

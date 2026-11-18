@@ -4,6 +4,9 @@ Gespeichert im jeweiligen Profil:
 
 - ``auto_arm_time`` / ``auto_disarm_time``: Uhrzeit "HH:MM[:SS]" oder leer
 - ``auto_weekdays``: Wochentage für die Uhrzeiten (leer = jeden Tag)
+- ``auto_schedule``: Zeitplan-Helfer (``schedule.…``) – scharf, wenn ein Zeitblock beginnt,
+  unscharf, wenn er endet. Damit gehen je Wochentag andere Zeiten; die Wochentage oben gelten
+  dafür nicht (der Zeitplan hat seine eigenen).
 - ``auto_away_persons``: Personen; sind alle weg, wird nach ``auto_away_delay`` Minuten
   scharf geschaltet
 - ``auto_arrival_mode``: "Unscharf bei Rückkehr" einer dieser Personen
@@ -55,6 +58,7 @@ class AutoConfig:
     away_delay: int = DEFAULT_AWAY_DELAY
     arrival_mode: str = ARRIVAL_OFF
     arrival_window: int = DEFAULT_ARRIVAL_WINDOW
+    schedule: str | None = None
 
     @property
     def disarm_on_arrival(self) -> bool:
@@ -67,7 +71,7 @@ class AutoConfig:
 
     @property
     def enabled(self) -> bool:
-        return bool(self.arm_time or self.disarm_time or self.away_persons)
+        return bool(self.arm_time or self.disarm_time or self.away_persons or self.schedule)
 
 
 def parse_time(value: Any) -> time | None:
@@ -110,7 +114,37 @@ def parse_automation(options: Mapping[str, Any], profile_id: str) -> AutoConfig:
         arrival_window=_int_in(
             stored.get("auto_arrival_window"), 1, MAX_ARRIVAL_WINDOW, DEFAULT_ARRIVAL_WINDOW
         ),
+        schedule=_schedule(stored.get("auto_schedule")),
     )
+
+
+def _schedule(value: Any) -> str | None:
+    return value if isinstance(value, str) and value.startswith("schedule.") else None
+
+
+SCHEDULE_GAP = 60  # Sekunden: so kurz "aus" zählt als durchgehend (Block bis 24:00 + ab 0:00)
+
+
+def schedule_action(
+    old: str | None, new: str | None, seconds_to_next: float | None = None
+) -> str | None:
+    """Was ein Zustandswechsel des Zeitplans bedeutet: "arm", "disarm" oder nichts.
+
+    Nur echte Wechsel zwischen "off" und "on" zählen. Wird der Zeitplan nach einem Neustart oder
+    Ausfall wieder verfügbar (unknown/unavailable -> on), schaltet Hauswacht nichts – sonst würde
+    eine von Hand unscharf geschaltete Anlage beim Neustart wieder scharf.
+
+    ``seconds_to_next``: Sekunden bis zum nächsten Wechsel des Zeitplans (Attribut
+    ``next_event``). Geht er nach dem Ende gleich wieder an (z. B. Block bis 24:00 und nächster ab
+    0:00), ist das kein echtes Ende – dann wird nicht unscharf geschaltet.
+    """
+    if old == "off" and new == "on":
+        return "arm"
+    if old == "on" and new == "off":
+        if seconds_to_next is not None and 0 <= seconds_to_next <= SCHEDULE_GAP:
+            return None
+        return "disarm"
+    return None
 
 
 def arrival_mode(stored: Mapping[str, Any]) -> str:

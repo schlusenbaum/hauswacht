@@ -151,6 +151,7 @@ def _profiles(main: HauswachtRuntime) -> list[dict[str, Any]]:
                         "arm_time": _time(auto.arm_time),
                         "disarm_time": _time(auto.disarm_time),
                         "weekdays": sorted(auto.weekdays),
+                        "schedule": _name(hass, auto.schedule) if auto.schedule else None,
                         "away_persons": [plain_name(hass, p) for p in auto.away_persons],
                         "away_delay": auto.away_delay,
                         "disarm_on_arrival": auto.disarm_on_arrival,

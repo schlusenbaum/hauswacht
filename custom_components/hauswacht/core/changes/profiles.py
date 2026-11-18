@@ -37,6 +37,7 @@ def automation_from_input(data: Mapping[str, Any]) -> dict[str, Any]:
         "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
         "auto_arrival_mode": mode,
         "auto_arrival_window": int(data.get("auto_arrival_window") or DEFAULT_ARRIVAL_WINDOW),
+        "auto_schedule": data.get("auto_schedule") or None,
         # alter Schalter (bis 0.41) passend mitführen
         "auto_disarm_on_arrival": mode == ARRIVAL_AUTO_ONLY,
     }

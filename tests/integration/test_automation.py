@@ -445,3 +445,61 @@ async def test_guest_mode_from_alarm_card(hass: HomeAssistant, hass_ws_client: A
     panel = hass.states.get(PANEL)
     assert panel is not None
     assert panel.attributes["guest_mode"] is False
+
+
+# --- Zeitplan-Helfer -----------------------------------------------------------
+
+SCHEDULE = "schedule.nacht"
+
+
+async def _schedule(hass: HomeAssistant, state: str, next_in: float | None = None) -> None:
+    attrs = {}
+    if next_in is not None:
+        attrs["next_event"] = (dt_util.now() + timedelta(seconds=next_in)).isoformat()
+    hass.states.async_set(SCHEDULE, state, attrs)
+    await hass.async_block_till_done()
+
+
+async def test_schedule_arms_and_disarms(hass: HomeAssistant) -> None:
+    hass.states.async_set(SCHEDULE, "off")
+    await _setup(hass, auto_schedule=SCHEDULE)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _schedule(hass, "on", next_in=3600)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    assert any(e.data["type"] == "AutoArmed" and e.data["reason"] == "Zeitplan" for e in events)
+    await _schedule(hass, "off", next_in=3600)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_schedule_gap_at_midnight_is_continuous(hass: HomeAssistant) -> None:
+    hass.states.async_set(SCHEDULE, "off")
+    await _setup(hass, auto_schedule=SCHEDULE)
+    await _schedule(hass, "on", next_in=3600)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    # Block bis 24:00, nächster ab 0:00: kurz "aus" -> bleibt scharf
+    await _schedule(hass, "off", next_in=1)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_schedule_after_restart_does_not_arm(hass: HomeAssistant) -> None:
+    hass.states.async_set(SCHEDULE, "unavailable")
+    await _setup(hass, auto_schedule=SCHEDULE)
+    await _schedule(hass, "on")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_schedule_respects_guest_mode(hass: HomeAssistant) -> None:
+    hass.states.async_set(SCHEDULE, "off")
+    await _setup(hass, auto_schedule=SCHEDULE)
+    await _service(hass, "hauswacht", "guest_mode", entity_id=PANEL, **{"on": True})
+    await _schedule(hass, "on")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_schedule_end_leaves_other_profile_armed(hass: HomeAssistant) -> None:
+    hass.states.async_set(SCHEDULE, "on")
+    await _setup(hass, auto_schedule=SCHEDULE)
+    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _schedule(hass, "off")
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT

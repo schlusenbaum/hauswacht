@@ -6,12 +6,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.54.0] - 2026-11-18
+
+### Hinzugefügt
+- **Je Wochentag andere Zeiten – Zeitplan-Helfer in der Profil-Automatik:** Unter Automatik →
+  **„Oder nach Zeitplan (Helfer)“** wählst du einen Zeitplan von Home Assistant. Beginnt ein
+  Zeitblock, wird das Profil scharf; endet er, unscharf. Beispiel „Nacht“: Mo–Do 22:30–6:00,
+  Fr–Sa 0:30–8:00 – ohne zweites Profil. Es gelten dieselben Regeln wie für die Uhrzeiten
+  (nur aus „unscharf“, Gastmodus, offene Fenster werden nie bestätigt, nie während eines Alarms).
+  Blöcke über Mitternacht (bis 24:00 + ab 0:00) gelten als durchgehend; nach einem Neustart holt
+  der Zeitplan nichts nach. Die Anlagenübersicht zeigt den Zeitplan im Profil.
+
 ### Dokumentation
 - Neue Seite **Beispiele** (deutsch und englisch): Hauswacht mit anderen Geräten verbinden –
   bei Alarm Licht an und danach wieder wie vorher, Licht blinken, Kamerabild aufs Handy,
   Rollläden hoch und Musik aus, Statuslicht rot/grün, Heizung und Kamera bei Abwesenheit,
   Willkommenslicht, Sabotage als kritische Benachrichtigung, Störungslampe, Gastmodus aus dem
   Kalender, Taster mit Zusatzfunktion – und was man besser nicht automatisiert.
+- Alarmprofile (deutsch und englisch): neuer Abschnitt „Je Wochentag andere Zeiten (Zeitplan)“
+  mit Beispiel.
 
 ## [0.53.2] - 2026-11-17
 

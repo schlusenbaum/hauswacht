@@ -52,6 +52,7 @@ Im Profil, aufklappbar unter **Automatik**. Alle Felder sind optional – leer h
 | Einstellung | Wirkung |
 |---|---|
 | Scharf um / Unscharf um | Uhrzeit, zu der das Profil scharf bzw. unscharf geschaltet wird |
+| Oder nach Zeitplan (Helfer) | Für **je Wochentag andere Zeiten**: ein Zeitplan-Helfer; Beginn eines Zeitblocks = scharf, Ende = unscharf, siehe [unten](#je-wochentag-andere-zeiten-zeitplan) |
 | An diesen Tagen | Tage, an denen die Uhrzeiten gelten; leer = täglich. Über Nacht siehe [unten](#uhrzeiten-über-nacht-und-scharf-von-hand) |
 | Scharf, wenn alle diese Personen weg sind | Sind alle gewählten Personen nicht zu Hause, wird nach der Wartezeit scharf geschaltet |
 | Wartezeit | Standard 15 Minuten. Kommt in dieser Zeit jemand zurück, wird nichts geschaltet |
@@ -105,6 +106,42 @@ schalten. Dann gilt:
   gilt nur für ihr eigenes Profil.
 
 Beispiel: „Nacht“ um 22:00 von Hand scharf → 23:00 nichts → 06:30 unscharf.
+
+### Je Wochentag andere Zeiten (Zeitplan)
+
+„Scharf um“ und „Unscharf um“ gelten an allen gewählten Tagen gleich. Brauchst du **an
+verschiedenen Tagen verschiedene Zeiten**, nimm statt eines zweiten Profils einen
+**Zeitplan-Helfer** von Home Assistant:
+
+1. Einstellungen → Geräte & Dienste → **Helfer** → Helfer erstellen → **Zeitplan**, Name z. B.
+   „Nacht“.
+2. Im Zeitplan je Wochentag die Zeitblöcke ziehen, in denen das Profil scharf sein soll.
+3. Im Profil unter **Automatik → Oder nach Zeitplan (Helfer)** den Zeitplan wählen.
+
+*Beispiel „Nacht“:*
+
+| Tag | Zeitblock im Zeitplan | Was passiert |
+|---|---|---|
+| Mo–Do | 22:30–24:00 und 0:00–6:00 | 22:30 scharf, 6:00 unscharf |
+| Fr | 0:00–6:00 | 6:00 unscharf (Freitag Abend kein Block) |
+| Sa | 0:30–8:00 | 0:30 scharf, 8:00 unscharf |
+| So | 0:30–8:00 und 22:30–24:00 | 0:30 scharf, 8:00 unscharf, 22:30 scharf |
+
+Ein Block über Mitternacht wird im Zeitplan als zwei Blöcke eingetragen (bis 24:00 und ab 0:00);
+Home Assistant zeigt das als durchgehend an – Hauswacht schaltet dann nicht dazwischen.
+
+Es gelten dieselben Regeln wie für die Uhrzeiten:
+
+- **Scharf** nur aus „unscharf“ heraus; im **Gastmodus** wird nicht scharf geschaltet. Offene
+  Melder werden nie bestätigt – dann kommt eine Meldung.
+- **Unscharf** nur, wenn genau dieses Profil scharf ist – nie während Eingangsverzögerung oder
+  Alarm. Hast du das Profil von Hand scharf geschaltet, schaltet das Ende des Blocks es trotzdem
+  unscharf.
+- Die Wochentage der Automatik gelten für den Zeitplan **nicht** – der Zeitplan hat seine eigenen.
+- **Nach einem Neustart** holt der Zeitplan nichts nach: Hat ein Block während des Neustarts
+  begonnen oder geendet, gilt das [Verhalten nach Neustart](installation.md#verhalten-nach-einem-neustart).
+  So wird eine von Hand unscharf geschaltete Anlage nicht durch einen Neustart wieder scharf.
+- Uhrzeiten und Zeitplan lassen sich kombinieren, sinnvoll ist aber meist nur eins von beiden.
 
 ### Woran Hauswacht erkennt, wer zuhause ist
 

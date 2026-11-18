@@ -62,6 +62,7 @@ const LANG = {
     recipients: "Empfänger bei Alarm",
     auto: "Automatik",
     armAt: "scharf um",
+    schedule: "Zeitplan",
     disarmAt: "unscharf um",
     weekdays: "Tage",
     daily: "täglich",
@@ -206,6 +207,7 @@ const LANG = {
     recipients: "Alarm recipients",
     auto: "Automation",
     armAt: "arm at",
+    schedule: "schedule",
     disarmAt: "disarm at",
     weekdays: "Days",
     daily: "daily",
@@ -519,6 +521,7 @@ class HauswachtUebersichtCard extends HTMLElement {
     if (auto.disarm_time) autoParts.push(`${this._t("disarmAt")} ${auto.disarm_time}`);
     if (auto.arm_time || auto.disarm_time)
       autoParts.push(auto.weekdays?.length ? auto.weekdays.map((d) => this._l("weekday", d)).join(" ") : this._t("daily"));
+    if (auto.schedule) autoParts.push(`${this._t("schedule")}: ${esc(auto.schedule)}`);
     if (auto.away_persons?.length)
       autoParts.push(`${this._t("awayPersons")}: ${auto.away_persons.join(", ")} (${this._t("after")} ${auto.away_delay} min)`);
     if (auto.arrival_mode === "door")

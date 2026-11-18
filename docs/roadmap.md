@@ -38,6 +38,7 @@
 | 0.51 | Gastmodus (Schalter, Dienst, Alarmkarte; bis Uhrzeit oder bis aus) – keine Profil-Automatik und keine Erinnerungen; laufenden Alarm nach Neustart fortsetzen (Einstellung, Standard aus); „Alarm vor dem Neustart“ als wichtige Alarm-Nachricht |
 | 0.52 | Anlagenübersicht zeigt Gastmodus, Aktions-Codes und das Recht „Scharf erzwingen“; neue Prüfhinweise (stiller Notruf ohne Empfänger, Aktions-Code mit gelöschtem Profil/Keypad, Gastmodus an); Notfallblatt erklärt „trotzdem scharf“ am Keypad |
 | 0.53 | [Einrichtungsassistent](assistent.md): kurze Einführung, Melder-Vorschläge nach Etage und Raum, Meldergruppen oder Auslöseregeln, Profile, Empfänger mit Test-Nachricht, Sirenen (ohne Freigabe), Benutzer, Probelauf im Testmodus, weitere Bereiche, Kapitel-Auswahl – jeder Schritt überspringbar; Einstellungsregeln im Kern ([ADR 0009](entwicklung/adr/0009-einrichtungsassistent.md)) |
+| 0.54 | Profil-Automatik nach Zeitplan-Helfer: je Wochentag andere Zeiten ohne zweites Profil; Doku-Seite [Beispiele](beispiele.md) für eigene Automationen (Licht, Kamera, Rollläden …) |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 

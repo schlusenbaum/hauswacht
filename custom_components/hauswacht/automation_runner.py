@@ -38,6 +38,7 @@ from .core.automation import (
     is_active_day,
     parse_automation,
     person_value,
+    schedule_action,
 )
 from .core.homecoming import presence
 from .core.notify_events import NotifyEvent
@@ -56,6 +57,7 @@ REASON_AWAY = "alle weg"
 REASON_ARRIVAL = "Rückkehr"
 REASON_ARRIVAL_DOOR = "Rückkehr mit Türbeleg"
 REASON_RESTART = "Neustart"
+REASON_SCHEDULE = "Zeitplan"
 _PROOF_STATES = (AlarmState.ARMED, AlarmState.PENDING)
 
 
@@ -117,6 +119,11 @@ class AutomationRunner:
                     )
                 )
             persons.update(cfg.away_persons)
+        schedules = sorted({cfg.schedule for cfg in self.configs.values() if cfg.schedule})
+        if schedules:
+            self._unsubs.append(
+                async_track_state_change_event(self.hass, schedules, self._on_schedule)
+            )
         if persons:
             watched = set(persons)
             for person in persons:
@@ -178,6 +185,29 @@ class AutomationRunner:
                 self.auto_arm(profile_id, REASON_TIME)
         elif disarm_due(cfg, today):
             self.auto_disarm(profile_id, REASON_TIME)
+
+    # --- Zeitplan (Helfer) ------------------------------------------------------
+
+    @callback
+    def _on_schedule(self, event: Event[EventStateChangedData]) -> None:
+        entity_id = event.data["entity_id"]
+        old, new = event.data["old_state"], event.data["new_state"]
+        next_event = new.attributes.get("next_event") if new else None
+        seconds = None
+        if isinstance(next_event, datetime):
+            seconds = (next_event - dt_util.now()).total_seconds()
+        elif isinstance(next_event, str) and (parsed := dt_util.parse_datetime(next_event)):
+            seconds = (parsed - dt_util.now()).total_seconds()
+        action = schedule_action(old.state if old else None, new.state if new else None, seconds)
+        if action is None:
+            return
+        for profile_id, cfg in self.configs.items():
+            if cfg.schedule != entity_id:
+                continue
+            if action == "arm":
+                self.auto_arm(profile_id, REASON_SCHEDULE)
+            else:
+                self.auto_disarm(profile_id, REASON_SCHEDULE)
 
     # --- Anwesenheit ----------------------------------------------------------
 
@@ -357,6 +387,7 @@ class AutomationRunner:
             REASON_ARRIVAL: "reason_arrival",
             REASON_ARRIVAL_DOOR: "reason_arrival_door",
             REASON_RESTART: "reason_restart",
+            REASON_SCHEDULE: "reason_schedule",
         }
         return tr(self.runtime.lang, key[reason]) if reason in key else reason
 

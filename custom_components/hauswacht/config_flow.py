@@ -3755,6 +3755,9 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
                 "auto_disarm_time",
                 description=suggested(auto.disarm_time.isoformat() if auto.disarm_time else None),
             ): TimeSelector(),
+            vol.Optional("auto_schedule", description=suggested(auto.schedule)): EntitySelector(
+                EntitySelectorConfig(domain="schedule")
+            ),
             vol.Optional("auto_weekdays", default=sorted(auto.weekdays, key=WEEKDAYS.index)): (
                 SelectSelector(
                     SelectSelectorConfig(
