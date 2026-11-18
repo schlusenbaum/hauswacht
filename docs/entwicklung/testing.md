@@ -47,6 +47,7 @@ Dieselben Prüfungen laufen bei jedem Pull Request in der CI, dazu Hassfest.
 | `tests/core/test_checks.py` | Prüfhinweise: Lücken, Vergessenes, Widersprüche; Bedrohungs-PIN ohne Namen |
 | `tests/integration/test_alarm_card.py` | Alarmkarte: ohne PINs frei, zugeordnetes Konto ohne PIN mit Namen und Rechten, fremdes Konto bzw. Tablet mit PIN, falscher PIN, „Trotzdem scharf“, kein Zugriff für Nur-Lesen-Konten |
 | `tests/integration/test_overview.py` | Übersicht per WebSocket (nur Admins, nichts Geheimes), Reparaturen kommen und gehen, Diagnose geschwärzt |
+| `tests/core/test_reference.py` | Referenz (deutsch und englisch) nennt jedes Ereignis (`type`), jede Aktion und jedes Attribut des Bedienfelds – wer ein neues Ereignis einbaut, muss es dort beschreiben |
 | `tests/core/test_docs.py` | Dokumentation: keine toten Links oder Anker, jede Seite im Inhaltsverzeichnis; zu jeder deutschen Seite die englische (`PAGES`), beide verlinken einander oben |
 | `tests/core/test_versions.py` | Versionsangaben in README, Anleitung, pyproject und CHANGELOG passen zum Manifest |
 | `tests/integration/test_users.py` | Mit Home Assistant: „geändert von“, gemeinsamer PIN, Rechte, gesperrt/abgelaufen, Bedrohungs-PIN unauffällig, Push mit Rechten, Benutzerverwaltung |

@@ -6,6 +6,9 @@ Hauswacht itself only switches **sirens** and sends messages and announcements. 
 lights, cameras, shutters, heating, door lock – is done by **your own automations** that react to
 Hauswacht. This page collects ready-made examples to copy.
 
+Which trigger to use for what is in the cheat sheet
+[automations: what to use for what?](automations.md); every field in the [reference](reference.md).
+
 How to use an example: Settings → Automations & scenes → **Create automation** → ⋮ → **Edit in
 YAML** → paste the example → adjust entities, areas and services to yours → Save.
 

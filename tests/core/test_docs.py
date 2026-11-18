@@ -71,6 +71,7 @@ PAGES = {
     "installation.md": "installation.md",
     "assistent.md": "setup-wizard.md",
     "beispiele.md": "examples.md",
+    "automationen.md": "automations.md",
     "melder.md": "sensors.md",
     "profile.md": "profiles.md",
     "ausloeseregeln.md": "trigger-rules.md",

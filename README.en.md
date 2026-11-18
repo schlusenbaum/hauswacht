@@ -86,8 +86,9 @@ system knows**, so that you can connect whatever you like with your own automati
 This makes Hauswacht the core of much an alarm system should do: on alarm **lights on** and back
 as before afterwards, **camera image to the phone**, **shutters up**, music off, **heating down**
 while away, welcome light when coming home, lock the front door when arming – each with a
-ready-made template in the **[examples](docs/en/examples.md)**, all entities, attributes and
-events in the **[reference](docs/en/reference.md)**. In test mode this stays silent thanks to the
+ready-made template in the **[examples](docs/en/examples.md)**. Which trigger to use for what is
+shown by the cheat sheet **[automations](docs/en/automations.md)**; all entities, attributes and
+events with their fields are in the **[reference](docs/en/reference.md)**. In test mode this stays silent thanks to the
 attribute `test_mode`.
 
 ## Quick start
@@ -126,6 +127,7 @@ In detail: [Installation and first steps](docs/en/installation.md).
 | [Sirens](docs/en/sirens.md) | compatibility, release, tone per siren, siren from switch, siren test, "why didn't it sound?", fire protection |
 | [Notifications](docs/en/notifications.md) | events, custom texts, speech |
 | [System overview](docs/en/overview.md) | overview, printing, emergency sheet, check hints |
+| [Automations: what to use for what?](docs/en/automations.md) | cheat sheet: the right trigger for every occasion |
 | [Examples](docs/en/examples.md) | connect other devices: lights, camera, shutters, status light, heating … |
 | [Test mode](docs/en/test-mode.md) · [Observations](docs/en/observations.md) · [Reference](docs/en/reference.md) · [Troubleshooting](docs/en/troubleshooting.md) | |
 

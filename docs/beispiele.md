@@ -6,6 +6,9 @@ Hauswacht schaltet selbst nur **Sirenen** und verschickt Nachrichten und Ansagen
 Licht, Kameras, Rollläden, Heizung, Türschloss – erledigen **eigene Automationen**, die auf
 Hauswacht reagieren. Diese Seite sammelt fertige Beispiele zum Abschreiben.
 
+Welchen Auslöser du wofür nimmst, steht im Spickzettel
+[Automationen: was nehme ich wofür?](automationen.md); jedes Feld in der [Referenz](referenz.md).
+
 So übernimmst du ein Beispiel: Einstellungen → Automationen & Szenen → **Automation erstellen** →
 ⋮ → **In YAML bearbeiten** → Beispiel einfügen → Entitäten, Bereiche und Dienste an deine
 anpassen → Speichern.

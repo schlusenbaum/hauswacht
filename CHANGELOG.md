@@ -7,12 +7,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 
 ### Dokumentation
+- **Referenz** (deutsch und englisch) zum vollständigen Nachschlagewerk ausgebaut: alle
+  Entitäten mit deutscher **und** englischer Entitäts-ID und „je Bereich“, alle Attribute des
+  Bedienfelds mit Beispielwerten, **alle 49 Ereignisse** nach Themen mit ihren Feldern und
+  möglichen Werten (u. a. bisher fehlend: `Rejected`, `ConfirmationRequired`,
+  `AlarmAcknowledged`, `SensorsRestored`, `TestModeChanged`; Gründe in `StateChanged`), Hinweise zu
+  Testmodus und Bereichen, alle Aktionen mit Beispiel.
+- Neue Seite **„Automationen: was nehme ich wofür?“** (deutsch und englisch): Spickzettel
+  „Ich will reagieren, wenn … → nimm …“, „Ich will etwas tun …“ und häufige Stolperfallen.
 - **README** (deutsch und englisch): neuer Abschnitt **„Offen für alles: Hauswacht als
   Baustein“** – was Hauswacht an Bedienfeld-Attributen, Ereignissen, Entitäten, Aktionen und
   Knöpfen bereitstellt und was man damit baut (Licht, Kamera, Rollläden, Heizung …), mit Verweis
   auf Beispiele und Referenz. Funktionsliste um Einrichtungsassistent, Zeitplan, Gastmodus und
   Aktions-Codes ergänzt; Schnellstart mit dem Assistenten; „Grenzen, ehrlich gesagt“ (läuft nur
   mit Home Assistant, keine Notrufleitstelle, Funkstörung nur indirekt).
+
+### Intern
+- Neuer Test `tests/core/test_reference.py`: Jedes Ereignis, jede Aktion und jedes Attribut des
+  Bedienfelds muss in der Referenz stehen (deutsch und englisch) – sonst wird die CI rot.
 
 ## [0.54.1] - 2026-11-18
 
