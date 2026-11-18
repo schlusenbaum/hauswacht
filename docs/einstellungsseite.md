@@ -2,10 +2,10 @@
 
 **Deutsch** | [English](en/settings-page.md)
 
-> **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an;
-> Fast alles bearbeitest du direkt auf der Seite. Nur **Bedienteile anlegen und einstellen** und
-> **Karten anlernen** geht weiter im Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben
-> rechts) – dort wartet Hauswacht auf das Hinhalten oder Tippen am Gerät.
+> **Vorabversion:** Die Seite **zeigt** die ganze Einrichtung und du bearbeitest **alles** direkt
+> auf ihr. Der Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) bleibt als zweiter
+> Weg. Nur den **Sirenentest** startest du bewusst in der Karte „Hauswacht Test“ – die Seite
+> schaltet nie eine Sirene.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -21,7 +21,7 @@ Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
 
 | Reiter | Inhalt |
 |---|---|
-| **Übersicht** | Prüfhinweise (z. B. „Profil ohne Empfänger“) und der Zustand je Bereich |
+| **Übersicht** | Prüfhinweise (z. B. „Profil ohne Empfänger“) und der Zustand je Bereich; Knöpfe **Drucken** und **Notfallblatt** wie in der Karte [Hauswacht Übersicht](uebersicht.md) |
 | **Melder** | Alle Melder **nach Meldergruppen**, mit Typ, Zustand und Batterie – und je Profil eine Spalte (Matrix, siehe unten). Darunter [Besondere Melder](melder.md#melder-mit-kippstellung-gekippt) und [Immer aktiv](melder.md#immer-aktive-melder) |
 | **Profile** | Jedes Profil mit Gruppen, Regeln, Zeiten, Reaktion, Empfängern und Automatik |
 | **Auslöseregeln** | Jede Regel als Satz und wo sie gilt |
@@ -58,7 +58,7 @@ Profil gibt es eine Spalte:
 | leer | wird in diesem Profil nicht überwacht |
 
 Gruppen mit Erschütterungsmeldern zeigen ihren [Fehlalarmschutz](melder.md#erschütterungsmelder)
-(„Alarm bei 2 Meldungen in 60 s“). Das **Suchfeld** filtert nach dem Namen.
+(„Alarm bei 2 Meldungen in 60 s“).
 
 Beispiel: Steht beim Bewegungsmelder im Flur in der Spalte „Nacht“ ein **–**, ist er nachts
 ausgenommen – du kannst nachts durch den Flur gehen, ohne Alarm.
@@ -74,7 +74,8 @@ Seitenblatt; **Speichern** übernimmt sofort, **Abbrechen** oder ein Klick daneb
 | **Meldergruppe** | „+ Meldergruppe anlegen“ bzw. „Bearbeiten“ an der Gruppe | Name, Melder (Suchfeld → anklicken), **Typ je Melder**, zusätzlich ein Label. Sind Erschütterungsmelder dabei, erscheint der **Fehlalarmschutz** (Meldungen bis zum Alarm, Zeitfenster) mit Knopf „Empfehlung übernehmen“ (2 in 60 s). Löschen nimmt die Gruppe auch aus allen Profilen |
 | **Melder mit Kippstellung** | Besondere Melder → „+ Kippstellung hinzufügen“ bzw. „Bearbeiten“ | Quelle (Suchfeld), optional Attribut, dann je bekanntem Wert **offen / gekippt / zu** – weitere Werte eintippen und Enter. Optional gleich in eine Gruppe |
 | **Erschütterungsstärke** | Besondere Melder → „+ Erschütterungsstärke hinzufügen“ | Sensor (Suchfeld, der aktuelle Wert steht daneben) und Schwelle; optional gleich in eine Gruppe |
-| **Immer aktiv** | „Bearbeiten“ unter Immer aktiv | Ganze Gruppen ankreuzen, einzelne Melder hinzufügen oder entfernen. Sirenen für „Immer aktiv“ bleiben im Dialog |
+| **Immer aktiv** | „Bearbeiten“ unter Immer aktiv | Ganze Gruppen ankreuzen, einzelne Melder hinzufügen oder entfernen. Darunter **Sirenen, wenn unscharf ausgelöst**: aus = nur Nachricht; an = Alarm mit den gewählten Sirenen, Ton (nur Einbruchtöne), Lautstärke und Dauer |
+| **Melder aus Messwert** | Besondere Melder → „+ Melder aus Messwert erstellen“ | Messwert (`sensor.…`, z. B. Temperatur), Name, oberer und/oder unterer Grenzwert, Hysterese, Typ und wohin (Gruppe oder Immer aktiv). Hauswacht legt dafür einen Schwellenwert-Helfer an – siehe [Melder aus anderem Sensor erstellen](melder.md#melder-aus-anderem-sensor-erstellen) |
 
 **Melder finden, ohne ihre Namen zu kennen:** Beim Hinzufügen zeigt die Liste sofort alle
 **passenden** Melder (Tür, Fenster, Bewegung, Erschütterung, Wasser … sowie Schlösser und
@@ -186,8 +187,6 @@ leeres. Was Personen, PINs und Rechte sind, steht unter [Benutzer, PINs und Sper
 - Es gelten die [PIN-Regeln](benutzer.md#pin-regeln) wie im Dialog: Ein PIN darf keine
   Bedrohungs-PIN einer anderen Person und kein Aktions-Code sein. Passt etwas nicht, wird **gar
   nichts** gespeichert und das Feld zeigt den Grund.
-- **Karten** anlernen geht weiter im Dialog (Systemeinstellungen → Benutzer und PINs → Karten und
-  Anhänger).
 - **Löschen** fragt einmal nach.
 
 Im selben Reiter darunter:
@@ -195,13 +194,15 @@ Im selben Reiter darunter:
 | Abschnitt | Auf der Seite |
 |---|---|
 | **PIN-Regeln und Master-PIN** | PIN auch zum Scharfschalten, Alarm beenden ohne PIN, Dashboard-Knöpfe trotz PIN, PIN in der Alarmkarte für Konten ohne Person; [Master-PIN](benutzer.md#pins) setzen oder entfernen (nie sichtbar) |
-| **Bedienteile** | ansehen und **löschen**; die **Anlernzeit für Karten** einstellen. Anlegen und einstellen (Topic, Tasten, Kennungen) im Dialog, weil dort am Gerät angelernt wird |
+| **[Karten, Anhänger und Schloss-Kennungen](bedienteile.md#karten-anlernen)** | jede Karte mit Person und Zustand (🟢 aktiv, ⏸️ deaktiviert). **„Bearbeiten“:** umbenennen, anderer Person geben, deaktivieren, löschen. **„+ Neue Karte anlernen“:** Karte an ein Keypad oder einen Leser halten – sie erscheint im Blatt von selbst (die Seite fragt alle 2 Sekunden nach) – oder die Nummer eintippen; dann Person wählen. Zufallsnummern (z. B. Handys) werden abgelehnt. Schloss-Kennungen erscheinen genauso, wenn jemand einmal aufschließt, solange alles unscharf ist |
+| **[Bedienteile](bedienteile.md)** | anlegen, einstellen, löschen – Keypad (Zigbee2MQTT-Gerät oder Topic, Profil je Taste, Anmeldung, Notruf-Taste), NFC-Aufkleber, RFID-Leser, Taster (Profil je Druckart; Druckarten von Ereignis-Entitäten erscheinen von selbst) und Türschloss (Quelle, Nuki-Topic oder Kennungs-Sensor, optional scharf beim Abschließen). Dazu die **Anlernzeit für Karten** |
 | **[Aktions-Codes](bedienteile.md#aktions-codes)** | anlegen, ändern, löschen: Name, Code (2–8 Ziffern), Taste, Keypad, Aktion (Ereignis, Scharf schalten mit Profil, stiller Notruf). Gibt es nur mit Keypad. Ein Aktions-Code darf keinem PIN gleichen – das wird geprüft |
 
 ## System bearbeiten
 
-Im Reiter **System** steht oben der Zustand der Überwachung, darunter je Thema eine Karte mit
-**„Bearbeiten“**:
+Im Reiter **System** steht oben der Zustand der Überwachung – mit den Knöpfen **Heimkehr-Bericht**
+und **Tabelle** zum Herunterladen der [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung).
+Darunter je Thema eine Karte mit **„Bearbeiten“**:
 
 | Karte | Inhalt |
 |---|---|
@@ -226,9 +227,16 @@ Im Reiter **Alarmgeber** öffnet **„Sirenen bearbeiten“** das Seitenblatt:
 - **Experten: auch Schalter als Sirene erlauben** – nach dem Speichern stehen auch `switch.…` in
   der Auswahl (siehe [Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)).
 
-Den **Ton je Sirene** und die Brandton-Freigabe stellst du weiter im Dialog ein
-([Ton je Sirene](sirenen.md#ton-je-sirene)). Einen **Sirenentest** gibt es auf der Seite bewusst
-nicht – nur in der [Testkarte](sirenen.md#sirenentest).
+Darunter im selben Reiter:
+
+| Karte | Auf der Seite |
+|---|---|
+| **[Ton je Sirene](sirenen.md#ton-je-sirene)** | je Sirene „Bearbeiten“: die Töne, die das Gerät meldet, „automatisch“ (Einbruchton) oder ein eigener Name. **Brandtöne** sind gesperrt; nur als Experte mit Haken „Brandton für Einbruch erlauben“ **und** ausdrücklicher Bestätigung – für Sirenen mit eigenen Rauchmeldern nie |
+| **[Sirenentest](sirenen.md#sirenentest)** | Erinnerung (aus, alle 3 / 6 Monate, jährlich) und Vorwarnung „Sirenentest in 10 Sekunden“. Den Test selbst startest du in der Testkarte |
+| **[Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)** | Schalter wählen und bestätigen, dass es eine reine Alarmsirene ist: Hauswacht legt den Helfer „Gerätetyp eines Schalters ändern“ (Typ Sirene) an und trägt die Sirene ein. Der Schalter wird dabei **nicht** geschaltet |
+
+Einen **Sirenentest** gibt es auf der Seite bewusst nicht – nur in der
+[Testkarte](sirenen.md#sirenentest).
 
 ## Benachrichtigungen bearbeiten
 
@@ -269,12 +277,17 @@ Text:   {melder} hat um {uhrzeit} ausgelöst (Profil {profil}).
 ```
 
 Mehr dazu unter [Eigene Texte und Platzhalter](benachrichtigungen.md#eigene-texte-und-platzhalter).
-Sprachausgabe und Nachtruhe stellst du noch im Dialog ein.
+**Sprachausgabe** – darunter im selben Reiter: Lautsprecher (Standard für alle Ereignisse),
+Wiederholung der Alarm-Durchsage, Nachtruhe von–bis; je Ereignis an/aus, Durchsage oder Sprechen,
+eigene Lautsprecher, „auch in der Nachtruhe“ und der Text (mit Vorschau und „↺ Standardtext“).
+Siehe [Sprachausgabe](benachrichtigungen.md#sprachausgabe-lautsprecher).
 
 ## Gut zu wissen
 
 - Die Seite **schaltet nichts** – weder Sirenen noch Geräte. Sie ändert nur Einstellungen, und
-  nur die, die du speicherst.
+  nur die, die du speicherst. Helfer legt sie nur an, wenn du es ausdrücklich willst („Sirene aus
+  Schalter erstellen“, „Melder aus Messwert erstellen“).
+- Der **Einrichtungsassistent** bleibt im Dialog (Knopf „Im Dialog bearbeiten“ → Einrichtungsassistent).
 - Gezeigt wird der Stand beim Öffnen; „Neu laden“ (Pfeil oben) holt den aktuellen.
 - Dieselben Inhalte gibt es zum Ausdrucken in der Karte [Hauswacht Übersicht](uebersicht.md).
 - Auf dem Handy geht die Seite auch; breite Tabellen lassen sich seitlich schieben.

@@ -18,18 +18,76 @@ from .core.messages import (
     ENGLISH_NAMES,
     EXAMPLE_VALUES_DE,
     EXAMPLE_VALUES_EN,
+    default_speech,
     placeholder_names,
     render,
 )
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.profiles import profile_info
+from .core.siren_guard import is_fire_tone
+from .core.siren_test import REMINDER_CHOICES
+from .core.siren_test import parse_settings as parse_siren_test
+from .core.speech import MAX_REPEAT, MIN_REPEAT, parse_speech
 from .names import display_name
-from .profile_settings_ws import _notify_choices
+from .profile_settings_ws import _notify_choices, _speaker_choices
 
 OPT_SIRENS = "sirens"
 OPT_HARDWARE = "sirens_hardware_enabled"
 OPT_ALLOW_SWITCH = "sirens_allow_switch"
 OPT_TONES = "siren_tones"
+
+
+def _siren_items(hass: HomeAssistant, main: Any, registered: list[str]) -> list[dict[str, Any]]:
+    """Je eingetragener Sirene: Ton, bekannte Töne, ob Rauchmelder (dann nie Brandton)."""
+    options = main.entry.options
+    executor = getattr(main, "sirens", None)
+    devices = executor.devices() if executor is not None else {}
+    tones = dict(options.get(OPT_TONES, {}))
+    fire_ok = set(options.get("siren_fire_tone_ok", []))
+    items = []
+    for siren in registered:
+        caps = executor.capabilities(siren) if executor is not None else None
+        device = devices.get(siren)
+        known = sorted(caps.tones) if caps is not None and caps.tones else []
+        items.append(
+            {
+                "id": siren,
+                "name": display_name(hass, siren),
+                "tone": tones.get(siren, ""),
+                "tones": [{"tone": t, "fire": is_fire_tone(t)} for t in known],
+                "tones_supported": bool(caps and caps.tones_supported),
+                "smoke_detector": bool(device and device.fire_detector),
+                "fire_ok": siren in fire_ok,
+            }
+        )
+    return items
+
+
+def _speech(hass: HomeAssistant, options: Any, lang: str) -> dict[str, Any]:
+    """Sprachausgabe wie im Dialog: Lautsprecher, Wiederholung, Nachtruhe, je Ereignis."""
+    config = parse_speech(options)
+    return {
+        "speakers": list(config.speakers),
+        "repeat": config.repeat,
+        "min_repeat": MIN_REPEAT,
+        "max_repeat": MAX_REPEAT,
+        "quiet_enabled": config.quiet_enabled,
+        "quiet_start": config.quiet_start.strftime("%H:%M"),
+        "quiet_end": config.quiet_end.strftime("%H:%M"),
+        "events": [
+            {
+                "event": event.value,
+                "enabled": setting.enabled,
+                "mode": setting.mode,
+                "speakers": list(setting.speakers),
+                "in_quiet": setting.in_quiet,
+                "text": setting.text,
+                "default": default_speech(event, german=lang == "de"),
+            }
+            for event, setting in config.events.items()
+        ],
+        "speaker_choices": _speaker_choices(hass),
+    }
 
 
 def build_alarm_notify_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
@@ -52,6 +110,21 @@ def build_alarm_notify_settings(hass: HomeAssistant, main: Any) -> dict[str, Any
             "allow_switch": allow_switch,
             "tones": dict(options.get(OPT_TONES, {})),
             "candidates": sorted(candidates, key=lambda c: str(c["name"]).casefold()),
+            "items": _siren_items(hass, main, registered),
+            "test": {
+                "reminder_months": parse_siren_test(options).reminder_months,
+                "prewarn": parse_siren_test(options).prewarn,
+                "choices": list(REMINDER_CHOICES),
+            },
+            # Für „Sirene aus Schalter erstellen“: Schalter, die noch keine Sirene sind
+            "switches": sorted(
+                (
+                    {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
+                    for s in hass.states.async_all("switch")
+                    if s.entity_id not in registered
+                ),
+                key=lambda c: str(c["name"]).casefold(),
+            ),
         },
         "notify": {
             "general": list(options.get("notify_system", [])),
@@ -81,6 +154,7 @@ def build_alarm_notify_settings(hass: HomeAssistant, main: Any) -> dict[str, Any
                 "delay": int(options.get("reminder_delay", 15)),
             },
             "placeholders": [f"{{{p}}}" for p in placeholder_names(lang)],
+            "speech": _speech(hass, options, lang),
             # Beispielwerte für die Vorschau beim Tippen (beide Schreibweisen)
             "examples": {
                 **dict(examples),

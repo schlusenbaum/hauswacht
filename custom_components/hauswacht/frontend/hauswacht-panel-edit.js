@@ -45,7 +45,16 @@ const ET = {
     group: "In Meldergruppe aufnehmen",
     noGroupChoice: "– keine –",
     alwaysTitle: "Immer aktiv",
-    alwaysText: "Diese Melder melden auch im unscharfen Zustand (z. B. Wasser, Tresor). Sirenen dafür stellst du im Dialog ein.",
+    alwaysText: "Diese Melder melden auch im unscharfen Zustand (z. B. Wasser, Tresor). Unscharf gibt es eine Nachricht – oder, wenn unten eingeschaltet, einen Alarm mit Sirene.",
+    alwaysSirens: "Sirenen, wenn unscharf ausgelöst",
+    alwaysSirensOn: "Unscharf: Alarm mit Sirene (sonst nur Nachricht)",
+    alwaysSirensHint: "Scharf lösen immer aktive Melder den normalen Alarm des Profils aus. Technik-Melder (z. B. Wasser) nie Einbruchalarm.",
+    alwaysTone: "Ton",
+    alwaysVolume: "Lautstärke",
+    alwaysReaction: "Dauer (Sekunden)",
+    alwaysNoSirens: "Noch keine Sirene eingetragen (Reiter Alarmgeber).",
+    tones: { burglar: "Einbruch", emergency: "Notfall", police_panic: "Polizei-Panik", emergency_panic: "Notfall-Panik" },
+    volumes: { low: "leise", medium: "mittel", high: "laut", very_high: "sehr laut" },
     alwaysGroups: "Ganze Meldergruppen",
     alwaysSensors: "Einzelne Melder",
     chosen: "gewählt",
@@ -115,7 +124,16 @@ const ET = {
     group: "Add to sensor group",
     noGroupChoice: "– none –",
     alwaysTitle: "Always active",
-    alwaysText: "These sensors also report while disarmed (e.g. water, safe). Sirens for them are set in the dialog.",
+    alwaysText: "These sensors also report while disarmed (e.g. water, safe). Disarmed you get a message – or, if switched on below, an alarm with siren.",
+    alwaysSirens: "Sirens when triggered while disarmed",
+    alwaysSirensOn: "Disarmed: alarm with siren (otherwise only a message)",
+    alwaysSirensHint: "Armed, always-active sensors trigger the profile's normal alarm. Technical sensors (e.g. water) never trigger an intrusion alarm.",
+    alwaysTone: "Tone",
+    alwaysVolume: "Volume",
+    alwaysReaction: "Duration (seconds)",
+    alwaysNoSirens: "No siren registered yet (tab alarm devices).",
+    tones: { burglar: "Burglar", emergency: "Emergency", police_panic: "Police panic", emergency_panic: "Emergency panic" },
+    volumes: { low: "low", medium: "medium", high: "high", very_high: "very high" },
     alwaysGroups: "Whole sensor groups",
     alwaysSensors: "Single sensors",
     chosen: "chosen",
@@ -262,7 +280,16 @@ class HauswachtSensorEditor extends HTMLElement {
       const v = this.item;
       return { entity: v?.entity || "", threshold: v?.threshold ?? "", group: "", existing: !!v };
     }
-    return { zones: [...(s.always.zones || [])], sensors: [...(s.always.sensors || [])] };
+    const a = s.always;
+    return {
+      zones: [...(a.zones || [])],
+      sensors: [...(a.sensors || [])],
+      sirens_enabled: !!a.sirens_enabled,
+      sirens: [...(a.sirens || [])],
+      siren_tone: a.siren_tone || "burglar",
+      siren_volume: a.siren_volume || "high",
+      reaction_time: a.reaction_time || 180,
+    };
   }
 
   // --- Auswahl --------------------------------------------------------------------
@@ -451,7 +478,28 @@ class HauswachtSensorEditor extends HTMLElement {
       <h2>${e(this._t("alwaysTitle"))}</h2><div class="muted">${e(this._t("alwaysText"))}</div>
       <label>${e(this._t("alwaysGroups"))}</label>${groups || "–"}
       <label>${e(this._t("alwaysSensors"))}</label>${sensors}
-      ${this._pickerHtml(SENSOR_DOMAINS, d.sensors)}${this._err("base")}`;
+      ${this._pickerHtml(SENSOR_DOMAINS, d.sensors)}${this._err("base")}
+      ${this._alwaysSirensHtml()}`;
+  }
+
+  _alwaysSirensHtml() {
+    const d = this._draft;
+    const sir = this.settings.sirens;
+    const pe = this.settings.profile_edit;
+    if (!sir || !pe) return "";
+    const name = (id) => (sir.candidates.find((c) => c.id === id) || { name: id }).name;
+    const sirens = sir.registered.length
+      ? sir.registered.map((id) => `<div class="chk"><input type="checkbox" data-asiren="${e(id)}" ${d.sirens.includes(id) ? "checked" : ""}><span>${e(name(id))}</span></div>`).join("")
+      : `<div class="muted">${e(this._t("alwaysNoSirens"))}</div>`;
+    const opts = (list, group, value) => list.map((x) => `<option value="${e(x)}" ${x === value ? "selected" : ""}>${e((this._t(group) || {})[x] || x)}</option>`).join("");
+    return `<div class="box"><b>${e(this._t("alwaysSirens"))}</b>
+      <div class="chk"><input type="checkbox" data-f-check="sirens_enabled" ${d.sirens_enabled ? "checked" : ""}><span>${e(this._t("alwaysSirensOn"))}</span></div>
+      <div class="muted">${e(this._t("alwaysSirensHint"))}</div>
+      ${d.sirens_enabled ? `${sirens}
+        <div class="inline"><div><label>${e(this._t("alwaysTone"))}</label><select data-f="siren_tone">${opts(pe.choices.tones, "tones", d.siren_tone)}</select></div>
+        <div><label>${e(this._t("alwaysVolume"))}</label><select data-f="siren_volume">${opts(pe.choices.volumes, "volumes", d.siren_volume)}</select></div>
+        <div><label>${e(this._t("alwaysReaction"))}</label><input class="small" type="number" min="1" max="3600" data-f="reaction_time" value="${e(d.reaction_time)}"></div></div>` : ""}
+    </div>`;
   }
 
   // --- Lesen, Speichern -----------------------------------------------------------
@@ -471,6 +519,11 @@ class HauswachtSensorEditor extends HTMLElement {
     });
     if (this.kind === "always") {
       d.zones = [...root.querySelectorAll("[data-zone]")].filter((el) => el.checked).map((el) => el.dataset.zone);
+      const on = root.querySelector('[data-f-check="sirens_enabled"]');
+      if (on) d.sirens_enabled = on.checked;
+      if (root.querySelector("[data-asiren]")) {
+        d.sirens = [...root.querySelectorAll("[data-asiren]")].filter((el) => el.checked).map((el) => el.dataset.asiren);
+      }
     }
     if (this.kind === "sensor") {
       const always = root.querySelector('[data-f-check="always"]');
@@ -507,7 +560,20 @@ class HauswachtSensorEditor extends HTMLElement {
       const label = this.settings.groups.find((g) => (this.settings.label_members?.[g.id] || []).includes(d.entity));
       return ["sensor_save", { entity: d.entity, group: label ? label.id : d.group || null, type: d.type, always: d.always, excluded: d.excluded }];
     }
-    return ["always_save", { zones: d.zones, sensors: d.sensors }];
+    return [
+      "always_save",
+      {
+        zones: d.zones,
+        sensors: d.sensors,
+        sirens_settings: {
+          sirens_enabled: d.sirens_enabled,
+          sirens: d.sirens,
+          siren_tone: d.siren_tone,
+          siren_volume: d.siren_volume,
+          reaction_time: Number(d.reaction_time),
+        },
+      },
+    ];
   }
 
   async _apply(action, data) {
@@ -577,6 +643,13 @@ class HauswachtSensorEditor extends HTMLElement {
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();
     };
+    const sirensOn = root.querySelector('[data-f-check="sirens_enabled"]');
+    if (sirensOn) {
+      sirensOn.addEventListener("change", () => {
+        this._collect();
+        this._render();
+      });
+    }
     root.querySelectorAll("[data-a]").forEach((btn) =>
       btn.addEventListener("click", () => {
         const a = btn.dataset.a;

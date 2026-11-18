@@ -2,10 +2,10 @@
 
 [Deutsch](../einstellungsseite.md) | **English**
 
-> **Pre-release:** the page grows in stages. It **shows** the whole setup; you already edit
-> almost everything directly on the page. Only **adding and setting up control devices** and
-> **learning cards** stay in the settings dialog (button "Edit in the dialog" at the top right) –
-> there Hauswacht waits for holding a card or pressing keys at the device.
+> **Pre-release:** the page **shows** the whole setup and you edit **everything** directly on it.
+> The settings dialog (button "Edit in the dialog" at the top right) stays as a second way. Only
+> the **siren test** is deliberately started in the card "Hauswacht Test" – the page never
+> switches a siren.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -20,7 +20,7 @@ which profile they are armed, who gets which message.
 
 | Tab | Content |
 |---|---|
-| **Overview** | Check hints (e.g. "profile without recipients") and the state per area |
+| **Overview** | Check hints (e.g. "profile without recipients") and the state per area; buttons **Print** and **Emergency sheet** as in the card [Hauswacht overview](overview.md) |
 | **Sensors** | All sensors **by sensor group**, with type, state and battery – and one column per profile (matrix, see below). Below that [special sensors](sensors.md#sensors-with-tilt-position-tilted) and [always active](sensors.md#always-active-sensors) |
 | **Profiles** | Every profile with groups, rules, times, reaction, recipients and automation |
 | **Trigger rules** | Every rule as a sentence and where it applies |
@@ -57,7 +57,7 @@ column:
 | empty | not monitored in this profile |
 
 Groups with vibration sensors show their [false alarm protection](sensors.md#vibration-sensors)
-("alarm at 2 reports in 60 s"). The **search field** filters by name.
+("alarm at 2 reports in 60 s").
 
 Example: if the motion sensor in the hallway shows **–** in the column "Night", it is excluded at
 night – you can walk through the hallway at night without an alarm.
@@ -73,7 +73,8 @@ applies immediately, **Cancel** or a click next to it discards.
 | **Sensor group** | "+ Add sensor group" or "Edit" at the group | Name, sensors (search field → click), **type per sensor**, additionally a label. If vibration sensors are included, the **false alarm protection** appears (reports until alarm, time window) with the button "Use recommendation" (2 in 60 s). Deleting also removes the group from all profiles |
 | **Sensor with tilt position** | Special sensors → "+ Add tilt position" or "Edit" | Source (search field), optionally an attribute, then for every known value **open / tilted / closed** – type further values and press Enter. Optionally add it to a group right away |
 | **Vibration strength** | Special sensors → "+ Add vibration strength" | Sensor (search field, the current value is shown) and threshold; optionally add it to a group right away |
-| **Always active** | "Edit" under always active | Tick whole groups, add or remove single sensors. Sirens for "always active" stay in the dialog |
+| **Always active** | "Edit" under always active | Tick whole groups, add or remove single sensors. Below that **sirens when triggered while disarmed**: off = only a message; on = alarm with the chosen sirens, tone (burglar tones only), volume and duration |
+| **Sensor from a measurement** | Special sensors → "+ Create sensor from a measurement" | Measurement (`sensor.…`, e.g. temperature), name, upper and/or lower limit, hysteresis, type and where to (group or always active). Hauswacht creates a threshold helper for it – see [create a sensor from another sensor](sensors.md#create-a-sensor-from-another-sensor) |
 
 **Finding sensors without knowing their names:** when adding, the list immediately shows all
 **suitable** sensors (door, window, motion, vibration, water … as well as locks and garage doors),
@@ -183,7 +184,6 @@ people, PINs and rights are: see [users, PINs and lockout](users.md).
 - The [PIN rules](users.md#pin-rules) apply as in the dialog: a PIN must not be another person's
   duress PIN or an action code. If something does not fit, **nothing** is saved and the field
   shows the reason.
-- Learning **cards** stays in the dialog (system settings → users and PINs → cards and tags).
 - **Delete** asks once.
 
 Further down in the same tab:
@@ -191,13 +191,15 @@ Further down in the same tab:
 | Section | On the page |
 |---|---|
 | **PIN rules and master PIN** | PIN also to arm, end an alarm without PIN, dashboard buttons despite PIN, PIN in the alarm card for accounts without a person; set or remove the [master PIN](users.md#pins) (never visible) |
-| **Control devices** | view and **delete**; set the **learning time for cards**. Adding and setting up (topic, keys, IDs) in the dialog, because learning happens at the device there |
+| **[Cards, tags and lock IDs](control-devices.md#learning-cards)** | every card with person and state (🟢 active, ⏸️ disabled). **"Edit":** rename, give to another person, disable, delete. **"+ Learn a new card":** hold the card to a keypad or reader – it appears in the sheet by itself (the page checks every 2 seconds) – or type in the number; then choose the person. Random IDs (e.g. phones) are refused. Lock IDs appear the same way when someone unlocks once while everything is disarmed |
+| **[Control devices](control-devices.md)** | add, set up, delete – keypad (Zigbee2MQTT device or topic, profile per key, login, emergency key), NFC sticker, RFID reader, button (profile per press type; press types of event entities appear by themselves) and door lock (source, Nuki topic or ID sensor, optionally arm when locking). Plus the **learning time for cards** |
 | **[Action codes](control-devices.md#action-codes)** | add, change, delete: name, code (2–8 digits), key, keypad, action (event, arm with profile, silent emergency). Only with a keypad. An action code must not equal a PIN – this is checked |
 
 ## Editing the system
 
-The tab **System** shows the monitoring state at the top, below it one card per topic with
-**"Edit"**:
+The tab **System** shows the monitoring state at the top – with the buttons **homecoming
+report** and **table** to download the [homecoming observation](observations.md#homecoming-observation).
+Below it one card per topic with **"Edit"**:
 
 | Card | Content |
 |---|---|
@@ -221,9 +223,16 @@ In the tab **Alarm devices**, **"Edit sirens"** opens the side sheet:
 - **Experts: also allow switches as sirens** – after saving, `switch.…` entities also appear in
   the list (see [create siren from switch](sirens.md#create-siren-from-switch)).
 
-The **tone per siren** and the fire tone release are still set in the dialog
-([tone per siren](sirens.md#tone-per-siren)). There is deliberately **no siren test** on the page
-– only in the [test card](sirens.md#siren-test).
+Below in the same tab:
+
+| Card | On the page |
+|---|---|
+| **[Tone per siren](sirens.md#tone-per-siren)** | "Edit" per siren: the tones the device reports, "automatic" (burglar tone) or an own name. **Fire tones** are blocked; only as an expert with the tick "allow fire tone for intrusion" **and** an explicit confirmation – never for sirens with their own smoke detectors |
+| **[Siren test](sirens.md#siren-test)** | Reminder (off, every 3 / 6 months, yearly) and pre-warning "siren test in 10 seconds". You start the test itself in the test card |
+| **[Create siren from switch](sirens.md#create-siren-from-switch)** | Choose the switch and confirm it is a pure alarm siren: Hauswacht creates the helper "change device type of a switch" (type siren) and registers the siren. The switch is **not** switched |
+
+There is deliberately **no siren test** on the page – only in the
+[test card](sirens.md#siren-test).
 
 ## Editing notifications
 
@@ -262,12 +271,17 @@ Text:   {sensor} triggered at {time} (profile {profile}).
 ```
 
 More under [custom texts and placeholders](notifications.md#custom-texts-and-placeholders).
-Speech and quiet hours are still set in the dialog.
+**Speech** – further down in the same tab: speakers (default for all events), repetition of the
+alarm announcement, quiet hours from–to; per event on/off, announcement or speak, own speakers,
+"also during quiet hours" and the text (with preview and "↺ default text"). See
+[speech](notifications.md#speech-speakers).
 
 ## Good to know
 
 - The page **switches nothing** – neither sirens nor devices. It only changes settings, and only
-  the ones you save.
+  the ones you save. It only creates helpers when you explicitly want it ("create siren from
+  switch", "create sensor from a measurement").
+- The **setup wizard** stays in the dialog (button "Edit in the dialog" → setup wizard).
 - It shows the state at the time of opening; "Reload" (arrow at the top) fetches the current one.
 - The same content is available for printing in the card [Hauswacht overview](overview.md).
 - The page also works on a phone; wide tables can be scrolled sideways.

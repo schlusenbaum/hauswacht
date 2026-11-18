@@ -6,6 +6,34 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b12] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`). Alles, was der
+Einstellungsdialog kann, geht jetzt auch auf der Seite – nur der Sirenentest bleibt bewusst in
+der Testkarte.
+
+### Hinzugefügt
+- **Ton je Sirene** auf der Seite, mit Brandton-Sperre wie im Dialog (Experten-Freigabe mit
+  Bestätigung, nie für Rauchmelder), **Sirenentest-Erinnerung und Vorwarnung** und **Sirene aus
+  Schalter erstellen**.
+- **Bedienteile anlegen und einstellen**: Keypad, NFC-Aufkleber, RFID-Leser, Taster (mit
+  Druckarten) und Türschloss.
+- **Karten anlernen auf der Seite**: Karte hinhalten – sie erscheint von selbst – oder Nummer
+  eintippen; Karten umbenennen, anderer Person geben, deaktivieren, löschen.
+- **Sprachausgabe**: Lautsprecher, Wiederholung, Nachtruhe und je Ereignis Art, Lautsprecher und
+  Text (mit Vorschau und „↺ Standardtext“).
+- **Immer aktiv**: Sirenen, Ton, Lautstärke und Dauer für Auslösungen im unscharfen Zustand.
+- **Melder aus Messwert erstellen** (Schwellenwert-Helfer) auf der Seite.
+- Übersicht: Knöpfe **Drucken** und **Notfallblatt**.
+
+### Geändert
+- Aktions-Codes stehen als Liste mit Code, Taste, Keypad und Aktion.
+- Das Suchfeld über der Melder-Matrix ist entfallen.
+
+### Behoben
+- System → Überwachung: Die Knöpfe „Heimkehr-Bericht“ und „Tabelle“ taten auf der Seite nichts.
+- Veraltete Hinweise „im Dialog einstellen“ auf der Seite entfernt.
+
 ## [0.57.0b11] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 5,

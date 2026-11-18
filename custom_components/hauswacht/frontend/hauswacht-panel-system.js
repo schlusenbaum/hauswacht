@@ -1,7 +1,7 @@
 // Hauswacht – Einstellungsseite, Stufe 5: System, PIN-Regeln, Aktions-Codes, Bedienteile (ADR 0011).
 //
 // Seitenblatt <hauswacht-system-editor> mit den Arten restart, silence, network, homecoming,
-// area, page, pinrules, actioncode, control, learn. Gespeichert wird über
+// area, page, pinrules, actioncode, learn. Gespeichert wird über
 // hauswacht/settings/apply – dieselben Regeln wie im Dialog.
 
 const ST = {
@@ -72,11 +72,19 @@ const ST = {
     actions: { event: "Ereignis für eigene Automation", arm: "Scharf schalten mit Profil …", silent_emergency: "Stiller Notruf" },
     profile: "Alarmprofil",
     codeHint: "Kein Ausweis: Ein Aktions-Code kann nie unscharf schalten und darf keinem PIN gleichen. Derselbe Code darf mit verschiedenen Tasten verschiedene Aktionen haben.",
-    control: "Bedienteil",
-    controlHint: "Löschen entfernt das Bedienteil aus Hauswacht. Anlegen und Einstellen (Topic, Tasten, Kennungen) im Dialog – dort wird am Gerät angelernt.",
     learn: "Anlernzeit für neue Karten",
+    helper: "Melder aus Messwert erstellen",
+    helperInfo: "Macht aus einem Messwert (z. B. Temperatur, Feuchte, Leistung) einen Melder: Hauswacht legt einen Schwellenwert-Helfer in Home Assistant an (danach unter Einstellungen → Geräte & Dienste → Helfer änderbar und löschbar) und setzt ihn gleich ein. Bestehendes bleibt unverändert.",
+    source: "Messwert",
+    helperName: "Name des neuen Melders",
+    upper: "Oberer Grenzwert (löst aus, wenn darüber)",
+    lower: "Unterer Grenzwert (löst aus, wenn darunter)",
+    hysteresis: "Hysterese (Abstand, ab dem wieder „normal“ gilt)",
+    type: "Typ",
+    target: "Einsetzen in",
+    targetAlways: "Immer aktiv",
     minutes: "Minuten (0 = Anlernen aus)",
-    learnHint: "So lange nach dem Öffnen von „Neue Karte anlernen“ im Dialog wartet Hauswacht auf eine unbekannte Karte.",
+    learnHint: "So lange merkt sich Hauswacht eine unbekannte Karte, die an einem Keypad oder Leser gelesen wurde, zum Anlernen. 0 = Anlernen aus.",
     errors: {
       restart_needs_profile: "„Immer scharf“ braucht mindestens ein Alarmprofil.",
       area_has_profiles: "Diesem Bereich gehören noch Alarmprofile – erst die Profile löschen oder einem anderen Bereich zuordnen.",
@@ -91,6 +99,12 @@ const ST = {
       action_code_taken: "Diesen Code mit dieser Taste gibt es schon („{c}“).",
       action_code_profile_missing: "Bitte ein Alarmprofil wählen.",
       action_code_is_pin: "Dieser Code ist schon ein PIN oder Bedrohungs-PIN – bitte einen anderen wählen.",
+      helper_no_limit: "Bitte einen oberen und/oder unteren Grenzwert angeben.",
+      helper_range: "Der untere Grenzwert muss kleiner sein als der obere.",
+      helper_name: "Bitte einen Namen angeben.",
+      helper_failed: "Der Helfer konnte nicht angelegt werden (siehe Protokoll).",
+      control_entity: "Bitte einen Messwert (sensor.…) wählen.",
+      invalid: "Ungültiger Wert.",
       disarm_first: "Erst alle Bereiche unscharf schalten – dann lässt sich speichern.",
       changed_elsewhere: "Inzwischen wurde woanders etwas geändert. Die Seite lädt neu – bitte noch einmal.",
       failed: "Speichern fehlgeschlagen.",
@@ -163,11 +177,19 @@ const ST = {
     actions: { event: "Event for your own automation", arm: "Arm with profile …", silent_emergency: "Silent emergency" },
     profile: "Alarm profile",
     codeHint: "Not a credential: an action code can never disarm and must not equal a PIN. The same code may have different actions with different keys.",
-    control: "Control device",
-    controlHint: "Delete removes the control device from Hauswacht. Adding and setting up (topic, keys, IDs) in the dialog – learning happens at the device there.",
     learn: "Learning time for new cards",
+    helper: "Create sensor from a measurement",
+    helperInfo: "Turns a measurement (e.g. temperature, humidity, power) into a sensor: Hauswacht creates a threshold helper in Home Assistant (afterwards changeable and deletable under Settings → Devices & services → Helpers) and puts it to use right away. Nothing existing is changed.",
+    source: "Measurement",
+    helperName: "Name of the new sensor",
+    upper: "Upper limit (triggers when above)",
+    lower: "Lower limit (triggers when below)",
+    hysteresis: "Hysteresis (distance before “normal” applies again)",
+    type: "Type",
+    target: "Use in",
+    targetAlways: "Always active",
     minutes: "Minutes (0 = learning off)",
-    learnHint: "This long after opening “learn a new card” in the dialog, Hauswacht waits for an unknown card.",
+    learnHint: "This long Hauswacht remembers an unknown card read at a keypad or reader for learning. 0 = learning off.",
     errors: {
       restart_needs_profile: "“Always armed” needs at least one alarm profile.",
       area_has_profiles: "This area still has alarm profiles – delete them or move them to another area first.",
@@ -182,6 +204,12 @@ const ST = {
       action_code_taken: "This code with this key already exists (“{c}”).",
       action_code_profile_missing: "Please choose an alarm profile.",
       action_code_is_pin: "This code is already a PIN or duress PIN – please choose another one.",
+      helper_no_limit: "Please enter an upper and/or lower limit.",
+      helper_range: "The lower limit must be below the upper one.",
+      helper_name: "Please enter a name.",
+      helper_failed: "The helper could not be created (see log).",
+      control_entity: "Please choose a measurement (sensor.…).",
+      invalid: "Invalid value.",
       disarm_first: "Disarm all areas first – then saving works.",
       changed_elsewhere: "Something was changed elsewhere in the meantime. The page reloads – please try again.",
       failed: "Saving failed.",
@@ -198,8 +226,8 @@ const HELP = {
   page: "settingsPage",
   pinrules: "pinRules",
   actioncode: "actionCodes",
-  control: "controls",
   learn: "cards",
+  helper: "helper",
 };
 
 const se = (value) =>
@@ -223,6 +251,7 @@ class HauswachtSystemEditor extends HTMLElement {
     else if (kind === "page") this._draft = { enabled: sys.settings_page };
     else if (kind === "pinrules") this._draft = { ...copy(sys.pin_rules), master_pin: "", remove_master_pin: false };
     else if (kind === "learn") this._draft = { minutes: sys.controls.learn_minutes };
+    else if (kind === "helper") this._draft = { source: "", name: "", upper: "", lower: "", hysteresis: 0, type: "technical", target: "__always__" };
     else if (kind === "area") this._draft = copy(sys.areas.find((a) => a.id === this.item) || { name: "", icon: "mdi:home-outline", profiles: [] });
     else if (kind === "actioncode") {
       this._draft = copy(
@@ -230,7 +259,7 @@ class HauswachtSystemEditor extends HTMLElement {
           name: "", code: "", key: "arm_day_zones", keypad: sys.action_codes.all_keypads, action: "event", profile: null,
         }
       );
-    } else if (kind === "control") this._draft = copy(sys.controls.items.find((c) => c.id === this.item) || {});
+    }
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     this._render();
   }
@@ -263,6 +292,13 @@ class HauswachtSystemEditor extends HTMLElement {
     const name = (id) => (choices.find((c) => c.id === id) || { name: id }).name;
     const chips = list.map((id, i) => `<span class="chip" title="${se(id)}">${se(name(id))}<button class="x" data-rm="${where}:${i}">✕</button></span>`).join("");
     return `<div class="chips">${chips}</div><input list="hw-sys-${where.split(":")[0]}" data-add="${where}" placeholder="${se(this._t("addEntity"))}">`;
+  }
+
+  // Eine Entität wählen: Eingabe mit Vorschlägen (Name oder ID)
+  _entityPick(field, value, choices) {
+    this._picks = { ...(this._picks || {}), [field]: choices };
+    const shown = (choices.find((c) => c.id === value) || { name: value || "" }).name;
+    return `<input data-pick="${field}" list="hw-sys-pick-${field}" value="${se(shown)}" placeholder="${se(this._t("addEntity"))}">${this._datalist(`pick-${field}`, choices)}`;
   }
 
   _datalist(id, choices) {
@@ -342,8 +378,18 @@ class HauswachtSystemEditor extends HTMLElement {
         <label>${se(this._t("action"))}</label>${this._select("action", d.action, ac.actions.map((x) => [x, this._t("actions")[x] || x]))}
         ${d.action === "arm" ? `<label>${se(this._t("profile"))}</label>${this._select("profile", d.profile || "", [["", this._t("none")], ...sys.profiles.map((p) => [p.id, p.name])])}${this._err("profile")}` : ""}`;
     }
-    if (k === "control") {
-      return `<h2>${se(this._t("control"))}: ${se(d.name)}</h2><div class="muted">${se(this._t("controlHint"))}</div>${this._err("base")}`;
+    if (k === "helper") {
+      const sensors = this.settings.entities.filter((e) => e.domain === "sensor").map((e) => ({ id: e.id, name: `${e.name} (${e.state})` }));
+      const types = this.settings.types.map((t) => [t, this.typeLabel ? this.typeLabel(t) : t]);
+      const targets = [["__always__", this._t("targetAlways")], ...this.settings.groups.map((g) => [g.id, g.name])];
+      return `<h2>${se(this._t("helper"))}</h2><div class="muted">${se(this._t("helperInfo"))}</div>
+        <label>${se(this._t("source"))}</label>${this._entityPick("source", d.source, sensors)}${this._err("source")}
+        <label>${se(this._t("helperName"))}</label><input data-f="name" value="${se(d.name)}">${this._err("name")}
+        <div class="inline"><div><label>${se(this._t("upper"))}</label><input class="small" type="number" step="any" data-f="upper" value="${se(d.upper)}"></div>
+        <div><label>${se(this._t("lower"))}</label><input class="small" type="number" step="any" data-f="lower" value="${se(d.lower)}"></div></div>
+        <label>${se(this._t("hysteresis"))}</label><input class="small" type="number" step="any" min="0" data-f="hysteresis" value="${se(d.hysteresis)}">
+        <label>${se(this._t("type"))}</label>${this._select("type", d.type, types)}
+        <label>${se(this._t("target"))}</label>${this._select("target", d.target, targets)}`;
     }
     return `<h2>${se(this._t("learn"))}</h2>
       <label>${se(this._t("minutes"))}</label><input class="small" type="number" min="0" max="${this.settings.system.controls.learn_max}" data-f="minutes" value="${se(d.minutes)}">
@@ -355,6 +401,11 @@ class HauswachtSystemEditor extends HTMLElement {
     const d = this._draft;
     root.querySelectorAll("[data-f]").forEach((el) => (d[el.dataset.f] = el.value));
     root.querySelectorAll("[data-b]").forEach((el) => (d[el.dataset.b] = el.checked));
+    root.querySelectorAll("[data-pick]").forEach((el) => {
+      const value = el.value.trim();
+      const match = (this._picks?.[el.dataset.pick] || []).find((c) => c.name === value || c.id === value);
+      d[el.dataset.pick] = match ? match.id : value;
+    });
     root.querySelectorAll("[data-rp]").forEach((el) => {
       if (el.value) d.profiles[el.dataset.rp] = el.value;
       else delete d.profiles[el.dataset.rp];
@@ -402,13 +453,15 @@ class HauswachtSystemEditor extends HTMLElement {
         return ["action_code_save", { ...d, id: this.item }];
       case "learn":
         return ["learn_save", { minutes: Number(d.minutes) }];
+      case "helper":
+        return ["helper_create", { ...d, upper: d.upper === "" ? null : Number(d.upper), lower: d.lower === "" ? null : Number(d.lower), hysteresis: Number(d.hysteresis || 0) }];
       default:
         return null;
     }
   }
 
   get _canDelete() {
-    return (this.kind === "area" && this.item && this.item !== "main") || (this.kind === "actioncode" && this.item) || this.kind === "control";
+    return (this.kind === "area" && this.item && this.item !== "main") || (this.kind === "actioncode" && this.item);
   }
 
   async _apply(action, data) {
@@ -439,7 +492,8 @@ class HauswachtSystemEditor extends HTMLElement {
       .chip .x { font-size: 1rem; padding: 0 4px; }
       .warn { border: 1px solid var(--warning-color, #ffa600); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: .9rem; }`;
     this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style}</style><div class="sheet">${this._form()}
-      ${["restart", "area", "control"].includes(this.kind) ? "" : this._err("base")}
+      ${["restart", "area"].includes(this.kind) ? "" : this._err("base")}
+      ${this.kind === "helper" ? ["upper", "lower", "hysteresis", "type", "target"].map((k) => this._err(k)).join("") : ""}
       <div class="bar">${canSave ? `<button class="b p" data-act="save" ${this._busy ? "disabled" : ""}>${se(this._busy ? this._t("saving") : this._t("save"))}</button>` : ""}
       <button class="b" data-act="cancel">${se(this._t("cancel"))}</button>
       ${this._canDelete ? `<button class="b d" data-act="delete">${se(this._sure ? this._t("delSure") : this._t("del"))}</button>` : ""}</div></div>`;
@@ -475,7 +529,7 @@ class HauswachtSystemEditor extends HTMLElement {
           this._render();
           return;
         }
-        const action = { area: "area_delete", actioncode: "action_code_delete", control: "control_delete" }[this.kind];
+        const action = { area: "area_delete", actioncode: "action_code_delete" }[this.kind];
         this._apply(action, { id: this.item });
       });
     }

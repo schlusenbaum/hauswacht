@@ -114,6 +114,12 @@ from .core.automation import (
     parse_automation,
 )
 from .core.changes.areas import save_area
+from .core.changes.cards import all_cards as _all_cards
+from .core.changes.cards import put_card as _put_card
+from .core.changes.cards import remove_card as _remove_card
+from .core.changes.cards import tag_owner as _tag_owner
+from .core.changes.controls import control_data as _control_data
+from .core.changes.controls import validate_control
 from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sirens import save_sirens
@@ -3700,40 +3706,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         return {**user_input, "topic": topic}
 
     def _validate_control(self, kind: ControlKind, data: dict[str, Any]) -> dict[str, str]:
-        errors: dict[str, str] = {}
-        options = self.config_entry.options
-        area = data.get("area") or CONTROL_ALL_AREAS
-        profiles = [data.get("profile")] if kind is not ControlKind.KEYPAD else []
-        if kind is ControlKind.BUTTON:
-            profiles = list((data.get("presses") or {}).values())
-        if kind is ControlKind.KEYPAD:
-            profiles = [data.get(k) for k in CONTROL_ARM_KEYS]
-            if not str(data.get("topic") or "").strip().strip("/"):
-                errors["keypad_device"] = "control_keypad_topic"
-        elif (
-            kind in (ControlKind.STICKER, ControlKind.READER)
-            and data.get("action") in ("arm", "toggle")
-            and not data.get("profile")
-        ):
-            errors["profile"] = "control_profile_required"
-        if kind is ControlKind.STICKER and not normalize_tag(data.get("tag")):
-            errors["tag"] = "control_tag"
-        if kind is ControlKind.READER and not data.get("device"):
-            errors["device"] = "control_device"
-        if kind in (ControlKind.BUTTON, ControlKind.LOCK) and not data.get("entity"):
-            errors["entity"] = "control_entity"
-        if kind is ControlKind.LOCK:
-            profiles = [data.get("profile")]
-            if data.get("source") == "generic" and not data.get("who"):
-                errors["who"] = "control_who"
-            if data.get("source", "nuki_mqtt") == "nuki_mqtt" and not str(
-                data.get("topic") or ""
-            ).strip().strip("/"):
-                errors["topic"] = "control_topic"
-        for profile in profiles:
-            if profile and area != CONTROL_ALL_AREAS and profile_area(options, profile) != area:
-                errors["base"] = "control_profile_area"
-        return errors
+        return validate_control(self.config_entry.options, kind, data)
 
     async def async_step_control_settings(
         self, user_input: dict[str, Any] | None = None
@@ -4149,42 +4122,6 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         }
 
 
-def _control_data(
-    kind: ControlKind, user_input: dict[str, Any], current: dict[str, Any]
-) -> dict[str, Any]:
-    """Gespeicherte Daten eines Bedienteils aus dem Formular."""
-    data: dict[str, Any] = {
-        "name": str(user_input.get("name") or "").strip() or kind.value,
-        "kind": kind.value,
-        "area": user_input.get("area") or CONTROL_ALL_AREAS,
-    }
-    if kind is ControlKind.KEYPAD:
-        data["topic"] = str(user_input["topic"]).strip().rstrip("/")
-        if user_input.get("keypad_device"):
-            data["keypad_device"] = user_input["keypad_device"]
-        data["buttons"] = {k: user_input[k] for k in CONTROL_ARM_KEYS if user_input.get(k)}
-        data["login"] = user_input.get("login", "pin_or_card")
-        data["emergency"] = user_input.get("emergency", "off")
-    elif kind is ControlKind.BUTTON:
-        data["entity"] = user_input["entity"]
-        data["presses"] = dict(current.get("presses", {}))
-    elif kind is ControlKind.LOCK:
-        data["entity"] = user_input["entity"]
-        data["source"] = user_input.get("source", "nuki_mqtt")
-        data["topic"] = str(user_input.get("topic") or "").strip().rstrip("/")
-        data["who"] = user_input.get("who") or ""
-        data["profile"] = user_input.get("profile") or None
-    else:
-        data["action"] = user_input.get("action", "disarm")
-        data["profile"] = user_input.get("profile") or None
-    if kind is ControlKind.STICKER:
-        data["tag"] = normalize_tag(user_input.get("tag"))
-    if kind is ControlKind.READER:
-        data["device"] = user_input.get("device")
-        data["login"] = user_input.get("login", "card")
-    return data
-
-
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
     """Personen der Heimkehr-Beobachtung und der Profil-Automatik (ohne Doppelte)."""
     persons = [p for p in options.get(OPT_HOMECOMING_PERSONS, []) if isinstance(p, str)]
@@ -4272,62 +4209,6 @@ def _tag_input(value: Any) -> list[str]:
     """Karten aus der Auswahl (Liste) oder – wie früher – als Text mit Komma."""
     items = value if isinstance(value, list) else str(value or "").split(",")
     return list(dict.fromkeys(t for t in (normalize_tag(i) for i in items) if t))
-
-
-def _remove_card(users: dict[str, Any], tag: str) -> None:
-    """Karte bei allen Benutzern entfernen (aktiv, deaktiviert, Name)."""
-    for uid, data in list(users.items()):
-        if not isinstance(data, Mapping):
-            continue
-        new = dict(data)
-        new["tags"] = [t for t in new.get("tags", []) or [] if t != tag]
-        disabled = [t for t in new.get("tags_disabled", []) or [] if t != tag]
-        if disabled or "tags_disabled" in new:
-            new["tags_disabled"] = disabled
-        names = new.get("tag_names")
-        if isinstance(names, dict):
-            new["tag_names"] = {k: v for k, v in names.items() if k != tag}
-        users[uid] = new
-
-
-def _put_card(users: dict[str, Any], tag: str, user_id: str, name: str, *, active: bool) -> None:
-    """Karte einem Benutzer geben (vorher bei allen entfernen)."""
-    _remove_card(users, tag)
-    data = dict(users[user_id])
-    key = "tags" if active else "tags_disabled"
-    data[key] = [*list(data.get(key, []) or []), tag]
-    names = dict(data.get("tag_names") or {})
-    if name:
-        names[tag] = name
-    data["tag_names"] = names
-    users[user_id] = data
-
-
-def _all_cards(users: Mapping[str, Any]) -> list[tuple[str, str, str, bool]]:
-    """Alle Karten: (Karte, Benutzer-ID, Name, aktiv), sortiert nach Benutzer und Name."""
-    rows: list[tuple[str, str, str, bool]] = []
-    for uid, data in users.items():
-        if not isinstance(data, Mapping):
-            continue
-        names = data.get("tag_names") if isinstance(data.get("tag_names"), Mapping) else {}
-        assert isinstance(names, Mapping)
-        rows.extend((t, uid, str(names.get(t, "")), True) for t in data.get("tags", []) or [])
-        rows.extend(
-            (t, uid, str(names.get(t, "")), False) for t in data.get("tags_disabled", []) or []
-        )
-    return sorted(
-        rows,
-        key=lambda r: (str(users[r[1]].get("name", r[1])).casefold(), r[2].casefold(), r[0]),
-    )
-
-
-def _tag_owner(tags: list[str], user_id: str | None, stored: Mapping[str, Any]) -> str | None:
-    """Gehört eine dieser Karten schon einem anderen Benutzer? Dann dessen Name."""
-    for other_id, other in stored.items():
-        own = set(other.get("tags", []) or []) | set(other.get("tags_disabled", []) or [])
-        if other_id != user_id and set(tags) & own:
-            return str(other.get("name", other_id))
-    return None
 
 
 def _rights_scope(current: Mapping[str, Any]) -> str:

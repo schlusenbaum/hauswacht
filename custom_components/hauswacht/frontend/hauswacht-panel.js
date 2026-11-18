@@ -13,7 +13,7 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick – und fast alles direkt hier bearbeiten. Bedienteile anlegen und Karten anlernen geht im Dialog („Im Dialog bearbeiten“), weil dort am Gerät angelernt wird.",
+    hint: "Die ganze Einrichtung auf einen Blick – und alles direkt hier bearbeiten. Der Einstellungsdialog („Im Dialog bearbeiten“) bleibt als zweiter Weg. Nur den Sirenentest startest du in der Karte „Hauswacht Test“.",
     addRule: "Auslöseregel anlegen",
     addPerson: "Person anlegen",
     noPeople: "Noch keine Person. Ohne Personen schaltet jeder ohne PIN – mit Personen bekommt jede ihren PIN, ihre Karten und ihre Rechte.",
@@ -23,16 +23,38 @@ const TEXTS = {
     cardsN: "Karten",
     allRights: "alle Rechte",
     perArea: "Rechte je Bereich",
-    dialogOnly: "Anlegen und Einstellen im Dialog („Im Dialog bearbeiten“ → Systemeinstellungen → Bedienteile) – dort wird am Gerät angelernt. Hier: ansehen und löschen.",
+    noControls: "Noch kein Bedienteil.",
+    addControl: "Bedienteil anlegen",
+    cardsTitle: "Karten, Anhänger und Schloss-Kennungen",
+    noCards: "Noch keine Karte.",
+    addCard: "Neue Karte anlernen",
+    cardsNeedPerson: "Karten gehören immer einer Person – erst eine Person anlegen.",
     pinRules: "PIN-Regeln und Master-PIN",
+    tonesTitle: "Ton je Sirene",
+    speechTitle: "Sprachausgabe",
+    noSpeaker: "kein Lautsprecher",
+    quietLine: "Nachtruhe {a}–{b}",
+    addHelper: "Melder aus Messwert erstellen",
+    toneLabel: "Ton",
+    toneAuto: "automatisch",
+    fireReleased: "Brandton als Experte freigegeben",
+    smokeDetector: "Rauchmelder (nie Brandton)",
+    noSirens: "Noch keine Sirene eingetragen.",
+    testTitle: "Sirenentest",
+    testEvery: "Erinnerung alle {m} Monate",
+    testOff: "keine Erinnerung",
+    prewarnOn: "mit Vorwarnung",
+    testCard: "Den Test selbst startest du in der Karte „Hauswacht Test“ – die Seite schaltet nie eine Sirene.",
+    switchTitle: "Sirene aus Schalter erstellen",
+    switchHint: "Für Sirenen, die in Home Assistant nur als Schalter erscheinen: legt den Helfer „Gerätetyp eines Schalters ändern“ an und trägt die Sirene ein.",
     masterSet: "Master-PIN gesetzt",
     masterNone: "kein Master-PIN",
     pinArm: "PIN auch zum Scharfschalten",
     addCode: "Aktions-Code anlegen",
-    noKeypad: "Aktions-Codes gibt es nur mit Keypad – erst ein Keypad im Dialog einrichten.",
+    noKeypad: "Aktions-Codes gibt es nur mit Keypad – erst unter Bedienteile ein Keypad anlegen.",
     noCodes: "Noch kein Aktions-Code.",
+    allKeypads: "alle Keypads",
     learnTime: "Anlernzeit für Karten: {m} min",
-    remove: "Löschen …",
     restart: "Verhalten nach Neustart",
     behaviors: { restore: "Vorherigen Zustand wiederherstellen", armed: "Immer scharf", disarmed: "Immer unscharf" },
     continueAlarm: "laufender Alarm wird fortgesetzt",
@@ -81,7 +103,6 @@ const TEXTS = {
     },
     docsIntro: "Die Anleitung zu deiner Version ({v}) – öffnet sich in einem neuen Fenster. Das „?“ an jedem Abschnitt springt direkt an die passende Stelle.",
     docsAll: "Alle Seiten im Überblick",
-    search: "Melder suchen …",
     noGroup: "Ohne Meldergruppe",
     sensorsCount: "Melder",
     vibrationRule: "Erschütterung: Alarm bei {n} Meldungen in {s} s",
@@ -90,10 +111,10 @@ const TEXTS = {
     tiltLine: "zu: {c} · gekippt: {t}",
     strength: "Erschütterungsstärken",
     strengthLine: "ab {v}",
-    noSpecial: "Keine – anlegen im Dialog unter Alarmauslösung → Besondere Melder.",
+    noSpecial: "Noch keine – mit den Knöpfen unten anlegen.",
     group: "Gruppe",
     none: "keine",
-    noMatch: "Kein Melder passt zur Suche.",
+    noMatch: "Noch kein Melder – „+ Meldergruppe anlegen“.",
     reloadHint: "Die Seite konnte nicht angezeigt werden. Bitte den Browser bzw. die App einmal neu laden (nach einem Update hält der Browser oft noch die alte Version).",
   },
   en: {
@@ -101,7 +122,7 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance – and edit almost everything right here. Adding control devices and learning cards happens in the dialog (“Edit in the dialog”), because learning happens at the device there.",
+    hint: "The whole setup at a glance – and edit everything right here. The settings dialog (“Edit in the dialog”) stays as a second way. Only the siren test is started in the card “Hauswacht Test”.",
     addRule: "Add trigger rule",
     addPerson: "Add person",
     noPeople: "No person yet. Without people anyone operates without a PIN – with people, each gets their PIN, cards and rights.",
@@ -111,16 +132,38 @@ const TEXTS = {
     cardsN: "cards",
     allRights: "all rights",
     perArea: "rights per area",
-    dialogOnly: "Adding and setting up in the dialog (“Edit in the dialog” → system settings → control devices) – learning happens at the device there. Here: view and delete.",
+    noControls: "No control device yet.",
+    addControl: "Add control device",
+    cardsTitle: "Cards, tags and lock IDs",
+    noCards: "No card yet.",
+    addCard: "Learn a new card",
+    cardsNeedPerson: "Cards always belong to a person – add a person first.",
     pinRules: "PIN rules and master PIN",
+    tonesTitle: "Tone per siren",
+    speechTitle: "Speech",
+    noSpeaker: "no speaker",
+    quietLine: "quiet hours {a}–{b}",
+    addHelper: "Create sensor from a measurement",
+    toneLabel: "Tone",
+    toneAuto: "automatic",
+    fireReleased: "fire tone released by an expert",
+    smokeDetector: "smoke detector (never fire tone)",
+    noSirens: "No siren registered yet.",
+    testTitle: "Siren test",
+    testEvery: "Reminder every {m} months",
+    testOff: "no reminder",
+    prewarnOn: "with pre-warning",
+    testCard: "You start the test itself in the card “Hauswacht Test” – the page never switches a siren.",
+    switchTitle: "Create siren from switch",
+    switchHint: "For sirens that appear in Home Assistant only as a switch: creates the helper “change device type of a switch” and registers the siren.",
     masterSet: "master PIN set",
     masterNone: "no master PIN",
     pinArm: "PIN also to arm",
     addCode: "Add action code",
-    noKeypad: "Action codes need a keypad – set up a keypad in the dialog first.",
+    noKeypad: "Action codes need a keypad – add a keypad under control devices first.",
     noCodes: "No action code yet.",
+    allKeypads: "all keypads",
     learnTime: "Learning time for cards: {m} min",
-    remove: "Delete …",
     restart: "Behaviour after restart",
     behaviors: { restore: "Restore the previous state", armed: "Always armed", disarmed: "Always disarmed" },
     continueAlarm: "a running alarm continues",
@@ -169,7 +212,6 @@ const TEXTS = {
     },
     docsIntro: "The documentation for your version ({v}) – opens in a new window. The “?” on every section jumps straight to the right place.",
     docsAll: "All pages at a glance",
-    search: "Search sensors …",
     noGroup: "Without sensor group",
     sensorsCount: "sensors",
     vibrationRule: "Vibration: alarm at {n} reports in {s} s",
@@ -178,10 +220,10 @@ const TEXTS = {
     tiltLine: "closed: {c} · tilted: {t}",
     strength: "Vibration strengths",
     strengthLine: "from {v}",
-    noSpecial: "None – create them in the dialog under Alarm triggering → Special sensors.",
+    noSpecial: "None yet – create them with the buttons below.",
     group: "Group",
     none: "none",
-    noMatch: "No sensor matches the search.",
+    noMatch: "No sensor yet – “+ Add sensor group”.",
     reloadHint: "The page could not be shown. Please reload the browser or app once (after an update the browser often still holds the old version).",
   },
 };
@@ -237,8 +279,6 @@ const PANEL_STYLE = `
   tr.grp button.e { margin-left: 8px; padding: 1px 10px; }
   .item button.e { float: right; }
   .ok { color: var(--success-color, #43a047); margin: 0 0 10px; }
-  .search { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 12px; margin: 4px 0 10px;
-    border: 1px solid var(--divider-color); border-radius: 8px; background: var(--card-background-color); color: var(--primary-text-color); }
   tr.grp td { background: var(--secondary-background-color); font-weight: 500; }
   tr.grp .muted { font-weight: 400; }
   h3 { margin: 12px 0 4px; font-size: 1rem; font-weight: 500; }
@@ -252,7 +292,6 @@ class HauswachtPanel extends HTMLElement {
     super();
     this._data = null;
     this._error = null;
-    this._search = "";
     try {
       this._tab = localStorage.getItem(STORE_KEY) || "overview";
     } catch (_err) {
@@ -313,6 +352,7 @@ class HauswachtPanel extends HTMLElement {
       await import(`/hauswacht/hauswacht-panel-rules.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-people.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-system.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-controls.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -410,6 +450,7 @@ class HauswachtPanel extends HTMLElement {
       settings: this._settings,
       kind,
       event,
+      siren: event,
       eventLabel: (e) => (view ? view._l("event", e) : e),
     });
   }
@@ -489,7 +530,7 @@ class HauswachtPanel extends HTMLElement {
     } else {
       users = this._card(parts.users[0], parts.users[2], "users");
     }
-    const note = `<div class="muted">${escHtml(this._t("dialogOnly"))}</div>`;
+    const note = "";
     const sys = this._settings?.system;
     if (!sys) {
       return (
@@ -505,17 +546,39 @@ class HauswachtPanel extends HTMLElement {
         this._armedOr(`<div class="tool">${this._btn("sys:pinrules", this._t("edit"))}</div>`),
       "pinRules"
     );
-    const ctrlButtons = sys.controls.items.map((c) => `<span>${this._btn(`sys:control:${c.id}`, `${c.name} – ${this._t("remove")}`)}</span>`).join("");
+    const kindLabel = (k) => (view._l ? view._l("kind", k) : k);
+    const ctrlList = sys.controls.items.length
+      ? sys.controls.items
+          .map((c) => `<div class="item">${this._btn(`ctrl:${c.id}`, this._t("edit"))}<div class="n">${escHtml(c.name)} <span class="muted">${escHtml(kindLabel(c.kind))}</span></div></div>`)
+          .join("")
+      : `<div class="muted">${escHtml(this._t("noControls"))}</div>`;
     const controls = this._card(
       parts.controls[0],
-      note + parts.controls[2] +
-        this._armedOr(`<div class="tool">${ctrlButtons}</div>`) +
+      ctrlList +
+        this._armedOr(`<div class="tool">${this._btn("ctrl:", "+ " + this._t("addControl"))}</div>`) +
         `<div class="muted">${escHtml(this._fmt("learnTime", { m: sys.controls.learn_minutes }))} ${this._btn("sys:learn", this._t("edit"))}</div>`,
       "controls"
     );
+    const cardsData = sys.cards;
+    const cardList = cardsData.cards.length
+      ? cardsData.cards
+          .map((c) => `<div class="item">${this._btn(`card:${c.tag}`, this._t("edit"))}<div class="n">${c.active ? "🟢" : "⏸️"} ${escHtml(c.name ? `${c.name} (${c.label})` : c.label)}</div><div class="muted">${escHtml(c.user_name)}</div></div>`)
+          .join("")
+      : `<div class="muted">${escHtml(this._t("noCards"))}</div>`;
+    const cards = this._card(
+      this._t("cardsTitle"),
+      cardList +
+        (cardsData.users.length
+          ? this._armedOr(`<div class="tool">${this._btn("cardnew:", "+ " + this._t("addCard"))}</div>`)
+          : `<div class="muted">${escHtml(this._t("cardsNeedPerson"))}</div>`),
+      "cards"
+    );
     const ac = sys.action_codes;
+    const keypadName = (id) => (id === ac.all_keypads ? this._t("allKeypads") : (ac.keypads.find((k) => k.id === id) || { name: id }).name);
     const codeList = ac.codes.length
-      ? parts.actionCodes[2] + `<div class="tool">${ac.codes.map((c) => this._btn(`sys:actioncode:${c.id}`, `${c.name} – ${this._t("edit")}`)).join("")}</div>`
+      ? ac.codes
+          .map((c) => `<div class="item">${this._btn(`sys:actioncode:${c.id}`, this._t("edit"))}<div class="n">${escHtml(c.name)}</div><div class="muted">${escHtml(`${c.code} + ${view._l("key", c.key)} · ${keypadName(c.keypad)} → ${view._l("codeAction", c.action)}${c.profile ? ` (${(sys.profiles.find((p) => p.id === c.profile) || { name: c.profile }).name})` : ""}`)}</div></div>`)
+          .join("")
       : `<div class="muted">${escHtml(this._t("noCodes"))}</div>`;
     const codes = this._card(
       parts.actionCodes[0],
@@ -524,7 +587,22 @@ class HauswachtPanel extends HTMLElement {
         : `<div class="muted">${escHtml(this._t("noKeypad"))}</div>`,
       "actionCodes"
     );
-    return users + pinRules + controls + codes;
+    return users + pinRules + cards + controls + codes;
+  }
+
+  _openControlEditor(kind, item) {
+    if (!customElements.get("hauswacht-control-editor") || !this._settings?.system) return;
+    const editor = document.createElement("hauswacht-control-editor");
+    editor.addEventListener("hw-close", () => this._closeEditor());
+    editor.addEventListener("hw-saved", (ev) => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave(ev.detail?.revision);
+    });
+    editor.addEventListener("hw-stale", () => this._reloadAfterSave());
+    this._editor = editor;
+    this.shadowRoot.appendChild(editor);
+    editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null });
   }
 
   _openSystemEditor(kind, item) {
@@ -539,7 +617,8 @@ class HauswachtPanel extends HTMLElement {
     editor.addEventListener("hw-stale", () => this._reloadAfterSave());
     this._editor = editor;
     this.shadowRoot.appendChild(editor);
-    editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null });
+    const view = this._view();
+    editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null, typeLabel: (t) => (view ? view._l("type", t) : t) });
   }
 
   _systemTab(view) {
@@ -594,7 +673,21 @@ class HauswachtPanel extends HTMLElement {
   _sirensTab(view) {
     const parts = view._parts();
     const tools = this._armedOr(`<div class="tool">${this._btn("sirens:", this._t("editSirens"))}</div>`);
-    return this._card(parts.sirens[0], tools + parts.sirens[2], "sirens");
+    const sir = this._settings?.sirens;
+    if (!sir) return this._card(parts.sirens[0], tools + parts.sirens[2], "sirens");
+    const tones = sir.items.length
+      ? sir.items
+          .map((i) => `<div class="item">${this._btn(`tone:${i.id}`, this._t("edit"))}<div class="n">${escHtml(i.name)}</div><div class="muted">${escHtml(this._t("toneLabel"))}: ${escHtml(i.tone || this._t("toneAuto"))}${i.fire_ok ? ` · ${escHtml(this._t("fireReleased"))}` : ""}${i.smoke_detector ? ` · ${escHtml(this._t("smokeDetector"))}` : ""}</div></div>`)
+          .join("")
+      : `<div class="muted">${escHtml(this._t("noSirens"))}</div>`;
+    const months = sir.test.reminder_months;
+    const testText = `${months ? this._fmt("testEvery", { m: months }) : this._t("testOff")}${sir.test.prewarn ? ` · ${this._t("prewarnOn")}` : ""}`;
+    return (
+      this._card(parts.sirens[0], tools + parts.sirens[2], "sirens") +
+      this._card(this._t("tonesTitle"), tones, "sirenTone") +
+      this._card(this._t("testTitle"), `<div>${escHtml(testText)}</div><div class="muted">${escHtml(this._t("testCard"))}</div>${this._armedOr(`<div class="tool">${this._btn("sirentest:", this._t("edit"))}</div>`)}`, "sirenTest") +
+      this._card(this._t("switchTitle"), `<div class="muted">${escHtml(this._t("switchHint"))}</div>${this._armedOr(`<div class="tool">${this._btn("fromswitch:", "+ " + this._t("switchTitle"))}</div>`)}`, "sirenSwitch")
+    );
   }
 
   _notificationsTab(view) {
@@ -604,9 +697,27 @@ class HauswachtPanel extends HTMLElement {
     const texts = events
       .map((e) => `<div class="item">${this._btn(`text:${e.event}`, this._t("edit"))}<div class="n">${escHtml(view._l("event", e.event))}</div><div class="muted">${escHtml(e.message || e.title ? `${this._t("ownText")}: ${e.title ? e.title + " – " : ""}${e.preview || e.message}` : this._t("defaultText"))}</div></div>`)
       .join("");
+    const sp = this._settings?.notify?.speech;
+    let speech = "";
+    if (sp) {
+      const speakerName = (id) => (sp.speaker_choices.find((c) => c.id === id) || { name: id }).name;
+      const summary = [
+        sp.speakers.length ? sp.speakers.map(speakerName).join(", ") : this._t("noSpeaker"),
+        sp.quiet_enabled ? this._fmt("quietLine", { a: sp.quiet_start, b: sp.quiet_end }) : null,
+      ].filter(Boolean).join(" · ");
+      const events = sp.events
+        .map((e) => `<div class="item">${this._btn(`speechevent:${e.event}`, this._t("edit"))}<div class="n">${e.enabled ? "🔊" : "🔇"} ${escHtml(view._l("event", e.event))}</div><div class="muted">${escHtml(e.text || e.default)}</div></div>`)
+        .join("");
+      speech = this._card(
+        this._t("speechTitle"),
+        `<div>${escHtml(summary)}</div>${this._armedOr(`<div class="tool">${this._btn("speech:", this._t("edit"))}</div>`)}${events}`,
+        "speech"
+      );
+    }
     return (
       this._card(parts.notifications[0], tools + parts.notifications[2], "notifications") +
-      (events.length ? this._card(this._t("texts"), `<div class="muted">${escHtml(this._t("textsHint"))}</div>${texts}`, "texts") : "")
+      (events.length ? this._card(this._t("texts"), `<div class="muted">${escHtml(this._t("textsHint"))}</div>${texts}`, "texts") : "") +
+      speech
     );
   }
 
@@ -640,8 +751,17 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "profile") this._openProfileEditor(id);
     else if (kind === "rule") this._openRuleEditor(id);
     else if (kind === "person") this._openPersonEditor(id);
+    else if (kind === "ctrl") this._openControlEditor("control", spec.slice(5));
+    else if (kind === "card") this._openControlEditor("card", spec.slice(5));
+    else if (kind === "cardnew") this._openControlEditor("cardnew");
     else if (kind === "sys") this._openSystemEditor(id, spec.split(":").slice(2).join(":"));
     else if (kind === "sirens") this._openAlarmEditor("sirens");
+    else if (kind === "tone") this._openAlarmEditor("tone", spec.slice(5));
+    else if (kind === "sirentest") this._openAlarmEditor("sirentest");
+    else if (kind === "speech") this._openAlarmEditor("speech");
+    else if (kind === "speechevent") this._openAlarmEditor("speechevent", spec.slice(12));
+    else if (kind === "helper") this._openSystemEditor("helper");
+    else if (kind === "fromswitch") this._openAlarmEditor("fromswitch");
     else if (kind === "notify") this._openAlarmEditor("notify");
     else if (kind === "text") this._openAlarmEditor("text", id);
   }
@@ -673,12 +793,10 @@ class HauswachtPanel extends HTMLElement {
 
   _sensorsTab(view) {
     const d = this._data;
-    const term = this._search.trim().toLowerCase();
     const groups = d.groups || [];
     const byGroup = new Map(groups.map((g) => [g.name, []]));
     const loose = [];
     for (const s of d.sensors) {
-      if (term && !String(s.name).toLowerCase().includes(term)) continue;
       if (s.zone && byGroup.has(s.zone)) byGroup.get(s.zone).push(s);
       else loose.push(s);
     }
@@ -692,7 +810,6 @@ class HauswachtPanel extends HTMLElement {
     let body = "";
     for (const g of groups) {
       const members = byGroup.get(g.name) || [];
-      if (!members.length && term) continue;
       const vibration = members.some((s) => s.type === "vibration") && g.vibration_count > 1
         ? ` · ${escHtml(this._fmt("vibrationRule", { n: g.vibration_count, s: g.vibration_window }))}`
         : "";
@@ -707,7 +824,6 @@ class HauswachtPanel extends HTMLElement {
       ? `<div class="muted">${escHtml(this._t("armedNote"))}</div>`
       : `<div class="tool">${this._btn("group:", "+ " + this._t("addGroup"))}</div>${this._canEdit ? `<div class="muted">${escHtml(this._t("clickHint"))}</div>` : ""}`;
     const matrix = `${tools}
-      <input class="search" type="search" placeholder="${escHtml(this._t("search"))}" value="${escHtml(this._search)}">
       <div class="muted">${escHtml(view._t("legend"))}</div>
       <div class="scroll"><table>
         <tr><th>${escHtml(view._t("sensors"))}</th><th>${escHtml(view._t("type"))}</th><th>${escHtml(view._t("state"))}</th><th>🔋</th>${d.profiles.map((p) => `<th class="c">${escHtml(p.name)}</th>`).join("")}</tr>
@@ -724,7 +840,7 @@ class HauswachtPanel extends HTMLElement {
     const specialHtml = tilt || strength
       ? `${tilt ? `<h3>${escHtml(this._t("tilt"))}</h3>${tilt}` : ""}${strength ? `<h3>${escHtml(this._t("strength"))}</h3>${strength}` : ""}`
       : `<div class="muted">${escHtml(this._t("noSpecial"))}</div>`;
-    const specialTools = `<div class="tool">${this._btn("tilt:", "+ " + this._t("addTilt"))}${this._btn("strength:", "+ " + this._t("addStrength"))}</div>`;
+    const specialTools = `<div class="tool">${this._btn("tilt:", "+ " + this._t("addTilt"))}${this._btn("strength:", "+ " + this._t("addStrength"))}${this._btn("helper:", "+ " + this._t("addHelper"))}</div>`;
     const parts = view._parts();
     return (
       this._card(view._t("sensors"), matrix, "sensors") +
@@ -768,7 +884,9 @@ class HauswachtPanel extends HTMLElement {
     if (this._tab === "notifications") return this._notificationsTab(view);
     const parts = view._parts();
     const items = TAB_PARTS[this._tab] || [];
-    const asOf = this._tab === "overview" ? parts.asOf : "";
+    const asOf = this._tab === "overview"
+      ? `${parts.asOf}<div class="tool"><button class="e" data-a="print">🖨 ${escHtml(view._t("print"))}</button><button class="e" data-a="sheet">📄 ${escHtml(view._t("sheet"))}</button></div>`
+      : "";
     return asOf + items.map((key) => this._card(parts[key][0], parts[key][2], PART_HELP[key])).join("");
   }
 
@@ -809,6 +927,8 @@ class HauswachtPanel extends HTMLElement {
         if (action === "refresh") this._load();
         else if (action === "menu") this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true }));
         else if (action === "dialog") this._navigate("/config/integrations/integration/hauswacht");
+        else if (action === "print" || action === "sheet") this._print(action);
+        else if (action === "hc-md" || action === "hc-csv") this._downloadHomecoming(action === "hc-csv" ? "csv" : "markdown");
       })
     );
     this.shadowRoot.querySelectorAll("[data-edit]").forEach((button) =>
@@ -818,18 +938,33 @@ class HauswachtPanel extends HTMLElement {
       })
     );
     if (this._editor) this.shadowRoot.appendChild(this._editor);
-    const search = this.shadowRoot.querySelector("input.search");
-    if (search) {
-      search.addEventListener("input", () => {
-        this._search = search.value;
-        const pos = search.selectionStart;
-        this._render();
-        const again = this.shadowRoot.querySelector("input.search");
-        if (again) {
-          again.focus();
-          again.setSelectionRange(pos, pos);
-        }
-      });
+  }
+
+  _print(kind) {
+    // Drucken wie in der Karte „Hauswacht Übersicht“: ganze Anlage oder Notfallblatt
+    const view = this._view();
+    if (!view) return;
+    view._print(kind === "sheet" ? view._sheetHtml() : view._printHtml());
+  }
+
+  async _downloadHomecoming(kind) {
+    // Heimkehr-Bericht (Markdown) oder Tabelle (CSV) herunterladen – wie in der Übersichtskarte
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/homecoming/report" });
+      const csv = kind === "csv";
+      const blob = new Blob([csv ? r.csv : r.markdown], { type: csv ? "text/csv;charset=utf-8" : "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${r.filename}.${csv ? "csv" : "md"}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      this._flash = null;
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
     }
   }
 

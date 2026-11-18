@@ -44,6 +44,7 @@ def test_help_keys_used_by_panel_exist() -> None:
         "hauswacht-panel-rules.js",
         "hauswacht-panel-people.js",
         "hauswacht-panel-system.js",
+        "hauswacht-panel-controls.js",
     ):
         text = (frontend / name).read_text(encoding="utf-8")
         text = re.sub(r'===\s*"\w+"', "", text)  # Vergleiche sind keine Schlüssel

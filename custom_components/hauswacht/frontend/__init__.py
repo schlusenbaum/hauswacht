@@ -30,6 +30,7 @@ PANEL_RULES_FILE = "hauswacht-panel-rules.js"
 PANEL_DOCS_FILE = "hauswacht-panel-docs.js"
 PANEL_PEOPLE_FILE = "hauswacht-panel-people.js"
 PANEL_SYSTEM_FILE = "hauswacht-panel-system.js"
+PANEL_CONTROLS_FILE = "hauswacht-panel-controls.js"
 PANEL_FILES = (
     PANEL_FILE,
     PANEL_EDIT_FILE,
@@ -39,6 +40,7 @@ PANEL_FILES = (
     PANEL_DOCS_FILE,
     PANEL_PEOPLE_FILE,
     PANEL_SYSTEM_FILE,
+    PANEL_CONTROLS_FILE,
 )
 PANEL_URL_PATH = "hauswacht-settings"
 PANEL_ELEMENT = "hauswacht-panel"

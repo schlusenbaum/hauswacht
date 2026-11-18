@@ -1,7 +1,7 @@
 # ADR 0011: Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog
 
-- Status: umgesetzt in den Vorabversionen 0.57.0b1–b11 (alle fünf Stufen; Bedienteile anlegen und
-  Karten anlernen bleiben bewusst im Dialog, weil dort am Gerät angelernt wird)
+- Status: umgesetzt in den Vorabversionen 0.57.0b1–b12 (alle fünf Stufen; alles lässt sich auf der
+  Seite einstellen – nur der Sirenentest bleibt bewusst in der Testkarte)
 - Datum: 2026-11-18
 
 ## Kontext

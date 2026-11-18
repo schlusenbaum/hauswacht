@@ -509,3 +509,122 @@ async def test_pin_rules_master_pin(hass: HomeAssistant, hass_ws_client: Any) ->
     data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
     assert data["system"]["pin_rules"]["master"] is True
     assert "123456" not in str(data)
+
+
+async def test_siren_tone_and_test_settings(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Nur Einstellungen – keine Sirene wird geschaltet."""
+    hass.states.async_set(
+        "siren.flur",
+        "off",
+        {"supported_features": 1 | 2 | 4, "available_tones": ["burglar", "fire"]},
+    )
+    await setup_entry(hass, make_entry())
+    assert (await _apply(hass_ws_client, hass, "sirens_save", {"sirens": ["siren.flur"]}))["ok"]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    item = data["sirens"]["items"][0]
+    assert {"tone": "fire", "fire": True} in item["tones"]
+    refused = await _apply(
+        hass_ws_client, hass, "siren_tone_save", {"siren": "siren.flur", "tone": "fire"}
+    )
+    assert refused["errors"] == {"tone": "siren_tone_fire"}
+    ok = await _apply(
+        hass_ws_client,
+        hass,
+        "siren_tone_save",
+        {"siren": "siren.flur", "tone": "fire", "allow_fire_tone": True, "confirm_fire_tone": True},
+    )
+    assert ok["ok"] is True, ok
+    assert _options(hass)["siren_tones"] == {"siren.flur": "fire"}
+    assert _options(hass)["siren_fire_tone_ok"] == ["siren.flur"]
+    test = await _apply(
+        hass_ws_client, hass, "siren_test_save", {"reminder_months": 6, "prewarn": True}
+    )
+    assert test["ok"] is True
+    assert _options(hass)["siren_test"] == {"reminder_months": 6, "prewarn": True}
+    assert hass.states.get("siren.flur").state == "off"
+
+
+async def test_control_card_speech_always(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    hass.states.async_set("event.taster", "unknown", {"event_types": ["single", "double"]})
+    await setup_entry(hass, make_entry())
+    keypad = await _apply(
+        hass_ws_client,
+        hass,
+        "control_save",
+        {
+            "kind": "keypad",
+            "name": "Keypad Flur",
+            "topic": "zigbee2mqtt/Keypad Flur",
+            "arm_night_zones": "night",
+        },
+    )
+    assert keypad["ok"] is True, keypad
+    stored = _options(hass)["controls"][keypad["id"]]
+    assert stored["buttons"] == {"arm_night_zones": "night"}
+    missing = await _apply(hass_ws_client, hass, "control_save", {"kind": "keypad", "name": "X"})
+    assert missing["errors"] == {"keypad_device": "control_keypad_topic"}
+    button = await _apply(
+        hass_ws_client,
+        hass,
+        "control_save",
+        {
+            "kind": "button",
+            "name": "Taster",
+            "entity": "event.taster",
+            "presses": {"single": "away"},
+        },
+    )
+    assert button["ok"] is True, button
+    assert _options(hass)["controls"][button["id"]]["presses"] == {"single": "away"}
+    person = await _apply(hass_ws_client, hass, "user_save", {"name": "Anna"})
+    card = await _apply(
+        hass_ws_client, hass, "card_add", {"card": "04A1B2C3", "user": person["id"], "name": "Blau"}
+    )
+    assert card["ok"] is True, card
+    assert "04A1B2C3" in _options(hass)["users"][person["id"]]["tags"]
+    off = await _apply(
+        hass_ws_client,
+        hass,
+        "card_save",
+        {"tag": "04A1B2C3", "user": person["id"], "active": False},
+    )
+    assert off["ok"] is True
+    assert _options(hass)["users"][person["id"]]["tags_disabled"] == ["04A1B2C3"]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/new_cards")
+    assert data["cards"][0]["tag"] == "04A1B2C3"
+    speech = await _apply(
+        hass_ws_client,
+        hass,
+        "speech_save",
+        {
+            "speakers": [],
+            "repeat": 30,
+            "quiet_enabled": True,
+            "quiet_start": "22:30",
+            "quiet_end": "06:00",
+        },
+    )
+    assert speech["ok"] is True, speech
+    assert _options(hass)["speech"]["quiet"] == {"enabled": True, "start": "22:30", "end": "06:00"}
+    bad = await _apply(
+        hass_ws_client,
+        hass,
+        "speech_event_save",
+        {"event": "alarm", "enabled": True, "mode": "speak", "text": "{foo}"},
+    )
+    assert bad["errors"] == {"text": "invalid_template"}
+    always = await _apply(
+        hass_ws_client,
+        hass,
+        "always_save",
+        {
+            "zones": [],
+            "sensors": [],
+            "sirens_settings": {"sirens_enabled": True, "siren_tone": "fire", "reaction_time": 60},
+        },
+    )
+    assert always["ok"] is True, always
+    stored_always = _options(hass)["always_active"]
+    assert stored_always["sirens_enabled"] is True
+    assert stored_always["siren_tone"] == "burglar"  # Brandton hier nie
+    assert stored_always["reaction_time"] == 60
