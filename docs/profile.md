@@ -26,6 +26,7 @@ an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub
 | Ausgefallene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben |
 | Maximale Alarmzyklen | Wie oft nach einem Alarm erneut ausgelöst werden darf |
 | Manipulation löst Alarm aus | Sonst wird Manipulation nur gemeldet |
+| Gekippte Fenster erlaubt | Nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) (sonst ausgeblendet): Ein gekipptes Fenster zählt als zu, erst ganz öffnen löst aus. **Aus** (Standard): gekippt zählt wie offen. Typisch: an bei „Nacht“, aus bei „Abwesend“. Der [Einrichtungsassistent](assistent.md#6-alarmprofile) fragt beim Nachtprofil danach |
 | Sirenen, Ton, Lautstärke, stiller Alarm | Reaktion bei Alarm, siehe [Sirenen](sirenen.md) |
 | Benachrichtigen (Alarm) | Wer bei einem Alarm eine Push-Nachricht bekommt |
 | Zusätzliche Lautsprecher | Ansagen dieses Profils, siehe [Sprachausgabe](benachrichtigungen.md#sprachausgabe-lautsprecher) |

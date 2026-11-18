@@ -50,6 +50,7 @@ use the one of the respective area.
 | … | Use | Note |
 |---|---|---|
 | **tampering** is reported | event `TamperDetected` | sensor in `sensor_key`; also comes when disarmed |
+| a **vibration** was counted, but no alarm yet | event `VibrationCounted` | `count`, `needed` – e.g. light on as a deterrent |
 | a **sensor fails** | event `SensorUnavailable` | or `sensor.hauswacht_system_status` → `degraded` |
 | the **radio network/gateway** is faulty | event `InfrastructureFault` (`InfrastructureRecovered` = fine again) | or system status → `fault` |
 | a **wrong PIN** was entered | event `InvalidCode` | `failures`, `lock_seconds` (lockout) |
@@ -67,6 +68,7 @@ use the one of the respective area.
 | the **profile automation** armed | event `AutoArmed` | `reason`: `Uhrzeit` (time), `Zeitplan` (schedule), `alle weg` (everyone left) … |
 | the profile automation could **not** | event `AutoArmFailed` or `AutoArmSkipped` | `reason`, `details`; `guest_mode: true` = because of guest mode |
 | **windows are open** (e.g. hint when leaving) | entity `binary_sensor.hauswacht_open_sensors` | names in the attribute `names` |
+| a window is **tilted** ([tilt position](sensors.md#sensors-with-tilt-position-tilted)) | panel attribute `tilted_sensors` | Even if the profile allows tilted; in events field `position` |
 
 ## I want to do something …
 

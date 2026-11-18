@@ -22,7 +22,8 @@ from typing import Any
 
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.const import EVENT_STATE_REPORTED
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, State, callback
 from homeassistant.core import Event as HaEvent
 from homeassistant.core import Event as HaEventAny
 from homeassistant.exceptions import ServiceValidationError
@@ -136,7 +137,6 @@ from .core.sensor_types import (
     domain_of,
     excluded_sensors,
     normalize,
-    parse_types,
     role_overrides,
     sensor_type,
 )
@@ -163,6 +163,7 @@ from .core.state_machine import (
     AlwaysActiveTriggered,
     ArmingAborted,
     ArmRequested,
+    BypassedSensorOpened,
     BypassUntilClosed,
     CancelTimer,
     ConfirmationRequired,
@@ -191,6 +192,8 @@ from .core.state_machine import (
 )
 from .core.texts import by as by_text
 from .core.texts import lang_of, quoted, tr
+from .core.tilt import POSITION_NAMES, TILTED, effective_types, judge, parse_tilt_sources
+from .core.tilt import position as tilt_position
 from .core.users import (
     Action,
     Identity,
@@ -207,6 +210,13 @@ from .core.users import (
     tag_credential,
 )
 from .core.users import label as users_label
+from .core.vibration import (
+    VibrationCounter,
+    VibrationRule,
+    parse_vibration_sources,
+    rule_for_zone_id,
+)
+from .core.vibration import position as vibration_position
 from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
@@ -219,7 +229,7 @@ from .siren_test import SirenTester
 _LOGGER = logging.getLogger(__name__)
 
 SIMULATION_REAL = "real"
-SIMULATION_VALUES = frozenset({"on", "off", "unavailable", SIMULATION_REAL})
+SIMULATION_VALUES = frozenset({"on", "off", "tilted", "unavailable", SIMULATION_REAL})
 
 # So lange gelten Push-Knöpfe zum Scharfschalten ("Trotzdem scharf", "Jetzt scharf")
 PENDING_ARM_SECONDS = 15 * 60
@@ -332,7 +342,14 @@ class HauswachtRuntime:
         self.notifier.fire_event = self.fire_event
         self.reminder = ReminderRunner(self)
         self.zones = parse_zones(entry.options)
-        self.sensor_types = parse_types(entry.options)
+        # Melder mit Kippstellung (ADR 0010): drei Stellungen, Bewertung je Profil
+        self.tilt_sources = parse_tilt_sources(entry.options)
+        # Erschütterungsstärke als Zahl und Fehlalarmschutz je Meldergruppe (ADR 0010 Teil B)
+        self.vibration_sources = parse_vibration_sources(entry.options)
+        self._vibration = VibrationCounter()
+        self._unsub_reported: CALLBACK_TYPE | None = None
+        self._bypass_position: dict[str, str | None] = {}
+        self.sensor_types = effective_types(entry.options)
         self.role_overrides = role_overrides(self.sensor_types)
         self.stale_after = stale_after_seconds(entry.options)
         # Funknetz/Gateways überwacht nur der Hauptbereich (sonst doppelte Meldungen)
@@ -656,7 +673,9 @@ class HauswachtRuntime:
         # lässt sich nicht unterscheiden) – gemeldet am Ende der Startphase.
         bypassed = self.ctx.bypassed | self.ctx.bypassed_until_closed
         open_now = frozenset(
-            e for e in self.armed_sensors - bypassed if self._effective_state(e) == "on"
+            e
+            for e in self.armed_sensors - bypassed
+            if self._effective_state(e) == "on" and not self.is_vibration(e)
         )
         if open_now:
             self._dispatch(BypassUntilClosed(sensors=open_now))
@@ -774,7 +793,11 @@ class HauswachtRuntime:
     @callback
     def fire_event(self, data: Mapping[str, Any]) -> None:
         """hauswacht_event auslösen – immer mit Bereich. Ein ``area`` in ``data`` hat Vorrang."""
-        self.hass.bus.async_fire(EVENT_HAUSWACHT, {**self.event_area, **data})
+        payload = {**self.event_area, **data}
+        key = payload.get("sensor_key")
+        if isinstance(key, str) and key in self.tilt_sources and "position" not in payload:
+            payload["position"] = POSITION_NAMES.get(self._raw(key), self._raw(key))
+        self.hass.bus.async_fire(EVENT_HAUSWACHT, payload)
 
     @callback
     def note_used(self, key: str) -> None:
@@ -866,10 +889,10 @@ class HauswachtRuntime:
         if self._unsub_push is not None:
             self._unsub_push()
             self._unsub_push = None
-        for unsub in (self._unsub_states, self._unsub_registry):
+        for unsub in (self._unsub_states, self._unsub_registry, self._unsub_reported):
             if unsub is not None:
                 unsub()
-        self._unsub_states = self._unsub_registry = None
+        self._unsub_states = self._unsub_registry = self._unsub_reported = None
         self._listeners.clear()
 
     @callback
@@ -932,7 +955,10 @@ class HauswachtRuntime:
             ArmRequested(
                 profile=profile,
                 # Ausgangstüren dürfen beim Scharfschalten offen sein (Scharf durch Schließen)
-                readiness=self.readiness_for(self.single_sensors - self._exit_doors),
+                readiness=self.readiness_for(
+                    self.single_sensors - self._exit_doors,
+                    tilt_allowed=self.tilt_allowed(profile_id),
+                ),
                 confirmed=confirmed,
             )
         )
@@ -1513,15 +1539,53 @@ class HauswachtRuntime:
     def zone_members(self) -> dict[str, list[str]]:
         return {zone.name: sorted(resolve_zone(zone, self._labels)) for zone in self.zones.values()}
 
-    def snapshots(self, entity_ids: frozenset[str]) -> dict[str, SensorSnapshot]:
+    # --- Stellung (offen / zu / gekippt) -------------------------------------
+
+    def read_position(self, entity_id: str, state: State | None) -> str | None:
+        """Echte Stellung aus dem Home-Assistant-Zustand: on, off, tilted, unavailable …"""
+        strength_source = self.vibration_sources.get(entity_id)
+        if strength_source is not None:
+            return vibration_position(strength_source, state.state if state else None)
+        source = self.tilt_sources.get(entity_id)
+        if source is not None:
+            return tilt_position(
+                source, state.state if state else None, state.attributes if state else None
+            )
+        return normalize(entity_id, state.state if state else None)
+
+    def _raw(self, entity_id: str) -> str | None:
+        """Stellung für Hauswacht: simuliert (Testmodus) oder echt – noch nicht bewertet."""
+        simulated = self.simulated(entity_id)
+        if simulated is not None:
+            return simulated
+        return self.read_position(entity_id, self.hass.states.get(entity_id))
+
+    def tilt_allowed(self, profile_id: str | None = None) -> bool:
+        """Erlaubt das Profil gekippte Fenster? Ohne Angabe: aktives bzw. ausgewähltes Profil."""
+        pid = profile_id or self.selected_profile
+        return bool(pid) and profile_behaviour(self.entry.options, pid).tilt_allowed
+
+    def _judged(self, raw: str | None, tilt_allowed: bool | None = None) -> str | None:
+        allowed = self.tilt_allowed() if tilt_allowed is None else tilt_allowed
+        return judge(raw, tilt_allowed=allowed)
+
+    def tilted_sensors(self, entity_ids: frozenset[str] | None = None) -> frozenset[str]:
+        """Melder, die gerade gekippt sind."""
+        ids = self.candidates if entity_ids is None else entity_ids
+        return frozenset(e for e in ids if e in self.tilt_sources and self._raw(e) == TILTED)
+
+    def snapshots(
+        self, entity_ids: frozenset[str], *, tilt_allowed: bool | None = None
+    ) -> dict[str, SensorSnapshot]:
         result: dict[str, SensorSnapshot] = {}
         now = dt_util.utcnow().timestamp()
+        allowed = self.tilt_allowed() if tilt_allowed is None else tilt_allowed
         for entity_id in entity_ids:
             state = self.hass.states.get(entity_id)
             if (simulated := self.simulated(entity_id)) is not None:
                 result[entity_id] = SensorSnapshot(
                     entity_id=entity_id,
-                    state=simulated,
+                    state=judge(simulated, tilt_allowed=allowed),
                     device_class=state.attributes.get("device_class") if state else None,
                     last_reported=now,
                     last_seen=None,
@@ -1529,7 +1593,7 @@ class HauswachtRuntime:
                 continue
             result[entity_id] = SensorSnapshot(
                 entity_id=entity_id,
-                state=normalize(entity_id, state.state if state else None),
+                state=judge(self.read_position(entity_id, state), tilt_allowed=allowed),
                 device_class=state.attributes.get("device_class") if state else None,
                 last_reported=state.last_reported.timestamp() if state else None,
                 last_seen=self._last_seen(entity_id),
@@ -1575,21 +1639,33 @@ class HauswachtRuntime:
                     break
         return found
 
-    def readiness_for(self, entity_ids: frozenset[str]) -> Readiness:
+    def readiness_for(
+        self, entity_ids: frozenset[str], *, tilt_allowed: bool | None = None
+    ) -> Readiness:
         """Bereitschaft der Sensoren. Gestörte Infrastruktur zählt als "nicht verfügbar"."""
         readiness = evaluate_readiness(
             entity_ids,
-            self.snapshots(entity_ids),
+            self.snapshots(entity_ids, tilt_allowed=tilt_allowed),
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
         )
+        # Erschütterung ist ein Vorgang, kein offener Zustand: blockiert das Scharfschalten nie
+        open_sensors = frozenset(e for e in readiness.open_sensors if not self.is_vibration(e))
         faulty = self.faulty_infrastructure()
-        if not faulty:
-            return readiness
         return Readiness(
-            open_sensors=readiness.open_sensors,
+            open_sensors=open_sensors,
             unavailable_sensors=readiness.unavailable_sensors | faulty,
         )
+
+    def is_vibration(self, entity_id: str) -> bool:
+        return self.type_of(entity_id) is SensorType.VIBRATION
+
+    def vibration_rule_of(self, entity_id: str) -> VibrationRule:
+        """Fehlalarmschutz aus der Meldergruppe des Melders (ohne Gruppe: 1 Meldung)."""
+        for zone in self.zones.values():
+            if entity_id in resolve_zone(zone, self._labels):
+                return rule_for_zone_id(self.entry.options, zone.zone_id)
+        return VibrationRule()
 
     # --- Infrastruktur und Systemstatus -------------------------------------
 
@@ -1939,11 +2015,7 @@ class HauswachtRuntime:
 
     def _effective_state(self, entity_id: str) -> str | None:
         """Zustand für Hauswacht: simuliert (Testmodus) oder echt, vereinheitlicht."""
-        simulated = self.simulated(entity_id)
-        if simulated is not None:
-            return simulated
-        state = self.hass.states.get(entity_id)
-        return normalize(entity_id, state.state if state else None)
+        return self._judged(self._raw(entity_id))
 
     def simulated(self, entity_id: str) -> str | None:
         """Simulierter Zustand – nur im Testmodus wirksam."""
@@ -1982,7 +2054,9 @@ class HauswachtRuntime:
             raise ServiceValidationError(f"Unbekannter Zustand: {value}")
         self._require_simulation(entity_id)
         real = self.hass.states.get(entity_id)
-        real_state = normalize(entity_id, real.state if real else None)
+        real_state = self.read_position(entity_id, real)
+        if value == TILTED and entity_id not in self.tilt_sources:
+            raise ServiceValidationError(f"{entity_id} hat keine Kippstellung")
         old = self._simulated.get(entity_id, real_state)
         if value == SIMULATION_REAL:
             self._simulated.pop(entity_id, None)
@@ -2039,7 +2113,8 @@ class HauswachtRuntime:
                     "name": display_name(self.hass, entity_id),
                     "device_class": device_class,
                     "role": sensor_role(entity_id, device_class, self.role_overrides).value,
-                    "real": normalize(entity_id, state.state if state else None),
+                    "real": self.read_position(entity_id, state),
+                    "tilt": entity_id in self.tilt_sources,
                     "raw": state.state if state else None,
                     "kind": domain_of(entity_id),
                     "type": self.type_of(entity_id).value,
@@ -2138,7 +2213,13 @@ class HauswachtRuntime:
             | self._all_exit_doors()
         )
         # Nur Melder mit offen/zu (z. B. Messwerte aus 0.24 in alten Auslöseregeln ignorieren)
-        self.candidates = frozenset(e for e in configured if domain_of(e) in MONITORED_DOMAINS)
+        self.candidates = frozenset(
+            e
+            for e in configured
+            if domain_of(e) in MONITORED_DOMAINS
+            or e in self.tilt_sources
+            or e in self.vibration_sources
+        )
         if ignored := sorted(configured - self.candidates):
             _LOGGER.warning(
                 "Hauswacht ignoriert Entitäten ohne offen/zu (Auslöseregeln prüfen): %s",
@@ -2156,6 +2237,12 @@ class HauswachtRuntime:
         )
         self.homecoming.refresh()
         self.automation.refresh_doors()
+        if self.vibration_sources and self._unsub_reported is None:
+            self._unsub_reported = self.hass.bus.async_listen(
+                EVENT_STATE_REPORTED,
+                self._on_vibration_reported,
+                event_filter=self._is_vibration_report,
+            )
         if wanted == self._subscribed and self._unsub_states is not None:
             return
         if self._unsub_states is not None:
@@ -2188,12 +2275,17 @@ class HauswachtRuntime:
         old = event.data["old_state"]
         new = event.data["new_state"]
         device_class = new.attributes.get("device_class") if new else None
-        self._handle_sensor_change(
-            entity_id,
-            normalize(entity_id, old.state if old else None),
-            normalize(entity_id, new.state if new else None),
-            device_class,
-        )
+        old_position = self.read_position(entity_id, old)
+        new_position = self.read_position(entity_id, new)
+        if (
+            entity_id in self.vibration_sources
+            and old_position == new_position == "on"
+            and old is not None
+            and new is not None
+            and old.state != new.state
+        ):
+            old_position = "off"  # neue Zahl über der Schwelle = neue Erschütterung
+        self._handle_sensor_change(entity_id, old_position, new_position, device_class)
 
     @callback
     def _handle_sensor_change(
@@ -2203,9 +2295,24 @@ class HauswachtRuntime:
         new_state: str | None,
         device_class: str | None,
     ) -> None:
-        """Zustandswechsel eines Sensors bewerten – echt oder simuliert."""
+        """Zustandswechsel eines Sensors bewerten – echt oder simuliert.
+
+        ``old_state``/``new_state`` sind Stellungen (on, off, tilted …); bewertet werden sie
+        hier im aktiven Profil (gekippt erlaubt oder nicht).
+        """
         role = sensor_role(entity_id, device_class, self.role_overrides)
         armed = self.ctx.state is not AlarmState.DISARMED
+        if (
+            armed
+            and entity_id in self.ctx.bypassed
+            and old_state == TILTED
+            and new_state == "on"
+            and self._bypass_position.get(entity_id) == TILTED
+        ):
+            # Gekippt überbrückt, jetzt ganz geöffnet: neuer Vorgang (ADR 0010)
+            self._dispatch(BypassedSensorOpened(sensor_key=entity_id, role=role))
+            return
+        old_state, new_state = self._judged(old_state), self._judged(new_state)
         if self.ctx.state is AlarmState.ARMING and entity_id in self._exit_doors:
             self._on_exit_door(new_state)
 
@@ -2222,6 +2329,7 @@ class HauswachtRuntime:
             and (old_state is None or old_state in UNAVAILABLE_STATES)
             and role is not SensorRole.ENTRY
             and entity_id not in self.ctx.bypassed
+            and not self.is_vibration(entity_id)
         ):
             # Nach dem Wiederherstellen erstmals gemeldet und offen: Fenster oder Bewegung
             # bis zum Schließen überbrücken statt nachts Sirenenalarm – Eingangstüren starten
@@ -2231,6 +2339,8 @@ class HauswachtRuntime:
             self._notify()
             return
         if relevant and is_trigger(old_state, new_state):
+            if self.is_vibration(entity_id) and not self._vibration_counts(entity_id):
+                return
             self._sensor_triggered(entity_id, role)
             return
         if (
@@ -2244,6 +2354,48 @@ class HauswachtRuntime:
             self._dispatch(SensorClosed(sensor_key=entity_id))
             return
         self._notify()
+
+    @callback
+    def _vibration_counts(self, entity_id: str) -> bool:
+        """Fehlalarmschutz: True, wenn genug Erschütterungen im Zeitfenster zusammenkamen."""
+        rule = self.vibration_rule_of(entity_id)
+        reached, count = self._vibration.record(entity_id, time.monotonic(), rule)
+        if not reached:
+            _LOGGER.info(
+                "Erschütterung %s: %s von %s in %s s", entity_id, count, rule.count, rule.window
+            )
+            self.fire_event(
+                {
+                    "type": "VibrationCounted",
+                    "sensor_key": entity_id,
+                    "count": count,
+                    "needed": rule.count,
+                    "window": rule.window,
+                }
+            )
+            self._notify()
+        return reached
+
+    @callback
+    def _is_vibration_report(self, event_data: Mapping[str, Any]) -> bool:
+        """Nur Meldungen der Erschütterungsstärken (Home Assistant verlangt den Filter)."""
+        return event_data.get("entity_id") in self.vibration_sources
+
+    @callback
+    def _on_vibration_reported(self, event: HaEventAny[Any]) -> None:
+        """Erschütterungsstärke: auch eine gleich gebliebene Zahl über der Schwelle ist eine
+        neue Meldung (Home Assistant meldet sie als ``state_reported``)."""
+        entity_id = event.data.get("entity_id")
+        if entity_id not in self.vibration_sources or self.simulated(entity_id) is not None:
+            return
+        if entity_id not in self.candidates and entity_id not in self.armed_sensors:
+            return
+        new = event.data.get("new_state")
+        if self.read_position(entity_id, new) != "on":
+            return
+        self._handle_sensor_change(
+            entity_id, "off", "on", new.attributes.get("device_class") if new else None
+        )
 
     @callback
     def _on_sensor_lost(self, entity_id: str) -> None:
@@ -2268,8 +2420,19 @@ class HauswachtRuntime:
         """Klartext für Meldungen: Namen mit Raum, gestörte Infrastruktur getrennt."""
         faulty = unavailable & self.main.infrastructure
 
+        tilted = self.tilted_sensors(open_sensors)
+
         def names(ids: frozenset[str]) -> str:
-            return ", ".join(sorted(display_name(self.hass, e) for e in ids)) or "-"
+            return (
+                ", ".join(
+                    sorted(
+                        display_name(self.hass, e)
+                        + (tr(self.lang, "tilted_suffix") if e in tilted else "")
+                        for e in ids
+                    )
+                )
+                or "-"
+            )
 
         return {
             "open": names(open_sensors),
@@ -2300,11 +2463,18 @@ class HauswachtRuntime:
     def _dispatch(self, event: Event) -> tuple[Effect, ...]:
         old_ctx = self.ctx
         self.ctx, effects = step(self.ctx, event, time.monotonic())
+        # Stellung beim Überbrücken merken (gekippt überbrückt -> ganz offen löst aus)
+        for entity_id in self.ctx.bypassed - old_ctx.bypassed:
+            if entity_id in self.tilt_sources:
+                self._bypass_position[entity_id] = self._raw(entity_id)
+        for entity_id in old_ctx.bypassed - self.ctx.bypassed:
+            self._bypass_position.pop(entity_id, None)
         for effect in effects:
             self._apply(effect)
         if self.ctx.state is not AlarmState.ARMING:
             self._cancel_settle()
         if self.ctx.state is AlarmState.DISARMED:
+            self._vibration.reset()
             self.sirens.reset()
             self._reset_rules()
             self._engine = RuleEngine()
@@ -2573,7 +2743,8 @@ class HauswachtRuntime:
         lang = self.lang
         title, message = alarm_message(
             self.profile_name(effect.profile_id),
-            display_name(self.hass, effect.sensor_key),
+            display_name(self.hass, effect.sensor_key)
+            + (tr(lang, "vibration_suffix") if self.is_vibration(effect.sensor_key) else ""),
             test_mode=effect.test_mode,
             lang=lang,
         )

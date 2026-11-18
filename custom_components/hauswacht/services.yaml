@@ -46,6 +46,9 @@ simulate_state:
             - binary_sensor
             - lock
             - cover
+            - sensor
+            - input_select
+            - select
     state:
       required: true
       selector:
@@ -54,6 +57,7 @@ simulate_state:
           options:
             - "on"
             - "off"
+            - "tilted"
             - "unavailable"
             - "real"
 

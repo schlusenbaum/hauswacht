@@ -37,7 +37,7 @@ ganze Anlage.
 
 | Entität (Deutsch) | Entität (Englisch) | Je Bereich | Zweck |
 |---|---|---|---|
-| `binary_sensor.hauswacht_offene_sensoren` | `binary_sensor.hauswacht_open_sensors` | ja | `on`, sobald ein Melder einer Meldergruppe offen ist; Attribute `sensors` (IDs), `names` |
+| `binary_sensor.hauswacht_offene_sensoren` | `binary_sensor.hauswacht_open_sensors` | ja | `on`, sobald ein Melder einer Meldergruppe offen ist; Attribute `sensors` (IDs), `names`, `tilted` (gerade gekippt) |
 | `sensor.hauswacht_systemstatus` | `sensor.hauswacht_system_status` | – | `ok` · `degraded` (Melder ausgefallen) · `fault` (Funknetz/Gateway gestört); Attribute `faulty_infrastructure`, `unavailable_sensors` |
 | `sensor.hauswacht_letzter_sirenentest` | `sensor.hauswacht_last_siren_test` | – | Letzter Sirenentest; je Sirene Datum und „gehört?“ in den Attributen |
 | `sensor.hauswacht_funkstille_beobachtung` | `sensor.hauswacht_radio_silence_observation` | – | [Beobachtung](beobachtung.md): Empfehlung für die maximale Funkstille, längste Pausen je Melder |
@@ -67,6 +67,7 @@ Einstellungen“, für Automationen selten nötig.
 | `select.hauswacht_sirenenlautstarke` | `select.hauswacht_siren_volume` | Sirenenlautstärke |
 | `switch.hauswacht_stiller_alarm` | `switch.hauswacht_silent_alarm` | Stiller Alarm |
 | `switch.hauswacht_sabotage_lost_alarm_aus` | `switch.hauswacht_tamper_triggers_alarm` | Sabotage löst Alarm aus |
+| `switch.hauswacht_gekippte_fenster_erlaubt` | `switch.hauswacht_tilted_windows_allowed` | Gekippte Fenster erlaubt – nur, wenn es [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) gibt |
 | `time.hauswacht_automatisch_scharf_um` | `time.hauswacht_arm_automatically_at` | Automatik: scharf um |
 | `time.hauswacht_automatisch_unscharf_um` | `time.hauswacht_disarm_automatically_at` | Automatik: unscharf um |
 
@@ -88,6 +89,7 @@ in seinen Attributen. Für Automationen ist **`phase`** der wichtigste Auslöser
 | `alarm_cycles` | Wie oft in diesem Alarm schon ausgelöst wurde | `1` |
 | `monitored_sensors` | Gerade scharf überwachte Melder | `[…]` |
 | `open_sensors`, `unavailable_sensors` | Offene bzw. ausgefallene Melder aller Meldergruppen | `["binary_sensor.fenster_bad"]` |
+| `tilted_sensors` | Gerade gekippte [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt). Erlaubt das Profil gekippte Fenster, stehen sie nicht in `open_sensors` | `["sensor.fenster_schlafzimmer_opening_state"]` |
 | `open_rule_sensors` | Offene Melder, die im aktiven Profil nur in Auslöseregeln vorkommen | `[]` |
 | `bypassed_sensors`, `bypassed_until_closed` | Überbrückte Melder (bis unscharf bzw. bis zum Schließen) | `[]` |
 | `zones` | Meldergruppen mit ihren tatsächlichen Meldern | `{"Außen": […]}` |
@@ -169,6 +171,9 @@ Gut zu wissen:
 - **Melder** stehen als Entitäts-ID in `sensor_key` bzw. als Liste in `sensors`,
   `open_sensors` …; den Anzeigenamen liefert `state_attr(…, 'friendly_name')`.
 - Mengen (z. B. `open_sensors`) kommen als **Liste**.
+- **Melder mit Kippstellung:** Ereignisse mit `sensor_key` haben bei diesen Meldern zusätzlich
+  `position` – `open`, `tilted` oder `closed` (siehe
+  [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt)).
 
 ### Zustand und Alarm
 
@@ -186,6 +191,7 @@ Gut zu wissen:
 | `SensorsRestored` | Überbrückte Melder wieder zu, werden wieder überwacht | `sensors` |
 | `ArmingAborted` | Scharfschalten am Ende der Ausgangsverzögerung abgebrochen (noch offen/ausgefallen) | `open_sensors`, `unavailable_sensors` |
 | `TamperDetected` | Sabotage gemeldet | `sensor_key`, `state` (Zustand der Anlage in dem Moment) |
+| `VibrationCounted` | [Erschütterung](melder.md#erschütterungsmelder) gezählt, reicht aber noch nicht für einen Alarm (Fehlalarmschutz) | `sensor_key`, `count` (bisher im Zeitfenster), `needed` (nötig), `window` (Sekunden) |
 | `AlwaysActiveTriggered` | [Immer aktiver](melder.md#immer-aktive-melder) Melder ausgelöst | `sensor_key` |
 | `ArmedByClosingDoor` | [Scharf durch Schließen der Tür](profile.md#scharf-durch-schließen-der-tür) | – |
 | `TestModeChanged` | Testmodus ein/aus | `enabled` |
@@ -297,7 +303,7 @@ Alle Aktionen richten sich an ein Bedienfeld (`target: entity_id: alarm_control_
 | `hauswacht.arm` | `profile` (Name oder Kennung), `confirm` (offene Melder bestätigen), `code` | Profil scharf schalten |
 | `hauswacht.guest_mode` | `on`, `until` (Zeitpunkt, leer = bis zum Ausschalten) | [Gastmodus](profile.md#gastmodus) ein/aus; Ziel ein Bereich oder „Alle“ |
 | `hauswacht.simulate_trigger` | `sensor` | Testmodus: Melder kurz auslösen |
-| `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `unavailable`, `real`) | Testmodus: Melderzustand simulieren |
+| `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `tilted` – nur Melder mit Kippstellung, `unavailable`, `real`) | Testmodus: Melderzustand simulieren |
 | `hauswacht.simulate_reset` | – | Testmodus: alle Simulationen zurück |
 | `hauswacht.siren_test` | `siren`, `duration`, `volume`, `tone` | Echte Sirene kurz testen (nur Administratoren) |
 | `hauswacht.siren_test_result` | `siren`, `heard` | Ergebnis eines Sirenentests speichern (nur Administratoren) |

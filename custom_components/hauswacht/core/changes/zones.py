@@ -40,7 +40,8 @@ def save_zone(
     conflicts = zone_conflicts(zone, parse_zones(options), entities_by_label or {})
     if conflicts:
         return failed({"base": "zone_overlap"}, conflicts=conflicts)
-    zones[new_id] = {"name": name, "entities": members, "label": label}
+    # Weitere Einstellungen der Gruppe (z. B. Fehlalarmschutz für Erschütterung) bleiben erhalten
+    zones[new_id] = {**zones.get(new_id, {}), "name": name, "entities": members, "label": label}
     new[OPT_ZONES] = zones
     return Change(options=new, item_id=new_id)
 

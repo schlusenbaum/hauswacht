@@ -26,6 +26,8 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         # Wer, Verbindungsstücke
         "by": " von {who}",
         "event_all_areas": "Alle Bereiche",
+        "tilted_suffix": " (gekippt)",
+        "vibration_suffix": " (Erschütterung)",
         "by_paren": " ({who})",
         "quote": "„{text}“",
         # Push-Knöpfe
@@ -232,6 +234,8 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
     EN: {
         "by": " by {who}",
         "event_all_areas": "All areas",
+        "tilted_suffix": " (tilted)",
+        "vibration_suffix": " (vibration)",
         "by_paren": " ({who})",
         "quote": "“{text}”",
         "btn_arm_anyway": "Arm anyway",

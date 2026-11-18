@@ -35,9 +35,10 @@ from .core.profiles import profile_behaviour, profile_info, profile_settings, st
 from .core.reactions import parse_reaction
 from .core.restart import OPT_RESTART_PROFILES, continue_alarm, restart_behavior
 from .core.rules import build_engine, describe_rule, profile_rule_ids
-from .core.sensor_types import excluded_sensors, normalize
+from .core.sensor_types import excluded_sensors
 from .core.siren_guard import FireIndicator, SirenDevice, is_fire_tone, select_tone
 from .core.speech import parse_speech
+from .core.tilt import TILTED
 from .core.users import Action, User
 from .names import display_name, plain_name
 
@@ -211,9 +212,7 @@ def _sensors(main: HauswachtRuntime) -> list[dict[str, Any]]:
                 "name": _name(hass, entity_id),
                 "zone": zone_of.get(entity_id),
                 "type": main.type_of(entity_id).value,
-                "state": "unavailable"
-                if raw in UNAVAILABLE
-                else ("open" if normalize(entity_id, raw) == "on" else "closed"),
+                "state": _overview_state(main, entity_id, raw),
                 "last_contact": contacts.get(entity_id),
                 "battery": _battery(hass, entity_id),
                 "always_active": entity_id in always,
@@ -221,6 +220,18 @@ def _sensors(main: HauswachtRuntime) -> list[dict[str, Any]]:
             }
         )
     return sorted(rows, key=lambda r: (str(r["zone"] or "~"), str(r["name"]).casefold()))
+
+
+def _overview_state(main: HauswachtRuntime, entity_id: str, raw: str | None) -> str:
+    """Zustand für die Übersicht: open, closed, tilted oder unavailable."""
+    if raw in UNAVAILABLE:
+        return "unavailable"
+    position = main.read_position(entity_id, main.hass.states.get(entity_id))
+    if position == TILTED:
+        return "tilted"
+    if position in UNAVAILABLE:
+        return "unavailable"
+    return "open" if position == "on" else "closed"
 
 
 def _rules(main: HauswachtRuntime, language: str) -> list[dict[str, Any]]:

@@ -102,6 +102,11 @@ in the profile (sirens, recipients, automation …) stays as it is.
 
 A selected profile needs at least one sensor group or rule.
 
+**Allow tilted windows at night:** if there are [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted),
+the wizard asks for the night profile whether tilted windows are allowed (suggested: yes). Then
+the bedroom window may stay tilted at night – opening it fully triggers. "Away" stays strict:
+tilted counts as open there.
+
 **By schedule (optional):** for each of the two profiles you can choose a **schedule helper**.
 When a time block starts, the profile is armed; when it ends, disarmed – this gives **different
 times per weekday**, e.g. "Night" Mon–Thu 22:30–6:00 and Fri–Sat 0:30–8:00. You create the

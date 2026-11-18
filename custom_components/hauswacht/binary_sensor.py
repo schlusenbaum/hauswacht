@@ -47,7 +47,10 @@ class HauswachtOpenSensorsBinarySensor(HauswachtEntity, BinarySensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         open_sensors = self._open()
+        tilted = self.runtime.tilted_sensors()
         return {
             "sensors": open_sensors,
             "names": [display_name(self.hass, entity_id) for entity_id in open_sensors],
+            # Melder mit Kippstellung, die gerade gekippt sind (auch wenn das Profil es erlaubt)
+            "tilted": sorted(tilted),
         }

@@ -45,7 +45,7 @@ def test_default_types() -> None:
     assert default_type("binary_sensor.m", "tamper") is SensorType.TAMPER
     assert default_type("binary_sensor.w", "moisture") is SensorType.TECHNICAL
     assert default_type("binary_sensor.r", "smoke") is SensorType.OTHER  # Rauch bewusst nicht
-    assert default_type("binary_sensor.v", "vibration") is SensorType.OTHER
+    assert default_type("binary_sensor.v", "vibration") is SensorType.VIBRATION
     assert default_type("binary_sensor.x", None) is SensorType.OTHER
     assert default_type("lock.s", None) is SensorType.DOOR
     assert default_type("cover.tor", "garage") is SensorType.DOOR

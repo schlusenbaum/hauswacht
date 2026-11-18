@@ -6,6 +6,56 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-11-18
+
+Fenster richtig überwachen: gekippte Fenster und Erschütterung (ADR 0010, getestet über die
+Vorabversionen 0.56.0b1 und b2).
+
+### Hinzugefügt
+- **Melder mit Kippstellung („gekippt“):** Fenstersensoren und Fenstergriffe mit drei
+  Stellungen – zu, gekippt, offen – werden direkt unterstützt, ohne Vorlagen-Helfer. Neuer
+  Menüpunkt **Alarmauslösung → Besondere Melder**: Quelle wählen (Sensor mit Text-Zustand, z. B.
+  `opening_state` von Zigbee2MQTT; Attribut, z. B. `window_state` eines Fenstergriffs; oder ein
+  Auswahl-Helfer zum Ausprobieren), Werte für zu und gekippt zuordnen (Vorschlag automatisch),
+  optional gleich in eine Meldergruppe nehmen. Unbekannte Werte zählen sicherheitshalber als
+  offen, ein Ausfall wird wie bei jedem Melder erkannt.
+- **Profil-Einstellung „Gekippte Fenster erlaubt“** (Formular und Schalter im Dashboard, nur mit
+  Meldern mit Kippstellung): an = gekippt zählt als zu, erst ganz öffnen löst aus (typisch
+  „Nacht“); aus (Standard) = gekippt zählt wie offen. Der Einrichtungsassistent fragt beim
+  Nachtprofil danach.
+- **„Trotzdem scharf“ mit gekipptem Fenster:** Wird ein so überbrücktes Fenster danach ganz
+  geöffnet, löst es aus.
+- **Melder-Typ „Erschütterung“** (Vorschlag für Geräteklasse Vibration): sofort Alarm im
+  scharfen Profil, **blockiert das Scharfschalten nie**; ein ausgefallener Erschütterungssensor
+  zählt weiter wie jeder ausgefallene Melder. Texte sagen „(Erschütterung)“.
+- **Fehlalarmschutz je Meldergruppe:** „Alarm bei N Meldungen eines Melders innerhalb von S
+  Sekunden“ – Standard 1 Meldung, Empfehlung 2 in 60 Sekunden, mit Erklärung im Dialog. Gezählt
+  wird je Melder. Neues Ereignis `VibrationCounted` für Meldungen, die noch nicht reichen.
+- **Erschütterungsstärke als Zahl** (Besondere Melder): Zahlensensor oder Zahlenwert-Helfer mit
+  Schwelle wird ohne Helfer zum Erschütterungsmelder; jede Meldung ab der Schwelle zählt, auch
+  bei gleichbleibendem Wert. Keine Zahl = ausgefallen.
+- Bedienfeld-Attribut `tilted_sensors`, Attribut `tilted` an „Offene Sensoren“, Feld `position`
+  (`open`/`tilted`/`closed`) in Ereignissen, „(gekippt)“ in Meldungen; Testkarte mit Knöpfen
+  **Gekippt** und **Erschütterung**/**Ruhe**, Aktion `hauswacht.simulate_state` mit `tilted`;
+  Anlagenübersicht mit Zustand „gekippt“ und Typ „Erschütterung“.
+
+### Geändert
+- Erschütterungssensoren mit Geräteklasse Vibration, deren Typ nie geändert wurde, sind jetzt
+  vom Typ **Erschütterung** statt „Sonstiges“. Unterschied: Sie blockieren das Scharfschalten
+  nicht mehr, ausgelöst wird wie bisher bei der ersten Meldung. Wer den Typ selbst gewählt hat,
+  behält ihn.
+
+### Dokumentation
+- Melder: neue Abschnitte „Melder mit Kippstellung (gekippt)“ und „Erschütterungsmelder“ mit
+  Einrichtung, Bewertungstabelle, Fehlalarmschutz und Sicherheitsregeln; Typen, Profile,
+  Assistent, Referenz, Spickzettel Automationen, Testmodus, README; Beispiel „Es regnet und ein
+  Fenster ist gekippt“ – alles deutsch und englisch.
+
+### Intern
+- ADR 0010 „Fenster richtig überwachen – Kippstellung und Erschütterung“; neue reine Bausteine
+  `core/tilt.py` und `core/vibration.py`, Kern-Ereignis `BypassedSensorOpened`; Kern- und
+  Integrationstests.
+
 ## [0.55.3] - 2026-11-18
 
 ### Geändert

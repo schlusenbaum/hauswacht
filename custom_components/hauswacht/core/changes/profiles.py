@@ -150,6 +150,9 @@ def save_profile(
     elif "auto_schedule" in data:
         # Assistent: nur den Zeitplan setzen, die übrige Automatik bleibt
         stored["auto_schedule"] = data.get("auto_schedule") or None
+    if "tilt_allowed" in data:
+        # Nur im Formular, wenn es Melder mit Kippstellung gibt – sonst bleibt der Wert
+        stored["tilt_allowed"] = bool(data["tilt_allowed"])
     if not partial or "arm_on_close" in data:
         stored["arm_on_close"] = arm_on_close_from_input(data.get("arm_on_close") or {})
     profiles[new_id] = stored

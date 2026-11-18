@@ -476,6 +476,7 @@ async def test_options_menu_structure(hass: HomeAssistant) -> None:
         "zones",
         "rules",
         "always_active",
+        "special_sensors",
         "helper_create",
         "init",
     ]
