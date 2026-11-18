@@ -245,6 +245,22 @@ async def test_always_armed_after_start(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
 
 
+async def test_reload_does_not_apply_restart_setting(hass: HomeAssistant) -> None:
+    """Nur nach echtem Neustart: Neuladen (z. B. nach dem Speichern) schaltet nicht scharf."""
+    entry = make_entry({"restart_behavior": "armed", "restart_profiles": {"main": "night"}})
+    await setup_entry(hass, entry)
+    await _later(hass, 61)
+    assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_disarm", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    await _later(hass, 120)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
 async def test_always_armed_refuses_open_sensors(hass: HomeAssistant) -> None:
     entry = make_entry({"restart_behavior": "armed", "restart_profiles": {"main": "night"}})
     await setup_entry(hass, entry)

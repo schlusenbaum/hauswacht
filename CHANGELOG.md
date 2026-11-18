@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b14] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Geändert
+- **„Verhalten nach Neustart“ gilt nur noch nach einem echten Neustart von Home Assistant.** Wird
+  nur Hauswacht neu geladen – etwa nach dem Speichern von Einstellungen –, bleibt der Zustand,
+  wie er war. Bisher schaltete „immer scharf“ eine Minute nach jeder Änderung der Einstellungen
+  scharf, und „immer unscharf“ schaltete bei einem Neuladen unscharf.
+
 ## [0.57.0b13] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).

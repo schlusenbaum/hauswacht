@@ -582,12 +582,18 @@ class HauswachtRuntime:
         edit = data.get("edit_profile")
         self._edit_profile = edit if isinstance(edit, str) else None
         previous = data.get("armed_profile")
+        # Erster Start in diesem Lauf von Home Assistant oder nur neu geladen?
+        started: set[str] = self.hass.data.setdefault(f"{DOMAIN}_started", set())
+        start_key = f"{self.entry.entry_id}:{self.area_id}"
+        reload = start_key in started
+        started.add(start_key)
         plan = plan_restart(
             restart_behavior(self.entry.options),
             saved=data.get("restore") if isinstance(data.get("restore"), dict) else None,
             previous_profile=previous if isinstance(previous, str) else None,
             fixed_profile=restart_profile(self.entry.options, self.area_id),
             known_profiles=set(self.profiles),
+            reload=reload,
         )
         self._dispatch(
             Startup(

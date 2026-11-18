@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.57.0b13:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.57.0b14:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -137,13 +137,17 @@ leads to these instructions.
 ## Behaviour after a restart
 
 **System settings → Behaviour after restart.** What happens when Home Assistant restarts – e.g.
-after an update, a nightly backup or a power cut – or Hauswacht is reloaded. Three options:
+after an update, a nightly backup or a power cut. Three options:
 
 | Setting | What happens after the restart | Meant for |
 |---|---|---|
 | **Restore the previous state** (default) | if the system was armed, it is armed again right away; if it was disarmed, it stays disarmed | almost everyone |
 | **Always armed** (with a fixed profile) | about one minute after startup, the chosen profile is armed normally | holiday homes, unoccupied areas |
 | **Always disarmed** | always disarmed; if the system was armed, you get the message "disarmed after restart" | whoever prefers to decide themselves (behaviour up to 0.44) |
+
+**Only after a real restart of Home Assistant.** If only Hauswacht is reloaded – e.g. after
+saving settings – the state always stays as it was: "always armed" then does not arm, "always
+disarmed" does not disarm.
 
 ### Restoring in detail
 

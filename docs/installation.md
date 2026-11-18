@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.57.0b13:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.57.0b14:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -142,14 +142,18 @@ dieser Anleitung.
 ## Verhalten nach einem Neustart
 
 **Systemeinstellungen → Verhalten nach Neustart.** Was passiert, wenn Home Assistant neu startet
-– etwa nach einem Update, einer nächtlichen Sicherung oder einem Stromausfall – oder Hauswacht
-neu geladen wird. Drei Möglichkeiten:
+– etwa nach einem Update, einer nächtlichen Sicherung oder einem Stromausfall. Drei
+Möglichkeiten:
 
 | Einstellung | Was nach dem Neustart passiert | Gedacht für |
 |---|---|---|
 | **Vorherigen Zustand wiederherstellen** (Standard) | War die Anlage scharf, ist sie es sofort wieder; war sie unscharf, bleibt sie unscharf | fast alle |
 | **Immer scharf** (mit festem Profil) | etwa eine Minute nach dem Hochfahren wird das gewählte Profil normal scharf geschaltet | Ferienhaus, unbewohnte Bereiche |
 | **Immer unscharf** | immer unscharf; war die Anlage scharf, kommt die Nachricht „nach Neustart unscharf“ | wer lieber selbst entscheidet (Verhalten bis 0.44) |
+
+**Nur nach einem echten Neustart von Home Assistant.** Wird nur Hauswacht neu geladen – etwa nach
+dem Speichern von Einstellungen –, bleibt der Zustand immer, wie er war: Bei „immer scharf“ wird
+dann nicht scharf geschaltet, bei „immer unscharf“ nicht unscharf.
 
 ### Wiederherstellen im Detail
 

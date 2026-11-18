@@ -113,19 +113,27 @@ def saved_state(  # noqa: PLR0913
     }
 
 
-def plan_restart(
+def plan_restart(  # noqa: PLR0913
     behavior: str,
     *,
     saved: Mapping[str, Any] | None,
     previous_profile: str | None,
     fixed_profile: str | None,
     known_profiles: Collection[str],
+    reload: bool = False,
 ) -> RestartPlan:
     """Was nach dem Start passieren soll.
 
     ``saved``: Zustand vor dem Neustart (ab 0.45); ``previous_profile``: das früher allein
     gespeicherte scharfe Profil (Aktualisierung von älteren Versionen).
+
+    ``reload``: Hauswacht wurde nur neu geladen (z. B. nach dem Speichern von Einstellungen),
+    Home Assistant lief weiter. Dann gilt die Einstellung "nach Neustart" nicht – der bisherige
+    Zustand bleibt, wie er war (sonst wäre die Anlage bei "immer scharf" nach jeder Änderung
+    eine Minute später scharf bzw. bei "immer unscharf" plötzlich unscharf).
     """
+    if reload:
+        behavior = RESTORE
     if behavior == ARMED:
         if fixed_profile is not None and fixed_profile in known_profiles:
             return RestartPlan(RestartKind.ARM, profile_id=fixed_profile)
