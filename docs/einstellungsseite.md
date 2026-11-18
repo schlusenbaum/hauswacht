@@ -2,9 +2,10 @@
 
 **Deutsch** | [English](en/settings-page.md)
 
-> **Vorabversion:** Die Seite wächst in Stufen. In dieser Stufe **zeigt** sie die ganze
-> Einrichtung an; **bearbeitet** wird weiter im Einstellungsdialog (Knopf „Im Dialog
-> bearbeiten“ oben rechts). Die nächsten Stufen bringen das Bearbeiten direkt auf der Seite.
+> **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an, und die
+> **Melder** bearbeitest du schon direkt auf der Seite. Profile und alles andere bearbeitest du
+> noch im Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) – das folgt in den
+> nächsten Stufen.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -49,10 +50,34 @@ Gruppen mit Erschütterungsmeldern zeigen ihren [Fehlalarmschutz](melder.md#ersc
 Beispiel: Steht beim Bewegungsmelder im Flur in der Spalte „Nacht“ ein **–**, ist er nachts
 ausgenommen – du kannst nachts durch den Flur gehen, ohne Alarm.
 
+## Melder bearbeiten
+
+Im Reiter **Melder** gibt es die Knöpfe zum Bearbeiten. Ein Klick öffnet rechts ein
+Seitenblatt; **Speichern** übernimmt sofort, **Abbrechen** oder ein Klick daneben verwirft.
+
+| Was | Wo | Was du einstellst |
+|---|---|---|
+| **Meldergruppe** | „+ Meldergruppe anlegen“ bzw. „Bearbeiten“ an der Gruppe | Name, Melder (Suchfeld → anklicken), **Typ je Melder**, zusätzlich ein Label. Sind Erschütterungsmelder dabei, erscheint der **Fehlalarmschutz** (Meldungen bis zum Alarm, Zeitfenster) mit Knopf „Empfehlung übernehmen“ (2 in 60 s). Löschen nimmt die Gruppe auch aus allen Profilen |
+| **Melder mit Kippstellung** | Besondere Melder → „+ Kippstellung hinzufügen“ bzw. „Bearbeiten“ | Quelle (Suchfeld), optional Attribut, dann je bekanntem Wert **offen / gekippt / zu** – weitere Werte eintippen und Enter. Optional gleich in eine Gruppe |
+| **Erschütterungsstärke** | Besondere Melder → „+ Erschütterungsstärke hinzufügen“ | Sensor (Suchfeld, der aktuelle Wert steht daneben) und Schwelle; optional gleich in eine Gruppe |
+| **Immer aktiv** | „Bearbeiten“ unter Immer aktiv | Ganze Gruppen ankreuzen, einzelne Melder hinzufügen oder entfernen. Sirenen für „Immer aktiv“ bleiben im Dialog |
+
+So sicher wie der Dialog:
+
+- **Dieselben Regeln:** Die Seite nutzt dieselbe Prüfung wie der Dialog. Ein Melder in zwei
+  Gruppen, eine Gruppe ohne Namen, „gekippt“ und „zu“ für denselben Wert – das wird mit einer
+  Meldung am Feld abgelehnt.
+- **Nur unscharf:** Ist ein Bereich scharf, fehlen die Knöpfe; oben steht „Ändern geht nur, wenn
+  alle Bereiche unscharf sind“.
+- **Nichts überschreiben:** Hat jemand zwischendurch im Dialog oder auf einem anderen Gerät etwas
+  geändert, speichert die Seite nicht, sondern lädt neu – dann einfach noch einmal.
+- Nach dem Speichern lädt Hauswacht seine Einstellungen neu (ein, zwei Sekunden), danach zeigt
+  die Seite den neuen Stand mit „✓ Gespeichert.“
+
 ## Gut zu wissen
 
-- Die Seite **schaltet nichts** – weder Sirenen noch Geräte – und ändert in dieser Stufe auch
-  keine Einstellungen.
+- Die Seite **schaltet nichts** – weder Sirenen noch Geräte. Sie ändert nur Einstellungen, und
+  nur die, die du speicherst.
 - Gezeigt wird der Stand beim Öffnen; „Neu laden“ (Pfeil oben) holt den aktuellen.
 - Dieselben Inhalte gibt es zum Ausdrucken in der Karte [Hauswacht Übersicht](uebersicht.md).
 - Auf dem Handy geht die Seite auch; breite Tabellen lassen sich seitlich schieben.

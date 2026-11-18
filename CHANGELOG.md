@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b3] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 2).
+
+### Hinzugefügt
+- **Melder direkt auf der Einstellungsseite bearbeiten** (Reiter Melder, Seitenblatt rechts):
+  Meldergruppen anlegen, ändern und löschen – mit Melder-Suche, Typ je Melder, Label und
+  Fehlalarmschutz für Erschütterung („Empfehlung übernehmen“); Melder mit Kippstellung (Werte je
+  Zeile offen/gekippt/zu zuordnen); Erschütterungsstärken; Immer aktiv (Gruppen und Melder).
+- Dieselben Prüfungen wie im Dialog, Meldungen direkt am Feld. Speichern nur, wenn alle Bereiche
+  unscharf sind; hat jemand zwischendurch woanders etwas geändert, wird nicht überschrieben,
+  sondern neu geladen.
+
+### Dokumentation
+- Einstellungsseite: neuer Abschnitt „Melder bearbeiten“ (deutsch und englisch); README.
+
+### Intern
+- Neue Websocket-Befehle `hauswacht/settings/get` und `hauswacht/settings/apply` (nur
+  Administratoren, mit Revision); Logikschicht `core/changes/sensors.py`; eigenes Element
+  `hauswacht-sensor-editor` mit eigener Melder-Suche (keine internen Formular-Bausteine von Home
+  Assistant). Kern- und Integrationstests.
+
 ## [0.57.0b2] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).

@@ -2,9 +2,9 @@
 
 [Deutsch](../einstellungsseite.md) | **English**
 
-> **Pre-release:** the page grows in stages. In this stage it **shows** the whole setup;
-> **editing** is still done in the settings dialog (button "Edit in the dialog" at the top
-> right). The next stages bring editing directly to the page.
+> **Pre-release:** the page grows in stages. It **shows** the whole setup, and you already edit
+> **sensors** directly on the page. Profiles and everything else are still edited in the settings
+> dialog (button "Edit in the dialog" at the top right) – that follows in the next stages.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -48,10 +48,34 @@ Groups with vibration sensors show their [false alarm protection](sensors.md#vib
 Example: if the motion sensor in the hallway shows **–** in the column "Night", it is excluded at
 night – you can walk through the hallway at night without an alarm.
 
+## Editing sensors
+
+The tab **Sensors** has the buttons for editing. A click opens a side sheet on the right; **Save**
+applies immediately, **Cancel** or a click next to it discards.
+
+| What | Where | What you set |
+|---|---|---|
+| **Sensor group** | "+ Add sensor group" or "Edit" at the group | Name, sensors (search field → click), **type per sensor**, additionally a label. If vibration sensors are included, the **false alarm protection** appears (reports until alarm, time window) with the button "Use recommendation" (2 in 60 s). Deleting also removes the group from all profiles |
+| **Sensor with tilt position** | Special sensors → "+ Add tilt position" or "Edit" | Source (search field), optionally an attribute, then for every known value **open / tilted / closed** – type further values and press Enter. Optionally add it to a group right away |
+| **Vibration strength** | Special sensors → "+ Add vibration strength" | Sensor (search field, the current value is shown) and threshold; optionally add it to a group right away |
+| **Always active** | "Edit" under always active | Tick whole groups, add or remove single sensors. Sirens for "always active" stay in the dialog |
+
+As safe as the dialog:
+
+- **The same rules:** the page uses the same checks as the dialog. A sensor in two groups, a group
+  without a name, "tilted" and "closed" for the same value – that is refused with a message at
+  the field.
+- **Only disarmed:** if an area is armed, the buttons are missing; at the top it says "Changes are
+  only possible while all areas are disarmed".
+- **Nothing gets overwritten:** if someone changed something in the dialog or on another device
+  in the meantime, the page does not save but reloads – then simply try again.
+- After saving, Hauswacht reloads its settings (a second or two), then the page shows the new
+  state with "✓ Saved."
+
 ## Good to know
 
-- The page **switches nothing** – neither sirens nor devices – and in this stage does not change
-  any settings either.
+- The page **switches nothing** – neither sirens nor devices. It only changes settings, and only
+  the ones you save.
 - It shows the state at the time of opening; "Reload" (arrow at the top) fetches the current one.
 - The same content is available for printing in the card [Hauswacht overview](overview.md).
 - The page also works on a phone; wide tables can be scrolled sideways.

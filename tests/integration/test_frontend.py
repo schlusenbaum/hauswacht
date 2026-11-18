@@ -12,6 +12,7 @@ from custom_components.hauswacht.frontend import (
     CARD_FILES,
     DATA_KEY,
     EDITOR_FILE,
+    PANEL_EDIT_FILE,
     PANEL_FILE,
     PANEL_URL_PATH,
     TEST_CARD_FILE,
@@ -34,7 +35,7 @@ async def test_card_registered_once(hass: HomeAssistant) -> None:
     assert http.async_register_static_paths.await_count == 1
     configs = http.async_register_static_paths.await_args.args[0]
     assert [c.url_path for c in configs] == [
-        f"/hauswacht/{name}" for name in (*CARD_FILES, PANEL_FILE)
+        f"/hauswacht/{name}" for name in (*CARD_FILES, PANEL_FILE, PANEL_EDIT_FILE)
     ]
     assert all(Path(c.path).is_file() for c in configs)
     urls = [call.args[1] for call in add_js.call_args_list]

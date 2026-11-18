@@ -11,7 +11,13 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Diese Seite zeigt die ganze Einrichtung auf einen Blick. Bearbeiten kommt Schritt für Schritt dazu – bis dahin über „Im Dialog bearbeiten“.",
+    hint: "Die ganze Einrichtung auf einen Blick. Melder bearbeitest du hier direkt; Profile und der Rest folgen – bis dahin über „Im Dialog bearbeiten“.",
+    edit: "Bearbeiten",
+    addGroup: "Meldergruppe anlegen",
+    addTilt: "Kippstellung hinzufügen",
+    addStrength: "Erschütterungsstärke hinzufügen",
+    armedNote: "Ändern geht nur, wenn alle Bereiche unscharf sind.",
+    saved: "Gespeichert.",
     adminOnly: "Diese Seite ist nur für Administratoren.",
     error: "Fehler",
     tabs: {
@@ -44,7 +50,13 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "This page shows the whole setup at a glance. Editing is added step by step – until then use “Edit in the dialog”.",
+    hint: "The whole setup at a glance. You edit sensors right here; profiles and the rest follow – until then use “Edit in the dialog”.",
+    edit: "Edit",
+    addGroup: "Add sensor group",
+    addTilt: "Add tilt position",
+    addStrength: "Add vibration strength",
+    armedNote: "Changes are only possible while all areas are disarmed.",
+    saved: "Saved.",
     adminOnly: "This page is for administrators only.",
     error: "Error",
     tabs: {
@@ -103,6 +115,12 @@ const PANEL_STYLE = `
   .content { max-width: 1100px; margin: 0 auto; padding: 16px; }
   .note { color: var(--secondary-text-color); font-size: .9rem; margin: 0 0 12px; }
   ha-card { margin-bottom: 16px; }
+  .tool { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
+  button.e { font: inherit; font-size: .85rem; padding: 4px 12px; border-radius: 16px; cursor: pointer;
+    border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-color); }
+  tr.grp button.e { margin-left: 8px; padding: 1px 10px; }
+  .item button.e { float: right; }
+  .ok { color: var(--success-color, #43a047); margin: 0 0 10px; }
   .search { width: 100%; box-sizing: border-box; font: inherit; padding: 8px 12px; margin: 4px 0 10px;
     border: 1px solid var(--divider-color); border-radius: 8px; background: var(--card-background-color); color: var(--primary-text-color); }
   tr.grp td { background: var(--secondary-background-color); font-weight: 500; }
@@ -165,6 +183,11 @@ class HauswachtPanel extends HTMLElement {
         // bleibt leer; _load meldet den Fehler
       }
     }
+    try {
+      await import(`/hauswacht/hauswacht-panel-edit.js?v=${this._panel?.config?.version || "0"}`);
+    } catch (_err) {
+      // ohne Bearbeiten weiter nutzbar
+    }
     this._ready = true;
     await this._load();
   }
@@ -172,12 +195,75 @@ class HauswachtPanel extends HTMLElement {
   async _load() {
     this._error = null;
     try {
-      this._data = await this._hass.callWS({ type: "hauswacht/overview" });
+      [this._data, this._settings] = await Promise.all([
+        this._hass.callWS({ type: "hauswacht/overview" }),
+        this._hass.callWS({ type: "hauswacht/settings/get" }).catch(() => null),
+      ]);
     } catch (err) {
       this._data = null;
       this._error = err && err.code === "unauthorized" ? this._t("adminOnly") : `${this._t("error")}: ${err?.message || err}`;
     }
     this._render();
+  }
+
+  async _reloadAfterSave() {
+    // Nach dem Speichern lädt Hauswacht neu – kurz warten, dann bis zu 10 s erneut versuchen
+    for (let i = 0; i < 10; i++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      try {
+        this._data = await this._hass.callWS({ type: "hauswacht/overview" });
+        this._settings = await this._hass.callWS({ type: "hauswacht/settings/get" });
+        this._error = null;
+        break;
+      } catch (_err) {
+        // noch nicht wieder geladen
+      }
+    }
+    this._render();
+  }
+
+  _openEditor(kind, item) {
+    if (!customElements.get("hauswacht-sensor-editor") || !this._settings) return;
+    const view = this._view();
+    const editor = document.createElement("hauswacht-sensor-editor");
+    editor.addEventListener("hw-close", () => this._closeEditor());
+    editor.addEventListener("hw-saved", () => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave();
+    });
+    editor.addEventListener("hw-stale", () => this._reloadAfterSave());
+    this._editor = editor;
+    this.shadowRoot.appendChild(editor);
+    editor.open({
+      hass: this._hass,
+      settings: this._settings,
+      typeLabel: (t) => (view ? view._l("type", t) : t),
+      kind,
+      item,
+    });
+  }
+
+  _closeEditor() {
+    if (this._editor) this._editor.remove();
+    this._editor = null;
+  }
+
+  _editAction(spec) {
+    const [kind, id] = spec.split(":");
+    const s = this._settings;
+    if (kind === "group") this._openEditor("group", id ? s.groups.find((g) => g.id === id) : null);
+    else if (kind === "tilt") this._openEditor("tilt", id ? s.tilt.find((x) => x.entity === id) : null);
+    else if (kind === "strength") this._openEditor("strength", id ? s.strength.find((x) => x.entity === id) : null);
+    else if (kind === "always") this._openEditor("always", null);
+  }
+
+  get _canEdit() {
+    return !!(this._settings && this._settings.editable && customElements.get("hauswacht-sensor-editor"));
+  }
+
+  _btn(spec, label) {
+    return this._canEdit ? `<button class="e" data-edit="${escHtml(spec)}">${escHtml(label)}</button>` : "";
   }
 
   _view() {
@@ -218,14 +304,17 @@ class HauswachtPanel extends HTMLElement {
       const vibration = members.some((s) => s.type === "vibration") && g.vibration_count > 1
         ? ` · ${escHtml(this._fmt("vibrationRule", { n: g.vibration_count, s: g.vibration_window }))}`
         : "";
-      body += `<tr class="grp"><td colspan="${cols}">${escHtml(g.name)} <span class="muted">${g.count} ${escHtml(this._t("sensorsCount"))}${vibration}</span></td></tr>`;
+      body += `<tr class="grp"><td colspan="${cols}">${escHtml(g.name)} <span class="muted">${g.count} ${escHtml(this._t("sensorsCount"))}${vibration}</span>${this._btn(`group:${g.id}`, this._t("edit"))}</td></tr>`;
       body += members.map(row).join("");
     }
     if (loose.length) {
       body += `<tr class="grp"><td colspan="${cols}">${escHtml(this._t("noGroup"))}</td></tr>` + loose.map(row).join("");
     }
     if (!body) body = `<tr><td colspan="${cols}" class="muted">${escHtml(this._t("noMatch"))}</td></tr>`;
-    const matrix = `
+    const tools = this._settings && !this._settings.editable
+      ? `<div class="muted">${escHtml(this._t("armedNote"))}</div>`
+      : `<div class="tool">${this._btn("group:", "+ " + this._t("addGroup"))}</div>`;
+    const matrix = `${tools}
       <input class="search" type="search" placeholder="${escHtml(this._t("search"))}" value="${escHtml(this._search)}">
       <div class="muted">${escHtml(view._t("legend"))}</div>
       <div class="scroll"><table>
@@ -235,19 +324,20 @@ class HauswachtPanel extends HTMLElement {
     const special = d.special || { tilt: [], vibration: [] };
     const where = (x) => `${escHtml(this._t("group"))}: ${escHtml(x.group || this._t("none"))}`;
     const tilt = special.tilt.map((x) =>
-      `<div class="item"><div class="n">${escHtml(x.name)}${x.attribute ? ` <span class="muted">(${escHtml(x.attribute)})</span>` : ""}</div><div class="muted">${escHtml(this._fmt("tiltLine", { c: x.closed.join(", ") || "–", t: x.tilted.join(", ") || "–" }))} · ${where(x)}</div></div>`
+      `<div class="item">${this._btn(`tilt:${x.entity}`, this._t("edit"))}<div class="n">${escHtml(x.name)}${x.attribute ? ` <span class="muted">(${escHtml(x.attribute)})</span>` : ""}</div><div class="muted">${escHtml(this._fmt("tiltLine", { c: x.closed.join(", ") || "–", t: x.tilted.join(", ") || "–" }))} · ${where(x)}</div></div>`
     ).join("");
     const strength = special.vibration.map((x) =>
-      `<div class="item"><div class="n">${escHtml(x.name)}</div><div class="muted">${escHtml(this._fmt("strengthLine", { v: x.threshold }))} · ${where(x)}</div></div>`
+      `<div class="item">${this._btn(`strength:${x.entity}`, this._t("edit"))}<div class="n">${escHtml(x.name)}</div><div class="muted">${escHtml(this._fmt("strengthLine", { v: x.threshold }))} · ${where(x)}</div></div>`
     ).join("");
     const specialHtml = tilt || strength
       ? `${tilt ? `<h3>${escHtml(this._t("tilt"))}</h3>${tilt}` : ""}${strength ? `<h3>${escHtml(this._t("strength"))}</h3>${strength}` : ""}`
       : `<div class="muted">${escHtml(this._t("noSpecial"))}</div>`;
+    const specialTools = `<div class="tool">${this._btn("tilt:", "+ " + this._t("addTilt"))}${this._btn("strength:", "+ " + this._t("addStrength"))}</div>`;
     const parts = view._parts();
     return (
       this._card(view._t("sensors"), matrix) +
-      this._card(this._t("special"), specialHtml) +
-      this._card(parts.always[0], parts.always[2])
+      this._card(this._t("special"), specialHtml + specialTools) +
+      this._card(parts.always[0], parts.always[2] + `<div class="tool">${this._btn("always:", this._t("edit"))}</div>`)
     );
   }
 
@@ -299,6 +389,7 @@ class HauswachtPanel extends HTMLElement {
       <div class="tabs">${TABS.map((tab) => `<button data-tab="${tab}" class="${tab === this._tab ? "on" : ""}">${escHtml(this._t("tabs")[tab])}</button>`).join("")}</div>
       <div class="content">
         <div class="note">${escHtml(this._t("hint"))}</div>
+        ${this._flash ? `<div class="ok">✓ ${escHtml(this._flash)}</div>` : ""}
         ${this._tabBody()}
       </div>`;
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((button) =>
@@ -320,6 +411,13 @@ class HauswachtPanel extends HTMLElement {
         else if (action === "dialog") this._navigate("/config/integrations/integration/hauswacht");
       })
     );
+    this.shadowRoot.querySelectorAll("[data-edit]").forEach((button) =>
+      button.addEventListener("click", () => {
+        this._flash = null;
+        this._editAction(button.dataset.edit);
+      })
+    );
+    if (this._editor) this.shadowRoot.appendChild(this._editor);
     const search = this.shadowRoot.querySelector("input.search");
     if (search) {
       search.addEventListener("input", () => {
