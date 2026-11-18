@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.54.1] - 2026-11-18
+
+### Behoben
+- **Alarmprofil bearbeiten:** Das Feld „Auslöseregeln“ samt Hinweistext erscheint nur noch, wenn
+  es überhaupt Auslöseregeln gibt – vorher stand es leer und etwas verloren im Formular.
+
+### Dokumentation
+- Alarmprofile (deutsch und englisch): Hinweis, dass das Feld erst mit Auslöseregeln erscheint.
+
 ## [0.54.0] - 2026-11-18
 
 ### Hinzugefügt
