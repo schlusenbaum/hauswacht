@@ -127,8 +127,9 @@ actions:
         Einbruchalarm ({{ state_attr('alarm_control_panel.hauswacht', 'profile_name') }})!
 ```
 
-Lichter, Bereiche und den Benachrichtigungsdienst an deine anpassen. Später kämen hier z. B.
-Kamera-Schnappschüsse dazu. `triggered` gilt für die Reaktionsphase; ist sie vorbei, wechselt
+Lichter, Bereiche und den Benachrichtigungsdienst an deine anpassen. Viele weitere fertige
+Beispiele – Licht danach wieder wie vorher, Kamerabild aufs Handy, Rollläden, Statuslicht,
+Heizung bei Abwesenheit – stehen unter [Beispiele](beispiele.md). `triggered` gilt für die Reaktionsphase; ist sie vorbei, wechselt
 `phase` auf `alarm_hold` (Alarm noch nicht quittiert).
 
 ## Aktionen

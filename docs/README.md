@@ -25,6 +25,7 @@ Gegenstück in der anderen Sprache.
 | [Testmodus und Testkarte](testmodus.md) | Alles gefahrlos durchspielen: Sensoren simulieren, ohne Sirene |
 | [Beobachtungen](beobachtung.md) | Heimkehr-Beobachtung und „Tür auf bis unscharf“ – messen, bevor man automatisiert |
 | [Anlagenübersicht](uebersicht.md) | Karte mit der ganzen Konfiguration, Drucken, Notfallblatt, Prüfhinweise, Diagnose-Datei |
+| [Beispiele](beispiele.md) | Hauswacht mit anderen Geräten verbinden: bei Alarm Licht an und wieder wie vorher, Kamerabild aufs Handy, Rollläden, Statuslicht, Heizung bei Abwesenheit, Gastmodus aus dem Kalender … |
 | [Referenz](referenz.md) | Alle Entitäten, Attribute, Aktionen und Ereignisse |
 | [Fehlersuche](fehlersuche.md) | Häufige Fragen und Probleme |
 

@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Dokumentation
+- Neue Seite **Beispiele** (deutsch und englisch): Hauswacht mit anderen Geräten verbinden –
+  bei Alarm Licht an und danach wieder wie vorher, Licht blinken, Kamerabild aufs Handy,
+  Rollläden hoch und Musik aus, Statuslicht rot/grün, Heizung und Kamera bei Abwesenheit,
+  Willkommenslicht, Sabotage als kritische Benachrichtigung, Störungslampe, Gastmodus aus dem
+  Kalender, Taster mit Zusatzfunktion – und was man besser nicht automatisiert.
+
 ## [0.53.2] - 2026-11-17
 
 ### Geändert

@@ -70,6 +70,7 @@ PAGES = {
     "README.md": "README.md",
     "installation.md": "installation.md",
     "assistent.md": "setup-wizard.md",
+    "beispiele.md": "examples.md",
     "melder.md": "sensors.md",
     "profile.md": "profiles.md",
     "ausloeseregeln.md": "trigger-rules.md",
