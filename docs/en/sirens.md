@@ -255,21 +255,37 @@ The same decision comes as the event `hauswacht_event` with `type: SirenDecision
 
 ## Fire protection
 
-If the sirens are smoke detectors at the same time, Hauswacht recognises their smoke and test
-button sensors automatically.
+Fire always takes priority over burglary. Hauswacht therefore watches for fire reports – **even
+if you have separate sirens and not a single smoke detector is entered in Hauswacht.**
 
-- If **any** smoke detector in Home Assistant reports fire, Hauswacht switches no siren on and
-  none off.
-- If the fire state of a **registered** siren is unclear (sensor unavailable or disabled), the
-  same applies.
+### Always applies
+
+- Before Hauswacht switches a siren, it looks at **all** binary sensors in Home Assistant. If one
+  with the device class **smoke, gas, carbon monoxide or heat** is currently "on", the fire lock
+  applies. The detector does **not** need to be entered in Hauswacht.
+- During the fire lock Hauswacht switches **no siren on and none off** – not even a burglary
+  siren. This way a burglary siren never drowns out the fire alarm.
+- The burglary alarm itself still runs: the panel shows alarm, notifications go out, your own
+  automations start. Only the sirens stay off.
 - If fire was reported during a burglar alarm, even disarming does not switch off any siren.
   Sirens with their own running time go quiet after their maximum duration. Hauswacht switches
   off all others as soon as no fire is reported any more (checked every minute).
+- Hauswacht never uses other switch-off scripts (e.g. "all smoke detectors off").
+- **Limit:** Hauswacht only knows about fires reported by a detector **in Home Assistant**. If a
+  detector is not integrated or currently unreachable, Hauswacht does not notice – the detector
+  itself of course still beeps.
+
+### In addition, if smoke detectors are your alarm devices
+
+If you also use the siren of a smoke detector as a siren for Hauswacht, Hauswacht recognises its
+smoke and test button sensors automatically. Then also:
+
+- If the fire state of a **registered** siren is unclear (sensor unavailable or disabled), the
+  fire lock applies as well.
 - A smoke detector never plays its fire tone for a burglary – not even with the
   [expert release](#fire-tone-as-expert-release).
-- Hauswacht never uses other switch-off scripts (e.g. "all smoke detectors off").
-- If you use smoke detectors as alarm devices: **interconnecting** them (all beep on smoke) is
-  deliberately not done by Hauswacht – it is a small automation of your own, see
+- **Interconnecting** smoke detectors (all beep on smoke) is deliberately not done by Hauswacht –
+  it is a small automation of your own, see
   [examples](examples.md#interconnecting-smoke-detectors).
 
 ## Siren was still on at a restart
