@@ -151,8 +151,18 @@ Gut zu wissen:
 - **Testmodus:** Alle Ereignisse kommen **auch im Testmodus**. Ob er an ist, steht im Attribut
   `test_mode` des Bedienfelds; einige Ereignisse haben dafür ein eigenes Feld (`test_mode`,
   `test`). Eigene Alarm-Automationen deshalb immer mit der Bedingung `test_mode: false`.
-- **Bereich:** Nur einige Ereignisse nennen den Bereich (`area`). Mit mehreren Bereichen für
-  Zustandswechsel besser das **Attribut `phase` des jeweiligen Bedienfelds** nehmen.
+- **Bereich:** **Jedes** Ereignis nennt seinen Bereich: `area` (Kennung, `main` = Hauptbereich,
+  `all` = ganze Anlage, z. B. Funknetz, Sirenentest oder ein Bedienteil für alle Bereiche) und
+  `area_name` (Anzeigename, z. B. „Garage“). So reagiert eine Automation nur auf einen Bereich:
+
+  ```yaml
+  triggers:
+    - trigger: event
+      event_type: hauswacht_event
+      event_data:
+        type: TamperDetected
+        area: garage
+  ```
 - **Melder** stehen als Entitäts-ID in `sensor_key` bzw. als Liste in `sensors`,
   `open_sensors` …; den Anzeigenamen liefert `state_attr(…, 'friendly_name')`.
 - Mengen (z. B. `open_sensors`) kommen als **Liste**.

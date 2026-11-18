@@ -27,7 +27,6 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import dt as dt_util
 
-from .const import EVENT_HAUSWACHT
 from .core.action_codes import ActionCode, CodeAction, find_action_code, parse_action_codes
 from .core.alarm_states import panel_value
 from .core.code_guard import remaining_lock
@@ -467,14 +466,14 @@ class ControlManager:
     def _run_action_code(self, keypad: Control, action_code: ActionCode) -> str:
         """Aktion eines Aktions-Codes ausführen. Nie unscharf: ein Aktions-Code ist kein Ausweis."""
         actor = tr(self.runtime.lang, "action_code_actor", name=action_code.name)
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
+        self.runtime.fire_event(
             {
                 "type": "ActionCode",
                 "name": action_code.name,
                 "action": action_code.action.value,
                 "control": keypad.name,
                 "test": self.runtime.ctx.test_mode,
+                **self._area_event(keypad),
             },
         )
         if action_code.action is CodeAction.ARM and action_code.profile:
@@ -495,9 +494,13 @@ class ControlManager:
 
     async def _emergency(self, keypad: Control) -> None:
         """Notruf-Taste: je Bedienteil aus, stiller Notruf (Push) oder Alarm."""
-        self.hass.bus.async_fire(
-            EVENT_HAUSWACHT,
-            {"type": "Emergency", "control": keypad.name, "mode": keypad.emergency.value},
+        self.runtime.fire_event(
+            {
+                "type": "Emergency",
+                "control": keypad.name,
+                "mode": keypad.emergency.value,
+                **self._area_event(keypad),
+            },
         )
         if keypad.emergency is Emergency.OFF:
             return
@@ -747,8 +750,16 @@ class ControlManager:
         for waiter in list(self._card_waiters):
             waiter(tag)
 
+    def _area_event(self, control: Control) -> dict[str, Any]:
+        """Bereich eines Bedienteils für hauswacht_event (für alle Bereiche: "all")."""
+        if control.area == ALL_AREAS or control.area not in self.runtime.areas:
+            return self.runtime.all_areas_event()
+        return self.runtime.areas[control.area].event_area
+
     def _fire(self, kind: str, control: Control, **data: Any) -> None:
-        self.hass.bus.async_fire(EVENT_HAUSWACHT, {"type": kind, "control": control.name, **data})
+        self.runtime.fire_event(
+            {"type": kind, "control": control.name, **data, **self._area_event(control)}
+        )
 
     # --- Anzeige ----------------------------------------------------------------
 

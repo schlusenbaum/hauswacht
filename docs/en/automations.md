@@ -89,7 +89,8 @@ use the one of the respective area.
   `switch.hauswacht_test_mode`) – if in doubt, check under Settings → Entities.
 - **Events also come in test mode** – without the test mode condition the trial run switches on
   lights and starts camera recordings.
-- **Several areas:** not every event names the area – for states use the alarm panel of the area.
+- **Several areas:** every event has `area` (e.g. `garage`, `main`, `all` for the whole system) –
+  add it to the trigger under `event_data`; for states use the alarm panel of the area.
 - **Look for yourself:** Developer tools → Events → listen to `hauswacht_event` → "Start
   listening" shows every event with all fields; Developer tools → States shows the attributes of
   the alarm panel.

@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.55.0] - 2026-11-18
+
+### Hinzugefügt
+- **Jedes Ereignis nennt seinen Bereich:** Alle `hauswacht_event` tragen jetzt die Felder `area`
+  (Kennung des Bereichs, `main` = Hauptbereich, `all` = ganze Anlage) und `area_name`
+  (Anzeigename). Mit mehreren Bereichen reagiert eine Automation so gezielt auf einen Bereich,
+  z. B. `event_data: {type: TamperDetected, area: garage}`. Ereignisse der ganzen Anlage
+  (Funknetz/Gateway, Sirenentest, Zurücksetzen der Sperre, Bedienteile für alle Bereiche) haben
+  `area: all`. Bestehende Felder bleiben unverändert – vorhandene Automationen laufen weiter.
+
 ### Dokumentation
 - **Referenz** (deutsch und englisch) zum vollständigen Nachschlagewerk ausgebaut: alle
   Entitäten mit deutscher **und** englischer Entitäts-ID und „je Bereich“, alle Attribute des
@@ -15,6 +25,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Testmodus und Bereichen, alle Aktionen mit Beispiel.
 - Neue Seite **„Automationen: was nehme ich wofür?“** (deutsch und englisch): Spickzettel
   „Ich will reagieren, wenn … → nimm …“, „Ich will etwas tun …“ und häufige Stolperfallen.
+- Referenz, Spickzettel, Beispiele und README: Feld `area` in jedem Ereignis, mit Beispiel.
 - **README** (deutsch und englisch): neuer Abschnitt **„Offen für alles: Hauswacht als
   Baustein“** – was Hauswacht an Bedienfeld-Attributen, Ereignissen, Entitäten, Aktionen und
   Knöpfen bereitstellt und was man damit baut (Licht, Kamera, Rollläden, Heizung …), mit Verweis

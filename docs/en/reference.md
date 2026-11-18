@@ -150,8 +150,18 @@ Good to know:
 - **Test mode:** all events also come **in test mode**. Whether it is on is shown by the
   attribute `test_mode` of the alarm panel; some events have their own field for it (`test_mode`,
   `test`). So always add the condition `test_mode: false` to your own alarm automations.
-- **Area:** only some events name the area (`area`). With several areas, better use the
-  **attribute `phase` of the respective alarm panel** for state changes.
+- **Area:** **every** event names its area: `area` (ID, `main` = main area, `all` = whole system,
+  e.g. radio network, siren test or a control device for all areas) and `area_name` (display
+  name, e.g. "Garage"). This way an automation reacts to one area only:
+
+  ```yaml
+  triggers:
+    - trigger: event
+      event_type: hauswacht_event
+      event_data:
+        type: TamperDetected
+        area: garage
+  ```
 - **Sensors** are given as entity ID in `sensor_key` or as a list in `sensors`, `open_sensors` …;
   the display name is returned by `state_attr(…, 'friendly_name')`.
 - Sets (e.g. `open_sensors`) come as a **list**.

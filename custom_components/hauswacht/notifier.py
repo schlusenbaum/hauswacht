@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
@@ -42,6 +42,10 @@ class Notifier:
         self.in_test_mode = bool(options.get(OPT_NOTIFY_IN_TEST_MODE, False))
         self.options = options
         self.critical_allowed = bool(options.get(OPT_CRITICAL_ALERTS, True))
+        # hauswacht_event mit Bereich; die Runtime setzt ihre Funktion ein
+        self.fire_event: Callable[[Mapping[str, Any]], None] = lambda data: (
+            self.hass.bus.async_fire(EVENT_HAUSWACHT, dict(data))
+        )
 
     @callback
     def send(  # noqa: PLR0913
@@ -59,9 +63,8 @@ class Notifier:
         if not targets:
             return []
         if test_mode and not self.in_test_mode:
-            self.hass.bus.async_fire(
-                EVENT_HAUSWACHT,
-                {"type": "NotificationSuppressed", "targets": list(targets), "title": title},
+            self.fire_event(
+                {"type": "NotificationSuppressed", "targets": list(targets), "title": title}
             )
             return []
         if self.label:
@@ -176,9 +179,8 @@ class Notifier:
         if not entities:
             return []
         if test_mode and not self.in_test_mode:
-            self.hass.bus.async_fire(
-                EVENT_HAUSWACHT,
-                {"type": "SpeechSuppressed", "event": event.value, "entities": entities},
+            self.fire_event(
+                {"type": "SpeechSuppressed", "event": event.value, "entities": entities}
             )
             return []
         if test_mode:
