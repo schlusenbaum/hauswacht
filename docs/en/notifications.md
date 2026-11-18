@@ -51,7 +51,19 @@ as entered.
 ## Custom texts and placeholders
 
 **Notifications → Custom texts for push messages:** write title and text per event yourself;
-empty = default text. The same placeholders apply to speech:
+the field first shows **Hauswacht's text** as a template – with placeholders instead of values,
+e.g. `Profile {profile} armed ({who}).` Just change it and save. If the template stays
+**unchanged** (or the field empty), nothing is saved and Hauswacht sends its own text. Where that
+text differs depending on the situation (e.g. faults), the template is `{text}` – that is
+Hauswacht's complete text.
+
+> **Good to know:** a custom text replaces Hauswacht's whole text. On an alarm, Hauswacht
+> otherwise also adds e.g. which sirens are running. To keep that, include `{text}`, e.g.
+> `{text} Please call the neighbours.`
+
+Back to Hauswacht's text: on the [settings page](settings-page.md#editing-notifications) the
+button **"↺ Default text"**, in the dialog empty the field. The same placeholders apply to
+speech:
 
 | Placeholder | German | Content |
 |---|---|---|

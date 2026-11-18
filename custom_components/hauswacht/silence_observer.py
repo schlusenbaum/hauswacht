@@ -15,7 +15,16 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
-from .core.silence import SilenceRecord, advice, dump, format_duration, load, update
+from .core.profiles import stale_override_hours
+from .core.silence import (
+    SilenceRecord,
+    advice,
+    dump,
+    format_duration,
+    load,
+    sensor_advice,
+    update,
+)
 from .names import display_name
 
 if TYPE_CHECKING:
@@ -92,13 +101,23 @@ class SilenceObserver:
             return 0.0
         return max(0.0, (dt_util.utcnow().timestamp() - self.since) / 86400)
 
+    def _own(self) -> set[str]:
+        """Melder mit eigener Grenze – zählen für den allgemeinen Wert nicht mit."""
+        return set(stale_override_hours(self.runtime.entry.options))
+
     def advice_hours(self) -> int | None:
-        return advice(self.records, self.days())
+        return advice(self.records, self.days(), skip=self._own())
+
+    def sensor_advice(self, entity_id: str) -> int | None:
+        """Empfehlung für einen Melder (None = noch zu wenig Daten)."""
+        return sensor_advice(self.records.get(entity_id), self.days())
 
     def longest(self) -> tuple[str, SilenceRecord] | None:
-        if not self.records:
+        own = self._own()
+        records = {k: v for k, v in self.records.items() if k not in own}
+        if not records:
             return None
-        return max(self.records.items(), key=lambda item: item[1].longest)
+        return max(records.items(), key=lambda item: item[1].longest)
 
     def summary_text(self, german: bool = True) -> str:
         """Kurzfassung für den Einstellungsdialog."""
@@ -132,6 +151,7 @@ class SilenceObserver:
                     "longest_pause": format_duration(record.longest),
                     "longest_pause_s": round(record.longest),
                     "contacts": record.contacts,
+                    "recommended_hours": sensor_advice(record, self.days()),
                 }
                 for entity_id, record in sorted(
                     self.records.items(), key=lambda item: -item[1].longest

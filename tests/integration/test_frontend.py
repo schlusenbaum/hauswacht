@@ -12,8 +12,12 @@ from custom_components.hauswacht.frontend import (
     CARD_FILES,
     DATA_KEY,
     EDITOR_FILE,
+    PANEL_FILE,
+    PANEL_FILES,
+    PANEL_URL_PATH,
     TEST_CARD_FILE,
     async_register_card,
+    async_register_panel,
 )
 
 
@@ -30,7 +34,9 @@ async def test_card_registered_once(hass: HomeAssistant) -> None:
 
     assert http.async_register_static_paths.await_count == 1
     configs = http.async_register_static_paths.await_args.args[0]
-    assert [c.url_path for c in configs] == [f"/hauswacht/{name}" for name in CARD_FILES]
+    assert [c.url_path for c in configs] == [
+        f"/hauswacht/{name}" for name in (*CARD_FILES, *PANEL_FILES)
+    ]
     assert all(Path(c.path).is_file() for c in configs)
     urls = [call.args[1] for call in add_js.call_args_list]
     assert urls == [f"/hauswacht/{name}?v=1.2.3" for name in CARD_FILES]
@@ -81,3 +87,32 @@ def test_alarm_card_editor_keeps_safety_out_of_card_config() -> None:
     defaults = source[start : source.index("};", start)]
     for forbidden in ("pin", "unscharf_knopf", "alarm_beenden", "end_alarm"):
         assert forbidden not in defaults, forbidden
+
+
+async def test_panel_registered_for_admins(hass: HomeAssistant) -> None:
+    hass.config.components.add("frontend")
+    with (
+        patch.object(hass, "http", MagicMock()),
+        patch(
+            "homeassistant.components.panel_custom.async_register_panel", new=AsyncMock()
+        ) as register,
+    ):
+        await async_register_panel(hass, "1.2.3")
+    kwargs = register.await_args.kwargs
+    assert kwargs["frontend_url_path"] == PANEL_URL_PATH
+    assert kwargs["require_admin"] is True
+    assert kwargs["module_url"] == f"/hauswacht/{PANEL_FILE}?v=1.2.3"
+
+
+async def test_panel_skipped_without_frontend(hass: HomeAssistant) -> None:
+    with patch(
+        "homeassistant.components.panel_custom.async_register_panel", new=AsyncMock()
+    ) as register:
+        await async_register_panel(hass, "1.2.3")
+    register.assert_not_awaited()
+
+
+def test_panel_file_exists() -> None:
+    import custom_components.hauswacht.frontend as fe  # noqa: PLC0415
+
+    assert (Path(fe.__file__).parent / PANEL_FILE).is_file()

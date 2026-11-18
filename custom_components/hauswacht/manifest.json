@@ -4,7 +4,8 @@
   "after_dependencies": [
     "frontend",
     "http",
-    "mqtt"
+    "mqtt",
+    "panel_custom"
   ],
   "categories": [
     "security_safety.alarm_systems"
@@ -22,5 +23,5 @@
   "issue_tracker": "https://github.com/schlusenbaum/hauswacht/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.56.0"
+  "version": "0.57.0"
 }

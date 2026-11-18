@@ -283,7 +283,34 @@ dann z. B.:
 
 Die Empfehlung ist die längste Pause × 1,5, auf volle Stunden aufgerundet – frühestens nach 3
 Tagen Beobachtung. Eingetragen wird der Wert von dir; die Beobachtung ändert nichts. Der
-Diagnose-Sensor `sensor.hauswacht_funkstille_beobachtung` zeigt Empfehlung und Pausen.
+Diagnose-Sensor `sensor.hauswacht_funkstille_beobachtung` zeigt Empfehlung und Pausen – auch die
+**Empfehlung je Melder** (`recommended_hours`).
+
+### Eigene Grenze je Melder
+
+Meldet sich ein einzelner Melder viel seltener als die anderen – z. B. ein Batterie-Türkontakt,
+der nur bei Änderungen funkt –, würde er den allgemeinen Wert für alle hochziehen. Dann fiele ein
+ausgefallener Bewegungsmelder erst nach vielen Stunden auf. Besser: diesem Melder einen **eigenen
+Wert** geben.
+
+| Einstellung | Wirkung |
+|---|---|
+| **Wie allgemein** | Es gilt der allgemeine Wert (Standard) |
+| **Eigener Wert** | Eigene Stunden (1–168) für genau diesen Melder |
+| **Nie prüfen** | Für Melder, die sich nur bei Änderungen melden. Sie gelten nie wegen Funkstille als ausgefallen; „nicht verfügbar“ (`unavailable`) wird weiter erkannt |
+
+- **Einstellungsseite:** Reiter Melder → auf den Melder klicken → **Funkstille**. Dort stehen die
+  Beobachtung für genau diesen Melder und der Knopf **„Empfehlung übernehmen“**. Im Reiter System
+  zeigt die Karte „Funkstille von Sensoren“ alle Melder mit längster Pause, Empfehlung und eigenem
+  Wert (⚠️, wenn der eigene Wert unter der Empfehlung liegt). In der Melder-Tabelle steht ein
+  eigener Wert als „⏱ 24 h“ bzw. „⏱ nie prüfen“ hinter dem Namen.
+- **Dialog:** Systemeinstellungen → Funkstille von Sensoren → unten „Eigenen Wert für einen Melder
+  einstellen“ wählen.
+- Melder mit eigenem Wert zählen für die **allgemeine Empfehlung** nicht mehr mit. Beispiel: Die
+  Hintertür schweigt bis zu 16 Stunden, alle anderen höchstens 2 Stunden. Mit eigenem Wert für die
+  Hintertür (24 h) empfiehlt die Beobachtung allgemein 3 h statt 24 h.
+- Liegt ein eigener Wert unter der Empfehlung für diesen Melder, meldet die
+  [Anlagenübersicht](uebersicht.md#prüfhinweise) das als Prüfhinweis.
 
 ## Funknetz und Gateways überwachen
 

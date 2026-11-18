@@ -62,3 +62,39 @@ def save_notify_settings(options: Mapping[str, Any], data: Mapping[str, Any]) ->
             new.pop(OPT_REMINDER_PROFILE, None)
         new[OPT_REMINDER_DELAY] = int(reminder.get(OPT_REMINDER_DELAY) or DEFAULT_REMINDER_DELAY)
     return Change(options=new)
+
+
+def save_event_text(
+    options: Mapping[str, Any], event: str, title: str, message: str, *, lang: str = "de"
+) -> Change:
+    """Eigener Titel und Text eines Ereignisses (leer = Text von Hauswacht).
+
+    Steht im Feld noch genau die Vorlage von Hauswacht (``core.default_texts``), wird nichts
+    gespeichert – es bleibt beim Text von Hauswacht. Prüft die Platzhalter wie der Dialog;
+    Fehler: ``invalid_template`` mit der Meldung in ``details["message"]``.
+    """
+    from ..default_texts import is_default  # noqa: PLC0415
+    from ..messages import TemplateError, check_template  # noqa: PLC0415
+
+    try:
+        kind = NotifyEvent(event)
+    except ValueError:
+        return Change(errors={"event": "unknown_event"})
+    texts = {"title": str(title or "").strip(), "message": str(message or "").strip()}
+    texts = {k: "" if is_default(kind, k, v, lang) else v for k, v in texts.items()}
+    for key, text in texts.items():
+        try:
+            check_template(text, lang)
+        except TemplateError as err:
+            return Change(errors={key: "invalid_template"}, details={"message": str(err)})
+    new = copy_options(options)
+    events = {k: dict(v) for k, v in options.get(OPT_EVENTS, {}).items()}
+    stored = events.get(kind.value, {})
+    for key, text in texts.items():
+        if text:
+            stored[key] = text
+        else:
+            stored.pop(key, None)
+    events[kind.value] = stored
+    new[OPT_EVENTS] = events
+    return Change(options=new, item_id=kind.value)

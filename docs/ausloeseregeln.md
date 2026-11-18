@@ -43,6 +43,9 @@ Schritt 1 erfüllt ──(Zeit von Schritt 1)──▶ Schritt 2 erfüllt ──
 
 ## Anlegen mit dem Assistenten
 
+> Einfacher geht es auf der [Einstellungsseite](einstellungsseite.md#auslöseregeln-bearbeiten):
+> alles auf einem Blatt, mit Umschalter Formular / YAML.
+
 Name und Ergebnis → Schritt 1 → Übersicht mit „Weiteren
 Schritt hinzufügen“, „Schritt bearbeiten“, „Letzten Schritt entfernen“, „Fertig – speichern“
 (bis zu 10 Schritte). Über jedem Schritt und in der Übersicht steht die Auslöseregel als Satz, z. B.

@@ -167,3 +167,42 @@ def set_pins(options: Mapping[str, Any], user_id: str, data: Mapping[str, Any]) 
     new = copy_options(options)
     new[OPT_USERS] = users
     return Change(options=new, item_id=user_id)
+
+
+def save_person(
+    options: Mapping[str, Any],
+    user_id: str | None,
+    data: Mapping[str, Any],
+    *,
+    ha_user: str | None = None,
+) -> Change:
+    """Einstellungsseite: Benutzer, Rechte je Bereich und PINs in einem Schritt.
+
+    ``data`` wie :func:`save_user`, dazu ``area_rights`` ({Bereich: [Rechte]}, nur bei
+    ``rights="per_area"``) und die PIN-Felder von :func:`set_pins`. Erst wenn alles passt, wird
+    gespeichert – ein falscher PIN verwirft also auch die übrigen Änderungen nicht stillschweigend,
+    sondern meldet den Fehler. Langsam (Hashes) – im Executor aufrufen.
+    """
+    if user_id is not None and user_id not in _stored(options):
+        return failed({"base": "unknown_user"})
+    new_pin = str(data.get("new_pin") or "").strip()
+    new_duress = str(data.get("new_duress_pin") or "").strip()
+    pins_checked = validate_pins(options, user_id, new_pin, new_duress)
+    errors = {**validate_user_name(options, user_id, str(data.get("name") or ""))}
+    errors.update(pins_checked.errors)
+    if errors:
+        return failed(errors, **pins_checked.details)
+    change = save_user(options, user_id, data, ha_user=ha_user)
+    if not change.ok or change.options is None or change.item_id is None:
+        return change
+    new_id = change.item_id
+    if data.get("rights") == RIGHTS_PER_AREA:
+        rights = data.get("area_rights") if isinstance(data.get("area_rights"), Mapping) else {}
+        change = set_area_rights(change.options, new_id, rights or {})
+        assert change.options is not None
+    assert change.options is not None
+    if new_pin or new_duress or data.get("remove_pin") or data.get("remove_duress_pin"):
+        change = set_pins(change.options, new_id, data)
+        if not change.ok:
+            return change
+    return Change(options=change.options, item_id=new_id)

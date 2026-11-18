@@ -158,3 +158,33 @@ def test_saved_state_disarmed_is_none() -> None:
         )
         is None
     )
+
+
+def test_reload_keeps_state_whatever_the_setting() -> None:
+    saved = {"profile": "night", "state": "armed"}
+    # Echter Neustart: "immer scharf" schaltet das feste Profil scharf
+    plan = plan_restart(
+        "armed", saved=None, previous_profile=None, fixed_profile="away", known_profiles={"away"}
+    )
+    assert plan.kind is RestartKind.ARM
+    # Nur neu geladen (unscharf): kein Scharfschalten
+    plan = plan_restart(
+        "armed",
+        saved=None,
+        previous_profile=None,
+        fixed_profile="away",
+        known_profiles={"away"},
+        reload=True,
+    )
+    assert plan.kind is RestartKind.DISARMED
+    # Nur neu geladen (scharf): bleibt scharf, auch bei "immer unscharf"
+    plan = plan_restart(
+        "disarmed",
+        saved=saved,
+        previous_profile=None,
+        fixed_profile=None,
+        known_profiles={"night"},
+        reload=True,
+    )
+    assert plan.kind is RestartKind.RESTORE
+    assert plan.profile_id == "night"

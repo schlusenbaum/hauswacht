@@ -459,15 +459,20 @@
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Anwesenheit und Heimkehr-Beobachtung",
           "restart": "Verhalten nach Neustart",
+          "settings_page": "Einstellungsseite in der Seitenleiste",
           "init": "← Zurück"
         },
         "description": "{saved}"
       },
       "sensor_behaviour": {
         "title": "Funkstille von Sensoren",
-        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.\n\n**Beobachtung:** {observation}",
+        "description": "Hat sich ein Melder so lange nicht gemeldet, gilt er beim Scharfschalten als ausgefallen (0 = aus). Batteriesensoren melden sich teils nur alle paar Stunden – großzügig wählen.\n\nWie ein Melder reagiert (Typ), stellst du in der **Meldergruppe** ein.\n\n**Beobachtung:** {observation}\n\n**Eigene Werte je Melder:** {own}\n\nMeldet sich ein einzelner Melder seltener (z. B. ein Batterie-Türkontakt, der sich nur bei Änderungen meldet), gib ihm einen eigenen Wert statt den allgemeinen hochzusetzen: unten den Melder wählen.",
         "data": {
-          "stale_after_hours": "Maximale Funkstille"
+          "stale_after_hours": "Maximale Funkstille",
+          "stale_sensor": "Eigenen Wert für einen Melder einstellen (optional)"
+        },
+        "data_description": {
+          "stale_sensor": "Nach dem Speichern geht es mit diesem Melder weiter."
         }
       },
       "rules": {
@@ -776,7 +781,7 @@
       },
       "notify_text_edit": {
         "title": "Eigener Text",
-        "description": "Leer = Standardtext von Hauswacht. Platzhalter: {placeholders}. Der Platzhalter „text“ ist der Standardtext, im Titel der Standardtitel.\n\nAktuelle Vorschau: {preview}\n\n{error}",
+        "description": "Vorgeschlagen ist der Text von Hauswacht – einfach ändern. Unverändert oder leer = Text von Hauswacht. Platzhalter: {placeholders}. Der Platzhalter „text“ ist der Standardtext, im Titel der Standardtitel.\n\nAktuelle Vorschau: {preview}\n\n{error}",
         "data": {
           "title": "Titel",
           "message": "Text"
@@ -1050,7 +1055,7 @@
       },
       "restart": {
         "title": "Verhalten nach Neustart",
-        "description": "Was Hauswacht macht, wenn Home Assistant neu startet (z. B. nach einem Update oder einer nächtlichen Sicherung) oder Hauswacht neu geladen wird.\n\n**Vorherigen Zustand wiederherstellen (Standard):** War die Anlage scharf, ist sie sofort wieder scharf – mit demselben Profil und denselben überbrückten Meldern, ohne erneute Prüfung und ohne Ausgangsverzögerung. War sie unscharf, bleibt sie unscharf.\n- Lief gerade die **Eingangsverzögerung**, beginnt sie neu – wer heimkam, konnte während des Neustarts nicht unscharf schalten.\n- Ein laufender **Alarm wird standardmäßig nicht fortgesetzt**: keine Sirenen, die Anlage ist scharf, die Alarm-Empfänger bekommen eine wichtige Nachricht mit dem Auslöser. Wer das anders will: „Laufenden Alarm fortsetzen“ (unten).\n- Melder, die beim Hochfahren **offen** gemeldet werden, werden bis zum Schließen überbrückt (Eingangstüren starten stattdessen die Eingangsverzögerung) und gemeldet.\n\n**Immer scharf:** etwa eine Minute nach dem Hochfahren wird das gewählte Profil normal scharf geschaltet – mit Prüfung offener Melder. Für Ferienhaus oder unbewohnte Bereiche. Bereiche ohne Profil bleiben unscharf.\n\n**Immer unscharf:** wie bis Version 0.44; war die Anlage scharf, kommt die Nachricht „nach Neustart unscharf“.",
+        "description": "Was Hauswacht macht, wenn Home Assistant neu startet (z. B. nach einem Update oder einer nächtlichen Sicherung). Wird nur Hauswacht neu geladen (z. B. nach dem Speichern von Einstellungen), bleibt der Zustand, wie er war.\n\n**Vorherigen Zustand wiederherstellen (Standard):** War die Anlage scharf, ist sie sofort wieder scharf – mit demselben Profil und denselben überbrückten Meldern, ohne erneute Prüfung und ohne Ausgangsverzögerung. War sie unscharf, bleibt sie unscharf.\n- Lief gerade die **Eingangsverzögerung**, beginnt sie neu – wer heimkam, konnte während des Neustarts nicht unscharf schalten.\n- Ein laufender **Alarm wird standardmäßig nicht fortgesetzt**: keine Sirenen, die Anlage ist scharf, die Alarm-Empfänger bekommen eine wichtige Nachricht mit dem Auslöser. Wer das anders will: „Laufenden Alarm fortsetzen“ (unten).\n- Melder, die beim Hochfahren **offen** gemeldet werden, werden bis zum Schließen überbrückt (Eingangstüren starten stattdessen die Eingangsverzögerung) und gemeldet.\n\n**Immer scharf:** etwa eine Minute nach dem Hochfahren wird das gewählte Profil normal scharf geschaltet – mit Prüfung offener Melder. Für Ferienhaus oder unbewohnte Bereiche. Bereiche ohne Profil bleiben unscharf.\n\n**Immer unscharf:** wie bis Version 0.44; war die Anlage scharf, kommt die Nachricht „nach Neustart unscharf“.",
         "data": {
           "restart_behavior": "Nach einem Neustart",
           "restart_continue_alarm": "Laufenden Alarm fortsetzen",
@@ -1353,6 +1358,21 @@
           "vibration_count": "Meldungen bis zum Alarm",
           "vibration_window": "innerhalb von"
         }
+      },
+      "settings_page": {
+        "title": "Einstellungsseite",
+        "description": "Die Seite **Hauswacht** in der Seitenleiste zeigt die ganze Einrichtung auf einen Blick (nur für Administratoren): Melder mit Gruppen und Profilen als Tabelle, Profile, Regeln, Sirenen, Benachrichtigungen, Personen. Der Einstellungsdialog bleibt immer vollständig – die Seite ist ein zusätzlicher Weg.",
+        "data": {
+          "enabled": "Seite „Hauswacht“ in der Seitenleiste anzeigen"
+        }
+      },
+      "stale_sensor": {
+        "title": "Funkstille für {sensor}",
+        "description": "**Beobachtung:** {observation}\n\n**Wie allgemein:** es gilt der allgemeine Wert. **Eigener Wert:** eigene Stunden für diesen Melder – er zählt dann auch nicht mehr für die allgemeine Empfehlung. **Nie prüfen:** für Melder, die sich nur bei Änderungen melden – sie gelten nie wegen Funkstille als ausgefallen (ausgefallen = „nicht verfügbar“ wird weiter erkannt).",
+        "data": {
+          "mode": "Funkstille",
+          "hours": "Eigener Wert"
+        }
       }
     },
     "error": {
@@ -1416,7 +1436,8 @@
       "tilt_attribute_missing": "Die Entität hat dieses Attribut nicht. Unter Entwicklerwerkzeuge → Zustände nachsehen.",
       "tilt_attribute_needed": "Bei dieser Entität steht die Stellung in einem Attribut – bitte den Namen des Attributs eintragen.",
       "tilt_no_closed": "Mindestens ein Wert muss „zu“ bedeuten.",
-      "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten."
+      "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten.",
+      "stale_hours_invalid": "Bitte 1 bis 168 Stunden angeben."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1618,6 +1639,13 @@
         "event": "Ereignis für eigene Automation",
         "arm": "Scharf schalten mit Profil …",
         "silent_emergency": "Stiller Notruf"
+      }
+    },
+    "stale_mode": {
+      "options": {
+        "default": "Wie allgemein",
+        "hours": "Eigener Wert (Stunden)",
+        "off": "Nie prüfen"
       }
     }
   },

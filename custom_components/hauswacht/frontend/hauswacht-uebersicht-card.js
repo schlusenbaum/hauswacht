@@ -122,6 +122,7 @@ const LANG = {
     quiet: "Nachtruhe",
     staleAfter: "Funkstille-Grenze",
     recommended: "Empfehlung",
+    ownLimits: "eigene Grenzen",
     observed: "beobachtet",
     days: "Tage",
     off: "aus",
@@ -267,6 +268,7 @@ const LANG = {
     quiet: "Quiet hours",
     staleAfter: "Silence limit",
     recommended: "Recommended",
+    ownLimits: "own limits",
     observed: "observed",
     days: "days",
     off: "off",
@@ -614,7 +616,9 @@ class HauswachtUebersichtCard extends HTMLElement {
   _staleText(m) {
     const now = m.stale_after_hours ? `${m.stale_after_hours} h` : this._t("off");
     const rec = m.recommended_hours ? ` · ${this._t("recommended")}: ${m.recommended_hours} h` : "";
-    return `${now}${rec} (${this._t("observed")} ${m.observed_days} ${this._t("days")})`;
+    const own = (m.stale_overrides || []).map((o) => `${o.name}: ${o.hours ? `${o.hours} h` : this._t("off")}`);
+    const ownText = own.length ? ` · ${this._t("ownLimits")}: ${own.join(", ")}` : "";
+    return `${now}${rec} (${this._t("observed")} ${m.observed_days} ${this._t("days")})${ownText}`;
   }
 
   // --- Bildschirm ---------------------------------------------------------------
@@ -627,7 +631,8 @@ class HauswachtUebersichtCard extends HTMLElement {
     return `<div class="kv">${rows.map(([k, v]) => `<div class="k">${esc(k)}</div><div>${v}</div>`).join("")}</div>`;
   }
 
-  _screen() {
+  // Abschnitte einzeln – die Einstellungsseite (Seitenleiste) zeigt sie in Reitern
+  _parts() {
     const d = this._data;
     const sys = d.system || {};
     const findings = d.findings || [];
@@ -694,21 +699,27 @@ class HauswachtUebersichtCard extends HTMLElement {
     ]);
     const always = d.always_active || {};
     const alwaysSensors = d.sensors.filter((s) => s.always_active).map((s) => s.name);
-    return `
-      <div class="asof">${this._t("asOf")}: ${this._when(d.generated_at)}</div>
-      ${this._section(`${this._t("findings")}`, findings.length ? [important ? `⚠️ ${important}` : "", findings.length - important ? `ℹ️ ${findings.length - important}` : ""].filter(Boolean).join(" · ") : "✓", findingHtml, important > 0)}
-      ${this._section(this._t("status"), esc(d.areas.map((a) => this._l("alarm", a.state)).join(" · ")), this._kv(statusRows))}
-      ${this._section(this._t("profiles"), d.profiles.length, profiles)}
-      ${this._section(this._t("sensors"), d.sensors.length, sensors)}
-      ${this._section(this._t("rules"), d.rules.length, rules || this._t("none"))}
-      ${this._section(this._t("always"), alwaysSensors.length, this._kv([[this._t("sensors"), this._list(alwaysSensors)], [this._t("sirens"), this._list(always.sirens)]]))}
-      ${this._section(this._t("sirens"), d.sirens.length, sirens || this._t("none"))}
-      ${this._section(this._t("users"), d.users.length, users + `<div class="item"><div class="n">${this._t("pinRules")}</div>${pinRules}</div>`)}
-      ${this._section(this._t("controls"), d.controls.length, controls)}
-      ${this._section(this._t("actionCodes"), codes.length, codeHtml)}
-      ${this._section(this._t("notifications"), (n.events || []).length, notify)}
-      ${this._section(this._t("monitoring"), "", monitoring)}
-    `;
+    return {
+      asOf: `<div class="asof">${this._t("asOf")}: ${this._when(d.generated_at)}</div>`,
+      findings: [this._t("findings"), findings.length ? [important ? `⚠️ ${important}` : "", findings.length - important ? `ℹ️ ${findings.length - important}` : ""].filter(Boolean).join(" · ") : "✓", findingHtml, important > 0],
+      status: [this._t("status"), esc(d.areas.map((a) => this._l("alarm", a.state)).join(" · ")), this._kv(statusRows)],
+      profiles: [this._t("profiles"), d.profiles.length, profiles],
+      sensors: [this._t("sensors"), d.sensors.length, sensors],
+      rules: [this._t("rules"), d.rules.length, rules || this._t("none")],
+      always: [this._t("always"), alwaysSensors.length, this._kv([[this._t("sensors"), this._list(alwaysSensors)], [this._t("sirens"), this._list(always.sirens)]])],
+      sirens: [this._t("sirens"), d.sirens.length, sirens || this._t("none")],
+      users: [this._t("users"), d.users.length, users + `<div class="item"><div class="n">${this._t("pinRules")}</div>${pinRules}</div>`],
+      controls: [this._t("controls"), d.controls.length, controls],
+      actionCodes: [this._t("actionCodes"), codes.length, codeHtml],
+      notifications: [this._t("notifications"), (n.events || []).length, notify],
+      monitoring: [this._t("monitoring"), "", monitoring],
+    };
+  }
+
+  _screen() {
+    const parts = this._parts();
+    const order = ["findings", "status", "profiles", "sensors", "rules", "always", "sirens", "users", "controls", "actionCodes", "notifications", "monitoring"];
+    return parts.asOf + order.map((k) => this._section(...parts[k])).join("");
   }
 
   _render() {
@@ -933,3 +944,7 @@ if (!customElements.get("hauswacht-uebersicht-card")) {
     documentationURL: "https://github.com/schlusenbaum/hauswacht/blob/main/docs/uebersicht.md",
   });
 }
+
+// Für die Einstellungsseite (Seitenleiste): dieselben Abschnitte, dieselben Texte
+window.HauswachtOverviewView = window.HauswachtOverviewView || HauswachtUebersichtCard;
+window.HauswachtOverviewStyle = window.HauswachtOverviewStyle || STYLE;

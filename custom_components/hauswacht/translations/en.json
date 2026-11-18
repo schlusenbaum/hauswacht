@@ -459,15 +459,20 @@
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Presence and homecoming observation",
           "restart": "Behaviour after restart",
+          "settings_page": "Settings page in the sidebar",
           "init": "← Back"
         },
         "description": "{saved}"
       },
       "sensor_behaviour": {
         "title": "Sensor radio silence",
-        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.\n\n**Observation:** {observation}",
+        "description": "If a sensor has not reported for this long, it counts as failed when arming (0 = off). Battery sensors sometimes only report every few hours – choose generously.\n\nHow a sensor reacts (type) is set in the **sensor group**.\n\n**Observation:** {observation}\n\n**Own values per sensor:** {own}\n\nIf a single sensor reports less often (e.g. a battery door contact that only reports on changes), give it an own value instead of raising the general one: choose the sensor below.",
         "data": {
-          "stale_after_hours": "Maximum radio silence"
+          "stale_after_hours": "Maximum radio silence",
+          "stale_sensor": "Set an own value for a sensor (optional)"
+        },
+        "data_description": {
+          "stale_sensor": "After saving, you continue with this sensor."
         }
       },
       "rules": {
@@ -776,7 +781,7 @@
       },
       "notify_text_edit": {
         "title": "Custom text",
-        "description": "Empty = Hauswacht's default text. Placeholders: {placeholders}. The placeholder “text” is the default text, in the title the default title.\n\nCurrent preview: {preview}\n\n{error}",
+        "description": "Hauswacht's text is suggested – just change it. Unchanged or empty = Hauswacht's text. Placeholders: {placeholders}. The placeholder “text” is the default text, in the title the default title.\n\nCurrent preview: {preview}\n\n{error}",
         "data": {
           "title": "Title",
           "message": "Text"
@@ -1050,7 +1055,7 @@
       },
       "restart": {
         "title": "Behaviour after restart",
-        "description": "What Hauswacht does when Home Assistant restarts (e.g. after an update or a nightly backup) or Hauswacht is reloaded.\n\n**Restore the previous state (default):** if the system was armed, it is armed again right away – with the same profile and the same bypassed sensors, without a new check and without exit delay. If it was disarmed, it stays disarmed.\n- If the **entry delay** was running, it starts again – whoever came home could not disarm during the restart.\n- By default a running **alarm is not continued**: no sirens, the system is armed, the alarm recipients get an important message naming the trigger. To change this: “Resume a running alarm” (below).\n- Sensors reported **open** at startup are bypassed until closed (entry doors start the entry delay instead) and reported.\n\n**Always armed:** about one minute after startup, the chosen profile is armed normally – with the check for open sensors. For holiday homes or unoccupied areas. Areas without a profile stay disarmed.\n\n**Always disarmed:** as up to version 0.44; if the system was armed, you get the message “disarmed after restart”.",
+        "description": "What Hauswacht does when Home Assistant restarts (e.g. after an update or a nightly backup). If only Hauswacht is reloaded (e.g. after saving settings), the state stays as it was.\n\n**Restore the previous state (default):** if the system was armed, it is armed again right away – with the same profile and the same bypassed sensors, without a new check and without exit delay. If it was disarmed, it stays disarmed.\n- If the **entry delay** was running, it starts again – whoever came home could not disarm during the restart.\n- By default a running **alarm is not continued**: no sirens, the system is armed, the alarm recipients get an important message naming the trigger. To change this: “Resume a running alarm” (below).\n- Sensors reported **open** at startup are bypassed until closed (entry doors start the entry delay instead) and reported.\n\n**Always armed:** about one minute after startup, the chosen profile is armed normally – with the check for open sensors. For holiday homes or unoccupied areas. Areas without a profile stay disarmed.\n\n**Always disarmed:** as up to version 0.44; if the system was armed, you get the message “disarmed after restart”.",
         "data": {
           "restart_behavior": "After a restart",
           "restart_continue_alarm": "Resume a running alarm",
@@ -1353,6 +1358,21 @@
           "vibration_count": "Reports until alarm",
           "vibration_window": "within"
         }
+      },
+      "settings_page": {
+        "title": "Settings page",
+        "description": "The page **Hauswacht** in the sidebar shows the whole setup at a glance (administrators only): sensors with groups and profiles as a table, profiles, rules, sirens, notifications, people. The settings dialog always stays complete – the page is an additional way.",
+        "data": {
+          "enabled": "Show the page “Hauswacht” in the sidebar"
+        }
+      },
+      "stale_sensor": {
+        "title": "Radio silence for {sensor}",
+        "description": "**Observation:** {observation}\n\n**As general:** the general value applies. **Own value:** own hours for this sensor – it then no longer counts for the general recommendation. **Never check:** for sensors that only report on changes – they never count as failed because of silence (“unavailable” is still detected).",
+        "data": {
+          "mode": "Radio silence",
+          "hours": "Own value"
+        }
       }
     },
     "error": {
@@ -1416,7 +1436,8 @@
       "tilt_attribute_missing": "The entity does not have this attribute. Check under Developer tools → States.",
       "tilt_attribute_needed": "For this entity the position is in an attribute – please enter the attribute name.",
       "tilt_no_closed": "At least one value must mean \"closed\".",
-      "tilt_overlap": "A value cannot mean both closed and tilted."
+      "tilt_overlap": "A value cannot mean both closed and tilted.",
+      "stale_hours_invalid": "Please enter 1 to 168 hours."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1618,6 +1639,13 @@
         "event": "Event for your own automation",
         "arm": "Arm with profile …",
         "silent_emergency": "Silent emergency"
+      }
+    },
+    "stale_mode": {
+      "options": {
+        "default": "As general",
+        "hours": "Own value (hours)",
+        "off": "Never check"
       }
     }
   },

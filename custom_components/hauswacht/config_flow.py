@@ -74,6 +74,7 @@ from .const import (
     OPT_REMINDER_PERSONS,
     OPT_REMINDER_PROFILE,
     OPT_SENSOR_TYPES,
+    OPT_SETTINGS_PAGE,
     OPT_SIREN_FIRE_TONE_OK,
     OPT_SIREN_TEST,
     OPT_SIREN_TONES,
@@ -113,8 +114,21 @@ from .core.automation import (
     parse_automation,
 )
 from .core.changes.areas import save_area
-from .core.changes.notifications import save_notify_settings
+from .core.changes.cards import all_cards as _all_cards
+from .core.changes.cards import put_card as _put_card
+from .core.changes.cards import remove_card as _remove_card
+from .core.changes.cards import tag_owner as _tag_owner
+from .core.changes.controls import control_data as _control_data
+from .core.changes.controls import validate_control
+from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
+from .core.changes.sensors import (
+    STALE_DEFAULT,
+    STALE_HOURS,
+    STALE_MODES,
+    STALE_OFF,
+    save_stale_override,
+)
 from .core.changes.sirens import save_sirens
 from .core.changes.users import (
     RIGHT_VALUES,
@@ -141,6 +155,7 @@ from .core.controls import (
     normalize_tag,
     parse_controls,
 )
+from .core.default_texts import default_message, default_title
 from .core.messages import (
     EXAMPLE_VALUES_DE,
     EXAMPLE_VALUES_EN,
@@ -167,6 +182,7 @@ from .core.profiles import (
     profile_infos,
     profile_settings,
     stale_after_seconds,
+    stale_override_hours,
 )
 from .core.reactions import parse_reaction
 from .core.restart import ARMED as RESTART_ARMED
@@ -220,6 +236,7 @@ from .core.sensors import (
     resolve_zones,
     slugify,
 )
+from .core.silence import format_duration as format_silence
 from .core.siren_guard import BURGLAR_TONES, VOLUME_LEVELS, is_fire_tone
 from .core.siren_test import DEFAULT_SECONDS as SIREN_DEFAULT_SECONDS
 from .core.siren_test import DEFAULT_TONE as SIREN_DEFAULT_TONE
@@ -544,6 +561,25 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         """Schließen. Gespeichert wurde bereits nach jedem Formular."""
         return self.async_create_entry(data=dict(self.config_entry.options))
 
+    async def async_step_settings_page(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Einstellungsseite in der Seitenleiste ein- oder ausblenden (ADR 0011)."""
+        options = dict(self.config_entry.options)
+        if user_input is not None:
+            options[OPT_SETTINGS_PAGE] = bool(user_input.get("enabled"))
+            return await self._save(options, "system")
+        return self.async_show_form(
+            step_id="settings_page",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        "enabled", default=bool(options.get(OPT_SETTINGS_PAGE, True))
+                    ): BooleanSelector()
+                }
+            ),
+        )
+
     async def async_step_system(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         return self._menu(
             "system",
@@ -555,6 +591,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 "infrastructure",
                 "homecoming",
                 "restart",
+                "settings_page",
                 "init",
             ],
         )
@@ -2115,6 +2152,12 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         options = dict(self.config_entry.options)
         if user_input is not None:
             options[OPT_STALE_AFTER_HOURS] = int(user_input.get(OPT_STALE_AFTER_HOURS) or 0)
+            sensor = user_input.get("stale_sensor")
+            if sensor:
+                # Erst den allgemeinen Wert übernehmen, dann den Melder einstellen
+                self.hass.config_entries.async_update_entry(self.config_entry, options=options)
+                self._stale_sensor = str(sensor)
+                return await self.async_step_stale_sensor()
             return await self._save(options, "system")
         current = stale_after_seconds(options)
         schema = vol.Schema(
@@ -2130,6 +2173,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                         mode=NumberSelectorMode.BOX,
                     )
                 ),
+                vol.Optional("stale_sensor"): EntitySelector(
+                    EntitySelectorConfig(domain=list(MONITORED_DOMAINS))
+                ),
             }
         )
         silence = self.config_entry.runtime_data.silence if self._loaded() else None
@@ -2137,7 +2183,87 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         return self.async_show_form(
             step_id="sensor_behaviour",
             data_schema=schema,
-            description_placeholders={"observation": observed},
+            description_placeholders={
+                "observation": observed,
+                "own": self._stale_overrides_text(),
+            },
+        )
+
+    def _stale_overrides_text(self) -> str:
+        """Melder mit eigener Funkstille-Grenze, z. B. "Hintertür: 24 h, Keller: nie prüfen"."""
+        own = stale_override_hours(self.config_entry.options)
+        if not own:
+            return "–"
+        never = "nie prüfen" if self._german() else "never check"
+        return ", ".join(
+            f"{display_name(self.hass, e)}: {f'{h} h' if h else never}" for e, h in own.items()
+        )
+
+    async def async_step_stale_sensor(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Funkstille für einen Melder: wie allgemein, eigene Stunden oder nie prüfen."""
+        options = dict(self.config_entry.options)
+        entity_id = getattr(self, "_stale_sensor", "") or ""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            change = save_stale_override(
+                options, entity_id, str(user_input.get("mode")), user_input.get("hours")
+            )
+            # Feld heißt im Dialog "hours"
+            errors = {("hours" if k == "stale_hours" else k): v for k, v in change.errors.items()}
+            if change.ok and change.options is not None:
+                return await self._save(change.options, "system")
+        own = stale_override_hours(options).get(entity_id)
+        mode = STALE_DEFAULT if own is None else (STALE_OFF if own == 0 else STALE_HOURS)
+        silence = self.config_entry.runtime_data.silence if self._loaded() else None
+        german = self._german()
+        record = silence.records.get(entity_id) if silence is not None else None
+        advice_hours = silence.sensor_advice(entity_id) if silence is not None else None
+        if record is None:
+            observed = (
+                "Für diesen Melder gibt es noch keine Beobachtung."
+                if german
+                else "No observation for this sensor yet."
+            )
+        else:
+            days = f"{silence.days():.1f}" if silence is not None else "0"
+            pause = format_silence(record.longest)
+            observed = (
+                f"Längste Pause {pause} bei {record.contacts} Meldungen in {days} Tagen."
+                if german
+                else f"Longest pause {pause} with {record.contacts} reports in {days} days."
+            )
+            if advice_hours:
+                observed += (
+                    f" **Empfehlung: {advice_hours} h.**"
+                    if german
+                    else f" **Recommendation: {advice_hours} h.**"
+                )
+        schema = vol.Schema(
+            {
+                vol.Required("mode", default=mode): _select(list(STALE_MODES), "stale_mode"),
+                vol.Optional(
+                    "hours", description={"suggested_value": own or advice_hours}
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=1,
+                        max=MAX_STALE_HOURS,
+                        step=1,
+                        unit_of_measurement="h",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="stale_sensor",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "sensor": display_name(self.hass, entity_id),
+                "observation": observed,
+            },
         )
 
     # --- Sirenen -----------------------------------------------------------
@@ -2644,26 +2770,20 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         stored = events.get(event.value, {})
         errors: dict[str, str] = {}
         placeholders = {"error": "", "placeholders": self._placeholder_help(), "preview": ""}
+        lang = "de" if self._german() else "en"
         if user_input is not None:
             texts = {k: str(user_input.get(k) or "").strip() for k in ("title", "message")}
-            for key, text in texts.items():
-                try:
-                    check_template(text, "de" if self._german() else "en")
-                except TemplateError as err:
-                    errors[key] = "invalid_template"
-                    placeholders["error"] = str(err)
-            if not errors:
-                for key, text in texts.items():
-                    if text:
-                        stored[key] = text
-                    else:
-                        stored.pop(key, None)
-                events[event.value] = stored
-                options[OPT_EVENTS] = events
-                example = {**self._example_values()}
-                if texts["message"]:
-                    self._notes.append(render(texts["message"], example))
-                return await self._save(options, "notifications")
+            # Gleiche Regeln wie auf der Einstellungsseite: Vorlage unverändert = Text von Hauswacht
+            change = save_event_text(
+                options, event.value, texts["title"], texts["message"], lang=lang
+            )
+            if change.ok and change.options is not None:
+                saved = change.options[OPT_EVENTS].get(event.value, {})
+                if saved.get("message"):
+                    self._notes.append(render(saved["message"], self._example_values()))
+                return await self._save(dict(change.options), "notifications")
+            errors = dict(change.errors)
+            placeholders["error"] = str(change.details.get("message", ""))
         current = stored.get("message")
         if isinstance(current, str) and current:
             placeholders["preview"] = render(current, self._example_values())
@@ -2671,11 +2791,18 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             step_id="notify_text_edit",
             data_schema=vol.Schema(
                 {
+                    # Vorschlag: eigener Text oder die Vorlage von Hauswacht zum Ändern
                     vol.Optional(
-                        "title", description={"suggested_value": stored.get("title", "")}
+                        "title",
+                        description={
+                            "suggested_value": stored.get("title") or default_title(event, lang)
+                        },
                     ): TextSelector(),
                     vol.Optional(
-                        "message", description={"suggested_value": stored.get("message", "")}
+                        "message",
+                        description={
+                            "suggested_value": stored.get("message") or default_message(event, lang)
+                        },
                     ): TextSelector(TextSelectorConfig(multiline=True)),
                 }
             ),
@@ -3677,40 +3804,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         return {**user_input, "topic": topic}
 
     def _validate_control(self, kind: ControlKind, data: dict[str, Any]) -> dict[str, str]:
-        errors: dict[str, str] = {}
-        options = self.config_entry.options
-        area = data.get("area") or CONTROL_ALL_AREAS
-        profiles = [data.get("profile")] if kind is not ControlKind.KEYPAD else []
-        if kind is ControlKind.BUTTON:
-            profiles = list((data.get("presses") or {}).values())
-        if kind is ControlKind.KEYPAD:
-            profiles = [data.get(k) for k in CONTROL_ARM_KEYS]
-            if not str(data.get("topic") or "").strip().strip("/"):
-                errors["keypad_device"] = "control_keypad_topic"
-        elif (
-            kind in (ControlKind.STICKER, ControlKind.READER)
-            and data.get("action") in ("arm", "toggle")
-            and not data.get("profile")
-        ):
-            errors["profile"] = "control_profile_required"
-        if kind is ControlKind.STICKER and not normalize_tag(data.get("tag")):
-            errors["tag"] = "control_tag"
-        if kind is ControlKind.READER and not data.get("device"):
-            errors["device"] = "control_device"
-        if kind in (ControlKind.BUTTON, ControlKind.LOCK) and not data.get("entity"):
-            errors["entity"] = "control_entity"
-        if kind is ControlKind.LOCK:
-            profiles = [data.get("profile")]
-            if data.get("source") == "generic" and not data.get("who"):
-                errors["who"] = "control_who"
-            if data.get("source", "nuki_mqtt") == "nuki_mqtt" and not str(
-                data.get("topic") or ""
-            ).strip().strip("/"):
-                errors["topic"] = "control_topic"
-        for profile in profiles:
-            if profile and area != CONTROL_ALL_AREAS and profile_area(options, profile) != area:
-                errors["base"] = "control_profile_area"
-        return errors
+        return validate_control(self.config_entry.options, kind, data)
 
     async def async_step_control_settings(
         self, user_input: dict[str, Any] | None = None
@@ -4126,42 +4220,6 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         }
 
 
-def _control_data(
-    kind: ControlKind, user_input: dict[str, Any], current: dict[str, Any]
-) -> dict[str, Any]:
-    """Gespeicherte Daten eines Bedienteils aus dem Formular."""
-    data: dict[str, Any] = {
-        "name": str(user_input.get("name") or "").strip() or kind.value,
-        "kind": kind.value,
-        "area": user_input.get("area") or CONTROL_ALL_AREAS,
-    }
-    if kind is ControlKind.KEYPAD:
-        data["topic"] = str(user_input["topic"]).strip().rstrip("/")
-        if user_input.get("keypad_device"):
-            data["keypad_device"] = user_input["keypad_device"]
-        data["buttons"] = {k: user_input[k] for k in CONTROL_ARM_KEYS if user_input.get(k)}
-        data["login"] = user_input.get("login", "pin_or_card")
-        data["emergency"] = user_input.get("emergency", "off")
-    elif kind is ControlKind.BUTTON:
-        data["entity"] = user_input["entity"]
-        data["presses"] = dict(current.get("presses", {}))
-    elif kind is ControlKind.LOCK:
-        data["entity"] = user_input["entity"]
-        data["source"] = user_input.get("source", "nuki_mqtt")
-        data["topic"] = str(user_input.get("topic") or "").strip().rstrip("/")
-        data["who"] = user_input.get("who") or ""
-        data["profile"] = user_input.get("profile") or None
-    else:
-        data["action"] = user_input.get("action", "disarm")
-        data["profile"] = user_input.get("profile") or None
-    if kind is ControlKind.STICKER:
-        data["tag"] = normalize_tag(user_input.get("tag"))
-    if kind is ControlKind.READER:
-        data["device"] = user_input.get("device")
-        data["login"] = user_input.get("login", "card")
-    return data
-
-
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
     """Personen der Heimkehr-Beobachtung und der Profil-Automatik (ohne Doppelte)."""
     persons = [p for p in options.get(OPT_HOMECOMING_PERSONS, []) if isinstance(p, str)]
@@ -4249,62 +4307,6 @@ def _tag_input(value: Any) -> list[str]:
     """Karten aus der Auswahl (Liste) oder – wie früher – als Text mit Komma."""
     items = value if isinstance(value, list) else str(value or "").split(",")
     return list(dict.fromkeys(t for t in (normalize_tag(i) for i in items) if t))
-
-
-def _remove_card(users: dict[str, Any], tag: str) -> None:
-    """Karte bei allen Benutzern entfernen (aktiv, deaktiviert, Name)."""
-    for uid, data in list(users.items()):
-        if not isinstance(data, Mapping):
-            continue
-        new = dict(data)
-        new["tags"] = [t for t in new.get("tags", []) or [] if t != tag]
-        disabled = [t for t in new.get("tags_disabled", []) or [] if t != tag]
-        if disabled or "tags_disabled" in new:
-            new["tags_disabled"] = disabled
-        names = new.get("tag_names")
-        if isinstance(names, dict):
-            new["tag_names"] = {k: v for k, v in names.items() if k != tag}
-        users[uid] = new
-
-
-def _put_card(users: dict[str, Any], tag: str, user_id: str, name: str, *, active: bool) -> None:
-    """Karte einem Benutzer geben (vorher bei allen entfernen)."""
-    _remove_card(users, tag)
-    data = dict(users[user_id])
-    key = "tags" if active else "tags_disabled"
-    data[key] = [*list(data.get(key, []) or []), tag]
-    names = dict(data.get("tag_names") or {})
-    if name:
-        names[tag] = name
-    data["tag_names"] = names
-    users[user_id] = data
-
-
-def _all_cards(users: Mapping[str, Any]) -> list[tuple[str, str, str, bool]]:
-    """Alle Karten: (Karte, Benutzer-ID, Name, aktiv), sortiert nach Benutzer und Name."""
-    rows: list[tuple[str, str, str, bool]] = []
-    for uid, data in users.items():
-        if not isinstance(data, Mapping):
-            continue
-        names = data.get("tag_names") if isinstance(data.get("tag_names"), Mapping) else {}
-        assert isinstance(names, Mapping)
-        rows.extend((t, uid, str(names.get(t, "")), True) for t in data.get("tags", []) or [])
-        rows.extend(
-            (t, uid, str(names.get(t, "")), False) for t in data.get("tags_disabled", []) or []
-        )
-    return sorted(
-        rows,
-        key=lambda r: (str(users[r[1]].get("name", r[1])).casefold(), r[2].casefold(), r[0]),
-    )
-
-
-def _tag_owner(tags: list[str], user_id: str | None, stored: Mapping[str, Any]) -> str | None:
-    """Gehört eine dieser Karten schon einem anderen Benutzer? Dann dessen Name."""
-    for other_id, other in stored.items():
-        own = set(other.get("tags", []) or []) | set(other.get("tags_disabled", []) or [])
-        if other_id != user_id and set(tags) & own:
-            return str(other.get("name", other_id))
-    return None
 
 
 def _rights_scope(current: Mapping[str, Any]) -> str:

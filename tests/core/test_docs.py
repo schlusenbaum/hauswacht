@@ -83,6 +83,7 @@ PAGES = {
     "testmodus.md": "test-mode.md",
     "beobachtung.md": "observations.md",
     "uebersicht.md": "overview.md",
+    "einstellungsseite.md": "settings-page.md",
     "referenz.md": "reference.md",
     "fehlersuche.md": "troubleshooting.md",
     "roadmap.md": "roadmap.md",

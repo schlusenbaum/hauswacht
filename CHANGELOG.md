@@ -6,6 +6,65 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-11-18
+
+**Einstellungsseite „Hauswacht“ in der Seitenleiste** – die ganze Einrichtung auf einen Blick und
+alles direkt bearbeiten, zusätzlich zum Einstellungsdialog (ADR 0011, getestet über die
+Vorabversionen 0.57.0b1 bis b14).
+
+### Hinzugefügt
+- **Einstellungsseite** (nur Administratoren) mit den Reitern Übersicht, Melder, Profile,
+  Auslöseregeln, Alarmgeber, Benachrichtigungen, Personen und Bedienteile, System und
+  Dokumentation. Bearbeitet wird in Seitenblättern rechts – mit denselben Regeln und Prüfungen
+  wie im Dialog. Gespeichert wird nur, wenn alle Bereiche unscharf sind; hat jemand zwischendurch
+  woanders etwas geändert, wird nichts überschrieben. Ausblenden unter System →
+  Einstellungsseite.
+- **Melder:** Matrix „Melder × Profile“ nach Meldergruppen; Meldergruppen mit Typ je Melder,
+  Label und Fehlalarmschutz; einzelnen Melder bearbeiten (Gruppe, Typ, Immer aktiv, Ausnahmen je
+  Profil); Melder mit Kippstellung, Erschütterungsstärken, Immer aktiv mit Sirenen für den
+  unscharfen Zustand, Melder aus Messwert erstellen. Die Melder-Auswahl zeigt sofort alle
+  passenden Melder, ohne Namen kennen zu müssen.
+- **Profile:** anlegen, ändern, löschen – alle Einstellungen wie im Dialog, mit Link zum Anlegen
+  eines Zeitplans.
+- **Auslöseregeln** mit Umschalter **Formular / YAML**; komplexe Regeln nur als YAML. Beim
+  Bearbeiten steht immer als Satz da, was die Regel bewirkt.
+- **Alarmgeber:** Sirenen und Freigabe (nur mit Bestätigung), Ton je Sirene mit Brandton-Sperre,
+  Sirenentest-Erinnerung, Sirene aus Schalter erstellen. Die Seite schaltet nie eine Sirene; der
+  Sirenentest bleibt in der Testkarte.
+- **Benachrichtigungen:** Empfänger, Ereignisse, Erinnerung; **eigene Texte** starten mit dem Text
+  von Hauswacht als Vorlage, mit Vorschau und „↺ Standardtext“; **Sprachausgabe** mit
+  Lautsprechern, Nachtruhe und Text je Ereignis.
+- **Personen** mit Rechten je Bereich, Gültigkeit und PINs (nie sichtbar); **Karten anlernen** auf
+  der Seite (hinhalten oder Nummer eintippen); **Bedienteile** anlegen und einstellen; PIN-Regeln
+  und Master-PIN; Aktions-Codes.
+- **System:** Verhalten nach Neustart, Funkstille, Funknetz, Anwesenheit und Heimkehr, Bereiche.
+- **Funkstille je Melder:** eigene Grenze oder „nie prüfen“, Beobachtung und Empfehlung je Melder
+  („Empfehlung übernehmen“) – auf der Seite und im Dialog. Melder mit eigenem Wert zählen für die
+  allgemeine Empfehlung nicht mehr mit. Neuer Prüfhinweis, wenn ein eigener Wert zu knapp ist.
+- **„?“ an jedem Abschnitt** öffnet die Anleitung an der passenden Stelle – für genau die
+  installierte Version; Reiter **Dokumentation** mit allen Seiten.
+- Übersicht auf der Seite mit **Drucken**, **Notfallblatt** und Download des Heimkehr-Berichts.
+
+### Geändert
+- **„Verhalten nach Neustart“ gilt nur noch nach einem echten Neustart von Home Assistant.** Wird
+  nur Hauswacht neu geladen (z. B. nach dem Speichern von Einstellungen), bleibt der Zustand, wie
+  er war.
+- Platzhalter-Texte räumen leere Klammern besser auf (kein Leerzeichen mehr vor dem Punkt).
+
+### Behoben
+- „Nach Neustart immer scharf“: Beim Neuladen lief der Timer der alten Instanz weiter und ließ sich
+  nicht stoppen.
+
+### Dokumentation
+- Neue Seite „Einstellungsseite“; Melder (Funkstille je Melder), Benachrichtigungen (eigene Texte
+  als Vorlage), Installation (Neustart), Auslöseregeln, README, Roadmap – deutsch und englisch.
+
+### Intern
+- Logikschicht erweitert (`core/changes/`: Regeln, Sirenen, Sprachausgabe, Karten, Bedienteile,
+  System, Aktions-Codes, Benutzer); Karten und Bedienteile nutzt jetzt auch der Dialog.
+  Websocket-Befehle `hauswacht/settings/get`, `…/apply`, `…/rule_check`, `…/new_cards` (nur
+  Administratoren). Kern- und Integrationstests; Test, dass jeder Doku-Link der Seite existiert.
+
 ## [0.56.0] - 2026-11-18
 
 Fenster richtig überwachen: gekippte Fenster und Erschütterung (ADR 0010, getestet über die

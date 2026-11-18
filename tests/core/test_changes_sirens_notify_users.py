@@ -5,12 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from custom_components.hauswacht.core.changes.notifications import (
+    save_event_text,
     save_notify_settings,
     set_general_recipients,
 )
 from custom_components.hauswacht.core.changes.sirens import save_sirens
 from custom_components.hauswacht.core.changes.users import (
     delete_user,
+    save_person,
     save_user,
     set_area_rights,
     set_pins,
@@ -102,6 +104,32 @@ def test_notify_settings_keep_own_texts() -> None:
     assert "reminder_profile" not in change.options
 
 
+def test_event_text_saved_checked_and_cleared() -> None:
+    options = {"events": {"armed": {"enabled": True, "targets": ["notify.a"]}}}
+    change = save_event_text(options, "armed", " Scharf ", "{profil} ist scharf ({who})")
+    assert change.ok
+    assert change.options is not None
+    stored = change.options["events"]["armed"]
+    assert stored == {
+        "enabled": True,
+        "targets": ["notify.a"],
+        "title": "Scharf",
+        "message": "{profil} ist scharf ({who})",
+    }
+    assert options["events"]["armed"] == {"enabled": True, "targets": ["notify.a"]}
+    # Leer = wieder der Text von Hauswacht
+    cleared = save_event_text(change.options, "armed", "", "")
+    assert cleared.options is not None
+    assert cleared.options["events"]["armed"] == {"enabled": True, "targets": ["notify.a"]}
+
+
+def test_event_text_errors() -> None:
+    bad = save_event_text({}, "armed", "", "{foo} da", lang="en")
+    assert bad.errors == {"message": "invalid_template"}
+    assert "{foo}" in bad.details["message"]
+    assert save_event_text({}, "nope", "", "").errors == {"event": "unknown_event"}
+
+
 # --- Benutzer ---------------------------------------------------------------
 
 
@@ -189,3 +217,39 @@ def test_set_and_remove_pins() -> None:
     removed = set_pins(change.options, "anna", {"remove_pin": True})
     assert removed.options is not None
     assert "pin_digest" not in removed.options["users"]["anna"]
+
+
+def test_save_person_with_pins_and_area_rights() -> None:
+    options: dict[str, Any] = {
+        "users": {},
+        "areas": {"garage": {"name": "Garage"}},
+    }
+    change = save_person(
+        options,
+        None,
+        {
+            "name": "Anna",
+            "rights": "per_area",
+            "area_rights": {"main": ["arm", "disarm", "nonsense"], "garage": []},
+            "new_pin": "4711",
+            "new_duress_pin": "4712",
+        },
+    )
+    assert change.ok, change.errors
+    assert change.options is not None
+    anna = change.options["users"][change.item_id]
+    assert anna["rights"] == "per_area"
+    assert anna["area_rights"] == {"main": ["arm", "disarm"], "garage": []}
+    assert anna["pin_digest"]
+    assert anna["duress_digest"]
+    assert "4711" not in str(anna)
+    # PIN-Fehler: nichts wird gespeichert, Name und PIN werden gemeinsam gemeldet
+    bad = save_person(change.options, None, {"name": "Anna", "new_pin": "12"})
+    assert bad.errors == {"name": "user_name_taken", "new_pin": "invalid_pin"}
+    # PIN entfernen, Rest bleibt
+    removed = save_person(change.options, change.item_id, {"name": "Anna", "remove_pin": True})
+    assert removed.options is not None
+    stored = removed.options["users"][change.item_id]
+    assert "pin_digest" not in stored
+    assert stored["duress_digest"]
+    assert save_person(options, "gibtsnicht", {"name": "X"}).errors == {"base": "unknown_user"}

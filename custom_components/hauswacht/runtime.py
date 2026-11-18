@@ -78,6 +78,7 @@ from .core.always_active import (
     parse_arm_on_close,
 )
 from .core.areas import MAIN_AREA, area_options, parse_areas
+from .core.changes import options_revision
 from .core.code_guard import (
     CodeGuardState,
     current_failures,
@@ -99,6 +100,7 @@ from .core.profiles import (
     profile_info,
     profile_infos,
     stale_after_seconds,
+    stale_overrides_seconds,
 )
 from .core.reactions import (
     alarm_message,
@@ -343,6 +345,8 @@ class HauswachtRuntime:
         self.reminder = ReminderRunner(self)
         self.zones = parse_zones(entry.options)
         # Melder mit Kippstellung (ADR 0010): drei Stellungen, Bewertung je Profil
+        # Stand der Einstellungen, mit dem dieser Lauf gestartet ist (Einstellungsseite)
+        self.loaded_revision = options_revision(entry.options)
         self.tilt_sources = parse_tilt_sources(entry.options)
         # Erschütterungsstärke als Zahl und Fehlalarmschutz je Meldergruppe (ADR 0010 Teil B)
         self.vibration_sources = parse_vibration_sources(entry.options)
@@ -352,6 +356,8 @@ class HauswachtRuntime:
         self.sensor_types = effective_types(entry.options)
         self.role_overrides = role_overrides(self.sensor_types)
         self.stale_after = stale_after_seconds(entry.options)
+        # Eigene Funkstille-Grenzen je Melder (None = nie prüfen)
+        self.stale_overrides = stale_overrides_seconds(entry.options)
         # Funknetz/Gateways überwacht nur der Hauptbereich (sonst doppelte Meldungen)
         self.infrastructure: frozenset[str] = frozenset(
             str(e)
@@ -396,6 +402,8 @@ class HauswachtRuntime:
         # Nach dem Wiederherstellen: Startphase (keine Ausfallmeldungen, offene Melder überbrücken)
         self._grace_until: float | None = None
         self._unsub_grace: CALLBACK_TYPE | None = None
+        # "Nach Neustart scharf": eigener Timer (Warten auf den Start, dann ARM_AFTER_START)
+        self._unsub_restart_arm: CALLBACK_TYPE | None = None
         self._startup_open: frozenset[str] = frozenset()
         # Push-Knopf "Unscharf schalten": gilt nur für die laufende Scharfschaltung
         self.push_disarm = bool(entry.options.get(OPT_PUSH_DISARM, False))
@@ -574,12 +582,18 @@ class HauswachtRuntime:
         edit = data.get("edit_profile")
         self._edit_profile = edit if isinstance(edit, str) else None
         previous = data.get("armed_profile")
+        # Erster Start in diesem Lauf von Home Assistant oder nur neu geladen?
+        started: set[str] = self.hass.data.setdefault(f"{DOMAIN}_started", set())
+        start_key = f"{self.entry.entry_id}:{self.area_id}"
+        reload = start_key in started
+        started.add(start_key)
         plan = plan_restart(
             restart_behavior(self.entry.options),
             saved=data.get("restore") if isinstance(data.get("restore"), dict) else None,
             previous_profile=previous if isinstance(previous, str) else None,
             fixed_profile=restart_profile(self.entry.options, self.area_id),
             known_profiles=set(self.profiles),
+            reload=reload,
         )
         self._dispatch(
             Startup(
@@ -846,14 +860,18 @@ class HauswachtRuntime:
 
         @callback
         def _later(_hass: HomeAssistant) -> None:
-            self._unsub_grace = async_call_later(self.hass, ARM_AFTER_START, _arm)
+            self._unsub_restart_arm = async_call_later(self.hass, ARM_AFTER_START, _arm)
 
         @callback
         def _arm(_now: Any) -> None:
-            self._unsub_grace = None
+            self._unsub_restart_arm = None
             self.automation.auto_arm(profile_id, REASON_RESTART)
 
-        self._unsub_grace = async_at_started(self.hass, _later)
+        # Läuft Home Assistant schon, ruft async_at_started _later sofort auf – dann steht der
+        # Timer bereits in _unsub_restart_arm und darf nicht überschrieben werden.
+        waiting = async_at_started(self.hass, _later)
+        if self._unsub_restart_arm is None:
+            self._unsub_restart_arm = waiting
 
     @callback
     def async_stop(self) -> None:
@@ -861,6 +879,9 @@ class HauswachtRuntime:
         if self._unsub_grace is not None:
             self._unsub_grace()
             self._unsub_grace = None
+        if self._unsub_restart_arm is not None:
+            self._unsub_restart_arm()
+            self._unsub_restart_arm = None
         if self._unsub_siren_check is not None:
             self._unsub_siren_check()
             self._unsub_siren_check = None
@@ -1648,6 +1669,7 @@ class HauswachtRuntime:
             self.snapshots(entity_ids, tilt_allowed=tilt_allowed),
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
+            stale_overrides=self.stale_overrides,
         )
         # Erschütterung ist ein Vorgang, kein offener Zustand: blockiert das Scharfschalten nie
         open_sensors = frozenset(e for e in readiness.open_sensors if not self.is_vibration(e))
@@ -1692,6 +1714,7 @@ class HauswachtRuntime:
             self.snapshots(self.candidates),
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
+            stale_overrides=self.stale_overrides,
         )
         return system_report(
             self._infrastructure_states(),

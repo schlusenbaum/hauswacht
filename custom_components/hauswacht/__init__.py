@@ -57,11 +57,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     from .alarm_card import async_register_alarm_websocket  # noqa: PLC0415
     from .frontend import async_register_card  # noqa: PLC0415
     from .review import async_register_websocket  # noqa: PLC0415
+    from .settings_ws import async_register_settings_websocket  # noqa: PLC0415
 
     async_register_websocket(hass)
     async_register_alarm_websocket(hass)
+    async_register_settings_websocket(hass)
     integration = await async_get_integration(hass, entry.domain)
     await async_register_card(hass, str(integration.version or "0"))
+    from .const import OPT_SETTINGS_PAGE  # noqa: PLC0415
+    from .frontend import async_register_panel, async_remove_panel  # noqa: PLC0415
+
+    if entry.options.get(OPT_SETTINGS_PAGE, True):
+        await async_register_panel(hass, str(integration.version or "0"))
+        entry.async_on_unload(lambda: async_remove_panel(hass))
     return True
 
 

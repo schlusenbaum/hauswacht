@@ -31,15 +31,23 @@ from .core.automation import parse_automation
 from .core.checks import run_checks
 from .core.controls import learn_minutes, parse_controls
 from .core.notify_events import NotifyEvent, enabled, route
-from .core.profiles import profile_behaviour, profile_info, profile_settings, stale_after_seconds
+from .core.profiles import (
+    profile_behaviour,
+    profile_info,
+    profile_settings,
+    stale_after_seconds,
+    stale_override_hours,
+)
 from .core.reactions import parse_reaction
 from .core.restart import OPT_RESTART_PROFILES, continue_alarm, restart_behavior
 from .core.rules import build_engine, describe_rule, profile_rule_ids
 from .core.sensor_types import excluded_sensors
+from .core.sensors import resolve_zone
 from .core.siren_guard import FireIndicator, SirenDevice, is_fire_tone, select_tone
 from .core.speech import parse_speech
-from .core.tilt import TILTED
+from .core.tilt import TILTED, parse_tilt_sources
 from .core.users import Action, User
+from .core.vibration import parse_vibration_sources, rule_for_zone_id
 from .names import display_name, plain_name
 
 if TYPE_CHECKING:
@@ -435,6 +443,15 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
     return {
         "stale_after_hours": round(stale / 3600) if stale else 0,
         "recommended_hours": silence.advice_hours() if silence is not None else None,
+        # Eigene Grenzen je Melder (0 = nie prüfen) mit der Empfehlung für diesen Melder
+        "stale_overrides": [
+            {
+                "name": _name(hass, entity),
+                "hours": hours,
+                "recommended": silence.sensor_advice(entity) if silence is not None else None,
+            }
+            for entity, hours in stale_override_hours(options).items()
+        ],
         "observed_days": round(silence.days(), 1) if silence is not None else 0,
         "infrastructure": [
             {
@@ -458,6 +475,57 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
             "days": round(main.homecoming.days(), 1),
             "arrivals": main.homecoming.summary() or 0,
         },
+    }
+
+
+def _groups(main: HauswachtRuntime) -> list[dict[str, Any]]:
+    """Meldergruppen mit Melderzahl und Fehlalarmschutz für Erschütterung."""
+    options = main.entry.options
+    rows = []
+    for zone in main.zones.values():
+        rule = rule_for_zone_id(options, zone.zone_id)
+        rows.append(
+            {
+                "id": zone.zone_id,
+                "name": zone.name,
+                "label": zone.label,
+                "count": len(resolve_zone(zone, main._labels)),
+                "vibration_count": rule.count,
+                "vibration_window": rule.window,
+            }
+        )
+    return rows
+
+
+def _special(main: HauswachtRuntime) -> dict[str, Any]:
+    """Besondere Melder: Kippstellung (Zuordnung) und Erschütterungsstärke (Schwelle)."""
+    hass = main.hass
+    options = main.entry.options
+    group_of: dict[str, str] = {}
+    for zone_name, members in main.zone_members().items():
+        for member in members:
+            group_of.setdefault(member, zone_name)
+    return {
+        "tilt": [
+            {
+                "entity": s.entity_id,
+                "name": _name(hass, s.entity_id),
+                "attribute": s.attribute,
+                "closed": sorted(s.closed),
+                "tilted": sorted(s.tilted),
+                "group": group_of.get(s.entity_id),
+            }
+            for s in parse_tilt_sources(options).values()
+        ],
+        "vibration": [
+            {
+                "entity": s.entity_id,
+                "name": _name(hass, s.entity_id),
+                "threshold": s.threshold,
+                "group": group_of.get(s.entity_id),
+            }
+            for s in parse_vibration_sources(options).values()
+        ],
     }
 
 
@@ -494,6 +562,8 @@ def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
         ],
         "profiles": _profiles(main),
         "sensors": _sensors(main),
+        "groups": _groups(main),
+        "special": _special(main),
         "rules": _rules(main, language),
         "always_active": {
             "configured": always.configured,

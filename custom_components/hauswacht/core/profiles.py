@@ -188,6 +188,30 @@ def stale_after_seconds(options: Mapping[str, Any]) -> float | None:
     return hours * 3600.0 if hours > 0 else None
 
 
+OPT_STALE_OVERRIDES = "stale_overrides"  # {Melder: Stunden}, 0 = nie prüfen
+
+
+def stale_override_hours(options: Mapping[str, Any]) -> dict[str, int]:
+    """Eigene Funkstille-Grenzen je Melder in Stunden (0 = nie prüfen)."""
+    raw = options.get(OPT_STALE_OVERRIDES)
+    if not isinstance(raw, Mapping):
+        return {}
+    return {
+        str(entity): _bounded_int(hours, 0, 0, MAX_STALE_HOURS)
+        for entity, hours in raw.items()
+        if isinstance(entity, str) and "." in entity
+    }
+
+
+def stale_overrides_seconds(options: Mapping[str, Any]) -> dict[str, float | None]:
+    """Eigene Grenzen je Melder in Sekunden (None = nie prüfen) – Vorrang vor dem allgemeinen
+    Wert aus :func:`stale_after_seconds`."""
+    return {
+        entity: hours * 3600.0 if hours > 0 else None
+        for entity, hours in stale_override_hours(options).items()
+    }
+
+
 def build_profiles(options: Mapping[str, Any]) -> dict[str, ProfileRuntime]:
     """Erzeugt die Laufzeitprofile aus den Optionen eines Konfigurationseintrags."""
     profiles: dict[str, ProfileRuntime] = {}

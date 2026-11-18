@@ -10,6 +10,8 @@ Die Funktionen ändern die übergebenen Einstellungen nie, sie liefern immer ein
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -42,3 +44,9 @@ def failed(errors: Mapping[str, str], **details: Any) -> Change:
 def copy_options(options: Mapping[str, Any]) -> dict[str, Any]:
     """Flache Kopie – verschachtelte Teile werden beim Ändern selbst kopiert."""
     return dict(options)
+
+
+def options_revision(options: Mapping[str, Any]) -> str:
+    """Prüfsumme der Einstellungen – ändert sich mit jeder Änderung, egal von wo."""
+    raw = json.dumps(options, sort_keys=True, default=str, ensure_ascii=False)
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]

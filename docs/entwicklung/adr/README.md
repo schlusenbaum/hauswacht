@@ -14,3 +14,4 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0008](0008-verhalten-nach-neustart.md) | Verhalten nach Neustart einstellbar, Standard: wiederherstellen |
 | [0009](0009-einrichtungsassistent.md) | Einrichtungsassistent und gemeinsame Logikschicht |
 | [0010](0010-fenster-kippstellung-erschuetterung.md) | Fenster richtig überwachen: Kippstellung („gekippt“) je Profil und Erschütterung als eigener Typ |
+| [0011](0011-einstellungsseite.md) | Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog |
