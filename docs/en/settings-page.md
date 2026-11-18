@@ -3,8 +3,8 @@
 [Deutsch](../einstellungsseite.md) | **English**
 
 > **Pre-release:** the page grows in stages. It **shows** the whole setup; you already edit
-> **sensors** and **alarm profiles** directly on the page. Trigger rules, alarm devices,
-> notifications, people and system are still edited in the settings dialog (button "Edit in the
+> **sensors**, **alarm profiles**, **alarm devices** and **notifications** directly on the page.
+> Trigger rules, people and system are still edited in the settings dialog (button "Edit in the
 > dialog" at the top right) – that follows in the next stages.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
@@ -106,6 +106,54 @@ sections match the dialog:
 
 The same rules as in the dialog apply: a name is needed and must be unique, every button only
 once per area, "disarm on arrival" only with persons. **Delete** asks once.
+
+## Editing alarm devices
+
+In the tab **Alarm devices**, **"Edit sirens"** opens the side sheet:
+
+- **Registered sirens** – remove with ✕; below, all other sirens (`siren.…`) to tap. When a
+  siren is removed, it also disappears from the profiles and its tone is forgotten – as in the
+  dialog.
+- **Real siren control enabled** – only then can sirens really sound on an alarm. When **turning
+  it on**, a warning and a second tick **"I understand …"** appear; without this tick nothing is
+  saved ("Please confirm to enable."). Turning it off works any time without asking.
+- **Experts: also allow switches as sirens** – after saving, `switch.…` entities also appear in
+  the list (see [create siren from switch](sirens.md#create-siren-from-switch)).
+
+The **tone per siren** and the fire tone release are still set in the dialog
+([tone per siren](sirens.md#tone-per-siren)). There is deliberately **no siren test** on the page
+– only in the [test card](sirens.md#siren-test).
+
+## Editing notifications
+
+The tab **Notifications** has two buttons:
+
+**"Edit recipients and events"** – everything from "Notifications – settings" in the dialog on
+one sheet:
+
+| Section | Content |
+|---|---|
+| **General recipients** | get every event that has no own recipients |
+| **Switches** | Also notify in test mode · button "Disarm" in the alarm message · important messages break through "Do not disturb" |
+| **Duress PIN silently reports to** | who is notified silently on a duress PIN |
+| **Events** | a tick per event (on/off); expand → **own recipients**. On the right it says who gets it – "general recipients" if no own ones are ticked |
+| **Reminder** | persons, suggested profile, after how many minutes – see [reminder](notifications.md#reminder-everyone-away-system-disarmed) |
+
+Recipients per **profile** (who is notified on an alarm in this profile) are set in the profile
+(section "Reaction on alarm").
+
+**"Own texts"** – below, every event is listed with "Hauswacht's text" or your own text. "Edit"
+opens title and text. Placeholders like `{sensor}` or `{profile}` are listed below, and after
+saving the list shows a **preview** with example values. A typo is refused, e.g. "Text has an
+error: unknown placeholder {foo}". Leave a field empty = Hauswacht's text again. Example:
+
+```text
+Title:  Alarm in {area}
+Text:   {sensor} triggered at {time} (profile {profile}).
+```
+
+More under [custom texts and placeholders](notifications.md#custom-texts-and-placeholders).
+Speech and quiet hours are still set in the dialog.
 
 ## Good to know
 

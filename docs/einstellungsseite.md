@@ -2,10 +2,11 @@
 
 **Deutsch** | [English](en/settings-page.md)
 
-> **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an; **Melder**
-> und **Alarmprofile** bearbeitest du schon direkt auf der Seite. Auslöseregeln, Alarmgeber,
-> Benachrichtigungen, Personen und System bearbeitest du noch im Einstellungsdialog (Knopf „Im
-> Dialog bearbeiten“ oben rechts) – das folgt in den nächsten Stufen.
+> **Vorabversion:** Die Seite wächst in Stufen. Sie **zeigt** die ganze Einrichtung an;
+> **Melder**, **Alarmprofile**, **Alarmgeber** und **Benachrichtigungen** bearbeitest du schon
+> direkt auf der Seite. Auslöseregeln, Personen und System bearbeitest du noch im
+> Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) – das folgt in den nächsten
+> Stufen.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -107,6 +108,56 @@ Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgab
 
 Es gelten dieselben Regeln wie im Dialog: Name nötig und eindeutig, jeder Knopf nur einmal je
 Bereich, „Unscharf bei Rückkehr“ nur mit Personen. **Löschen** fragt einmal nach.
+
+## Alarmgeber bearbeiten
+
+Im Reiter **Alarmgeber** öffnet **„Sirenen bearbeiten“** das Seitenblatt:
+
+- **Eingetragene Sirenen** – mit ✕ austragen; darunter alle weiteren Sirenen (`siren.…`) zum
+  Antippen. Wird eine Sirene ausgetragen, verschwindet sie auch aus den Profilen und ihr Ton wird
+  vergessen – wie im Dialog.
+- **Echte Sirenenansteuerung freigegeben** – erst damit können Sirenen bei einem Alarm wirklich
+  ertönen. Beim **Einschalten** erscheint ein Warnhinweis und ein zweiter Haken **„Ich habe
+  verstanden …“**; ohne diesen Haken wird nicht gespeichert („Zum Freigeben bitte bestätigen.“).
+  Ausschalten geht jederzeit ohne Nachfrage.
+- **Experten: auch Schalter als Sirene erlauben** – nach dem Speichern stehen auch `switch.…` in
+  der Auswahl (siehe [Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)).
+
+Den **Ton je Sirene** und die Brandton-Freigabe stellst du weiter im Dialog ein
+([Ton je Sirene](sirenen.md#ton-je-sirene)). Einen **Sirenentest** gibt es auf der Seite bewusst
+nicht – nur in der [Testkarte](sirenen.md#sirenentest).
+
+## Benachrichtigungen bearbeiten
+
+Im Reiter **Benachrichtigungen** gibt es zwei Knöpfe:
+
+**„Empfänger und Ereignisse bearbeiten“** – alles aus „Benachrichtigungen – Einstellungen“ im
+Dialog auf einem Blatt:
+
+| Abschnitt | Inhalt |
+|---|---|
+| **Allgemeine Empfänger** | bekommen alle Ereignisse, die keine eigenen Empfänger haben |
+| **Schalter** | Auch im Testmodus benachrichtigen · Knopf „Unscharf schalten“ in der Alarm-Nachricht · Wichtige Nachrichten durchbrechen „Nicht stören“ |
+| **Bedrohungs-PIN meldet still an** | wer bei einer Bedrohungs-PIN still benachrichtigt wird |
+| **Ereignisse** | je Ereignis ein Haken (an/aus); aufklappen → **eigene Empfänger**. Rechts steht, wer es bekommt – „allgemeine Empfänger“, wenn keine eigenen angehakt sind |
+| **Erinnerung** | Personen, vorgeschlagenes Profil, nach wie vielen Minuten – siehe [Erinnerung](benachrichtigungen.md#erinnerung-alle-weg-anlage-unscharf) |
+
+Die Empfänger je **Profil** (wer bei Alarm in diesem Profil benachrichtigt wird) stellst du im
+Profil ein (Abschnitt „Reaktion bei Alarm“).
+
+**„Eigene Texte“** – darunter steht jedes Ereignis mit „Text von Hauswacht“ oder deinem eigenen
+Text. „Bearbeiten“ öffnet Titel und Text. Platzhalter wie `{melder}` oder `{profil}` stehen
+darunter, und nach dem Speichern zeigt die Liste eine **Vorschau** mit Beispielwerten. Ein
+Tippfehler wird abgelehnt, z. B. „Text fehlerhaft: Unbekannter Platzhalter {foo}“. Feld leer
+lassen = wieder der Text von Hauswacht. Beispiel:
+
+```text
+Titel:  Alarm im {bereich}
+Text:   {melder} hat um {uhrzeit} ausgelöst (Profil {profil}).
+```
+
+Mehr dazu unter [Eigene Texte und Platzhalter](benachrichtigungen.md#eigene-texte-und-platzhalter).
+Sprachausgabe und Nachtruhe stellst du noch im Dialog ein.
 
 ## Gut zu wissen
 

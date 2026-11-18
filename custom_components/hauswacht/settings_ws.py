@@ -19,9 +19,11 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import label_registry as lr
 
+from .alarm_notify_settings_ws import build_alarm_notify_settings
 from .const import DOMAIN
 from .core.always_active import parse_always_active
 from .core.changes import Change, options_revision
+from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sensors import (
     remove_group,
@@ -33,6 +35,7 @@ from .core.changes.sensors import (
     save_strength,
     save_tilt,
 )
+from .core.changes.sirens import save_sirens
 from .core.sensor_types import SensorType, default_type
 from .core.tilt import effective_types, parse_tilt_sources
 from .core.vibration import parse_vibration_sources, rule_for_zone_id
@@ -67,6 +70,9 @@ ACTIONS = (
     "sensor_save",
     "profile_save",
     "profile_delete",
+    "sirens_save",
+    "notify_save",
+    "notify_text_save",
 )
 
 
@@ -162,6 +168,7 @@ def build_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
         ],
         "entities": sorted(entities, key=lambda e: str(e["name"]).casefold()),
         "profile_edit": build_profile_settings(hass, main),
+        **build_alarm_notify_settings(hass, main),
     }
 
 
@@ -186,6 +193,27 @@ def apply_change(hass: HomeAssistant, main: Any, action: str, data: Mapping[str,
     if action == "profile_save":
         payload = {k: v for k, v in data.items() if k != "id"}
         return save_profile(options, data.get("id") or None, payload, entities_by_label=labels)
+    if action == "sirens_save":
+        return save_sirens(
+            options,
+            {
+                "sirens": list(data.get("sirens") or []),
+                "sirens_hardware_enabled": bool(data.get("hardware_enabled")),
+                "sirens_allow_switch": bool(data.get("allow_switch")),
+                "confirm_hardware": bool(data.get("confirm_hardware")),
+            },
+        )
+    if action == "notify_save":
+        return save_notify_settings(options, data)
+    if action == "notify_text_save":
+        lang = "de" if (hass.config.language or "").startswith("de") else "en"
+        return save_event_text(
+            options,
+            str(data.get("event")),
+            str(data.get("title") or ""),
+            str(data.get("message") or ""),
+            lang=lang,
+        )
     if action == "profile_delete":
         if data.get("id") not in options.get("profiles", {}):
             return Change(errors={"base": "unknown_profile"})

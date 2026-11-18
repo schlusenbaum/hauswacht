@@ -230,3 +230,90 @@ async def test_profile_persons_show_in_overview_after_reload(
     overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
     profile = next(p for p in overview["profiles"] if p["id"] == "night")
     assert profile["auto"]["away_persons"] == ["Anna"]
+
+
+async def test_sirens_release_needs_confirmation(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Nur Einstellungen – es wird keine Sirene geschaltet."""
+    hass.states.async_set("siren.flur", "off", {"friendly_name": "Flur"})
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert any(c["id"] == "siren.flur" for c in data["sirens"]["candidates"])
+    payload = {"sirens": ["siren.flur"], "hardware_enabled": True, "allow_switch": False}
+    refused = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="sirens_save",
+        data=payload,
+    )
+    assert refused["errors"] == {"base": "confirm_hardware_required"}
+    assert not _options(hass).get("sirens_hardware_enabled")
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="sirens_save",
+        data={**payload, "confirm_hardware": True},
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    assert _options(hass)["sirens"] == ["siren.flur"]
+    assert _options(hass)["sirens_hardware_enabled"] is True
+    assert hass.states.get("siren.flur").state == "off"
+
+
+async def test_notify_settings_and_event_text(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    events = {e["event"]: e for e in data["notify"]["events"]}
+    assert "alarm" in events
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="notify_save",
+        data={
+            "notify_system": ["notify.anna"],
+            "notify_in_test_mode": True,
+            "critical_alerts": False,
+            "event_armed": {"enabled": False, "targets": []},
+            "reminder": {"reminder_persons": [], "reminder_profile": "night", "reminder_delay": 20},
+        },
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    options = _options(hass)
+    assert options["notify_system"] == ["notify.anna"]
+    assert options["events"]["armed"]["enabled"] is False
+    assert options["reminder_profile"] == "night"
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    bad = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="notify_text_save",
+        data={"event": "armed", "title": "", "message": "{foo}"},
+    )
+    assert bad["errors"] == {"message": "invalid_template"}
+    assert "{foo}" in bad["details"]["message"]
+    good = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="notify_text_save",
+        data={"event": "armed", "title": "Scharf", "message": "{profil} ist scharf"},
+    )
+    assert good["ok"] is True, good
+    await hass.async_block_till_done()
+    armed = _options(hass)["events"]["armed"]
+    assert armed["message"] == "{profil} ist scharf"
+    assert armed["enabled"] is False
+    fresh = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    text = next(e for e in fresh["notify"]["events"] if e["event"] == "armed")
+    assert text["preview"]
+    assert "{" not in text["preview"]

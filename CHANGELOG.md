@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b7] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 4).
+
+### Hinzugefügt
+- **Alarmgeber auf der Einstellungsseite bearbeiten**: Sirenen eintragen und austragen, echte
+  Sirenenansteuerung freigeben (nur mit ausdrücklicher Bestätigung, wie im Dialog), Schalter als
+  Sirene erlauben. Ton je Sirene bleibt im Dialog, ein Sirenentest nur in der Testkarte – die
+  Seite schaltet keine Sirene.
+- **Benachrichtigungen auf der Einstellungsseite bearbeiten**: allgemeine Empfänger, Testmodus,
+  Push-Knopf, „Nicht stören“ durchbrechen, Bedrohungs-PIN, jedes Ereignis an/aus mit eigenen
+  Empfängern, Erinnerung „Alle weg“.
+- **Eigene Texte je Ereignis** auf der Seite: Titel und Text mit Platzhalterhilfe, Prüfung auf
+  Tippfehler und Vorschau mit Beispielwerten.
+
 ## [0.57.0b6] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).

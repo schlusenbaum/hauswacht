@@ -3,7 +3,8 @@
 // Nur stabile Bausteine: eigene Web-Component, ha-card, ha-icon und die Farben des Themas.
 // Die Abschnitte kommen aus der Karte "Hauswacht Übersicht" (dieselben Texte und Daten über
 // den Websocket-Befehl hauswacht/overview, nur für Administratoren). Bearbeitet wird in dieser
-// Stufe noch im Einstellungsdialog.
+// Stufe noch im Einstellungsdialog. Bearbeiten (ab Stufe 2) über eigene Seitenblätter:
+// hauswacht-panel-edit.js (Melder), -profile.js (Profile), -alarm.js (Alarmgeber, Benachrichtigungen).
 
 const TEXTS = {
   de: {
@@ -11,7 +12,13 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick. Melder und Profile bearbeitest du hier direkt; der Rest folgt – bis dahin über „Im Dialog bearbeiten“.",
+    hint: "Die ganze Einrichtung auf einen Blick. Melder, Profile, Alarmgeber und Benachrichtigungen bearbeitest du hier direkt; der Rest folgt – bis dahin über „Im Dialog bearbeiten“.",
+    editSirens: "Sirenen bearbeiten",
+    editNotify: "Empfänger und Ereignisse bearbeiten",
+    texts: "Eigene Texte",
+    textsHint: "Titel und Text je Ereignis selbst formulieren – mit Platzhaltern wie {melder}. Leer lassen = Text von Hauswacht.",
+    ownText: "eigener Text",
+    defaultText: "Text von Hauswacht",
     edit: "Bearbeiten",
     clickHint: "Auf einen Melder klicken: Gruppe, Typ, Immer aktiv und Ausnahmen je Profil ändern.",
     addGroup: "Meldergruppe anlegen",
@@ -52,7 +59,13 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance. You edit sensors and profiles right here; the rest follows – until then use “Edit in the dialog”.",
+    hint: "The whole setup at a glance. You edit sensors, profiles, alarm devices and notifications right here; the rest follows – until then use “Edit in the dialog”.",
+    editSirens: "Edit sirens",
+    editNotify: "Edit recipients and events",
+    texts: "Own texts",
+    textsHint: "Write the title and text per event yourself – with placeholders like {sensor}. Leave empty = Hauswacht's text.",
+    ownText: "own text",
+    defaultText: "Hauswacht's text",
     edit: "Edit",
     clickHint: "Click a sensor: change group, type, always active and exclusions per profile.",
     addGroup: "Add sensor group",
@@ -192,6 +205,7 @@ class HauswachtPanel extends HTMLElement {
     try {
       await import(`/hauswacht/hauswacht-panel-edit.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-profile.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-alarm.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -270,6 +284,51 @@ class HauswachtPanel extends HTMLElement {
     editor.open({ hass: this._hass, settings: this._settings, profile: profileId || null });
   }
 
+  _openAlarmEditor(kind, event) {
+    if (!customElements.get("hauswacht-alarm-editor") || !this._settings?.notify) return;
+    const view = this._view();
+    const editor = document.createElement("hauswacht-alarm-editor");
+    editor.addEventListener("hw-close", () => this._closeEditor());
+    editor.addEventListener("hw-saved", (ev) => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave(ev.detail?.revision);
+    });
+    editor.addEventListener("hw-stale", () => this._reloadAfterSave());
+    this._editor = editor;
+    this.shadowRoot.appendChild(editor);
+    editor.open({
+      hass: this._hass,
+      settings: this._settings,
+      kind,
+      event,
+      eventLabel: (e) => (view ? view._l("event", e) : e),
+    });
+  }
+
+  _armedOr(html) {
+    return this._settings && !this._settings.editable ? `<div class="muted">${escHtml(this._t("armedNote"))}</div>` : html;
+  }
+
+  _sirensTab(view) {
+    const parts = view._parts();
+    const tools = this._armedOr(`<div class="tool">${this._btn("sirens:", this._t("editSirens"))}</div>`);
+    return this._card(parts.sirens[0], tools + parts.sirens[2]);
+  }
+
+  _notificationsTab(view) {
+    const parts = view._parts();
+    const tools = this._armedOr(`<div class="tool">${this._btn("notify:", this._t("editNotify"))}</div>`);
+    const events = this._settings?.notify?.events || [];
+    const texts = events
+      .map((e) => `<div class="item">${this._btn(`text:${e.event}`, this._t("edit"))}<div class="n">${escHtml(view._l("event", e.event))}</div><div class="muted">${escHtml(e.message || e.title ? `${this._t("ownText")}: ${e.title ? e.title + " – " : ""}${e.preview || e.message}` : this._t("defaultText"))}</div></div>`)
+      .join("");
+    return (
+      this._card(parts.notifications[0], tools + parts.notifications[2]) +
+      (events.length ? this._card(this._t("texts"), `<div class="muted">${escHtml(this._t("textsHint"))}</div>${texts}`) : "")
+    );
+  }
+
   _profilesTab(view) {
     const d = this._data;
     const tools = this._settings && !this._settings.editable
@@ -298,6 +357,9 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "always") this._openEditor("always", null);
     else if (kind === "sensor") this._openEditor("sensor", { entity: spec.slice(7) });
     else if (kind === "profile") this._openProfileEditor(id);
+    else if (kind === "sirens") this._openAlarmEditor("sirens");
+    else if (kind === "notify") this._openAlarmEditor("notify");
+    else if (kind === "text") this._openAlarmEditor("text", id);
   }
 
   get _canEdit() {
@@ -413,6 +475,8 @@ class HauswachtPanel extends HTMLElement {
     }
     if (this._tab === "sensors") return this._sensorsTab(view);
     if (this._tab === "profiles") return this._profilesTab(view);
+    if (this._tab === "sirens") return this._sirensTab(view);
+    if (this._tab === "notifications") return this._notificationsTab(view);
     const parts = view._parts();
     const items = TAB_PARTS[this._tab] || [];
     const asOf = this._tab === "overview" ? parts.asOf : "";

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from custom_components.hauswacht.core.changes.notifications import (
+    save_event_text,
     save_notify_settings,
     set_general_recipients,
 )
@@ -100,6 +101,32 @@ def test_notify_settings_keep_own_texts() -> None:
     assert change.options["critical_alerts"] is True
     assert change.options["reminder_delay"] == 15
     assert "reminder_profile" not in change.options
+
+
+def test_event_text_saved_checked_and_cleared() -> None:
+    options = {"events": {"armed": {"enabled": True, "targets": ["notify.a"]}}}
+    change = save_event_text(options, "armed", " Scharf ", "{profil} ist scharf ({who})")
+    assert change.ok
+    assert change.options is not None
+    stored = change.options["events"]["armed"]
+    assert stored == {
+        "enabled": True,
+        "targets": ["notify.a"],
+        "title": "Scharf",
+        "message": "{profil} ist scharf ({who})",
+    }
+    assert options["events"]["armed"] == {"enabled": True, "targets": ["notify.a"]}
+    # Leer = wieder der Text von Hauswacht
+    cleared = save_event_text(change.options, "armed", "", "")
+    assert cleared.options is not None
+    assert cleared.options["events"]["armed"] == {"enabled": True, "targets": ["notify.a"]}
+
+
+def test_event_text_errors() -> None:
+    bad = save_event_text({}, "armed", "", "{foo} da", lang="en")
+    assert bad.errors == {"message": "invalid_template"}
+    assert "{foo}" in bad.details["message"]
+    assert save_event_text({}, "nope", "", "").errors == {"event": "unknown_event"}
 
 
 # --- Benutzer ---------------------------------------------------------------
