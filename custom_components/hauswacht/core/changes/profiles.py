@@ -147,6 +147,9 @@ def save_profile(
         stored[key] = convert(data)
     if not partial or "automation" in data:
         stored.update(automation_from_input(data.get("automation") or {}))
+    elif "auto_schedule" in data:
+        # Assistent: nur den Zeitplan setzen, die übrige Automatik bleibt
+        stored["auto_schedule"] = data.get("auto_schedule") or None
     if not partial or "arm_on_close" in data:
         stored["arm_on_close"] = arm_on_close_from_input(data.get("arm_on_close") or {})
     profiles[new_id] = stored

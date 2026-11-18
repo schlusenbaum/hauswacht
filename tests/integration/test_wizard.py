@@ -403,3 +403,34 @@ async def test_trial_run_asks_for_test_mode_and_ticks_sensors(hass: HomeAssistan
     assert "✅" in flow["description_placeholders"]["sensors"]
     flow = await _opt(hass, flow, {"next_step_id": "wizard_summary"})
     assert flow["step_id"] == "wizard_summary"
+
+
+async def test_wizard_sets_schedule_and_keeps_other_automation(hass: HomeAssistant) -> None:
+    _sensors(hass)
+    hass.states.async_set("schedule.nacht", "off")
+    entry = make_entry({"profiles": {"night": {"auto_away_persons": ["person.anna"]}}})
+    await setup_entry(hass, entry)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard"})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_profiles"})
+    assert flow["step_id"] == "wizard_profiles"
+    flow = await _opt(
+        hass,
+        flow,
+        {
+            "away": False,
+            "night": True,
+            "night_zones": ["aussen"],
+            "night_schedule": "schedule.nacht",
+        },
+    )
+    assert flow["step_id"] == "wizard_recipients"
+    night = entry.options["profiles"]["night"]
+    assert night["auto_schedule"] == "schedule.nacht"
+    assert night["auto_away_persons"] == ["person.anna"]  # übrige Automatik bleibt
+    # erneut: Feld ist vorbelegt
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    flow = await _opt(hass, flow, {"next_step_id": "wizard"})
+    flow = await _opt(hass, flow, {"next_step_id": "wizard_profiles"})
+    marker = next(m for m in flow["data_schema"].schema if str(m) == "night_schedule")
+    assert marker.description == {"suggested_value": "schedule.nacht"}

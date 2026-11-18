@@ -146,3 +146,21 @@ def test_delete_profile() -> None:
     assert change.options is not None
     assert change.options["profiles"] == {}
     assert "night" in options["profiles"]
+
+
+def test_partial_schedule_keeps_other_automation() -> None:
+    options = _options()
+    options["profiles"]["night"]["auto_away_persons"] = ["person.anna"]
+    change = save_profile(
+        options, "night", {"name": "Nacht", "auto_schedule": "schedule.nacht"}, partial=True
+    )
+    assert change.options is not None
+    stored = change.options["profiles"]["night"]
+    assert stored["auto_schedule"] == "schedule.nacht"
+    assert stored["auto_away_persons"] == ["person.anna"]
+
+
+def test_full_form_stores_schedule() -> None:
+    change = save_profile(_options(), None, _form(automation={"auto_schedule": "schedule.x"}))
+    assert change.options is not None
+    assert change.options["profiles"]["abwesend"]["auto_schedule"] == "schedule.x"

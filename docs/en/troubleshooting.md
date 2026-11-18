@@ -24,6 +24,17 @@ It was reported open at startup. Hauswacht cannot tell whether it was already op
 bypasses it instead of triggering an alarm. As soon as it is closed, it is monitored normally
 again.
 
+**The schedule does not arm (or does not disarm).**
+- Arming only from **disarmed** – if another profile was already armed, nothing happens.
+- In **guest mode** Hauswacht does not arm automatically (message "skipped").
+- **Open windows** are never confirmed automatically – then you get the message "not armed".
+- Disarming only if **exactly this profile** is armed, and never during entry delay or an alarm.
+- **Restart** during a block change: the schedule catches up on nothing; the behaviour after
+  restart applies.
+- Check the schedule itself: Developer tools → States → `schedule.…` must change from `off` to
+  `on` at the desired time. Events `AutoArmed`/`AutoArmSkipped` with `reason: Zeitplan` show what
+  Hauswacht made of it. More: [different times per weekday](profiles.md#different-times-per-weekday-schedule).
+
 **Settings cannot be changed.**
 Only possible while **all areas are disarmed**.
 

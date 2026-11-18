@@ -116,7 +116,12 @@ verschiedenen Tagen verschiedene Zeiten**, nimm statt eines zweiten Profils eine
 1. Einstellungen → Geräte & Dienste → **Helfer** → Helfer erstellen → **Zeitplan**, Name z. B.
    „Nacht“.
 2. Im Zeitplan je Wochentag die Zeitblöcke ziehen, in denen das Profil scharf sein soll.
-3. Im Profil unter **Automatik → Oder nach Zeitplan (Helfer)** den Zeitplan wählen.
+3. Im Profil unter **Automatik → Oder nach Zeitplan (Helfer)** den Zeitplan wählen – oder im
+   [Einrichtungsassistenten](assistent.md) im Schritt Alarmprofile.
+
+Den Zeitplan legst du selbst an: Home Assistant bietet Integrationen keinen offiziellen Weg,
+Zeitpläne anzulegen, und Hauswacht greift nicht in interne Teile ein, die sich mit Updates ändern
+können. Die Zeiten änderst du später direkt im Zeitplan – Hauswacht musst du dafür nicht öffnen.
 
 *Beispiel „Nacht“:*
 

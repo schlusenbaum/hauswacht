@@ -102,6 +102,14 @@ in the profile (sirens, recipients, automation …) stays as it is.
 
 A selected profile needs at least one sensor group or rule.
 
+**By schedule (optional):** for each of the two profiles you can choose a **schedule helper**.
+When a time block starts, the profile is armed; when it ends, disarmed – this gives **different
+times per weekday**, e.g. "Night" Mon–Thu 22:30–6:00 and Fri–Sat 0:30–8:00. You create the
+schedule yourself: Settings → Devices & services → **Helpers** → Create helper → **Schedule**
+(Hauswacht cannot create schedules itself). This also works later – start the wizard again and
+choose "Alarm profiles", or in the profile under Automation. Empty = no time control; a schedule
+already chosen stays. Details: [different times per weekday](profiles.md#different-times-per-weekday-schedule).
+
 ### 7. Recipients
 
 Who gets the messages from Hauswacht (alarm, armed, disarmed, faults)? Phones with the Home

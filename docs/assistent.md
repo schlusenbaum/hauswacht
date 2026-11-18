@@ -106,6 +106,15 @@ anzulegen. Alles andere am Profil (Sirenen, Empfänger, Automatik …) bleibt, w
 
 Ein ausgewähltes Profil braucht mindestens eine Meldergruppe oder Regel.
 
+**Nach Zeitplan (optional):** Für jedes der beiden Profile kannst du einen
+**Zeitplan-Helfer** wählen. Beginnt ein Zeitblock, wird das Profil scharf; endet er, unscharf –
+so gehen **je Wochentag andere Zeiten**, z. B. „Nacht“ Mo–Do 22:30–6:00 und Fr–Sa 0:30–8:00.
+Den Zeitplan legst du selbst an: Einstellungen → Geräte & Dienste → **Helfer** → Helfer
+erstellen → **Zeitplan** (Hauswacht kann Zeitpläne nicht selbst anlegen). Das geht auch später –
+dann den Assistenten erneut starten und „Alarmprofile“ wählen, oder im Profil unter Automatik.
+Leer = keine Zeitsteuerung; ein schon gewählter Zeitplan bleibt. Details:
+[Je Wochentag andere Zeiten](profile.md#je-wochentag-andere-zeiten-zeitplan).
+
 ### 7. Empfänger
 
 Wer bekommt die Nachrichten von Hauswacht (Alarm, scharf, unscharf, Störungen)? Handys mit der
