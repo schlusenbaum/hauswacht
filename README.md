@@ -83,8 +83,9 @@ was eine Alarmanlage weiß**, damit du mit eigenen Automationen anschließt, was
 Damit wird Hauswacht zum Kern für vieles, was eine Alarmanlage können soll: bei Alarm **Licht an**
 und danach wieder wie vorher, **Kamerabild aufs Handy**, **Rollläden hoch**, Musik aus,
 **Heizung runter** bei Abwesenheit, Willkommenslicht beim Heimkommen, Haustür abschließen beim
-Scharfschalten – jeweils mit fertiger Vorlage in den **[Beispielen](docs/beispiele.md)**, alle
-Entitäten, Attribute und Ereignisse in der **[Referenz](docs/referenz.md)**. Im Testmodus bleibt
+Scharfschalten – jeweils mit fertiger Vorlage in den **[Beispielen](docs/beispiele.md)**. Welchen
+Auslöser du wofür nimmst, zeigt der Spickzettel **[Automationen](docs/automationen.md)**; alle
+Entitäten, Attribute und Ereignisse mit ihren Feldern stehen in der **[Referenz](docs/referenz.md)**. Im Testmodus bleibt
 das dank des Attributs `test_mode` still.
 
 ## Schnellstart
@@ -124,6 +125,7 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 | [Sirenen](docs/sirenen.md) | Kompatibilität, Freigabe, Ton je Sirene, Sirene aus Schalter, Sirenentest, „Warum hat sie nicht geklingelt?“, Brandschutz |
 | [Benachrichtigungen](docs/benachrichtigungen.md) | Ereignisse, eigene Texte, Sprachausgabe |
 | [Anlagenübersicht](docs/uebersicht.md) | Übersicht, Drucken, Notfallblatt, Prüfhinweise |
+| [Automationen: was nehme ich wofür?](docs/automationen.md) | Spickzettel: der richtige Auslöser für jeden Anlass |
 | [Beispiele](docs/beispiele.md) | Mit anderen Geräten verbinden: Licht, Kamera, Rollläden, Statuslicht, Heizung … |
 | [Testmodus](docs/testmodus.md) · [Beobachtungen](docs/beobachtung.md) · [Referenz](docs/referenz.md) · [Fehlersuche](docs/fehlersuche.md) | |
 
