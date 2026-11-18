@@ -346,6 +346,44 @@ actions:
 What exactly is in the event is shown by Developer tools → Events → `hauswacht_event` → "Start
 listening".
 
+### Several areas: tampering in the garage
+
+With [areas](profiles.md#areas) every event names its area in `area` (ID) and `area_name`
+(display name). Here tampering **only in the garage** goes to Peter's phone, and the garage light
+goes on. Tampering in the house does not trigger this automation.
+
+```yaml
+alias: Hauswacht – tampering garage
+triggers:
+  - trigger: event
+    event_type: hauswacht_event
+    event_data:
+      type: TamperDetected
+      area: garage
+conditions:
+  - condition: state
+    entity_id: alarm_control_panel.hauswacht_garage
+    attribute: test_mode
+    state: false
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.garage
+  - action: notify.mobile_app_peters_phone
+    data:
+      title: "Tampering – {{ trigger.event.data.area_name }}"
+      message: >
+        {{ state_attr(trigger.event.data.sensor_key, 'friendly_name')
+           or trigger.event.data.sensor_key }} reports tampering.
+```
+
+- The ID (`garage`) is shown in the [reference](reference.md#events) or when listening to
+  `hauswacht_event`; it stays the same even if you rename the area.
+- `area: all` is used by events of the whole system (e.g. radio network faulty) and by control
+  devices for all areas. Whoever means **all** areas simply leaves out `area`.
+- The panel of the area is called e.g. `alarm_control_panel.hauswacht_garage` – if in doubt, check
+  under Settings → Entities.
+
 ### System faulty: lamp orange
 
 ```yaml

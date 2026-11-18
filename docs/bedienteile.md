@@ -187,7 +187,13 @@ data:
   action: event
   control: Keypad Flur
   test: false
+  area: all            # Keypad für alle Bereiche; sonst der Bereich des Keypads, z. B. garage
+  area_name: Alle Bereiche
 ```
+
+`area` ist der Bereich des **Bedienteils**: ein Keypad „für alle Bereiche“ meldet `all`, eines
+für die Garage `garage`. Wer im Auslöser nach `area` filtert, muss deshalb den Bereich des Keypads
+nehmen – nicht den Bereich, den der Code scharf schaltet.
 
 Dieses Ereignis `hauswacht_event` kommt bei **jedem** Aktions-Code – auch bei „Scharf schalten“
 und „stiller Notruf“. Als Auslöser ist es oft einfacher als die Entität, weil ein einziger
@@ -563,6 +569,9 @@ Gut zu wissen:
 - Verlangen die PIN-Regeln einen **PIN zum Scharfschalten**, schaltet der Taster **nicht** –
   er kann keinen PIN eingeben. Hauswacht schickt dann eine Systemmeldung.
 - Kommt der Taster nach einem Funkausfall wieder, zählt das nicht als Drücken.
+- Jedes Drücken meldet das Ereignis `ButtonPressed` (siehe [Referenz](referenz.md#bedienung-1)).
+  Dessen Feld `area` ist der Bereich des Tasters – bei einem Taster „für alle Bereiche“ `all`.
+  Dasselbe gilt für Türschloss und Notruf-Taste.
 - Ein Taster **außen** an der Tür ist nicht verboten, aber dann kann jeder Vorbeigehende scharf
   schalten (und wer drinnen ist, löst später Alarm aus). Besser innen anbringen.
 

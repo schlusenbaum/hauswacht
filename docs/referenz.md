@@ -163,11 +163,16 @@ Gut zu wissen:
         type: TamperDetected
         area: garage
   ```
+
+  Bei Bedienteilen (Keypad, Taster, Türschloss, Notruf-Taste) ist `area` der Bereich des
+  **Bedienteils** – ein Bedienteil „für alle Bereiche“ meldet `all`.
 - **Melder** stehen als Entitäts-ID in `sensor_key` bzw. als Liste in `sensors`,
   `open_sensors` …; den Anzeigenamen liefert `state_attr(…, 'friendly_name')`.
 - Mengen (z. B. `open_sensors`) kommen als **Liste**.
 
 ### Zustand und Alarm
+
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
 
 | `type` | Wann | Felder |
 |---|---|---|
@@ -195,12 +200,16 @@ Neustart), `startup`.
 
 ### Neustart
 
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
+
 | `type` | Wann | Felder |
 |---|---|---|
-| `RestoredAfterRestart` | Nach einem Neustart wiederhergestellt | `area`, `profile_id`, `entry_delay`, `alarm_was_active` |
+| `RestoredAfterRestart` | Nach einem Neustart wiederhergestellt | `profile_id`, `entry_delay`, `alarm_was_active` |
 | `RestartedDisarmed` | Nach einem Neustart unscharf (Einstellung „immer unscharf“ oder Profil gelöscht) | `previous_profile_id` |
 
 ### Profil-Automatik und Anwesenheit
+
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
 
 `reason` nennt den Anlass: `Uhrzeit`, `Zeitplan`, `alle weg`, `Rückkehr`, `Rückkehr mit
 Türbeleg`, `Neustart`.
@@ -219,6 +228,8 @@ Türbeleg`, `Neustart`.
 
 ### Bedienung
 
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
+
 | `type` | Wann | Felder |
 |---|---|---|
 | `InvalidCode` | Falscher PIN bzw. unbekannte Karte | `failures` (Zahl in Folge), `lock_seconds` (Sperre, 0 = keine) |
@@ -227,11 +238,13 @@ Türbeleg`, `Neustart`.
 | `ButtonPressed` | [Taster](bedienteile.md#taster) gedrückt | `control`, `press` (`single`, `double`, `long`), `profile` (leer = Druckart nicht belegt) |
 | `LockIdentified` | [Türschloss](bedienteile.md#türschloss-z-b-nuki): Kennung empfangen | `control`, `intent` (`UNLOCK`, `LOCK` oder leer), `identity`, `reason` (`ok`, `not_by_person`, `no_id`) |
 | `LockIgnored` | Türschloss: Kennung nicht verwendet | `control`, `intent`, `reason` (`unknown_id`, `disabled_id`) |
-| `GuestMode` | [Gastmodus](profile.md#gastmodus) ein/aus | `area`, `on`, `until` (leer = bis zum Ausschalten), `by` |
+| `GuestMode` | [Gastmodus](profile.md#gastmodus) ein/aus | `on`, `until` (leer = bis zum Ausschalten), `by` |
 | `Panic` | Notruf-Taste mit Alarm | `control` |
 | `Emergency` | Notruf-Taste gedrückt (vor der Reaktion) | `control`, `mode` (`off`, `silent`, `alarm`) |
 
 ### Störungen
+
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
 
 | `type` | Wann | Felder |
 |---|---|---|
@@ -240,6 +253,8 @@ Türbeleg`, `Neustart`.
 | `InfrastructureRecovered` | … wieder in Ordnung | `indicator`, `armed` |
 
 ### Auslöseregeln
+
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
 
 | `type` | Wann | Felder |
 |---|---|---|
@@ -251,12 +266,16 @@ Türbeleg`, `Neustart`.
 
 ### Sirenen
 
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
+
 | `type` | Wann | Felder |
 |---|---|---|
 | `SirenDecision` | Hauswacht hat über Sirenen entschieden | `action` (`activate`, `stop`, `stop_restored` = nach Neustart aus), `sent` (angesteuerte Sirenen), `blocked` (Sirene → Grund: `test_mode`, `hardware_disabled`, `fire_lock`, `unknown_device`, `not_allowed_for_burglar`, `no_burglar_tone`, …) |
 | `SirenTest` | Schritt eines [Sirenentests](sirenen.md) | `step` (`started`, `stopped`, `blocked`, `result`), `siren`, je nach Schritt `by`, `seconds`, `volume`, `reason`, `heard` |
 
 ### Für die Fehlersuche
+
+*Dazu in jedem Ereignis: `area`, `area_name` (siehe [oben](#ereignisse)).*
 
 Diese Ereignisse zeigen Abläufe im Inneren. Als Auslöser für Automationen taugen sie selten.
 
