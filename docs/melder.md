@@ -11,6 +11,7 @@ Hauswacht überwacht nur Entitäten, die **offen/zu** kennen:
 | Binärsensor (`binary_sensor`) | an |
 | Schloss (`lock`) | entriegelt, öffnet, offen, blockiert |
 | Abdeckung (`cover`, z. B. Garagentor) | offen, öffnet, schließt |
+| [Melder mit Kippstellung](#melder-mit-kippstellung-gekippt) (Sensor mit Text-Zustand, Attribut oder Auswahl-Helfer) | offen – gekippt je nach Profil |
 
 Alles andere wird über einen **Helfer** in Home Assistant zum Binärsensor:
 
@@ -52,7 +53,8 @@ ganze Meldergruppen scharf, nicht einzelne Melder. Typisch:
 
 Melder kommen auf zwei Wegen in eine Gruppe, beide lassen sich kombinieren:
 
-- **Direkt auswählen** im Feld „Sensoren“.
+- **Direkt auswählen** im Feld „Sensoren“. [Melder mit Kippstellung](#melder-mit-kippstellung-gekippt)
+  haben ein eigenes Feld darunter (es erscheint, sobald es welche gibt).
 - **Per Label:** Alle Melder, die dieses Label **direkt an der Entität** tragen, gehören
   automatisch dazu. Labels am Gerät zählen bewusst nicht – sonst kämen Batterie- oder
   Verbindungssensoren desselben Geräts mit.
@@ -77,6 +79,84 @@ vorgeschlagenen Typ – meist passt er, sonst direkt dort ändern.
 
 Beispiel: Ein Fenster, durch das man das Haus betritt, bekommt den Typ **Tür**. Rauchmelder
 schlägt Hauswacht bewusst nicht als „Technik“ vor – Brandschutz bleibt Sache der Rauchmelder.
+
+## Melder mit Kippstellung (gekippt)
+
+Viele Fenstersensoren melden nicht nur offen oder zu, sondern **drei Stellungen**: **zu**,
+**gekippt** und **offen** – z. B. Sensoren im Fensterfalz (etwa Senoro.Win über Zigbee2MQTT) oder
+Fenstergriffe (etwa Homematic IP). Hauswacht kann mit allen drei umgehen. Der große Vorteil: In
+jedem Alarmprofil legst du fest, ob ein **gekipptes Fenster erlaubt** ist.
+
+> **Beispiel:** Nachts ist das Schlafzimmerfenster gekippt – im Profil „Nacht“ ist das erlaubt,
+> die Anlage lässt sich scharf schalten. Öffnet jemand das Fenster **ganz**, gibt es Alarm. Im
+> Profil „Abwesend“ zählt dasselbe gekippte Fenster wie offen – du wirst beim Gehen darauf
+> hingewiesen.
+
+### Einrichten
+
+**Alarmauslösung → Besondere Melder → Melder mit Kippstellung anlegen.**
+
+1. **Quelle wählen.** Woher die Stellung kommt, ist je Gerät verschieden:
+
+   | Gerät liefert … | Beispiel | So eintragen |
+   |---|---|---|
+   | einen Sensor mit Text-Zustand | `sensor.fenster_schlafzimmer_opening_state` = `open` / `tilted` / `closed` | nur die Entität wählen |
+   | ein Attribut an einer Entität | `binary_sensor.fenstergriff_bad`, Attribut `window_state` = `OPEN` / `TILTED` / `CLOSED` | Entität wählen, Attribut `window_state` eintragen |
+   | nichts – du willst erst ausprobieren | Helfer „Auswahl“ (Dropdown) „Testfenster“ mit *offen*, *gekippt*, *zu* | den Helfer wählen |
+
+   Welche Werte und Attribute ein Gerät hat, zeigt Entwicklerwerkzeuge → Zustände.
+2. **Werte zuordnen.** Hauswacht zeigt die bekannten Werte und schlägt die Zuordnung vor
+   (`closed`/`zu`/`geschlossen` → zu, `tilted`/`gekippt` → gekippt). Prüfen, bei Bedarf
+   ergänzen (fehlende Werte lassen sich eintippen), speichern.
+3. **In eine Meldergruppe nehmen** – direkt im zweiten Schritt oder später unter Meldergruppen
+   (eigenes Feld „Melder mit Kippstellung“). Der Typ ist automatisch **Fenster** und lässt sich
+   wie bei jedem Melder ändern.
+4. **In den Profilen festlegen**, wo gekippt erlaubt ist: Einstellung **„Gekippte Fenster
+   erlaubt“** (siehe [Alarmprofile](profile.md#alarmprofile)). Standard ist **aus**.
+
+### So bewertet Hauswacht die Stellungen
+
+| Wechsel | Profil mit „gekippt erlaubt“ | Profil ohne (Standard) |
+|---|---|---|
+| zu → gekippt | nichts | Auslösung (wie Öffnen) |
+| gekippt → offen | **Auslösung** | nichts – war schon „offen“ |
+| offen → gekippt | nichts | nichts |
+| gekippt oder offen → zu | nichts | nichts |
+| Scharfschalten, während gekippt | erlaubt | wie ein offenes Fenster (verweigern, „trotzdem scharf“ …) |
+
+**Sicherheitsregeln:**
+
+- **Unbekannte Werte zählen als offen**, nie als zu – auch Werte, die das Gerät erst später
+  meldet (z. B. „Spaltlüftung“). Wer so einen Wert als gekippt behandeln will, ergänzt ihn in der
+  Zuordnung.
+- **Ausfall wird erkannt** wie bei jedem Melder: Ist der Sensor nicht verfügbar oder fehlt das
+  Attribut, gilt er als ausgefallen (Funkstille-Prüfung, Ereignis `SensorUnavailable`,
+  Einstellung „Ausgefallene Sensoren beim Scharfschalten“). Ein selbst gebauter Vorlagen-Helfer
+  würde einen Ausfall dagegen meist als „zu“ melden.
+- **„Trotzdem scharf“ mit gekipptem Fenster:** Das Fenster wird überbrückt – aber nur in der
+  Stellung gekippt. Wird es danach **ganz geöffnet**, löst es aus. Erst wenn es zu war, gilt die
+  Überbrückung als beendet wie bei jedem Melder.
+- In **Auslöseregeln** zählt ein Melder mit Kippstellung, sobald er im aktiven Profil als offen
+  gilt: mit „gekippt erlaubt“ also erst beim ganzen Öffnen, sonst schon beim Kippen.
+
+### Wo du die Stellung siehst
+
+- **Bedienfeld:** Attribut `tilted_sensors` (gerade gekippt). Erlaubt das Profil gekippte
+  Fenster, stehen sie **nicht** in `open_sensors`.
+- **Meldungen:** „Nicht scharf geschaltet: Schlafzimmer: Fenster (gekippt)“.
+- **Ereignisse:** Ereignisse mit `sensor_key` haben bei diesen Meldern zusätzlich `position`
+  (`open`, `tilted`, `closed`), siehe [Referenz](referenz.md#ereignisse).
+- **Testkarte:** zeigt „gekippt“ und hat im Testmodus einen eigenen Knopf **Gekippt** zum
+  Simulieren.
+- **Anlagenübersicht:** Zustand „gekippt“.
+
+**Bearbeiten und entfernen** unter Alarmauslösung → Besondere Melder. Entfernen nimmt den Melder
+auch aus allen Meldergruppen; am Gerät ändert sich nichts.
+
+> **Erschütterung am Fenster:** Viele dieser Sensoren melden auch Erschütterung (Aufhebeln,
+> Glasbruch) als Zahl. Daraus wird heute mit
+> [Melder aus anderem Sensor erstellen](#melder-aus-anderem-sensor-erstellen) ein eigener Melder
+> (z. B. oberer Grenzwert 30, Typ Fenster).
 
 ## Melder aus anderem Sensor erstellen
 

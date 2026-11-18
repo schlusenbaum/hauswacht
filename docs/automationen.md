@@ -67,6 +67,7 @@ Die Beispiele nennen das Bedienfeld `alarm_control_panel.hauswacht` – mit
 | die **Profil-Automatik** scharf geschaltet hat | Ereignis `AutoArmed` | `reason`: `Uhrzeit`, `Zeitplan`, `alle weg` … |
 | die Profil-Automatik es **nicht** konnte | Ereignis `AutoArmFailed` bzw. `AutoArmSkipped` | `reason`, `details`; `guest_mode: true` = wegen Gastmodus |
 | **Fenster offen** sind (z. B. Hinweis beim Gehen) | Entität `binary_sensor.hauswacht_offene_sensoren` | Namen im Attribut `names` |
+| ein Fenster **gekippt** ist ([Kippstellung](melder.md#melder-mit-kippstellung-gekippt)) | Attribut `tilted_sensors` des Bedienfelds | Auch wenn das Profil gekippt erlaubt; im Ereignis Feld `position` |
 
 ## Ich will etwas tun …
 

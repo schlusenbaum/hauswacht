@@ -11,6 +11,7 @@ from custom_components.hauswacht.core.state_machine import (
     AlarmState,
     ArmRequested,
     BypassedSensorOpened,
+    Ignored,
     OpenSensorPolicy,
     ProfileRuntime,
     Readiness,
@@ -161,4 +162,5 @@ def test_bypassed_tilted_window_opened_fully_triggers() -> None:
 def test_bypassed_opened_ignored_when_not_bypassed() -> None:
     ctx, effects = step(AlarmContext(), BypassedSensorOpened("sensor.f", SensorRole.INSTANT), 0.0)
     assert ctx.state is AlarmState.DISARMED
-    assert effects[0].reason == "not_bypassed"  # type: ignore[attr-defined]
+    assert isinstance(effects[0], Ignored)
+    assert effects[0].reason == "not_bypassed"

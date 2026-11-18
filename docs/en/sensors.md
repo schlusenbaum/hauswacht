@@ -11,6 +11,7 @@ Hauswacht only monitors entities that know **open/closed**:
 | Binary sensor (`binary_sensor`) | on |
 | Lock (`lock`) | unlocked, opening, open, jammed |
 | Cover (`cover`, e.g. garage door) | open, opening, closing |
+| [Sensor with tilt position](#sensors-with-tilt-position-tilted) (sensor with a text state, attribute or select helper) | open – tilted depending on the profile |
 
 Everything else becomes a binary sensor via a **helper** in Home Assistant:
 
@@ -52,7 +53,8 @@ groups, not single sensors. Typical:
 
 Sensors get into a group in two ways, which can be combined:
 
-- **Select directly** in the field "Sensors".
+- **Select directly** in the field "Sensors". [Sensors with tilt position](#sensors-with-tilt-position-tilted)
+  have their own field below (it appears as soon as there are any).
 - **By label:** all sensors that carry this label **directly on the entity** belong to the
   group automatically. Labels on the device deliberately do not count – otherwise battery or
   connectivity sensors of the same device would be included.
@@ -78,6 +80,80 @@ suggested type – usually it fits, otherwise change it right there.
 Example: a window through which you enter the house gets the type **Door**. Hauswacht
 deliberately does not suggest smoke detectors as "Technical" – fire protection stays the job of
 the smoke detectors.
+
+## Sensors with tilt position (tilted)
+
+Many window sensors report not only open or closed but **three positions**: **closed**,
+**tilted** and **open** – e.g. sensors in the window rebate (such as Senoro.Win via Zigbee2MQTT)
+or window handles (such as Homematic IP). Hauswacht can handle all three. The big advantage: in
+every alarm profile you decide whether a **tilted window is allowed**.
+
+> **Example:** at night the bedroom window is tilted – in the profile "Night" that is allowed,
+> the system can be armed. If someone opens the window **fully**, there is an alarm. In the
+> profile "Away" the same tilted window counts as open – you are told about it when leaving.
+
+### Setting up
+
+**Alarm triggering → Special sensors → Add sensor with tilt position.**
+
+1. **Choose the source.** Where the position comes from differs per device:
+
+   | Device provides … | Example | How to enter it |
+   |---|---|---|
+   | a sensor with a text state | `sensor.bedroom_window_opening_state` = `open` / `tilted` / `closed` | just choose the entity |
+   | an attribute on an entity | `binary_sensor.bathroom_window_handle`, attribute `window_state` = `OPEN` / `TILTED` / `CLOSED` | choose the entity, enter the attribute `window_state` |
+   | nothing – you want to try it first | "Dropdown" (select) helper "Test window" with *open*, *tilted*, *closed* | choose the helper |
+
+   Which values and attributes a device has is shown by Developer tools → States.
+2. **Assign values.** Hauswacht shows the known values and suggests the assignment
+   (`closed`/`zu`/`geschlossen` → closed, `tilted`/`gekippt` → tilted). Check, add values if
+   needed (missing values can be typed in), save.
+3. **Add it to a sensor group** – directly in the second step or later under sensor groups (own
+   field "Sensors with tilt position"). The type is automatically **window** and can be changed
+   like for every sensor.
+4. **Decide in the profiles** where tilted is allowed: setting **"Tilted windows allowed"** (see
+   [alarm profiles](profiles.md#alarm-profiles)). Default is **off**.
+
+### How Hauswacht judges the positions
+
+| Change | Profile with "tilted allowed" | Profile without (default) |
+|---|---|---|
+| closed → tilted | nothing | trigger (like opening) |
+| tilted → open | **trigger** | nothing – was already "open" |
+| open → tilted | nothing | nothing |
+| tilted or open → closed | nothing | nothing |
+| arming while tilted | allowed | like an open window (refuse, "arm anyway" …) |
+
+**Safety rules:**
+
+- **Unknown values count as open**, never as closed – also values the device only reports later
+  (e.g. "gap ventilation"). Whoever wants to treat such a value as tilted adds it to the
+  assignment.
+- **Failure is detected** like for every sensor: if the sensor is unavailable or the attribute is
+  missing, it counts as failed (radio silence check, event `SensorUnavailable`, setting "Failed
+  sensors when arming"). A home-made template helper would usually report a failure as "closed".
+- **"Arm anyway" with a tilted window:** the window is bypassed – but only in the tilted
+  position. If it is then **opened fully**, it triggers. Only once it was closed does the bypass
+  end as for every sensor.
+- In **trigger rules** a sensor with tilt position counts as soon as it is open in the active
+  profile: with "tilted allowed" only when fully opened, otherwise already when tilted.
+
+### Where you see the position
+
+- **Panel:** attribute `tilted_sensors` (currently tilted). If the profile allows tilted
+  windows, they are **not** in `open_sensors`.
+- **Messages:** "Not armed: Bedroom: window (tilted)".
+- **Events:** events with `sensor_key` additionally have `position` for these sensors (`open`,
+  `tilted`, `closed`), see [reference](reference.md#events).
+- **Test card:** shows "tilted" and has its own button **Tilted** for simulating in test mode.
+- **System overview:** state "tilted".
+
+**Edit and remove** under Alarm triggering → Special sensors. Removing also takes the sensor out
+of all sensor groups; nothing changes on the device.
+
+> **Vibration at the window:** many of these sensors also report vibration (prying, glass
+> breakage) as a number. Today, [create a sensor from another sensor](#create-a-sensor-from-another-sensor)
+> turns it into a sensor of its own (e.g. upper limit 30, type window).
 
 ## Create a sensor from another sensor
 

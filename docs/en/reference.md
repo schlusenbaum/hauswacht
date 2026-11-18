@@ -37,7 +37,7 @@ system.
 
 | Entity (German) | Entity (English) | Per area | Purpose |
 |---|---|---|---|
-| `binary_sensor.hauswacht_offene_sensoren` | `binary_sensor.hauswacht_open_sensors` | yes | `on` as soon as a sensor of a sensor group is open; attributes `sensors` (IDs), `names` |
+| `binary_sensor.hauswacht_offene_sensoren` | `binary_sensor.hauswacht_open_sensors` | yes | `on` as soon as a sensor of a sensor group is open; attributes `sensors` (IDs), `names`, `tilted` (currently tilted) |
 | `sensor.hauswacht_systemstatus` | `sensor.hauswacht_system_status` | – | `ok` · `degraded` (sensor failed) · `fault` (radio network/gateway faulty); attributes `faulty_infrastructure`, `unavailable_sensors` |
 | `sensor.hauswacht_letzter_sirenentest` | `sensor.hauswacht_last_siren_test` | – | Last siren test; per siren date and "heard?" in the attributes |
 | `sensor.hauswacht_funkstille_beobachtung` | `sensor.hauswacht_radio_silence_observation` | – | [Observation](observations.md): recommendation for the maximum radio silence, longest gaps per sensor |
@@ -67,6 +67,7 @@ automations.
 | `select.hauswacht_sirenenlautstarke` | `select.hauswacht_siren_volume` | Siren volume |
 | `switch.hauswacht_stiller_alarm` | `switch.hauswacht_silent_alarm` | Silent alarm |
 | `switch.hauswacht_sabotage_lost_alarm_aus` | `switch.hauswacht_tamper_triggers_alarm` | Tampering triggers an alarm |
+| `switch.hauswacht_gekippte_fenster_erlaubt` | `switch.hauswacht_tilted_windows_allowed` | Tilted windows allowed – only if there are [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) |
 | `time.hauswacht_automatisch_scharf_um` | `time.hauswacht_arm_automatically_at` | Automation: arm at |
 | `time.hauswacht_automatisch_unscharf_um` | `time.hauswacht_disarm_automatically_at` | Automation: disarm at |
 
@@ -88,6 +89,7 @@ in its attributes. For automations **`phase`** is the most important trigger.
 | `alarm_cycles` | How often this alarm has triggered so far | `1` |
 | `monitored_sensors` | Sensors currently monitored | `[…]` |
 | `open_sensors`, `unavailable_sensors` | Open or failed sensors of all sensor groups | `["binary_sensor.bathroom_window"]` |
+| `tilted_sensors` | Currently tilted [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted). If the profile allows tilted windows, they are not in `open_sensors` | `["sensor.bedroom_window_opening_state"]` |
 | `open_rule_sensors` | Open sensors that only appear in trigger rules of the active profile | `[]` |
 | `bypassed_sensors`, `bypassed_until_closed` | Bypassed sensors (until disarmed or until closed) | `[]` |
 | `zones` | Sensor groups with their actual sensors | `{"Outside": […]}` |
@@ -168,6 +170,9 @@ Good to know:
 - **Sensors** are given as entity ID in `sensor_key` or as a list in `sensors`, `open_sensors` …;
   the display name is returned by `state_attr(…, 'friendly_name')`.
 - Sets (e.g. `open_sensors`) come as a **list**.
+- **Sensors with tilt position:** events with `sensor_key` additionally have `position` for these
+  sensors – `open`, `tilted` or `closed` (see
+  [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted)).
 
 ### State and alarm
 
@@ -296,7 +301,7 @@ All actions are aimed at an alarm panel (`target: entity_id: alarm_control_panel
 | `hauswacht.arm` | `profile` (name or ID), `confirm` (confirm open sensors), `code` | Arm a profile |
 | `hauswacht.guest_mode` | `on`, `until` (point in time, empty = until switched off) | [Guest mode](profiles.md#guest-mode) on/off; target an area or "All" |
 | `hauswacht.simulate_trigger` | `sensor` | Test mode: trigger a sensor briefly |
-| `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `unavailable`, `real`) | Test mode: simulate a sensor state |
+| `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `tilted` – only sensors with tilt position, `unavailable`, `real`) | Test mode: simulate a sensor state |
 | `hauswacht.simulate_reset` | – | Test mode: reset all simulations |
 | `hauswacht.siren_test` | `siren`, `duration`, `volume`, `tone` | Briefly test a real siren (administrators only) |
 | `hauswacht.siren_test_result` | `siren`, `heard` | Save the result of a siren test (administrators only) |

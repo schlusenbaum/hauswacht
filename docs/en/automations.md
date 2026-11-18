@@ -67,6 +67,7 @@ use the one of the respective area.
 | the **profile automation** armed | event `AutoArmed` | `reason`: `Uhrzeit` (time), `Zeitplan` (schedule), `alle weg` (everyone left) … |
 | the profile automation could **not** | event `AutoArmFailed` or `AutoArmSkipped` | `reason`, `details`; `guest_mode: true` = because of guest mode |
 | **windows are open** (e.g. hint when leaving) | entity `binary_sensor.hauswacht_open_sensors` | names in the attribute `names` |
+| a window is **tilted** ([tilt position](sensors.md#sensors-with-tilt-position-tilted)) | panel attribute `tilted_sensors` | Even if the profile allows tilted; in events field `position` |
 
 ## I want to do something …
 

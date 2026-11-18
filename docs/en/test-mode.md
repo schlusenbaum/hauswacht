@@ -31,6 +31,7 @@ entry and exit delay), below that the **trigger rules of the active profile** ("
 | Kind of sensor | Buttons |
 |---|---|
 | door, window, opening, garage door | **Open** / **Closed** |
+| [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) | **Open** / **Tilted** / **Closed** |
 | motion, presence, occupancy | **Motion** / **Clear** |
 | tamper | **Tamper** / **OK** |
 | all | **Gone** (unavailable), **Real** (back to the real value) |

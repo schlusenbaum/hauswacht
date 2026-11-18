@@ -414,6 +414,40 @@ actions:
 `ok` = alles in Ordnung, `degraded` = ein Melder ist ausgefallen, `fault` = Funknetz oder Gateway
 gestört.
 
+## Fenster mit Kippstellung
+
+Für [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt). Gekippte Fenster
+stehen im Attribut `tilted_sensors` des Bedienfelds – auch wenn das Profil sie erlaubt.
+
+### Es regnet und ein Fenster ist gekippt
+
+```yaml
+alias: Hauswacht – Regen bei gekipptem Fenster
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.regensensor
+    to: "on"
+conditions:
+  - condition: template
+    value_template: >
+      {{ state_attr('alarm_control_panel.hauswacht', 'tilted_sensors') | count > 0 }}
+actions:
+  - action: notify.mobile_app_annas_handy
+    data:
+      title: Es regnet
+      message: >
+        Gekippt:
+        {{ state_attr('alarm_control_panel.hauswacht', 'tilted_sensors')
+           | map('state_attr', 'friendly_name') | join(', ') }}
+```
+
+Statt eines Regensensors geht auch die Wettervorhersage (`weather.…` wechselt auf `rainy`).
+
+### Nachts gekippt erlauben, tagsüber nicht – automatisch
+
+Das regelt die Profil-Einstellung **„Gekippte Fenster erlaubt“** von selbst: an bei „Nacht“, aus
+bei „Abwesend“. Eine eigene Automation ist dafür nicht nötig.
+
 ## Zeitsteuerung
 
 Für „scharf zu bestimmten Zeiten“ brauchst du keine eigene Automation: Die Profil-Automatik kann

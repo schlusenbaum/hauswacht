@@ -412,6 +412,40 @@ actions:
 faulty. (With German as Home Assistant language the entity is called
 `sensor.hauswacht_systemstatus`.)
 
+## Windows with tilt position
+
+For [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted). Tilted windows are
+listed in the panel attribute `tilted_sensors` – even if the profile allows them.
+
+### It rains and a window is tilted
+
+```yaml
+alias: Hauswacht – rain with tilted window
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.rain_sensor
+    to: "on"
+conditions:
+  - condition: template
+    value_template: >
+      {{ state_attr('alarm_control_panel.hauswacht', 'tilted_sensors') | count > 0 }}
+actions:
+  - action: notify.mobile_app_annas_phone
+    data:
+      title: It is raining
+      message: >
+        Tilted:
+        {{ state_attr('alarm_control_panel.hauswacht', 'tilted_sensors')
+           | map('state_attr', 'friendly_name') | join(', ') }}
+```
+
+Instead of a rain sensor you can use the weather forecast (`weather.…` changes to `rainy`).
+
+### Allow tilted at night, not during the day – automatically
+
+The profile setting **"Tilted windows allowed"** does that by itself: on for "Night", off for
+"Away". No automation of your own is needed.
+
 ## Time control
 
 For "armed at certain times" you need no automation of your own: the profile automation supports

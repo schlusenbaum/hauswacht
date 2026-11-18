@@ -33,6 +33,7 @@ von 2 erfüllt · 85 s“) und **alle Melder** mit Raum, echtem Zustand und Knö
 | Melderart | Knöpfe |
 |---|---|
 | Tür, Fenster, Öffnung, Garagentor | **Auf** / **Zu** |
+| [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) | **Auf** / **Gekippt** / **Zu** |
 | Bewegung, Präsenz, Belegung | **Bewegung** / **Ruhe** |
 | Manipulation (Sabotage) | **Manipulation** / **OK** |
 | alle | **Weg** (nicht verfügbar), **Echt** (zurück auf den echten Wert) |

@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.55.3 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.56.0b1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -40,6 +40,8 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   oder wenn alle weg sind – mit Anwesenheit aus mehreren Signalen je Person (WLAN, Bluetooth,
   Router, Nähe …) – und unscharf bei Rückkehr mit Türbeleg. Je Wochentag andere Zeiten über einen
   Zeitplan; **Gastmodus**, damit Besuch nicht ausgesperrt wird.
+- **Gekippte Fenster** – Fenstersensoren und -griffe mit drei Stellungen (zu, gekippt, offen):
+  nachts gekippt erlaubt, ganz öffnen löst aus; bei Abwesenheit zählt gekippt wie offen.
 - **Auslöseregeln** – Alarm erst bei einer Abfolge („Tür, dann Keller innerhalb von 2 Minuten“),
   mit Ausnahmen und Bedingungen; im Assistenten oder als YAML.
 - **Alarmkarte ohne PIN-Zwang** – große Karte fürs Tablet: Zustand mit Countdown, ein Knopf je

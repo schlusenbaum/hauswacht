@@ -6,6 +6,37 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.56.0b1] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/gekippt`, ADR 0010 Teil A).
+
+### Hinzugefügt
+- **Melder mit Kippstellung („gekippt“):** Fenstersensoren und Fenstergriffe mit drei
+  Stellungen – zu, gekippt, offen – werden direkt unterstützt, ohne Vorlagen-Helfer. Neuer
+  Menüpunkt **Alarmauslösung → Besondere Melder**: Quelle wählen (Sensor mit Text-Zustand, z. B.
+  `opening_state` von Zigbee2MQTT; Attribut, z. B. `window_state` eines Fenstergriffs; oder ein
+  Auswahl-Helfer zum Ausprobieren), Werte für zu und gekippt zuordnen (Vorschlag automatisch),
+  optional gleich in eine Meldergruppe nehmen. Unbekannte Werte zählen sicherheitshalber als
+  offen, ein Ausfall wird wie bei jedem Melder erkannt.
+- **Profil-Einstellung „Gekippte Fenster erlaubt“** (Formular und Schalter im Dashboard, nur mit
+  Meldern mit Kippstellung): an = gekippt zählt als zu, erst ganz öffnen löst aus (typisch
+  „Nacht“); aus (Standard) = gekippt zählt wie offen.
+- **„Trotzdem scharf“ mit gekipptem Fenster:** Wird ein so überbrücktes Fenster danach ganz
+  geöffnet, löst es aus.
+- Bedienfeld-Attribut `tilted_sensors`, Attribut `tilted` an „Offene Sensoren“, Feld `position`
+  (`open`/`tilted`/`closed`) in Ereignissen dieser Melder, „(gekippt)“ in Meldungen, Zustand
+  „gekippt“ in Testkarte und Anlagenübersicht, Knopf **Gekippt** zum Simulieren im Testmodus
+  (Aktion `hauswacht.simulate_state` mit `tilted`).
+
+### Dokumentation
+- Melder: neuer Abschnitt „Melder mit Kippstellung (gekippt)“ mit Einrichtung, Bewertungstabelle
+  und Sicherheitsregeln; Profile, Referenz, Spickzettel Automationen, Testmodus, README;
+  Beispiel „Es regnet und ein Fenster ist gekippt“ – alles deutsch und englisch.
+
+### Intern
+- ADR 0010 „Fenster richtig überwachen – Kippstellung und Erschütterung“; neuer reiner Baustein
+  `core/tilt.py`, Kern-Ereignis `BypassedSensorOpened`; Kern- und Integrationstests.
+
 ## [0.55.3] - 2026-11-18
 
 ### Geändert
