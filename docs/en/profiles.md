@@ -52,6 +52,7 @@ In the profile, expandable under **Automation**. All fields are optional – emp
 | Setting | Effect |
 |---|---|
 | Arm at / Disarm at | Time at which the profile is armed or disarmed |
+| Or by schedule (helper) | For **different times per weekday**: a schedule helper; start of a time block = armed, end = disarmed, see [below](#different-times-per-weekday-schedule) |
 | On these days | Days on which the times apply; empty = every day. Overnight see [below](#times-overnight-and-manual-arming) |
 | Arm when all of these persons are away | If all selected persons are away, the profile is armed after the delay |
 | Delay before arming | Default 15 minutes. If someone comes back during this time, nothing is switched |
@@ -102,6 +103,40 @@ A daytime profile (e.g. arm 07:30, disarm 16:00) only applies on the chosen days
   its own profile.
 
 Example: "Night" armed by hand at 22:00 → 23:00 nothing → 06:30 disarmed.
+
+
+### Different times per weekday (schedule)
+
+"Arm at" and "Disarm at" apply equally on all selected days. If you need **different times on
+different days**, use a Home Assistant **schedule helper** instead of a second profile:
+
+1. Settings → Devices & services → **Helpers** → Create helper → **Schedule**, name e.g. "Night".
+2. In the schedule, drag the time blocks per weekday during which the profile should be armed.
+3. In the profile under **Automation → Or by schedule (helper)** choose the schedule.
+
+*Example "Night":*
+
+| Day | Time block in the schedule | What happens |
+|---|---|---|
+| Mon–Thu | 22:30–24:00 and 0:00–6:00 | 22:30 armed, 6:00 disarmed |
+| Fri | 0:00–6:00 | 6:00 disarmed (no block on Friday evening) |
+| Sat | 0:30–8:00 | 0:30 armed, 8:00 disarmed |
+| Sun | 0:30–8:00 and 22:30–24:00 | 0:30 armed, 8:00 disarmed, 22:30 armed |
+
+A block across midnight is entered in the schedule as two blocks (until 24:00 and from 0:00);
+Home Assistant shows it as continuous – Hauswacht does not switch in between.
+
+The same rules apply as for the times:
+
+- **Arming** only from "disarmed"; in **guest mode** nothing is armed. Open sensors are never
+  confirmed – you get a message instead.
+- **Disarming** only if exactly this profile is armed – never during entry delay or an alarm. If
+  you armed the profile by hand, the end of the block still disarms it.
+- The automation weekdays do **not** apply to the schedule – the schedule has its own.
+- **After a restart** the schedule catches up on nothing: if a block started or ended during the
+  restart, the [behaviour after restart](installation.md#behaviour-after-a-restart) applies. This
+  way a system disarmed by hand is not armed again by a restart.
+- Times and schedule can be combined, but usually only one of them makes sense.
 
 ### How Hauswacht knows who is home
 

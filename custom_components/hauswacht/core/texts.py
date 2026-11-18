@@ -165,6 +165,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "tpl_unknown": "unbekannter Platzhalter {field}",
         "tpl_format": "{field}: keine Formatangaben erlaubt",
         "reason_time": "Uhrzeit",
+        "reason_schedule": "Zeitplan",
         "automation_actor": "Automatik",
         "guest_title": "Hauswacht: Gastmodus",
         "guest_on": "Gastmodus an für {area} – bis {until}. Hauswacht schaltet bis dahin nicht "
@@ -355,6 +356,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "tpl_unknown": "unknown placeholder {field}",
         "tpl_format": "{field}: no format specifications allowed",
         "reason_time": "time",
+        "reason_schedule": "schedule",
         "automation_actor": "Automation",
         "guest_title": "Hauswacht: guest mode",
         "guest_on": "Guest mode on for {area} – until {until}. Until then Hauswacht does not arm "

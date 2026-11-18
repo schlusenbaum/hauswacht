@@ -209,6 +209,7 @@
             "data": {
               "auto_arm_time": "Arm at",
               "auto_disarm_time": "Disarm at",
+              "auto_schedule": "Or by schedule (helper)",
               "auto_weekdays": "On these days (empty = every day)",
               "auto_away_persons": "Arm when all of these persons are away",
               "auto_away_delay": "Delay before arming",
@@ -218,7 +219,8 @@
             "data_description": {
               "auto_away_delay": "Phones detected only via Wi-Fi sometimes briefly report \"away\" in standby. The delay prevents accidental arming.",
               "auto_arrival_mode": "**As before:** only if Hauswacht armed the profile itself and no door has opened yet. **With door proof:** arrival AND opening of an entry door within the time window, in any order – also during the entry delay. A running alarm is never ended. Note: whoever has the phone of one of these persons can disarm with it.",
-              "auto_arrival_window": "Only for “with door proof”, default 5 minutes. Does **not** delay the alarm: it comes after the entry delay as always. Example: the phone reports “home” at the street corner, 2 minutes later the front door opens → disarmed at once. If the phone reports only after the door, this must happen within the entry delay."
+              "auto_arrival_window": "Only for “with door proof”, default 5 minutes. Does **not** delay the alarm: it comes after the entry delay as always. Example: the phone reports “home” at the street corner, 2 minutes later the front door opens → disarmed at once. If the phone reports only after the door, this must happen within the entry delay.",
+              "auto_schedule": "For **different times per weekday**: choose a schedule helper (Settings → Devices & services → Helpers → Schedule). When a time block starts, the profile is armed; when it ends, disarmed. Example: Mon–Thu 22:30–6:00, Fri–Sat 0:30–8:00. The weekdays above do not apply to it. After a restart the schedule does not catch up on anything."
             }
           },
           "arm_on_close": {

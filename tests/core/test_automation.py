@@ -15,6 +15,7 @@ from custom_components.hauswacht.core.automation import (
     is_active_day,
     parse_automation,
     parse_time,
+    schedule_action,
 )
 
 
@@ -234,3 +235,17 @@ def test_disarm_due_same_day_only_on_active_days() -> None:
     assert not disarm_due(only_disarm, 5)
     # ohne Wochentage: täglich
     assert disarm_due(AutoConfig(arm_time=time(23, 0), disarm_time=time(6, 30)), 6)
+
+
+def test_schedule_option_and_actions() -> None:
+    cfg = parse_automation({"profiles": {"n": {"auto_schedule": "schedule.nacht"}}}, "n")
+    assert cfg.schedule == "schedule.nacht"
+    assert cfg.enabled
+    assert parse_automation({"profiles": {"n": {"auto_schedule": "light.x"}}}, "n").schedule is None
+    assert schedule_action("off", "on") == "arm"
+    assert schedule_action("on", "off") == "disarm"
+    assert schedule_action("on", "off", seconds_to_next=1) is None  # Mitternacht
+    assert schedule_action("on", "off", seconds_to_next=3600) == "disarm"
+    assert schedule_action("unavailable", "on") is None  # Neustart
+    assert schedule_action(None, "on") is None
+    assert schedule_action("on", "unavailable") is None
