@@ -12,6 +12,7 @@ Hauswacht überwacht nur Entitäten, die **offen/zu** kennen:
 | Schloss (`lock`) | entriegelt, öffnet, offen, blockiert |
 | Abdeckung (`cover`, z. B. Garagentor) | offen, öffnet, schließt |
 | [Melder mit Kippstellung](#melder-mit-kippstellung-gekippt) (Sensor mit Text-Zustand, Attribut oder Auswahl-Helfer) | offen – gekippt je nach Profil |
+| [Erschütterungsstärke](#erschütterungsstärke-als-zahl) (Zahlensensor oder Zahlenwert-Helfer) | Wert ab der eingestellten Schwelle |
 
 Alles andere wird über einen **Helfer** in Home Assistant zum Binärsensor:
 
@@ -54,7 +55,8 @@ ganze Meldergruppen scharf, nicht einzelne Melder. Typisch:
 Melder kommen auf zwei Wegen in eine Gruppe, beide lassen sich kombinieren:
 
 - **Direkt auswählen** im Feld „Sensoren“. [Melder mit Kippstellung](#melder-mit-kippstellung-gekippt)
-  haben ein eigenes Feld darunter (es erscheint, sobald es welche gibt).
+  und [Erschütterungsstärken](#erschütterungsstärke-als-zahl) haben ein eigenes Feld darunter
+  („Besondere Melder“ – es erscheint, sobald es welche gibt).
 - **Per Label:** Alle Melder, die dieses Label **direkt an der Entität** tragen, gehören
   automatisch dazu. Labels am Gerät zählen bewusst nicht – sonst kämen Batterie- oder
   Verbindungssensoren desselben Geräts mit.
@@ -75,7 +77,8 @@ vorgeschlagenen Typ – meist passt er, sonst direkt dort ändern.
 | **Bewegung** | Bewegung, Anwesenheit, Präsenz | Wartet, wenn gerade eine Eingangsverzögerung läuft, sonst sofort Alarm |
 | **Manipulation** | Manipulation (Sabotage) | Wird immer gemeldet, auch unscharf; Alarm je nach Profil |
 | **Technik** | Feuchte, Gas, Kälte, Hitze, Kohlenmonoxid | Immer aktiv, nie Teil der Scharfschaltung, kein Einbruchalarm – nur Benachrichtigung (siehe unten) |
-| **Sonstiges** | alles andere (Vibration, Rollladen …) | Sicherheitshalber sofort Alarm |
+| **Erschütterung** | Vibration, [Erschütterungsstärke](#erschütterungsstärke-als-zahl) | Sofort Alarm – mit einstellbarem [Fehlalarmschutz](#erschütterungsmelder); blockiert das Scharfschalten nie |
+| **Sonstiges** | alles andere (Rollladen …) | Sicherheitshalber sofort Alarm |
 
 Beispiel: Ein Fenster, durch das man das Haus betritt, bekommt den Typ **Tür**. Rauchmelder
 schlägt Hauswacht bewusst nicht als „Technik“ vor – Brandschutz bleibt Sache der Rauchmelder.
@@ -154,9 +157,68 @@ jedem Alarmprofil legst du fest, ob ein **gekipptes Fenster erlaubt** ist.
 auch aus allen Meldergruppen; am Gerät ändert sich nichts.
 
 > **Erschütterung am Fenster:** Viele dieser Sensoren melden auch Erschütterung (Aufhebeln,
-> Glasbruch) als Zahl. Daraus wird heute mit
-> [Melder aus anderem Sensor erstellen](#melder-aus-anderem-sensor-erstellen) ein eigener Melder
-> (z. B. oberer Grenzwert 30, Typ Fenster).
+> Glasbruch) als Zahl – daraus wird ein [Erschütterungsmelder](#erschütterungsmelder). Zusammen
+> sind beide stark: Nachts ist das Fenster gekippt und erlaubt – wer daran hebelt, löst über die
+> Erschütterung aus, **bevor** das Fenster offen ist.
+
+## Erschütterungsmelder
+
+Erschütterungssensoren (z. B. Aqara oder Tuya über Zigbee2MQTT, Geräteklasse „Vibration“) melden
+Stöße an Fenstern und Türen – also Aufhebeln oder eine eingeschlagene Scheibe. Hauswacht gibt
+ihnen den eigenen Typ **Erschütterung**:
+
+- **Sofort Alarm** im scharfen Profil (keine Eingangsverzögerung).
+- **Blockiert das Scharfschalten nie.** Erschütterung ist ein Vorgang, kein offener Zustand – ein
+  Sensor, der nach einem Stoß noch eine Minute „an“ steht, verhindert das Scharfschalten nicht.
+  Ein **ausgefallener** Erschütterungssensor zählt dagegen wie jeder ausgefallene Melder.
+- **Texte** sagen „… (Erschütterung)“.
+- **Unscharf** passiert nichts. Wer auch dann informiert werden will, nimmt den Melder unter
+  [Immer aktiv](#immer-aktive-melder) auf.
+
+### Fehlalarmschutz: wie viele Erschütterungen bis zum Alarm?
+
+Erschütterungssensoren sind empfindlich: Eine zugeschlagene Tür, ein vorbeifahrender Lkw, ein
+Gewitter oder ein Ball gegen die Scheibe können auslösen. Deshalb fragt Hauswacht beim Speichern
+einer Meldergruppe mit Erschütterungsmeldern:
+
+**„Alarm bei N Meldungen eines Melders innerhalb von S Sekunden“**
+
+| Einstellung | Wirkung |
+|---|---|
+| **1 Meldung** (Standard) | Jede Erschütterung löst sofort aus – am empfindlichsten |
+| **2 Meldungen in 60 s** (Empfehlung) | Ein einzelner Stoß löst nicht aus. Wer hebelt oder eine Scheibe einschlägt, erzeugt fast immer mehrere Stöße kurz hintereinander. Preis: Ein einzelner, sehr kräftiger Schlag allein löst nicht aus |
+| 3 – 5 Meldungen | Nur bei sehr unruhigen Stellen (z. B. Tür zur Straße) |
+
+- Gezählt wird **je Melder**: Ein Gewitter, das alle Fenster einmal anstößt, ergibt so keinen
+  Alarm.
+- Jede Meldung, die noch nicht reicht, erscheint als Ereignis `VibrationCounted` (mit `count`,
+  `needed`, `window`) – praktisch, um die Einstellung zu prüfen.
+- **Haltezeit beachten:** Viele Erschütterungssensoren bleiben nach einer Meldung eine Weile
+  „an“ (oft 60–90 Sekunden) und melden in dieser Zeit keine zweite. Für „2 in 60 Sekunden“ muss
+  die Haltezeit deutlich kürzer sein – bei Zigbee2MQTT ist sie oft als Geräteoption einstellbar
+  (z. B. 5–10 Sekunden).
+- Ändern: Meldergruppe bearbeiten → speichern → nach den Typen kommt die Frage erneut.
+
+### Erschütterungsstärke als Zahl
+
+Manche Sensoren melden keine „an/aus“-Erschütterung, sondern eine **Stärke als Zahl** (z. B.
+`sensor.fenster_bad_vibration` eines Fenstersensors). Daraus wird ohne Helfer ein Melder:
+
+**Alarmauslösung → Besondere Melder → Erschütterungsstärke anlegen.**
+
+1. Sensor wählen (zum Ausprobieren ohne Hardware: Helfer **Zahlenwert**, `input_number`).
+2. **Schwelle** eintragen: ab diesem Wert gilt es als Erschütterung. Am besten den Wert unter
+   Entwicklerwerkzeuge → Zustände beobachten und leicht ans Fenster klopfen – die Schwelle etwas
+   über dem Ruhewert und unter einem kräftigen Stoß wählen.
+3. Optional gleich in eine Meldergruppe nehmen. Der Typ ist automatisch **Erschütterung**.
+
+**Jede Meldung ab der Schwelle zählt** – auch wenn die Zahl gleich bleibt (Home Assistant meldet
+auch unveränderte Werte). Ist der Wert keine Zahl oder der Sensor nicht verfügbar, gilt der
+Melder als ausgefallen.
+
+**Kombinieren mit Auslöseregeln:** „Erschütterung, dann innerhalb einer Minute Fenster offen“
+geht als [Auslöseregel](ausloeseregeln.md) – z. B. wenn einzelne Erschütterungen nicht reichen
+sollen, die Kombination aber schon.
 
 ## Melder aus anderem Sensor erstellen
 

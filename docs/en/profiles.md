@@ -26,7 +26,7 @@ you need, e.g. "Home", "Night", "Away", "Vacation".
 | Unavailable sensors when arming | refuse · allow after confirmation |
 | Maximum alarm cycles | How often the alarm may trigger again after an alarm |
 | Tamper triggers alarm | Otherwise tampering is only reported |
-| Tilted windows allowed | Only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) (hidden otherwise): a tilted window counts as closed, only opening it fully triggers. **Off** (default): tilted counts as open. Typical: on for "Night", off for "Away" |
+| Tilted windows allowed | Only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) (hidden otherwise): a tilted window counts as closed, only opening it fully triggers. **Off** (default): tilted counts as open. Typical: on for "Night", off for "Away". The [setup wizard](setup-wizard.md#6-alarm-profiles) asks about it for the night profile |
 | Sirens, tone, volume, silent alarm | Reaction on alarm, see [Sirens](sirens.md) |
 | Notify (alarm) | Who gets a push message on an alarm |
 | Additional speakers | Announcements of this profile, see [Speech](notifications.md#speech-speakers) |

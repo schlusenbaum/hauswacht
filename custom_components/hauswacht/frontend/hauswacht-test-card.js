@@ -52,6 +52,8 @@ const TEXT = {
     panel: "Anlage",
     open: ["Auf", "Zu"],
     motion: ["Bewegung", "Ruhe"],
+    vibration: ["Erschütterung", "Ruhe"],
+    vibrationStates: { on: "Erschütterung", off: "Ruhe" },
     tamper: ["Manipulation", "OK"],
     other: ["Ein", "Aus"],
     states: { on: "ein", off: "aus", unavailable: "nicht verfügbar", unknown: "unbekannt" },
@@ -122,6 +124,8 @@ const TEXT = {
     panel: "System",
     open: ["Open", "Closed"],
     motion: ["Motion", "Clear"],
+    vibration: ["Vibration", "Calm"],
+    vibrationStates: { on: "vibration", off: "calm" },
     tamper: ["Tamper", "OK"],
     other: ["On", "Off"],
     states: { on: "on", off: "off", unavailable: "unavailable", unknown: "unknown" },
@@ -160,7 +164,7 @@ const TEXT = {
 };
 
 const OPEN_CLASSES = ["door", "window", "opening", "garage_door"];
-const MOTION_CLASSES = ["motion", "occupancy", "presence", "moving", "vibration"];
+const MOTION_CLASSES = ["motion", "occupancy", "presence", "moving"];
 
 const ICONS = {
   door: "mdi:door",
@@ -288,6 +292,7 @@ class HauswachtTestCard extends HTMLElement {
 
   _kind(sensor) {
     if (sensor.tilt) return "open";
+    if (sensor.type === "vibration") return "vibration";
     if (sensor.kind === "lock") return "lock";
     if (sensor.kind === "cover") return "open";
     if (sensor.role === "tamper_24h" || sensor.device_class === "tamper") return "tamper";
@@ -303,6 +308,7 @@ class HauswachtTestCard extends HTMLElement {
       open: "openStates",
       motion: "motionStates",
       tamper: "tamperStates",
+      vibration: "vibrationStates",
       lock: "lockStates",
     }[kind];
     const map = (specific && this._t(specific)) || {};

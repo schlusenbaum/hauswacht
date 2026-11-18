@@ -50,6 +50,7 @@ Die Beispiele nennen das Bedienfeld `alarm_control_panel.hauswacht` – mit
 | … | Nimm | Hinweis |
 |---|---|---|
 | **Sabotage** gemeldet wird | Ereignis `TamperDetected` | Melder in `sensor_key`; kommt auch unscharf |
+| eine **Erschütterung** gezählt wurde, aber noch kein Alarm | Ereignis `VibrationCounted` | `count`, `needed` – z. B. Licht an als Abschreckung |
 | ein **Melder ausfällt** | Ereignis `SensorUnavailable` | oder `sensor.hauswacht_systemstatus` → `degraded` |
 | **Funknetz/Gateway** gestört ist | Ereignis `InfrastructureFault` (`InfrastructureRecovered` = wieder gut) | oder Systemstatus → `fault` |
 | ein **falscher PIN** eingegeben wurde | Ereignis `InvalidCode` | `failures`, `lock_seconds` (Sperre) |

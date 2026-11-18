@@ -106,6 +106,11 @@ anzulegen. Alles andere am Profil (Sirenen, Empfänger, Automatik …) bleibt, w
 
 Ein ausgewähltes Profil braucht mindestens eine Meldergruppe oder Regel.
 
+**Gekippte Fenster nachts erlauben:** Gibt es [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt),
+fragt der Assistent beim Nachtprofil, ob gekippte Fenster erlaubt sind (vorgeschlagen: ja). Dann
+darf das Schlafzimmerfenster nachts gekippt bleiben – ganz öffnen löst aus. „Abwesend“ bleibt
+streng: gekippt zählt dort wie offen.
+
 **Nach Zeitplan (optional):** Für jedes der beiden Profile kannst du einen
 **Zeitplan-Helfer** wählen. Beginnt ein Zeitblock, wird das Profil scharf; endet er, unscharf –
 so gehen **je Wochentag andere Zeiten**, z. B. „Nacht“ Mo–Do 22:30–6:00 und Fr–Sa 0:30–8:00.

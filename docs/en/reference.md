@@ -189,6 +189,7 @@ Good to know:
 | `SensorsBypassed` | Sensors bypassed (e.g. "arm anyway") | `sensors` |
 | `SensorsRestored` | Bypassed sensors closed again, monitored again | `sensors` |
 | `ArmingAborted` | Arming aborted at the end of the exit delay (still open/failed) | `open_sensors`, `unavailable_sensors` |
+| `VibrationCounted` | [Vibration](sensors.md#vibration-sensors) counted, but not yet enough for an alarm (false alarm protection) | `sensor_key`, `count` (so far in the time window), `needed`, `window` (seconds) |
 | `TamperDetected` | Tampering reported | `sensor_key`, `state` (state of the system at that moment) |
 | `AlwaysActiveTriggered` | [Always-active](sensors.md#always-active-sensors) sensor triggered | `sensor_key` |
 | `ArmedByClosingDoor` | [Armed by closing the door](profiles.md#arm-by-closing-the-door) | – |

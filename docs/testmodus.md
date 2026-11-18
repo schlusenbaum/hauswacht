@@ -36,6 +36,7 @@ von 2 erfüllt · 85 s“) und **alle Melder** mit Raum, echtem Zustand und Knö
 | [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) | **Auf** / **Gekippt** / **Zu** |
 | Bewegung, Präsenz, Belegung | **Bewegung** / **Ruhe** |
 | Manipulation (Sabotage) | **Manipulation** / **OK** |
+| Erschütterung | **Erschütterung** / **Ruhe** (der Fehlalarmschutz zählt mit) |
 | alle | **Weg** (nicht verfügbar), **Echt** (zurück auf den echten Wert) |
 
 Unter jedem Melder steht, was Hauswacht gerade mit ihm macht:

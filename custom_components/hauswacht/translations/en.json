@@ -66,11 +66,13 @@
           "night_zones": "Night: sensor groups",
           "night_rules": "Night: trigger rules",
           "away_schedule": "Away: by schedule (optional)",
-          "night_schedule": "Night: by schedule (optional)"
+          "night_schedule": "Night: by schedule (optional)",
+          "night_tilt": "Allow tilted windows at night"
         },
         "data_description": {
           "night_schedule": "For **different times per weekday**: choose a schedule helper – start of a block = armed, end = disarmed. Create it under Settings → Devices & services → Helpers → Create helper → Schedule. Empty = no time control.",
-          "away_schedule": "Like for “Night”, e.g. for fixed working hours. Empty = no time control."
+          "away_schedule": "Like for “Night”, e.g. for fixed working hours. Empty = no time control.",
+          "night_tilt": "In the night profile tilted counts as closed – only opening fully triggers. Only for sensors with tilt position."
         }
       },
       "wizard_summary": {
@@ -265,12 +267,12 @@
         "data": {
           "name": "Sensor group name (e.g. Doors, Windows, Basement)",
           "entities": "Sensors in this sensor group",
-          "tilt_entities": "Sensors with tilt position",
+          "tilt_entities": "Special sensors (tilt position, vibration strength)",
           "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "tilt_entities": "Windows with tilt position created under Alarm triggering → Special sensors.",
+          "tilt_entities": "Sensors created under Alarm triggering → Special sensors.",
           "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the sensor group automatically."
         }
       },
@@ -286,12 +288,12 @@
         "data": {
           "name": "Sensor group name (e.g. Doors, Windows, Basement)",
           "entities": "Sensors in this sensor group",
-          "tilt_entities": "Sensors with tilt position",
+          "tilt_entities": "Special sensors (tilt position, vibration strength)",
           "label": "Additionally all sensors with this label (optional)"
         },
         "data_description": {
           "entities": "Door, window, motion, presence and tamper sensors (binary sensors).",
-          "tilt_entities": "Windows with tilt position created under Alarm triggering → Special sensors.",
+          "tilt_entities": "Sensors created under Alarm triggering → Special sensors.",
           "label": "Handy for many sensors: put the label directly on the sensor entity (not the device); new sensors with the label then belong to the sensor group automatically."
         }
       },
@@ -544,7 +546,7 @@
           "zones": "Sensor groups – which sensors belong together",
           "rules": "Trigger rules – sequences of sensors",
           "always_active": "Always active – sensors that trigger even when disarmed",
-          "special_sensors": "Special sensors – windows with tilt position",
+          "special_sensors": "Special sensors – tilt position, vibration strength",
           "helper_create": "Create a sensor from another sensor (e.g. temperature → frost warning)",
           "init": "← Back"
         }
@@ -1150,10 +1152,12 @@
           "night_zones": "Night: sensor groups",
           "night_rules": "Night: trigger rules",
           "away_schedule": "Away: by schedule (optional)",
-          "night_schedule": "Night: by schedule (optional)"
+          "night_schedule": "Night: by schedule (optional)",
+          "night_tilt": "Allow tilted windows at night"
         },
         "data_description": {
           "night_schedule": "For **different times per weekday**: choose a schedule helper – start of a block = armed, end = disarmed. Create it under Settings → Devices & services → Helpers → Create helper → Schedule. Empty = no time control.",
+          "night_tilt": "In the night profile tilted counts as closed – only opening fully triggers. Only for sensors with tilt position.",
           "away_schedule": "Like for “Night”, e.g. for fixed working hours. Empty = no time control."
         }
       },
@@ -1266,11 +1270,14 @@
       },
       "special_sensors": {
         "title": "Special sensors",
-        "description": "{saved}{items}Set up sensors that can do more than \"open/closed\" here.\n\n**Sensors with tilt position** report three positions: **closed**, **tilted** and **open** – e.g. window sensors in the rebate, window handles or a select helper for trying it out. In every alarm profile you then decide whether **tilted windows are allowed** (e.g. at night) or count as open (default).\n\nAfter creating it, add the sensor to a **sensor group** like any other.",
+        "description": "{saved}{items}Set up sensors that can do more than \"open/closed\" here.\n\n**Sensors with tilt position** report three positions: **closed**, **tilted** and **open** – e.g. window sensors in the rebate, window handles or a select helper for trying it out. In every alarm profile you decide whether **tilted windows are allowed** (e.g. at night) or count as open (default).\n\n**Vibration strength:** a sensor that reports vibration as a **number** (e.g. `vibration` of a window sensor) becomes a vibration sensor with a threshold – without helpers.\n\nAfter creating it, add the sensor to a **sensor group** like any other.",
         "menu_options": {
           "tilt_add": "Add sensor with tilt position",
           "tilt_edit": "Edit sensor with tilt position",
           "tilt_delete": "Remove sensor with tilt position",
+          "vibration_add": "Add vibration strength",
+          "vibration_edit": "Edit vibration strength",
+          "vibration_delete": "Remove vibration strength",
           "triggering": "← Back"
         }
       },
@@ -1311,6 +1318,40 @@
         "description": "Removes the assignment and takes the sensor out of all sensor groups. The device itself stays unchanged.",
         "data": {
           "sensor": "Sensor"
+        }
+      },
+      "vibration_add": {
+        "title": "Vibration strength",
+        "description": "A sensor that reports vibration as a **number** becomes a vibration sensor: **every report at or above the threshold counts as a vibration** – even if the number stays the same.\n\nSensor: {sensor} – currently: {current}.\n\nTo try it without hardware: create a **Number** helper (`input_number`) and choose it here.\n\nThe type is automatically **vibration**. How many reports trigger an alarm is set at the sensor group (false alarm protection).",
+        "data": {
+          "entity": "Sensor with the vibration strength",
+          "threshold": "Threshold (from this value = vibration)",
+          "target": "Add to sensor group"
+        },
+        "data_description": {
+          "threshold": "Best watch the value: Developer tools → States, then knock lightly on the window. Choose the threshold a bit above the idle value and below a strong knock.",
+          "target": "Optional – can also be done later under sensor groups."
+        }
+      },
+      "vibration_edit": {
+        "title": "Edit vibration strength",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "vibration_delete": {
+        "title": "Remove vibration strength",
+        "description": "Removes the threshold and takes the sensor out of all sensor groups. The device itself stays unchanged.",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "zone_vibration": {
+        "title": "Vibration sensors in \"{zone}\"",
+        "description": "This sensor group contains **vibration sensors**. How many vibrations of one sensor should trigger an alarm?\n\n- **1 report** (default): every vibration triggers immediately – the most sensitive.\n- **Recommendation: 2 reports within 60 seconds.** A single knock – door slams, a truck passes, a ball hits the pane – then does not trigger an alarm. Someone prying a window open or smashing a pane almost always causes several knocks in quick succession. The price: a single, very strong blow alone does not trigger.\n\nCounting is **per sensor** – a thunderstorm that shakes every window once does not cause an alarm.\n\n**Important:** many vibration sensors stay \"on\" for a while after a report and report no second one during that time. This hold time must be clearly shorter than the time window (with Zigbee2MQTT often adjustable as a device option).",
+        "data": {
+          "vibration_count": "Reports until alarm",
+          "vibration_window": "within"
         }
       }
     },
@@ -1498,6 +1539,7 @@
         "motion": "Motion – waits during entry delay",
         "tamper": "Tamper – always reported",
         "technical": "Technical (water, gas, frost …) – always active",
+        "vibration": "Vibration – immediately, never blocks arming",
         "other": "Other – instant"
       }
     },

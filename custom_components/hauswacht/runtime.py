@@ -22,6 +22,7 @@ from typing import Any
 
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_STATE_REPORTED
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, State, callback
 from homeassistant.core import Event as HaEvent
 from homeassistant.core import Event as HaEventAny
@@ -191,7 +192,7 @@ from .core.state_machine import (
 )
 from .core.texts import by as by_text
 from .core.texts import lang_of, quoted, tr
-from .core.tilt import POSITION_NAMES, TILTED, judge, parse_tilt_sources, types_with_tilt
+from .core.tilt import POSITION_NAMES, TILTED, effective_types, judge, parse_tilt_sources
 from .core.tilt import position as tilt_position
 from .core.users import (
     Action,
@@ -209,6 +210,13 @@ from .core.users import (
     tag_credential,
 )
 from .core.users import label as users_label
+from .core.vibration import (
+    VibrationCounter,
+    VibrationRule,
+    parse_vibration_sources,
+    rule_for_zone_id,
+)
+from .core.vibration import position as vibration_position
 from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
@@ -336,8 +344,12 @@ class HauswachtRuntime:
         self.zones = parse_zones(entry.options)
         # Melder mit Kippstellung (ADR 0010): drei Stellungen, Bewertung je Profil
         self.tilt_sources = parse_tilt_sources(entry.options)
+        # Erschütterungsstärke als Zahl und Fehlalarmschutz je Meldergruppe (ADR 0010 Teil B)
+        self.vibration_sources = parse_vibration_sources(entry.options)
+        self._vibration = VibrationCounter()
+        self._unsub_reported: CALLBACK_TYPE | None = None
         self._bypass_position: dict[str, str | None] = {}
-        self.sensor_types = types_with_tilt(entry.options)
+        self.sensor_types = effective_types(entry.options)
         self.role_overrides = role_overrides(self.sensor_types)
         self.stale_after = stale_after_seconds(entry.options)
         # Funknetz/Gateways überwacht nur der Hauptbereich (sonst doppelte Meldungen)
@@ -661,7 +673,9 @@ class HauswachtRuntime:
         # lässt sich nicht unterscheiden) – gemeldet am Ende der Startphase.
         bypassed = self.ctx.bypassed | self.ctx.bypassed_until_closed
         open_now = frozenset(
-            e for e in self.armed_sensors - bypassed if self._effective_state(e) == "on"
+            e
+            for e in self.armed_sensors - bypassed
+            if self._effective_state(e) == "on" and not self.is_vibration(e)
         )
         if open_now:
             self._dispatch(BypassUntilClosed(sensors=open_now))
@@ -875,10 +889,10 @@ class HauswachtRuntime:
         if self._unsub_push is not None:
             self._unsub_push()
             self._unsub_push = None
-        for unsub in (self._unsub_states, self._unsub_registry):
+        for unsub in (self._unsub_states, self._unsub_registry, self._unsub_reported):
             if unsub is not None:
                 unsub()
-        self._unsub_states = self._unsub_registry = None
+        self._unsub_states = self._unsub_registry = self._unsub_reported = None
         self._listeners.clear()
 
     @callback
@@ -1529,6 +1543,9 @@ class HauswachtRuntime:
 
     def read_position(self, entity_id: str, state: State | None) -> str | None:
         """Echte Stellung aus dem Home-Assistant-Zustand: on, off, tilted, unavailable …"""
+        strength_source = self.vibration_sources.get(entity_id)
+        if strength_source is not None:
+            return vibration_position(strength_source, state.state if state else None)
         source = self.tilt_sources.get(entity_id)
         if source is not None:
             return tilt_position(
@@ -1632,13 +1649,23 @@ class HauswachtRuntime:
             now=dt_util.utcnow().timestamp(),
             stale_after=self.stale_after,
         )
+        # Erschütterung ist ein Vorgang, kein offener Zustand: blockiert das Scharfschalten nie
+        open_sensors = frozenset(e for e in readiness.open_sensors if not self.is_vibration(e))
         faulty = self.faulty_infrastructure()
-        if not faulty:
-            return readiness
         return Readiness(
-            open_sensors=readiness.open_sensors,
+            open_sensors=open_sensors,
             unavailable_sensors=readiness.unavailable_sensors | faulty,
         )
+
+    def is_vibration(self, entity_id: str) -> bool:
+        return self.type_of(entity_id) is SensorType.VIBRATION
+
+    def vibration_rule_of(self, entity_id: str) -> VibrationRule:
+        """Fehlalarmschutz aus der Meldergruppe des Melders (ohne Gruppe: 1 Meldung)."""
+        for zone in self.zones.values():
+            if entity_id in resolve_zone(zone, self._labels):
+                return rule_for_zone_id(self.entry.options, zone.zone_id)
+        return VibrationRule()
 
     # --- Infrastruktur und Systemstatus -------------------------------------
 
@@ -2187,7 +2214,11 @@ class HauswachtRuntime:
         )
         # Nur Melder mit offen/zu (z. B. Messwerte aus 0.24 in alten Auslöseregeln ignorieren)
         self.candidates = frozenset(
-            e for e in configured if domain_of(e) in MONITORED_DOMAINS or e in self.tilt_sources
+            e
+            for e in configured
+            if domain_of(e) in MONITORED_DOMAINS
+            or e in self.tilt_sources
+            or e in self.vibration_sources
         )
         if ignored := sorted(configured - self.candidates):
             _LOGGER.warning(
@@ -2206,6 +2237,10 @@ class HauswachtRuntime:
         )
         self.homecoming.refresh()
         self.automation.refresh_doors()
+        if self.vibration_sources and self._unsub_reported is None:
+            self._unsub_reported = self.hass.bus.async_listen(
+                EVENT_STATE_REPORTED, self._on_vibration_reported
+            )
         if wanted == self._subscribed and self._unsub_states is not None:
             return
         if self._unsub_states is not None:
@@ -2238,12 +2273,17 @@ class HauswachtRuntime:
         old = event.data["old_state"]
         new = event.data["new_state"]
         device_class = new.attributes.get("device_class") if new else None
-        self._handle_sensor_change(
-            entity_id,
-            self.read_position(entity_id, old),
-            self.read_position(entity_id, new),
-            device_class,
-        )
+        old_position = self.read_position(entity_id, old)
+        new_position = self.read_position(entity_id, new)
+        if (
+            entity_id in self.vibration_sources
+            and old_position == new_position == "on"
+            and old is not None
+            and new is not None
+            and old.state != new.state
+        ):
+            old_position = "off"  # neue Zahl über der Schwelle = neue Erschütterung
+        self._handle_sensor_change(entity_id, old_position, new_position, device_class)
 
     @callback
     def _handle_sensor_change(
@@ -2287,6 +2327,7 @@ class HauswachtRuntime:
             and (old_state is None or old_state in UNAVAILABLE_STATES)
             and role is not SensorRole.ENTRY
             and entity_id not in self.ctx.bypassed
+            and not self.is_vibration(entity_id)
         ):
             # Nach dem Wiederherstellen erstmals gemeldet und offen: Fenster oder Bewegung
             # bis zum Schließen überbrücken statt nachts Sirenenalarm – Eingangstüren starten
@@ -2296,6 +2337,8 @@ class HauswachtRuntime:
             self._notify()
             return
         if relevant and is_trigger(old_state, new_state):
+            if self.is_vibration(entity_id) and not self._vibration_counts(entity_id):
+                return
             self._sensor_triggered(entity_id, role)
             return
         if (
@@ -2309,6 +2352,43 @@ class HauswachtRuntime:
             self._dispatch(SensorClosed(sensor_key=entity_id))
             return
         self._notify()
+
+    @callback
+    def _vibration_counts(self, entity_id: str) -> bool:
+        """Fehlalarmschutz: True, wenn genug Erschütterungen im Zeitfenster zusammenkamen."""
+        rule = self.vibration_rule_of(entity_id)
+        reached, count = self._vibration.record(entity_id, time.monotonic(), rule)
+        if not reached:
+            _LOGGER.info(
+                "Erschütterung %s: %s von %s in %s s", entity_id, count, rule.count, rule.window
+            )
+            self.fire_event(
+                {
+                    "type": "VibrationCounted",
+                    "sensor_key": entity_id,
+                    "count": count,
+                    "needed": rule.count,
+                    "window": rule.window,
+                }
+            )
+            self._notify()
+        return reached
+
+    @callback
+    def _on_vibration_reported(self, event: HaEventAny[Any]) -> None:
+        """Erschütterungsstärke: auch eine gleich gebliebene Zahl über der Schwelle ist eine
+        neue Meldung (Home Assistant meldet sie als ``state_reported``)."""
+        entity_id = event.data.get("entity_id")
+        if entity_id not in self.vibration_sources or self.simulated(entity_id) is not None:
+            return
+        if entity_id not in self.candidates and entity_id not in self.armed_sensors:
+            return
+        new = event.data.get("new_state")
+        if self.read_position(entity_id, new) != "on":
+            return
+        self._handle_sensor_change(
+            entity_id, "off", "on", new.attributes.get("device_class") if new else None
+        )
 
     @callback
     def _on_sensor_lost(self, entity_id: str) -> None:
@@ -2387,6 +2467,7 @@ class HauswachtRuntime:
         if self.ctx.state is not AlarmState.ARMING:
             self._cancel_settle()
         if self.ctx.state is AlarmState.DISARMED:
+            self._vibration.reset()
             self.sirens.reset()
             self._reset_rules()
             self._engine = RuleEngine()
@@ -2655,7 +2736,8 @@ class HauswachtRuntime:
         lang = self.lang
         title, message = alarm_message(
             self.profile_name(effect.profile_id),
-            display_name(self.hass, effect.sensor_key),
+            display_name(self.hass, effect.sensor_key)
+            + (tr(lang, "vibration_suffix") if self.is_vibration(effect.sensor_key) else ""),
             test_mode=effect.test_mode,
             lang=lang,
         )

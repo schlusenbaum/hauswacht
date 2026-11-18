@@ -12,6 +12,7 @@ Hauswacht only monitors entities that know **open/closed**:
 | Lock (`lock`) | unlocked, opening, open, jammed |
 | Cover (`cover`, e.g. garage door) | open, opening, closing |
 | [Sensor with tilt position](#sensors-with-tilt-position-tilted) (sensor with a text state, attribute or select helper) | open – tilted depending on the profile |
+| [Vibration strength](#vibration-strength-as-a-number) (number sensor or number helper) | value at or above the configured threshold |
 
 Everything else becomes a binary sensor via a **helper** in Home Assistant:
 
@@ -54,7 +55,8 @@ groups, not single sensors. Typical:
 Sensors get into a group in two ways, which can be combined:
 
 - **Select directly** in the field "Sensors". [Sensors with tilt position](#sensors-with-tilt-position-tilted)
-  have their own field below (it appears as soon as there are any).
+  and [vibration strengths](#vibration-strength-as-a-number) have their own field below ("Special
+  sensors" – it appears as soon as there are any).
 - **By label:** all sensors that carry this label **directly on the entity** belong to the
   group automatically. Labels on the device deliberately do not count – otherwise battery or
   connectivity sensors of the same device would be included.
@@ -75,7 +77,8 @@ suggested type – usually it fits, otherwise change it right there.
 | **Motion** | motion, occupancy, presence | Waits if an entry delay is running, otherwise instant alarm |
 | **Tamper** | tamper | Always reported, even when disarmed; alarm depending on the profile |
 | **Technical** | moisture, gas, cold, heat, carbon monoxide | Always active, never part of arming, no intrusion alarm – notification only (see below) |
-| **Other** | everything else (vibration, shutter …) | Instant alarm, to be on the safe side |
+| **Vibration** | vibration, [vibration strength](#vibration-strength-as-a-number) | Instant alarm – with adjustable [false alarm protection](#vibration-sensors); never blocks arming |
+| **Other** | everything else (shutter …) | Instant alarm, to be on the safe side |
 
 Example: a window through which you enter the house gets the type **Door**. Hauswacht
 deliberately does not suggest smoke detectors as "Technical" – fire protection stays the job of
@@ -152,8 +155,68 @@ every alarm profile you decide whether a **tilted window is allowed**.
 of all sensor groups; nothing changes on the device.
 
 > **Vibration at the window:** many of these sensors also report vibration (prying, glass
-> breakage) as a number. Today, [create a sensor from another sensor](#create-a-sensor-from-another-sensor)
-> turns it into a sensor of its own (e.g. upper limit 30, type window).
+> breakage) as a number – this becomes a [vibration sensor](#vibration-sensors). Together both
+> are strong: at night the window is tilted and allowed – whoever pries at it triggers via the
+> vibration **before** the window is open.
+
+## Vibration sensors
+
+Vibration sensors (e.g. Aqara or Tuya via Zigbee2MQTT, device class "vibration") report knocks on
+windows and doors – i.e. prying or a smashed pane. Hauswacht gives them their own type
+**vibration**:
+
+- **Instant alarm** in the armed profile (no entry delay).
+- **Never blocks arming.** Vibration is an event, not an open state – a sensor that is still
+  "on" for a minute after a knock does not prevent arming. A **failed** vibration sensor, on the
+  other hand, counts like every failed sensor.
+- **Texts** say "… (vibration)".
+- **Disarmed** nothing happens. Whoever wants to be informed then too adds the sensor under
+  [always active](#always-active-sensors).
+
+### False alarm protection: how many vibrations until the alarm?
+
+Vibration sensors are sensitive: a slammed door, a passing truck, a thunderstorm or a ball
+against the pane can trigger them. That is why Hauswacht asks when saving a sensor group with
+vibration sensors:
+
+**"Alarm at N reports of one sensor within S seconds"**
+
+| Setting | Effect |
+|---|---|
+| **1 report** (default) | Every vibration triggers immediately – the most sensitive |
+| **2 reports in 60 s** (recommendation) | A single knock does not trigger. Someone prying or smashing a pane almost always causes several knocks in quick succession. Price: a single, very strong blow alone does not trigger |
+| 3 – 5 reports | Only for very restless spots (e.g. door to the street) |
+
+- Counting is **per sensor**: a thunderstorm that shakes every window once does not cause an
+  alarm.
+- Every report that is not yet enough appears as the event `VibrationCounted` (with `count`,
+  `needed`, `window`) – handy for checking the setting.
+- **Mind the hold time:** many vibration sensors stay "on" for a while after a report (often
+  60–90 seconds) and report no second one during that time. For "2 in 60 seconds" the hold time
+  must be clearly shorter – with Zigbee2MQTT it is often adjustable as a device option (e.g. 5–10
+  seconds).
+- To change: edit the sensor group → save → the question comes again after the types.
+
+### Vibration strength as a number
+
+Some sensors don't report an "on/off" vibration but a **strength as a number** (e.g.
+`sensor.bathroom_window_vibration` of a window sensor). This becomes a sensor without helpers:
+
+**Alarm triggering → Special sensors → Add vibration strength.**
+
+1. Choose the sensor (to try it without hardware: **Number** helper, `input_number`).
+2. Enter the **threshold**: from this value on it counts as a vibration. Best watch the value
+   under Developer tools → States and knock lightly on the window – choose the threshold a bit
+   above the idle value and below a strong knock.
+3. Optionally add it to a sensor group right away. The type is automatically **vibration**.
+
+**Every report at or above the threshold counts** – even if the number stays the same (Home
+Assistant also reports unchanged values). If the value is not a number or the sensor is
+unavailable, the sensor counts as failed.
+
+**Combining with trigger rules:** "vibration, then window open within one minute" works as a
+[trigger rule](trigger-rules.md) – e.g. if single vibrations should not be enough, but the
+combination should.
 
 ## Create a sensor from another sensor
 

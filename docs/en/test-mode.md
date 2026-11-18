@@ -34,6 +34,7 @@ entry and exit delay), below that the **trigger rules of the active profile** ("
 | [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) | **Open** / **Tilted** / **Closed** |
 | motion, presence, occupancy | **Motion** / **Clear** |
 | tamper | **Tamper** / **OK** |
+| vibration | **Vibration** / **Calm** (the false alarm protection counts along) |
 | all | **Gone** (unavailable), **Real** (back to the real value) |
 
 Below each sensor it says what Hauswacht is currently doing with it:

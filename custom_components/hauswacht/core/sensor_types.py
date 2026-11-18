@@ -18,6 +18,7 @@ legen Meldergruppen und Alarmprofile fest.
 | Bewegung | Mitläufer |
 | Manipulation | immer gemeldet |
 | Technik (Wasser, Gas, Frost …) | immer aktiv, nie Teil der Scharfschaltung |
+| Erschütterung | sofort, blockiert das Scharfschalten nie; Fehlalarmschutz je Meldergruppe |
 | Sonstiges | sofort (sicherheitshalber) |
 """
 
@@ -48,6 +49,7 @@ class SensorType(StrEnum):
     MOTION = "motion"
     TAMPER = "tamper"
     TECHNICAL = "technical"
+    VIBRATION = "vibration"
     OTHER = "other"
 
 
@@ -57,6 +59,7 @@ TYPE_ROLE: Mapping[SensorType, SensorRole] = {
     SensorType.MOTION: SensorRole.FOLLOWER,
     SensorType.TAMPER: SensorRole.TAMPER_24H,
     SensorType.TECHNICAL: SensorRole.INSTANT,
+    SensorType.VIBRATION: SensorRole.INSTANT,
     SensorType.OTHER: SensorRole.INSTANT,
 }
 
@@ -79,6 +82,7 @@ TYPE_BY_DEVICE_CLASS: Mapping[str, SensorType] = {
     "presence": SensorType.MOTION,
     "moving": SensorType.MOTION,
     "tamper": SensorType.TAMPER,
+    "vibration": SensorType.VIBRATION,
     "moisture": SensorType.TECHNICAL,
     "gas": SensorType.TECHNICAL,
     "cold": SensorType.TECHNICAL,

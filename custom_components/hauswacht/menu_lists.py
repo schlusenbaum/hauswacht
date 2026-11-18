@@ -20,6 +20,7 @@ from .core.rules import parse_rules
 from .core.sensors import parse_zones, resolve_zone
 from .core.tilt import parse_tilt_sources
 from .core.users import parse_users
+from .core.vibration import parse_vibration_sources
 from .names import display_name
 from .runtime import entities_by_label
 
@@ -48,6 +49,7 @@ HEADS: Mapping[str, Mapping[str, str]] = {
     "controls": {"de": "Vorhandene Bedienteile", "en": "Existing control devices"},
     "sirens": {"de": "Eingetragene Sirenen", "en": "Registered sirens"},
     "tilt": {"de": "Melder mit Kippstellung", "en": "Sensors with tilt position"},
+    "vibration": {"de": "Erschütterungsstärken", "en": "Vibration strengths"},
 }
 
 
@@ -172,3 +174,24 @@ def tilt_text(hass: HomeAssistant, options: Mapping[str, Any], lang: str) -> str
                 f"({where})"
             )
     return _block("tilt", lang, lines)
+
+
+def special_text(hass: HomeAssistant, options: Mapping[str, Any], lang: str) -> str:
+    """Besondere Melder: Kippstellung und Erschütterungsstärke."""
+    labels = entities_by_label(hass)
+    zones = parse_zones(options)
+    lines = []
+    for source in sorted(
+        parse_vibration_sources(options).values(),
+        key=lambda s: display_name(hass, s.entity_id).casefold(),
+    ):
+        group = next(
+            (z.name for z in zones.values() if source.entity_id in resolve_zone(z, labels)), None
+        )
+        where = group or ("keine Meldergruppe" if lang == "de" else "no group")
+        limit = f"{source.threshold:g}"
+        lines.append(
+            f"{display_name(hass, source.entity_id)} – "
+            + (f"ab {limit} ({where})" if lang == "de" else f"from {limit} ({where})")
+        )
+    return tilt_text(hass, options, lang) + _block("vibration", lang, lines)

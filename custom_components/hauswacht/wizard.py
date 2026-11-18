@@ -49,10 +49,11 @@ from .core.changes.notifications import set_general_recipients
 from .core.changes.profiles import save_profile
 from .core.changes.sirens import save_sirens
 from .core.changes.users import save_user, set_pins
-from .core.profiles import MAX_DELAY, profile_infos, profile_settings
+from .core.profiles import MAX_DELAY, profile_behaviour, profile_infos, profile_settings
 from .core.rules import parse_rules
 from .core.sensor_types import MONITORED_DOMAINS, SensorType, parse_types, sensor_type
 from .core.sensors import parse_zones, resolve_zones
+from .core.tilt import parse_tilt_sources
 from .core.wizard import (
     AWAY,
     DEFAULT_ENTRY_DELAY,
@@ -474,6 +475,9 @@ class WizardSteps:
                 (AWAY, "away", {"exit_delay": exit_delay, "entry_delay": entry_delay}),
                 (NIGHT, "night", {"entry_delay": entry_delay}),
             ]
+            if parse_tilt_sources(options):
+                # Melder mit Kippstellung: nachts gekippt erlauben? (ADR 0010)
+                plan[1][2]["tilt_allowed"] = bool(user_input.get("night_tilt"))
             for mode, key, delays in plan:
                 if not user_input.get(key):
                     continue
@@ -554,6 +558,12 @@ class WizardSteps:
         fields[self._schedule_key(options, NIGHT, "night_schedule", source)] = (
             self._schedule_select()
         )
+        if parse_tilt_sources(options):
+            night_id = profile_with_mode(options, NIGHT, self._wiz_area)
+            current_tilt = profile_behaviour(options, night_id).tilt_allowed if night_id else True
+            fields[vol.Optional("night_tilt", default=source.get("night_tilt", current_tilt))] = (
+                BooleanSelector()
+            )
         return self.async_show_form(
             step_id="wizard_profiles",
             data_schema=vol.Schema(fields),

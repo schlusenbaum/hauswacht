@@ -24,6 +24,7 @@ from custom_components.hauswacht.core.tilt import (
     TILTED,
     TiltSource,
     delete_tilt_source,
+    effective_types,
     judge,
     known_values,
     looks_like_tilt,
@@ -31,7 +32,6 @@ from custom_components.hauswacht.core.tilt import (
     position,
     save_tilt_source,
     suggest,
-    types_with_tilt,
 )
 
 SENORO = TiltSource(
@@ -109,7 +109,7 @@ def test_save_parse_and_delete() -> None:
     source = parse_tilt_sources(options)["sensor.f"]
     assert source.closed == frozenset({"closed"})
     assert source.tilted == frozenset({"tilted"})  # nie zugleich zu und gekippt
-    assert types_with_tilt(options)["sensor.f"] is SensorType.WINDOW
+    assert effective_types(options)["sensor.f"] is SensorType.WINDOW
     removed = delete_tilt_source(options, "sensor.f")
     assert "sensor.f" not in parse_tilt_sources(removed)
     assert removed["zones"]["fenster"]["entities"] == ["binary_sensor.t"]
@@ -121,7 +121,7 @@ def test_explicit_type_wins() -> None:
     options = save_tilt_source(
         {"sensor_types": {"sensor.f": "door"}}, "sensor.f", attribute=None, closed=["zu"], tilted=[]
     )
-    assert types_with_tilt(options)["sensor.f"] is SensorType.DOOR
+    assert effective_types(options)["sensor.f"] is SensorType.DOOR
 
 
 def test_profile_setting_default_off() -> None:

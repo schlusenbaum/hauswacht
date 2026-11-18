@@ -50,6 +50,7 @@ use the one of the respective area.
 | … | Use | Note |
 |---|---|---|
 | **tampering** is reported | event `TamperDetected` | sensor in `sensor_key`; also comes when disarmed |
+| a **vibration** was counted, but no alarm yet | event `VibrationCounted` | `count`, `needed` – e.g. light on as a deterrent |
 | a **sensor fails** | event `SensorUnavailable` | or `sensor.hauswacht_system_status` → `degraded` |
 | the **radio network/gateway** is faulty | event `InfrastructureFault` (`InfrastructureRecovered` = fine again) | or system status → `fault` |
 | a **wrong PIN** was entered | event `InvalidCode` | `failures`, `lock_seconds` (lockout) |

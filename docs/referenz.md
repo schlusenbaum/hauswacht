@@ -191,6 +191,7 @@ Gut zu wissen:
 | `SensorsRestored` | Überbrückte Melder wieder zu, werden wieder überwacht | `sensors` |
 | `ArmingAborted` | Scharfschalten am Ende der Ausgangsverzögerung abgebrochen (noch offen/ausgefallen) | `open_sensors`, `unavailable_sensors` |
 | `TamperDetected` | Sabotage gemeldet | `sensor_key`, `state` (Zustand der Anlage in dem Moment) |
+| `VibrationCounted` | [Erschütterung](melder.md#erschütterungsmelder) gezählt, reicht aber noch nicht für einen Alarm (Fehlalarmschutz) | `sensor_key`, `count` (bisher im Zeitfenster), `needed` (nötig), `window` (Sekunden) |
 | `AlwaysActiveTriggered` | [Immer aktiver](melder.md#immer-aktive-melder) Melder ausgelöst | `sensor_key` |
 | `ArmedByClosingDoor` | [Scharf durch Schließen der Tür](profile.md#scharf-durch-schließen-der-tür) | – |
 | `TestModeChanged` | Testmodus ein/aus | `enabled` |

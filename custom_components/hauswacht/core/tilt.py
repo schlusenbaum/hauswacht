@@ -188,9 +188,14 @@ def delete_tilt_source(options: Mapping[str, Any], entity_id: str) -> dict[str, 
     return new
 
 
-def types_with_tilt(options: Mapping[str, Any]) -> dict[str, SensorType]:
-    """Gewählte Typen; Melder mit Kippstellung ohne eigene Wahl sind Fenster."""
+def effective_types(options: Mapping[str, Any]) -> dict[str, SensorType]:
+    """Gewählte Typen; ohne eigene Wahl sind Melder mit Kippstellung Fenster und
+    Erschütterungsstärken Erschütterung."""
+    from .vibration import parse_vibration_sources  # noqa: PLC0415
+
     types = parse_types(options)
     for entity_id in parse_tilt_sources(options):
         types.setdefault(entity_id, SensorType.WINDOW)
+    for entity_id in parse_vibration_sources(options):
+        types.setdefault(entity_id, SensorType.VIBRATION)
     return types

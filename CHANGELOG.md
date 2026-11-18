@@ -6,6 +6,40 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.56.0b2] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/gekippt`, ADR 0010 Teil B).
+
+### Hinzugefügt
+- **Melder-Typ „Erschütterung“** (Vorschlag für Geräteklasse Vibration): sofort Alarm im
+  scharfen Profil, **blockiert das Scharfschalten nie** (Erschütterung ist ein Vorgang, kein
+  offener Zustand); ein ausgefallener Erschütterungssensor zählt weiter wie jeder ausgefallene
+  Melder. Texte sagen „(Erschütterung)“.
+- **Fehlalarmschutz je Meldergruppe:** „Alarm bei N Meldungen eines Melders innerhalb von S
+  Sekunden“ – Standard 1 Meldung, Empfehlung 2 in 60 Sekunden, mit Erklärung im Dialog. Gezählt
+  wird je Melder. Neues Ereignis `VibrationCounted` für Meldungen, die noch nicht reichen.
+- **Erschütterungsstärke als Zahl** (Alarmauslösung → Besondere Melder): Zahlensensor oder
+  Zahlenwert-Helfer mit Schwelle wird ohne Helfer zum Erschütterungsmelder; jede Meldung ab der
+  Schwelle zählt, auch bei gleichbleibendem Wert. Keine Zahl = ausgefallen.
+- **Einrichtungsassistent:** fragt beim Nachtprofil „Nachts gekippte Fenster erlauben?“, wenn
+  es Melder mit Kippstellung gibt.
+- Testkarte: Knöpfe **Erschütterung** / **Ruhe**; Anlagenübersicht: Typ „Erschütterung“.
+
+### Geändert
+- Erschütterungssensoren mit Geräteklasse Vibration, deren Typ nie geändert wurde, sind jetzt
+  vom Typ **Erschütterung** statt „Sonstiges“. Unterschied: Sie blockieren das Scharfschalten
+  nicht mehr, ausgelöst wird wie bisher bei der ersten Meldung. Wer den Typ selbst gewählt hat,
+  behält ihn.
+
+### Dokumentation
+- Melder: neuer Abschnitt „Erschütterungsmelder“ mit Fehlalarmschutz, Haltezeit und
+  Erschütterungsstärke; Typen-Tabelle, Assistent, Profile, Referenz (`VibrationCounted`),
+  Spickzettel, Testmodus, README – deutsch und englisch.
+
+### Intern
+- Neuer reiner Baustein `core/vibration.py` (Quelle, Schwelle, Zähler je Melder); Kern- und
+  Integrationstests.
+
 ## [0.56.0b1] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/gekippt`, ADR 0010 Teil A).
