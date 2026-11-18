@@ -17,8 +17,9 @@ from homeassistant.core import HomeAssistant
 from .const import MASTER_USER_ID
 from .core.action_codes import ACTION_CODE_KEYS, ALL_KEYPADS, CodeAction, parse_action_codes
 from .core.areas import parse_areas, profile_area
+from .core.automation import parse_automation
 from .core.controls import MAX_LEARN_MINUTES, ControlKind, learn_minutes, parse_controls
-from .core.profiles import MAX_STALE_HOURS, parse_automation, profile_ids, profile_info
+from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
 from .names import display_name
 
