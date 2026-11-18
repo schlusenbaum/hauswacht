@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b8] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`).
+
+### Geändert
+- **Eigene Texte starten mit dem Text von Hauswacht**: Beim Bearbeiten stehen Titel und Text von
+  Hauswacht als Vorlage mit Platzhaltern im Feld (z. B. `Profil {profil} scharf geschaltet
+  ({wer}).`) – auf der Einstellungsseite und im Dialog. Unverändert gespeichert bleibt es beim
+  Text von Hauswacht.
+- Einstellungsseite: Knopf **„↺ Standardtext“** setzt einen eigenen Text zurück; die Vorschau mit
+  Beispielwerten ändert sich beim Tippen mit.
+- Platzhalter-Texte räumen leere Klammern besser auf (kein Leerzeichen mehr vor dem Punkt, wenn
+  z. B. `({wer})` leer bleibt).
+
 ## [0.57.0b7] - 2026-11-18
 
 Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 4).

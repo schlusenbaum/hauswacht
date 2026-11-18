@@ -39,10 +39,14 @@ const AT = {
     noProfile: "– keins –",
     reminderDelay: "Nach (Minuten)",
     textTitle: "Eigener Text",
-    title: "Titel (leer = Text von Hauswacht)",
-    message: "Text (leer = Text von Hauswacht)",
+    title: "Titel",
+    message: "Text",
     placeholders: "Platzhalter",
     preview: "Vorschau mit Beispielwerten",
+    reset: "↺ Standardtext",
+    isDefault: "Das ist der Text von Hauswacht – einfach ändern. Unverändert gespeichert bleibt es beim Text von Hauswacht.",
+    isCustom: "Eigener Text. „Standardtext“ setzt ihn auf den Text von Hauswacht zurück.",
+    fullText: "{text} steht für den vollständigen Text von Hauswacht, z. B. „{text} – bitte Nachbarn anrufen“.",
     none: "–",
     errors: {
       confirm_hardware_required: "Zum Freigeben bitte bestätigen.",
@@ -85,10 +89,14 @@ const AT = {
     noProfile: "– none –",
     reminderDelay: "After (minutes)",
     textTitle: "Own text",
-    title: "Title (empty = Hauswacht's text)",
-    message: "Text (empty = Hauswacht's text)",
+    title: "Title",
+    message: "Text",
     placeholders: "Placeholders",
     preview: "Preview with example values",
+    reset: "↺ Default text",
+    isDefault: "This is Hauswacht's text – just change it. Saved unchanged, Hauswacht's text stays.",
+    isCustom: "Own text. “Default text” resets it to Hauswacht's text.",
+    fullText: "{text} stands for Hauswacht's complete text, e.g. “{text} – please call the neighbours”.",
     none: "–",
     errors: {
       confirm_hardware_required: "Please confirm to enable.",
@@ -110,6 +118,8 @@ const ALARM_STYLE = `
   textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 90px; padding: 7px 10px; border-radius: 6px;
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color); }
   code { font-size: .85rem; }
+  .pv { border: 1px solid var(--divider-color); border-radius: 8px; padding: 8px 10px; font-size: .9rem; }
+  .tool { margin-top: 8px; }
 `;
 
 const ae = (value) =>
@@ -134,7 +144,8 @@ class HauswachtAlarmEditor extends HTMLElement {
       };
     } else {
       const ev = s.notify.events.find((e) => e.event === this.event) || {};
-      this._draft = { title: ev.title || "", message: ev.message || "", preview: ev.preview || "" };
+      this._event = ev;
+      this._draft = { title: ev.title || ev.default_title || "", message: ev.message || ev.default_message || "" };
     }
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     this._render();
@@ -220,15 +231,40 @@ class HauswachtAlarmEditor extends HTMLElement {
       <label>${ae(this._t("reminderDelay"))}</label><input class="small" type="number" min="1" max="240" data-r="delay" value="${ae(d.reminder.delay)}">`;
   }
 
+  get _isDefault() {
+    const ev = this._event || {};
+    const same = (text, def) => !text.trim() || text.trim() === (def || "");
+    return same(this._draft.title, ev.default_title) && same(this._draft.message, ev.default_message);
+  }
+
+  // Wie render() in core/messages.py: Platzhalter füllen, leere Klammern und Leerzeichen aufräumen
+  _fill(template) {
+    const values = this.settings.notify.examples || {};
+    return String(template || "")
+      .replace(/\{(\w+)\}/g, (m, name) => (name in values ? values[name] : m))
+      .replace(/\(\s*\)/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/ +([.,;:!?])/g, "$1")
+      .trim();
+  }
+
+  _previewHtml() {
+    const d = this._draft;
+    return `<b>${ae(this._fill(d.title))}</b><br>${ae(this._fill(d.message))}`;
+  }
+
   _textForm() {
     const d = this._draft;
     const ph = this.settings.notify.placeholders.map((p) => `<code>${ae(p)}</code>`).join(" ");
     return `
       <h2>${ae(this._t("textTitle"))}: ${ae(this.eventLabel ? this.eventLabel(this.event) : this.event)}</h2>
+      <div class="muted" data-state>${ae(this._isDefault ? this._t("isDefault") : this._t("isCustom"))}</div>
       <label>${ae(this._t("title"))}</label><input data-tx="title" value="${ae(d.title)}">${this._err("title")}
       <label>${ae(this._t("message"))}</label><textarea data-tx="message">${ae(d.message)}</textarea>${this._err("message")}
+      <div class="tool"><button class="b" data-act="reset">${ae(this._t("reset"))}</button></div>
       <label>${ae(this._t("placeholders"))}</label><div class="muted">${ph}</div>
-      ${d.preview ? `<label>${ae(this._t("preview"))}</label><div class="muted">${ae(d.preview)}</div>` : ""}`;
+      <div class="muted">${ae(this._t("fullText"))}</div>
+      <label>${ae(this._t("preview"))}</label><div class="pv" data-preview>${this._previewHtml()}</div>`;
   }
 
   // --- Lesen, Speichern --------------------------------------------------------
@@ -258,7 +294,12 @@ class HauswachtAlarmEditor extends HTMLElement {
   _payload() {
     const d = this._draft;
     if (this.kind === "sirens") return ["sirens_save", { ...d }];
-    if (this.kind === "text") return ["notify_text_save", { event: this.event, title: d.title, message: d.message }];
+    if (this.kind === "text") {
+      // Unverändert = Text von Hauswacht (es wird nichts gespeichert)
+      const ev = this._event || {};
+      const own = (text, def) => (text.trim() === (def || "") ? "" : text);
+      return ["notify_text_save", { event: this.event, title: own(d.title, ev.default_title), message: own(d.message, ev.default_message) }];
+    }
     const data = {
       notify_system: d.general,
       notify_in_test_mode: d.test_mode,
@@ -326,6 +367,23 @@ class HauswachtAlarmEditor extends HTMLElement {
       el.addEventListener("change", () => {
         this._collect();
         this._render();
+      })
+    );
+    const reset = root.querySelector('[data-act="reset"]');
+    if (reset) {
+      reset.addEventListener("click", () => {
+        this._draft.title = this._event?.default_title || "";
+        this._draft.message = this._event?.default_message || "";
+        this._errors = {};
+        this._render();
+      });
+    }
+    // Vorschau beim Tippen, ohne neu zu zeichnen (sonst springt der Cursor)
+    root.querySelectorAll("[data-tx]").forEach((el) =>
+      el.addEventListener("input", () => {
+        this._draft[el.dataset.tx] = el.value;
+        root.querySelector("[data-preview]").innerHTML = this._previewHtml();
+        root.querySelector("[data-state]").textContent = this._isDefault ? this._t("isDefault") : this._t("isCustom");
       })
     );
     // Haken im Kopf eines Ereignisses soll es nicht auf- und zuklappen

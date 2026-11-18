@@ -114,7 +114,7 @@ from .core.automation import (
     parse_automation,
 )
 from .core.changes.areas import save_area
-from .core.changes.notifications import save_notify_settings
+from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sirens import save_sirens
 from .core.changes.users import (
@@ -142,6 +142,7 @@ from .core.controls import (
     normalize_tag,
     parse_controls,
 )
+from .core.default_texts import default_message, default_title
 from .core.messages import (
     EXAMPLE_VALUES_DE,
     EXAMPLE_VALUES_EN,
@@ -2665,26 +2666,20 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         stored = events.get(event.value, {})
         errors: dict[str, str] = {}
         placeholders = {"error": "", "placeholders": self._placeholder_help(), "preview": ""}
+        lang = "de" if self._german() else "en"
         if user_input is not None:
             texts = {k: str(user_input.get(k) or "").strip() for k in ("title", "message")}
-            for key, text in texts.items():
-                try:
-                    check_template(text, "de" if self._german() else "en")
-                except TemplateError as err:
-                    errors[key] = "invalid_template"
-                    placeholders["error"] = str(err)
-            if not errors:
-                for key, text in texts.items():
-                    if text:
-                        stored[key] = text
-                    else:
-                        stored.pop(key, None)
-                events[event.value] = stored
-                options[OPT_EVENTS] = events
-                example = {**self._example_values()}
-                if texts["message"]:
-                    self._notes.append(render(texts["message"], example))
-                return await self._save(options, "notifications")
+            # Gleiche Regeln wie auf der Einstellungsseite: Vorlage unverändert = Text von Hauswacht
+            change = save_event_text(
+                options, event.value, texts["title"], texts["message"], lang=lang
+            )
+            if change.ok and change.options is not None:
+                saved = change.options[OPT_EVENTS].get(event.value, {})
+                if saved.get("message"):
+                    self._notes.append(render(saved["message"], self._example_values()))
+                return await self._save(dict(change.options), "notifications")
+            errors = dict(change.errors)
+            placeholders["error"] = str(change.details.get("message", ""))
         current = stored.get("message")
         if isinstance(current, str) and current:
             placeholders["preview"] = render(current, self._example_values())
@@ -2692,11 +2687,18 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             step_id="notify_text_edit",
             data_schema=vol.Schema(
                 {
+                    # Vorschlag: eigener Text oder die Vorlage von Hauswacht zum Ändern
                     vol.Optional(
-                        "title", description={"suggested_value": stored.get("title", "")}
+                        "title",
+                        description={
+                            "suggested_value": stored.get("title") or default_title(event, lang)
+                        },
                     ): TextSelector(),
                     vol.Optional(
-                        "message", description={"suggested_value": stored.get("message", "")}
+                        "message",
+                        description={
+                            "suggested_value": stored.get("message") or default_message(event, lang)
+                        },
                     ): TextSelector(TextSelectorConfig(multiline=True)),
                 }
             ),

@@ -143,9 +143,17 @@ Recipients per **profile** (who is notified on an alarm in this profile) are set
 (section "Reaction on alarm").
 
 **"Own texts"** – below, every event is listed with "Hauswacht's text" or your own text. "Edit"
-opens title and text. Placeholders like `{sensor}` or `{profile}` are listed below, and after
-saving the list shows a **preview** with example values. A typo is refused, e.g. "Text has an
-error: unknown placeholder {foo}". Leave a field empty = Hauswacht's text again. Example:
+opens title and text – the first time they show **Hauswacht's text as a template** (e.g.
+`Profile {profile} armed ({who}).`), which you simply change. The **preview** with example values
+changes as you type. Placeholders like `{sensor}` or `{profile}` are listed below. A typo is
+refused, e.g. "Text has an error: unknown placeholder {foo}".
+
+- **"↺ Default text"** resets title and text to the template; save – done.
+- Template saved **unchanged** = Hauswacht's text stays (nothing is saved).
+- `{text}` is Hauswacht's complete text. A custom text replaces it entirely – on an alarm e.g.
+  also the note which sirens are running. To keep it, include `{text}`.
+
+Example:
 
 ```text
 Title:  Alarm in {area}

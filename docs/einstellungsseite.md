@@ -146,10 +146,19 @@ Die Empfänger je **Profil** (wer bei Alarm in diesem Profil benachrichtigt wird
 Profil ein (Abschnitt „Reaktion bei Alarm“).
 
 **„Eigene Texte“** – darunter steht jedes Ereignis mit „Text von Hauswacht“ oder deinem eigenen
-Text. „Bearbeiten“ öffnet Titel und Text. Platzhalter wie `{melder}` oder `{profil}` stehen
-darunter, und nach dem Speichern zeigt die Liste eine **Vorschau** mit Beispielwerten. Ein
-Tippfehler wird abgelehnt, z. B. „Text fehlerhaft: Unbekannter Platzhalter {foo}“. Feld leer
-lassen = wieder der Text von Hauswacht. Beispiel:
+Text. „Bearbeiten“ öffnet Titel und Text – beim ersten Mal steht dort der **Text von Hauswacht als
+Vorlage** (z. B. `Profil {profil} scharf geschaltet ({wer}).`), die du einfach änderst. Die
+**Vorschau** mit Beispielwerten ändert sich beim Tippen mit. Platzhalter wie `{melder}` oder
+`{profil}` stehen darunter. Ein Tippfehler wird abgelehnt, z. B. „Text fehlerhaft: Unbekannter
+Platzhalter {foo}“.
+
+- **„↺ Standardtext“** setzt Titel und Text auf die Vorlage zurück; speichern – fertig.
+- Vorlage **unverändert** gespeichert = es bleibt beim Text von Hauswacht (nichts wird
+  gespeichert).
+- `{text}` ist der vollständige Text von Hauswacht. Ein eigener Text ersetzt ihn ganz – beim Alarm
+  z. B. auch den Zusatz, welche Sirenen laufen. Zum Behalten `{text}` mit hineinschreiben.
+
+Beispiel:
 
 ```text
 Titel:  Alarm im {bereich}

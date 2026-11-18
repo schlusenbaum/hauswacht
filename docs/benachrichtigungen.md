@@ -53,7 +53,19 @@ werden so verschickt, wie sie eingetragen sind.
 ## Eigene Texte und Platzhalter
 
 **Benachrichtigungen → Eigene Texte für Push-Nachrichten:** Titel und Text je Ereignis selbst
-formulieren; leer = Standardtext. Dieselben Platzhalter gelten für die Sprachausgabe:
+formulieren. Im Feld steht zuerst der **Text von Hauswacht** als Vorlage – mit Platzhaltern statt
+Werten, z. B. `Profil {profil} scharf geschaltet ({wer}).` Einfach ändern und speichern. Bleibt die
+Vorlage **unverändert** (oder das Feld leer), wird nichts gespeichert und Hauswacht schickt seinen
+eigenen Text. Wo dieser je nach Lage anders aussieht (z. B. Störungen), steht `{text}` in der
+Vorlage – das ist der vollständige Text von Hauswacht.
+
+> **Gut zu wissen:** Ein eigener Text ersetzt den ganzen Text von Hauswacht. Beim Alarm hängt
+> Hauswacht sonst z. B. noch an, welche Sirenen laufen. Wer das behalten will, schreibt `{text}`
+> mit hinein, z. B. `{text} Bitte Nachbarn anrufen.`
+
+Zurück zum Text von Hauswacht: auf der [Einstellungsseite](einstellungsseite.md#benachrichtigungen-bearbeiten)
+der Knopf **„↺ Standardtext“**, im Dialog das Feld leeren. Dieselben Platzhalter gelten für die
+Sprachausgabe:
 
 | Platzhalter | englisch | Inhalt |
 |---|---|---|

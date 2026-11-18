@@ -777,7 +777,7 @@
       },
       "notify_text_edit": {
         "title": "Custom text",
-        "description": "Empty = Hauswacht's default text. Placeholders: {placeholders}. The placeholder “text” is the default text, in the title the default title.\n\nCurrent preview: {preview}\n\n{error}",
+        "description": "Hauswacht's text is suggested – just change it. Unchanged or empty = Hauswacht's text. Placeholders: {placeholders}. The placeholder “text” is the default text, in the title the default title.\n\nCurrent preview: {preview}\n\n{error}",
         "data": {
           "title": "Title",
           "message": "Text"

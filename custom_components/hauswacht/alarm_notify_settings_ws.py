@@ -13,7 +13,14 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .core.messages import EXAMPLE_VALUES_DE, EXAMPLE_VALUES_EN, placeholder_names, render
+from .core.default_texts import default_message, default_title
+from .core.messages import (
+    ENGLISH_NAMES,
+    EXAMPLE_VALUES_DE,
+    EXAMPLE_VALUES_EN,
+    placeholder_names,
+    render,
+)
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.profiles import profile_info
 from .names import display_name
@@ -62,6 +69,9 @@ def build_alarm_notify_settings(hass: HomeAssistant, main: Any) -> dict[str, Any
                     "preview": render(events[event.value]["message"], examples)
                     if events.get(event.value, {}).get("message")
                     else "",
+                    # Vorlage zum Ändern: der Text von Hauswacht mit Platzhaltern
+                    "default_title": default_title(event, lang),
+                    "default_message": default_message(event, lang),
                 }
                 for event in NotifyEvent
             ],
@@ -71,6 +81,11 @@ def build_alarm_notify_settings(hass: HomeAssistant, main: Any) -> dict[str, Any
                 "delay": int(options.get("reminder_delay", 15)),
             },
             "placeholders": [f"{{{p}}}" for p in placeholder_names(lang)],
+            # Beispielwerte für die Vorschau beim Tippen (beide Schreibweisen)
+            "examples": {
+                **dict(examples),
+                **{en: examples.get(de, "") for en, de in ENGLISH_NAMES.items()},
+            },
             "choices": {
                 "notify": _notify_choices(hass),
                 "persons": [

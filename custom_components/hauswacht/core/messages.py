@@ -100,9 +100,9 @@ def check_template(template: str, lang: str = DE) -> None:
 
 
 def _tidy(text: str) -> str:
+    text = re.sub(r"\(\s*\)", "", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" +([.,;:!?])", r"\1", text)
-    text = re.sub(r"\(\s*\)", "", text)
     return text.strip()
 
 

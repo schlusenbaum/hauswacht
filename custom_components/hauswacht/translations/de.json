@@ -777,7 +777,7 @@
       },
       "notify_text_edit": {
         "title": "Eigener Text",
-        "description": "Leer = Standardtext von Hauswacht. Platzhalter: {placeholders}. Der Platzhalter „text“ ist der Standardtext, im Titel der Standardtitel.\n\nAktuelle Vorschau: {preview}\n\n{error}",
+        "description": "Vorgeschlagen ist der Text von Hauswacht – einfach ändern. Unverändert oder leer = Text von Hauswacht. Platzhalter: {placeholders}. Der Platzhalter „text“ ist der Standardtext, im Titel der Standardtitel.\n\nAktuelle Vorschau: {preview}\n\n{error}",
         "data": {
           "title": "Titel",
           "message": "Text"
