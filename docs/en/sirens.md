@@ -268,6 +268,9 @@ button sensors automatically.
 - A smoke detector never plays its fire tone for a burglary – not even with the
   [expert release](#fire-tone-as-expert-release).
 - Hauswacht never uses other switch-off scripts (e.g. "all smoke detectors off").
+- **Interconnecting** smoke detectors (all beep on smoke) is deliberately not done by Hauswacht –
+  it is a small automation of your own, see
+  [examples](examples.md#interconnecting-smoke-detectors).
 
 ## Siren was still on at a restart
 
