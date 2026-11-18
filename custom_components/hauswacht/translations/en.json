@@ -459,6 +459,7 @@
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Presence and homecoming observation",
           "restart": "Behaviour after restart",
+          "settings_page": "Settings page in the sidebar",
           "init": "← Back"
         },
         "description": "{saved}"
@@ -1352,6 +1353,13 @@
         "data": {
           "vibration_count": "Reports until alarm",
           "vibration_window": "within"
+        }
+      },
+      "settings_page": {
+        "title": "Settings page",
+        "description": "The page **Hauswacht** in the sidebar shows the whole setup at a glance (administrators only): sensors with groups and profiles as a table, profiles, rules, sirens, notifications, people. The settings dialog always stays complete – the page is an additional way.",
+        "data": {
+          "enabled": "Show the page “Hauswacht” in the sidebar"
         }
       }
     },

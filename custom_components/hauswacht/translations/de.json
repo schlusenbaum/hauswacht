@@ -459,6 +459,7 @@
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Anwesenheit und Heimkehr-Beobachtung",
           "restart": "Verhalten nach Neustart",
+          "settings_page": "Einstellungsseite in der Seitenleiste",
           "init": "← Zurück"
         },
         "description": "{saved}"
@@ -1352,6 +1353,13 @@
         "data": {
           "vibration_count": "Meldungen bis zum Alarm",
           "vibration_window": "innerhalb von"
+        }
+      },
+      "settings_page": {
+        "title": "Einstellungsseite",
+        "description": "Die Seite **Hauswacht** in der Seitenleiste zeigt die ganze Einrichtung auf einen Blick (nur für Administratoren): Melder mit Gruppen und Profilen als Tabelle, Profile, Regeln, Sirenen, Benachrichtigungen, Personen. Der Einstellungsdialog bleibt immer vollständig – die Seite ist ein zusätzlicher Weg.",
+        "data": {
+          "enabled": "Seite „Hauswacht“ in der Seitenleiste anzeigen"
         }
       }
     },

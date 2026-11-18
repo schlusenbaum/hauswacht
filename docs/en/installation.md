@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.56.0:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.57.0b1:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -71,6 +71,10 @@ Setup wizard.
 
 All settings are under **Settings → Devices & services → Hauswacht → Configure**. They can only
 be changed while **all areas are disarmed**.
+
+For an **overview** there is also the page **Hauswacht** in the sidebar (administrators only):
+everything at a glance, e.g. which sensor is armed in which profile – see
+[settings page](settings-page.md).
 
 | Menu | Content | Page |
 |---|---|---|

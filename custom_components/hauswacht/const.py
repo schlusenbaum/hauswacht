@@ -24,6 +24,8 @@ ROLE_AUTO: Final = "auto"
 OPT_INFRASTRUCTURE: Final = "infrastructure"
 OPT_SIRENS: Final = "sirens"
 OPT_SIRENS_HARDWARE_ENABLED: Final = "sirens_hardware_enabled"
+# Einstellungsseite in der Seitenleiste anzeigen (Standard: ja)
+OPT_SETTINGS_PAGE: Final = "settings_page"
 # Fest eingestellter Ton je Sirene: {entity_id: Ton}
 OPT_SIREN_TONES: Final = "siren_tones"
 # Experten: Sirenen, deren eingestellter Ton ein Brandton sein darf (nie Rauchmelder)

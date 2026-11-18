@@ -6,6 +6,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.0b1] - 2026-11-18
+
+Vorabversion zum Testen (Entwicklungszweig `entwicklung/einstellungsseite`, ADR 0011 Stufe 1).
+
+### Hinzugefügt
+- **Einstellungsseite „Hauswacht“ in der Seitenleiste** (nur Administratoren, zusätzlich zum
+  Dialog): die ganze Einrichtung auf einen Blick in Reitern – Übersicht mit Prüfhinweisen,
+  Melder, Profile, Auslöseregeln, Alarmgeber, Benachrichtigungen, Personen und Bedienteile,
+  System. Im Reiter Melder die **Matrix „Melder × Profile“** nach Meldergruppen mit Suchfeld,
+  Fehlalarmschutz je Gruppe und den Besonderen Meldern. In dieser Stufe nur Anzeige; der Knopf
+  „Im Dialog bearbeiten“ führt in den Einstellungsdialog.
+- Unter System → **Einstellungsseite in der Seitenleiste** lässt sich die Seite ausblenden.
+
+### Dokumentation
+- Neue Seite „Einstellungsseite“ (deutsch und englisch); Installation, README.
+
+### Intern
+- ADR 0011 „Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog“. Die Übersichtskarte
+  liefert ihre Abschnitte einzeln (`_parts`), die Seite nutzt dieselben Texte und Daten
+  (`hauswacht/overview`, ergänzt um Meldergruppen und Besondere Melder).
+
 ## [0.56.0] - 2026-11-18
 
 Fenster richtig überwachen: gekippte Fenster und Erschütterung (ADR 0010, getestet über die

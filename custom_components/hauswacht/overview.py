@@ -36,10 +36,12 @@ from .core.reactions import parse_reaction
 from .core.restart import OPT_RESTART_PROFILES, continue_alarm, restart_behavior
 from .core.rules import build_engine, describe_rule, profile_rule_ids
 from .core.sensor_types import excluded_sensors
+from .core.sensors import resolve_zone
 from .core.siren_guard import FireIndicator, SirenDevice, is_fire_tone, select_tone
 from .core.speech import parse_speech
-from .core.tilt import TILTED
+from .core.tilt import TILTED, parse_tilt_sources
 from .core.users import Action, User
+from .core.vibration import parse_vibration_sources, rule_for_zone_id
 from .names import display_name, plain_name
 
 if TYPE_CHECKING:
@@ -461,6 +463,57 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
     }
 
 
+def _groups(main: HauswachtRuntime) -> list[dict[str, Any]]:
+    """Meldergruppen mit Melderzahl und Fehlalarmschutz für Erschütterung."""
+    options = main.entry.options
+    rows = []
+    for zone in main.zones.values():
+        rule = rule_for_zone_id(options, zone.zone_id)
+        rows.append(
+            {
+                "id": zone.zone_id,
+                "name": zone.name,
+                "label": zone.label,
+                "count": len(resolve_zone(zone, main._labels)),
+                "vibration_count": rule.count,
+                "vibration_window": rule.window,
+            }
+        )
+    return rows
+
+
+def _special(main: HauswachtRuntime) -> dict[str, Any]:
+    """Besondere Melder: Kippstellung (Zuordnung) und Erschütterungsstärke (Schwelle)."""
+    hass = main.hass
+    options = main.entry.options
+    group_of: dict[str, str] = {}
+    for zone_name, members in main.zone_members().items():
+        for member in members:
+            group_of.setdefault(member, zone_name)
+    return {
+        "tilt": [
+            {
+                "entity": s.entity_id,
+                "name": _name(hass, s.entity_id),
+                "attribute": s.attribute,
+                "closed": sorted(s.closed),
+                "tilted": sorted(s.tilted),
+                "group": group_of.get(s.entity_id),
+            }
+            for s in parse_tilt_sources(options).values()
+        ],
+        "vibration": [
+            {
+                "entity": s.entity_id,
+                "name": _name(hass, s.entity_id),
+                "threshold": s.threshold,
+                "group": group_of.get(s.entity_id),
+            }
+            for s in parse_vibration_sources(options).values()
+        ],
+    }
+
+
 def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
     """Die komplette Übersicht samt Prüfhinweisen (Sprache wie Home Assistant)."""
     hass = main.hass
@@ -494,6 +547,8 @@ def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
         ],
         "profiles": _profiles(main),
         "sensors": _sensors(main),
+        "groups": _groups(main),
+        "special": _special(main),
         "rules": _rules(main, language),
         "always_active": {
             "configured": always.configured,

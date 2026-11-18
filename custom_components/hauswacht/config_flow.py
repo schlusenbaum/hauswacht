@@ -74,6 +74,7 @@ from .const import (
     OPT_REMINDER_PERSONS,
     OPT_REMINDER_PROFILE,
     OPT_SENSOR_TYPES,
+    OPT_SETTINGS_PAGE,
     OPT_SIREN_FIRE_TONE_OK,
     OPT_SIREN_TEST,
     OPT_SIREN_TONES,
@@ -544,6 +545,25 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         """Schließen. Gespeichert wurde bereits nach jedem Formular."""
         return self.async_create_entry(data=dict(self.config_entry.options))
 
+    async def async_step_settings_page(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Einstellungsseite in der Seitenleiste ein- oder ausblenden (ADR 0011)."""
+        options = dict(self.config_entry.options)
+        if user_input is not None:
+            options[OPT_SETTINGS_PAGE] = bool(user_input.get("enabled"))
+            return await self._save(options, "system")
+        return self.async_show_form(
+            step_id="settings_page",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        "enabled", default=bool(options.get(OPT_SETTINGS_PAGE, True))
+                    ): BooleanSelector()
+                }
+            ),
+        )
+
     async def async_step_system(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         return self._menu(
             "system",
@@ -555,6 +575,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 "infrastructure",
                 "homecoming",
                 "restart",
+                "settings_page",
                 "init",
             ],
         )

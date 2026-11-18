@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.56.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.57.0b1:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -74,6 +74,10 @@ Einrichtungsassistent.
 
 Alle Einstellungen liegen unter **Einstellungen → Geräte & Dienste → Hauswacht →
 Konfigurieren**. Sie lassen sich nur ändern, wenn **alle Bereiche unscharf** sind.
+
+Zum **Überblick** gibt es zusätzlich die Seite **Hauswacht** in der Seitenleiste (nur
+Administratoren): alles auf einen Blick, z. B. welcher Melder in welchem Profil scharf ist – siehe
+[Einstellungsseite](einstellungsseite.md).
 
 | Menü | Inhalt | Seite |
 |---|---|---|

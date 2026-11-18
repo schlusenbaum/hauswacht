@@ -24,6 +24,7 @@ Gegenstück in der anderen Sprache.
 | [Benachrichtigungen und Sprachausgabe](benachrichtigungen.md) | Empfänger je Ereignis, eigene Texte, Ansagen über Lautsprecher, Push-Knöpfe |
 | [Testmodus und Testkarte](testmodus.md) | Alles gefahrlos durchspielen: Sensoren simulieren, ohne Sirene |
 | [Beobachtungen](beobachtung.md) | Heimkehr-Beobachtung und „Tür auf bis unscharf“ – messen, bevor man automatisiert |
+| [Einstellungsseite](einstellungsseite.md) | Seite „Hauswacht“ in der Seitenleiste: die ganze Einrichtung auf einen Blick, Matrix „Melder × Profile“ |
 | [Anlagenübersicht](uebersicht.md) | Karte mit der ganzen Konfiguration, Drucken, Notfallblatt, Prüfhinweise, Diagnose-Datei |
 | [Automationen: was nehme ich wofür?](automationen.md) | Spickzettel: für jeden Anlass der richtige Auslöser (`phase`, Ereignis, Entität) und die häufigsten Stolperfallen |
 | [Beispiele](beispiele.md) | Hauswacht mit anderen Geräten verbinden: bei Alarm Licht an und wieder wie vorher, Kamerabild aufs Handy, Rollläden, Statuslicht, Heizung bei Abwesenheit, Gastmodus aus dem Kalender … |
