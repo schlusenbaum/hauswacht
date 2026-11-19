@@ -30,6 +30,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **„Wie gut erprobt?“** in der Anleitung der Bedienteile: Erprobt, Getestet oder Ungetestet –
   damit klar ist, was an echter Hardware geprüft ist.
 
+### Geändert
+- **Warnungen zu falschen PINs** ersetzen einander auf dem Handy (Home-Assistant-App) – es bleibt
+  nur die letzte; beim Zurücksetzen der Falscheingaben verschwindet sie.
+
 ### Dokumentation
 - Bedienteile: neuer Abschnitt „Keypad (allgemein)“ mit Beispiel-Automationen in beide
   Richtungen und dem Hinweis, wie PINs aus der Datenbank von Home Assistant herausbleiben;

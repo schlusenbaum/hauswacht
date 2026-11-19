@@ -200,3 +200,16 @@ async def test_options_add_generic_keypad(hass: HomeAssistant) -> None:
     stored = entry.options["controls"]["keypad_garage"]
     assert stored["kind"] == "generic_keypad"
     assert stored["buttons"] == {"away": "away"}
+
+
+async def test_wrong_pin_warnings_replace_each_other(hass: HomeAssistant) -> None:
+    from pytest_homeassistant_custom_component.common import async_mock_service  # noqa: PLC0415
+
+    push = async_mock_service(hass, "notify", "mobile_app_handy")
+    entry = make_entry({**_options(), "notify_system": ["mobile_app_handy"]})
+    await setup_entry(hass, entry)
+    for code in ("0001", "0002", "0003", "0004"):  # verschieden: keine doppelte Meldung
+        await _input(hass, button="night", code=code)
+    warnings = [c for c in push if c.data["message"] != "clear_notification"]
+    assert warnings
+    assert all(c.data["data"]["tag"] == "hauswacht_code" for c in warnings)

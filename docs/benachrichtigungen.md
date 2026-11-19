@@ -51,7 +51,9 @@ werden so verschickt, wie sie eingetragen sind.
   (bzw. der Hinweis) und die beim Unscharfschalten **ersetzen einander** – auf dem Handy steht
   immer nur die neueste. Wer beim Unscharfschalten keine Nachricht bekommt, bei dem verschwindet
   die Scharf-Nachricht einfach. Alarm-Nachrichten verschwinden beim Unscharfschalten, die Meldung
-  „Scharfschalten nicht möglich“, sobald es geklappt hat. Benachrichtigungs-Entitäten (z. B.
+  „Scharfschalten nicht möglich“, sobald es geklappt hat. Warnungen zu **falschen PINs** ersetzen
+  einander (es bleibt nur die letzte) und verschwinden, wenn die Falscheingaben zurückgesetzt
+  werden. Benachrichtigungs-Entitäten (z. B.
   Telegram, WhatsApp) können Nachrichten nicht zurückziehen.
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.

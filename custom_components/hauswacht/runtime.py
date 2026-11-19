@@ -65,6 +65,7 @@ from .const import (
     PUSH_ARM_NOW_PREFIX,
     PUSH_ARM_RETRY_PREFIX,
     PUSH_ARM_TAG,
+    PUSH_CODE_TAG,
     PUSH_STATE_TAG,
     PUSH_TAG,
     STORAGE_VERSION,
@@ -420,6 +421,8 @@ class HauswachtRuntime:
         self._arm_pushed: set[str] = set()
         # Wer die letzte Scharf-/Unscharf-Nachricht bekommen hat (zum Ersetzen und Wegräumen)
         self._state_pushed: set[str] = set()
+        # Wer Warnungen zu falschen PINs bekommen hat (beim Zurücksetzen wegräumen)
+        self._code_pushed: set[str] = set()
         self._via_push = False
         self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
@@ -1150,9 +1153,12 @@ class HauswachtRuntime:
             {"type": "InvalidCode", "failures": failures, "lock_seconds": result.lock_seconds},
         )
         if result.warn:
-            self.notifier.send_system(
-                *invalid_code_message(failures, result.lock_seconds, self.lang)
+            # Gleicher tag: jede neue Warnung ersetzt die vorige auf dem Handy
+            sent = self.notifier.send_system(
+                *invalid_code_message(failures, result.lock_seconds, self.lang),
+                data={"tag": PUSH_CODE_TAG},
             )
+            self.main._code_pushed.update(sent)
         if result.lock_seconds:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
@@ -1180,6 +1186,9 @@ class HauswachtRuntime:
             {"type": "CodeLockReset", "by": by, "failures": failures, **self.all_areas_event()}
         )
         _LOGGER.info("Falscheingaben zurückgesetzt (%s Fehlversuche) von %s", failures, by)
+        if self.main._code_pushed:
+            self.notifier.clear(self.main._code_pushed, PUSH_CODE_TAG)
+            self.main._code_pushed.clear()
         for area in self.main.areas.values():
             area._notify()
 
