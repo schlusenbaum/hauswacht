@@ -30,6 +30,7 @@ from .core.siren_test import (
     dump_records,
     parse_records,
     parse_settings,
+    siren_test_window,
 )
 from .core.texts import tr
 from .names import display_name
@@ -56,6 +57,8 @@ class SirenTester:
         self.settings = parse_settings(runtime.entry.options)
         self.records: dict[str, SirenTestRecord] = {}
         self.running: str | None = None
+        # Bis wann der laufende Test dauert (für die Anzeige in der Testkarte)
+        self.running_until: datetime | None = None
         self._reminded: datetime | None = None
         self._stop_timer: CALLBACK_TYPE | None = None
         self._unsub_reminder: CALLBACK_TYPE | None = None
@@ -161,10 +164,13 @@ class SirenTester:
             self._event(siren, "blocked", by=by, reason=why)
             return {"started": False, "reason": why}
         self.running = siren
-        self._event(siren, "started", by=by, seconds=seconds, volume=volume)
-        self._stop_timer = async_call_later(self.hass, seconds + 0.5, self._timeout)
+        own_duration = self.runtime.sirens.capabilities(siren).duration
+        window = siren_test_window(seconds, own_duration=own_duration)
+        self.running_until = dt_util.utcnow() + timedelta(seconds=window)
+        self._event(siren, "started", by=by, seconds=seconds, volume=volume, window=window)
+        self._stop_timer = async_call_later(self.hass, window, self._timeout)
         self.runtime._notify()
-        return {"started": True, "reason": None, "seconds": seconds}
+        return {"started": True, "reason": None, "seconds": seconds, "window": window}
 
     @callback
     def _timeout(self, _now: datetime) -> None:
@@ -180,6 +186,7 @@ class SirenTester:
         if self.running is None:
             return
         siren, self.running = self.running, None
+        self.running_until = None
         self.runtime.sirens.stop(test_mode=self.runtime.ctx.test_mode)
         self._event(siren, "stopped")
         self.runtime._notify()
@@ -194,6 +201,8 @@ class SirenTester:
         seconds: int = 3,
         volume: str = DEFAULT_VOLUME,
     ) -> None:
+        if self.running == siren:
+            self.stop()  # Antwort gegeben: Test ist vorbei
         self.records[siren] = SirenTestRecord(
             at=dt_util.now(), heard=heard, by=by, seconds=clamp_seconds(seconds), volume=volume
         )
@@ -249,6 +258,7 @@ class SirenTester:
                 for siren in self.sirens
             ],
             "running": self.running,
+            "running_until": self.running_until.isoformat() if self.running_until else None,
             "due": self.due(),
             "reminder_months": self.settings.reminder_months,
             "prewarn": self.settings.prewarn,

@@ -2646,7 +2646,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             self._siren_summary.append(f"{display_name(self.hass, siren)}: ⛔ {result['reason']}")
             self._siren_queue.pop(0)
             return await self.async_step_siren_test_next()
-        await asyncio.sleep(result["seconds"] + 1)
+        # Bis zum Ende des Tests warten: Batterie-Rauchmelder holen den Befehl oft erst nach
+        # einigen Sekunden ab (siehe core.siren_test.siren_test_window)
+        await asyncio.sleep(result.get("window", result["seconds"] + 1))
         self._siren_by = by
         return await self.async_step_siren_test_heard()
 

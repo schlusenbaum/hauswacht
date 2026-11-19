@@ -40,6 +40,7 @@ const TEXT = {
     sirenCancel: "Abbrechen",
     sirenHeard: "Hast du die Sirene gehört?",
     sirenStop: "Stopp",
+    sirenRunning: "Läuft … Rauchmelder mit Batterie reagieren oft erst nach einigen Sekunden – kurz warten.",
     yes: "Ja",
     no: "Nein",
     sirenBlocked: {
@@ -112,6 +113,7 @@ const TEXT = {
     sirenCancel: "Cancel",
     sirenHeard: "Did you hear the siren?",
     sirenStop: "Stop",
+    sirenRunning: "Running … battery smoke detectors often react only after a few seconds – wait a moment.",
     yes: "Yes",
     no: "No",
     sirenBlocked: {
@@ -471,6 +473,7 @@ class HauswachtTestCard extends HTMLElement {
         return b;
       };
       if (info.running === unit.entity_id) {
+        last.textContent = this._t("sirenRunning");
         button(this._t("sirenStop"), () => this._call(DOMAIN, "siren_test_stop", { entity_id: this._ids.panel }), true);
       } else if (ask && ask.step === "confirm") {
         last.textContent = this._t("sirenConfirm");
