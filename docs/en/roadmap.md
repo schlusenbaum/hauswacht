@@ -49,6 +49,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
+| next | [MQTT interface](../entwicklung/adr/0012-mqtt-schnittstelle.md): send state, details and events, accept commands with PIN – for wall tablets, ESP keypads, third-party keypads, Node-RED (0.58) |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | later | ZHA and Z-Wave keypads |

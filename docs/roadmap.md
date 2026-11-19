@@ -49,6 +49,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| als Nächstes | [MQTT-Schnittstelle](entwicklung/adr/0012-mqtt-schnittstelle.md): Zustand, Details und Ereignisse senden, Befehle mit PIN annehmen – für Wand-Tablets, ESP-Bedienteile, fremde Keypads, Node-RED (0.58) |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
 | später | ZHA- und Z-Wave-Keypads |
