@@ -345,6 +345,7 @@ class ControlManager:
             panic_word=interface.panic_word,
         )
         if command is None:
+            _LOGGER.info("MQTT-Schnittstelle %s: unlesbare Nachricht ignoriert", interface.name)
             return
         self.hass.async_create_task(
             self._interface_command(interface, command),
@@ -358,6 +359,14 @@ class ControlManager:
         answer["display"] = state_word(answer["display"], interface.words)
         if command.request_id is not None:
             answer["id"] = command.request_id
+        # Fürs Log von Home Assistant – nie mit PIN oder Karte
+        _LOGGER.info(
+            "MQTT-Schnittstelle %s: Befehl %s%s → %s",
+            interface.name,
+            command.button,
+            " mit Ausweis" if command.code else "",
+            answer["result"],
+        )
         await self._mqtt_publish(interface, TOPIC_RESPONSE, json.dumps(answer))
 
     @callback

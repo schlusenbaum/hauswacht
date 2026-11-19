@@ -407,6 +407,22 @@ fertige Tablet-Apps ohne Anpassung:
 `area`, `profile`, `delay_ends`, `delay_seconds`, `test_mode`, `changed_by`, `buttons`,
 `last_result`. **Nie** enthalten: PINs, Kartennummern.
 
+### Ausprobieren ohne Gerät
+
+Mit einem MQTT-Programm, z. B. dem Add-on **MQTT Explorer**:
+
+1. Im Bereich **Publish** ins Feld **Topic** von Hand `hauswacht/flur/set` eintippen. Das Topic
+   gibt es vorher nicht – es entsteht beim ersten Senden. Hauswacht selbst sendet nie auf `set`,
+   es hört dort nur zu.
+2. Format **json**, Nachricht `{"action": "ARM_NIGHT", "code": "2580", "id": 1}`, **retain aus**,
+   senden.
+3. Unter `hauswacht/flur/response` steht die Antwort, unter `…/state` der neue Zustand. Zurück mit
+   `{"action": "DISARM", "code": "2580"}`.
+
+Im Log von Home Assistant steht jeder Befehl (ohne PIN), z. B. „MQTT-Schnittstelle Tablet Flur:
+Befehl arm_night mit Ausweis → ok“ – sichtbar, wenn für Hauswacht die Protokollstufe „Info“ oder
+feiner eingestellt ist.
+
 ### Sicherheit: den Broker absichern
 
 **Wer auf den Broker schreiben darf, darf an die Anlage** – genau wie bei Zigbee2MQTT-Keypads

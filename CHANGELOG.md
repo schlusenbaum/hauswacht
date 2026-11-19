@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.0b5] - 2026-11-19
+
+### Hinzugefügt
+- MQTT-Schnittstelle: Jeder Befehl steht im Log von Home Assistant (Stufe „Info“, nie mit PIN).
+
+### Dokumentation
+- Bedienteile: „Ausprobieren ohne Gerät“ – das Topic `…/set` entsteht beim ersten Senden.
+
 ## [0.58.0b4] - 2026-11-19
 
 **Vorabversion: MQTT-Schnittstelle** (ADR 0012, Stufe 3).

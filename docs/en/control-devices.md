@@ -394,6 +394,22 @@ fit without changes:
 `profile`, `delay_ends`, `delay_seconds`, `test_mode`, `changed_by`, `buttons`, `last_result`.
 **Never** included: PINs, card numbers.
 
+### Trying it out without a device
+
+With an MQTT program, e.g. the **MQTT Explorer** add-on:
+
+1. In the **Publish** area, type `hauswacht/hallway/set` into the **topic** field by hand. The topic
+   does not exist beforehand – it comes into being with the first message. Hauswacht itself never
+   sends on `set`, it only listens there.
+2. Format **json**, message `{"action": "ARM_NIGHT", "code": "2580", "id": 1}`, **retain off**,
+   send.
+3. The response is under `hauswacht/hallway/response`, the new state under `…/state`. Back with
+   `{"action": "DISARM", "code": "2580"}`.
+
+Home Assistant's log shows every command (without the PIN), e.g. "MQTT-Schnittstelle Tablet
+hallway: Befehl arm_night mit Ausweis → ok" – visible if the log level for Hauswacht is "info" or
+finer.
+
 ### Security: secure the broker
 
 **Whoever may write to the broker may operate the system** – just like with Zigbee2MQTT keypads
