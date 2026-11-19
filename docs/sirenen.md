@@ -206,7 +206,16 @@ Voraussetzungen – der Sirenen-Guard prüft sie wie bei einem Alarm, ohne Ausna
 - Sirene ist für Einbruch freigegeben und kann begrenzt werden
 
 Die Dauer wird dreifach begrenzt: als Dauer an das Gerät (wenn es das kann), durch einen eigenen
-Ausschaltbefehl nach Ablauf und durch die feste Obergrenze von 10 s. Während des Tests ist
+Ausschaltbefehl und durch die feste Obergrenze von 10 s.
+
+**Batterie-Rauchmelder reagieren verzögert.** Rauchmelder mit Sirene über Zigbee (z. B. Develco,
+frient, Heiman) schlafen, um Batterie zu sparen, und holen Befehle erst beim nächsten Nachfragen
+ab – oft erst nach einigen Sekunden. Kann die Sirene die Dauer selbst einhalten, schickt
+Hauswacht deshalb **nur „Ein für 3 Sekunden“** und das Sicherheits-„Aus“ erst **12 Sekunden
+später**. So kommen „Ein“ und „Aus“ nie gemeinsam an und heben sich auf. Der Test läuft dadurch
+länger (Standard 15 s); die Frage „gehört?“ kommt erst danach. Sirenen ohne eigene Dauer
+schaltet Hauswacht wie bisher gleich nach der Testdauer aus. **Im Alarmfall** kann eine solche
+Sirene aus demselben Grund einige Sekunden später anfangen. Während des Tests ist
 **Scharfschalten gesperrt**; **Unscharf schalten** bricht den Test ab. Bei Brand greift Hauswacht
 nicht ein – dann gilt die Brandsperre.
 

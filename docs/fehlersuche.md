@@ -165,6 +165,13 @@ Häufig:
 - Die Sirene lässt sich nicht begrenzen, siehe
   [Welche Sirenen gehen?](sirenen.md#welche-sirenen-gehen).
 
+**Der Sirenentest klappt manchmal erst beim zweiten Mal.**
+Typisch für Rauchmelder mit Batterie über Zigbee: Sie holen Befehle erst nach einigen Sekunden
+ab. Bis 0.57.1 schickte Hauswacht das „Aus“ schon nach 3,5 s – kam es zusammen mit dem „Ein“
+an, blieb der Melder still. Seit 0.57.2 wartet der Test bei solchen Sirenen länger, siehe
+[Sirenentest](sirenen.md#sirenentest). Klingelt es trotzdem nicht: in Zigbee2MQTT prüfen, ob der
+Melder erreichbar ist (Last seen, Linkquality).
+
 **Meine Sirene gibt es in Home Assistant nur als Schalter.**
 Mit dem Assistenten [Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)
 wird daraus eine Sirene. Alternativ die

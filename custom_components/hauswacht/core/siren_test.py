@@ -29,6 +29,10 @@ DEFAULT_VOLUME = "low"
 DEFAULT_TONE = BURGLAR_TONE_ORDER[0]
 REMINDER_CHOICES = (0, 3, 6, 12)
 PREWARN_SECONDS = 10
+# Batteriegeräte (z. B. Rauchmelder mit Sirene über Zigbee) schlafen und holen Befehle erst beim
+# nächsten Nachfragen ab – oft erst nach einigen Sekunden. So lange wartet der Test zusätzlich,
+# bevor er zur Sicherheit "Aus" schickt.
+LATE_START_GRACE = 12
 VOLUMES = tuple(VOLUME_LEVELS)
 TONES = BURGLAR_TONE_ORDER
 
@@ -59,6 +63,17 @@ def clamp_seconds(value: Any) -> int:
     except (TypeError, ValueError):
         return DEFAULT_SECONDS
     return max(1, min(MAX_SECONDS, seconds))
+
+
+def siren_test_window(seconds: int, *, own_duration: bool) -> float:
+    """Wie lange ein Test läuft, bis Hauswacht zur Sicherheit "Aus" schickt.
+
+    - Sirene hält die Dauer selbst ein (``own_duration``): Sie hört von allein auf – egal, wann
+      sie den Befehl abholt. Ein frühes "Aus" würde ein schlafendes Batteriegerät zusammen mit
+      dem "Ein" erreichen und den Ton verschlucken. Deshalb erst nach ``LATE_START_GRACE``.
+    - Sonst: gleich nach der Testdauer (wie bisher).
+    """
+    return seconds + (LATE_START_GRACE if own_duration else 0.5)
 
 
 @dataclass(frozen=True)

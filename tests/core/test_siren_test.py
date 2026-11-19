@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from custom_components.hauswacht.core.siren_test import (
+    LATE_START_GRACE,
     MAX_SECONDS,
     SirenTestRecord,
     add_months,
@@ -13,6 +14,7 @@ from custom_components.hauswacht.core.siren_test import (
     dump_records,
     parse_records,
     parse_settings,
+    siren_test_window,
 )
 
 NOW = datetime(2026, 11, 12, 12, 0, tzinfo=UTC)
@@ -55,3 +57,8 @@ def test_due_sirens() -> None:
     sirens = ["siren.ok", "siren.alt", "siren.stumm", "siren.neu"]
     assert due_sirens(sirens, records, 6, NOW) == ["siren.alt", "siren.stumm", "siren.neu"]
     assert due_sirens(sirens, records, 0, NOW) == []
+
+
+def test_window_waits_for_sleepy_devices() -> None:
+    assert siren_test_window(3, own_duration=False) == 3.5
+    assert siren_test_window(3, own_duration=True) == 3 + LATE_START_GRACE

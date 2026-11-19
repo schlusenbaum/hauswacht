@@ -204,7 +204,18 @@ Requirements – the siren guard checks them as for an alarm, without exception:
 - the siren is enabled for burglary and can be limited
 
 The duration is limited three times: as a duration sent to the device (if it supports it), by a
-separate switch-off command afterwards, and by the fixed upper limit of 10 s. During the test,
+separate switch-off command, and by the fixed upper limit of 10 s.
+
+**Battery smoke detectors react with a delay.** Smoke detectors with a siren via Zigbee (e.g.
+Develco, frient, Heiman) sleep to save battery and only fetch commands the next time they check
+in – often only after a few seconds. If the siren can keep the duration itself, Hauswacht
+therefore only sends **"on for 3 seconds"** and the safety "off" only **12 seconds later**. So
+"on" and "off" never arrive together and cancel each other out. The test takes longer this way
+(15 s by default); the question "heard?" only comes afterwards. Sirens without their own duration
+are switched off right after the test duration as before. **In an alarm**, such a siren can start
+a few seconds later for the same reason.
+
+During the test,
 **arming is locked**; **disarming** stops the test. In case of fire, Hauswacht does not interfere
 – then the fire lock applies.
 
