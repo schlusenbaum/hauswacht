@@ -6,18 +6,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.57.1b2] - 2026-11-19
+## [0.57.1] - 2026-11-19
 
-### Geändert
-- **Eine Nachricht beim Scharfschalten statt zwei:** Ist „Scharf geschaltet“ an, stehen die nicht
-  überwachten Melder in dieser Nachricht; der eigene Hinweis kommt nur, wenn sie aus ist.
-- **Alte Nachrichten räumen sich auf:** Scharf- und Unscharf-Nachricht ersetzen einander auf dem
-  Handy (Home-Assistant-App); bekommt man beim Unscharfschalten keine Nachricht, verschwindet die
-  Scharf-Nachricht.
-
-## [0.57.1b1] - 2026-11-19
-
-**Vorabversion: „Trotzdem scharf“ am Keypad repariert, Rückmeldung über Lücken.**
+**„Trotzdem scharf“ am Keypad repariert, eine Nachricht beim Scharfschalten** (getestet über die
+Vorabversionen 0.57.1b1 und b2).
 
 ### Behoben
 - **Trotzdem scharf am Keypad** ging nicht, wenn der zweite Druck ohne PIN kam – und gar nicht,
@@ -29,16 +21,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - Die Anleitung versprach eine Meldung „scharf, überbrückt: …“ – sie wurde nie verschickt.
 
 ### Hinzugefügt
-- **Hinweis beim Scharfschalten** nennt jetzt alles, was nicht überwacht wird: überbrückte offene
-  Melder („trotzdem scharf“ oder automatisch), ausgefallene Melder (werden wieder überwacht,
-  sobald sie sich melden) und offene Melder, die nur in Auslöseregeln vorkommen – egal ob über
-  Keypad, Karte, Push-Knopf oder Automatik. Neues Ereignis `ArmedWithGaps`.
+- **Rückmeldung über Lücken beim Scharfschalten:** überbrückte offene Melder („trotzdem scharf“
+  oder automatisch), ausgefallene Melder (werden wieder überwacht, sobald sie sich melden) und
+  offene Melder, die nur in Auslöseregeln vorkommen – egal ob über Keypad, Karte, Push-Knopf oder
+  Automatik. Neues Ereignis `ArmedWithGaps`.
 - **Ausgefallene Sensoren beim Scharfschalten: „automatisch überbrücken“** als Expertenoption je
   Profil – scharf ohne Rückfrage; der Melder wird wieder überwacht, sobald er sich meldet.
 
+### Geändert
+- **Eine Nachricht beim Scharfschalten statt zwei:** Ist „Scharf geschaltet“ an, stehen die
+  Lücken in dieser Nachricht; der eigene Hinweis kommt nur, wenn sie aus ist.
+- **Alte Nachrichten räumen sich auf:** Scharf- und Unscharf-Nachricht ersetzen einander auf dem
+  Handy (Home-Assistant-App); bekommt man beim Unscharfschalten keine Nachricht, verschwindet die
+  Scharf-Nachricht.
+
 ### Dokumentation
-- Bedienteile (Trotzdem scharf am Keypad), Profile, Benachrichtigungen (neuer Abschnitt „Hinweis
-  beim Scharfschalten“), Referenz – deutsch und englisch.
+- Bedienteile (Trotzdem scharf am Keypad), Profile, Benachrichtigungen (Hinweis beim
+  Scharfschalten, Aufräumen), Referenz – deutsch und englisch.
 
 ## [0.57.0] - 2026-11-18
 
