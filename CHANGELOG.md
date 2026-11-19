@@ -6,9 +6,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.58.1b1] - 2026-11-19
+## [0.58.1] - 2026-11-19
 
-**Vorabversion: jedes Handy nur einmal unter den Empfängern.**
+**Jedes Handy nur einmal unter den Empfängern.**
 
 ### Behoben
 - **Handys standen doppelt in der Empfängerliste** – einmal als Dienst der Home-Assistant-App
