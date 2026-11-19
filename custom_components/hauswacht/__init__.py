@@ -73,9 +73,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     if entry.options.get(OPT_SETTINGS_PAGE, True):
         await async_register_panel(hass, str(integration.version or "0"))
         entry.async_on_unload(lambda: async_remove_panel(hass))
+    from homeassistant.core import callback  # noqa: PLC0415
     from homeassistant.helpers.start import async_at_started  # noqa: PLC0415
 
-    entry.async_on_unload(async_at_started(hass, lambda _hass: _migrate_app_targets(hass, entry)))
+    @callback
+    def _after_start(_hass: HomeAssistant) -> None:
+        _migrate_app_targets(hass, entry)
+
+    entry.async_on_unload(async_at_started(hass, _after_start))
     return True
 
 
