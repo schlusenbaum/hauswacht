@@ -1,6 +1,6 @@
 # ADR 0012: Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT
 
-- Status: in Arbeit – Stufe 1 in 0.58.0b1, Stufe 2 in 0.58.0b2, Stufe 3 in 0.58.0b4
+- Status: umgesetzt in 0.58.0 (Vorabversionen 0.58.0b1–b5); ZHA-Keypads offen, bis jemand mit Gerät mittesten kann
 - Datum: 2026-11-19
 
 ## Kontext

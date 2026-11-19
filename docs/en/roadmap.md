@@ -42,6 +42,7 @@
 | 0.55 | Every event names its area (`area`, `area_name`); complete [reference](reference.md) and cheat sheet [automations](automations.md); ready for the Marketplace/HACS catalogue |
 | 0.56 | [Tilted windows](sensors.md#sensors-with-tilt-position-tilted) allowed per profile or counted as open; [vibration sensors](sensors.md#vibration-sensors) with false alarm protection, also as a number ([ADR 0010](../entwicklung/adr/0010-fenster-kippstellung-erschuetterung.md)) |
 | 0.57 | [Settings page](settings-page.md) in the sidebar: everything at a glance, matrix "sensor × profile", edit everything directly (sensors, profiles, trigger rules as form or YAML, sirens with tone, notifications, people, cards, control devices, PIN rules, action codes, system), tab documentation and "?" at every section; [radio silence per sensor](sensors.md#own-limit-per-sensor); "behaviour after restart" only on a real restart ([ADR 0011](../entwicklung/adr/0011-einstellungsseite.md)) |
+| 0.58 | [Generic keypads](../entwicklung/adr/0012-keypads-allgemein.md): one input for every keypad (Z-Wave, ESPHome, Node-RED …) with response and display entity, blueprint Ring Keypad v2 and ESPHome example, [MQTT interface](control-devices.md#mqtt-interface); wrong-PIN warnings tidy themselves up |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -49,7 +50,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| 0.58 (in progress) | [Generic keypads](../entwicklung/adr/0012-keypads-allgemein.md): one input for every keypad (ZHA, Z-Wave, ESPHome, Node-RED …) with response and display, ready-made blueprints for common devices, then an MQTT interface |
+| on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
 | 1.0.0 | stable, documentation complete (inclusion in the Marketplace/HACS catalogue requested since 0.55.3) |

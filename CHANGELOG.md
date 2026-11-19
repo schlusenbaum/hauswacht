@@ -6,105 +6,53 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.58.0b5] - 2026-11-19
+## [0.58.0] - 2026-11-19
 
-### Hinzugefügt
-- MQTT-Schnittstelle: Jeder Befehl steht im Log von Home Assistant (Stufe „Info“, nie mit PIN).
-
-### Dokumentation
-- Bedienteile: „Ausprobieren ohne Gerät“ – das Topic `…/set` entsteht beim ersten Senden.
-
-## [0.58.0b4] - 2026-11-19
-
-**Vorabversion: MQTT-Schnittstelle** (ADR 0012, Stufe 3).
-
-### Hinzugefügt
-- **MQTT-Schnittstelle** – neue Art von Bedienteil für Geräte und Programme, die nur MQTT sprechen
-  (Wand-Tablet-Apps, Tasmota- oder Arduino-Eigenbauten, Node-RED). Basis-Topic frei wählbar:
-  Befehle auf `…/set` als Text (`ARM_AWAY`, `DISARM`) oder JSON (`action`, `code`, `force`,
-  `id`); Hauswacht sendet Zustand (`…/state`, Wörter wie die MQTT-Alarmzentrale von Home
-  Assistant, anpassbar), Details (`…/attributes`), eine Antwort je Befehl (`…/response`) und
-  `online`/`offline` (`…/availability`). Ausgewertet wird genau wie am Keypad.
-- **Gespeicherte Befehle (retain) werden nie ausgeführt** (Ereignis `MqttRetainedCommand`). Im
-  Testmodus nie `triggered`.
-- Einrichten auf der Einstellungsseite und im Dialog; Prüfung des Basis-Topics (nicht unter
-  `zigbee2mqtt`, keine Platzhalter, keine Überschneidung).
-
-### Dokumentation
-- Bedienteile: Abschnitt „MQTT-Schnittstelle“ mit Topics, Befehlen, Zustandswörtern und
-  „Sicherheit: den Broker absichern“ (eigene Benutzer, ACL, TLS); Referenz, Einstellungsseite,
-  README, ADR 0012 – deutsch und englisch.
-
-### Intern
-- Statischer Test: Hauswacht sendet per MQTT nur an die Anzeige eingerichteter
-  Zigbee2MQTT-Keypads und an die eigenen Topics einer MQTT-Schnittstelle – nie an deren
-  Befehls-Topic.
-
-## [0.58.0b3] - 2026-11-19
-
-### Hinzugefügt
-- **Vorlagen direkt von der Einstellungsseite:** Beim „Keypad (allgemein)“ stehen „Ring Keypad v2:
-  Blueprint importieren“ und das ESPHome-Beispiel. Beide öffnen sich in einem **neuen Tab** und
-  nutzen genau die installierte Hauswacht-Version – so lassen sich Blueprints auch in
-  Vorabversionen ausprobieren.
-
-## [0.58.0b2] - 2026-11-19
-
-**Vorabversion: fertige Vorlagen für allgemeine Keypads** (ADR 0012, Stufe 2).
-
-### Hinzugefügt
-- **Blueprint „Ring Keypad v2“ (Z-Wave JS)** mit Import-Knopf in der Anleitung: Unscharf,
-  Abwesend, Zuhause, Polizei-Taste = Notruf; Fehlerton bei falschem PIN, Enter blinkt bei „nicht
-  bereit“; Lichter und Töne nach der Anzeige-Entität, mit Countdown. Im Testmodus kein Alarmton.
-- **ESPHome-Beispiel** für ein selbst gebautes Keypad (4×4-Tastenfeld, zwei LEDs), das die Aktion
-  direkt aufruft.
-- Beide sind als **ungetestet – eigene Verantwortung** gekennzeichnet und tragen eine
-  Versionsnummer.
-
-### Dokumentation
-- Bedienteile: Abschnitt „Fertige Vorlagen“ (mit Einrichtung, Versionsnummer und dem Stand bei
-  ZHA-Keypads), „Wie gut erprobt?“ ergänzt; ADR 0012 – deutsch und englisch.
-
-### Intern
-- Integrationstest, der den Blueprint in Home Assistant lädt und mit einem simulierten Ring Keypad
-  scharf und unscharf schaltet.
-
-## [0.58.0b1] - 2026-11-19
-
-**Vorabversion: jedes Keypad anbinden** (ADR 0012, Stufe 1). Enthält alles aus 0.57.1 und 0.57.2.
+**Jedes Keypad anbinden** – ein Eingang für alle Keypads, fertige Vorlagen und eine
+MQTT-Schnittstelle (ADR 0012, getestet über die Vorabversionen 0.58.0b1 bis b5).
 
 ### Hinzugefügt
 - **Keypad (allgemein):** neue Art von Bedienteil für Keypads, die Hauswacht nicht selbst kennt –
   ZHA, Z-Wave (z. B. Ring Keypad), deCONZ, ESPHome, Node-RED. Ein Blueprint oder eine Automation
   meldet Taste und PIN/Karte mit der neuen Aktion **`hauswacht.keypad_input`** und bekommt eine
   **Antwort** zurück (`ok`, `invalid_code`, `locked`, `not_ready` mit den offenen Meldern,
-  `pending`, …). Ausgewertet wird genau wie am Zigbee2MQTT-Keypad: Rechte, Sperre,
-  Bedrohungs-PIN, Karte und PIN, Aktions-Codes, „trotzdem scharf“, Notruf. Tasten haben freie
-  Namen (z. B. `away`).
-- **Anzeige-Entität je Keypad** („Keypad Flur Anzeige“): was das Keypad zeigen soll – unscharf,
-  Verzögerungen (mit Ende für einen Countdown), scharf, Alarm. Im **Testmodus** nie „Alarm“,
-  sondern `test_alarm`, damit ein Keypad mit eingebauter Sirene nicht losheult; **Brand** hat
-  einen eigenen Zustand mit Vorrang.
-- **Nur angelegte Keypads** werden angenommen. Meldet sich ein unbekanntes, zeigt die
-  Einstellungsseite es mit „Anlegen“, der Dialog trägt es beim Anlegen schon ein.
-- Die Aktion dürfen nur Automationen, Skripte, Geräte und Administratoren aufrufen. Doppelt
-  gesendete Eingaben (Funk) zählen nur einmal.
-- Einrichten auf der Einstellungsseite und im Dialog.
-- **„Wie gut erprobt?“** in der Anleitung der Bedienteile: Erprobt, Getestet oder Ungetestet –
-  damit klar ist, was an echter Hardware geprüft ist.
+  `pending` …). Ausgewertet wird genau wie am Zigbee2MQTT-Keypad: Rechte, Sperre,
+  Bedrohungs-PIN, Karte und PIN, Aktions-Codes, „trotzdem scharf“, Notruf. Tasten mit freien
+  Namen.
+- **Anzeige-Entität je Keypad**: was das Keypad zeigen soll – unscharf, Verzögerungen (mit Ende
+  für einen Countdown), scharf, Alarm. Im Testmodus nie „Alarm“ (`test_alarm`), Brand mit eigenem
+  Zustand und Vorrang.
+- **Nur angelegte Keypads werden angenommen**; ein unbekanntes erscheint auf der
+  Einstellungsseite mit „Anlegen“. Die Aktion dürfen nur Automationen, Skripte, Geräte und
+  Administratoren aufrufen; doppelte Funkmeldungen zählen einmal.
+- **Fertige Vorlagen** (ungetestet – eigene Verantwortung): Blueprint **Ring Keypad v2**
+  (Z-Wave JS) und ein **ESPHome-Beispiel** für ein selbst gebautes Keypad – mit Versionsnummer,
+  importierbar direkt von der Einstellungsseite (neuer Tab, installierte Version).
+- **MQTT-Schnittstelle** für Geräte und Programme, die nur MQTT sprechen (Wand-Tablet-Apps,
+  Tasmota- oder Arduino-Eigenbauten, Node-RED): Befehle auf `…/set` als Text oder JSON; Zustand
+  (Wörter wie die MQTT-Alarmzentrale von Home Assistant, anpassbar), Details, Antwort und
+  Verfügbarkeit. Gespeicherte Befehle (retain) werden nie ausgeführt; jeder Befehl steht im Log
+  (ohne PIN).
+- **„Wie gut erprobt?“** in der Anleitung der Bedienteile: Erprobt, Getestet oder Ungetestet.
 
 ### Geändert
-- **Warnungen zu falschen PINs** ersetzen einander auf dem Handy (Home-Assistant-App) – es bleibt
-  nur die letzte; beim Zurücksetzen der Falscheingaben verschwindet sie.
+- **Warnungen zu falschen PINs** ersetzen einander auf dem Handy – es bleibt nur die letzte;
+  beim Zurücksetzen der Falscheingaben verschwindet sie.
 
 ### Dokumentation
-- Bedienteile: neuer Abschnitt „Keypad (allgemein)“ mit Beispiel-Automationen in beide
-  Richtungen und dem Hinweis, wie PINs aus der Datenbank von Home Assistant herausbleiben;
-  Referenz, Einstellungsseite, README, Roadmap, ADR 0012 – deutsch und englisch.
+- Bedienteile: „Keypad (allgemein)“ mit Beispiel-Automationen und dem Hinweis, wie PINs aus der
+  Datenbank von Home Assistant herausbleiben; „Fertige Vorlagen“ (inkl. Stand bei ZHA-Keypads);
+  „MQTT-Schnittstelle“ mit Topics, Befehlen, Zustandswörtern, „Ausprobieren ohne Gerät“ und
+  „Den Broker absichern“. Dazu Benachrichtigungen, Referenz, Einstellungsseite, README, Roadmap,
+  ADR 0012 – deutsch und englisch.
 
 ### Intern
 - Keypad-Kern aus der Zigbee2MQTT-Anbindung herausgelöst (`ControlManager.async_input`); das
-  Zigbee2MQTT-Keypad antwortet unverändert. Neuer reiner Kern `core/keypad_input.py`.
+  Zigbee2MQTT-Keypad antwortet unverändert. Neue reine Module `core/keypad_input.py` und
+  `core/mqtt_keypad.py`. Integrationstest lädt den Ring-Blueprint in Home Assistant. Statischer
+  Test: Hauswacht sendet per MQTT nur an die Anzeige von Zigbee2MQTT-Keypads und an die eigenen
+  Topics einer MQTT-Schnittstelle.
+
 ## [0.57.2] - 2026-11-19
 
 **Sirenentest mit Batterie-Rauchmeldern** (getestet über die Vorabversion 0.57.2b1).
