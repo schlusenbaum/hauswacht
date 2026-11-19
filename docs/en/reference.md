@@ -240,6 +240,7 @@ proof), `Neustart` (restart).
 |---|---|---|
 | `InvalidCode` | Wrong PIN or unknown card | `failures` (number in a row), `lock_seconds` (lockout, 0 = none) |
 | `CodeLockReset` | Wrong entries reset | `by`, `failures` |
+| `MqttRetainedCommand` | A stored command (retain) to an [MQTT interface](control-devices.md#mqtt-interface) was ignored | `control` |
 | `UnknownKeypad` | A [generic keypad](control-devices.md#keypad-generic) that is not set up in Hauswacht reported | `keypad` (ID it sent) |
 | `ActionCode` | [Action code](control-devices.md#action-codes) entered | `name`, `action` (`event`, `arm`, `silent_emergency`), `control` (keypad), `test` |
 | `ButtonPressed` | [Button](control-devices.md#button) pressed | `control`, `press` (`single`, `double`, `long`), `profile` (empty = press type not assigned) |

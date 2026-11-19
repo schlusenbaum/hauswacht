@@ -905,6 +905,7 @@
         "menu_options": {
           "control_add_keypad": "Add keypad (Zigbee2MQTT)",
           "control_add_generic_keypad": "Add keypad (generic: ZHA, Z-Wave, ESPHome …)",
+          "control_add_mqtt_keypad": "Add MQTT interface (tablet, home-made, Node-RED …)",
           "control_add_sticker": "Add NFC sticker (companion app)",
           "control_add_reader": "Add RFID/NFC reader (e.g. ESPHome)",
           "control_add_button": "Add button (arms only)",
@@ -1398,6 +1399,36 @@
           "login": "**Card and PIN:** both credentials of the same user within 30 s (the first input gets the result `pending`).",
           "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile."
         }
+      },
+      "control_mqtt_keypad": {
+        "title": "MQTT interface",
+        "description": "**Tested** – automated tests, no feedback with real devices yet.\n\nFor devices and programs that only speak MQTT: wall tablet apps, Tasmota or Arduino home-made devices, Node-RED, other systems. Commands as text (`ARM_AWAY`, `DISARM`) or as JSON with the fields `action` and `code`. Hauswacht never executes stored commands (retain). Whoever may write to the broker may operate the system – secure broker access (see the guide).\n\n**ID:** `{ident}`",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "topic": "Base topic",
+          "button_1": "Button 1 – name",
+          "profile_1": "Button 1 → alarm profile",
+          "button_2": "Button 2 – name",
+          "profile_2": "Button 2 → alarm profile",
+          "button_3": "Button 3 – name",
+          "profile_3": "Button 3 → alarm profile",
+          "button_4": "Button 4 – name",
+          "profile_4": "Button 4 → alarm profile",
+          "login": "Login",
+          "emergency": "Emergency button",
+          "disarm_word": "Command word for disarm",
+          "panic_word": "Command word for emergency",
+          "code_field": "Name of the code field in JSON",
+          "words": "Own state words (for experts)"
+        },
+        "data_description": {
+          "button_1": "Command word your device sends, e.g. `ARM_AWAY` (case and spaces do not matter; becomes `arm_away`).",
+          "login": "**Card and PIN:** both credentials of the same user within 30 s (the first input gets the result `pending`).",
+          "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile.",
+          "topic": "Hauswacht listens on `topic/set` and sends to `topic/state`, `/attributes`, `/response` and `/availability`. Not below `zigbee2mqtt`, no `+` or `#`.",
+          "words": "One line per state, e.g. `armed_away: ARMED_AWAY`. States: disarmed, exit_delay, armed_home, armed_away, armed_night, armed_vacation, armed_custom_bypass, entry_delay, triggered, test_alarm, fire. Empty = default like Home Assistant's MQTT alarm panel."
+        }
       }
     },
     "error": {
@@ -1464,7 +1495,11 @@
       "tilt_overlap": "A value cannot mean both closed and tilted.",
       "stale_hours_invalid": "Please enter 1 to 168 hours.",
       "control_no_buttons": "Enter at least one button with an alarm profile.",
-      "control_button_reserved": "\"disarm\" and \"emergency\" are fixed buttons – please choose another name."
+      "control_button_reserved": "\"disarm\" and \"emergency\" are fixed buttons – please choose another name.",
+      "mqtt_topic_missing": "Please enter a base topic.",
+      "mqtt_topic_invalid": "The topic must not contain `+` or `#` and must not start with `/`.",
+      "mqtt_topic_z2m": "The Zigbee2MQTT keypads listen below `zigbee2mqtt` – please use another topic.",
+      "mqtt_topic_taken": "This topic (or an overlapping one) is already used by another MQTT interface."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",

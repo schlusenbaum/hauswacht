@@ -905,6 +905,7 @@
         "menu_options": {
           "control_add_keypad": "Keypad hinzufügen (Zigbee2MQTT)",
           "control_add_generic_keypad": "Keypad hinzufügen (allgemein: ZHA, Z-Wave, ESPHome …)",
+          "control_add_mqtt_keypad": "MQTT-Schnittstelle hinzufügen (Tablet, Eigenbau, Node-RED …)",
           "control_add_sticker": "NFC-Aufkleber hinzufügen (Companion App)",
           "control_add_reader": "RFID-/NFC-Leser hinzufügen (z. B. ESPHome)",
           "control_add_button": "Taster hinzufügen (schaltet nur scharf)",
@@ -1398,6 +1399,36 @@
           "login": "**Karte und PIN:** Beide Ausweise desselben Benutzers innerhalb von 30 s (die erste Eingabe bekommt das Ergebnis `pending`).",
           "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils."
         }
+      },
+      "control_mqtt_keypad": {
+        "title": "MQTT-Schnittstelle",
+        "description": "**Getestet** – automatische Tests, noch ohne Rückmeldung mit echten Geräten.\n\nFür Geräte und Programme, die nur MQTT sprechen: Wand-Tablet-Apps, Tasmota- oder Arduino-Eigenbauten, Node-RED, andere Systeme. Befehle als Text (`ARM_AWAY`, `DISARM`) oder als JSON mit den Feldern `action` und `code`. Gespeicherte Befehle (retain) führt Hauswacht nie aus. Wer auf den Broker schreiben darf, darf an die Anlage – Broker-Zugang absichern (siehe Anleitung).\n\n**Kennung:** `{ident}`",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "topic": "Basis-Topic",
+          "button_1": "Taste 1 – Name",
+          "profile_1": "Taste 1 → Alarmprofil",
+          "button_2": "Taste 2 – Name",
+          "profile_2": "Taste 2 → Alarmprofil",
+          "button_3": "Taste 3 – Name",
+          "profile_3": "Taste 3 → Alarmprofil",
+          "button_4": "Taste 4 – Name",
+          "profile_4": "Taste 4 → Alarmprofil",
+          "login": "Anmeldung",
+          "emergency": "Notruf-Taste",
+          "disarm_word": "Befehlswort für Unscharf",
+          "panic_word": "Befehlswort für Notruf",
+          "code_field": "Name des Code-Felds im JSON",
+          "words": "Eigene Zustandswörter (für Experten)"
+        },
+        "data_description": {
+          "button_1": "Befehlswort, das dein Gerät sendet, z. B. `ARM_AWAY` (Groß/klein und Leerzeichen egal; wird zu `arm_away`).",
+          "login": "**Karte und PIN:** Beide Ausweise desselben Benutzers innerhalb von 30 s (die erste Eingabe bekommt das Ergebnis `pending`).",
+          "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils.",
+          "topic": "Hauswacht hört auf `Topic/set` und sendet an `Topic/state`, `/attributes`, `/response` und `/availability`. Nicht unter `zigbee2mqtt`, keine `+` oder `#`.",
+          "words": "Eine Zeile je Zustand, z. B. `armed_away: ARMED_AWAY`. Zustände: disarmed, exit_delay, armed_home, armed_away, armed_night, armed_vacation, armed_custom_bypass, entry_delay, triggered, test_alarm, fire. Leer = Standard wie die MQTT-Alarmzentrale von Home Assistant."
+        }
       }
     },
     "error": {
@@ -1464,7 +1495,11 @@
       "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten.",
       "stale_hours_invalid": "Bitte 1 bis 168 Stunden angeben.",
       "control_no_buttons": "Mindestens eine Taste mit Alarmprofil eintragen.",
-      "control_button_reserved": "„disarm“ und „emergency“ sind feste Tasten – bitte einen anderen Namen wählen."
+      "control_button_reserved": "„disarm“ und „emergency“ sind feste Tasten – bitte einen anderen Namen wählen.",
+      "mqtt_topic_missing": "Bitte ein Basis-Topic angeben.",
+      "mqtt_topic_invalid": "Das Topic darf kein `+` oder `#` enthalten und nicht mit `/` beginnen.",
+      "mqtt_topic_z2m": "Unter `zigbee2mqtt` lauschen die Zigbee2MQTT-Keypads – bitte ein anderes Topic.",
+      "mqtt_topic_taken": "Dieses Topic (oder ein überlappendes) nutzt schon eine andere MQTT-Schnittstelle."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

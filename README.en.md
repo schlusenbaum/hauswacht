@@ -15,7 +15,7 @@ Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can g
 Hauswacht provides everything it knows as entities, attributes and events, you connect it with
 **everything Home Assistant can do** – lights, cameras, shutters, heating, speakers.
 
-> **Status: 0.58.0b3 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.58.0b4 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -56,7 +56,8 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
   guests with validity, duress PIN with silent emergency call, lockout against guessing.
 - **Control devices** – Zigbee keypads via Zigbee2MQTT with feedback on the device, **any other
   keypad** (ZHA, Z-Wave, ESPHome, Node-RED …) via an action with a response and a display entity
-  (pre-release), learning cards directly at the keypad, NFC stickers with the Home Assistant app, RFID readers, buttons
+  devices that only speak MQTT via an **MQTT interface** (pre-release), learning cards directly at
+  the keypad, NFC stickers with the Home Assistant app, RFID readers, buttons
   (arm only) and door locks (e.g. Nuki: disarm when a known user unlocks). **Action codes** at
   the keypad (e.g. 7777 + Home) start your own automations or a silent emergency call.
 - **Notifications** – per event with their own recipients and texts, critical alerts break

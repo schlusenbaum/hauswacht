@@ -241,6 +241,7 @@ Türbeleg`, `Neustart`.
 |---|---|---|
 | `InvalidCode` | Falscher PIN bzw. unbekannte Karte | `failures` (Zahl in Folge), `lock_seconds` (Sperre, 0 = keine) |
 | `CodeLockReset` | Falsche Eingaben zurückgesetzt | `by`, `failures` |
+| `MqttRetainedCommand` | Ein gespeicherter Befehl (retain) an eine [MQTT-Schnittstelle](bedienteile.md#mqtt-schnittstelle) wurde ignoriert | `control` |
 | `UnknownKeypad` | Ein [allgemeines Keypad](bedienteile.md#keypad-allgemein), das in Hauswacht nicht angelegt ist, hat sich gemeldet | `keypad` (gesendete Kennung) |
 | `ActionCode` | [Aktions-Code](bedienteile.md#aktions-codes) eingegeben | `name`, `action` (`event`, `arm`, `silent_emergency`), `control` (Keypad), `test` |
 | `ButtonPressed` | [Taster](bedienteile.md#taster) gedrückt | `control`, `press` (`single`, `double`, `long`), `profile` (leer = Druckart nicht belegt) |

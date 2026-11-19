@@ -6,6 +6,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.0b4] - 2026-11-19
+
+**Vorabversion: MQTT-Schnittstelle** (ADR 0012, Stufe 3).
+
+### Hinzugefügt
+- **MQTT-Schnittstelle** – neue Art von Bedienteil für Geräte und Programme, die nur MQTT sprechen
+  (Wand-Tablet-Apps, Tasmota- oder Arduino-Eigenbauten, Node-RED). Basis-Topic frei wählbar:
+  Befehle auf `…/set` als Text (`ARM_AWAY`, `DISARM`) oder JSON (`action`, `code`, `force`,
+  `id`); Hauswacht sendet Zustand (`…/state`, Wörter wie die MQTT-Alarmzentrale von Home
+  Assistant, anpassbar), Details (`…/attributes`), eine Antwort je Befehl (`…/response`) und
+  `online`/`offline` (`…/availability`). Ausgewertet wird genau wie am Keypad.
+- **Gespeicherte Befehle (retain) werden nie ausgeführt** (Ereignis `MqttRetainedCommand`). Im
+  Testmodus nie `triggered`.
+- Einrichten auf der Einstellungsseite und im Dialog; Prüfung des Basis-Topics (nicht unter
+  `zigbee2mqtt`, keine Platzhalter, keine Überschneidung).
+
+### Dokumentation
+- Bedienteile: Abschnitt „MQTT-Schnittstelle“ mit Topics, Befehlen, Zustandswörtern und
+  „Sicherheit: den Broker absichern“ (eigene Benutzer, ACL, TLS); Referenz, Einstellungsseite,
+  README, ADR 0012 – deutsch und englisch.
+
+### Intern
+- Statischer Test: Hauswacht sendet per MQTT nur an die Anzeige eingerichteter
+  Zigbee2MQTT-Keypads und an die eigenen Topics einer MQTT-Schnittstelle – nie an deren
+  Befehls-Topic.
+
 ## [0.58.0b3] - 2026-11-19
 
 ### Hinzugefügt

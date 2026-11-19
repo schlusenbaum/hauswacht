@@ -11,6 +11,7 @@ ID): rights, validity, lockout after wrong entries and duress PIN apply as on th
 |---|---|---|
 | [Keypad (Zigbee2MQTT)](#keypad-zigbee2mqtt) | PIN and/or RFID card + key | wall next to the front door |
 | [Keypad (generic)](#keypad-generic) | PIN and/or RFID card + key | keypads via ZHA, Z-Wave, ESPHome, Node-RED … |
+| [MQTT interface](#mqtt-interface) | PIN and/or RFID card + command | wall tablets, home-made devices and programs that only speak MQTT |
 | [NFC sticker](#nfc-sticker-companion-app) | your own phone (Home Assistant app) | residents with the app |
 | [RFID reader](#rfid-reader) | RFID card, no key | hold up the card and done |
 | [Fingerprint reader](#fingerprint-reader-esphome) | stored finger (like a card) | place a finger, e.g. in the hallway |
@@ -24,7 +25,7 @@ Not every control device could be checked with real hardware. So you know what y
 | Label | Meaning | Control devices |
 |---|---|---|
 | **Proven** | automated tests **and** checked in everyday use with real hardware | Keypad (Zigbee2MQTT), RFID cards at the keypad |
-| **Tested** | automated tests, but no feedback with real hardware yet | Keypad (generic), NFC sticker, RFID reader, fingerprint reader, button, door lock (Nuki and generic) |
+| **Tested** | automated tests, but no feedback with real hardware yet | Keypad (generic), MQTT interface, NFC sticker, RFID reader, fingerprint reader, button, door lock (Nuki and generic) |
 | **Untested – own responsibility** | built from the manufacturer's docs, never checked on the device | [Templates](#ready-made-templates): blueprint Ring Keypad v2, ESPHome example |
 
 Does something from "Tested" or "Untested" work reliably for you? A short note as a
@@ -320,6 +321,96 @@ recorder:
 Note: this removes **all** events of this type from the database – with `zha_event`, for example,
 also those of other ZHA devices. And keep the number of stored traces in the automation small
 (`trace: stored_traces:` with a small number).
+
+## MQTT interface
+
+> **Tested** – checked with automated tests, but no feedback with real devices yet.
+> See [How well proven?](#how-well-proven).
+
+For devices and programs that **only speak MQTT** and do not know Home Assistant: wall tablet apps
+for MQTT alarm panels, Tasmota or Arduino home-made devices, Node-RED, other systems. An MQTT
+interface is a keypad – Hauswacht evaluates its commands **exactly like at the Zigbee2MQTT
+keypad** (rights, lockout, duress PIN, card and PIN, action codes, "arm anyway", emergency).
+
+### Setting up
+
+**System settings → Control devices → Add MQTT interface** – or on the
+[settings page](settings-page.md) in the tab People and control devices:
+
+| Setting | Meaning |
+|---|---|
+| Name, area | as with every control device |
+| Base topic | e.g. `hauswacht/hallway` – all topics live below it (see below). Not below `zigbee2mqtt`, no `+` or `#`; each interface needs its own |
+| Command words → alarm profile | the word your device sends to arm, and the profile for it, e.g. `ARM_AWAY` → "Away", `ARM_HOME` → "Home", `ARM_NIGHT` → "Night". Case and spaces do not matter |
+| Command word for disarm / emergency | default `DISARM` and `PANIC` |
+| Name of the code field in JSON | default `code` – some devices send `pin` |
+| Login, emergency button | as with the [Zigbee2MQTT keypad](#keypad-zigbee2mqtt) |
+| Own state words | for experts: one line per state, e.g. `armed_away: ARMED_AWAY` |
+
+### Topics
+
+| Topic | Direction | Stored (retain) | Content |
+|---|---|---|---|
+| `hauswacht/hallway/set` | to Hauswacht | – | command |
+| `hauswacht/hallway/state` | from Hauswacht | yes | state as a word |
+| `hauswacht/hallway/attributes` | from Hauswacht | yes | details as JSON |
+| `hauswacht/hallway/response` | from Hauswacht | no | response to every command |
+| `hauswacht/hallway/availability` | from Hauswacht | yes | `online` / `offline` |
+
+**Commands** as text or JSON:
+
+```
+ARM_AWAY
+DISARM
+{"action": "ARM_NIGHT", "code": "2580"}
+{"action": "ARM_NIGHT", "code": "2580", "force": true, "id": 17}
+```
+
+`force` means "arm anyway" (only with the right for it), `id` comes back in the response. As at
+the keypad, disarming only works with a PIN or card. **Hauswacht never executes stored commands
+(retain)** – otherwise an old `DISARM` would arrive again after every restart. Hauswacht reports
+such a message with the event `MqttRetainedCommand`.
+
+**State:** default words like Home Assistant's MQTT alarm panel – so many ready-made tablet apps
+fit without changes:
+
+| Hauswacht | Word |
+|---|---|
+| disarmed | `disarmed` |
+| exit delay | `arming` |
+| armed | `armed_home`, `armed_away`, `armed_night`, `armed_vacation`, `armed_custom_bypass` (depending on the profile's button) |
+| entry delay | `pending` |
+| alarm, fire | `triggered` |
+| alarm in test mode | `test_alarm` – **never** `triggered`, so a device with its own siren cannot go off in test mode |
+
+**Response** (JSON) – the same results as with the [action `hauswacht.keypad_input`](#keypad-generic):
+
+```json
+{"keypad": "tablet_hallway", "result": "not_ready", "display": "disarmed",
+ "open_sensors": ["Kitchen window"], "can_force": true, "lock_seconds": 0, "id": 17}
+```
+
+**Details** (`attributes`, JSON): `state`, `display` (state as with the display entity), `area`,
+`profile`, `delay_ends`, `delay_seconds`, `test_mode`, `changed_by`, `buttons`, `last_result`.
+**Never** included: PINs, card numbers.
+
+### Security: secure the broker
+
+**Whoever may write to the broker may operate the system** – just like with Zigbee2MQTT keypads
+today. Therefore:
+
+- Each device gets its **own broker user** with a password.
+- **Access rights (ACL)** as narrow as possible, e.g. for the tablet in the hallway:
+  ```
+  user tablet_hallway
+  topic read hauswacht/hallway/#
+  topic write hauswacht/hallway/set
+  ```
+  With Home Assistant's Mosquitto add-on, these rules go into a separate ACL file (see the add-on's
+  documentation).
+- No anonymous access, do not expose the broker to the internet; outside the home network only
+  with TLS.
+- Typed PINs travel over the broker in plain text – another reason for TLS and separate users.
 
 ## Action codes
 
@@ -903,6 +994,8 @@ within 30 seconds.
   something.
 - Lost card: remove it from the user or set the user to "Active: off".
 - The duress PIN also works at the keypad.
+- **MQTT interface:** the same rules as at the keypad; stored commands are never executed. Secure
+  the broker – see [Security: secure the broker](#security-secure-the-broker).
 - **Generic keypad:** the same rules apply as at the Zigbee2MQTT keypad – disarm only with a PIN
   or card. Only keypads that are set up are accepted, and only automations, scripts, devices and
   administrators may call the action. Whether the PIN ends up somewhere in plain text depends on

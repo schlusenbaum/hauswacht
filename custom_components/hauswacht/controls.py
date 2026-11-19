@@ -36,6 +36,7 @@ from .core.code_guard import remaining_lock
 from .core.controls import (
     ALL_AREAS,
     ARM_KEYS,
+    FREE_BUTTON_KINDS,
     KEY_DISARM,
     KEY_EMERGENCY,
     LOCK,
@@ -87,6 +88,16 @@ from .core.keypad_input import (
     public_result,
     remember_unknown,
     z2m_reply,
+)
+from .core.mqtt_keypad import (
+    TOPIC_ATTRIBUTES,
+    TOPIC_AVAILABILITY,
+    TOPIC_RESPONSE,
+    TOPIC_SET,
+    TOPIC_STATE,
+    MqttCommand,
+    parse_command,
+    state_word,
 )
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
@@ -141,6 +152,9 @@ class ControlManager:
         self._display_listeners: list[Callable[[], None]] = []
         # Unbekannte Keypads, die sich gemeldet haben: Kennung -> Zeitpunkt (zum Anlegen)
         self.unknown_keypads: dict[str, float] = {}
+        # MQTT-Schnittstellen und was zuletzt an sie gesendet wurde
+        self._interfaces: list[Control] = []
+        self._published: dict[str, str] = {}
 
     # --- Start/Stopp ----------------------------------------------------------
 
@@ -163,18 +177,22 @@ class ControlManager:
             for c in self.controls.values()
             if c.kind is ControlKind.LOCK and c.source is LockSource.NUKI_MQTT and c.topic
         ]
-        if keypads or nuki:
+        interfaces = [
+            c for c in self.controls.values() if c.kind is ControlKind.MQTT_KEYPAD and c.topic
+        ]
+        if keypads or nuki or interfaces:
             if MQTT_DOMAIN not in self.hass.config.components:
                 _LOGGER.warning("Keypads und Nuki über MQTT brauchen die MQTT-Integration")
             else:
                 await self._subscribe(keypads)
                 await self._subscribe_nuki(nuki)
+                await self._start_interfaces(interfaces)
         watched = self._watched_entities()
         if watched:
             self._unsubs.append(
                 async_track_state_change_event(self.hass, sorted(watched), self._on_entity)
             )
-        if any(c.kind is ControlKind.GENERIC_KEYPAD for c in self.controls.values()):
+        if any(c.kind in FREE_BUTTON_KINDS for c in self.controls.values()):
             fire = self._fire_indicators()
             if fire:
                 self._unsubs.append(
@@ -271,6 +289,105 @@ class ControlManager:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+        for interface in self._interfaces:
+            self.hass.async_create_task(
+                self._mqtt_publish(interface, TOPIC_AVAILABILITY, "offline", retain=True),
+                f"hauswacht_mqtt_offline_{interface.control_id}",
+            )
+        self._interfaces = []
+
+    # --- MQTT-Schnittstelle (ADR 0012, Stufe 3) ----------------------------------
+
+    async def _start_interfaces(self, interfaces: list[Control]) -> None:
+        from homeassistant.components import mqtt  # noqa: PLC0415
+
+        self._interfaces = interfaces
+        for interface in interfaces:
+            self._unsubs.append(
+                await mqtt.async_subscribe(
+                    self.hass,
+                    f"{interface.topic}/{TOPIC_SET}",
+                    partial(self._on_interface_command, interface),
+                )
+            )
+            await self._mqtt_publish(interface, TOPIC_AVAILABILITY, "online", retain=True)
+        self._publish_interfaces()
+
+    async def _mqtt_publish(
+        self, interface: Control, suffix: str, payload: str, *, retain: bool = False
+    ) -> None:
+        """Sendung der MQTT-Schnittstelle – nur an ihre eigenen Topics, nie an Geräte."""
+        if MQTT_DOMAIN not in self.hass.config.components:
+            return
+        from homeassistant.components import mqtt  # noqa: PLC0415
+
+        try:
+            await mqtt.async_publish(
+                self.hass, f"{interface.topic}/{suffix}", payload, retain=retain
+            )
+        except HomeAssistantError:
+            _LOGGER.warning("MQTT-Schnittstelle %s: Senden fehlgeschlagen", interface.name)
+
+    @callback
+    def _on_interface_command(self, interface: Control, message: Any) -> None:
+        if getattr(message, "retain", False):
+            # Gespeicherter Befehl (retain): nie ausführen – sonst käme ein altes DISARM nach
+            # jedem Neustart erneut an
+            _LOGGER.warning(
+                "MQTT-Schnittstelle %s: gespeicherten Befehl (retain) ignoriert", interface.name
+            )
+            self._fire("MqttRetainedCommand", interface)
+            return
+        command = parse_command(
+            message.payload,
+            code_field=interface.code_field,
+            disarm_word=interface.disarm_word,
+            panic_word=interface.panic_word,
+        )
+        if command is None:
+            return
+        self.hass.async_create_task(
+            self._interface_command(interface, command),
+            f"hauswacht_mqtt_{interface.control_id}",
+        )
+
+    async def _interface_command(self, interface: Control, command: MqttCommand) -> None:
+        answer = await self.async_request(
+            interface, command.button, command.code, force=command.force
+        )
+        answer["display"] = state_word(answer["display"], interface.words)
+        if command.request_id is not None:
+            answer["id"] = command.request_id
+        await self._mqtt_publish(interface, TOPIC_RESPONSE, json.dumps(answer))
+
+    @callback
+    def _publish_interfaces(self) -> None:
+        """Zustand und Details an alle MQTT-Schnittstellen – nur bei Änderungen."""
+        for interface in self._interfaces:
+            display = self.generic_display(interface).value
+            attributes = {
+                "state": state_word(display, interface.words),
+                "display": display,
+                **self.generic_attributes(interface),
+            }
+            stable = {k: v for k, v in attributes.items() if k != "delay_seconds"}
+            fingerprint = json.dumps(stable, sort_keys=True, default=str)
+            if self._published.get(interface.control_id) == fingerprint:
+                continue
+            self._published[interface.control_id] = fingerprint
+            self.hass.async_create_task(
+                self._mqtt_publish(interface, TOPIC_STATE, attributes["state"], retain=True),
+                f"hauswacht_mqtt_state_{interface.control_id}",
+            )
+            self.hass.async_create_task(
+                self._mqtt_publish(
+                    interface,
+                    TOPIC_ATTRIBUTES,
+                    json.dumps(attributes, default=str),
+                    retain=True,
+                ),
+                f"hauswacht_mqtt_attributes_{interface.control_id}",
+            )
 
     # --- Allgemeine Keypads (ADR 0012) ------------------------------------------
 
@@ -300,6 +417,7 @@ class ControlManager:
     def _notify_displays(self) -> None:
         for listener in list(self._display_listeners):
             listener()
+        self._publish_interfaces()
 
     def resolve_generic(self, ref: str) -> Control | None:
         """Allgemeines Keypad über Kennung, Namen oder Anzeige-Entität."""
@@ -324,6 +442,12 @@ class ControlManager:
             self.runtime.fire_event({"type": "UnknownKeypad", "keypad": ref[:64]})
             _LOGGER.warning("Unbekanntes Keypad hat sich gemeldet: %s", ref[:64])
             return {"keypad": ref, "result": KeypadResult.UNKNOWN_KEYPAD.value}
+        return await self.async_request(keypad, button, code, force=force)
+
+    async def async_request(
+        self, keypad: Control, button: str, code: str | None, *, force: bool = False
+    ) -> dict[str, Any]:
+        """Eingabe eines Keypads mit freien Tasten (allgemein oder MQTT) – mit Antwort."""
         pressed = normalize_button(button)
         # Der PIN bleibt nicht im Speicher – nur ein Fingerabdruck zum Vergleichen
         fingerprint = hashlib.sha256((code or "").encode()).hexdigest() if code else None
@@ -503,7 +627,7 @@ class ControlManager:
     ) -> ActionCode | None:
         """Aktions-Code zu Code + Taste. Allgemeines Keypad: jede Scharf-Taste zählt als Taste
         "scharf" (die Tasten haben dort freie Namen), "disarm" als "unscharf"."""
-        if keypad.kind is not ControlKind.GENERIC_KEYPAD:
+        if keypad.kind not in FREE_BUTTON_KINDS:
             return find_action_code(self._action_codes, code, button, keypad.control_id)
         keys = (KEY_DISARM,) if button == KEY_DISARM else ARM_KEYS
         for key in keys:

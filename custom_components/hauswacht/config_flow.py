@@ -166,6 +166,7 @@ from .core.messages import (
     placeholder_names,
     render,
 )
+from .core.mqtt_keypad import DEFAULT_MQTT_BUTTONS, state_words_text
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
@@ -3140,7 +3141,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         return {
             c.control_id: c.name
             for c in parse_controls(self.config_entry.options).values()
-            if c.kind in (ControlKind.KEYPAD, ControlKind.GENERIC_KEYPAD)
+            if c.kind in (ControlKind.KEYPAD, ControlKind.GENERIC_KEYPAD, ControlKind.MQTT_KEYPAD)
         }
 
     def _action_code_label(self, code: ActionCode) -> str:
@@ -3659,6 +3660,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             [
                 "control_add_keypad",
                 "control_add_generic_keypad",
+                "control_add_mqtt_keypad",
                 "control_add_sticker",
                 "control_add_reader",
                 "control_add_button",
@@ -3707,6 +3709,12 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         self._control_id, self._control_kind = None, ControlKind.GENERIC_KEYPAD
+        return await self.async_step_control_settings()
+
+    async def async_step_control_add_mqtt_keypad(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._control_id, self._control_kind = None, ControlKind.MQTT_KEYPAD
         return await self.async_step_control_settings()
 
     async def async_step_control_add_sticker(
@@ -3826,7 +3834,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         if user_input is not None:
             if kind is ControlKind.KEYPAD:
                 user_input = self._resolve_keypad_topic(user_input)
-            errors = self._validate_control(kind, user_input)
+            errors = self._validate_control(kind, {**user_input, "id": self._control_id})
             if not errors:
                 data = _control_data(kind, user_input, current)
                 control_id = self._control_id or slugify(data["name"], existing=list(stored))
@@ -3841,6 +3849,8 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 return await self._save(options, "controls")
         source = {**current, **(user_input or {})}
         placeholders: dict[str, str] = {}
+        if kind is ControlKind.MQTT_KEYPAD:
+            placeholders = {"ident": self._control_id or "–"}
         if kind is ControlKind.GENERIC_KEYPAD:
             unknown = self._unknown_keypads()
             if not self._control_id and unknown and not source.get("name"):
@@ -3895,6 +3905,8 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             )
         elif kind is ControlKind.GENERIC_KEYPAD:
             self._generic_keypad_fields(fields, source, buttons)
+        elif kind is ControlKind.MQTT_KEYPAD:
+            self._mqtt_keypad_fields(fields, source, buttons)
         elif kind is ControlKind.BUTTON:
             fields[vol.Required("entity", default=source.get("entity", vol.UNDEFINED))] = (
                 EntitySelector(EntitySelectorConfig(domain=["event", "sensor"]))
@@ -3934,11 +3946,34 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 )
         return fields
 
-    def _generic_keypad_fields(
+    def _mqtt_keypad_fields(
         self, fields: dict[Any, Any], source: dict[str, Any], buttons: Mapping[str, Any]
     ) -> None:
+        """MQTT-Schnittstelle: Basis-Topic, Tasten (= Befehlswörter), Wörter und Code-Feld."""
+        topic = source.get("topic") or f"hauswacht/{slugify(str(source.get('name') or 'keypad'))}"
+        fields[vol.Required("topic", default=topic)] = TextSelector()
+        self._generic_keypad_fields(fields, source, buttons, DEFAULT_MQTT_BUTTONS)
+        for key, default in (
+            ("disarm_word", "DISARM"),
+            ("panic_word", "PANIC"),
+            ("code_field", "code"),
+        ):
+            fields[vol.Optional(key, default=str(source.get(key) or default))] = TextSelector()
+        words = source.get("words")
+        text = words if isinstance(words, str) else state_words_text(words or {})
+        fields[vol.Optional("words", description={"suggested_value": text})] = TextSelector(
+            TextSelectorConfig(multiline=True)
+        )
+
+    def _generic_keypad_fields(
+        self,
+        fields: dict[Any, Any],
+        source: dict[str, Any],
+        buttons: Mapping[str, Any],
+        defaults: tuple[str, ...] = DEFAULT_GENERIC_BUTTONS,
+    ) -> None:
         """Allgemeines Keypad: freie Tasten (Name → Profil), Anmeldung, Notruf."""
-        pairs = list(buttons.items()) or [(name, None) for name in DEFAULT_GENERIC_BUTTONS]
+        pairs = list(buttons.items()) or [(name, None) for name in defaults]
         for n in range(1, GENERIC_BUTTON_FIELDS + 1):
             name, profile = pairs[n - 1] if len(pairs) >= n else (None, None)
             name = source.get(f"button_{n}", name)
@@ -3957,6 +3992,11 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         )
 
     async def async_step_control_keypad(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_control_settings(user_input)
+
+    async def async_step_control_mqtt_keypad(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return await self.async_step_control_settings(user_input)

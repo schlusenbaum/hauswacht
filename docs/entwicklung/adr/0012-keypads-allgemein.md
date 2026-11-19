@@ -1,6 +1,6 @@
 # ADR 0012: Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT
 
-- Status: in Arbeit – Stufe 1 in 0.58.0b1, Stufe 2 in 0.58.0b2
+- Status: in Arbeit – Stufe 1 in 0.58.0b1, Stufe 2 in 0.58.0b2, Stufe 3 in 0.58.0b4
 - Datum: 2026-11-19
 
 ## Kontext
@@ -171,7 +171,7 @@ Meldet jemand „läuft mit Gerät X“, steigt ein Blueprint zu „Getestet von
 |---|---|
 | 0.58.0b1 | Keypad-Kern herauslösen; Keypad-Quelle „Allgemein“, Aktion mit Antwort, Anzeige-Entität, unbekanntes Keypad anlegen; Einstellungsseite und Dialog; Kennzeichnung Erprobt/Getestet/Ungetestet; Doku mit Beispiel-Automation |
 | 0.58.0b2 | Blueprint Ring Keypad v2 und ESPHome-Beispiel mit Versionsnummer und Import-Knopf. **ZHA-Keypads** (frient, Xfinity, Centralite) brauchen zuerst eine Geräteanpassung für ZHA (Quirk), weil ZHA ihre Eingaben an ein eigenes Bedienfeld leitet – erst, wenn jemand mit so einem Gerät mittesten kann |
-| 0.58.0b3 | MQTT-Schnittstelle |
+| 0.58.0b4 | MQTT-Schnittstelle: Bedienteil-Art mit Basis-Topic; Befehlswörter werden zu Tasten; Zustandswörter wie die MQTT-Alarmzentrale von Home Assistant (anpassbar); Antwort je Befehl; retain-Befehle werden ignoriert. Ereignisse über MQTT folgen bei Bedarf |
 
 ## Verworfene Alternativen
 

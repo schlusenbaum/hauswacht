@@ -13,6 +13,13 @@ from typing import Any
 from ..areas import profile_area
 from ..controls import ALL_AREAS, ARM_KEYS, ControlKind, normalize_tag
 from ..keypad_input import RESERVED_BUTTONS, normalize_button
+from ..mqtt_keypad import (
+    DEFAULT_CODE_FIELD,
+    DEFAULT_DISARM_WORD,
+    DEFAULT_PANIC_WORD,
+    parse_state_words,
+    validate_base_topic,
+)
 from ..profiles import profile_ids
 from ..sensors import slugify
 from . import Change, copy_options, failed
@@ -51,13 +58,23 @@ def validate_control(
         profiles = [data.get(k) for k in ARM_KEYS]
         if not str(data.get("topic") or "").strip().strip("/"):
             errors["keypad_device"] = "control_keypad_topic"
-    elif kind is ControlKind.GENERIC_KEYPAD:
+    elif kind in (ControlKind.GENERIC_KEYPAD, ControlKind.MQTT_KEYPAD):
         buttons = generic_buttons(data)
         profiles = list(buttons.values())
         if any(normalize_button(n) in RESERVED_BUTTONS for n in _button_names(data)):
             errors["base"] = "control_button_reserved"
         elif not buttons:
             errors["base"] = "control_no_buttons"
+        if kind is ControlKind.MQTT_KEYPAD:
+            others = [
+                str(c.get("topic") or "")
+                for cid, c in (options.get(OPT_CONTROLS) or {}).items()
+                if isinstance(c, Mapping)
+                and c.get("kind") == ControlKind.MQTT_KEYPAD.value
+                and cid != data.get("id")
+            ]
+            if problem := validate_base_topic(data.get("topic"), others):
+                errors["topic"] = problem
     elif (
         kind in (ControlKind.STICKER, ControlKind.READER)
         and data.get("action") in ("arm", "toggle")
@@ -107,10 +124,19 @@ def control_data(
         data["buttons"] = {k: user_input[k] for k in ARM_KEYS if user_input.get(k)}
         data["login"] = user_input.get("login", "pin_or_card")
         data["emergency"] = user_input.get("emergency", "off")
-    elif kind is ControlKind.GENERIC_KEYPAD:
+    elif kind in (ControlKind.GENERIC_KEYPAD, ControlKind.MQTT_KEYPAD):
         data["buttons"] = generic_buttons(user_input)
         data["login"] = user_input.get("login", "pin_or_card")
         data["emergency"] = user_input.get("emergency", "off")
+        if kind is ControlKind.MQTT_KEYPAD:
+            data["topic"] = str(user_input.get("topic") or "").strip().strip("/")
+            data["words"] = parse_state_words(user_input.get("words"))
+            for key, default in (
+                ("code_field", DEFAULT_CODE_FIELD),
+                ("disarm_word", DEFAULT_DISARM_WORD),
+                ("panic_word", DEFAULT_PANIC_WORD),
+            ):
+                data[key] = str(user_input.get(key) or "").strip()[:32] or default
     elif kind is ControlKind.BUTTON:
         data["entity"] = user_input["entity"]
         data["presses"] = dict(current.get("presses", {}))

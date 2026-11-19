@@ -187,7 +187,7 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     keypads = [
         {"id": c.control_id, "name": c.name}
         for c in controls.values()
-        if c.kind in (ControlKind.KEYPAD, ControlKind.GENERIC_KEYPAD)
+        if c.kind in (ControlKind.KEYPAD, ControlKind.GENERIC_KEYPAD, ControlKind.MQTT_KEYPAD)
     ]
     return {
         "restart": {
