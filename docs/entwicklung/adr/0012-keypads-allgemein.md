@@ -1,6 +1,6 @@
 # ADR 0012: Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT
 
-- Status: in Arbeit (0.58)
+- Status: in Arbeit – Stufe 1 in 0.58.0b1
 - Datum: 2026-11-19
 
 ## Kontext
@@ -64,14 +64,14 @@ Automation mit PIN schalten – nur ohne die Extras.
 | Feld | Bedeutung |
 |---|---|
 | `keypad` | Kennung des Keypads (wie in Hauswacht angelegt) |
-| `button` | `disarm`, `emergency` oder eine der eigenen Tasten (z. B. `away`); leer = nur Code |
+| `button` | `disarm`, `emergency` oder eine der eigenen Tasten (z. B. `away`) |
 | `code` | PIN oder Kartennummer (optional) |
 | `force` | „trotzdem scharf“ (optional, nur mit Recht dazu) |
 
 Die Aktion gibt eine **Antwort** zurück (Antwortdaten von Home Assistant):
 
 ```yaml
-result: not_ready          # ok | invalid_code | not_ready | not_allowed | already_disarmed
+result: not_ready          # ok | invalid_code | not_ready | already_disarmed
                            # | locked | unknown_keypad | unknown_button | pending
 open_sensors: [Küchenfenster]
 can_force: true
@@ -80,8 +80,10 @@ display: disarmed          # was das Keypad jetzt zeigen soll
 ```
 
 - `pending`: erster Ausweis bei „Karte + PIN“ – zweiten Ausweis abwarten.
-- Ein Code ohne Taste (oder Code + Taste) kann ein **Aktions-Code** sein – dieselben Regeln wie am
-  Zigbee2MQTT-Keypad: nie unscharf, kein Fehlversuch, in der Sperre gesperrt.
+- Code + Taste kann ein **Aktions-Code** sein – dieselben Regeln wie am Zigbee2MQTT-Keypad: nie
+  unscharf, kein Fehlversuch, in der Sperre gesperrt. Weil die Tasten eines allgemeinen Keypads
+  freie Namen haben, gilt dort jede Scharf-Taste als Taste „scharf“ des Aktions-Codes und
+  `disarm` als „unscharf“.
 - Fehlende Rechte ergeben wie am Keypad `invalid_code` – kein Hinweis, ob der PIN stimmte.
 
 **Wer darf die Aktion aufrufen?** Nur Automationen und Skripte (ohne Benutzer) sowie
@@ -94,7 +96,8 @@ falscher PIN nicht doppelt.
 
 ### 4. Anzeige-Entität je Keypad
 
-Jedes allgemeine Keypad bekommt `sensor.<keypad>_anzeige`. Der Blueprint reagiert auf ihre
+Jedes allgemeine Keypad bekommt eine Anzeige-Entität „Name Anzeige“, z. B.
+`sensor.hauswacht_keypad_flur_anzeige`. Der Blueprint reagiert auf ihre
 Änderungen und steuert damit das Gerät (LEDs, Töne, Display).
 
 | Zustand | Bedeutung |
@@ -107,8 +110,9 @@ Jedes allgemeine Keypad bekommt `sensor.<keypad>_anzeige`. Der Blueprint reagier
 | `test_alarm` | Alarm im **Testmodus** – nie `triggered`, damit ein Keypad mit eingebauter Sirene im Testmodus nicht losheult |
 | `fire` | Brand erkannt – hat Vorrang vor allem anderen |
 
-Attribute: `delay_ends` (Zeitpunkt), `delay_seconds`, `area`, `profile`, `ready`,
-`open_sensors`, `changed_by`, `last_result`. **Nie**: PINs, Kartennummern.
+Attribute: `keypad`, `area`, `profile`, `delay_ends` (Zeitpunkt), `delay_seconds`, `test_mode`,
+`changed_by`, `buttons`, `last_result`, `last_result_at`. Offene Melder stehen in der Antwort der
+Aktion (`open_sensors`), nicht in der Entität. **Nie**: PINs, Kartennummern.
 
 Bei „alle Bereiche“ zeigt die Entität den zusammengefassten Zustand (Brand vor Alarm vor
 Eingangsverzögerung vor Ausgangsverzögerung vor scharf vor unscharf) – wie das
@@ -141,8 +145,8 @@ In Doku und Einstellungsseite bekommt jeder Weg ein Kennzeichen:
 
 | Kennzeichen | Bedeutung | Beispiele |
 |---|---|---|
-| **Erprobt** | automatische Tests + im Alltag mit echter Hardware geprüft | Zigbee2MQTT-Keypad, Karten, Aufkleber, Taster |
-| **Getestet** | automatische Tests, ohne Rückmeldung mit echter Hardware | allgemeiner Keypad-Eingang, Nuki, MQTT-Schnittstelle |
+| **Erprobt** | automatische Tests + im Alltag mit echter Hardware geprüft | Zigbee2MQTT-Keypad, RFID-Karten am Keypad |
+| **Getestet** | automatische Tests, ohne Rückmeldung mit echter Hardware | allgemeines Keypad, NFC-Aufkleber, RFID-/Fingerabdruck-Leser, Taster, Türschloss (Nuki und allgemein), MQTT-Schnittstelle |
 | **Ungetestet – eigene Verantwortung** | nach Doku gebaut, nie am Gerät geprüft | Blueprints für Ring, Frient, Xfinity … |
 
 Meldet jemand „läuft mit Gerät X“, steigt ein Blueprint zu „Getestet von der Community“ auf.

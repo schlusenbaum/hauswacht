@@ -6,6 +6,39 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.0b1] - 2026-11-19
+
+**Vorabversion: jedes Keypad anbinden** (ADR 0012, Stufe 1).
+
+### Hinzugefügt
+- **Keypad (allgemein):** neue Art von Bedienteil für Keypads, die Hauswacht nicht selbst kennt –
+  ZHA, Z-Wave (z. B. Ring Keypad), deCONZ, ESPHome, Node-RED. Ein Blueprint oder eine Automation
+  meldet Taste und PIN/Karte mit der neuen Aktion **`hauswacht.keypad_input`** und bekommt eine
+  **Antwort** zurück (`ok`, `invalid_code`, `locked`, `not_ready` mit den offenen Meldern,
+  `pending`, …). Ausgewertet wird genau wie am Zigbee2MQTT-Keypad: Rechte, Sperre,
+  Bedrohungs-PIN, Karte und PIN, Aktions-Codes, „trotzdem scharf“, Notruf. Tasten haben freie
+  Namen (z. B. `away`).
+- **Anzeige-Entität je Keypad** („Keypad Flur Anzeige“): was das Keypad zeigen soll – unscharf,
+  Verzögerungen (mit Ende für einen Countdown), scharf, Alarm. Im **Testmodus** nie „Alarm“,
+  sondern `test_alarm`, damit ein Keypad mit eingebauter Sirene nicht losheult; **Brand** hat
+  einen eigenen Zustand mit Vorrang.
+- **Nur angelegte Keypads** werden angenommen. Meldet sich ein unbekanntes, zeigt die
+  Einstellungsseite es mit „Anlegen“, der Dialog trägt es beim Anlegen schon ein.
+- Die Aktion dürfen nur Automationen, Skripte, Geräte und Administratoren aufrufen. Doppelt
+  gesendete Eingaben (Funk) zählen nur einmal.
+- Einrichten auf der Einstellungsseite und im Dialog.
+- **„Wie gut erprobt?“** in der Anleitung der Bedienteile: Erprobt, Getestet oder Ungetestet –
+  damit klar ist, was an echter Hardware geprüft ist.
+
+### Dokumentation
+- Bedienteile: neuer Abschnitt „Keypad (allgemein)“ mit Beispiel-Automationen in beide
+  Richtungen und dem Hinweis, wie PINs aus der Datenbank von Home Assistant herausbleiben;
+  Referenz, Einstellungsseite, README, Roadmap, ADR 0012 – deutsch und englisch.
+
+### Intern
+- Keypad-Kern aus der Zigbee2MQTT-Anbindung herausgelöst (`ControlManager.async_input`); das
+  Zigbee2MQTT-Keypad antwortet unverändert. Neuer reiner Kern `core/keypad_input.py`.
+
 ## [0.57.0] - 2026-11-18
 
 **Einstellungsseite „Hauswacht“ in der Seitenleiste** – die ganze Einrichtung auf einen Blick und
