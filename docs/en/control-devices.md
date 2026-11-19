@@ -78,29 +78,36 @@ state displays to configured keypads; a test makes sure that Hauswacht sends now
 
 ### Arm anyway at the keypad
 
-If a sensor is still open when arming (e.g. a tilted window), the keypad answers **"not
-ready"**. If the profile allows open sensors **after confirmation**, you confirm at the keypad
+If a sensor is still open (e.g. a tilted window) or unavailable when arming, the keypad answers
+**"not ready"**. If the profile allows this **after confirmation**, you confirm at the keypad
 like this:
 
-1. Type the PIN or hold up the card and press the key, e.g. 🌙 night → "not ready".
-2. **Within 10 seconds** once more: the same PIN or card and **the same key**.
+1. Press the key, e.g. 🌙 night – with a PIN or card or, if arming without a PIN is allowed, also
+   without → "not ready".
+2. **Within 10 seconds** press **the same key** once more – with or without a PIN or card.
 3. Hauswacht **arms anyway** and bypasses the open sensors until disarming – like "Arm anyway"
-   in the card. As always, the logbook shows who it was.
+   in the card. You get the [note on arming](notifications.md#note-on-arming) saying what is not
+   monitored.
 
 Conditions:
 
-- Profile setting "Open sensors when arming" = **allow after confirmation** (the same applies to
-  unavailable sensors with this setting). With **refuse** it stays "not ready" also on the
-  second press; with **bypass automatically** no second press is needed.
-- The user has the right **"May arm anyway at the keypad"** (default on; can be switched off in
-  the user dialog, e.g. for children).
-- It must be the same person with the same key. If someone presses something else in between,
-  the confirmation expires. Without a PIN or card (arming without a code) there is no "anyway".
-- With login "card and PIN", log in with both again for the second press.
+- Profile setting "Open sensors when arming" or "Unavailable sensors when arming" = **allow
+  after confirmation**. With **refuse** it stays "not ready" also on the second press; with
+  **bypass automatically** no second press is needed.
+- If the first press came with a PIN or card, the person needs the right **"May arm anyway at
+  the keypad"** (default on; can be switched off in the user dialog, e.g. for children). The
+  second press may then come without a PIN – it counts in this person's name.
+- If the second press comes with a **different** PIN, it must be the same person. A wrong PIN is
+  rejected as always.
+- **Without a PIN** this only works if arming without a PIN is allowed ("PIN also for arming"
+  off). Then anyone at the keypad can also arm anyway – just as they can arm without a PIN.
+- If someone presses another key in between, the confirmation expires.
+- With login "card and PIN", log in with both for the first press.
 
 **Example:** in the evening the bathroom window is tilted. Anna types `2580` + 🌙 → "not ready".
-She immediately types `2580` + 🌙 again → the keypad shows the exit delay, Hauswacht reports
-"armed, bypassed: bathroom window".
+She immediately presses 🌙 again → the keypad shows the exit delay, Hauswacht reports "Profile
+Night is armed (Anna, Keypad hallway). Not monitored: bathroom window – open, bypassed until
+disarming".
 
 **PINs not in the history:** Zigbee2MQTT creates its own entity for the code typed at the keypad,
 e.g. `sensor.keypad_hallway_action_code`. Home Assistant stores it in the history – i.e. every PIN

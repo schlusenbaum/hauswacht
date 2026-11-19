@@ -269,6 +269,7 @@ proof), `Neustart` (restart).
 | `RuleFired` | Rule completely fulfilled | `rule`, `name`, `sensor_key` |
 | `RuleExpired` | Rule only partly fulfilled, time over | `rule`, `sensor_key` (first sensor) |
 | `RuleConditionsNotMet` | Rule fulfilled, but conditions not – no alarm | `rule`, `sensor_key` |
+| `ArmedWithGaps` | Armed, but not everything is monitored (see [note on arming](notifications.md)) | `bypassed` (bypassed because open), `unavailable` (unavailable, accepted), `rule_sensors` (open, only in rules) |
 | `OpenRuleSensors` | Open sensors on arming that only appear in rules | `sensors` |
 
 ### Sirens

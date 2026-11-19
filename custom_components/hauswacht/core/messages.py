@@ -133,7 +133,7 @@ DEFAULT_SPEECH_DE: Mapping[NotifyEvent, str] = {
     NotifyEvent.REMINDER: "Die Alarmanlage ist noch unscharf.",
     NotifyEvent.ALWAYS_ACTIVE: "Achtung, {melder} hat ausgelöst.",
     NotifyEvent.RULE_NOTIFY: "Auslöseregel {regel} erfüllt durch {melder}.",
-    NotifyEvent.ARM_HINT: "Hinweis: {offen} ist offen.",
+    NotifyEvent.ARM_HINT: "Hinweis: Nicht überwacht: {grund}.",
     NotifyEvent.UNCONFIRMED: "{text}",
     NotifyEvent.UNCONFIRMED_FREQUENT: "{text}",
 }
@@ -150,7 +150,7 @@ DEFAULT_SPEECH_EN: Mapping[NotifyEvent, str] = {
     NotifyEvent.REMINDER: "The alarm system is still disarmed.",
     NotifyEvent.ALWAYS_ACTIVE: "Attention, {sensor} was triggered.",
     NotifyEvent.RULE_NOTIFY: "Trigger rule {rule} met by {sensor}.",
-    NotifyEvent.ARM_HINT: "Note: {open} is open.",
+    NotifyEvent.ARM_HINT: "Note: not monitored: {reason}.",
     NotifyEvent.UNCONFIRMED: "{text}",
     NotifyEvent.UNCONFIRMED_FREQUENT: "{text}",
 }

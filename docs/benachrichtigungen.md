@@ -35,7 +35,7 @@ werden so verschickt, wie sie eingetragen sind.
 | Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
-| Hinweis beim Scharfschalten (offene Melder, die nur in Auslöseregeln vorkommen) | an | Ereignis, sonst allgemein |
+| [Hinweis beim Scharfschalten](#hinweis-beim-scharfschalten) (scharf, aber nicht alles überwacht) | an | Ereignis, sonst allgemein |
 | Immer aktiver Melder (unscharf, ohne Sirene) | an, **wichtig** | Ereignis, sonst allgemein |
 | Auslöseregel „nur Benachrichtigung“ erfüllt | an | Ereignis, sonst allgemein |
 | Unbestätigte Auslösung (Auslöseregel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
@@ -47,6 +47,12 @@ werden so verschickt, wie sie eingetragen sind.
   Bedrohung als wichtige Hinweise“, Standard an). iPhone: kritischer Hinweis – beim ersten Mal
   in der App erlauben. Android: Kanal `alarm_stream`, klingt auch im lautlosen Modus. Alle
   anderen Meldungen gehen mit hoher Priorität, aber normal raus.
+- **Alte Nachrichten räumen sich auf** (Home-Assistant-App): Die Nachricht beim Scharfschalten
+  (bzw. der Hinweis) und die beim Unscharfschalten **ersetzen einander** – auf dem Handy steht
+  immer nur die neueste. Wer beim Unscharfschalten keine Nachricht bekommt, bei dem verschwindet
+  die Scharf-Nachricht einfach. Alarm-Nachrichten verschwinden beim Unscharfschalten, die Meldung
+  „Scharfschalten nicht möglich“, sobald es geklappt hat. Benachrichtigungs-Entitäten (z. B.
+  Telegram, WhatsApp) können Nachrichten nicht zurückziehen.
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
 
@@ -138,6 +144,31 @@ Grund und den Knöpfen:
 
 Die Knöpfe gelten 15 Minuten und je einmal, brauchen einen angemeldeten Home-Assistant-Benutzer
 mit dem Recht „Scharf schalten“ und wirken nur, wenn die Anlage noch unscharf ist.
+
+## Hinweis beim Scharfschalten
+
+Sobald ein Profil scharf ist, aber **nicht alles überwacht** wird, kommt diese Nachricht – egal ob
+über Keypad, Karte, Push-Knopf oder Automatik:
+
+> Profil Nacht ist scharf (Christian, Keypad). Nicht überwacht: Eingang: Türkontakt vorne –
+> offen, überbrückt bis zum Unscharfschalten; Kellerfenster – ausgefallen, wird wieder
+> überwacht, sobald er sich meldet.
+
+Genannt werden:
+
+| Lücke | Wie lange |
+|---|---|
+| **Offener Melder, überbrückt** („trotzdem scharf“ oder automatisch überbrückt) | bis zum Unscharfschalten |
+| **Ausgefallener Melder**, in Kauf genommen (nach Bestätigung oder automatisch) | bis er sich wieder meldet – dann wird er wieder überwacht |
+| **Offener Melder, der nur in Auslöseregeln vorkommt** | bis er zu und wieder auf geht |
+
+**Nur eine Nachricht:** Ist „Scharf geschaltet“ eingeschaltet, stehen die Lücken einfach in
+dieser Nachricht („Profil Nacht scharf geschaltet (Christian). Nicht überwacht: …“). Der eigene
+Hinweis kommt nur, wenn „Scharf geschaltet“ aus ist.
+
+Dazu ein Eintrag unter Benachrichtigungen in Home Assistant und das Ereignis `ArmedWithGaps`
+(siehe [Referenz](referenz.md)). In eigenen Texten: `{offen}` (offene Melder), `{grund}` (alle
+Lücken mit Erklärung), `{profil}`, `{wer}`.
 
 ## Erinnerung „Alle weg, Anlage unscharf“
 

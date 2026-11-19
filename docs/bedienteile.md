@@ -83,31 +83,39 @@ sicher, dass Hauswacht sonst nirgends hin sendet.
 
 ### Trotzdem scharf am Keypad
 
-Ist beim Scharfschalten noch ein Melder offen (z. B. ein gekipptes Fenster), antwortet das
-Keypad **„nicht bereit“**. Erlaubt das Profil offene Melder **nach Bestätigung**, bestätigst du
-am Keypad so:
+Ist beim Scharfschalten noch ein Melder offen (z. B. ein gekipptes Fenster) oder ausgefallen,
+antwortet das Keypad **„nicht bereit“**. Erlaubt das Profil das **nach Bestätigung**, bestätigst
+du am Keypad so:
 
-1. PIN tippen bzw. Karte vorhalten und die Taste drücken, z. B. 🌙 Nacht → „nicht bereit“.
-2. **Innerhalb von 10 Sekunden** noch einmal: dieselbe PIN bzw. Karte und **dieselbe Taste**.
+1. Taste drücken, z. B. 🌙 Nacht – mit PIN bzw. Karte oder, wenn Scharfschalten ohne PIN erlaubt
+   ist, auch ohne → „nicht bereit“.
+2. **Innerhalb von 10 Sekunden** noch einmal **dieselbe Taste** – mit oder ohne PIN bzw. Karte.
 3. Hauswacht schaltet **trotzdem scharf** und überbrückt die offenen Melder bis zum
-   Unscharfschalten – wie „Trotzdem scharf“ in der Karte. Im Logbuch steht wie immer, wer es war.
+   Unscharfschalten – wie „Trotzdem scharf“ in der Karte. Du bekommst den
+   [Hinweis beim Scharfschalten](benachrichtigungen.md#hinweis-beim-scharfschalten), was nicht
+   überwacht wird.
 
 Bedingungen:
 
-- Profil-Einstellung „Offene Sensoren beim Scharfschalten“ = **nach Bestätigung erlauben**
-  (gilt genauso für ausgefallene Melder mit dieser Einstellung). Bei **verweigern** bleibt es
-  auch beim zweiten Druck bei „nicht bereit“; bei **automatisch überbrücken** braucht es keinen
-  zweiten Druck.
-- Der Benutzer hat das Recht **„Darf am Keypad trotzdem scharf schalten“** (Standard an; im
-  Benutzer-Dialog abschaltbar, z. B. für Kinder).
-- Es muss dieselbe Person mit derselben Taste sein. Drückt dazwischen jemand etwas anderes,
-  verfällt die Bestätigung. Ohne PIN oder Karte (Scharfschalten ohne Code) gibt es kein
-  „trotzdem“.
-- Bei Anmeldung „Karte und PIN“ meldest du dich für den zweiten Druck wieder mit beidem an.
+- Profil-Einstellung „Offene Sensoren beim Scharfschalten“ bzw. „Ausgefallene Sensoren beim
+  Scharfschalten“ = **nach Bestätigung erlauben**. Bei **verweigern** bleibt es auch beim
+  zweiten Druck bei „nicht bereit“; bei **automatisch überbrücken** braucht es keinen zweiten
+  Druck.
+- Kam der erste Druck mit PIN oder Karte, braucht die Person das Recht **„Darf am Keypad trotzdem
+  scharf schalten“** (Standard an; im Benutzer-Dialog abschaltbar, z. B. für Kinder). Der zweite
+  Druck darf dann ohne PIN kommen – er gilt im Namen dieser Person.
+- Kommt der zweite Druck mit einem **anderen** PIN, muss es dieselbe Person sein. Ein falscher
+  PIN wird wie immer abgelehnt.
+- **Ohne PIN** geht es nur, wenn Scharfschalten ohne PIN erlaubt ist („PIN auch zum
+  Scharfschalten“ aus). Dann kann jeder am Keypad auch trotzdem scharf schalten – so wie er ja
+  auch ohne PIN scharf schalten kann.
+- Drückt dazwischen jemand eine andere Taste, verfällt die Bestätigung.
+- Bei Anmeldung „Karte und PIN“ meldest du dich für den ersten Druck mit beidem an.
 
 **Beispiel:** Abends ist das Badfenster gekippt. Anna tippt `2580` + 🌙 → „nicht bereit“. Sie
-tippt sofort noch einmal `2580` + 🌙 → das Keypad zeigt die Ausgangsverzögerung, Hauswacht
-meldet „scharf, überbrückt: Badfenster“.
+drückt sofort noch einmal 🌙 → das Keypad zeigt die Ausgangsverzögerung, Hauswacht meldet
+„Profil Nacht ist scharf (Anna, Keypad Flur). Nicht überwacht: Badfenster – offen, überbrückt bis
+zum Unscharfschalten“.
 
 **PINs nicht im Verlauf:** Zigbee2MQTT legt für den am Keypad getippten Code eine eigene
 Entität an, z. B. `sensor.keypad_flur_action_code`. Home Assistant speichert sie im Verlauf –

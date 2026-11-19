@@ -53,6 +53,13 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "arm_hint": "Profil {profile} ist scharf. Offen: {items}. Diese Melder können ihre "
         "Auslöseregeln erst auslösen, wenn sie zu und wieder auf gehen.",
         "arm_hint_item": "{sensor} (Auslöseregel {rules})",
+        "arm_gaps": "Profil {profile} ist scharf{by}. Nicht überwacht: {items}.",
+        "arm_gaps_tail": "Nicht überwacht: {items}.",
+        "arm_gap_bypassed": "{sensor} – offen, überbrückt bis zum Unscharfschalten",
+        "arm_gap_unavailable": "{sensor} – ausgefallen, wird wieder überwacht, sobald er sich "
+        "meldet",
+        "arm_gap_rule": "{sensor} – offen, Auslöseregel {rules} erst nach Schließen und "
+        "erneutem Öffnen",
         # Alarm
         "alarm_prefix": "EINBRUCHALARM",
         "alarm_prefix_test": "TESTALARM",
@@ -259,6 +266,12 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "arm_hint": "Profile {profile} is armed. Open: {items}. These sensors can only trigger "
         "their rules after closing and opening again.",
         "arm_hint_item": "{sensor} (trigger rule {rules})",
+        "arm_gaps": "Profile {profile} is armed{by}. Not monitored: {items}.",
+        "arm_gaps_tail": "Not monitored: {items}.",
+        "arm_gap_bypassed": "{sensor} – open, bypassed until disarming",
+        "arm_gap_unavailable": "{sensor} – unavailable, monitored again as soon as it reports",
+        "arm_gap_rule": "{sensor} – open, trigger rule {rules} only after closing and opening "
+        "again",
         "alarm_prefix": "INTRUSION ALARM",
         "alarm_prefix_test": "TEST ALARM",
         "alarm_title": "Hauswacht: {prefix}",

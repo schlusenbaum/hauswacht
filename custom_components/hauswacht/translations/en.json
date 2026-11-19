@@ -248,7 +248,8 @@
           "area": "Which area the alarm profile belongs to. Each area has its own panel; panel buttons are per area.",
           "speakers": "For alarm, entry delay and “alarm ended” of this profile instead of the default speakers.",
           "excluded": "Sensors from the selected groups that do **not** trigger on their own in this profile (e.g. the hallway motion sensor in “Night”). They still count in trigger rules.",
-          "tilt_allowed": "Only for sensors with tilt position: a tilted window counts as closed in this profile – only opening it fully triggers. Off: tilted counts as open (recommended when away)."
+          "tilt_allowed": "Only for sensors with tilt position: a tilted window counts as closed in this profile – only opening it fully triggers. Off: tilted counts as open (recommended when away).",
+          "unavailable_policy": "**Bypass automatically (experts):** arm without asking even if a sensor is unavailable (e.g. empty battery). It is monitored again as soon as it reports; until then it is a gap. The note on arming names it."
         }
       },
       "zones": {
@@ -737,7 +738,7 @@
           },
           "event_arm_hint": {
             "name": "Hint when arming",
-            "description": "Open sensors that only appear in trigger rules in this profile: they can only start their trigger rule after closing and opening again (e.g. an open window). Default: on.",
+            "description": "Armed, but not everything monitored: bypassed open sensors (e.g. \"arm anyway\"), unavailable sensors and open sensors that only appear in trigger rules. Default: on.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -1491,7 +1492,8 @@
     "unavailable_policy": {
       "options": {
         "refuse": "Refuse arming",
-        "confirm": "Allow after confirmation"
+        "confirm": "Allow after confirmation",
+        "bypass_auto": "Bypass automatically (experts)"
       }
     },
     "siren_tone": {
@@ -1760,7 +1762,8 @@
         "name": "Unavailable sensors when arming",
         "state": {
           "refuse": "Refuse arming",
-          "confirm": "Allow after confirmation"
+          "confirm": "Allow after confirmation",
+          "bypass_auto": "Bypass automatically (experts)"
         }
       },
       "setting_siren_tone": {

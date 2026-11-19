@@ -248,7 +248,8 @@
           "area": "Zu welchem Bereich das Alarmprofil gehört. Jeder Bereich hat ein eigenes Bedienfeld; die Bedienfeld-Knöpfe sind je Bereich frei.",
           "speakers": "Für Alarm, Eingangsverzögerung und „Alarm beendet“ dieses Profils statt der Standard-Lautsprecher.",
           "excluded": "Melder aus den gewählten Meldergruppen, die in diesem Profil **nicht** einzeln auslösen (z. B. der Bewegungsmelder im Flur in „Nacht“). In Auslöseregeln zählen sie weiter.",
-          "tilt_allowed": "Nur für Melder mit Kippstellung: Ein gekipptes Fenster zählt in diesem Profil als zu – erst ganz öffnen löst aus. Aus: gekippt zählt wie offen (empfohlen bei Abwesenheit)."
+          "tilt_allowed": "Nur für Melder mit Kippstellung: Ein gekipptes Fenster zählt in diesem Profil als zu – erst ganz öffnen löst aus. Aus: gekippt zählt wie offen (empfohlen bei Abwesenheit).",
+          "unavailable_policy": "**Automatisch überbrücken (Experten):** scharf ohne Rückfrage, auch wenn ein Melder ausgefallen ist (z. B. leere Batterie). Er wird wieder überwacht, sobald er sich meldet; bis dahin ist er eine Lücke. Der Hinweis beim Scharfschalten nennt ihn."
         }
       },
       "zones": {
@@ -737,7 +738,7 @@
           },
           "event_arm_hint": {
             "name": "Hinweis beim Scharfschalten",
-            "description": "Offene Melder, die im Profil nur in Auslöseregeln vorkommen: Sie können ihre Auslöseregel erst auslösen, wenn sie zu und wieder auf gehen (z. B. ein offenes Fenster). Standard: an.",
+            "description": "Scharf, aber nicht alles überwacht: überbrückte offene Melder (z. B. „trotzdem scharf“), ausgefallene Melder und offene Melder, die nur in Auslöseregeln vorkommen. Standard: an.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -1491,7 +1492,8 @@
     "unavailable_policy": {
       "options": {
         "refuse": "Scharfschalten verweigern",
-        "confirm": "Nach Bestätigung erlauben"
+        "confirm": "Nach Bestätigung erlauben",
+        "bypass_auto": "Automatisch überbrücken (Experten)"
       }
     },
     "siren_tone": {
@@ -1760,7 +1762,8 @@
         "name": "Ausgefallene Sensoren beim Scharfschalten",
         "state": {
           "refuse": "Scharfschalten verweigern",
-          "confirm": "Nach Bestätigung erlauben"
+          "confirm": "Nach Bestätigung erlauben",
+          "bypass_auto": "Automatisch überbrücken (Experten)"
         }
       },
       "setting_siren_tone": {

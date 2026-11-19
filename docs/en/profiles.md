@@ -23,7 +23,7 @@ you need, e.g. "Home", "Night", "Away", "Vacation".
 | Exit / entry delay | Time to leave, or to disarm after entering (default 30 s each) |
 | Alarm reaction time | How long one alarm cycle lasts (default 180 s) |
 | Open sensors when arming | refuse · allow after confirmation · bypass automatically. Confirm: "Arm anyway" in the card or push – or at the keypad [the same key once more](control-devices.md#arm-anyway-at-the-keypad) |
-| Unavailable sensors when arming | refuse · allow after confirmation |
+| Unavailable sensors when arming | refuse · allow after confirmation · bypass automatically (**experts**). An unavailable sensor (e.g. empty battery) is **monitored again as soon as it reports** – until then it is a gap. "Bypass automatically" arms without asking; the [note on arming](notifications.md#note-on-arming) names it |
 | Maximum alarm cycles | How often the alarm may trigger again after an alarm |
 | Tamper triggers alarm | Otherwise tampering is only reported |
 | Tilted windows allowed | Only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) (hidden otherwise): a tilted window counts as closed, only opening it fully triggers. **Off** (default): tilted counts as open. Typical: on for "Night", off for "Away". The [setup wizard](setup-wizard.md#6-alarm-profiles) asks about it for the night profile |
@@ -63,7 +63,8 @@ In the profile, expandable under **Automation**. All fields are optional – emp
 Safety rules:
 
 - Automatic arming only while the system is disarmed – never on top of another profile.
-- Open or failed sensors are **never** confirmed automatically. If arming fails because of this,
+- Open or failed sensors are **never** confirmed automatically (unless the profile bypasses them
+  automatically anyway). If arming fails because of this,
   you get a system message.
 - A **running alarm** is never ended automatically. A running entry delay only with door proof.
 - A person whose location is unknown or unavailable does **not** count as away.
