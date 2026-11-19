@@ -170,7 +170,7 @@ Meldet jemand „läuft mit Gerät X“, steigt ein Blueprint zu „Getestet von
 | Vorabversion | Inhalt |
 |---|---|
 | 0.58.0b1 | Keypad-Kern herauslösen; Keypad-Quelle „Allgemein“, Aktion mit Antwort, Anzeige-Entität, unbekanntes Keypad anlegen; Einstellungsseite und Dialog; Kennzeichnung Erprobt/Getestet/Ungetestet; Doku mit Beispiel-Automation |
-| 0.58.0b2 | Blueprints (Ring Keypad v2, Frient und Xfinity/Centralite über ZHA, ESPHome-Beispiel) mit Versionsnummer und Import-Knopf |
+| 0.58.0b2 | Blueprint Ring Keypad v2 und ESPHome-Beispiel mit Versionsnummer und Import-Knopf. **ZHA-Keypads** (frient, Xfinity, Centralite) brauchen zuerst eine Geräteanpassung für ZHA (Quirk), weil ZHA ihre Eingaben an ein eigenes Bedienfeld leitet – erst, wenn jemand mit so einem Gerät mittesten kann |
 | 0.58.0b3 | MQTT-Schnittstelle |
 
 ## Verworfene Alternativen

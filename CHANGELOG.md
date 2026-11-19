@@ -6,6 +6,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.0b2] - 2026-11-19
+
+**Vorabversion: fertige Vorlagen für allgemeine Keypads** (ADR 0012, Stufe 2).
+
+### Hinzugefügt
+- **Blueprint „Ring Keypad v2“ (Z-Wave JS)** mit Import-Knopf in der Anleitung: Unscharf,
+  Abwesend, Zuhause, Polizei-Taste = Notruf; Fehlerton bei falschem PIN, Enter blinkt bei „nicht
+  bereit“; Lichter und Töne nach der Anzeige-Entität, mit Countdown. Im Testmodus kein Alarmton.
+- **ESPHome-Beispiel** für ein selbst gebautes Keypad (4×4-Tastenfeld, zwei LEDs), das die Aktion
+  direkt aufruft.
+- Beide sind als **ungetestet – eigene Verantwortung** gekennzeichnet und tragen eine
+  Versionsnummer.
+
+### Dokumentation
+- Bedienteile: Abschnitt „Fertige Vorlagen“ (mit Einrichtung, Versionsnummer und dem Stand bei
+  ZHA-Keypads), „Wie gut erprobt?“ ergänzt; ADR 0012 – deutsch und englisch.
+
+### Intern
+- Integrationstest, der den Blueprint in Home Assistant lädt und mit einem simulierten Ring Keypad
+  scharf und unscharf schaltet.
+
 ## [0.58.0b1] - 2026-11-19
 
 **Vorabversion: jedes Keypad anbinden** (ADR 0012, Stufe 1). Enthält alles aus 0.57.1 und 0.57.2.
