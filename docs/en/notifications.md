@@ -14,6 +14,11 @@ two items for [speech](#speech-speakers).
   through Do Not Disturb. Good as an additional channel (e.g. a family group); the Home Assistant
   app stays the actual alarm signal. Speakers (announce/speak) do not appear here, they are under
   "Speech"; the duress alarm never goes to speakers.
+- **Each phone only once:** the Home Assistant app offers a service (`mobile_app_…`) for every
+  phone and now also a notification entity. Hauswacht only shows the service – with the phone's
+  name from Home Assistant, e.g. "Xiaomi 13 Christian" instead of "2211133g xiaomi13" – because
+  only it supports buttons, tidying up and critical alerts. App entities chosen earlier are
+  switched to the same phone's service once.
 - **Per event** (expandable sections): on/off and own recipients.
 
 **Language:** notifications, push buttons, announcements and reports come in the language of Home

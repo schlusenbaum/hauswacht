@@ -251,7 +251,7 @@ from .core.siren_test import clamp_seconds as clamp_siren_seconds
 from .core.siren_test import parse_settings as parse_siren_test
 from .core.speech import MAX_REPEAT as SPEECH_MAX_REPEAT
 from .core.speech import MODES as SPEECH_MODES
-from .core.speech import Candidate, is_speaker, parse_speech, profile_speakers
+from .core.speech import parse_speech, profile_speakers
 from .core.state_machine import (
     OpenSensorPolicy,
     UnavailableSensorPolicy,
@@ -279,6 +279,7 @@ from .core.vibration import (
     save_zone_rule,
 )
 from .names import display_name, plain_name
+from .notify_targets import notify_choices
 from .runtime import device_class_of, entities_by_label
 from .siren_test import SirenTester
 from .wizard import WizardSteps
@@ -2707,33 +2708,35 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
     # --- Benachrichtigungen --------------------------------------------------
 
     def _notify_services(self) -> list[SelectOptionDict]:
-        """Empfänger: notify-Dienste (z. B. App mit Knöpfen) und Benachrichtigungs-Entitäten
-        (z. B. WhatsApp, Telegram, E-Mail – nur Titel und Text)."""
-        services = self.hass.services.async_services_for_domain("notify")
-        options = [
-            SelectOptionDict(value=s, label=s)
-            for s in sorted(services)
-            if s not in {"send_message", "notify", "persistent_notification"}
-        ]
+        """Empfänger: Dienste (z. B. die App mit Knöpfen – jedes Handy nur einmal) und
+        Benachrichtigungs-Entitäten anderer Integrationen (WhatsApp, Telegram, E-Mail – nur Text).
+        Früher gewählte Werte, die es so nicht mehr gibt, bleiben wählbar."""
         text_only = " – nur Text" if self._german() else " – text only"
-        registry = er.async_get(self.hass)
-        for state in sorted(
-            self.hass.states.async_all("notify"), key=lambda st: st.name.casefold()
-        ):
-            entry = registry.async_get(state.entity_id)
-            candidate = Candidate(
-                state.entity_id,
-                entry.unique_id if entry else "",
-                entry.translation_key if entry else None,
+        options = [
+            SelectOptionDict(
+                value=c["id"], label=c["name"] + (text_only if c["kind"] == "text" else "")
             )
-            if is_speaker(candidate):
-                continue  # Lautsprecher stehen unter "Sprachausgabe"
-            options.append(
-                SelectOptionDict(
-                    value=state.entity_id, label=f"{state.name} ({state.entity_id}){text_only}"
-                )
-            )
+            for c in notify_choices(self.hass)
+        ]
+        known = {o["value"] for o in options}
+        for target in self._configured_targets():
+            if target not in known:
+                options.append(SelectOptionDict(value=target, label=target))
+                known.add(target)
         return options
+
+    def _configured_targets(self) -> list[str]:
+        opts = self.config_entry.options
+        found: list[str] = []
+        for key in (OPT_NOTIFY_SYSTEM, OPT_DURESS_NOTIFY):
+            found += [t for t in opts.get(key) or [] if isinstance(t, str)]
+        for data in (opts.get("events") or {}).values():
+            if isinstance(data, Mapping):
+                found += [t for t in data.get("targets") or [] if isinstance(t, str)]
+        for data in (opts.get("profiles") or {}).values():
+            if isinstance(data, Mapping):
+                found += [t for t in data.get("notify") or [] if isinstance(t, str)]
+        return found
 
     async def async_step_notifications(
         self, user_input: dict[str, Any] | None = None

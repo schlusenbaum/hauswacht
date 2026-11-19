@@ -126,3 +126,42 @@ def push_data(event: NotifyEvent | None, *, critical_allowed: bool) -> Mapping[s
     if critical_allowed and (event is None or event in CRITICAL):
         return CRITICAL_DATA
     return NORMAL_DATA
+
+
+def replace_targets(
+    options: Mapping[str, Any], aliases: Mapping[str, str]
+) -> dict[str, Any] | None:
+    """Empfänger umschreiben (z. B. App-Entität -> App-Dienst). None = nichts zu tun.
+
+    Betrifft allgemeine Empfänger, Bedrohungsalarm, Empfänger je Ereignis und je Profil.
+    Doppelte fallen weg, die Reihenfolge bleibt.
+    """
+    if not aliases:
+        return None
+
+    def fix(value: Any) -> Any:
+        if not isinstance(value, list):
+            return value
+        return list(dict.fromkeys(aliases.get(t, t) if isinstance(t, str) else t for t in value))
+
+    new: dict[str, Any] = dict(options)
+    for key in ("notify_system", "duress_notify"):
+        if key in new:
+            new[key] = fix(new[key])
+    events = new.get("events")
+    if isinstance(events, Mapping):
+        new["events"] = {
+            name: {**data, "targets": fix(data.get("targets"))}
+            if isinstance(data, Mapping) and "targets" in data
+            else data
+            for name, data in events.items()
+        }
+    profiles = new.get("profiles")
+    if isinstance(profiles, Mapping):
+        new["profiles"] = {
+            pid: {**data, "notify": fix(data.get("notify"))}
+            if isinstance(data, Mapping) and "notify" in data
+            else data
+            for pid, data in profiles.items()
+        }
+    return new if new != dict(options) else None

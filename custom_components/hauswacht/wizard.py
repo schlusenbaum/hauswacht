@@ -74,6 +74,7 @@ from .core.wizard import (
     suggest_sensors,
 )
 from .names import display_name
+from .notify_targets import notify_choices
 from .runtime import device_class_of, entities_by_label
 
 MAX_LISTED = 40  # so viele Vorschläge stehen im Text, der Rest als "… und N weitere"
@@ -574,10 +575,8 @@ class WizardSteps:
     # --- Empfänger (Teil 2) -------------------------------------------------------
 
     def _notify_choices(self) -> list[str]:
-        services = self.hass.services.async_services_for_domain("notify")
-        return sorted(
-            s for s in services if s not in {"send_message", "notify", "persistent_notification"}
-        )
+        """Dienste wie die App (jedes Handy nur einmal), ohne reine Text-Entitäten."""
+        return [c["id"] for c in notify_choices(self.hass) if c["kind"] == "app"]
 
     async def async_step_wizard_recipients(
         self, user_input: dict[str, Any] | None = None

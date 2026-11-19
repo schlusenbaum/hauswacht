@@ -16,6 +16,11 @@ Texte für Push-Nachrichten“ und zwei Punkten zur [Sprachausgabe](#sprachausga
   Home-Assistant-App bleibt das eigentliche Alarmsignal. Lautsprecher (Durchsage/Sprechen)
   erscheinen hier nicht, sie stehen unter „Sprachausgabe“; der Bedrohungsalarm geht nie an
   Lautsprecher.
+- **Jedes Handy nur einmal:** Die Home-Assistant-App bietet für jedes Handy einen Dienst
+  (`mobile_app_…`) und inzwischen zusätzlich eine Benachrichtigungs-Entität. Hauswacht zeigt nur
+  den Dienst – mit dem Namen des Handys aus Home Assistant, z. B. „Xiaomi 13 Christian“ statt
+  „2211133g xiaomi13“ –, denn nur er kann Knöpfe, Aufräumen und wichtige Hinweise. Früher
+  gewählte App-Entitäten stellt Hauswacht einmalig auf den Dienst desselben Handys um.
 - **Pro Ereignis** (aufklappbare Bereiche): an/aus und eigene Empfänger.
 
 **Sprache:** Benachrichtigungen, Push-Knöpfe, Ansagen und Berichte kommen in der Sprache von

@@ -73,7 +73,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     if entry.options.get(OPT_SETTINGS_PAGE, True):
         await async_register_panel(hass, str(integration.version or "0"))
         entry.async_on_unload(lambda: async_remove_panel(hass))
+    from homeassistant.core import callback  # noqa: PLC0415
+    from homeassistant.helpers.start import async_at_started  # noqa: PLC0415
+
+    @callback
+    def _after_start(_hass: HomeAssistant) -> None:
+        _migrate_app_targets(hass, entry)
+
+    entry.async_on_unload(async_at_started(hass, _after_start))
     return True
+
+
+def _migrate_app_targets(hass: HomeAssistant, entry: HauswachtConfigEntry) -> None:
+    """Früher gewählte App-Entitäten einmalig durch den App-Dienst ersetzen (gleiches Handy,
+    aber mit Knöpfen und Aufräumen). Erst nach dem Start: dann gibt es alle App-Entitäten."""
+    from .core.notify_events import replace_targets  # noqa: PLC0415
+    from .notify_targets import app_entity_aliases  # noqa: PLC0415
+
+    new = replace_targets(entry.options, app_entity_aliases(hass))
+    if new is not None:
+        hass.config_entries.async_update_entry(entry, options=new)
 
 
 def _async_remove_stale_areas(hass: HomeAssistant, entry: HauswachtConfigEntry) -> None:
