@@ -171,6 +171,19 @@ def test_unavailable_with_confirm_policy() -> None:
     assert h.ctx.accepted_unavailable == {"bwm"}
 
 
+def test_unavailable_bypass_auto_arms_without_asking() -> None:
+    profile = ProfileRuntime(profile_id="p", unavailable_policy=UnavailableSensorPolicy.BYPASS_AUTO)
+    h = Harness()
+    effects = h.send(ArmRequested(profile, Readiness(unavailable_sensors=frozenset({"bwm"}))))
+    assert not of_type(effects, ConfirmationRequired)
+    assert h.ctx.state is AlarmState.ARMED
+    assert h.ctx.accepted_unavailable == {"bwm"}
+    # Wieder da und ausgelöst: wird überwacht (nicht überbrückt)
+    assert "bwm" not in h.ctx.bypassed
+    effects = h.send(SensorTriggered("bwm", SensorRole.INSTANT))
+    assert h.ctx.state is AlarmState.TRIGGERED
+
+
 def test_refuse_beats_confirmation() -> None:
     profile = ProfileRuntime(profile_id="p", open_policy=OpenSensorPolicy.CONFIRM)
     readiness = Readiness(

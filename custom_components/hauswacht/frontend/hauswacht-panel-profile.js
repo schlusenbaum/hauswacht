@@ -62,6 +62,7 @@ const PT = {
     none: "–",
     modes: { none: "kein Knopf", home: "Zuhause", night: "Nacht", away: "Abwesend", vacation: "Urlaub", custom: "Benutzerdefiniert" },
     policy: { refuse: "verweigern", confirm: "nach Bestätigung erlauben", bypass_auto: "automatisch überbrücken" },
+    experts: " (Experten – wird wieder überwacht, sobald er sich meldet)",
     tones: { burglar: "Einbruch", emergency: "Notfall", police_panic: "Polizei-Panik", emergency_panic: "Notfall-Panik" },
     volumes: { low: "leise", medium: "mittel", high: "laut", very_high: "sehr laut" },
     days: { mon: "Mo", tue: "Di", wed: "Mi", thu: "Do", fri: "Fr", sat: "Sa", sun: "So" },
@@ -135,6 +136,7 @@ const PT = {
     none: "–",
     modes: { none: "no button", home: "Home", night: "Night", away: "Away", vacation: "Vacation", custom: "Custom" },
     policy: { refuse: "refuse", confirm: "allow after confirmation", bypass_auto: "bypass automatically" },
+    experts: " (experts – monitored again as soon as it reports)",
     tones: { burglar: "Burglar", emergency: "Emergency", police_panic: "Police panic", emergency_panic: "Emergency panic" },
     volumes: { low: "low", medium: "medium", high: "high", very_high: "very high" },
     days: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
@@ -261,7 +263,7 @@ class HauswachtProfileEditor extends HTMLElement {
       ${this._num("reaction_time", d.reaction_time, this._t("reaction"), 1, lim.reaction)}${this._num("max_alarm_cycles", d.max_alarm_cycles, this._t("cycles"), 1, lim.cycles)}</div>
       <div class="sec">${pe(this._t("secArming"))}</div>
       ${this._select("open_policy", d.open_policy, this._t("openPolicy"), c.open_policies.map((p) => [p, t("policy", p)]))}
-      ${this._select("unavailable_policy", d.unavailable_policy, this._t("unavailablePolicy"), c.unavailable_policies.map((p) => [p, t("policy", p)]))}
+      ${this._select("unavailable_policy", d.unavailable_policy, this._t("unavailablePolicy"), c.unavailable_policies.map((p) => [p, t("policy", p) + (p === "bypass_auto" ? this._t("experts") : "")]))}
       ${this._check("tamper_triggers_alarm", d.tamper_triggers_alarm, this._t("tamper"))}
       <div class="sec">${pe(this._t("secReaction"))}</div>
       ${this._multi("sirens", d.sirens, c.sirens.map((x) => [x.id, x.name]), this._t("sirens"), this._t("noSirens"))}

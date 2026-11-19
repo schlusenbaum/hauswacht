@@ -299,3 +299,11 @@ def test_force_confirmed_window() -> None:
     assert not force_confirmed(pending, "arm_all_zones", users, 105.0)
     assert not force_confirmed(pending, "arm_night_zones", frozenset({"ben"}), 105.0)
     assert not force_confirmed(None, "arm_night_zones", users, 105.0)
+    # Zweiter Druck ohne PIN bestätigt den ersten (mit PIN)
+    assert force_confirmed(pending, "arm_night_zones", frozenset(), 105.0)
+    assert not force_confirmed(pending, "arm_all_zones", frozenset(), 105.0)
+    # Erster Druck ohne PIN (Scharfschalten ohne PIN erlaubt), zweiter mit oder ohne PIN
+    anonymous = PendingForce("arm_night_zones", frozenset(), 100.0)
+    assert force_confirmed(anonymous, "arm_night_zones", frozenset(), 105.0)
+    assert force_confirmed(anonymous, "arm_night_zones", users, 105.0)
+    assert not force_confirmed(anonymous, "arm_night_zones", frozenset(), 111.0)

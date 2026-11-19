@@ -35,6 +35,7 @@ from .core.controls import (
     KEY_DISARM,
     KEY_EMERGENCY,
     LOCK,
+    NOBODY,
     REPLY_ALREADY_DISARMED,
     REPLY_INVALID_CODE,
     REPLY_NOT_READY,
@@ -61,6 +62,7 @@ from .core.controls import (
     normalize_tag,
     parse_controls,
     parse_nuki_event,
+    pending_valid,
     press_value,
     reader_for,
     remember_card,
@@ -299,12 +301,24 @@ class ControlManager:
             return await self._reply(keypad, transaction, REPLY_NOT_READY)
         wanted = Action.DISARM if action == KEY_DISARM else Action.ARM
         identity = await self._login(keypad, code, wanted)
+        # Zweiter Druck derselben Taste OHNE PIN/Karte bestätigt einen gescheiterten ersten
+        # ("trotzdem scharf") – im Namen der Person des ersten Drucks
+        confirm = None
+        if wanted is Action.ARM and not code:
+            pending = self._force.get(keypad.control_id)
+            if pending_valid(pending, action, time.monotonic()):
+                confirm = pending
+                identity = pending.identity if pending is not None else None
         # Falscher Ausweis wird immer abgelehnt; ohne Ausweis nur scharf, wenn kein PIN nötig
-        if identity is None and (code or wanted is Action.DISARM or self.runtime.code_arm_required):
+        if (
+            confirm is None
+            and identity is None
+            and (code or wanted is Action.DISARM or self.runtime.code_arm_required)
+        ):
             return await self._reply(keypad, transaction, REPLY_INVALID_CODE)
         if identity == "pending":
             return await self._reply(keypad, transaction, REPLY_NOT_READY)
-        force = self._force_wanted(keypad, action, identity)
+        force = confirm is not None or self._force_wanted(keypad, action, identity)
         result = self._execute(
             keypad, wanted, keypad.buttons.get(action), identity, confirmed=force
         )
@@ -312,7 +326,12 @@ class ControlManager:
         return await self._reply(keypad, transaction, action if result == "ok" else result)
 
     def _force_users(self, identity: Any) -> frozenset[str] | None:
-        """Wer per zweitem Druck trotzdem scharf schalten darf (sonst None)."""
+        """Wer per zweitem Druck trotzdem scharf schalten darf (sonst None).
+
+        Ohne Ausweis: leere Menge – aber nur, wenn Scharfschalten ohne PIN erlaubt ist.
+        """
+        if identity is None:
+            return None if self.runtime.code_arm_required else NOBODY
         if not isinstance(identity, Identity) or identity.duress:
             return None
         if not any(u.can_force_arm for u in identity.users):
@@ -330,7 +349,10 @@ class ControlManager:
         """Nach "nicht bereit" merken: derselbe Druck gleich noch einmal = trotzdem scharf."""
         users = self._force_users(identity)
         if result == REPLY_NOT_READY and users is not None and action != KEY_DISARM:
-            self._force[keypad.control_id] = PendingForce(action, users, time.monotonic())
+            pending = self._force.get(keypad.control_id)
+            if pending_valid(pending, action, time.monotonic()):
+                return  # schon bestätigt und trotzdem abgelehnt (z. B. "verweigern"): nicht neu
+            self._force[keypad.control_id] = PendingForce(action, users, time.monotonic(), identity)
         else:
             self._force.pop(keypad.control_id, None)
 

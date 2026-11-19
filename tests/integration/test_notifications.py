@@ -82,8 +82,11 @@ async def test_armed_and_disarmed_when_enabled(hass: HomeAssistant) -> None:
     await setup_entry(hass, make_entry(options))
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
-    assert len(push) == 1
-    assert "armed" in push[0].data["title"].lower()
+    messages = [c for c in push if c.data["message"] != "clear_notification"]
+    assert len(messages) == 1
+    assert "armed" in messages[0].data["title"].lower()
+    # Bekommt die Unscharf-Nachricht nicht: die Scharf-Nachricht wird weggeräumt
+    assert push[-1].data["message"] == "clear_notification"
     assert len(other) == 1  # eigene Empfänger statt der allgemeinen
     assert "disarmed" in other[0].data["title"].lower()
 

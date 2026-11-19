@@ -6,6 +6,39 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.1] - 2026-11-19
+
+**„Trotzdem scharf“ am Keypad repariert, eine Nachricht beim Scharfschalten** (getestet über die
+Vorabversionen 0.57.1b1 und b2).
+
+### Behoben
+- **Trotzdem scharf am Keypad** ging nicht, wenn der zweite Druck ohne PIN kam – und gar nicht,
+  wenn Scharfschalten ohne PIN erlaubt ist: Ein Druck ohne PIN löschte die gemerkte Bestätigung.
+  Jetzt bestätigt **dieselbe Taste innerhalb von 10 Sekunden** den ersten Druck – **mit oder ohne
+  PIN** bzw. Karte. Kam der erste Druck mit PIN, gilt der zweite im Namen dieser Person (Recht
+  „trotzdem scharf“ nötig). Ohne PIN geht es nur, wenn Scharfschalten ohne PIN erlaubt ist.
+  „Verweigern“ bleibt verweigern.
+- Die Anleitung versprach eine Meldung „scharf, überbrückt: …“ – sie wurde nie verschickt.
+
+### Hinzugefügt
+- **Rückmeldung über Lücken beim Scharfschalten:** überbrückte offene Melder („trotzdem scharf“
+  oder automatisch), ausgefallene Melder (werden wieder überwacht, sobald sie sich melden) und
+  offene Melder, die nur in Auslöseregeln vorkommen – egal ob über Keypad, Karte, Push-Knopf oder
+  Automatik. Neues Ereignis `ArmedWithGaps`.
+- **Ausgefallene Sensoren beim Scharfschalten: „automatisch überbrücken“** als Expertenoption je
+  Profil – scharf ohne Rückfrage; der Melder wird wieder überwacht, sobald er sich meldet.
+
+### Geändert
+- **Eine Nachricht beim Scharfschalten statt zwei:** Ist „Scharf geschaltet“ an, stehen die
+  Lücken in dieser Nachricht; der eigene Hinweis kommt nur, wenn sie aus ist.
+- **Alte Nachrichten räumen sich auf:** Scharf- und Unscharf-Nachricht ersetzen einander auf dem
+  Handy (Home-Assistant-App); bekommt man beim Unscharfschalten keine Nachricht, verschwindet die
+  Scharf-Nachricht.
+
+### Dokumentation
+- Bedienteile (Trotzdem scharf am Keypad), Profile, Benachrichtigungen (Hinweis beim
+  Scharfschalten, Aufräumen), Referenz – deutsch und englisch.
+
 ## [0.57.0] - 2026-11-18
 
 **Einstellungsseite „Hauswacht“ in der Seitenleiste** – die ganze Einrichtung auf einen Blick und

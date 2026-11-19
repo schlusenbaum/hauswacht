@@ -268,6 +268,7 @@ Türbeleg`, `Neustart`.
 | `RuleFired` | Regel vollständig erfüllt | `rule`, `name`, `sensor_key` |
 | `RuleExpired` | Regel nur teilweise erfüllt, Zeit abgelaufen | `rule`, `sensor_key` (erster Melder) |
 | `RuleConditionsNotMet` | Regel erfüllt, aber Bedingungen nicht – kein Alarm | `rule`, `sensor_key` |
+| `ArmedWithGaps` | Scharf, aber nicht alles überwacht (siehe [Hinweis beim Scharfschalten](benachrichtigungen.md)) | `bypassed` (überbrückt, weil offen), `unavailable` (ausgefallen, in Kauf genommen), `rule_sensors` (offen, nur in Regeln) |
 | `OpenRuleSensors` | Beim Scharfschalten offene Melder, die nur in Regeln vorkommen | `sensors` |
 
 ### Sirenen
