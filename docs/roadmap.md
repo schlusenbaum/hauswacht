@@ -49,10 +49,9 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| als Nächstes | [MQTT-Schnittstelle](entwicklung/adr/0012-mqtt-schnittstelle.md): Zustand, Details und Ereignisse senden, Befehle mit PIN annehmen – für Wand-Tablets, ESP-Bedienteile, fremde Keypads, Node-RED (0.58) |
+| 0.58 (in Arbeit) | [Keypads allgemein anbinden](entwicklung/adr/0012-keypads-allgemein.md): ein Eingang für jedes Keypad (ZHA, Z-Wave, ESPHome, Node-RED …) mit Antwort und Anzeige, fertige Blueprints für verbreitete Geräte, danach MQTT-Schnittstelle |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
-| später | ZHA- und Z-Wave-Keypads |
 | 1.0.0 | Stabil, Doku vollständig (Aufnahme in den Katalog von Marketplace/HACS ist seit 0.55.3 beantragt) |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
 | 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gastmodus-Zeiten (z. B. jeden Dienstag 8–12 Uhr) |
