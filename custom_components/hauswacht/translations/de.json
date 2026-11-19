@@ -900,9 +900,10 @@
       },
       "controls": {
         "title": "Bedienteile",
-        "description": "{saved}{items}Bedienteile sind Keypads, NFC-Aufkleber, RFID-Leser, Taster und Türschlösser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN, RFID-Karte/-Anhänger oder Schloss-Kennung (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld. Ein Taster weist niemanden aus – deshalb schaltet er nur scharf.",
+        "description": "{saved}{items}Bedienteile sind Keypads (Zigbee2MQTT oder allgemein), NFC-Aufkleber, RFID-Leser, Taster und Türschlösser. Ausgewiesen wird mit den **Ausweisen der Benutzer**: PIN, RFID-Karte/-Anhänger oder Schloss-Kennung (unter Benutzer und PINs). Rechte, Gültigkeit, Sperre bei falschen Eingaben und Bedrohungs-PIN gelten wie am Bedienfeld. Ein Taster weist niemanden aus – deshalb schaltet er nur scharf.",
         "menu_options": {
           "control_add_keypad": "Keypad hinzufügen (Zigbee2MQTT)",
+          "control_add_generic_keypad": "Keypad hinzufügen (allgemein: ZHA, Z-Wave, ESPHome …)",
           "control_add_sticker": "NFC-Aufkleber hinzufügen (Companion App)",
           "control_add_reader": "RFID-/NFC-Leser hinzufügen (z. B. ESPHome)",
           "control_add_button": "Taster hinzufügen (schaltet nur scharf)",
@@ -1373,6 +1374,29 @@
           "mode": "Funkstille",
           "hours": "Eigener Wert"
         }
+      },
+      "control_generic_keypad": {
+        "title": "Keypad (allgemein)",
+        "description": "**Getestet** – automatische Tests, noch ohne Rückmeldung mit echten Geräten.\n\nFür Keypads, die Hauswacht nicht selbst kennt: ZHA, Z-Wave (z. B. Ring Keypad), deCONZ, ESPHome, Node-RED. Ein Blueprint oder eine Automation meldet Taste und PIN/Karte mit der Aktion `hauswacht.keypad_input` und bekommt das Ergebnis zurück. Was das Keypad anzeigen soll, steht in der Entität **„Name Anzeige“** (z. B. „Keypad Flur Anzeige“).\n\n**Kennung für Automationen:** `{ident}` (oder der Name bzw. die Anzeige-Entität).\n**Unbekannte Keypads, die sich zuletzt gemeldet haben:** {unknown}",
+        "data": {
+          "name": "Name",
+          "area": "Bereich",
+          "button_1": "Taste 1 – Name",
+          "profile_1": "Taste 1 → Alarmprofil",
+          "button_2": "Taste 2 – Name",
+          "profile_2": "Taste 2 → Alarmprofil",
+          "button_3": "Taste 3 – Name",
+          "profile_3": "Taste 3 → Alarmprofil",
+          "button_4": "Taste 4 – Name",
+          "profile_4": "Taste 4 → Alarmprofil",
+          "login": "Anmeldung",
+          "emergency": "Notruf-Taste"
+        },
+        "data_description": {
+          "button_1": "Name, den dein Blueprint bzw. deine Automation als `button` sendet, z. B. `away`. Groß/klein egal. `disarm` (unscharf) und `emergency` (Notruf) sind fest und brauchen keinen Eintrag.",
+          "login": "**Karte und PIN:** Beide Ausweise desselben Benutzers innerhalb von 30 s (die erste Eingabe bekommt das Ergebnis `pending`).",
+          "emergency": "**Still:** wichtige Push-Nachricht. **Alarm:** zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils."
+        }
       }
     },
     "error": {
@@ -1437,7 +1461,9 @@
       "tilt_attribute_needed": "Bei dieser Entität steht die Stellung in einem Attribut – bitte den Namen des Attributs eintragen.",
       "tilt_no_closed": "Mindestens ein Wert muss „zu“ bedeuten.",
       "tilt_overlap": "Ein Wert kann nicht zugleich zu und gekippt bedeuten.",
-      "stale_hours_invalid": "Bitte 1 bis 168 Stunden angeben."
+      "stale_hours_invalid": "Bitte 1 bis 168 Stunden angeben.",
+      "control_no_buttons": "Mindestens eine Taste mit Alarmprofil eintragen.",
+      "control_button_reserved": "„disarm“ und „emergency“ sind feste Tasten – bitte einen anderen Namen wählen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1688,6 +1714,22 @@
       },
       "silence": {
         "name": "Funkstille-Beobachtung"
+      },
+      "keypad_display": {
+        "name": "{name} Anzeige",
+        "state": {
+          "disarmed": "Unscharf",
+          "exit_delay": "Ausgangsverzögerung",
+          "armed_home": "Scharf (Zuhause)",
+          "armed_away": "Scharf (Abwesend)",
+          "armed_night": "Scharf (Nacht)",
+          "armed_vacation": "Scharf (Urlaub)",
+          "armed_custom_bypass": "Scharf (Eigenes)",
+          "entry_delay": "Eingangsverzögerung",
+          "triggered": "Alarm",
+          "test_alarm": "Alarm im Testmodus",
+          "fire": "Brand"
+        }
       }
     },
     "binary_sensor": {
@@ -1882,6 +1924,9 @@
     },
     "guest_until_past": {
       "message": "Der Zeitpunkt für das Ende des Gastmodus liegt in der Vergangenheit."
+    },
+    "not_loaded": {
+      "message": "Hauswacht ist nicht geladen."
     }
   },
   "services": {
@@ -1986,6 +2031,28 @@
         "until": {
           "name": "Bis",
           "description": "Endet automatisch zu diesem Zeitpunkt. Leer = bis zum Ausschalten."
+        }
+      }
+    },
+    "keypad_input": {
+      "name": "Keypad-Eingabe",
+      "description": "Meldet Taste und PIN/Karte eines allgemeinen Keypads (ZHA, Z-Wave, ESPHome …) an Hauswacht. Gibt das Ergebnis zurück. Nur für Automationen, Skripte und Administratoren.",
+      "fields": {
+        "keypad": {
+          "name": "Keypad",
+          "description": "Kennung oder Name des Keypads in Hauswacht – oder seine Anzeige-Entität."
+        },
+        "button": {
+          "name": "Taste",
+          "description": "disarm, emergency oder eine eigene Taste (z. B. away)."
+        },
+        "code": {
+          "name": "PIN oder Karte",
+          "description": "Getippter PIN oder gelesene Kartennummer."
+        },
+        "force": {
+          "name": "Trotzdem scharf",
+          "description": "Offene Melder überbrücken, wenn Profil und Benutzer das erlauben."
         }
       }
     }

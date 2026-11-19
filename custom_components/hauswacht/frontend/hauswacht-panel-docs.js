@@ -33,6 +33,7 @@ const DOC_LINKS = {
   card: ["bedienteile.md#karte-bearbeiten-deaktivieren-löschen", "control-devices.md#edit-disable-delete-a-card"],
   cardNew: ["bedienteile.md#neue-karte-anlernen", "control-devices.md#learn-a-new-card"],
   keypad: ["bedienteile.md#keypad-zigbee2mqtt", "control-devices.md#keypad-zigbee2mqtt"],
+  generic_keypad: ["bedienteile.md#keypad-allgemein", "control-devices.md#keypad-generic"],
   sticker: ["bedienteile.md#nfc-aufkleber-companion-app", "control-devices.md#nfc-sticker-companion-app"],
   reader: ["bedienteile.md#rfid-leser", "control-devices.md#rfid-reader"],
   button: ["bedienteile.md#taster", "control-devices.md#button"],

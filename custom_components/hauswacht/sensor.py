@@ -10,7 +10,10 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .controls import ControlManager
+from .core.controls import Control, ControlKind, parse_controls
 from .core.infrastructure import SystemStatus
+from .core.keypad_input import Display
 from .entity import HauswachtEntity
 from .runtime import HauswachtConfigEntry
 
@@ -27,8 +30,50 @@ async def async_setup_entry(
             HauswachtSimulationSensor(entry),
             HauswachtSirenTestSensor(entry),
             HauswachtSilenceSensor(entry),
+            *(
+                HauswachtKeypadDisplaySensor(entry, control)
+                for control in parse_controls(entry.options).values()
+                if control.kind is ControlKind.GENERIC_KEYPAD
+            ),
         ]
     )
+
+
+class HauswachtKeypadDisplaySensor(HauswachtEntity, SensorEntity):
+    """Anzeige eines allgemeinen Keypads (ADR 0012): was das Gerät gerade zeigen soll.
+
+    Der Blueprint bzw. die Automation des Keypads reagiert auf Änderungen und steuert damit LEDs,
+    Töne und Display. Hauswacht selbst sendet nichts an das Gerät.
+    """
+
+    _attr_translation_key = "keypad_display"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_icon = "mdi:dialpad"
+
+    def __init__(self, entry: HauswachtConfigEntry, control: Control) -> None:
+        super().__init__(entry, f"keypad_{control.control_id}")
+        self._control = control
+        self._attr_options = [d.value for d in Display]
+        self._attr_translation_placeholders = {"name": control.name}
+
+    @property
+    def _manager(self) -> ControlManager | None:
+        return self.runtime.controls
+
+    @property
+    def native_value(self) -> str | None:
+        manager = self._manager
+        return manager.generic_display(self._control).value if manager else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        manager = self._manager
+        return manager.generic_attributes(self._control) if manager else {}
+
+    async def async_added_to_hass(self) -> None:
+        manager = self._manager
+        if manager is not None:
+            self.async_on_remove(manager.add_display_listener(self.async_write_ha_state))
 
 
 class HauswachtSystemStatusSensor(HauswachtEntity, SensorEntity):

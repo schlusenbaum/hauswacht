@@ -9,18 +9,40 @@ Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
 
 | Bedienteil | Ausweis | Typisch für |
 |---|---|---|
-| [Keypad](#keypad-zigbee2mqtt) | PIN und/oder RFID-Karte + Taste | Wand neben der Haustür |
+| [Keypad (Zigbee2MQTT)](#keypad-zigbee2mqtt) | PIN und/oder RFID-Karte + Taste | Wand neben der Haustür |
+| [Keypad (allgemein)](#keypad-allgemein) | PIN und/oder RFID-Karte + Taste | Keypads über ZHA, Z-Wave, ESPHome, Node-RED … |
 | [NFC-Aufkleber](#nfc-aufkleber-companion-app) | das eigene Handy (Home-Assistant-App) | Bewohner mit App |
 | [RFID-Leser](#rfid-leser) | RFID-Karte, ohne Taste | Karte vorhalten und fertig |
 | [Fingerabdruck-Leser](#fingerabdruck-leser-esphome) | gespeicherter Finger (wie eine Karte) | Finger auflegen, z. B. im Flur |
 | [Taster](#taster) | **keiner** – schaltet deshalb nur scharf | Taster im Hausflur: drücken, rausgehen |
 | [Türschloss](#türschloss-z-b-nuki) | wer aufgeschlossen hat (Nuki-Benutzer, Keypad-Code …) | Aufschließen = unscharf |
 
+## Wie gut erprobt?
+
+Nicht jedes Bedienteil konnten wir an echter Hardware prüfen. Damit du weißt, worauf du dich
+verlassen kannst:
+
+| Kennzeichen | Bedeutung | Bedienteile |
+|---|---|---|
+| **Erprobt** | automatische Tests **und** im Alltag mit echter Hardware geprüft | Keypad (Zigbee2MQTT), RFID-Karten am Keypad |
+| **Getestet** | automatische Tests, aber noch ohne Rückmeldung mit echter Hardware | Keypad (allgemein), NFC-Aufkleber, RFID-Leser, Fingerabdruck-Leser, Taster, Türschloss (Nuki und allgemein) |
+| **Ungetestet – eigene Verantwortung** | nach Hersteller-Doku gebaut, nie am Gerät geprüft | (noch keine – hier landen künftig Blueprints für einzelne Geräte) |
+
+Läuft bei dir etwas aus „Getestet“ oder „Ungetestet“ zuverlässig? Eine kurze Rückmeldung als
+[GitHub-Issue](https://github.com/schlusenbaum/hauswacht/issues) mit Gerät und Firmware hilft
+allen – dann steigt es auf.
+
+Wo die Sicherheit von **deiner eigenen Einrichtung** abhängt, liegt sie in deiner
+Verantwortung: Zugang zum MQTT-Broker (gilt für Zigbee2MQTT genauso), PINs in der Datenbank von
+Home Assistant (siehe [PINs außerhalb von Hauswacht](#pins-außerhalb-von-hauswacht)), selbst
+geschriebene oder geänderte Übersetzer.
+
 ## Keypad (Zigbee2MQTT)
 
 Für Alarm-Keypads nach dem Zigbee-Standard für Bedienteile (IAS ACE) – z. B. frient/Develco
 KEPZB-110 und KEYZB-110, Linkind, Centralite, Heiman. Voraussetzung: Zigbee2MQTT und die
-MQTT-Integration in Home Assistant. ZHA- und Z-Wave-Keypads sind geplant.
+MQTT-Integration in Home Assistant. Andere Keypads (ZHA, Z-Wave, ESPHome …): siehe
+[Keypad (allgemein)](#keypad-allgemein).
 
 **Einrichten:**
 
@@ -98,6 +120,177 @@ dem normalen Aufräumen des Verlaufs (Standard: 10 Tage) – sofort geht es mit 
 
 Wo das Keypad hängen sollte, damit man es in der Eingangsverzögerung erreicht, hilft die
 Messung [„Tür auf bis unscharf“](beobachtung.md#tür-auf-bis-unscharf).
+
+## Keypad (allgemein)
+
+> **Getestet** – mit automatischen Tests geprüft, aber noch ohne Rückmeldung mit echten Geräten.
+> Siehe [Wie gut erprobt?](#wie-gut-erprobt).
+
+Für Keypads, die Hauswacht **nicht selbst** kennt: ZHA-Keypads (z. B. frient, Xfinity,
+Centralite), Z-Wave-Keypads (z. B. Ring Keypad v2), deCONZ, selbst gebaute Bedienteile mit
+ESPHome, Abläufe in Node-RED – kurz: alles, was Home Assistant erreicht.
+
+**So funktioniert es:** Hauswacht spricht nicht direkt mit dem Gerät. Dazwischen sitzt ein
+kleiner **Übersetzer** – eine Automation (später auch fertige Blueprints), ein Ablauf in
+Node-RED oder das Gerät selbst. Er übersetzt in beide Richtungen:
+
+```
+Keypad ──Taste + PIN──► Übersetzer ──hauswacht.keypad_input──► Hauswacht
+Keypad ◄──LEDs, Töne──  Übersetzer ◄──sensor.…_anzeige──────── Hauswacht
+```
+
+Hauswacht wertet die Eingabe **genau wie beim Zigbee2MQTT-Keypad** aus: Rechte, Gültigkeit,
+Sperre nach falschen Eingaben, Bedrohungs-PIN, Karte und PIN, Aktions-Codes, „trotzdem scharf“,
+Notruf, Anlernen unbekannter Karten.
+
+### Einrichten
+
+**Systemeinstellungen → Bedienteile → Keypad hinzufügen (allgemein)** – oder auf der
+[Einstellungsseite](einstellungsseite.md) im Reiter Personen und Bedienteile:
+
+| Einstellung | Bedeutung |
+|---|---|
+| Name | z. B. „Keypad Flur“ – erscheint in „geändert von“, etwa „Anna (Keypad Flur)“ |
+| Bereich | ein Bereich oder alle |
+| Tasten | bis zu vier Tasten mit **freiem Namen** und je einem Alarmprofil, z. B. `home` → „Zuhause“, `away` → „Abwesend“, `night` → „Nacht“. Der Name ist das, was dein Übersetzer als `button` sendet. `disarm` (unscharf) und `emergency` (Notruf) gibt es immer – dafür nichts eintragen |
+| Anmeldung | **PIN oder Karte** oder **Karte und PIN** |
+| Notruf-Taste | aus, still oder Alarm – wie beim [Zigbee2MQTT-Keypad](#keypad-zigbee2mqtt) |
+
+Nach dem Speichern zeigt das Formular die **Kennung** des Keypads, z. B. `keypad_flur`. Mit ihr
+meldet der Übersetzer Eingaben. Statt der Kennung gehen auch der Name oder die Anzeige-Entität.
+
+**Unbekanntes Keypad hat sich gemeldet:** Ruft ein Übersetzer mit einer Kennung auf, die es in
+Hauswacht nicht gibt, lehnt Hauswacht ab (Ergebnis `unknown_keypad`). Beim nächsten
+„Keypad hinzufügen (allgemein)“ steht die gemeldete Kennung schon im Formular – nur noch Tasten
+und Bereich wählen. So kann kein unbekanntes Gerät etwas schalten.
+
+### Die Aktion `hauswacht.keypad_input`
+
+| Feld | Bedeutung | Beispiel |
+|---|---|---|
+| `keypad` | Kennung, Name oder Anzeige-Entität des Keypads | `keypad_flur` |
+| `button` | `disarm`, `emergency` oder eine eigene Taste | `away` |
+| `code` | getippter PIN oder gelesene Kartennummer | `2580` |
+| `force` | „trotzdem scharf“ – offene Melder überbrücken, wenn Profil und Benutzer das erlauben | `true` |
+
+Die Aktion **antwortet**. In einer Automation holst du die Antwort mit `response_variable`:
+
+| Antwort | Bedeutung |
+|---|---|
+| `result` | `ok` · `invalid_code` (falscher Ausweis **oder** keine Rechte – bewusst nicht zu unterscheiden) · `locked` (zu viele Fehlversuche) · `not_ready` (z. B. Fenster offen) · `pending` (Karte und PIN: erster Ausweis erkannt, zweiter fehlt) · `already_disarmed` · `unknown_button` · `unknown_keypad` |
+| `display` | was das Keypad jetzt zeigen soll (wie die Anzeige-Entität) |
+| `open_sensors` | bei `not_ready`: welche Melder es verhindern, z. B. `["Küchenfenster"]` |
+| `can_force` | bei `not_ready`: „trotzdem scharf“ wäre möglich (zweimal dieselbe Eingabe oder `force: true`) |
+| `lock_seconds` | bei `locked`: wie lange die Sperre noch dauert |
+
+**Doppelte Meldungen:** Funkgeräte senden manchmal doppelt. Dieselbe Eingabe vom selben Keypad
+innerhalb von 2 Sekunden wertet Hauswacht nur einmal aus – ein doppelt gesendeter falscher PIN
+zählt nicht doppelt.
+
+**Wer darf die Aktion aufrufen?** Automationen, Skripte, Geräte (z. B. ESPHome) und
+Administratoren. Normale Benutzer nicht – sie bedienen über die Hauswacht-Karte. Sonst könnte
+jeder angemeldete Benutzer z. B. einen Notruf ohne PIN auslösen.
+
+### Die Anzeige-Entität
+
+Jedes allgemeine Keypad bekommt eine Entität **„Keypad Flur Anzeige“**
+(`sensor.hauswacht_keypad_flur_anzeige`). Dein Übersetzer reagiert auf ihre Änderungen und
+steuert damit das Gerät:
+
+| Zustand | Bedeutung | Typisch am Keypad |
+|---|---|---|
+| `disarmed` | unscharf | grün / aus |
+| `exit_delay` | Ausgangsverzögerung läuft | Piepen, Countdown |
+| `armed_home`, `armed_away`, `armed_night`, `armed_vacation`, `armed_custom_bypass` | scharf (je nach Knopf des Profils) | rot |
+| `entry_delay` | Eingangsverzögerung – jetzt PIN eingeben | schnelles Piepen |
+| `triggered` | Einbruchalarm | Alarm |
+| `test_alarm` | Alarm im **Testmodus** | nur anzeigen, **keine** Sirene |
+| `fire` | Brand erkannt (hat Vorrang vor allem anderen) | Brandanzeige |
+
+Im Testmodus zeigt die Entität **nie** `triggered`, sondern `test_alarm`. So kann ein Keypad mit
+eingebauter Sirene im Testmodus nicht versehentlich losheulen.
+
+Attribute: `delay_ends` und `delay_seconds` (Ende bzw. Rest der Verzögerung – für einen
+Countdown), `profile`, `changed_by`, `test_mode`, `buttons`, `last_result` (Ergebnis der letzten
+Eingabe) und `last_result_at`. **Nie** enthalten: PINs und Kartennummern.
+
+### Beispiel: Übersetzer als Automation
+
+Ein selbst gebautes ESPHome-Keypad sendet beim Drücken einer Taste ein Ereignis
+`esphome.keypad_flur` mit `button` und `code`. Die erste Automation gibt die Eingabe an
+Hauswacht weiter und lässt bei einem Fehler den Summer des Keypads kurz piepen:
+
+```yaml
+alias: Keypad Flur → Hauswacht
+mode: queued
+triggers:
+  - trigger: event
+    event_type: esphome.keypad_flur
+actions:
+  - action: hauswacht.keypad_input
+    data:
+      keypad: keypad_flur
+      button: "{{ trigger.event.data.button }}"
+      code: "{{ trigger.event.data.code }}"
+    response_variable: antwort
+  - if: "{{ antwort.result not in ['ok', 'pending'] }}"
+    then:
+      - action: esphome.keypad_flur_beep  # Fehlerton (eigene Aktion des Geräts)
+```
+
+Die zweite Automation zeigt am Keypad, was Hauswacht meldet – auch nach einem Neustart:
+
+```yaml
+alias: Hauswacht → Keypad Flur
+mode: restart
+triggers:
+  - trigger: state
+    entity_id: sensor.hauswacht_keypad_flur_anzeige
+    not_to: [unknown, unavailable]
+  - trigger: homeassistant
+    event: start
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: sensor.hauswacht_keypad_flur_anzeige
+        state: [unknown, unavailable]
+actions:
+  - action: esphome.keypad_flur_show  # eigene Aktion des Geräts
+    data:
+      mode: "{{ states('sensor.hauswacht_keypad_flur_anzeige') }}"
+```
+
+Ein ESPHome-Gerät kann die Aktion auch **direkt** aufrufen (`homeassistant.action` mit
+`action: hauswacht.keypad_input`) und die Anzeige-Entität selbst lesen – dann braucht es gar
+keine Automation. In der ESPHome-Integration muss dafür „Gerät darf Home-Assistant-Aktionen
+ausführen“ eingeschaltet sein.
+
+Fertige Blueprints für verbreitete Keypads (Ring Keypad v2, frient und Xfinity/Centralite über
+ZHA) sind geplant – siehe [Roadmap](roadmap.md).
+
+### PINs außerhalb von Hauswacht
+
+Hauswacht speichert PINs nie im Klartext. **Dein Übersetzer aber schon möglicherweise:**
+
+- Meldet ein Gerät den PIN als **Ereignis** (z. B. `zha_event`, `zwave_js_notification` oder
+  wie im Beispiel `esphome.keypad_flur`), speichert Home Assistant dieses Ereignis in seiner
+  Datenbank – mit dem PIN, auch in Backups.
+- Die **Ablaufverfolgung** (Trace) der Automation enthält den PIN ebenfalls.
+
+Das kann Hauswacht nicht verhindern. Was hilft:
+
+```yaml
+# configuration.yaml – Ereignisse mit PINs nicht in der Datenbank speichern
+recorder:
+  exclude:
+    event_types:
+      - esphome.keypad_flur
+```
+
+Achtung: Damit fehlen **alle** Ereignisse dieses Typs in der Datenbank – bei `zha_event` z. B.
+auch die anderer ZHA-Geräte. Und in der Automation die Zahl gespeicherter Abläufe klein halten
+(`trace: stored_traces:` mit einer kleinen Zahl).
 
 ## Aktions-Codes
 
@@ -699,6 +892,10 @@ passiert.
   schaltet.
 - Verlorene Karte: beim Benutzer entfernen oder den Benutzer auf „Aktiv: aus“ stellen.
 - Der Bedrohungs-PIN wirkt auch am Keypad.
+- **Allgemeines Keypad:** Es gelten dieselben Regeln wie am Zigbee2MQTT-Keypad – unscharf nur mit
+  PIN oder Karte. Nur angelegte Keypads werden angenommen, und nur Automationen, Skripte, Geräte
+  und Administratoren dürfen die Aktion aufrufen. Ob der PIN irgendwo im Klartext landet, hängt
+  vom Übersetzer ab – siehe [PINs außerhalb von Hauswacht](#pins-außerhalb-von-hauswacht).
 - **Türschloss:** Wer das Handy mit der Nuki-App **und** den Zugang dazu hat, schaltet mit dem
   Aufschließen unscharf – genau wie er die Tür öffnen kann. Verlorenes Handy: in der Nuki-App
   den Zugang sperren **und** die Kennung beim Benutzer entfernen.

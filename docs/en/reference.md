@@ -32,6 +32,7 @@ system.
 | `switch.hauswacht_testmodus` | `switch.hauswacht_test_mode` | – | [Test mode](test-mode.md) |
 | `switch.hauswacht_gastmodus` | `switch.hauswacht_guest_mode` | – | [Guest mode](profiles.md#guest-mode) for all areas; attribute `areas` with the end per area |
 | `event.hauswacht_aktions_code` | `event.hauswacht_action_code` | – | Only with [action codes](control-devices.md#action-codes) with the action "event": event type = name of the code; attributes `keypad`, `test` |
+| `sensor.hauswacht_<keypad>_anzeige` | `sensor.hauswacht_<keypad>_display` | – | Per [generic keypad](control-devices.md#keypad-generic): what the keypad should show – `disarmed`, `exit_delay`, `armed_home`/`armed_away`/`armed_night`/`armed_vacation`/`armed_custom_bypass`, `entry_delay`, `triggered`, `test_alarm`, `fire`. Attributes `keypad`, `area`, `profile`, `delay_ends`, `delay_seconds`, `test_mode`, `changed_by`, `buttons`, `last_result`, `last_result_at` |
 
 ### State and diagnostics
 
@@ -239,6 +240,7 @@ proof), `Neustart` (restart).
 |---|---|---|
 | `InvalidCode` | Wrong PIN or unknown card | `failures` (number in a row), `lock_seconds` (lockout, 0 = none) |
 | `CodeLockReset` | Wrong entries reset | `by`, `failures` |
+| `UnknownKeypad` | A [generic keypad](control-devices.md#keypad-generic) that is not set up in Hauswacht reported | `keypad` (ID it sent) |
 | `ActionCode` | [Action code](control-devices.md#action-codes) entered | `name`, `action` (`event`, `arm`, `silent_emergency`), `control` (keypad), `test` |
 | `ButtonPressed` | [Button](control-devices.md#button) pressed | `control`, `press` (`single`, `double`, `long`), `profile` (empty = press type not assigned) |
 | `LockIdentified` | [Door lock](control-devices.md#door-lock-eg-nuki): ID received | `control`, `intent` (`UNLOCK`, `LOCK` or empty), `identity`, `reason` (`ok`, `not_by_person`, `no_id`) |
@@ -308,6 +310,12 @@ All actions are aimed at an alarm panel (`target: entity_id: alarm_control_panel
 | `hauswacht.siren_test_result` | `siren`, `heard` | Save the result of a siren test (administrators only) |
 | `hauswacht.siren_test_stop` | – | Cancel a running siren test (administrators only) |
 | `hauswacht.reset_code_lock` | – | Reset wrong entries and lockout (administrators only) |
+
+Without a target entity:
+
+| Action | Fields | Purpose |
+|---|---|---|
+| `hauswacht.keypad_input` | `keypad` (ID, name or display entity), `button` (`disarm`, `emergency` or an own button), `code`, `force` | Input of a [generic keypad](control-devices.md#keypad-generic); returns the result (`result`, `display`, `open_sensors`, `can_force`, `lock_seconds`). Automations, scripts and administrators only |
 
 In addition the standard actions of the alarm panel: `alarm_control_panel.alarm_disarm` (disarm,
 with `code` if a PIN is required) and `alarm_arm_home`/`away`/`night`/`vacation`/`custom_bypass`

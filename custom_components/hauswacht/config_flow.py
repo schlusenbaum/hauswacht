@@ -118,8 +118,8 @@ from .core.changes.cards import all_cards as _all_cards
 from .core.changes.cards import put_card as _put_card
 from .core.changes.cards import remove_card as _remove_card
 from .core.changes.cards import tag_owner as _tag_owner
+from .core.changes.controls import GENERIC_BUTTON_FIELDS, validate_control
 from .core.changes.controls import control_data as _control_data
-from .core.changes.controls import validate_control
 from .core.changes.notifications import save_event_text, save_notify_settings
 from .core.changes.profiles import delete_profile, save_profile
 from .core.changes.sensors import (
@@ -156,6 +156,7 @@ from .core.controls import (
     parse_controls,
 )
 from .core.default_texts import default_message, default_title
+from .core.keypad_input import DEFAULT_GENERIC_BUTTONS
 from .core.messages import (
     EXAMPLE_VALUES_DE,
     EXAMPLE_VALUES_EN,
@@ -3137,7 +3138,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         return {
             c.control_id: c.name
             for c in parse_controls(self.config_entry.options).values()
-            if c.kind is ControlKind.KEYPAD
+            if c.kind in (ControlKind.KEYPAD, ControlKind.GENERIC_KEYPAD)
         }
 
     def _action_code_label(self, code: ActionCode) -> str:
@@ -3655,6 +3656,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             "controls",
             [
                 "control_add_keypad",
+                "control_add_generic_keypad",
                 "control_add_sticker",
                 "control_add_reader",
                 "control_add_button",
@@ -3697,6 +3699,12 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         self._control_id, self._control_kind = None, ControlKind.KEYPAD
+        return await self.async_step_control_settings()
+
+    async def async_step_control_add_generic_keypad(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        self._control_id, self._control_kind = None, ControlKind.GENERIC_KEYPAD
         return await self.async_step_control_settings()
 
     async def async_step_control_add_sticker(
@@ -3829,12 +3837,29 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                     self._pending = options
                     return await self.async_step_control_presses()
                 return await self._save(options, "controls")
-        fields = self._control_fields(kind, {**current, **(user_input or {})}, current)
+        source = {**current, **(user_input or {})}
+        placeholders: dict[str, str] = {}
+        if kind is ControlKind.GENERIC_KEYPAD:
+            unknown = self._unknown_keypads()
+            if not self._control_id and unknown and not source.get("name"):
+                source["name"] = unknown[0]  # zuletzt gemeldetes unbekanntes Keypad
+            placeholders = {
+                "ident": self._control_id or "–",
+                "unknown": ", ".join(f"`{u}`" for u in unknown) or "–",
+            }
+        fields = self._control_fields(kind, source, current)
         return self.async_show_form(
             step_id=f"control_{kind.value}",
             data_schema=vol.Schema(fields),
             errors=errors,
+            description_placeholders=placeholders or None,
         )
+
+    def _unknown_keypads(self) -> list[str]:
+        """Unbekannte Keypads, die sich zuletzt über keypad_input gemeldet haben."""
+        runtime = getattr(self.config_entry, "runtime_data", None)
+        controls = getattr(runtime, "controls", None)
+        return list(getattr(controls, "unknown_keypads", {}) or {})
 
     def _control_fields(
         self, kind: ControlKind, source: dict[str, Any], current: dict[str, Any]
@@ -3866,6 +3891,8 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             fields[vol.Required("emergency", default=source.get("emergency", "off"))] = _select(
                 ["off", "silent", "alarm"], "control_emergency"
             )
+        elif kind is ControlKind.GENERIC_KEYPAD:
+            self._generic_keypad_fields(fields, source, buttons)
         elif kind is ControlKind.BUTTON:
             fields[vol.Required("entity", default=source.get("entity", vol.UNDEFINED))] = (
                 EntitySelector(EntitySelectorConfig(domain=["event", "sensor"]))
@@ -3905,7 +3932,34 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 )
         return fields
 
+    def _generic_keypad_fields(
+        self, fields: dict[Any, Any], source: dict[str, Any], buttons: Mapping[str, Any]
+    ) -> None:
+        """Allgemeines Keypad: freie Tasten (Name → Profil), Anmeldung, Notruf."""
+        pairs = list(buttons.items()) or [(name, None) for name in DEFAULT_GENERIC_BUTTONS]
+        for n in range(1, GENERIC_BUTTON_FIELDS + 1):
+            name, profile = pairs[n - 1] if len(pairs) >= n else (None, None)
+            name = source.get(f"button_{n}", name)
+            profile = source.get(f"profile_{n}", profile)
+            fields[vol.Optional(f"button_{n}", description={"suggested_value": name})] = (
+                TextSelector()
+            )
+            fields[vol.Optional(f"profile_{n}", description={"suggested_value": profile})] = (
+                self._control_profile_selector()
+            )
+        fields[vol.Required("login", default=source.get("login", "pin_or_card"))] = _select(
+            ["pin_or_card", "card_and_pin"], "control_login"
+        )
+        fields[vol.Required("emergency", default=source.get("emergency", "off"))] = _select(
+            ["off", "silent", "alarm"], "control_emergency"
+        )
+
     async def async_step_control_keypad(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        return await self.async_step_control_settings(user_input)
+
+    async def async_step_control_generic_keypad(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return await self.async_step_control_settings(user_input)

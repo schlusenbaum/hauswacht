@@ -9,18 +9,38 @@ ID): rights, validity, lockout after wrong entries and duress PIN apply as on th
 
 | Control device | Credential | Typical for |
 |---|---|---|
-| [Keypad](#keypad-zigbee2mqtt) | PIN and/or RFID card + key | wall next to the front door |
+| [Keypad (Zigbee2MQTT)](#keypad-zigbee2mqtt) | PIN and/or RFID card + key | wall next to the front door |
+| [Keypad (generic)](#keypad-generic) | PIN and/or RFID card + key | keypads via ZHA, Z-Wave, ESPHome, Node-RED … |
 | [NFC sticker](#nfc-sticker-companion-app) | your own phone (Home Assistant app) | residents with the app |
 | [RFID reader](#rfid-reader) | RFID card, no key | hold up the card and done |
 | [Fingerprint reader](#fingerprint-reader-esphome) | stored finger (like a card) | place a finger, e.g. in the hallway |
 | [Button](#button) | **none** – so it only arms | button in the hallway: press, leave |
 | [Door lock](#door-lock-eg-nuki) | who unlocked (Nuki user, keypad code …) | unlocking = disarmed |
 
+## How well proven?
+
+Not every control device could be checked with real hardware. So you know what you can rely on:
+
+| Label | Meaning | Control devices |
+|---|---|---|
+| **Proven** | automated tests **and** checked in everyday use with real hardware | Keypad (Zigbee2MQTT), RFID cards at the keypad |
+| **Tested** | automated tests, but no feedback with real hardware yet | Keypad (generic), NFC sticker, RFID reader, fingerprint reader, button, door lock (Nuki and generic) |
+| **Untested – own responsibility** | built from the manufacturer's docs, never checked on the device | (none yet – blueprints for single devices will go here) |
+
+Does something from "Tested" or "Untested" work reliably for you? A short note as a
+[GitHub issue](https://github.com/schlusenbaum/hauswacht/issues) with device and firmware helps
+everyone – then it moves up.
+
+Where security depends on **your own setup**, it is your responsibility: access to the MQTT
+broker (the same for Zigbee2MQTT), PINs in Home Assistant's database (see
+[PINs outside Hauswacht](#pins-outside-hauswacht)), translators you wrote or changed yourself.
+
 ## Keypad (Zigbee2MQTT)
 
 For alarm keypads according to the Zigbee standard for control devices (IAS ACE) – e.g.
 frient/Develco KEPZB-110 and KEYZB-110, Linkind, Centralite, Heiman. Requires Zigbee2MQTT and the
-MQTT integration in Home Assistant. ZHA and Z-Wave keypads are planned.
+MQTT integration in Home Assistant. Other keypads (ZHA, Z-Wave, ESPHome …): see
+[Keypad (generic)](#keypad-generic).
 
 **Setting up:**
 
@@ -92,6 +112,175 @@ once with the action "Recorder: Purge entities" for this entity.
 
 Where the keypad should hang so that you reach it during the entry delay is shown by the
 measurement ["Door open to disarmed"](observations.md#door-open-to-disarmed).
+
+## Keypad (generic)
+
+> **Tested** – checked with automated tests, but no feedback with real devices yet.
+> See [How well proven?](#how-well-proven).
+
+For keypads Hauswacht does **not** know itself: ZHA keypads (e.g. frient, Xfinity, Centralite),
+Z-Wave keypads (e.g. Ring Keypad v2), deCONZ, home-made control devices with ESPHome, flows in
+Node-RED – in short: anything Home Assistant can reach.
+
+**How it works:** Hauswacht does not talk to the device directly. In between sits a small
+**translator** – an automation (later also ready-made blueprints), a Node-RED flow or the device
+itself. It translates in both directions:
+
+```
+Keypad ──button + PIN──► translator ──hauswacht.keypad_input──► Hauswacht
+Keypad ◄──LEDs, beeps──  translator ◄──sensor.…_display───────── Hauswacht
+```
+
+Hauswacht evaluates the input **exactly like at the Zigbee2MQTT keypad**: rights, validity,
+lockout after wrong entries, duress PIN, card and PIN, action codes, "arm anyway", emergency,
+learning unknown cards.
+
+### Setting up
+
+**System settings → Control devices → Add keypad (generic)** – or on the
+[settings page](settings-page.md) in the tab People and control devices:
+
+| Setting | Meaning |
+|---|---|
+| Name | e.g. "Keypad hallway" – shows in "changed by", e.g. "Anna (Keypad hallway)" |
+| Area | one area or all |
+| Buttons | up to four buttons with a **free name** and an alarm profile each, e.g. `home` → "Home", `away` → "Away", `night` → "Night". The name is what your translator sends as `button`. `disarm` and `emergency` always exist – enter nothing for them |
+| Login | **PIN or card** or **card and PIN** |
+| Emergency button | off, silent or alarm – like at the [Zigbee2MQTT keypad](#keypad-zigbee2mqtt) |
+
+After saving, the form shows the keypad's **ID**, e.g. `keypad_hallway`. The translator reports
+inputs with it. Instead of the ID, the name or the display entity work too.
+
+**Unknown keypad reported:** If a translator calls with an ID that does not exist in Hauswacht,
+Hauswacht refuses (result `unknown_keypad`). The next "Add keypad (generic)" already has the
+reported ID in the form – just pick buttons and area. So no unknown device can switch anything.
+
+### The action `hauswacht.keypad_input`
+
+| Field | Meaning | Example |
+|---|---|---|
+| `keypad` | ID, name or display entity of the keypad | `keypad_hallway` |
+| `button` | `disarm`, `emergency` or an own button | `away` |
+| `code` | typed PIN or card number read | `2580` |
+| `force` | "arm anyway" – bypass open sensors if the profile and the user allow it | `true` |
+
+The action **responds**. In an automation you get the response with `response_variable`:
+
+| Response | Meaning |
+|---|---|
+| `result` | `ok` · `invalid_code` (wrong credential **or** no rights – deliberately indistinguishable) · `locked` (too many failed attempts) · `not_ready` (e.g. window open) · `pending` (card and PIN: first credential recognised, second missing) · `already_disarmed` · `unknown_button` · `unknown_keypad` |
+| `display` | what the keypad should show now (like the display entity) |
+| `open_sensors` | with `not_ready`: which sensors prevent it, e.g. `["Kitchen window"]` |
+| `can_force` | with `not_ready`: "arm anyway" would be possible (same input twice or `force: true`) |
+| `lock_seconds` | with `locked`: how long the lockout lasts |
+
+**Duplicate messages:** Radio devices sometimes send twice. The same input from the same keypad
+within 2 seconds is evaluated only once – a wrong PIN sent twice does not count twice.
+
+**Who may call the action?** Automations, scripts, devices (e.g. ESPHome) and administrators.
+Not normal users – they use the Hauswacht card. Otherwise any logged-in user could trigger e.g.
+an emergency without a PIN.
+
+### The display entity
+
+Each generic keypad gets an entity **"Keypad hallway display"**
+(`sensor.hauswacht_keypad_hallway_display`). Your translator reacts to its changes and controls
+the device with them:
+
+| State | Meaning | Typical at the keypad |
+|---|---|---|
+| `disarmed` | disarmed | green / off |
+| `exit_delay` | exit delay running | beeping, countdown |
+| `armed_home`, `armed_away`, `armed_night`, `armed_vacation`, `armed_custom_bypass` | armed (depending on the profile's button) | red |
+| `entry_delay` | entry delay – enter the PIN now | fast beeping |
+| `triggered` | burglary alarm | alarm |
+| `test_alarm` | alarm in **test mode** | show only, **no** siren |
+| `fire` | fire detected (takes precedence over everything) | fire display |
+
+In test mode the entity **never** shows `triggered`, but `test_alarm`. So a keypad with a
+built-in siren cannot go off by accident in test mode.
+
+Attributes: `delay_ends` and `delay_seconds` (end and rest of the delay – for a countdown),
+`profile`, `changed_by`, `test_mode`, `buttons`, `last_result` (result of the last input) and
+`last_result_at`. **Never** included: PINs and card numbers.
+
+### Example: translator as an automation
+
+A home-made ESPHome keypad fires an event `esphome.keypad_hallway` with `button` and `code` when a
+button is pressed. The first automation passes the input on to Hauswacht and lets the keypad's
+buzzer beep briefly on an error:
+
+```yaml
+alias: Keypad hallway → Hauswacht
+mode: queued
+triggers:
+  - trigger: event
+    event_type: esphome.keypad_hallway
+actions:
+  - action: hauswacht.keypad_input
+    data:
+      keypad: keypad_hallway
+      button: "{{ trigger.event.data.button }}"
+      code: "{{ trigger.event.data.code }}"
+    response_variable: answer
+  - if: "{{ answer.result not in ['ok', 'pending'] }}"
+    then:
+      - action: esphome.keypad_hallway_beep  # error tone (the device's own action)
+```
+
+The second automation shows on the keypad what Hauswacht reports – also after a restart:
+
+```yaml
+alias: Hauswacht → Keypad hallway
+mode: restart
+triggers:
+  - trigger: state
+    entity_id: sensor.hauswacht_keypad_hallway_display
+    not_to: [unknown, unavailable]
+  - trigger: homeassistant
+    event: start
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: sensor.hauswacht_keypad_hallway_display
+        state: [unknown, unavailable]
+actions:
+  - action: esphome.keypad_hallway_show  # the device's own action
+    data:
+      mode: "{{ states('sensor.hauswacht_keypad_hallway_display') }}"
+```
+
+An ESPHome device can also call the action **directly** (`homeassistant.action` with
+`action: hauswacht.keypad_input`) and read the display entity itself – then no automation is
+needed at all. In the ESPHome integration, "Allow the device to perform Home Assistant actions"
+must be switched on for that.
+
+Ready-made blueprints for common keypads (Ring Keypad v2, frient and Xfinity/Centralite via ZHA)
+are planned – see [roadmap](roadmap.md).
+
+### PINs outside Hauswacht
+
+Hauswacht never stores PINs in plain text. **Your translator, however, may:**
+
+- If a device reports the PIN as an **event** (e.g. `zha_event`, `zwave_js_notification` or, as
+  in the example, `esphome.keypad_hallway`), Home Assistant stores this event in its database –
+  with the PIN, also in backups.
+- The automation's **trace** contains the PIN as well.
+
+Hauswacht cannot prevent this. What helps:
+
+```yaml
+# configuration.yaml – do not store events with PINs in the database
+recorder:
+  exclude:
+    event_types:
+      - esphome.keypad_hallway
+```
+
+Note: this removes **all** events of this type from the database – with `zha_event`, for example,
+also those of other ZHA devices. And keep the number of stored traces in the automation small
+(`trace: stored_traces:` with a small number).
 
 ## Action codes
 
@@ -675,6 +864,10 @@ within 30 seconds.
   something.
 - Lost card: remove it from the user or set the user to "Active: off".
 - The duress PIN also works at the keypad.
+- **Generic keypad:** the same rules apply as at the Zigbee2MQTT keypad – disarm only with a PIN
+  or card. Only keypads that are set up are accepted, and only automations, scripts, devices and
+  administrators may call the action. Whether the PIN ends up somewhere in plain text depends on
+  the translator – see [PINs outside Hauswacht](#pins-outside-hauswacht).
 - **Door lock:** whoever has the phone with the Nuki app **and** its access disarms by unlocking –
   just as they can open the door. Lost phone: block the access in the Nuki app **and** remove the
   ID from the user.

@@ -13,6 +13,8 @@ Home Assistant, höchstens 30 s auseinander. Hauswacht schaltet das Schloss selb
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import json
 import logging
 import time
@@ -70,9 +72,24 @@ from .core.controls import (
     sticker_for,
     tag_intent,
 )
-from .core.keypad_input import NOT_ALLOWED, InputOutcome, KeypadResult, z2m_reply
+from .core.keypad_input import (
+    NOT_ALLOWED,
+    Display,
+    InputOutcome,
+    KeypadResult,
+    RecentInputs,
+    area_display,
+    combined_display,
+    generic_keypad_for,
+    normalize_button,
+    public_result,
+    remember_unknown,
+    z2m_reply,
+)
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
+from .core.reactions import FIRE_DEVICE_CLASSES
+from .core.siren_guard import FireIndicator
 from .core.texts import tr
 from .core.users import (
     Action,
@@ -115,6 +132,13 @@ class ControlManager:
         # Türschlösser: letzte Kennung bzw. letzter Zustandswechsel (je Schloss)
         self._lock_ident: dict[str, tuple[LockEvent, float]] = {}
         self._lock_state: dict[str, tuple[str, float]] = {}
+        # Allgemeine Keypads (ADR 0012): doppelte Meldungen, Reihenfolge, Anzeige, Unbekannte
+        self._recent = RecentInputs()
+        self._input_locks: dict[str, asyncio.Lock] = {}
+        self._last_result: dict[str, tuple[str, str]] = {}
+        self._display_listeners: list[Callable[[], None]] = []
+        # Unbekannte Keypads, die sich gemeldet haben: Kennung -> Zeitpunkt (zum Anlegen)
+        self.unknown_keypads: dict[str, float] = {}
 
     # --- Start/Stopp ----------------------------------------------------------
 
@@ -148,6 +172,12 @@ class ControlManager:
             self._unsubs.append(
                 async_track_state_change_event(self.hass, sorted(watched), self._on_entity)
             )
+        if any(c.kind is ControlKind.GENERIC_KEYPAD for c in self.controls.values()):
+            fire = self._fire_indicators()
+            if fire:
+                self._unsubs.append(
+                    async_track_state_change_event(self.hass, fire, self._on_fire_indicator)
+                )
         for area in self.runtime.areas.values():
             self._unsubs.append(area.add_listener(self._update_keypads))
         self._update_keypads()
@@ -239,6 +269,117 @@ class ControlManager:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+
+    # --- Allgemeine Keypads (ADR 0012) ------------------------------------------
+
+    def _fire_indicators(self) -> list[str]:
+        """Rauch-/Brandmelder in Home Assistant – für die Anzeige "fire"."""
+        return sorted(
+            s.entity_id
+            for s in self.hass.states.async_all("binary_sensor")
+            if s.attributes.get("device_class") in FIRE_DEVICE_CLASSES
+        )
+
+    @callback
+    def _on_fire_indicator(self, event: Event[EventStateChangedData]) -> None:
+        self._notify_displays()
+
+    def add_display_listener(self, listener: Callable[[], None]) -> CALLBACK_TYPE:
+        self._display_listeners.append(listener)
+
+        @callback
+        def remove() -> None:
+            if listener in self._display_listeners:
+                self._display_listeners.remove(listener)
+
+        return remove
+
+    @callback
+    def _notify_displays(self) -> None:
+        for listener in list(self._display_listeners):
+            listener()
+
+    def resolve_generic(self, ref: str) -> Control | None:
+        """Allgemeines Keypad über Kennung, Namen oder Anzeige-Entität."""
+        found = generic_keypad_for(self.controls, ref)
+        if found is not None or not ref.startswith("sensor."):
+            return found
+        entry = er.async_get(self.hass).async_get(ref)
+        prefix = f"{self.runtime.entry.entry_id}_keypad_"
+        if entry is None or not str(entry.unique_id).startswith(prefix):
+            return None
+        return generic_keypad_for(self.controls, str(entry.unique_id)[len(prefix) :])
+
+    async def async_generic_input(
+        self, ref: str, button: str, code: str | None, *, force: bool = False
+    ) -> dict[str, Any]:
+        """Aktion ``hauswacht.keypad_input``: Eingabe eines allgemeinen Keypads."""
+        keypad = self.resolve_generic(ref)
+        if keypad is None:
+            self.unknown_keypads = remember_unknown(
+                self.unknown_keypads, ref, dt_util.utcnow().timestamp()
+            )
+            self.runtime.fire_event({"type": "UnknownKeypad", "keypad": ref[:64]})
+            _LOGGER.warning("Unbekanntes Keypad hat sich gemeldet: %s", ref[:64])
+            return {"keypad": ref, "result": KeypadResult.UNKNOWN_KEYPAD.value}
+        pressed = normalize_button(button)
+        # Der PIN bleibt nicht im Speicher – nur ein Fingerabdruck zum Vergleichen
+        fingerprint = hashlib.sha256((code or "").encode()).hexdigest() if code else None
+        key = RecentInputs.key(pressed, fingerprint, force)
+        lock = self._input_locks.setdefault(keypad.control_id, asyncio.Lock())
+        async with lock:
+            now = time.monotonic()
+            outcome = self._recent.duplicate(keypad.control_id, key, now)
+            if outcome is None:
+                outcome = await self.async_input(keypad, pressed, code or None, force=force)
+                self._recent.remember(keypad.control_id, key, time.monotonic(), outcome)
+        result = public_result(outcome)
+        self._last_result[keypad.control_id] = (result, dt_util.utcnow().isoformat())
+        self._notify_displays()
+        return {
+            "keypad": keypad.control_id,
+            "result": result,
+            "display": self.generic_display(keypad).value,
+            "open_sensors": list(outcome.open_sensors),
+            "can_force": outcome.can_force,
+            "lock_seconds": outcome.lock_seconds,
+        }
+
+    def generic_display(self, keypad: Control) -> Display:
+        """Was ein allgemeines Keypad jetzt anzeigen soll."""
+        areas = [
+            area_display(panel_value(a.ctx, a.options), test_mode=a.ctx.test_mode)
+            for a in self._areas(keypad)
+        ]
+        fire = self.runtime.sirens.external_fire() is FireIndicator.ACTIVE
+        return combined_display(areas, fire=fire)
+
+    def generic_attributes(self, keypad: Control) -> dict[str, Any]:
+        """Zusatzangaben der Anzeige-Entität – nie PINs oder Kartennummern."""
+        areas = self._areas(keypad)
+        ends = [a.delay_ends_at for a in areas if a.delay_ends_at is not None]
+        delay_ends = min(ends) if ends else None
+        profiles = [
+            a.profile_name(a.ctx.profile.profile_id) for a in areas if a.ctx.profile is not None
+        ]
+        changed = [a.changed_by for a in areas if a.changed_by]
+        last = self._last_result.get(keypad.control_id)
+        return {
+            "keypad": keypad.control_id,
+            "area": keypad.area,
+            "profile": ", ".join(profiles) or None,
+            "delay_ends": delay_ends.isoformat() if delay_ends else None,
+            "delay_seconds": (
+                max(0, round((delay_ends - dt_util.utcnow()).total_seconds()))
+                if delay_ends
+                else None
+            ),
+            "test_mode": any(a.ctx.test_mode for a in areas),
+            "changed_by": changed[0] if changed else None,
+            "buttons": sorted(keypad.buttons),
+            "last_result": last[0] if last else None,
+            "last_result_at": last[1] if last else None,
+        }
 
     # --- Bereiche -------------------------------------------------------------
 
@@ -528,6 +669,7 @@ class ControlManager:
     @callback
     def _update_keypads(self) -> None:
         """Keypads zeigen den aktuellen Zustand ihres Bereichs (bzw. aller Bereiche)."""
+        self._notify_displays()
         for keypad in self.controls.values():
             if keypad.kind is not ControlKind.KEYPAD:
                 continue
