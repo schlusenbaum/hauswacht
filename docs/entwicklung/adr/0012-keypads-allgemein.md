@@ -1,6 +1,6 @@
 # ADR 0012: Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT
 
-- Status: in Arbeit – Stufe 1 in 0.58.0b1
+- Status: in Arbeit – Stufe 1 in 0.58.0b1, Stufe 2 in 0.58.0b2
 - Datum: 2026-11-19
 
 ## Kontext
@@ -124,8 +124,8 @@ Für verbreitete Geräte liefert Hauswacht **Blueprints** mit (Import-Knopf in d
 Gerät, der beide Richtungen übersetzt (Gerät → Aktion, Anzeige-Entität → Gerät). Der Nutzer wählt
 nur sein Gerät und sein Hauswacht-Keypad.
 
-- Blueprints tragen eine **Versionsnummer**; Hauswacht kann melden, wenn ein Blueprint veraltet
-  ist.
+- Blueprints tragen eine **Versionsnummer** (Beschreibung und Variable `blueprint_version`); eine
+  Meldung „Blueprint veraltet“ in Hauswacht kann später dazukommen.
 - Sie ignorieren `unknown`/`unavailable` und senden die Anzeige auch nach einem Neustart.
 - Sie halten so wenige Ablaufverfolgungen wie möglich (PINs!).
 - Blueprints sind **keine Pflicht**: eigene Automation, Node-RED oder ESPHome-Gerät, das die

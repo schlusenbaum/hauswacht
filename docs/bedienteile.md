@@ -26,7 +26,7 @@ verlassen kannst:
 |---|---|---|
 | **Erprobt** | automatische Tests **und** im Alltag mit echter Hardware geprüft | Keypad (Zigbee2MQTT), RFID-Karten am Keypad |
 | **Getestet** | automatische Tests, aber noch ohne Rückmeldung mit echter Hardware | Keypad (allgemein), NFC-Aufkleber, RFID-Leser, Fingerabdruck-Leser, Taster, Türschloss (Nuki und allgemein) |
-| **Ungetestet – eigene Verantwortung** | nach Hersteller-Doku gebaut, nie am Gerät geprüft | (noch keine – hier landen künftig Blueprints für einzelne Geräte) |
+| **Ungetestet – eigene Verantwortung** | nach Hersteller-Doku gebaut, nie am Gerät geprüft | [Vorlagen](#fertige-vorlagen): Blueprint Ring Keypad v2, ESPHome-Beispiel |
 
 Läuft bei dir etwas aus „Getestet“ oder „Ungetestet“ zuverlässig? Eine kurze Rückmeldung als
 [GitHub-Issue](https://github.com/schlusenbaum/hauswacht/issues) mit Gerät und Firmware hilft
@@ -274,8 +274,35 @@ Ein ESPHome-Gerät kann die Aktion auch **direkt** aufrufen (`homeassistant.acti
 keine Automation. In der ESPHome-Integration muss dafür „Gerät darf Home-Assistant-Aktionen
 ausführen“ eingeschaltet sein.
 
-Fertige Blueprints für verbreitete Keypads (Ring Keypad v2, frient und Xfinity/Centralite über
-ZHA) sind geplant – siehe [Roadmap](roadmap.md).
+### Fertige Vorlagen
+
+> **Ungetestet – Nutzung auf eigene Verantwortung.** Die Vorlagen sind nach der Dokumentation
+> der Geräte und der Community gebaut, aber nie an einem echten Gerät geprüft. Läuft eine bei dir?
+> Bitte kurz als [GitHub-Issue](https://github.com/schlusenbaum/hauswacht/issues) melden (Gerät,
+> Firmware) – dann steigt sie zu „Getestet von der Community“ auf.
+
+| Gerät | Vorlage | Was sie tut |
+|---|---|---|
+| **Ring Keypad v2** (Z-Wave JS) | Blueprint [ring_keypad_v2.yaml](https://github.com/schlusenbaum/hauswacht/blob/main/blueprints/automation/hauswacht/ring_keypad_v2.yaml) – [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fschlusenbaum%2Fhauswacht%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fhauswacht%2Fring_keypad_v2.yaml) | Unscharf, Abwesend (Taste `away`), Zuhause (Taste `home`), Polizei-Taste lang drücken = Notruf. Fehlerton bei falschem PIN, Enter blinkt bei „nicht bereit“. Lichter und Töne nach der Anzeige-Entität, mit Countdown bei den Verzögerungen. Im Testmodus nur das Medizin-Licht, kein Alarmton |
+| **Selbstbau mit ESPHome** (4×4-Tastenfeld, zwei LEDs) | Beispiel [hauswacht_keypad.yaml](https://github.com/schlusenbaum/hauswacht/blob/main/blueprints/esphome/hauswacht_keypad.yaml) | PIN + A/B/C/D, ruft die Aktion direkt auf – ohne Automation. LEDs nach der Anzeige-Entität. Zum Anpassen (Pins, Kennung, Entität) |
+
+**Ring Keypad einrichten:**
+
+1. In Hauswacht ein „Keypad (allgemein)“ anlegen, mit den Tasten `away` und `home` und je einem
+   Alarmprofil.
+2. Blueprint importieren (Knopf oben), daraus eine Automation erstellen: das Ring Keypad und die
+   Anzeige-Entität des Hauswacht-Keypads wählen, speichern.
+3. Ausprobieren: PIN tippen, „Zuhause“ drücken.
+
+Die Vorlage trägt eine **Versionsnummer** (in der Beschreibung). Gibt es eine neue, im Blueprint
+„Blueprint erneut importieren“ wählen.
+
+**ZHA-Keypads (frient, Xfinity, Centralite …):** ZHA verbindet diese Keypads mit einem eigenen
+kleinen Bedienfeld in ZHA – Tasten und PIN kommen dann nicht bei einer Automation an. Damit sie
+mit Hauswacht gehen, braucht es eine Geräteanpassung für ZHA (Quirk). Eine Vorlage dafür gibt es
+noch nicht. Wer so ein Keypad hat und mittesten mag: bitte ein Issue aufmachen. Mit
+**Zigbee2MQTT** gehen dieselben Keypads schon heute direkt – siehe
+[Keypad (Zigbee2MQTT)](#keypad-zigbee2mqtt).
 
 ### PINs außerhalb von Hauswacht
 
