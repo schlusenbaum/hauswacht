@@ -13,6 +13,9 @@ Rein und ohne Home Assistant.
       buttons: {arm_day_zones: <profil>, arm_night_zones: <profil>, arm_all_zones: <profil>}
       login: pin_or_card | card_and_pin
       emergency: off | silent | alarm
+      # generic_keypad (allgemeines Keypad, ADR 0012) – Eingabe über hauswacht.keypad_input:
+      buttons: {<freier Tastenname>: <profil>}   # z. B. home, away, night
+      login / emergency wie beim Keypad
       # sticker (NFC-Aufkleber, gescannt mit der Companion App):
       tag: "<tag-id>"
       action: disarm | arm | toggle
@@ -59,6 +62,8 @@ class ControlKind(StrEnum):
     READER = "reader"
     BUTTON = "button"
     LOCK = "lock"
+    # Allgemeines Keypad (ADR 0012): ZHA, Z-Wave, ESPHome … über die Aktion keypad_input
+    GENERIC_KEYPAD = "generic_keypad"
 
 
 class LockSource(StrEnum):
@@ -196,11 +201,7 @@ def parse_controls(options: Mapping[str, Any]) -> dict[str, Control]:
             kind=kind,
             area=str(data.get("area") or ALL_AREAS),
             topic=str(data.get("topic") or "").strip().rstrip("/"),
-            buttons={
-                k: str(v) for k, v in buttons.items() if k in ARM_KEYS and isinstance(v, str) and v
-            }
-            if isinstance(buttons, Mapping)
-            else {},
+            buttons=_buttons(kind, buttons),
             login=_enum(Login, data.get("login"), default_login),
             emergency=_enum(Emergency, data.get("emergency"), Emergency.OFF),
             tag=normalize_tag(data.get("tag")),
@@ -213,6 +214,21 @@ def parse_controls(options: Mapping[str, Any]) -> dict[str, Control]:
             who=str(data.get("who") or ""),
         )
     return result
+
+
+def _buttons(kind: ControlKind, value: Any) -> dict[str, str]:
+    """Tasten -> Profil. Zigbee2MQTT: feste Tasten; allgemeines Keypad: freie Namen."""
+    if not isinstance(value, Mapping):
+        return {}
+    if kind is ControlKind.GENERIC_KEYPAD:
+        result: dict[str, str] = {}
+        for key, profile in value.items():
+            name = str(key).strip().casefold().replace(" ", "_")
+            reserved = name in (KEY_DISARM, KEY_EMERGENCY)
+            if name and not reserved and isinstance(profile, str) and profile:
+                result[name] = profile
+        return result
+    return {k: str(v) for k, v in value.items() if k in ARM_KEYS and isinstance(v, str) and v}
 
 
 def _presses(value: Any) -> dict[str, str]:

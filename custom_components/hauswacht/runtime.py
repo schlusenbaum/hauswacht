@@ -219,6 +219,7 @@ from .core.vibration import (
     rule_for_zone_id,
 )
 from .core.vibration import position as vibration_position
+from .errors import ArmRefused
 from .homecoming_observer import HomecomingObserver
 from .names import display_name
 from .notifier import Notifier
@@ -2466,7 +2467,11 @@ class HauswachtRuntime:
     def _raise_for_rejection(self, effects: tuple[Effect, ...]) -> None:
         for effect in effects:
             if isinstance(effect, Rejected):
-                raise ServiceValidationError(
+                raise ArmRefused(
+                    open_sensors=self._blocker_names(
+                        effect.open_sensors | effect.unavailable_sensors
+                    ),
+                    confirmable=False,
                     translation_domain=DOMAIN,
                     translation_key=f"rejected_{effect.reason}",
                     translation_placeholders=self._rejection_placeholders(
@@ -2474,13 +2479,21 @@ class HauswachtRuntime:
                     ),
                 )
             if isinstance(effect, ConfirmationRequired):
-                raise ServiceValidationError(
+                raise ArmRefused(
+                    open_sensors=self._blocker_names(
+                        effect.open_sensors | effect.unavailable_sensors
+                    ),
+                    confirmable=True,
                     translation_domain=DOMAIN,
                     translation_key="confirmation_required",
                     translation_placeholders=self._rejection_placeholders(
                         effect.open_sensors, effect.unavailable_sensors
                     ),
                 )
+
+    def _blocker_names(self, entity_ids: frozenset[str]) -> tuple[str, ...]:
+        """Melder, die das Scharfschalten verhindern – als Namen (für Keypads)."""
+        return tuple(sorted(display_name(self.hass, e) for e in entity_ids))
 
     @callback
     def _dispatch(self, event: Event) -> tuple[Effect, ...]:
