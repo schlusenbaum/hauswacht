@@ -453,9 +453,12 @@ class ControlManager:
         fingerprint = hashlib.sha256((code or "").encode()).hexdigest() if code else None
         key = RecentInputs.key(pressed, fingerprint, force)
         lock = self._input_locks.setdefault(keypad.control_id, asyncio.Lock())
+        # Doppelte Funkmeldungen gibt es nur bei Keypads über Funk; MQTT liefert jede Nachricht
+        # genau so, wie sie gesendet wurde – dort zählt jede Eingabe
+        dedupe = keypad.kind is not ControlKind.MQTT_KEYPAD
         async with lock:
             now = time.monotonic()
-            outcome = self._recent.duplicate(keypad.control_id, key, now)
+            outcome = self._recent.duplicate(keypad.control_id, key, now) if dedupe else None
             if outcome is None:
                 outcome = await self.async_input(keypad, pressed, code or None, force=force)
                 self._recent.remember(keypad.control_id, key, time.monotonic(), outcome)

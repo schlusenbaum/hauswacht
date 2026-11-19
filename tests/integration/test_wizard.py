@@ -307,7 +307,9 @@ async def test_users_with_pin(hass: HomeAssistant) -> None:
     stored = next(iter(entry.options["users"].values()))
     assert stored["name"] == "Anna"
     assert "pin_digest" in stored
-    assert "2468" not in str(entry.options)
+    # Der PIN steht nirgends im Klartext (als Wert; Salz und Hash sind Hex und können die
+    # Ziffern zufällig enthalten)
+    assert "'2468'" not in str(entry.options)
     flow = await _opt(hass, flow, {"next_step_id": "wizard_users"})
     flow = await _opt(hass, flow, {"name": "anna"})
     assert flow["errors"] == {"name": "user_name_taken"}
