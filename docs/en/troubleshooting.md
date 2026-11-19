@@ -154,6 +154,13 @@ language under [Why didn't a siren sound?](sirens.md#why-didnt-a-siren-sound). C
   tone under [Tone per siren](sirens.md#tone-per-siren).
 - The siren cannot be limited, see [Which sirens work?](sirens.md#which-sirens-work).
 
+**The siren test sometimes only works the second time.**
+Typical for battery smoke detectors via Zigbee: they only fetch commands after a few seconds. Up
+to 0.57.1, Hauswacht sent the "off" after 3.5 s already – if it arrived together with the "on",
+the detector stayed silent. Since 0.57.2 the test waits longer with such sirens, see
+[siren test](sirens.md#siren-test). If it still does not sound: check in Zigbee2MQTT whether the
+detector is reachable (last seen, link quality).
+
 **My siren only exists as a switch in Home Assistant.**
 The wizard [Create siren from switch](sirens.md#create-siren-from-switch) turns it into a siren.
 Alternatively the [expert feature](sirens.md#experts-switch-directly-as-siren).

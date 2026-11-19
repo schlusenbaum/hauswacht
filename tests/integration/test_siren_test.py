@@ -87,10 +87,25 @@ async def test_short_quiet_test_and_automatic_stop(hass: HomeAssistant) -> None:
         await hass.services.async_call(
             "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
         )
+    # Die Sirene hält die Dauer selbst ein: kein frühes "Aus", das ein schlafendes
+    # Batteriegerät zusammen mit dem "Ein" erreichen und den Ton verschlucken würde
     _later(hass, 4)
+    await hass.async_block_till_done()
+    assert mocks.off == []
+    assert _tester(hass).running == SIREN
+    _later(hass, 16)  # zur Sicherheit doch noch "Aus"
     await hass.async_block_till_done()
     assert [c.data["entity_id"] for c in mocks.off] == [SIREN]
     assert _tester(hass).running is None
+
+
+async def test_siren_without_own_duration_stops_right_away(hass: HomeAssistant) -> None:
+    mocks = await _setup(hass)
+    hass.states.async_set(SIREN, "off", {"supported_features": FULL - 16})  # ohne Dauer
+    await _test(hass)
+    _later(hass, 4)
+    await hass.async_block_till_done()
+    assert [c.data["entity_id"] for c in mocks.off] == [SIREN]
 
 
 async def test_duration_is_capped(hass: HomeAssistant) -> None:

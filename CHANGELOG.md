@@ -8,7 +8,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [0.58.0b1] - 2026-11-19
 
-**Vorabversion: jedes Keypad anbinden** (ADR 0012, Stufe 1). Enthält alles aus 0.57.1.
+**Vorabversion: jedes Keypad anbinden** (ADR 0012, Stufe 1). Enthält alles aus 0.57.1 und 0.57.2.
 
 ### Hinzugefügt
 - **Keypad (allgemein):** neue Art von Bedienteil für Keypads, die Hauswacht nicht selbst kennt –
@@ -38,6 +38,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ### Intern
 - Keypad-Kern aus der Zigbee2MQTT-Anbindung herausgelöst (`ControlManager.async_input`); das
   Zigbee2MQTT-Keypad antwortet unverändert. Neuer reiner Kern `core/keypad_input.py`.
+## [0.57.2] - 2026-11-19
+
+**Sirenentest mit Batterie-Rauchmeldern** (getestet über die Vorabversion 0.57.2b1).
+
+### Behoben
+- **Sirenentest klappte bei Batterie-Rauchmeldern oft erst beim zweiten Mal.** Solche Geräte
+  (z. B. Develco über Zigbee2MQTT) holen Befehle erst nach einigen Sekunden ab. Hauswacht schickte
+  das „Aus“ schon nach 3,5 s – kam es zusammen mit dem „Ein“ an, blieb der Melder still. Jetzt
+  schickt der Test bei Sirenen, die die Dauer selbst einhalten, nur „Ein für 3 s“ und das
+  Sicherheits-„Aus“ erst 12 s später. Die Frage „gehört?“ kommt danach; die Testkarte zeigt
+  währenddessen einen Hinweis. Sirenen ohne eigene Dauer bleiben wie bisher.
+
+### Dokumentation
+- Sirenen (Sirenentest, Verzögerung im Alarmfall), Fehlersuche – deutsch und englisch.
+
 ## [0.57.1] - 2026-11-19
 
 **„Trotzdem scharf“ am Keypad repariert, eine Nachricht beim Scharfschalten** (getestet über die
