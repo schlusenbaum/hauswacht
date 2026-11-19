@@ -65,6 +65,7 @@ from .const import (
     PUSH_ARM_NOW_PREFIX,
     PUSH_ARM_RETRY_PREFIX,
     PUSH_ARM_TAG,
+    PUSH_STATE_TAG,
     PUSH_TAG,
     STORAGE_VERSION,
 )
@@ -91,6 +92,7 @@ from .core.confirmation import FREQUENT_COUNT, LoneTriggerCounter
 from .core.controls import looks_like_card, normalize_tag
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
+from .core.notify_events import enabled as notify_enabled
 from .core.profile_settings import SettingError
 from .core.profile_settings import write as write_setting
 from .core.profiles import (
@@ -415,6 +417,8 @@ class HauswachtRuntime:
         # Push-Knöpfe zum Scharfschalten: Kennung -> (Profil, gültig bis)
         self._pending_arms: dict[str, tuple[str, float]] = {}
         self._arm_pushed: set[str] = set()
+        # Wer die letzte Scharf-/Unscharf-Nachricht bekommen hat (zum Ersetzen und Wegräumen)
+        self._state_pushed: set[str] = set()
         self._via_push = False
         self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
@@ -2629,23 +2633,20 @@ class HauswachtRuntime:
             if snapshots[entity_id].state == "on"
         }
 
-    @callback
-    def _hint_open_rule_sensors(self) -> None:
-        """Hinweis beim Scharfschalten: was jetzt NICHT überwacht wird.
+    def _arm_gaps(self) -> tuple[list[str], list[str]]:
+        """Was beim Scharfschalten NICHT überwacht wird: (Zeilen für die Nachricht, offene Melder).
 
         - offene Melder, die überbrückt wurden ("trotzdem scharf" oder automatisch),
-        - ausgefallene Melder, die beim Scharfschalten in Kauf genommen wurden (sie werden wieder
-          überwacht, sobald sie sich melden),
+        - ausgefallene Melder, die in Kauf genommen wurden (wieder überwacht, sobald sie sich
+          melden),
         - offene Melder, die nur in Auslöseregeln vorkommen (Regel erst nach Schließen).
         """
-        if self.ctx.profile is None:
-            return
-        open_rules = self.open_rule_sensors()
+        lang = self.lang
+        open_rules = {
+            e: names for e, names in self.open_rule_sensors().items() if e not in self.ctx.bypassed
+        }
         bypassed = sorted(self.ctx.bypassed)
         unavailable = sorted(self.ctx.accepted_unavailable)
-        if not (open_rules or bypassed or unavailable):
-            return
-        lang = self.lang
 
         def name(entity_id: str) -> str:
             return display_name(self.hass, entity_id)
@@ -2660,44 +2661,81 @@ class HauswachtRuntime:
                 rules=", ".join(quoted(lang, n) for n in names),
             )
             for entity_id, names in open_rules.items()
-            if entity_id not in self.ctx.bypassed
         ]
-        profile = self.profile_name(self.ctx.profile.profile_id)
-        message = tr(
-            lang,
-            "arm_gaps",
-            profile=profile,
-            by=by_text(lang, self.changed_by),
-            items="; ".join(lines),
-        )
-        self.fire_event(
-            {
-                "type": "ArmedWithGaps",
-                "bypassed": bypassed,
-                "unavailable": unavailable,
-                "rule_sensors": list(open_rules),
-            }
-        )
+        if lines:
+            self.fire_event(
+                {
+                    "type": "ArmedWithGaps",
+                    "bypassed": bypassed,
+                    "unavailable": unavailable,
+                    "rule_sensors": list(open_rules),
+                }
+            )
         if open_rules:
             self.fire_event({"type": "OpenRuleSensors", "sensors": list(open_rules)})
-        self.notifier.notify(
-            NotifyEvent.ARM_HINT,
-            tr(lang, "arm_hint_title"),
-            message,
-            values={
-                "profil": profile,
-                "wer": self.changed_by,
-                "offen": ", ".join(name(e) for e in [*bypassed, *open_rules]),
-                "grund": "; ".join(lines),
-            },
-            test_mode=self.ctx.test_mode,
+        return lines, [name(e) for e in [*bypassed, *open_rules]]
+
+    @property
+    def _state_tag(self) -> str:
+        return f"{PUSH_STATE_TAG}_{self.area_id}"
+
+    def _state_push(
+        self, event: NotifyEvent, title: str, message: str, values: dict[str, Any]
+    ) -> None:
+        """Scharf-/Unscharf-Nachricht: ersetzt die vorige auf dem Handy (gleicher ``tag``),
+        bei Empfängern, die diesmal nichts bekommen, wird die alte weggeräumt."""
+        sent = set(
+            self.notifier.notify(
+                event,
+                title,
+                message,
+                values=values,
+                data={"tag": self._state_tag},
+                test_mode=self.ctx.test_mode,
+            )
         )
-        persistent_notification.async_create(
-            self.hass,
-            message,
-            title=tr(lang, "arm_hint_short_title"),
-            notification_id=NOTIFICATION_ARM_HINT,
-        )
+        if stale := self._state_pushed - sent:
+            self.notifier.clear(stale, self._state_tag)
+        self._state_pushed = sent
+
+    def _clear_state_push(self) -> None:
+        if self._state_pushed:
+            self.notifier.clear(self._state_pushed, self._state_tag)
+            self._state_pushed = set()
+
+    def _notify_armed(self) -> None:
+        """Eine Nachricht beim Scharfschalten.
+
+        "Scharf geschaltet" an: diese Nachricht, ergänzt um die Lücken. Sonst – nur wenn es
+        Lücken gibt – der "Hinweis beim Scharfschalten". Nie beide.
+        """
+        if self.ctx.profile is None:
+            return
+        lang = self.lang
+        profile = self.profile_name(self.ctx.profile.profile_id)
+        by = by_text(lang, self.changed_by)
+        lines, open_names = self._arm_gaps()
+        gaps = "; ".join(lines)
+        values: dict[str, Any] = {"profil": profile, "wer": self.changed_by}
+        if lines:
+            values |= {"offen": ", ".join(open_names), "grund": gaps}
+        if notify_enabled(self.entry.options, NotifyEvent.ARMED, push_disarm=self.push_disarm):
+            message = tr(lang, "armed", profile=profile, by=by)
+            if lines:
+                message = f"{message} {tr(lang, 'arm_gaps_tail', items=gaps)}"
+            self._state_push(NotifyEvent.ARMED, tr(lang, "armed_title"), message, values)
+        elif lines:
+            message = tr(lang, "arm_gaps", profile=profile, by=by, items=gaps)
+            self._state_push(NotifyEvent.ARM_HINT, tr(lang, "arm_hint_title"), message, values)
+        else:
+            self._clear_state_push()  # alte Unscharf-Nachricht weg
+        if lines:
+            persistent_notification.async_create(
+                self.hass,
+                tr(lang, "arm_gaps", profile=profile, by=by, items=gaps),
+                title=tr(lang, "arm_hint_short_title"),
+                notification_id=NOTIFICATION_ARM_HINT,
+            )
 
     def _notify_state_change(self, effect: StateChanged) -> None:
         """Ereignisse "Scharf geschaltet" und "Unscharf geschaltet" (standardmäßig aus)."""
@@ -2708,17 +2746,7 @@ class HauswachtRuntime:
             and effect.old in (AlarmState.ARMING, AlarmState.DISARMED)
             and self.ctx.profile is not None
         ):
-            self.notifier.notify(
-                NotifyEvent.ARMED,
-                tr(lang, "armed_title"),
-                tr(lang, "armed", profile=self.profile_name(self.ctx.profile.profile_id), by=by),
-                values={
-                    "profil": self.profile_name(self.ctx.profile.profile_id),
-                    "wer": self.changed_by,
-                },
-                test_mode=self.ctx.test_mode,
-            )
-            self._hint_open_rule_sensors()
+            self._notify_armed()
         if effect.new is AlarmState.DISARMED:
             persistent_notification.async_dismiss(self.hass, NOTIFICATION_ARM_HINT)
         if effect.cause == "always_alarm_ended":
@@ -2734,13 +2762,16 @@ class HauswachtRuntime:
             and effect.old is not AlarmState.DISARMED
             and not self._via_push  # dort gibt es eine eigene Rückmeldung
         ):
-            self.notifier.notify(
+            # Ersetzt die Scharf-Nachricht; wer keine Unscharf-Nachricht bekommt, bei dem
+            # verschwindet sie einfach
+            self._state_push(
                 NotifyEvent.DISARMED,
                 tr(lang, "disarmed_title"),
                 tr(lang, "disarmed", by=by),
-                values={"wer": self.changed_by},
-                test_mode=self.ctx.test_mode,
+                {"wer": self.changed_by},
             )
+        elif effect.new is AlarmState.DISARMED and effect.old is not AlarmState.DISARMED:
+            self._clear_state_push()
 
     @callback
     def _on_acknowledged(self, effect: AlarmAcknowledged) -> None:

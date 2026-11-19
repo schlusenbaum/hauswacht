@@ -852,3 +852,31 @@ async def test_keypad_unavailable_bypass_auto(
     await _press(hass, "arm_night_zones", PIN, 95)
     assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
     assert any("monitored again as soon as it reports" in c.data["message"] for c in push)
+
+
+async def test_one_message_on_arming_and_cleared_on_disarm(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    options = {
+        "users": _users(),
+        "controls": _controls(),
+        "notify_system": [PHONE],
+        "events": {"armed": {"enabled": True}},
+        "profiles": {"night": {"open_policy": "bypass_auto"}},
+    }
+    await setup_entry(hass, make_entry(options))
+    set_sensor(hass, WINDOW, "on")
+    await hass.async_block_till_done()
+    await _press(hass, "arm_night_zones", PIN, 100)
+    await hass.async_block_till_done()
+    sent = [c for c in push if c.data["message"] != "clear_notification"]
+    # Nur EINE Nachricht: "scharf" mit dem Hinweis auf den überbrückten Melder
+    assert len(sent) == 1
+    assert "bypassed until disarming" in sent[0].data["message"]
+    assert sent[0].data["data"]["tag"] == "hauswacht_state_main"
+    await _press(hass, "disarm", PIN, 101)
+    await hass.async_block_till_done()
+    cleared = [c for c in push if c.data["message"] == "clear_notification"]
+    assert cleared
+    assert cleared[-1].data["data"]["tag"] == "hauswacht_state_main"

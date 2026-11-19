@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.57.1b2] - 2026-11-19
+
+### Geändert
+- **Eine Nachricht beim Scharfschalten statt zwei:** Ist „Scharf geschaltet“ an, stehen die nicht
+  überwachten Melder in dieser Nachricht; der eigene Hinweis kommt nur, wenn sie aus ist.
+- **Alte Nachrichten räumen sich auf:** Scharf- und Unscharf-Nachricht ersetzen einander auf dem
+  Handy (Home-Assistant-App); bekommt man beim Unscharfschalten keine Nachricht, verschwindet die
+  Scharf-Nachricht.
+
 ## [0.57.1b1] - 2026-11-19
 
 **Vorabversion: „Trotzdem scharf“ am Keypad repariert, Rückmeldung über Lücken.**

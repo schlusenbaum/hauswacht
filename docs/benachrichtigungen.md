@@ -47,6 +47,12 @@ werden so verschickt, wie sie eingetragen sind.
   Bedrohung als wichtige Hinweise“, Standard an). iPhone: kritischer Hinweis – beim ersten Mal
   in der App erlauben. Android: Kanal `alarm_stream`, klingt auch im lautlosen Modus. Alle
   anderen Meldungen gehen mit hoher Priorität, aber normal raus.
+- **Alte Nachrichten räumen sich auf** (Home-Assistant-App): Die Nachricht beim Scharfschalten
+  (bzw. der Hinweis) und die beim Unscharfschalten **ersetzen einander** – auf dem Handy steht
+  immer nur die neueste. Wer beim Unscharfschalten keine Nachricht bekommt, bei dem verschwindet
+  die Scharf-Nachricht einfach. Alarm-Nachrichten verschwinden beim Unscharfschalten, die Meldung
+  „Scharfschalten nicht möglich“, sobald es geklappt hat. Benachrichtigungs-Entitäten (z. B.
+  Telegram, WhatsApp) können Nachrichten nicht zurückziehen.
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
 
@@ -155,6 +161,10 @@ Genannt werden:
 | **Offener Melder, überbrückt** („trotzdem scharf“ oder automatisch überbrückt) | bis zum Unscharfschalten |
 | **Ausgefallener Melder**, in Kauf genommen (nach Bestätigung oder automatisch) | bis er sich wieder meldet – dann wird er wieder überwacht |
 | **Offener Melder, der nur in Auslöseregeln vorkommt** | bis er zu und wieder auf geht |
+
+**Nur eine Nachricht:** Ist „Scharf geschaltet“ eingeschaltet, stehen die Lücken einfach in
+dieser Nachricht („Profil Nacht scharf geschaltet (Christian). Nicht überwacht: …“). Der eigene
+Hinweis kommt nur, wenn „Scharf geschaltet“ aus ist.
 
 Dazu ein Eintrag unter Benachrichtigungen in Home Assistant und das Ereignis `ArmedWithGaps`
 (siehe [Referenz](referenz.md)). In eigenen Texten: `{offen}` (offene Melder), `{grund}` (alle

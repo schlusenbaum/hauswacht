@@ -45,6 +45,11 @@ as entered.
   critical alerts", default on). iPhone: critical alert – allow it in the app the first time.
   Android: channel `alarm_stream`, sounds even in silent mode. All other messages go out with
   high priority, but normally.
+- **Old messages tidy themselves up** (Home Assistant app): the message on arming (or the note)
+  and the one on disarming **replace each other** – the phone always shows only the newest. If
+  you get no message on disarming, the armed message simply disappears. Alarm messages disappear
+  on disarming, "Arming not possible" as soon as arming worked. Notification entities (e.g.
+  Telegram, WhatsApp) cannot withdraw messages.
 - In test mode, notifications are only sent if "Also notify in test mode" is on. The title then
   starts with "[TEST]".
 
@@ -147,6 +152,10 @@ Listed are:
 | **Open sensor, bypassed** ("arm anyway" or bypassed automatically) | until disarming |
 | **Unavailable sensor**, accepted (after confirmation or automatically) | until it reports again – then it is monitored again |
 | **Open sensor that only appears in trigger rules** | until it closes and opens again |
+
+**Only one message:** if "Armed" is switched on, the gaps are simply part of that message
+("Profile Night armed (Christian). Not monitored: …"). The separate note only comes if "Armed" is
+off.
 
 Plus an entry under notifications in Home Assistant and the event `ArmedWithGaps` (see
 [reference](reference.md)). In custom texts: `{open}` (open sensors), `{reason}` (all gaps with
