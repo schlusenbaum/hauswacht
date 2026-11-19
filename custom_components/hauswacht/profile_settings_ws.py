@@ -42,10 +42,11 @@ from .core.reactions import DEFAULT_TONE, DEFAULT_VOLUME, parse_reaction
 from .core.rules import parse_rules, profile_rule_ids
 from .core.sensor_types import excluded_sensors
 from .core.siren_guard import BURGLAR_TONE_ORDER, VOLUME_LEVELS
-from .core.speech import Candidate, is_speaker, profile_speakers
+from .core.speech import profile_speakers
 from .core.state_machine import OpenSensorPolicy, UnavailableSensorPolicy
 from .core.tilt import parse_tilt_sources
 from .names import display_name
+from .notify_targets import notify_choices
 
 
 def _time(value: Any) -> str | None:
@@ -101,25 +102,8 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
 
 
 def _notify_choices(hass: HomeAssistant) -> list[dict[str, str]]:
-    """Empfänger wie im Dialog: notify-Dienste und Benachrichtigungs-Entitäten (ohne
-    Lautsprecher)."""
-    services = hass.services.async_services_for_domain("notify")
-    choices = [
-        {"id": s, "name": s.removeprefix("mobile_app_").replace("_", " ")}
-        for s in sorted(services)
-        if s not in {"send_message", "notify", "persistent_notification"}
-    ]
-    registry = er.async_get(hass)
-    for state in sorted(hass.states.async_all("notify"), key=lambda st: st.name.casefold()):
-        entry = registry.async_get(state.entity_id)
-        candidate = Candidate(
-            state.entity_id,
-            entry.unique_id if entry else "",
-            entry.translation_key if entry else None,
-        )
-        if not is_speaker(candidate):
-            choices.append({"id": state.entity_id, "name": state.name})
-    return choices
+    """Empfänger wie im Dialog – jedes Handy nur einmal (siehe ``notify_targets``)."""
+    return [{"id": c["id"], "name": c["name"]} for c in notify_choices(hass)]
 
 
 def _speaker_choices(hass: HomeAssistant) -> list[dict[str, str]]:

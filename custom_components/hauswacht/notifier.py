@@ -20,6 +20,7 @@ from .const import (
 from .core.messages import default_speech, render
 from .core.notify_events import NORMAL_DATA, NotifyEvent, push_data, route
 from .core.speech import Candidate, is_speaker, parse_speech, pick_entity, speakers_for
+from .notify_targets import canonical_targets
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,7 +60,8 @@ class Notifier:
         base: Mapping[str, Any] = NORMAL_DATA,
     ) -> list[str]:
         """Verschickt eine Nachricht. Im Testmodus nur, wenn das ausdrücklich erlaubt ist."""
-        targets = tuple(dict.fromkeys(targets))
+        # App-Entitäten über ihren Dienst: nur dort gibt es Knöpfe und Aufräumen (tag)
+        targets = tuple(canonical_targets(self.hass, list(targets)))
         if not targets:
             return []
         if test_mode and not self.in_test_mode:

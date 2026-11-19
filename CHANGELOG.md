@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.1b1] - 2026-11-19
+
+**Vorabversion: jedes Handy nur einmal unter den Empfängern.**
+
+### Behoben
+- **Handys standen doppelt in der Empfängerliste** – einmal als Dienst der Home-Assistant-App
+  (technischer Name, z. B. „2211133g xiaomi13“), einmal als Benachrichtigungs-Entität („Xiaomi 13
+  Christian“). Jetzt steht jedes Handy einmal da, als Dienst mit dem Namen aus Home Assistant –
+  nur der Dienst kann Knöpfe, Aufräumen und wichtige Hinweise. Früher gewählte App-Entitäten
+  stellt Hauswacht einmalig auf den Dienst desselben Handys um und schickt bis dahin schon
+  darüber.
+
+### Dokumentation
+- Benachrichtigungen: „Jedes Handy nur einmal“ – deutsch und englisch.
+
 ## [0.58.0] - 2026-11-19
 
 **Jedes Keypad anbinden** – ein Eingang für alle Keypads, fertige Vorlagen und eine
