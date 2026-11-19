@@ -2631,34 +2631,64 @@ class HauswachtRuntime:
 
     @callback
     def _hint_open_rule_sensors(self) -> None:
-        """Hinweis beim Scharfschalten: offene Regelmelder sind bis zum Schließen eine Lücke."""
-        open_sensors = self.open_rule_sensors()
-        if not open_sensors or self.ctx.profile is None:
+        """Hinweis beim Scharfschalten: was jetzt NICHT überwacht wird.
+
+        - offene Melder, die überbrückt wurden ("trotzdem scharf" oder automatisch),
+        - ausgefallene Melder, die beim Scharfschalten in Kauf genommen wurden (sie werden wieder
+          überwacht, sobald sie sich melden),
+        - offene Melder, die nur in Auslöseregeln vorkommen (Regel erst nach Schließen).
+        """
+        if self.ctx.profile is None:
+            return
+        open_rules = self.open_rule_sensors()
+        bypassed = sorted(self.ctx.bypassed)
+        unavailable = sorted(self.ctx.accepted_unavailable)
+        if not (open_rules or bypassed or unavailable):
             return
         lang = self.lang
-        lines = [
+
+        def name(entity_id: str) -> str:
+            return display_name(self.hass, entity_id)
+
+        lines = [tr(lang, "arm_gap_bypassed", sensor=name(e)) for e in bypassed]
+        lines += [tr(lang, "arm_gap_unavailable", sensor=name(e)) for e in unavailable]
+        lines += [
             tr(
                 lang,
-                "arm_hint_item",
-                sensor=display_name(self.hass, entity_id),
+                "arm_gap_rule",
+                sensor=name(entity_id),
                 rules=", ".join(quoted(lang, n) for n in names),
             )
-            for entity_id, names in open_sensors.items()
+            for entity_id, names in open_rules.items()
+            if entity_id not in self.ctx.bypassed
         ]
+        profile = self.profile_name(self.ctx.profile.profile_id)
         message = tr(
             lang,
-            "arm_hint",
-            profile=self.profile_name(self.ctx.profile.profile_id),
+            "arm_gaps",
+            profile=profile,
+            by=by_text(lang, self.changed_by),
             items="; ".join(lines),
         )
-        self.fire_event({"type": "OpenRuleSensors", "sensors": list(open_sensors)})
+        self.fire_event(
+            {
+                "type": "ArmedWithGaps",
+                "bypassed": bypassed,
+                "unavailable": unavailable,
+                "rule_sensors": list(open_rules),
+            }
+        )
+        if open_rules:
+            self.fire_event({"type": "OpenRuleSensors", "sensors": list(open_rules)})
         self.notifier.notify(
             NotifyEvent.ARM_HINT,
             tr(lang, "arm_hint_title"),
             message,
             values={
-                "profil": self.profile_name(self.ctx.profile.profile_id),
-                "offen": ", ".join(display_name(self.hass, e) for e in open_sensors),
+                "profil": profile,
+                "wer": self.changed_by,
+                "offen": ", ".join(name(e) for e in [*bypassed, *open_rules]),
+                "grund": "; ".join(lines),
             },
             test_mode=self.ctx.test_mode,
         )

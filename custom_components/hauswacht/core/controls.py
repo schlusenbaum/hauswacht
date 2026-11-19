@@ -411,26 +411,43 @@ def lock_id_label(tag: str, lang: str = "de") -> str:
 
 # --- Trotzdem scharf am Keypad ---------------------------------------------------
 
-# So lange gilt ein zweiter Druck derselben Taste durch dieselbe Person als Bestätigung
+# So lange gilt ein zweiter Druck derselben Taste als Bestätigung
 FORCE_ARM_WINDOW = 10.0
+
+# Kein Ausweis (Scharfschalten ohne PIN ist erlaubt): leere Menge statt Benutzern
+NOBODY: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
 class PendingForce:
-    """Erster Versuch scharf zu schalten scheiterte an offenen Meldern ("nicht bereit")."""
+    """Erster Versuch scharf zu schalten scheiterte an offenen Meldern ("nicht bereit").
+
+    ``users``: wer es war – leer, wenn ohne PIN/Karte gedrückt wurde (nur möglich, wenn
+    Scharfschalten ohne PIN erlaubt ist). ``identity``: der Ausweis des ersten Drucks, damit ein
+    zweiter Druck ohne PIN in seinem Namen bestätigen kann (Rechte, "geändert von").
+    """
 
     key: str
     users: frozenset[str]
     at: float
+    identity: object = None
+
+
+def pending_valid(pending: PendingForce | None, key: str, now: float) -> bool:
+    """Gibt es zu dieser Taste eine Bestätigung, die noch gilt (gleiche Taste, rechtzeitig)?"""
+    return pending is not None and pending.key == key and 0 <= now - pending.at <= FORCE_ARM_WINDOW
 
 
 def force_confirmed(
     pending: PendingForce | None, key: str, users: frozenset[str], now: float
 ) -> bool:
-    """Ist das der zweite Druck derselben Taste durch dieselbe(n) Person(en), rechtzeitig?"""
-    return (
-        pending is not None
-        and pending.key == key
-        and pending.users == users
-        and 0 <= now - pending.at <= FORCE_ARM_WINDOW
-    )
+    """Ist das der zweite Druck derselben Taste, rechtzeitig und durch dieselbe Person?
+
+    - Beide Male mit Ausweis: dieselbe(n) Person(en).
+    - Zweiter Druck ohne Ausweis (``users`` leer): bestätigt den ersten – egal ob der mit oder
+      ohne PIN kam. Ob ein Druck ohne PIN überhaupt zählt, entscheidet der Aufrufer.
+    - Erster Druck ohne Ausweis, zweiter mit: zählt (die Person darf "trotzdem scharf").
+    """
+    if pending is None or not pending_valid(pending, key, now):
+        return False
+    return not users or not pending.users or pending.users == users

@@ -33,7 +33,7 @@ as entered.
 | Fault (sensor lost, tampering, infrastructure) | on | event, otherwise general |
 | System (restart, PIN locked, wrong PIN) | on | event, otherwise general |
 | Reminder "everyone away" | on, once set up | event, otherwise general |
-| Hint when arming (open sensors that only appear in trigger rules) | on | event, otherwise general |
+| [Note on arming](#note-on-arming) (armed, but not everything monitored) | on | event, otherwise general |
 | Always-active sensor (disarmed, without siren) | on, **critical** | event, otherwise general |
 | Trigger rule "notification only" fulfilled | on | event, otherwise general |
 | Unconfirmed trigger (trigger rule only partly fulfilled, no alarm) | off | event, otherwise general |
@@ -131,6 +131,26 @@ If arming is rejected (e.g. window open), a notification comes with the reason a
 
 The buttons are valid for 15 minutes and once each, need a logged-in Home Assistant user with the
 right "May arm", and only work if the system is still disarmed.
+
+## Note on arming
+
+As soon as a profile is armed but **not everything is monitored**, this message comes – whether
+via keypad, card, push button or automation:
+
+> Profile Night is armed (Christian, Keypad). Not monitored: Entrance: front door contact – open,
+> bypassed until disarming; Basement window – unavailable, monitored again as soon as it reports.
+
+Listed are:
+
+| Gap | How long |
+|---|---|
+| **Open sensor, bypassed** ("arm anyway" or bypassed automatically) | until disarming |
+| **Unavailable sensor**, accepted (after confirmation or automatically) | until it reports again – then it is monitored again |
+| **Open sensor that only appears in trigger rules** | until it closes and opens again |
+
+Plus an entry under notifications in Home Assistant and the event `ArmedWithGaps` (see
+[reference](reference.md)). In custom texts: `{open}` (open sensors), `{reason}` (all gaps with
+explanation), `{profile}`, `{who}`.
 
 ## Reminder "everyone away, system disarmed"
 

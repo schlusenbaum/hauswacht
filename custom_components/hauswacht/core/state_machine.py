@@ -58,6 +58,9 @@ class UnavailableSensorPolicy(StrEnum):
 
     REFUSE = "refuse"
     CONFIRM = "confirm"
+    # Expertenoption: ohne Rückfrage scharf; der Melder wird wieder überwacht, sobald er sich
+    # meldet, und der Hinweis beim Scharfschalten nennt ihn
+    BYPASS_AUTO = "bypass_auto"
 
 
 class TimerKind(StrEnum):
@@ -426,7 +429,7 @@ def evaluate_readiness(
     if unavailable_new:
         if profile.unavailable_policy is UnavailableSensorPolicy.REFUSE:
             refused = True
-        elif not confirmed:
+        elif profile.unavailable_policy is UnavailableSensorPolicy.CONFIRM and not confirmed:
             needs_confirmation = True
 
     if open_new:

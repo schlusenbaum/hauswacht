@@ -23,7 +23,7 @@ an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub
 | Ausgangs- / Eingangsverzögerung | Zeit zum Verlassen bzw. zum Unscharfschalten nach dem Betreten (Standard je 30 s) |
 | Dauer der Alarmreaktion | Wie lange ein Alarmzyklus dauert (Standard 180 s) |
 | Offene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben · automatisch überbrücken. Bestätigen: „Trotzdem scharf“ in Karte oder Push – oder am Keypad [dieselbe Taste noch einmal](bedienteile.md#trotzdem-scharf-am-keypad) |
-| Ausgefallene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben |
+| Ausgefallene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben · automatisch überbrücken (**Experten**). Ein ausgefallener Melder (z. B. leere Batterie) wird **wieder überwacht, sobald er sich meldet** – bis dahin ist er eine Lücke. „Automatisch überbrücken“ schaltet ohne Rückfrage scharf; der [Hinweis beim Scharfschalten](benachrichtigungen.md#hinweis-beim-scharfschalten) nennt ihn |
 | Maximale Alarmzyklen | Wie oft nach einem Alarm erneut ausgelöst werden darf |
 | Manipulation löst Alarm aus | Sonst wird Manipulation nur gemeldet |
 | Gekippte Fenster erlaubt | Nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) (sonst ausgeblendet): Ein gekipptes Fenster zählt als zu, erst ganz öffnen löst aus. **Aus** (Standard): gekippt zählt wie offen. Typisch: an bei „Nacht“, aus bei „Abwesend“. Der [Einrichtungsassistent](assistent.md#6-alarmprofile) fragt beim Nachtprofil danach |
@@ -63,7 +63,8 @@ Im Profil, aufklappbar unter **Automatik**. Alle Felder sind optional – leer h
 Sicherheitsregeln:
 
 - Automatisch scharf nur, wenn die Anlage unscharf ist – nie über ein anderes Profil hinweg.
-- Offene oder ausgefallene Melder werden automatisch **nie** bestätigt. Klappt das
+- Offene oder ausgefallene Melder werden automatisch **nie** bestätigt (außer das Profil
+  überbrückt sie ohnehin automatisch). Klappt das
   Scharfschalten deshalb nicht, kommt eine Systemmeldung.
 - Ein **laufender Alarm** wird nie automatisch beendet. Eine laufende Eingangsverzögerung nur
   mit Türbeleg.

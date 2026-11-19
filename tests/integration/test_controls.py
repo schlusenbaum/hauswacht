@@ -783,3 +783,72 @@ async def test_keypad_force_needs_same_key(
     await _press(hass, "disarm", PIN, 61)  # dazwischen etwas anderes: Bestätigung verfällt
     await _press(hass, "arm_night_zones", PIN, 62)
     assert _panel(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_keypad_second_press_without_pin_confirms(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    await _setup_force(hass, policy="confirm")
+    await _press(hass, "arm_night_zones", PIN, 70)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    await _press(hass, "arm_night_zones", None, 71)  # nur die Taste: bestätigt den ersten Druck
+    assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert WINDOW in state.attributes["bypassed_sensors"]
+    assert state.attributes["changed_by"] == "Anna (Keypad Flur)"
+    # Rückmeldung: was nicht überwacht wird
+    assert any("bypassed until disarming" in c.data["message"] for c in push)
+
+
+async def test_keypad_force_without_any_pin(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    await _setup_force(hass, policy="confirm")
+    await _press(hass, "arm_night_zones", None, 80)  # Scharfschalten ohne PIN ist erlaubt
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    assert {"mode": "not_ready", "transaction": 80} in _sent(mqtt_mock)
+    await _press(hass, "arm_night_zones", None, 81)
+    assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
+
+
+async def test_keypad_force_with_pin_required(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    users = _users()
+    options = {
+        "users": users,
+        "controls": _controls(),
+        "notify_system": [PHONE],
+        "code_arm_required": True,
+        "profiles": {"night": {"open_policy": "confirm"}},
+    }
+    await setup_entry(hass, make_entry(options))
+    set_sensor(hass, WINDOW, "on")
+    await hass.async_block_till_done()
+    await _press(hass, "arm_night_zones", None, 90)  # ohne PIN: abgelehnt, nichts gemerkt
+    assert {"mode": "invalid_code", "transaction": 90} in _sent(mqtt_mock)
+    await _press(hass, "arm_night_zones", None, 91)
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    await _press(hass, "arm_night_zones", PIN, 92)
+    await _press(hass, "arm_night_zones", None, 93)  # zweiter Druck darf ohne PIN kommen
+    assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
+
+
+async def test_keypad_unavailable_bypass_auto(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    options = {
+        "users": _users(),
+        "controls": _controls(),
+        "notify_system": [PHONE],
+        "profiles": {"night": {"unavailable_policy": "bypass_auto"}},
+    }
+    await setup_entry(hass, make_entry(options))
+    set_sensor(hass, WINDOW, "unavailable")
+    await hass.async_block_till_done()
+    await _press(hass, "arm_night_zones", PIN, 95)
+    assert _panel(hass) in (AlarmControlPanelState.ARMING, AlarmControlPanelState.ARMED_NIGHT)
+    assert any("monitored again as soon as it reports" in c.data["message"] for c in push)
