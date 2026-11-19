@@ -6,9 +6,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.57.2b1] - 2026-11-19
+## [0.57.2] - 2026-11-19
 
-**Vorabversion: Sirenentest mit Batterie-Rauchmeldern.**
+**Sirenentest mit Batterie-Rauchmeldern** (getestet über die Vorabversion 0.57.2b1).
 
 ### Behoben
 - **Sirenentest klappte bei Batterie-Rauchmeldern oft erst beim zweiten Mal.** Solche Geräte
