@@ -57,6 +57,8 @@ PUSH_ARM_NOW_PREFIX: Final = "HAUSWACHT_ARM_NOW_"
 PUSH_ARM_TAG: Final = "hauswacht_arm"
 # Scharf/unscharf und Hinweis beim Scharfschalten: eine Nachricht je Bereich, die sich ersetzt
 PUSH_STATE_TAG: Final = "hauswacht_state"
+# Falsche PIN-Eingaben: nur die letzte Warnung bleibt auf dem Handy stehen
+PUSH_CODE_TAG: Final = "hauswacht_code"
 # Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)
 OPT_BUTTONS_WITHOUT_PIN: Final = "buttons_without_pin"
 MASTER_USER_ID: Final = "master"

@@ -563,6 +563,23 @@ async def test_control_card_speech_always(hass: HomeAssistant, hass_ws_client: A
     assert stored["buttons"] == {"arm_night_zones": "night"}
     missing = await _apply(hass_ws_client, hass, "control_save", {"kind": "keypad", "name": "X"})
     assert missing["errors"] == {"keypad_device": "control_keypad_topic"}
+    generic = await _apply(
+        hass_ws_client,
+        hass,
+        "control_save",
+        {"kind": "generic_keypad", "name": "Keypad Garage", "buttons": {"Away": "away"}},
+    )
+    assert generic["ok"] is True, generic
+    stored = _options(hass)["controls"][generic["id"]]
+    assert stored["kind"] == "generic_keypad"
+    assert stored["buttons"] == {"away": "away"}
+    reserved = await _apply(
+        hass_ws_client,
+        hass,
+        "control_save",
+        {"kind": "generic_keypad", "name": "Y", "buttons": {"disarm": "away"}},
+    )
+    assert reserved["errors"] == {"base": "control_button_reserved"}
     button = await _apply(
         hass_ws_client,
         hass,

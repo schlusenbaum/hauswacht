@@ -56,9 +56,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
 
     from .alarm_card import async_register_alarm_websocket  # noqa: PLC0415
     from .frontend import async_register_card  # noqa: PLC0415
+    from .keypad_service import async_register_keypad_service  # noqa: PLC0415
     from .review import async_register_websocket  # noqa: PLC0415
     from .settings_ws import async_register_settings_websocket  # noqa: PLC0415
 
+    # Aktion ohne Ziel-Entität (bleibt registriert; ohne geladene Anlage lehnt sie ab)
+    async_register_keypad_service(hass)
     async_register_websocket(hass)
     async_register_alarm_websocket(hass)
     async_register_settings_websocket(hass)

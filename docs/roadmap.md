@@ -42,6 +42,7 @@
 | 0.55 | Jedes Ereignis nennt seinen Bereich (`area`, `area_name`); vollständige [Referenz](referenz.md) und Spickzettel [Automationen](automationen.md); bereit für den Katalog von Marketplace/HACS |
 | 0.56 | [Gekippte Fenster](melder.md#melder-mit-kippstellung-gekippt) je Profil erlaubt oder wie offen; [Erschütterungsmelder](melder.md#erschütterungsmelder) mit Fehlalarmschutz, auch als Zahl ([ADR 0010](entwicklung/adr/0010-fenster-kippstellung-erschuetterung.md)) |
 | 0.57 | [Einstellungsseite](einstellungsseite.md) in der Seitenleiste: alles auf einen Blick, Matrix „Melder × Profile“, alles direkt bearbeiten (Melder, Profile, Auslöseregeln als Formular oder YAML, Sirenen mit Ton, Benachrichtigungen, Personen, Karten, Bedienteile, PIN-Regeln, Aktions-Codes, System), Reiter Dokumentation und „?“ an jedem Abschnitt; [Funkstille je Melder](melder.md#eigene-grenze-je-melder); „Verhalten nach Neustart“ nur bei echtem Neustart ([ADR 0011](entwicklung/adr/0011-einstellungsseite.md)) |
+| 0.58 | [Keypads allgemein anbinden](entwicklung/adr/0012-keypads-allgemein.md): ein Eingang für jedes Keypad (Z-Wave, ESPHome, Node-RED …) mit Antwort und Anzeige-Entität, Blueprint Ring Keypad v2 und ESPHome-Beispiel, [MQTT-Schnittstelle](bedienteile.md#mqtt-schnittstelle); Warnungen zu falschen PINs räumen sich auf |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -49,9 +50,9 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
-| später | ZHA- und Z-Wave-Keypads |
 | 1.0.0 | Stabil, Doku vollständig (Aufnahme in den Katalog von Marketplace/HACS ist seit 0.55.3 beantragt) |
 | irgendwann | Kameras: Bild in der Nachricht, Kamera-Erkennung als eigener Melder-Typ – in Ruhe neu konzipieren |
 | 1.x | Eigene Art „Fingerabdruck-Leser“ (Namen je Finger, Mindest-Übereinstimmung) – heute schon über RFID-Leser bzw. Nuki Keypad 2.0 möglich; weitere Automatik-Bedingungen, wiederkehrende Gastmodus-Zeiten (z. B. jeden Dienstag 8–12 Uhr) |

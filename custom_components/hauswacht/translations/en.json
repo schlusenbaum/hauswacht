@@ -901,9 +901,11 @@
       },
       "controls": {
         "title": "Control devices",
-        "description": "{saved}{items}Controls are keypads, NFC tags, RFID readers, buttons and door locks. Identification uses the **users' credentials**: PIN, RFID card/fob or lock ID (under Users and PINs). Rights, validity, lockout after wrong entries and duress PIN apply as on the alarm panel. A button identifies nobody – so it only arms.",
+        "description": "{saved}{items}Controls are keypads (Zigbee2MQTT or generic), NFC tags, RFID readers, buttons and door locks. Identification uses the **users' credentials**: PIN, RFID card/fob or lock ID (under Users and PINs). Rights, validity, lockout after wrong entries and duress PIN apply as on the alarm panel. A button identifies nobody – so it only arms.",
         "menu_options": {
           "control_add_keypad": "Add keypad (Zigbee2MQTT)",
+          "control_add_generic_keypad": "Add keypad (generic: ZHA, Z-Wave, ESPHome …)",
+          "control_add_mqtt_keypad": "Add MQTT interface (tablet, home-made, Node-RED …)",
           "control_add_sticker": "Add NFC sticker (companion app)",
           "control_add_reader": "Add RFID/NFC reader (e.g. ESPHome)",
           "control_add_button": "Add button (arms only)",
@@ -1374,6 +1376,59 @@
           "mode": "Radio silence",
           "hours": "Own value"
         }
+      },
+      "control_generic_keypad": {
+        "title": "Keypad (generic)",
+        "description": "**Tested** – automated tests, no feedback with real devices yet.\n\nFor keypads Hauswacht does not know itself: ZHA, Z-Wave (e.g. Ring Keypad), deCONZ, ESPHome, Node-RED. A blueprint or automation reports button and PIN/card with the action `hauswacht.keypad_input` and gets the result back. What the keypad should show is in the entity **\"name display\"** (e.g. \"Keypad Hall display\").\n\n**ID for automations:** `{ident}` (or the name or the display entity).\n**Unknown keypads that reported recently:** {unknown}",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "button_1": "Button 1 – name",
+          "profile_1": "Button 1 → alarm profile",
+          "button_2": "Button 2 – name",
+          "profile_2": "Button 2 → alarm profile",
+          "button_3": "Button 3 – name",
+          "profile_3": "Button 3 → alarm profile",
+          "button_4": "Button 4 – name",
+          "profile_4": "Button 4 → alarm profile",
+          "login": "Login",
+          "emergency": "Emergency button"
+        },
+        "data_description": {
+          "button_1": "Name your blueprint or automation sends as `button`, e.g. `away`. Case does not matter. `disarm` and `emergency` are fixed and need no entry.",
+          "login": "**Card and PIN:** both credentials of the same user within 30 s (the first input gets the result `pending`).",
+          "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile."
+        }
+      },
+      "control_mqtt_keypad": {
+        "title": "MQTT interface",
+        "description": "**Tested** – automated tests, no feedback with real devices yet.\n\nFor devices and programs that only speak MQTT: wall tablet apps, Tasmota or Arduino home-made devices, Node-RED, other systems. Commands as text (`ARM_AWAY`, `DISARM`) or as JSON with the fields `action` and `code`. Hauswacht never executes stored commands (retain). Whoever may write to the broker may operate the system – secure broker access (see the guide).\n\n**ID:** `{ident}`",
+        "data": {
+          "name": "Name",
+          "area": "Area",
+          "topic": "Base topic",
+          "button_1": "Button 1 – name",
+          "profile_1": "Button 1 → alarm profile",
+          "button_2": "Button 2 – name",
+          "profile_2": "Button 2 → alarm profile",
+          "button_3": "Button 3 – name",
+          "profile_3": "Button 3 → alarm profile",
+          "button_4": "Button 4 – name",
+          "profile_4": "Button 4 → alarm profile",
+          "login": "Login",
+          "emergency": "Emergency button",
+          "disarm_word": "Command word for disarm",
+          "panic_word": "Command word for emergency",
+          "code_field": "Name of the code field in JSON",
+          "words": "Own state words (for experts)"
+        },
+        "data_description": {
+          "button_1": "Command word your device sends, e.g. `ARM_AWAY` (case and spaces do not matter; becomes `arm_away`).",
+          "login": "**Card and PIN:** both credentials of the same user within 30 s (the first input gets the result `pending`).",
+          "emergency": "**Silent:** important push message. **Alarm:** also immediate alarm – disarmed with the sirens under “Always active”, armed with those of the active profile.",
+          "topic": "Hauswacht listens on `topic/set` and sends to `topic/state`, `/attributes`, `/response` and `/availability`. Not below `zigbee2mqtt`, no `+` or `#`.",
+          "words": "One line per state, e.g. `armed_away: ARMED_AWAY`. States: disarmed, exit_delay, armed_home, armed_away, armed_night, armed_vacation, armed_custom_bypass, entry_delay, triggered, test_alarm, fire. Empty = default like Home Assistant's MQTT alarm panel."
+        }
       }
     },
     "error": {
@@ -1438,7 +1493,13 @@
       "tilt_attribute_needed": "For this entity the position is in an attribute – please enter the attribute name.",
       "tilt_no_closed": "At least one value must mean \"closed\".",
       "tilt_overlap": "A value cannot mean both closed and tilted.",
-      "stale_hours_invalid": "Please enter 1 to 168 hours."
+      "stale_hours_invalid": "Please enter 1 to 168 hours.",
+      "control_no_buttons": "Enter at least one button with an alarm profile.",
+      "control_button_reserved": "\"disarm\" and \"emergency\" are fixed buttons – please choose another name.",
+      "mqtt_topic_missing": "Please enter a base topic.",
+      "mqtt_topic_invalid": "The topic must not contain `+` or `#` and must not start with `/`.",
+      "mqtt_topic_z2m": "The Zigbee2MQTT keypads listen below `zigbee2mqtt` – please use another topic.",
+      "mqtt_topic_taken": "This topic (or an overlapping one) is already used by another MQTT interface."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1690,6 +1751,22 @@
       },
       "silence": {
         "name": "Radio silence observation"
+      },
+      "keypad_display": {
+        "name": "{name} display",
+        "state": {
+          "disarmed": "Disarmed",
+          "exit_delay": "Exit delay",
+          "armed_home": "Armed (home)",
+          "armed_away": "Armed (away)",
+          "armed_night": "Armed (night)",
+          "armed_vacation": "Armed (vacation)",
+          "armed_custom_bypass": "Armed (custom)",
+          "entry_delay": "Entry delay",
+          "triggered": "Alarm",
+          "test_alarm": "Alarm in test mode",
+          "fire": "Fire"
+        }
       }
     },
     "binary_sensor": {
@@ -1885,6 +1962,9 @@
     },
     "guest_until_past": {
       "message": "The end of the guest mode is in the past."
+    },
+    "not_loaded": {
+      "message": "Hauswacht is not loaded."
     }
   },
   "services": {
@@ -1989,6 +2069,28 @@
         "until": {
           "name": "Until",
           "description": "Ends automatically at this time. Empty = until switched off."
+        }
+      }
+    },
+    "keypad_input": {
+      "name": "Keypad input",
+      "description": "Reports button and PIN/card of a generic keypad (ZHA, Z-Wave, ESPHome …) to Hauswacht. Returns the result. Only for automations, scripts and administrators.",
+      "fields": {
+        "keypad": {
+          "name": "Keypad",
+          "description": "ID or name of the keypad in Hauswacht – or its display entity."
+        },
+        "button": {
+          "name": "Button",
+          "description": "disarm, emergency or one of the keypad's own buttons (e.g. away)."
+        },
+        "code": {
+          "name": "PIN or card",
+          "description": "Typed PIN or card number read."
+        },
+        "force": {
+          "name": "Arm anyway",
+          "description": "Bypass open sensors if the profile and the user allow it."
         }
       }
     }

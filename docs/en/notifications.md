@@ -48,7 +48,8 @@ as entered.
 - **Old messages tidy themselves up** (Home Assistant app): the message on arming (or the note)
   and the one on disarming **replace each other** – the phone always shows only the newest. If
   you get no message on disarming, the armed message simply disappears. Alarm messages disappear
-  on disarming, "Arming not possible" as soon as arming worked. Notification entities (e.g.
+  on disarming, "Arming not possible" as soon as arming worked. Warnings about **wrong PINs**
+  replace each other (only the last one stays) and disappear when the wrong entries are reset. Notification entities (e.g.
   Telegram, WhatsApp) cannot withdraw messages.
 - In test mode, notifications are only sent if "Also notify in test mode" is on. The title then
   starts with "[TEST]".

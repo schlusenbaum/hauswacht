@@ -32,6 +32,7 @@ ganze Anlage.
 | `switch.hauswacht_testmodus` | `switch.hauswacht_test_mode` | – | [Testmodus](testmodus.md) |
 | `switch.hauswacht_gastmodus` | `switch.hauswacht_guest_mode` | – | [Gastmodus](profile.md#gastmodus) für alle Bereiche; Attribut `areas` mit Ende je Bereich |
 | `event.hauswacht_aktions_code` | `event.hauswacht_action_code` | – | Nur mit [Aktions-Codes](bedienteile.md#aktions-codes) der Aktion „Ereignis“: Ereignistyp = Name des Codes; Attribute `keypad`, `test` |
+| `sensor.hauswacht_<keypad>_anzeige` | `sensor.hauswacht_<keypad>_display` | – | Je [allgemeinem Keypad](bedienteile.md#keypad-allgemein): was das Keypad zeigen soll – `disarmed`, `exit_delay`, `armed_home`/`armed_away`/`armed_night`/`armed_vacation`/`armed_custom_bypass`, `entry_delay`, `triggered`, `test_alarm`, `fire`. Attribute `keypad`, `area`, `profile`, `delay_ends`, `delay_seconds`, `test_mode`, `changed_by`, `buttons`, `last_result`, `last_result_at` |
 
 ### Zustand und Diagnose
 
@@ -240,6 +241,8 @@ Türbeleg`, `Neustart`.
 |---|---|---|
 | `InvalidCode` | Falscher PIN bzw. unbekannte Karte | `failures` (Zahl in Folge), `lock_seconds` (Sperre, 0 = keine) |
 | `CodeLockReset` | Falsche Eingaben zurückgesetzt | `by`, `failures` |
+| `MqttRetainedCommand` | Ein gespeicherter Befehl (retain) an eine [MQTT-Schnittstelle](bedienteile.md#mqtt-schnittstelle) wurde ignoriert | `control` |
+| `UnknownKeypad` | Ein [allgemeines Keypad](bedienteile.md#keypad-allgemein), das in Hauswacht nicht angelegt ist, hat sich gemeldet | `keypad` (gesendete Kennung) |
 | `ActionCode` | [Aktions-Code](bedienteile.md#aktions-codes) eingegeben | `name`, `action` (`event`, `arm`, `silent_emergency`), `control` (Keypad), `test` |
 | `ButtonPressed` | [Taster](bedienteile.md#taster) gedrückt | `control`, `press` (`single`, `double`, `long`), `profile` (leer = Druckart nicht belegt) |
 | `LockIdentified` | [Türschloss](bedienteile.md#türschloss-z-b-nuki): Kennung empfangen | `control`, `intent` (`UNLOCK`, `LOCK` oder leer), `identity`, `reason` (`ok`, `not_by_person`, `no_id`) |
@@ -310,6 +313,12 @@ Alle Aktionen richten sich an ein Bedienfeld (`target: entity_id: alarm_control_
 | `hauswacht.siren_test_result` | `siren`, `heard` | Ergebnis eines Sirenentests speichern (nur Administratoren) |
 | `hauswacht.siren_test_stop` | – | Laufenden Sirenentest abbrechen (nur Administratoren) |
 | `hauswacht.reset_code_lock` | – | Falsche Eingaben und Sperre zurücksetzen (nur Administratoren) |
+
+Ohne Ziel-Entität:
+
+| Aktion | Felder | Zweck |
+|---|---|---|
+| `hauswacht.keypad_input` | `keypad` (Kennung, Name oder Anzeige-Entität), `button` (`disarm`, `emergency` oder eigene Taste), `code`, `force` | Eingabe eines [allgemeinen Keypads](bedienteile.md#keypad-allgemein); gibt das Ergebnis zurück (`result`, `display`, `open_sensors`, `can_force`, `lock_seconds`). Nur Automationen, Skripte und Administratoren |
 
 Dazu die Standardaktionen des Bedienfelds: `alarm_control_panel.alarm_disarm` (unscharf, mit
 `code`, wenn ein PIN verlangt wird) und `alarm_arm_home`/`away`/`night`/`vacation`/

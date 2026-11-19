@@ -1,7 +1,8 @@
 // Hauswacht – Einstellungsseite: Bedienteile und Karten (ADR 0011).
 //
 // Seitenblatt <hauswacht-control-editor> mit den Arten
-// - control: Keypad, NFC-Aufkleber, RFID-Leser, Taster, Türschloss anlegen und einstellen,
+// - control: Keypad (Zigbee2MQTT oder allgemein), NFC-Aufkleber, RFID-Leser, Taster,
+//   Türschloss anlegen und einstellen,
 // - card: eine Karte umbenennen, anderem Benutzer geben, deaktivieren, löschen,
 // - cardnew: neue Karte anlernen – hinhalten (die Seite fragt alle 2 Sekunden nach) oder
 //   Nummer eintippen.
@@ -15,7 +16,7 @@ const CT = {
     del: "Löschen",
     delSure: "Wirklich löschen?",
     none: "–",
-    kinds: { keypad: "Keypad (Zigbee2MQTT)", sticker: "NFC-Aufkleber (Companion App)", reader: "RFID-/NFC-Leser", button: "Taster", lock: "Türschloss" },
+    kinds: { keypad: "Keypad (Zigbee2MQTT)", generic_keypad: "Keypad (allgemein: ZHA, Z-Wave, ESPHome …)", mqtt_keypad: "MQTT-Schnittstelle (Tablet, Eigenbau, Node-RED …)", sticker: "NFC-Aufkleber (Companion App)", reader: "RFID-/NFC-Leser", button: "Taster", lock: "Türschloss" },
     newTitle: "Bedienteil anlegen",
     editTitle: "Bedienteil bearbeiten",
     kind: "Art",
@@ -45,7 +46,27 @@ const CT = {
     who: "Allgemein: Sensor oder Ereignis mit der Kennung",
     lockProfile: "Optional: beim Abschließen scharf schalten (Alarmprofil)",
     pick: "Namen tippen oder aus der Liste wählen",
+    ident: "Kennung für Automationen",
+    identNew: "Die Kennung wird beim Speichern aus dem Namen gebildet.",
+    genButtons: "Tasten → Alarmprofil",
+    genButtonsHint: "Name der Taste, wie ihn dein Blueprint bzw. deine Automation als „button“ sendet (z. B. away). „disarm“ (unscharf) und „emergency“ (Notruf) gibt es immer.",
+    genButton: "Tastenname",
+    templates: "Fertige Vorlagen (ungetestet – eigene Verantwortung)",
+    mqttTopic: "Basis-Topic (z. B. hauswacht/flur)",
+    mqttButtons: "Befehlswörter → Alarmprofil",
+    mqttButtonsHint: "Das Wort, das dein Gerät sendet, z. B. ARM_AWAY (wird zu arm_away). Unscharf und Notruf haben eigene Wörter (unten).",
+    mqttWord: "Befehlswort",
+    disarmWord: "Befehlswort für Unscharf",
+    panicWord: "Befehlswort für Notruf",
+    codeField: "Name des Code-Felds im JSON",
+    words: "Eigene Zustandswörter (für Experten, eine Zeile je Zustand, z. B. armed_away: ARMED_AWAY)",
+    mqttTopics: "Hauswacht hört auf {t}/set und sendet an {t}/state, /attributes, /response und /availability.",
+    ringImport: "Ring Keypad v2: Blueprint importieren ↗",
+    espExample: "ESPHome-Beispiel ansehen ↗",
+    templatesHint: "Öffnet in einem neuen Tab, in genau deiner Hauswacht-Version.",
     hints: {
+      mqtt_keypad: "Getestet – automatische Tests, noch ohne Rückmeldung mit echten Geräten. Für Geräte und Programme, die nur MQTT sprechen. Gespeicherte Befehle (retain) führt Hauswacht nie aus. Wer auf den Broker schreiben darf, darf an die Anlage – Broker-Zugang absichern.",
+      generic_keypad: "Getestet – automatische Tests, noch ohne Rückmeldung mit echten Geräten. Für Keypads, die Hauswacht nicht selbst kennt: Ein Blueprint oder eine Automation meldet Taste und PIN/Karte mit der Aktion hauswacht.keypad_input. Was das Keypad zeigen soll, steht in der Entität „Name Anzeige“.",
       keypad: "Hauswacht empfängt Taste, PIN oder Karte und bestätigt jede Eingabe; danach zeigt das Keypad den Zustand. Den Sabotage-Kontakt des Keypads in eine Meldergruppe aufnehmen (Typ Manipulation).",
       sticker: "Ausgewiesen wird mit dem Handy: Das angemeldete Home-Assistant-Konto muss einer Person zugeordnet sein.",
       reader: "Ein fester Leser, der in Home Assistant „Tag gescannt“ auslöst (z. B. ESPHome mit PN532/RC522). Ausgewiesen wird mit den Karten der Personen.",
@@ -68,6 +89,8 @@ const CT = {
     random: "An {s} wurde um {t} eine Zufallsnummer gelesen (z. B. ein Handy). Sie ändert sich bei jedem Lesen und taugt nicht als Ausweis.",
     chosen: "Gewählte Karte",
     errors: {
+      control_no_buttons: "Mindestens eine Taste mit Alarmprofil eintragen.",
+      control_button_reserved: "„disarm“ und „emergency“ sind feste Tasten – bitte einen anderen Namen wählen.",
       control_keypad_topic: "Bitte das Keypad-Gerät wählen oder das MQTT-Topic eintragen.",
       control_profile_required: "Für „scharf“ bzw. „umschalten“ ein Alarmprofil wählen.",
       control_tag: "Bitte die Aufkleber-ID angeben.",
@@ -93,7 +116,7 @@ const CT = {
     del: "Delete",
     delSure: "Really delete?",
     none: "–",
-    kinds: { keypad: "Keypad (Zigbee2MQTT)", sticker: "NFC sticker (companion app)", reader: "RFID/NFC reader", button: "Button", lock: "Door lock" },
+    kinds: { keypad: "Keypad (Zigbee2MQTT)", generic_keypad: "Keypad (generic: ZHA, Z-Wave, ESPHome …)", mqtt_keypad: "MQTT interface (tablet, home-made, Node-RED …)", sticker: "NFC sticker (companion app)", reader: "RFID/NFC reader", button: "Button", lock: "Door lock" },
     newTitle: "Add control device",
     editTitle: "Edit control device",
     kind: "Type",
@@ -122,8 +145,28 @@ const CT = {
     lockTopic: "Nuki: MQTT topic of the lock (e.g. nuki/3A1B2C4D)",
     who: "Generic: sensor or event with the ID",
     lockProfile: "Optional: arm when locking (alarm profile)",
+    ident: "ID for automations",
+    identNew: "The ID is made from the name when saving.",
+    genButtons: "Buttons → alarm profile",
+    genButtonsHint: "Name of the button as your blueprint or automation sends it as \"button\" (e.g. away). \"disarm\" and \"emergency\" always exist.",
+    genButton: "Button name",
+    templates: "Ready-made templates (untested – own responsibility)",
+    mqttTopic: "Base topic (e.g. hauswacht/hallway)",
+    mqttButtons: "Command words → alarm profile",
+    mqttButtonsHint: "The word your device sends, e.g. ARM_AWAY (becomes arm_away). Disarm and emergency have their own words (below).",
+    mqttWord: "Command word",
+    disarmWord: "Command word for disarm",
+    panicWord: "Command word for emergency",
+    codeField: "Name of the code field in JSON",
+    words: "Own state words (for experts, one line per state, e.g. armed_away: ARMED_AWAY)",
+    mqttTopics: "Hauswacht listens on {t}/set and sends to {t}/state, /attributes, /response and /availability.",
+    ringImport: "Ring Keypad v2: import blueprint ↗",
+    espExample: "View ESPHome example ↗",
+    templatesHint: "Opens in a new tab, in exactly your Hauswacht version.",
     pick: "Type a name or pick from the list",
     hints: {
+      mqtt_keypad: "Tested – automated tests, no feedback with real devices yet. For devices and programs that only speak MQTT. Hauswacht never executes stored commands (retain). Whoever may write to the broker may operate the system – secure broker access.",
+      generic_keypad: "Tested – automated tests, no feedback with real devices yet. For keypads Hauswacht does not know itself: a blueprint or automation reports button and PIN/card with the action hauswacht.keypad_input. What the keypad should show is in the entity \"name display\".",
       keypad: "Hauswacht receives key, PIN or card and confirms every entry; then the keypad shows the state. Add the keypad's tamper contact to a sensor group (type tamper).",
       sticker: "Identification is the phone: the logged-in Home Assistant account must be linked to a person.",
       reader: "A fixed reader that fires “tag scanned” in Home Assistant (e.g. ESPHome with PN532/RC522). Identification uses the people's cards.",
@@ -146,6 +189,8 @@ const CT = {
     random: "A random ID was read at {s} at {t} (e.g. a phone). It changes on every read and cannot be used as a credential.",
     chosen: "Chosen card",
     errors: {
+      control_no_buttons: "Enter at least one button with an alarm profile.",
+      control_button_reserved: "\"disarm\" and \"emergency\" are fixed buttons – please choose another name.",
       control_keypad_topic: "Please choose the keypad device or enter the MQTT topic.",
       control_profile_required: "Choose an alarm profile for “arm” or “toggle”.",
       control_tag: "Please enter the sticker ID.",
@@ -170,7 +215,7 @@ const ce = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 class HauswachtControlEditor extends HTMLElement {
-  // open({hass, settings, kind, item, ctrlKind}) – kind: control | card | cardnew
+  // open({hass, settings, kind, item, ctrlKind, presetName}) – kind: control | card | cardnew
   open(options) {
     Object.assign(this, options);
     const sys = this.settings.system;
@@ -182,12 +227,17 @@ class HauswachtControlEditor extends HTMLElement {
       const found = sys.controls.items.find((c) => c.id === this.item);
       this._draft = found
         ? JSON.parse(JSON.stringify(found))
-        : { kind: this.ctrlKind || "keypad", name: "", area: sys.controls.choices.all_areas, buttons: {}, presses: {}, login: "", action: "disarm", source: "nuki_mqtt" };
+        : { kind: this.ctrlKind || "keypad", name: this.presetName || "", area: sys.controls.choices.all_areas, buttons: {}, presses: {}, login: "", action: "disarm", source: "nuki_mqtt" };
       this._draft.buttons = this._draft.buttons || {};
       this._draft.presses = this._draft.presses || {};
       // Taster ohne eigene Druckarten: drei freie Zeilen
       this._pressRows = Object.entries(this._draft.presses);
       while (this._pressRows.length < 3) this._pressRows.push(["", ""]);
+      // Allgemeines Keypad: vier Tasten mit freiem Namen (Vorschlag home/away/night)
+      const free = ["generic_keypad", "mqtt_keypad"].includes(this._draft.kind);
+      this._btnRows = free ? Object.entries(this._draft.buttons) : [];
+      if (!this._btnRows.length) this._btnRows = this._defaultButtons(this._draft.kind);
+      while (this._btnRows.length < 4) this._btnRows.push(["", ""]);
     } else if (this.kind === "card") {
       const card = sys.cards.cards.find((c) => c.tag === this.item) || {};
       this._card = card;
@@ -257,6 +307,27 @@ class HauswachtControlEditor extends HTMLElement {
       <datalist id="${listId}">${choices.map((c) => `<option value="${ce(c.name)}">${ce(c.id)}</option>`).join("")}</datalist>`;
   }
 
+  _wordsText(words) {
+    if (typeof words === "string") return words;
+    return Object.entries(words || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
+  }
+
+  _defaultButtons(kind) {
+    const names = kind === "mqtt_keypad" ? ["arm_away", "arm_home", "arm_night"] : ["home", "away", "night"];
+    return names.map((b) => [b, ""]);
+  }
+
+  // Fertige Vorlagen für allgemeine Keypads – immer in einem neuen Tab
+  _templates() {
+    const docs = window.HauswachtDocs;
+    if (!docs?.blueprintImport) return "";
+    const link = (href, text) => `<a href="${ce(href)}" target="_blank" rel="noreferrer noopener">${ce(text)}</a>`;
+    return `<div class="box"><b>${ce(this._t("templates"))}</b>
+      <div>${link(docs.blueprintImport("ring_keypad_v2.yaml"), this._t("ringImport"))}</div>
+      <div>${link(docs.file("blueprints/esphome/hauswacht_keypad.yaml"), this._t("espExample"))}</div>
+      <div class="muted">${ce(this._t("templatesHint"))}</div></div>`;
+  }
+
   _controlForm() {
     const d = this._draft;
     const sys = this.settings.system;
@@ -267,6 +338,29 @@ class HauswachtControlEditor extends HTMLElement {
       fields = `<label>${ce(this._t("keypadDevice"))}</label>${this._picker("keypad_device", d.keypad_device, ch.mqtt_devices, "hw-mqtt")}${this._err("keypad_device")}
         <label>${ce(this._t("topic"))}</label><input data-f="topic" value="${ce(d.topic || "")}">
         ${ch.arm_keys.map((k) => `<label>${ce(this._t("keys")[k] || k)}</label>${this._select(`btn:${k}`, d.buttons[k] || "", this._profiles())}`).join("")}
+        <label>${ce(this._t("login"))}</label>${this._select("login", d.login || "pin_or_card", ["pin_or_card", "card_and_pin"].map((v) => [v, this._t("logins")[v]]))}
+        <label>${ce(this._t("emergency"))}</label>${this._select("emergency", d.emergency || "off", ["off", "silent", "alarm"].map((v) => [v, this._t("emergencies")[v]]))}`;
+    } else if (d.kind === "mqtt_keypad") {
+      const rows = this._btnRows
+        .map(([b, pid], i) => `<div class="inline"><div style="flex:1"><label>${ce(this._t("mqttWord"))}</label><input data-gb="${i}" value="${ce(b)}"></div><div style="flex:1"><label>&nbsp;</label>${this._select(`gp:${i}`, pid, this._profiles())}</div></div>`)
+        .join("");
+      const topic = d.topic || "hauswacht/…";
+      fields = `<label>${ce(this._t("mqttTopic"))}</label><input data-f="topic" value="${ce(d.topic || "")}">${this._err("topic")}
+        <div class="muted">${ce(this._t("mqttTopics").replaceAll("{t}", topic))}</div>
+        <label>${ce(this._t("mqttButtons"))}</label><div class="muted">${ce(this._t("mqttButtonsHint"))}</div>${rows}
+        <label>${ce(this._t("disarmWord"))}</label><input data-f="disarm_word" value="${ce(d.disarm_word || "DISARM")}">
+        <label>${ce(this._t("panicWord"))}</label><input data-f="panic_word" value="${ce(d.panic_word || "PANIC")}">
+        <label>${ce(this._t("codeField"))}</label><input data-f="code_field" value="${ce(d.code_field || "code")}">
+        <label>${ce(this._t("login"))}</label>${this._select("login", d.login || "pin_or_card", ["pin_or_card", "card_and_pin"].map((v) => [v, this._t("logins")[v]]))}
+        <label>${ce(this._t("emergency"))}</label>${this._select("emergency", d.emergency || "off", ["off", "silent", "alarm"].map((v) => [v, this._t("emergencies")[v]]))}
+        <label>${ce(this._t("words"))}</label><textarea data-f="words" rows="4">${ce(this._wordsText(d.words))}</textarea>`;
+    } else if (d.kind === "generic_keypad") {
+      const rows = this._btnRows
+        .map(([b, pid], i) => `<div class="inline"><div style="flex:1"><label>${ce(this._t("genButton"))}</label><input data-gb="${i}" value="${ce(b)}"></div><div style="flex:1"><label>&nbsp;</label>${this._select(`gp:${i}`, pid, this._profiles())}</div></div>`)
+        .join("");
+      fields = `<div class="box">${ce(this._t("ident"))}: ${this.item ? `<code>${ce(this.item)}</code>` : ce(this._t("identNew"))}</div>
+        <label>${ce(this._t("genButtons"))}</label><div class="muted">${ce(this._t("genButtonsHint"))}</div>${rows}
+        ${this._templates()}
         <label>${ce(this._t("login"))}</label>${this._select("login", d.login || "pin_or_card", ["pin_or_card", "card_and_pin"].map((v) => [v, this._t("logins")[v]]))}
         <label>${ce(this._t("emergency"))}</label>${this._select("emergency", d.emergency || "off", ["off", "silent", "alarm"].map((v) => [v, this._t("emergencies")[v]]))}`;
     } else if (d.kind === "sticker" || d.kind === "reader") {
@@ -349,9 +443,12 @@ class HauswachtControlEditor extends HTMLElement {
         else delete d.presses[field.slice(6)];
       } else if (field.startsWith("pp:")) {
         this._pressRows[Number(field.slice(3))][1] = el.value;
+      } else if (field.startsWith("gp:")) {
+        this._btnRows[Number(field.slice(3))][1] = el.value;
       } else d[field] = el.value;
     });
     root.querySelectorAll("[data-pv]").forEach((el) => (this._pressRows[Number(el.dataset.pv)][0] = el.value));
+    root.querySelectorAll("[data-gb]").forEach((el) => (this._btnRows[Number(el.dataset.gb)][0] = el.value));
     root.querySelectorAll("[data-pick]").forEach((el) => {
       const field = el.dataset.pick;
       const value = el.value.trim();
@@ -373,6 +470,7 @@ class HauswachtControlEditor extends HTMLElement {
       data.presses = types.length ? d.presses : Object.fromEntries(this._pressRows.filter(([p, pid]) => p.trim() && pid));
     }
     if (d.kind === "keypad") Object.assign(data, d.buttons);
+    if (["generic_keypad", "mqtt_keypad"].includes(d.kind)) data.buttons = Object.fromEntries(this._btnRows.filter(([b, pid]) => b.trim() && pid).map(([b, pid]) => [b.trim(), pid]));
     return ["control_save", data];
   }
 
@@ -401,7 +499,8 @@ class HauswachtControlEditor extends HTMLElement {
     const top = this.shadowRoot.querySelector(".sheet")?.scrollTop || 0;
     const body = this.kind === "control" ? this._controlForm() : this.kind === "card" ? this._cardForm() : this._cardNewForm();
     const canDelete = (this.kind === "control" && this.item) || this.kind === "card";
-    const style = `.warn { border: 1px solid var(--warning-color, #ffa600); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: .9rem; }`;
+    const style = `textarea { font: inherit; box-sizing: border-box; width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color); }
+      .warn { border: 1px solid var(--warning-color, #ffa600); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: .9rem; }`;
     this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style}</style><div class="sheet">${body}
       <div class="bar"><button class="b p" data-act="save" ${this._busy ? "disabled" : ""}>${ce(this._busy ? this._t("saving") : this._t("save"))}</button>
       <button class="b" data-act="cancel">${ce(this._t("cancel"))}</button>
@@ -435,7 +534,13 @@ class HauswachtControlEditor extends HTMLElement {
     // Felder, die andere ein- oder ausblenden
     root.querySelectorAll('[data-f="kind"], [data-f="source"], [data-pick="entity"]').forEach((el) =>
       el.addEventListener("change", () => {
+        const before = this._draft?.kind;
         this._collect();
+        // Andere Art gewählt und noch keine Taste belegt: passende Vorschläge
+        if (el.dataset.f === "kind" && before !== this._draft.kind && this._btnRows.every(([, pid]) => !pid)) {
+          this._btnRows = this._defaultButtons(this._draft.kind);
+          while (this._btnRows.length < 4) this._btnRows.push(["", ""]);
+        }
         this._render();
       })
     );

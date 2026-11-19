@@ -166,19 +166,40 @@ def test_only_threshold_and_switch_as_x_helpers_are_created() -> None:
 
 
 def test_controls_only_send_keypad_state() -> None:
-    """Bedienteile: einzige Sendung an Geräte ist arm_mode an <keypad-topic>/set."""
+    """Bedienteile senden nur zweierlei per MQTT:
+
+    - die Zustandsanzeige (arm_mode) an <keypad-topic>/set eines Zigbee2MQTT-Keypads,
+    - an die eigenen Topics einer MQTT-Schnittstelle: state, attributes, response, availability –
+      nie an ihr Befehls-Topic set.
+    """
     text = (SOURCE_ROOT / "controls.py").read_text(encoding="utf-8")
     tree = ast.parse(text)
     publishes = [
-        node
+        ast.unparse(node)
         for node in ast.walk(tree)
         if isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "async_publish"
     ]
-    assert len(publishes) == 1
-    assert "f'{keypad.topic}/set'" in ast.unparse(publishes[0])
-    assert "json.dumps({'arm_mode': arm_mode})" in ast.unparse(publishes[0])
+    assert len(publishes) == 2
+    keypad = [p for p in publishes if "f'{keypad.topic}/set'" in p]
+    assert len(keypad) == 1
+    assert "json.dumps({'arm_mode': arm_mode})" in keypad[0]
+    interface = [p for p in publishes if "f'{interface.topic}/{suffix}'" in p]
+    assert len(interface) == 1
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "_mqtt_publish"
+    ]
+    assert calls
+    allowed = {"TOPIC_STATE", "TOPIC_ATTRIBUTES", "TOPIC_RESPONSE", "TOPIC_AVAILABILITY"}
+    for call in calls:
+        suffix = call.args[1]
+        assert isinstance(suffix, ast.Name), ast.unparse(call)
+        assert suffix.id in allowed, ast.unparse(call)
     assert "async_call(" not in text
     for path in SOURCE_ROOT.rglob("*.py"):
         if path.name != "controls.py":

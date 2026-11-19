@@ -1,0 +1,162 @@
+blueprint:
+  name: Hauswacht – Ring Keypad v2 (Z-Wave JS)
+  description: >-
+    **UNGETESTET – Nutzung auf eigene Verantwortung.** Nach der Dokumentation der Community
+    gebaut, nie an einem echten Gerät geprüft. Rückmeldungen mit Firmware bitte als GitHub-Issue.
+
+
+    Verbindet ein Ring Keypad v2 (Z-Wave JS) mit einem **allgemeinen Keypad** in Hauswacht:
+
+    - Tasten und PIN gehen an `hauswacht.keypad_input` (Unscharf, Abwesend → Taste `away`,
+      Zuhause → Taste `home`, Polizei-Taste lang drücken → Notruf).
+
+    - Falscher PIN oder Sperre: Fehlerton. Nicht bereit: Enter-Taste blinkt.
+
+    - Die Anzeige-Entität von Hauswacht steuert Lichter und Töne (unscharf, scharf,
+      Verzögerungen mit Countdown, Alarm, Brand). Im Testmodus nur Anzeige, kein Alarmton.
+
+
+    Vorher in Hauswacht ein „Keypad (allgemein)“ mit den Tasten `away` und `home` anlegen.
+    Version 1.
+  domain: automation
+  source_url: https://github.com/schlusenbaum/hauswacht/blob/main/blueprints/automation/hauswacht/ring_keypad_v2.yaml
+  homeassistant:
+    min_version: "2026.10.0"
+  input:
+    keypad:
+      name: Ring Keypad
+      description: Das Ring Keypad v2 in Z-Wave JS.
+      selector:
+        device:
+          filter:
+            - integration: zwave_js
+    display:
+      name: Hauswacht-Keypad
+      description: Die Anzeige-Entität des allgemeinen Keypads in Hauswacht („… Anzeige“).
+      selector:
+        entity:
+          filter:
+            - integration: hauswacht
+              domain: sensor
+
+mode: queued
+max: 10
+max_exceeded: silent
+
+triggers:
+  - trigger: event
+    event_type: zwave_js_notification
+    event_data:
+      device_id: !input keypad
+      command_class: 111
+    id: key
+  - trigger: state
+    entity_id: !input display
+    not_to:
+      - unknown
+      - unavailable
+    id: display
+  - trigger: homeassistant
+    event: start
+    id: display
+
+variables:
+  blueprint_version: 1
+  display: !input display
+  # Ring: 3 = Unscharf, 5 = Abwesend, 6 = Zuhause, 17 = Polizei (lang gedrückt)
+  ring_buttons:
+    3: disarm
+    5: away
+    6: home
+    17: emergency
+
+actions:
+  - choose:
+      # --- Keypad → Hauswacht ------------------------------------------------
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'key' }}"
+        sequence:
+          - variables:
+              button: "{{ ring_buttons.get(trigger.event.data.event_type | int(-1), '') }}"
+              code: >-
+                {% set raw = trigger.event.data.event_data %}
+                {{ '' if raw is none else raw | string }}
+          - condition: template
+            value_template: "{{ button != '' }}"
+          - action: hauswacht.keypad_input
+            data:
+              keypad: "{{ display }}"
+              button: "{{ button }}"
+              code: "{{ code }}"
+            response_variable: answer
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ answer.result in ['invalid_code', 'locked'] }}"
+                sequence:
+                  # 9 = Code nicht angenommen (leiser Fehlerton)
+                  - action: zwave_js.set_value
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: 135
+                      endpoint: 0
+                      property: 9
+                      property_key: 1
+                      value: 1
+              - conditions:
+                  - condition: template
+                    value_template: "{{ answer.result == 'not_ready' }}"
+                sequence:
+                  # 16 = Melder müssen überbrückt werden (Enter blinkt)
+                  - action: zwave_js.set_value
+                    target:
+                      device_id: !input keypad
+                    data:
+                      command_class: 135
+                      endpoint: 0
+                      property: 16
+                      property_key: 1
+                      value: 1
+      # --- Hauswacht → Keypad ------------------------------------------------
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'display' }}"
+          - condition: template
+            value_template: "{{ states(display) not in ['unknown', 'unavailable'] }}"
+        sequence:
+          - variables:
+              state: "{{ states(display) }}"
+              seconds: "{{ state_attr(display, 'delay_seconds') | int(30) }}"
+          - variables:
+              # Anzeige → (Indikator, Eigenschaft, Wert)
+              # 2 unscharf, 10 scharf Zuhause, 11 scharf Abwesend, 17 Eingangsverzögerung,
+              # 18 Ausgangsverzögerung (Wert = Sekunden), 13 Einbruchalarm, 14 Rauchalarm,
+              # 19 Medizin-Licht ohne Ton (für den Alarm im Testmodus)
+              command: >-
+                {% set map = {
+                  'disarmed': [2, 1, 1],
+                  'exit_delay': [18, 7, seconds],
+                  'armed_home': [10, 1, 1],
+                  'armed_night': [10, 1, 1],
+                  'armed_away': [11, 1, 1],
+                  'armed_vacation': [11, 1, 1],
+                  'armed_custom_bypass': [11, 1, 1],
+                  'entry_delay': [17, 7, seconds],
+                  'triggered': [13, 1, 1],
+                  'test_alarm': [19, 1, 1],
+                  'fire': [14, 1, 1],
+                } %}
+                {{ map.get(state, []) }}
+          - condition: template
+            value_template: "{{ command | length == 3 }}"
+          - action: zwave_js.set_value
+            target:
+              device_id: !input keypad
+            data:
+              command_class: 135
+              endpoint: 0
+              property: "{{ command[0] }}"
+              property_key: "{{ command[1] }}"
+              value: "{{ command[2] }}"

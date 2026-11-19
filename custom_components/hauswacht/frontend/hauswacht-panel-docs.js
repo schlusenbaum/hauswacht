@@ -33,6 +33,8 @@ const DOC_LINKS = {
   card: ["bedienteile.md#karte-bearbeiten-deaktivieren-löschen", "control-devices.md#edit-disable-delete-a-card"],
   cardNew: ["bedienteile.md#neue-karte-anlernen", "control-devices.md#learn-a-new-card"],
   keypad: ["bedienteile.md#keypad-zigbee2mqtt", "control-devices.md#keypad-zigbee2mqtt"],
+  generic_keypad: ["bedienteile.md#keypad-allgemein", "control-devices.md#keypad-generic"],
+  mqtt_keypad: ["bedienteile.md#mqtt-schnittstelle", "control-devices.md#mqtt-interface"],
   sticker: ["bedienteile.md#nfc-aufkleber-companion-app", "control-devices.md#nfc-sticker-companion-app"],
   reader: ["bedienteile.md#rfid-leser", "control-devices.md#rfid-reader"],
   button: ["bedienteile.md#taster", "control-devices.md#button"],
@@ -128,6 +130,16 @@ window.HauswachtDocs = window.HauswachtDocs || {
   },
   page(dePath, enPath, lang) {
     return docUrl(lang === "de" ? dePath : enPath, lang, this.version);
+  },
+  // Datei im Repo in genau der installierten Version (z. B. ein Blueprint)
+  file(path) {
+    return `${DOC_REPO}/${docRef(this.version)}/${path}`;
+  },
+  // "Blueprint importieren" über my.home-assistant.io – mit der installierten Version, damit
+  // auch Vorabversionen ihren Blueprint finden
+  blueprintImport(name) {
+    const url = this.file(`blueprints/automation/hauswacht/${name}`);
+    return `https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=${encodeURIComponent(url)}`;
   },
   // Kleines „?“ mit Link, für Kopfzeilen von Karten und Seitenblättern
   help(key, lang, title) {

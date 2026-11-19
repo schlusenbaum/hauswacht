@@ -13,6 +13,9 @@ Rein und ohne Home Assistant.
       buttons: {arm_day_zones: <profil>, arm_night_zones: <profil>, arm_all_zones: <profil>}
       login: pin_or_card | card_and_pin
       emergency: off | silent | alarm
+      # generic_keypad (allgemeines Keypad, ADR 0012) – Eingabe über hauswacht.keypad_input:
+      buttons: {<freier Tastenname>: <profil>}   # z. B. home, away, night
+      login / emergency wie beim Keypad
       # sticker (NFC-Aufkleber, gescannt mit der Companion App):
       tag: "<tag-id>"
       action: disarm | arm | toggle
@@ -59,6 +62,14 @@ class ControlKind(StrEnum):
     READER = "reader"
     BUTTON = "button"
     LOCK = "lock"
+    # Allgemeines Keypad (ADR 0012): ZHA, Z-Wave, ESPHome … über die Aktion keypad_input
+    GENERIC_KEYPAD = "generic_keypad"
+    # MQTT-Schnittstelle (ADR 0012, Stufe 3): Befehle auf <topic>/set, Zustand auf <topic>/state
+    MQTT_KEYPAD = "mqtt_keypad"
+
+
+# Keypads, deren Tasten freie Namen haben
+FREE_BUTTON_KINDS = frozenset({ControlKind.GENERIC_KEYPAD, ControlKind.MQTT_KEYPAD})
 
 
 class LockSource(StrEnum):
@@ -113,6 +124,11 @@ class Control:
     presses: Mapping[str, str] = field(default_factory=dict)
     source: LockSource = LockSource.NUKI_MQTT
     who: str = ""
+    # MQTT-Schnittstelle: eigene Zustandswörter, Name des Code-Felds, Wörter für Unscharf/Notruf
+    words: Mapping[str, str] = field(default_factory=dict)
+    code_field: str = "code"
+    disarm_word: str = "DISARM"
+    panic_word: str = "PANIC"
 
 
 def normalize_tag(value: Any) -> str:
@@ -196,11 +212,7 @@ def parse_controls(options: Mapping[str, Any]) -> dict[str, Control]:
             kind=kind,
             area=str(data.get("area") or ALL_AREAS),
             topic=str(data.get("topic") or "").strip().rstrip("/"),
-            buttons={
-                k: str(v) for k, v in buttons.items() if k in ARM_KEYS and isinstance(v, str) and v
-            }
-            if isinstance(buttons, Mapping)
-            else {},
+            buttons=_buttons(kind, buttons),
             login=_enum(Login, data.get("login"), default_login),
             emergency=_enum(Emergency, data.get("emergency"), Emergency.OFF),
             tag=normalize_tag(data.get("tag")),
@@ -211,8 +223,33 @@ def parse_controls(options: Mapping[str, Any]) -> dict[str, Control]:
             presses=_presses(data.get("presses")),
             source=_enum(LockSource, data.get("source"), LockSource.NUKI_MQTT),
             who=str(data.get("who") or ""),
+            words=_words(data.get("words")),
+            code_field=str(data.get("code_field") or "code").strip() or "code",
+            disarm_word=str(data.get("disarm_word") or "DISARM").strip() or "DISARM",
+            panic_word=str(data.get("panic_word") or "PANIC").strip() or "PANIC",
         )
     return result
+
+
+def _words(value: Any) -> dict[str, str]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {str(k): str(v) for k, v in value.items() if str(k).strip() and str(v).strip()}
+
+
+def _buttons(kind: ControlKind, value: Any) -> dict[str, str]:
+    """Tasten -> Profil. Zigbee2MQTT: feste Tasten; allgemeines Keypad: freie Namen."""
+    if not isinstance(value, Mapping):
+        return {}
+    if kind in FREE_BUTTON_KINDS:
+        result: dict[str, str] = {}
+        for key, profile in value.items():
+            name = str(key).strip().casefold().replace(" ", "_")
+            reserved = name in (KEY_DISARM, KEY_EMERGENCY)
+            if name and not reserved and isinstance(profile, str) and profile:
+                result[name] = profile
+        return result
+    return {k: str(v) for k, v in value.items() if k in ARM_KEYS and isinstance(v, str) and v}
 
 
 def _presses(value: Any) -> dict[str, str]:

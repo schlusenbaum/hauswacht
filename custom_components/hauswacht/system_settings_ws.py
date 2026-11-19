@@ -3,7 +3,8 @@
 Liefert die Werte für die Seitenblätter. Gespeichert wird über ``core.changes.system`` und
 ``core.changes.action_codes`` – dieselben Regeln wie im Dialog.
 
-Bedienteile und Karten lassen sich auf der Seite anlegen, einstellen und anlernen.
+Bedienteile und Karten lassen sich auf der Seite anlegen, einstellen und anlernen; unbekannte
+allgemeine Keypads, die sich gemeldet haben, lassen sich mit einem Klick anlegen (ADR 0012).
 """
 
 from __future__ import annotations
@@ -161,6 +162,15 @@ def _silence_sensors(hass: HomeAssistant, silence: Any) -> dict[str, dict[str, A
     }
 
 
+def _unknown_keypads(main: Any) -> list[dict[str, str]]:
+    controls = getattr(main, "controls", None)
+    seen = getattr(controls, "unknown_keypads", None) or {}
+    return [
+        {"ref": ref, "when": dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%H:%M")}
+        for ref, when in seen.items()
+    ]
+
+
 def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     areas = parse_areas(options)
@@ -177,7 +187,7 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     keypads = [
         {"id": c.control_id, "name": c.name}
         for c in controls.values()
-        if c.kind is ControlKind.KEYPAD
+        if c.kind in (ControlKind.KEYPAD, ControlKind.GENERIC_KEYPAD, ControlKind.MQTT_KEYPAD)
     ]
     return {
         "restart": {
@@ -261,6 +271,8 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "learn_minutes": learn_minutes(options),
             "learn_max": MAX_LEARN_MINUTES,
             "choices": _control_choices(hass),
+            # Allgemeine Keypads, die sich gemeldet haben, aber nicht angelegt sind (ADR 0012)
+            "unknown_keypads": _unknown_keypads(main),
         },
         "cards": build_cards(hass, main),
     }

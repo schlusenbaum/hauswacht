@@ -24,6 +24,8 @@ const TEXTS = {
     allRights: "alle Rechte",
     perArea: "Rechte je Bereich",
     noControls: "Noch kein Bedienteil.",
+    unknownKeypad: "Unbekanntes Keypad „{k}“ hat sich um {t} gemeldet – noch nicht angelegt, deshalb abgelehnt.",
+    createKeypad: "Anlegen",
     addControl: "Bedienteil anlegen",
     cardsTitle: "Karten, Anhänger und Schloss-Kennungen",
     noCards: "Noch keine Karte.",
@@ -142,6 +144,8 @@ const TEXTS = {
     allRights: "all rights",
     perArea: "rights per area",
     noControls: "No control device yet.",
+    unknownKeypad: "Unknown keypad \"{k}\" reported at {t} – not set up yet, so it was refused.",
+    createKeypad: "Set up",
     addControl: "Add control device",
     cardsTitle: "Cards, tags and lock IDs",
     noCards: "No card yet.",
@@ -570,9 +574,13 @@ class HauswachtPanel extends HTMLElement {
           .map((c) => `<div class="item">${this._btn(`ctrl:${c.id}`, this._t("edit"))}<div class="n">${escHtml(c.name)} <span class="muted">${escHtml(kindLabel(c.kind))}</span></div></div>`)
           .join("")
       : `<div class="muted">${escHtml(this._t("noControls"))}</div>`;
+    const unknown = (sys.controls.unknown_keypads || [])
+      .map((u) => `<div class="item">${this._armedOr(this._btn(`ctrlnew:${u.ref}`, this._t("createKeypad")))}<div class="warn">${escHtml(this._fmt("unknownKeypad", { k: u.ref, t: u.when }))}</div></div>`)
+      .join("");
     const controls = this._card(
       parts.controls[0],
-      ctrlList +
+      unknown +
+        ctrlList +
         this._armedOr(`<div class="tool">${this._btn("ctrl:", "+ " + this._t("addControl"))}</div>`) +
         `<div class="muted">${escHtml(this._fmt("learnTime", { m: sys.controls.learn_minutes }))} ${this._btn("sys:learn", this._t("edit"))}</div>`,
       "controls"
@@ -608,7 +616,7 @@ class HauswachtPanel extends HTMLElement {
     return users + pinRules + cards + controls + codes;
   }
 
-  _openControlEditor(kind, item) {
+  _openControlEditor(kind, item, extra = {}) {
     if (!customElements.get("hauswacht-control-editor") || !this._settings?.system) return;
     const editor = document.createElement("hauswacht-control-editor");
     editor.addEventListener("hw-close", () => this._closeEditor());
@@ -620,7 +628,7 @@ class HauswachtPanel extends HTMLElement {
     editor.addEventListener("hw-stale", () => this._reloadAfterSave());
     this._editor = editor;
     this.shadowRoot.appendChild(editor);
-    editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null });
+    editor.open({ hass: this._hass, settings: this._settings, kind, item: item || null, ...extra });
   }
 
   _openSystemEditor(kind, item) {
@@ -789,6 +797,7 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "ctrl") this._openControlEditor("control", spec.slice(5));
     else if (kind === "card") this._openControlEditor("card", spec.slice(5));
     else if (kind === "cardnew") this._openControlEditor("cardnew");
+    else if (kind === "ctrlnew") this._openControlEditor("control", null, { ctrlKind: "generic_keypad", presetName: spec.slice(8) });
     else if (kind === "sys") this._openSystemEditor(id, spec.split(":").slice(2).join(":"));
     else if (kind === "sirens") this._openAlarmEditor("sirens");
     else if (kind === "tone") this._openAlarmEditor("tone", spec.slice(5));

@@ -94,8 +94,15 @@ class Notifier:
         return sent
 
     @callback
-    def send_system(self, title: str, message: str, *, test_mode: bool = False) -> list[str]:
-        return self.notify(NotifyEvent.SYSTEM, title, message, test_mode=test_mode)
+    def send_system(
+        self,
+        title: str,
+        message: str,
+        *,
+        test_mode: bool = False,
+        data: Mapping[str, Any] | None = None,
+    ) -> list[str]:
+        return self.notify(NotifyEvent.SYSTEM, title, message, test_mode=test_mode, data=data)
 
     def fill_values(self, message: str, values: Mapping[str, Any] | None) -> dict[str, str]:
         """Platzhalter-Werte; Bereich, Uhrzeit und Standardtext ergänzt Hauswacht selbst."""

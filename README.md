@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.57.2 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.58.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -51,8 +51,10 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 - **Bereiche** – Haus und Garage unabhängig scharf, mit eigenem Bedienfeld und „Alle Bereiche“.
 - **Benutzer und Ausweise** – PIN und beliebig viele RFID-Karten je Person, Rechte je Bereich,
   Gäste mit Gültigkeit, Bedrohungs-PIN mit stillem Notruf, Sperre gegen Durchprobieren.
-- **Bedienteile** – Zigbee-Keypads über Zigbee2MQTT mit Rückmeldung am Gerät, Karten direkt am
-  Keypad anlernen, NFC-Aufkleber mit der Home-Assistant-App, RFID-Leser, Taster (nur scharf)
+- **Bedienteile** – Zigbee-Keypads über Zigbee2MQTT mit Rückmeldung am Gerät, **jedes andere
+  Keypad** (ZHA, Z-Wave, ESPHome, Node-RED …) über eine Aktion mit Antwort und eine
+  Anzeige-Entität, Geräte nur mit MQTT über eine **MQTT-Schnittstelle**, Karten
+  direkt am Keypad anlernen, NFC-Aufkleber mit der Home-Assistant-App, RFID-Leser, Taster (nur scharf)
   und Türschlösser (z. B. Nuki: unscharf, wenn ein bekannter Benutzer aufschließt).
   **Aktions-Codes** am Keypad (z. B. 7777 + Haus) starten eigene Automationen oder einen stillen
   Notruf.

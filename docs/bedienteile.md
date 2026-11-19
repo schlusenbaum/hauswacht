@@ -9,18 +9,41 @@ Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
 
 | Bedienteil | Ausweis | Typisch für |
 |---|---|---|
-| [Keypad](#keypad-zigbee2mqtt) | PIN und/oder RFID-Karte + Taste | Wand neben der Haustür |
+| [Keypad (Zigbee2MQTT)](#keypad-zigbee2mqtt) | PIN und/oder RFID-Karte + Taste | Wand neben der Haustür |
+| [Keypad (allgemein)](#keypad-allgemein) | PIN und/oder RFID-Karte + Taste | Keypads über ZHA, Z-Wave, ESPHome, Node-RED … |
+| [MQTT-Schnittstelle](#mqtt-schnittstelle) | PIN und/oder RFID-Karte + Befehl | Wand-Tablets, Eigenbauten und Programme, die nur MQTT sprechen |
 | [NFC-Aufkleber](#nfc-aufkleber-companion-app) | das eigene Handy (Home-Assistant-App) | Bewohner mit App |
 | [RFID-Leser](#rfid-leser) | RFID-Karte, ohne Taste | Karte vorhalten und fertig |
 | [Fingerabdruck-Leser](#fingerabdruck-leser-esphome) | gespeicherter Finger (wie eine Karte) | Finger auflegen, z. B. im Flur |
 | [Taster](#taster) | **keiner** – schaltet deshalb nur scharf | Taster im Hausflur: drücken, rausgehen |
 | [Türschloss](#türschloss-z-b-nuki) | wer aufgeschlossen hat (Nuki-Benutzer, Keypad-Code …) | Aufschließen = unscharf |
 
+## Wie gut erprobt?
+
+Nicht jedes Bedienteil konnten wir an echter Hardware prüfen. Damit du weißt, worauf du dich
+verlassen kannst:
+
+| Kennzeichen | Bedeutung | Bedienteile |
+|---|---|---|
+| **Erprobt** | automatische Tests **und** im Alltag mit echter Hardware geprüft | Keypad (Zigbee2MQTT), RFID-Karten am Keypad |
+| **Getestet** | automatische Tests, aber noch ohne Rückmeldung mit echter Hardware | Keypad (allgemein), MQTT-Schnittstelle, NFC-Aufkleber, RFID-Leser, Fingerabdruck-Leser, Taster, Türschloss (Nuki und allgemein) |
+| **Ungetestet – eigene Verantwortung** | nach Hersteller-Doku gebaut, nie am Gerät geprüft | [Vorlagen](#fertige-vorlagen): Blueprint Ring Keypad v2, ESPHome-Beispiel |
+
+Läuft bei dir etwas aus „Getestet“ oder „Ungetestet“ zuverlässig? Eine kurze Rückmeldung als
+[GitHub-Issue](https://github.com/schlusenbaum/hauswacht/issues) mit Gerät und Firmware hilft
+allen – dann steigt es auf.
+
+Wo die Sicherheit von **deiner eigenen Einrichtung** abhängt, liegt sie in deiner
+Verantwortung: Zugang zum MQTT-Broker (gilt für Zigbee2MQTT genauso), PINs in der Datenbank von
+Home Assistant (siehe [PINs außerhalb von Hauswacht](#pins-außerhalb-von-hauswacht)), selbst
+geschriebene oder geänderte Übersetzer.
+
 ## Keypad (Zigbee2MQTT)
 
 Für Alarm-Keypads nach dem Zigbee-Standard für Bedienteile (IAS ACE) – z. B. frient/Develco
 KEPZB-110 und KEYZB-110, Linkind, Centralite, Heiman. Voraussetzung: Zigbee2MQTT und die
-MQTT-Integration in Home Assistant. ZHA- und Z-Wave-Keypads sind geplant.
+MQTT-Integration in Home Assistant. Andere Keypads (ZHA, Z-Wave, ESPHome …): siehe
+[Keypad (allgemein)](#keypad-allgemein).
 
 **Einrichten:**
 
@@ -106,6 +129,317 @@ dem normalen Aufräumen des Verlaufs (Standard: 10 Tage) – sofort geht es mit 
 
 Wo das Keypad hängen sollte, damit man es in der Eingangsverzögerung erreicht, hilft die
 Messung [„Tür auf bis unscharf“](beobachtung.md#tür-auf-bis-unscharf).
+
+## Keypad (allgemein)
+
+> **Getestet** – mit automatischen Tests geprüft, aber noch ohne Rückmeldung mit echten Geräten.
+> Siehe [Wie gut erprobt?](#wie-gut-erprobt).
+
+Für Keypads, die Hauswacht **nicht selbst** kennt: ZHA-Keypads (z. B. frient, Xfinity,
+Centralite), Z-Wave-Keypads (z. B. Ring Keypad v2), deCONZ, selbst gebaute Bedienteile mit
+ESPHome, Abläufe in Node-RED – kurz: alles, was Home Assistant erreicht.
+
+**So funktioniert es:** Hauswacht spricht nicht direkt mit dem Gerät. Dazwischen sitzt ein
+kleiner **Übersetzer** – eine Automation (später auch fertige Blueprints), ein Ablauf in
+Node-RED oder das Gerät selbst. Er übersetzt in beide Richtungen:
+
+```
+Keypad ──Taste + PIN──► Übersetzer ──hauswacht.keypad_input──► Hauswacht
+Keypad ◄──LEDs, Töne──  Übersetzer ◄──sensor.…_anzeige──────── Hauswacht
+```
+
+Hauswacht wertet die Eingabe **genau wie beim Zigbee2MQTT-Keypad** aus: Rechte, Gültigkeit,
+Sperre nach falschen Eingaben, Bedrohungs-PIN, Karte und PIN, Aktions-Codes, „trotzdem scharf“,
+Notruf, Anlernen unbekannter Karten.
+
+### Einrichten
+
+**Systemeinstellungen → Bedienteile → Keypad hinzufügen (allgemein)** – oder auf der
+[Einstellungsseite](einstellungsseite.md) im Reiter Personen und Bedienteile:
+
+| Einstellung | Bedeutung |
+|---|---|
+| Name | z. B. „Keypad Flur“ – erscheint in „geändert von“, etwa „Anna (Keypad Flur)“ |
+| Bereich | ein Bereich oder alle |
+| Tasten | bis zu vier Tasten mit **freiem Namen** und je einem Alarmprofil, z. B. `home` → „Zuhause“, `away` → „Abwesend“, `night` → „Nacht“. Der Name ist das, was dein Übersetzer als `button` sendet. `disarm` (unscharf) und `emergency` (Notruf) gibt es immer – dafür nichts eintragen |
+| Anmeldung | **PIN oder Karte** oder **Karte und PIN** |
+| Notruf-Taste | aus, still oder Alarm – wie beim [Zigbee2MQTT-Keypad](#keypad-zigbee2mqtt) |
+
+Nach dem Speichern zeigt das Formular die **Kennung** des Keypads, z. B. `keypad_flur`. Mit ihr
+meldet der Übersetzer Eingaben. Statt der Kennung gehen auch der Name oder die Anzeige-Entität.
+
+**Unbekanntes Keypad hat sich gemeldet:** Ruft ein Übersetzer mit einer Kennung auf, die es in
+Hauswacht nicht gibt, lehnt Hauswacht ab (Ergebnis `unknown_keypad`). Beim nächsten
+„Keypad hinzufügen (allgemein)“ steht die gemeldete Kennung schon im Formular – nur noch Tasten
+und Bereich wählen. So kann kein unbekanntes Gerät etwas schalten.
+
+### Die Aktion `hauswacht.keypad_input`
+
+| Feld | Bedeutung | Beispiel |
+|---|---|---|
+| `keypad` | Kennung, Name oder Anzeige-Entität des Keypads | `keypad_flur` |
+| `button` | `disarm`, `emergency` oder eine eigene Taste | `away` |
+| `code` | getippter PIN oder gelesene Kartennummer | `2580` |
+| `force` | „trotzdem scharf“ – offene Melder überbrücken, wenn Profil und Benutzer das erlauben | `true` |
+
+Die Aktion **antwortet**. In einer Automation holst du die Antwort mit `response_variable`:
+
+| Antwort | Bedeutung |
+|---|---|
+| `result` | `ok` · `invalid_code` (falscher Ausweis **oder** keine Rechte – bewusst nicht zu unterscheiden) · `locked` (zu viele Fehlversuche) · `not_ready` (z. B. Fenster offen) · `pending` (Karte und PIN: erster Ausweis erkannt, zweiter fehlt) · `already_disarmed` · `unknown_button` · `unknown_keypad` |
+| `display` | was das Keypad jetzt zeigen soll (wie die Anzeige-Entität) |
+| `open_sensors` | bei `not_ready`: welche Melder es verhindern, z. B. `["Küchenfenster"]` |
+| `can_force` | bei `not_ready`: „trotzdem scharf“ wäre möglich (zweimal dieselbe Eingabe oder `force: true`) |
+| `lock_seconds` | bei `locked`: wie lange die Sperre noch dauert |
+
+**Doppelte Meldungen:** Funkgeräte senden manchmal doppelt. Dieselbe Eingabe vom selben Keypad
+innerhalb von 2 Sekunden wertet Hauswacht nur einmal aus – ein doppelt gesendeter falscher PIN
+zählt nicht doppelt.
+
+**Wer darf die Aktion aufrufen?** Automationen, Skripte, Geräte (z. B. ESPHome) und
+Administratoren. Normale Benutzer nicht – sie bedienen über die Hauswacht-Karte. Sonst könnte
+jeder angemeldete Benutzer z. B. einen Notruf ohne PIN auslösen.
+
+### Die Anzeige-Entität
+
+Jedes allgemeine Keypad bekommt eine Entität **„Keypad Flur Anzeige“**
+(`sensor.hauswacht_keypad_flur_anzeige`). Dein Übersetzer reagiert auf ihre Änderungen und
+steuert damit das Gerät:
+
+| Zustand | Bedeutung | Typisch am Keypad |
+|---|---|---|
+| `disarmed` | unscharf | grün / aus |
+| `exit_delay` | Ausgangsverzögerung läuft | Piepen, Countdown |
+| `armed_home`, `armed_away`, `armed_night`, `armed_vacation`, `armed_custom_bypass` | scharf (je nach Knopf des Profils) | rot |
+| `entry_delay` | Eingangsverzögerung – jetzt PIN eingeben | schnelles Piepen |
+| `triggered` | Einbruchalarm | Alarm |
+| `test_alarm` | Alarm im **Testmodus** | nur anzeigen, **keine** Sirene |
+| `fire` | Brand erkannt (hat Vorrang vor allem anderen) | Brandanzeige |
+
+Im Testmodus zeigt die Entität **nie** `triggered`, sondern `test_alarm`. So kann ein Keypad mit
+eingebauter Sirene im Testmodus nicht versehentlich losheulen.
+
+Attribute: `delay_ends` und `delay_seconds` (Ende bzw. Rest der Verzögerung – für einen
+Countdown), `profile`, `changed_by`, `test_mode`, `buttons`, `last_result` (Ergebnis der letzten
+Eingabe) und `last_result_at`. **Nie** enthalten: PINs und Kartennummern.
+
+### Beispiel: Übersetzer als Automation
+
+Ein selbst gebautes ESPHome-Keypad sendet beim Drücken einer Taste ein Ereignis
+`esphome.keypad_flur` mit `button` und `code`. Die erste Automation gibt die Eingabe an
+Hauswacht weiter und lässt bei einem Fehler den Summer des Keypads kurz piepen:
+
+```yaml
+alias: Keypad Flur → Hauswacht
+mode: queued
+triggers:
+  - trigger: event
+    event_type: esphome.keypad_flur
+actions:
+  - action: hauswacht.keypad_input
+    data:
+      keypad: keypad_flur
+      button: "{{ trigger.event.data.button }}"
+      code: "{{ trigger.event.data.code }}"
+    response_variable: antwort
+  - if: "{{ antwort.result not in ['ok', 'pending'] }}"
+    then:
+      - action: esphome.keypad_flur_beep  # Fehlerton (eigene Aktion des Geräts)
+```
+
+Die zweite Automation zeigt am Keypad, was Hauswacht meldet – auch nach einem Neustart:
+
+```yaml
+alias: Hauswacht → Keypad Flur
+mode: restart
+triggers:
+  - trigger: state
+    entity_id: sensor.hauswacht_keypad_flur_anzeige
+    not_to: [unknown, unavailable]
+  - trigger: homeassistant
+    event: start
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: sensor.hauswacht_keypad_flur_anzeige
+        state: [unknown, unavailable]
+actions:
+  - action: esphome.keypad_flur_show  # eigene Aktion des Geräts
+    data:
+      mode: "{{ states('sensor.hauswacht_keypad_flur_anzeige') }}"
+```
+
+Ein ESPHome-Gerät kann die Aktion auch **direkt** aufrufen (`homeassistant.action` mit
+`action: hauswacht.keypad_input`) und die Anzeige-Entität selbst lesen – dann braucht es gar
+keine Automation. In der ESPHome-Integration muss dafür „Gerät darf Home-Assistant-Aktionen
+ausführen“ eingeschaltet sein.
+
+### Fertige Vorlagen
+
+> **Ungetestet – Nutzung auf eigene Verantwortung.** Die Vorlagen sind nach der Dokumentation
+> der Geräte und der Community gebaut, aber nie an einem echten Gerät geprüft. Läuft eine bei dir?
+> Bitte kurz als [GitHub-Issue](https://github.com/schlusenbaum/hauswacht/issues) melden (Gerät,
+> Firmware) – dann steigt sie zu „Getestet von der Community“ auf.
+
+| Gerät | Vorlage | Was sie tut |
+|---|---|---|
+| **Ring Keypad v2** (Z-Wave JS) | Blueprint [ring_keypad_v2.yaml](https://github.com/schlusenbaum/hauswacht/blob/main/blueprints/automation/hauswacht/ring_keypad_v2.yaml) – [![Blueprint importieren](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fschlusenbaum%2Fhauswacht%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fhauswacht%2Fring_keypad_v2.yaml) | Unscharf, Abwesend (Taste `away`), Zuhause (Taste `home`), Polizei-Taste lang drücken = Notruf. Fehlerton bei falschem PIN, Enter blinkt bei „nicht bereit“. Lichter und Töne nach der Anzeige-Entität, mit Countdown bei den Verzögerungen. Im Testmodus nur das Medizin-Licht, kein Alarmton |
+| **Selbstbau mit ESPHome** (4×4-Tastenfeld, zwei LEDs) | Beispiel [hauswacht_keypad.yaml](https://github.com/schlusenbaum/hauswacht/blob/main/blueprints/esphome/hauswacht_keypad.yaml) | PIN + A/B/C/D, ruft die Aktion direkt auf – ohne Automation. LEDs nach der Anzeige-Entität. Zum Anpassen (Pins, Kennung, Entität) |
+
+**Ring Keypad einrichten:**
+
+1. In Hauswacht ein „Keypad (allgemein)“ anlegen, mit den Tasten `away` und `home` und je einem
+   Alarmprofil.
+2. Blueprint importieren (Knopf oben), daraus eine Automation erstellen: das Ring Keypad und die
+   Anzeige-Entität des Hauswacht-Keypads wählen, speichern.
+3. Ausprobieren: PIN tippen, „Zuhause“ drücken.
+
+**Am bequemsten von der Einstellungsseite:** Beim „Keypad (allgemein)“ steht unter den Tasten
+„Ring Keypad v2: Blueprint importieren“. Der Knopf öffnet sich in einem **neuen Tab** und holt
+den Blueprint aus **genau deiner Hauswacht-Version** – auch bei Vorabversionen. Der Knopf hier in
+der Anleitung holt immer die neueste veröffentlichte Version (GitHub öffnet ihn im selben Tab;
+mit Strg- bzw. ⌘-Klick in einem neuen).
+
+Die Vorlage trägt eine **Versionsnummer** (in der Beschreibung). Gibt es eine neue, im Blueprint
+„Blueprint erneut importieren“ wählen.
+
+**ZHA-Keypads (frient, Xfinity, Centralite …):** ZHA verbindet diese Keypads mit einem eigenen
+kleinen Bedienfeld in ZHA – Tasten und PIN kommen dann nicht bei einer Automation an. Damit sie
+mit Hauswacht gehen, braucht es eine Geräteanpassung für ZHA (Quirk). Eine Vorlage dafür gibt es
+noch nicht. Wer so ein Keypad hat und mittesten mag: bitte ein Issue aufmachen. Mit
+**Zigbee2MQTT** gehen dieselben Keypads schon heute direkt – siehe
+[Keypad (Zigbee2MQTT)](#keypad-zigbee2mqtt).
+
+### PINs außerhalb von Hauswacht
+
+Hauswacht speichert PINs nie im Klartext. **Dein Übersetzer aber schon möglicherweise:**
+
+- Meldet ein Gerät den PIN als **Ereignis** (z. B. `zha_event`, `zwave_js_notification` oder
+  wie im Beispiel `esphome.keypad_flur`), speichert Home Assistant dieses Ereignis in seiner
+  Datenbank – mit dem PIN, auch in Backups.
+- Die **Ablaufverfolgung** (Trace) der Automation enthält den PIN ebenfalls.
+
+Das kann Hauswacht nicht verhindern. Was hilft:
+
+```yaml
+# configuration.yaml – Ereignisse mit PINs nicht in der Datenbank speichern
+recorder:
+  exclude:
+    event_types:
+      - esphome.keypad_flur
+```
+
+Achtung: Damit fehlen **alle** Ereignisse dieses Typs in der Datenbank – bei `zha_event` z. B.
+auch die anderer ZHA-Geräte. Und in der Automation die Zahl gespeicherter Abläufe klein halten
+(`trace: stored_traces:` mit einer kleinen Zahl).
+
+## MQTT-Schnittstelle
+
+> **Getestet** – mit automatischen Tests geprüft, aber noch ohne Rückmeldung mit echten Geräten.
+> Siehe [Wie gut erprobt?](#wie-gut-erprobt).
+
+Für Geräte und Programme, die **nur MQTT** sprechen und Home Assistant nicht kennen:
+Wand-Tablet-Apps für MQTT-Alarmzentralen, Tasmota- oder Arduino-Eigenbauten, Node-RED, andere
+Systeme. Eine MQTT-Schnittstelle ist ein Keypad – Hauswacht wertet ihre Befehle **genau wie am
+Zigbee2MQTT-Keypad** aus (Rechte, Sperre, Bedrohungs-PIN, Karte und PIN, Aktions-Codes,
+„trotzdem scharf“, Notruf).
+
+### Einrichten
+
+**Systemeinstellungen → Bedienteile → MQTT-Schnittstelle hinzufügen** – oder auf der
+[Einstellungsseite](einstellungsseite.md) im Reiter Personen und Bedienteile:
+
+| Einstellung | Bedeutung |
+|---|---|
+| Name, Bereich | wie bei jedem Bedienteil |
+| Basis-Topic | z. B. `hauswacht/flur` – darunter liegen alle Topics (siehe unten). Nicht unter `zigbee2mqtt`, keine `+` oder `#`; jede Schnittstelle braucht ihr eigenes |
+| Befehlswörter → Alarmprofil | das Wort, das dein Gerät zum Scharfschalten sendet, und das Profil dazu, z. B. `ARM_AWAY` → „Abwesend“, `ARM_HOME` → „Zuhause“, `ARM_NIGHT` → „Nacht“. Groß/klein und Leerzeichen sind egal |
+| Befehlswort für Unscharf / Notruf | Standard `DISARM` bzw. `PANIC` |
+| Name des Code-Felds im JSON | Standard `code` – manche Geräte schicken `pin` |
+| Anmeldung, Notruf-Taste | wie beim [Zigbee2MQTT-Keypad](#keypad-zigbee2mqtt) |
+| Eigene Zustandswörter | für Experten: eine Zeile je Zustand, z. B. `armed_away: ARMED_AWAY` |
+
+### Topics
+
+| Topic | Richtung | Gespeichert (retain) | Inhalt |
+|---|---|---|---|
+| `hauswacht/flur/set` | an Hauswacht | – | Befehl |
+| `hauswacht/flur/state` | von Hauswacht | ja | Zustand als Wort |
+| `hauswacht/flur/attributes` | von Hauswacht | ja | Details als JSON |
+| `hauswacht/flur/response` | von Hauswacht | nein | Antwort auf jeden Befehl |
+| `hauswacht/flur/availability` | von Hauswacht | ja | `online` / `offline` |
+
+**Befehle** gehen als Text oder JSON:
+
+```
+ARM_AWAY
+DISARM
+{"action": "ARM_NIGHT", "code": "2580"}
+{"action": "ARM_NIGHT", "code": "2580", "force": true, "id": 17}
+```
+
+`force` heißt „trotzdem scharf“ (nur mit dem Recht dazu), `id` kommt in der Antwort zurück.
+Unscharf geht – wie am Keypad – nur mit PIN oder Karte. **Gespeicherte Befehle (retain) führt
+Hauswacht nie aus** – sonst käme ein altes `DISARM` nach jedem Neustart erneut an. Hauswacht
+meldet so etwas mit dem Ereignis `MqttRetainedCommand`.
+
+**Zustand:** Standardwörter wie die MQTT-Alarmzentrale von Home Assistant – damit passen viele
+fertige Tablet-Apps ohne Anpassung:
+
+| Hauswacht | Wort |
+|---|---|
+| unscharf | `disarmed` |
+| Ausgangsverzögerung | `arming` |
+| scharf | `armed_home`, `armed_away`, `armed_night`, `armed_vacation`, `armed_custom_bypass` (je nach Knopf des Profils) |
+| Eingangsverzögerung | `pending` |
+| Alarm, Brand | `triggered` |
+| Alarm im Testmodus | `test_alarm` – **nie** `triggered`, damit ein Gerät mit eigener Sirene im Testmodus nicht losheult |
+
+**Antwort** (JSON) – dieselben Ergebnisse wie bei der [Aktion `hauswacht.keypad_input`](#keypad-allgemein):
+
+```json
+{"keypad": "tablet_flur", "result": "not_ready", "display": "disarmed",
+ "open_sensors": ["Küchenfenster"], "can_force": true, "lock_seconds": 0, "id": 17}
+```
+
+**Details** (`attributes`, JSON): `state`, `display` (Zustand wie bei der Anzeige-Entität),
+`area`, `profile`, `delay_ends`, `delay_seconds`, `test_mode`, `changed_by`, `buttons`,
+`last_result`. **Nie** enthalten: PINs, Kartennummern.
+
+### Ausprobieren ohne Gerät
+
+Mit einem MQTT-Programm, z. B. dem Add-on **MQTT Explorer**:
+
+1. Im Bereich **Publish** ins Feld **Topic** von Hand `hauswacht/flur/set` eintippen. Das Topic
+   gibt es vorher nicht – es entsteht beim ersten Senden. Hauswacht selbst sendet nie auf `set`,
+   es hört dort nur zu.
+2. Format **json**, Nachricht `{"action": "ARM_NIGHT", "code": "2580", "id": 1}`, **retain aus**,
+   senden.
+3. Unter `hauswacht/flur/response` steht die Antwort, unter `…/state` der neue Zustand. Zurück mit
+   `{"action": "DISARM", "code": "2580"}`.
+
+Im Log von Home Assistant steht jeder Befehl (ohne PIN), z. B. „MQTT-Schnittstelle Tablet Flur:
+Befehl arm_night mit Ausweis → ok“ – sichtbar, wenn für Hauswacht die Protokollstufe „Info“ oder
+feiner eingestellt ist.
+
+### Sicherheit: den Broker absichern
+
+**Wer auf den Broker schreiben darf, darf an die Anlage** – genau wie bei Zigbee2MQTT-Keypads
+schon heute. Deshalb:
+
+- Jedes Gerät bekommt einen **eigenen Broker-Benutzer** mit Passwort.
+- **Zugriffsrechte (ACL)** so eng wie möglich, z. B. für das Tablet im Flur:
+  ```
+  user tablet_flur
+  topic read hauswacht/flur/#
+  topic write hauswacht/flur/set
+  ```
+  Beim Mosquitto-Add-on von Home Assistant stehen diese Regeln in einer eigenen ACL-Datei (siehe
+  Dokumentation des Add-ons).
+- Kein anonymer Zugang, Broker nicht ins Internet freigeben; außerhalb des Heimnetzes nur mit
+  TLS.
+- Getippte PINs laufen im Klartext über den Broker – auch das spricht für TLS und eigene Benutzer.
 
 ## Aktions-Codes
 
@@ -707,6 +1041,12 @@ passiert.
   schaltet.
 - Verlorene Karte: beim Benutzer entfernen oder den Benutzer auf „Aktiv: aus“ stellen.
 - Der Bedrohungs-PIN wirkt auch am Keypad.
+- **MQTT-Schnittstelle:** dieselben Regeln wie am Keypad; gespeicherte Befehle werden nie
+  ausgeführt. Den Broker absichern – siehe [Sicherheit: den Broker absichern](#sicherheit-den-broker-absichern).
+- **Allgemeines Keypad:** Es gelten dieselben Regeln wie am Zigbee2MQTT-Keypad – unscharf nur mit
+  PIN oder Karte. Nur angelegte Keypads werden angenommen, und nur Automationen, Skripte, Geräte
+  und Administratoren dürfen die Aktion aufrufen. Ob der PIN irgendwo im Klartext landet, hängt
+  vom Übersetzer ab – siehe [PINs außerhalb von Hauswacht](#pins-außerhalb-von-hauswacht).
 - **Türschloss:** Wer das Handy mit der Nuki-App **und** den Zugang dazu hat, schaltet mit dem
   Aufschließen unscharf – genau wie er die Tür öffnen kann. Verlorenes Handy: in der Nuki-App
   den Zugang sperren **und** die Kennung beim Benutzer entfernen.

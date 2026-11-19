@@ -13,10 +13,13 @@ Home Assistant, höchstens 30 s auseinander. Hauswacht schaltet das Schloss selb
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import json
 import logging
 import time
 from collections.abc import Callable, Iterable
+from dataclasses import replace
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -32,6 +35,8 @@ from .core.alarm_states import panel_value
 from .core.code_guard import remaining_lock
 from .core.controls import (
     ALL_AREAS,
+    ARM_KEYS,
+    FREE_BUTTON_KINDS,
     KEY_DISARM,
     KEY_EMERGENCY,
     LOCK,
@@ -70,8 +75,34 @@ from .core.controls import (
     sticker_for,
     tag_intent,
 )
+from .core.keypad_input import (
+    NOT_ALLOWED,
+    Display,
+    InputOutcome,
+    KeypadResult,
+    RecentInputs,
+    area_display,
+    combined_display,
+    generic_keypad_for,
+    normalize_button,
+    public_result,
+    remember_unknown,
+    z2m_reply,
+)
+from .core.mqtt_keypad import (
+    TOPIC_ATTRIBUTES,
+    TOPIC_AVAILABILITY,
+    TOPIC_RESPONSE,
+    TOPIC_SET,
+    TOPIC_STATE,
+    MqttCommand,
+    parse_command,
+    state_word,
+)
 from .core.notify_events import NotifyEvent
 from .core.profiles import find_profile
+from .core.reactions import FIRE_DEVICE_CLASSES
+from .core.siren_guard import FireIndicator
 from .core.texts import tr
 from .core.users import (
     Action,
@@ -82,6 +113,7 @@ from .core.users import (
     match_tag,
     tag_credential,
 )
+from .errors import ArmRefused
 
 if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
@@ -113,6 +145,16 @@ class ControlManager:
         # Türschlösser: letzte Kennung bzw. letzter Zustandswechsel (je Schloss)
         self._lock_ident: dict[str, tuple[LockEvent, float]] = {}
         self._lock_state: dict[str, tuple[str, float]] = {}
+        # Allgemeine Keypads (ADR 0012): doppelte Meldungen, Reihenfolge, Anzeige, Unbekannte
+        self._recent = RecentInputs()
+        self._input_locks: dict[str, asyncio.Lock] = {}
+        self._last_result: dict[str, tuple[str, str]] = {}
+        self._display_listeners: list[Callable[[], None]] = []
+        # Unbekannte Keypads, die sich gemeldet haben: Kennung -> Zeitpunkt (zum Anlegen)
+        self.unknown_keypads: dict[str, float] = {}
+        # MQTT-Schnittstellen und was zuletzt an sie gesendet wurde
+        self._interfaces: list[Control] = []
+        self._published: dict[str, str] = {}
 
     # --- Start/Stopp ----------------------------------------------------------
 
@@ -135,17 +177,27 @@ class ControlManager:
             for c in self.controls.values()
             if c.kind is ControlKind.LOCK and c.source is LockSource.NUKI_MQTT and c.topic
         ]
-        if keypads or nuki:
+        interfaces = [
+            c for c in self.controls.values() if c.kind is ControlKind.MQTT_KEYPAD and c.topic
+        ]
+        if keypads or nuki or interfaces:
             if MQTT_DOMAIN not in self.hass.config.components:
                 _LOGGER.warning("Keypads und Nuki über MQTT brauchen die MQTT-Integration")
             else:
                 await self._subscribe(keypads)
                 await self._subscribe_nuki(nuki)
+                await self._start_interfaces(interfaces)
         watched = self._watched_entities()
         if watched:
             self._unsubs.append(
                 async_track_state_change_event(self.hass, sorted(watched), self._on_entity)
             )
+        if any(c.kind in FREE_BUTTON_KINDS for c in self.controls.values()):
+            fire = self._fire_indicators()
+            if fire:
+                self._unsubs.append(
+                    async_track_state_change_event(self.hass, fire, self._on_fire_indicator)
+                )
         for area in self.runtime.areas.values():
             self._unsubs.append(area.add_listener(self._update_keypads))
         self._update_keypads()
@@ -237,6 +289,235 @@ class ControlManager:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+        for interface in self._interfaces:
+            self.hass.async_create_task(
+                self._mqtt_publish(interface, TOPIC_AVAILABILITY, "offline", retain=True),
+                f"hauswacht_mqtt_offline_{interface.control_id}",
+            )
+        self._interfaces = []
+
+    # --- MQTT-Schnittstelle (ADR 0012, Stufe 3) ----------------------------------
+
+    async def _start_interfaces(self, interfaces: list[Control]) -> None:
+        from homeassistant.components import mqtt  # noqa: PLC0415
+
+        self._interfaces = interfaces
+        for interface in interfaces:
+            self._unsubs.append(
+                await mqtt.async_subscribe(
+                    self.hass,
+                    f"{interface.topic}/{TOPIC_SET}",
+                    partial(self._on_interface_command, interface),
+                )
+            )
+            await self._mqtt_publish(interface, TOPIC_AVAILABILITY, "online", retain=True)
+        self._publish_interfaces()
+
+    async def _mqtt_publish(
+        self, interface: Control, suffix: str, payload: str, *, retain: bool = False
+    ) -> None:
+        """Sendung der MQTT-Schnittstelle – nur an ihre eigenen Topics, nie an Geräte."""
+        if MQTT_DOMAIN not in self.hass.config.components:
+            return
+        from homeassistant.components import mqtt  # noqa: PLC0415
+
+        try:
+            await mqtt.async_publish(
+                self.hass, f"{interface.topic}/{suffix}", payload, retain=retain
+            )
+        except HomeAssistantError:
+            _LOGGER.warning("MQTT-Schnittstelle %s: Senden fehlgeschlagen", interface.name)
+
+    @callback
+    def _on_interface_command(self, interface: Control, message: Any) -> None:
+        if getattr(message, "retain", False):
+            # Gespeicherter Befehl (retain): nie ausführen – sonst käme ein altes DISARM nach
+            # jedem Neustart erneut an
+            _LOGGER.warning(
+                "MQTT-Schnittstelle %s: gespeicherten Befehl (retain) ignoriert", interface.name
+            )
+            self._fire("MqttRetainedCommand", interface)
+            return
+        command = parse_command(
+            message.payload,
+            code_field=interface.code_field,
+            disarm_word=interface.disarm_word,
+            panic_word=interface.panic_word,
+        )
+        if command is None:
+            _LOGGER.info("MQTT-Schnittstelle %s: unlesbare Nachricht ignoriert", interface.name)
+            return
+        self.hass.async_create_task(
+            self._interface_command(interface, command),
+            f"hauswacht_mqtt_{interface.control_id}",
+        )
+
+    async def _interface_command(self, interface: Control, command: MqttCommand) -> None:
+        answer = await self.async_request(
+            interface, command.button, command.code, force=command.force
+        )
+        answer["display"] = state_word(answer["display"], interface.words)
+        if command.request_id is not None:
+            answer["id"] = command.request_id
+        # Fürs Log von Home Assistant – nie mit PIN oder Karte
+        _LOGGER.info(
+            "MQTT-Schnittstelle %s: Befehl %s%s → %s",
+            interface.name,
+            command.button,
+            " mit Ausweis" if command.code else "",
+            answer["result"],
+        )
+        await self._mqtt_publish(interface, TOPIC_RESPONSE, json.dumps(answer))
+
+    @callback
+    def _publish_interfaces(self) -> None:
+        """Zustand und Details an alle MQTT-Schnittstellen – nur bei Änderungen."""
+        for interface in self._interfaces:
+            display = self.generic_display(interface).value
+            attributes = {
+                "state": state_word(display, interface.words),
+                "display": display,
+                **self.generic_attributes(interface),
+            }
+            stable = {k: v for k, v in attributes.items() if k != "delay_seconds"}
+            fingerprint = json.dumps(stable, sort_keys=True, default=str)
+            if self._published.get(interface.control_id) == fingerprint:
+                continue
+            self._published[interface.control_id] = fingerprint
+            self.hass.async_create_task(
+                self._mqtt_publish(interface, TOPIC_STATE, attributes["state"], retain=True),
+                f"hauswacht_mqtt_state_{interface.control_id}",
+            )
+            self.hass.async_create_task(
+                self._mqtt_publish(
+                    interface,
+                    TOPIC_ATTRIBUTES,
+                    json.dumps(attributes, default=str),
+                    retain=True,
+                ),
+                f"hauswacht_mqtt_attributes_{interface.control_id}",
+            )
+
+    # --- Allgemeine Keypads (ADR 0012) ------------------------------------------
+
+    def _fire_indicators(self) -> list[str]:
+        """Rauch-/Brandmelder in Home Assistant – für die Anzeige "fire"."""
+        return sorted(
+            s.entity_id
+            for s in self.hass.states.async_all("binary_sensor")
+            if s.attributes.get("device_class") in FIRE_DEVICE_CLASSES
+        )
+
+    @callback
+    def _on_fire_indicator(self, event: Event[EventStateChangedData]) -> None:
+        self._notify_displays()
+
+    def add_display_listener(self, listener: Callable[[], None]) -> CALLBACK_TYPE:
+        self._display_listeners.append(listener)
+
+        @callback
+        def remove() -> None:
+            if listener in self._display_listeners:
+                self._display_listeners.remove(listener)
+
+        return remove
+
+    @callback
+    def _notify_displays(self) -> None:
+        for listener in list(self._display_listeners):
+            listener()
+        self._publish_interfaces()
+
+    def resolve_generic(self, ref: str) -> Control | None:
+        """Allgemeines Keypad über Kennung, Namen oder Anzeige-Entität."""
+        found = generic_keypad_for(self.controls, ref)
+        if found is not None or not ref.startswith("sensor."):
+            return found
+        entry = er.async_get(self.hass).async_get(ref)
+        prefix = f"{self.runtime.entry.entry_id}_keypad_"
+        if entry is None or not str(entry.unique_id).startswith(prefix):
+            return None
+        return generic_keypad_for(self.controls, str(entry.unique_id)[len(prefix) :])
+
+    async def async_generic_input(
+        self, ref: str, button: str, code: str | None, *, force: bool = False
+    ) -> dict[str, Any]:
+        """Aktion ``hauswacht.keypad_input``: Eingabe eines allgemeinen Keypads."""
+        keypad = self.resolve_generic(ref)
+        if keypad is None:
+            self.unknown_keypads = remember_unknown(
+                self.unknown_keypads, ref, dt_util.utcnow().timestamp()
+            )
+            self.runtime.fire_event({"type": "UnknownKeypad", "keypad": ref[:64]})
+            _LOGGER.warning("Unbekanntes Keypad hat sich gemeldet: %s", ref[:64])
+            return {"keypad": ref, "result": KeypadResult.UNKNOWN_KEYPAD.value}
+        return await self.async_request(keypad, button, code, force=force)
+
+    async def async_request(
+        self, keypad: Control, button: str, code: str | None, *, force: bool = False
+    ) -> dict[str, Any]:
+        """Eingabe eines Keypads mit freien Tasten (allgemein oder MQTT) – mit Antwort."""
+        pressed = normalize_button(button)
+        # Der PIN bleibt nicht im Speicher – nur ein Fingerabdruck zum Vergleichen
+        fingerprint = hashlib.sha256((code or "").encode()).hexdigest() if code else None
+        key = RecentInputs.key(pressed, fingerprint, force)
+        lock = self._input_locks.setdefault(keypad.control_id, asyncio.Lock())
+        # Doppelte Funkmeldungen gibt es nur bei Keypads über Funk; MQTT liefert jede Nachricht
+        # genau so, wie sie gesendet wurde – dort zählt jede Eingabe
+        dedupe = keypad.kind is not ControlKind.MQTT_KEYPAD
+        async with lock:
+            now = time.monotonic()
+            outcome = self._recent.duplicate(keypad.control_id, key, now) if dedupe else None
+            if outcome is None:
+                outcome = await self.async_input(keypad, pressed, code or None, force=force)
+                self._recent.remember(keypad.control_id, key, time.monotonic(), outcome)
+        result = public_result(outcome)
+        self._last_result[keypad.control_id] = (result, dt_util.utcnow().isoformat())
+        self._notify_displays()
+        return {
+            "keypad": keypad.control_id,
+            "result": result,
+            "display": self.generic_display(keypad).value,
+            "open_sensors": list(outcome.open_sensors),
+            "can_force": outcome.can_force,
+            "lock_seconds": outcome.lock_seconds,
+        }
+
+    def generic_display(self, keypad: Control) -> Display:
+        """Was ein allgemeines Keypad jetzt anzeigen soll."""
+        areas = [
+            area_display(panel_value(a.ctx, a.options), test_mode=a.ctx.test_mode)
+            for a in self._areas(keypad)
+        ]
+        fire = self.runtime.sirens.external_fire() is FireIndicator.ACTIVE
+        return combined_display(areas, fire=fire)
+
+    def generic_attributes(self, keypad: Control) -> dict[str, Any]:
+        """Zusatzangaben der Anzeige-Entität – nie PINs oder Kartennummern."""
+        areas = self._areas(keypad)
+        ends = [a.delay_ends_at for a in areas if a.delay_ends_at is not None]
+        delay_ends = min(ends) if ends else None
+        profiles = [
+            a.profile_name(a.ctx.profile.profile_id) for a in areas if a.ctx.profile is not None
+        ]
+        changed = [a.changed_by for a in areas if a.changed_by]
+        last = self._last_result.get(keypad.control_id)
+        return {
+            "keypad": keypad.control_id,
+            "area": keypad.area,
+            "profile": ", ".join(profiles) or None,
+            "delay_ends": delay_ends.isoformat() if delay_ends else None,
+            "delay_seconds": (
+                max(0, round((delay_ends - dt_util.utcnow()).total_seconds()))
+                if delay_ends
+                else None
+            ),
+            "test_mode": any(a.ctx.test_mode for a in areas),
+            "changed_by": changed[0] if changed else None,
+            "buttons": sorted(keypad.buttons),
+            "last_result": last[0] if last else None,
+            "last_result_at": last[1] if last else None,
+        }
 
     # --- Bereiche -------------------------------------------------------------
 
@@ -284,29 +565,47 @@ class ControlManager:
     async def async_keypad_action(
         self, keypad: Control, action: str, code: str | None, transaction: Any
     ) -> str:
-        """Tastendruck am Keypad auswerten. Liefert die Antwort an das Keypad."""
-        if action == KEY_EMERGENCY:
-            await self._emergency(keypad)
+        """Tastendruck am Zigbee2MQTT-Keypad auswerten. Liefert die Antwort an das Keypad."""
+        outcome = await self.async_input(keypad, action, code)
+        mode = z2m_reply(outcome, action, self._keypad_mode(keypad))
+        if mode is None:
             return "emergency"
-        action_code = find_action_code(self._action_codes, code, action, keypad.control_id)
+        return await self._reply(keypad, transaction, mode)
+
+    async def async_input(
+        self, keypad: Control, button: str, code: str | None, *, force: bool = False
+    ) -> InputOutcome:
+        """Keypad-Kern: eine Eingabe (Taste + Ausweis) auswerten – für alle Keypads gleich.
+
+        Zigbee2MQTT-Keypad und allgemeines Keypad (ADR 0012) nutzen genau diesen Weg: Anmeldung,
+        Rechte, Sperre, Bedrohungs-PIN, Aktions-Codes, "trotzdem scharf", Notruf.
+        ``force``: ausdrücklich "trotzdem scharf" (nur mit dem Recht dazu).
+        """
+        if button == KEY_EMERGENCY:
+            await self._emergency(keypad)
+            result = (
+                KeypadResult.UNKNOWN_BUTTON
+                if keypad.emergency is Emergency.OFF
+                else KeypadResult.OK
+            )
+            return InputOutcome(result.value, emergency=True)
+        action_code = self._find_action_code(keypad, button, code)
         if action_code is not None:
             # Aktions-Code: kein Ausweis, kein Fehlversuch – in der PIN-Sperre aber gesperrt
-            if remaining_lock(self.runtime.main._code_guard, time.monotonic()):
-                return await self._reply(keypad, transaction, REPLY_INVALID_CODE)
-            result = self._run_action_code(keypad, action_code)
-            states = [panel_value(a.ctx, a.options) for a in self._areas(keypad)]
-            mode = keypad_mode(_combined(states))
-            return await self._reply(keypad, transaction, mode if result == "ok" else result)
-        if action != KEY_DISARM and action not in keypad.buttons:
-            return await self._reply(keypad, transaction, REPLY_NOT_READY)
-        wanted = Action.DISARM if action == KEY_DISARM else Action.ARM
+            locked = remaining_lock(self.runtime.main._code_guard, time.monotonic())
+            if locked:
+                return InputOutcome(KeypadResult.LOCKED.value, lock_seconds=locked)
+            return self._run_action_code(keypad, action_code)
+        if button != KEY_DISARM and button not in keypad.buttons:
+            return InputOutcome(KeypadResult.UNKNOWN_BUTTON.value)
+        wanted = Action.DISARM if button == KEY_DISARM else Action.ARM
         identity = await self._login(keypad, code, wanted)
         # Zweiter Druck derselben Taste OHNE PIN/Karte bestätigt einen gescheiterten ersten
         # ("trotzdem scharf") – im Namen der Person des ersten Drucks
         confirm = None
         if wanted is Action.ARM and not code:
             pending = self._force.get(keypad.control_id)
-            if pending_valid(pending, action, time.monotonic()):
+            if pending_valid(pending, button, time.monotonic()):
                 confirm = pending
                 identity = pending.identity if pending is not None else None
         # Falscher Ausweis wird immer abgelehnt; ohne Ausweis nur scharf, wenn kein PIN nötig
@@ -315,15 +614,39 @@ class ControlManager:
             and identity is None
             and (code or wanted is Action.DISARM or self.runtime.code_arm_required)
         ):
-            return await self._reply(keypad, transaction, REPLY_INVALID_CODE)
+            locked = remaining_lock(self.runtime.main._code_guard, time.monotonic())
+            if locked:
+                return InputOutcome(KeypadResult.LOCKED.value, lock_seconds=locked)
+            return InputOutcome(KeypadResult.INVALID_CODE.value)
         if identity == "pending":
-            return await self._reply(keypad, transaction, REPLY_NOT_READY)
-        force = confirm is not None or self._force_wanted(keypad, action, identity)
-        result = self._execute(
-            keypad, wanted, keypad.buttons.get(action), identity, confirmed=force
+            return InputOutcome(KeypadResult.PENDING.value)
+        may_force = confirm is not None or self._force_users(identity) is not None
+        confirmed = (
+            confirm is not None
+            or (force and may_force)
+            or self._force_wanted(keypad, button, identity)
         )
-        self._remember_force(keypad, action, identity, result)
-        return await self._reply(keypad, transaction, action if result == "ok" else result)
+        outcome = self._execute_outcome(
+            keypad, wanted, keypad.buttons.get(button), identity, confirmed=confirmed
+        )
+        self._remember_force(keypad, button, identity, outcome.result)
+        if outcome.can_force and not may_force:
+            outcome = replace(outcome, can_force=False)
+        return outcome
+
+    def _find_action_code(
+        self, keypad: Control, button: str, code: str | None
+    ) -> ActionCode | None:
+        """Aktions-Code zu Code + Taste. Allgemeines Keypad: jede Scharf-Taste zählt als Taste
+        "scharf" (die Tasten haben dort freie Namen), "disarm" als "unscharf"."""
+        if keypad.kind not in FREE_BUTTON_KINDS:
+            return find_action_code(self._action_codes, code, button, keypad.control_id)
+        keys = (KEY_DISARM,) if button == KEY_DISARM else ARM_KEYS
+        for key in keys:
+            found = find_action_code(self._action_codes, code, key, keypad.control_id)
+            if found is not None:
+                return found
+        return None
 
     def _force_users(self, identity: Any) -> frozenset[str] | None:
         """Wer per zweitem Druck trotzdem scharf schalten darf (sonst None).
@@ -348,7 +671,7 @@ class ControlManager:
     def _remember_force(self, keypad: Control, action: str, identity: Any, result: str) -> None:
         """Nach "nicht bereit" merken: derselbe Druck gleich noch einmal = trotzdem scharf."""
         users = self._force_users(identity)
-        if result == REPLY_NOT_READY and users is not None and action != KEY_DISARM:
+        if result == KeypadResult.NOT_READY and users is not None and action != KEY_DISARM:
             pending = self._force.get(keypad.control_id)
             if pending_valid(pending, action, time.monotonic()):
                 return  # schon bestätigt und trotzdem abgelehnt (z. B. "verweigern"): nicht neu
@@ -417,7 +740,29 @@ class ControlManager:
         *,
         confirmed: bool = False,
     ) -> str:
-        """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort.
+        """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort."""
+        outcome = self._execute_outcome(
+            control, action, profile, identity, actor, confirmed=confirmed
+        )
+        if outcome.result == KeypadResult.OK:
+            return "ok"
+        if outcome.result == KeypadResult.ALREADY_DISARMED:
+            return REPLY_ALREADY_DISARMED
+        if outcome.result == NOT_ALLOWED and action is Action.DISARM:
+            return REPLY_INVALID_CODE
+        return REPLY_NOT_READY
+
+    def _execute_outcome(  # noqa: PLR0913
+        self,
+        control: Control,
+        action: Action,
+        profile: str | None,
+        identity: Identity | None,
+        actor: str | None = None,
+        *,
+        confirmed: bool = False,
+    ) -> InputOutcome:
+        """Unscharf oder scharf schalten – mit Einzelheiten für Keypads.
 
         ``confirmed``: offene Melder überbrücken ("trotzdem scharf"), wenn das Profil das nach
         Bestätigung erlaubt.
@@ -428,25 +773,35 @@ class ControlManager:
         if action is Action.DISARM:
             targets = [a for a in self._areas(control) if not a.is_disarmed]
             if not targets:
-                return REPLY_ALREADY_DISARMED
+                return InputOutcome(KeypadResult.ALREADY_DISARMED.value)
             if identity is not None and not identity.duress:
                 # Nur die Bereiche, in denen der Benutzer unscharf schalten darf
                 targets = [a for a in targets if a.permits(identity.users, action)]
                 if not targets:
-                    return REPLY_INVALID_CODE
+                    return InputOutcome(NOT_ALLOWED)
             for area in targets:
                 area.disarm_trusted(changed_by=changed_by)
-            return "ok"
+            return InputOutcome(KeypadResult.OK.value)
         area = self._area_of_profile(control, profile) if profile else None
         if area is None or profile is None:
-            return REPLY_NOT_READY
+            return InputOutcome(KeypadResult.NOT_READY.value)
+        if (
+            identity is not None
+            and not identity.duress
+            and not area.permits(identity.users, action)
+        ):
+            return InputOutcome(NOT_ALLOWED)
         try:
-            if identity is not None and not identity.duress:
-                area.check_allowed(identity.users, action)
             area.arm(profile, confirmed=confirmed, changed_by=changed_by)
+        except ArmRefused as err:
+            return InputOutcome(
+                KeypadResult.NOT_READY.value,
+                open_sensors=err.open_sensors,
+                can_force=err.confirmable,
+            )
         except HomeAssistantError:
-            return REPLY_NOT_READY
-        return "ok"
+            return InputOutcome(KeypadResult.NOT_READY.value)
+        return InputOutcome(KeypadResult.OK.value)
 
     async def _reply(self, keypad: Control, transaction: Any, mode: str) -> str:
         """Antwort auf eine Keypad-Anfrage (gleiche Vorgangsnummer)."""
@@ -468,9 +823,15 @@ class ControlManager:
             self.hass, f"{keypad.topic}/set", json.dumps({"arm_mode": arm_mode})
         )
 
+    def _keypad_mode(self, keypad: Control) -> str:
+        """Aktuelle Anzeige eines Zigbee2MQTT-Keypads (Zustand seines Bereichs bzw. aller)."""
+        states = [panel_value(a.ctx, a.options) for a in self._areas(keypad)]
+        return keypad_mode(_combined(states))
+
     @callback
     def _update_keypads(self) -> None:
         """Keypads zeigen den aktuellen Zustand ihres Bereichs (bzw. aller Bereiche)."""
+        self._notify_displays()
         for keypad in self.controls.values():
             if keypad.kind is not ControlKind.KEYPAD:
                 continue
@@ -485,7 +846,7 @@ class ControlManager:
                 self._publish(keypad, {"mode": mode}), f"hauswacht_keypad_show_{keypad.control_id}"
             )
 
-    def _run_action_code(self, keypad: Control, action_code: ActionCode) -> str:
+    def _run_action_code(self, keypad: Control, action_code: ActionCode) -> InputOutcome:
         """Aktion eines Aktions-Codes ausführen. Nie unscharf: ein Aktions-Code ist kein Ausweis."""
         actor = tr(self.runtime.lang, "action_code_actor", name=action_code.name)
         self.runtime.fire_event(
@@ -499,10 +860,13 @@ class ControlManager:
             },
         )
         if action_code.action is CodeAction.ARM and action_code.profile:
-            return self._execute(keypad, Action.ARM, action_code.profile, None, actor=actor)
+            outcome = self._execute_outcome(
+                keypad, Action.ARM, action_code.profile, None, actor=actor
+            )
+            return replace(outcome, action_code=True, can_force=False)
         if action_code.action is CodeAction.SILENT_EMERGENCY:
             self._silent_emergency(keypad)
-        return "ok"
+        return InputOutcome(KeypadResult.OK.value, action_code=True)
 
     def _silent_emergency(self, keypad: Control) -> None:
         self.runtime.notifier.notify(

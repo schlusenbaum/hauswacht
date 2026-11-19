@@ -147,3 +147,23 @@ guest_mode:
     until:
       selector:
         datetime:
+
+keypad_input:
+  fields:
+    keypad:
+      required: true
+      example: flur
+      selector:
+        text:
+    button:
+      example: away
+      selector:
+        text:
+    code:
+      selector:
+        text:
+          type: password
+    force:
+      default: false
+      selector:
+        boolean:
