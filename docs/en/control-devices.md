@@ -283,6 +283,12 @@ must be switched on for that.
    the display entity of the Hauswacht keypad, save.
 3. Try it: type the PIN, press "Home".
 
+**Most convenient from the settings page:** with the "Keypad (generic)", "Ring Keypad v2: import
+blueprint" is listed below the buttons. It opens in a **new tab** and fetches the blueprint from
+**exactly your Hauswacht version** – also for pre-releases. The button here in the guide always
+fetches the latest released version (GitHub opens it in the same tab; Ctrl- or ⌘-click opens a
+new one).
+
 The template carries a **version number** (in the description). If there is a new one, choose
 "Re-import blueprint" in the blueprint.
 

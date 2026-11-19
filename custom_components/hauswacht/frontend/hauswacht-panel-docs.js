@@ -130,6 +130,16 @@ window.HauswachtDocs = window.HauswachtDocs || {
   page(dePath, enPath, lang) {
     return docUrl(lang === "de" ? dePath : enPath, lang, this.version);
   },
+  // Datei im Repo in genau der installierten Version (z. B. ein Blueprint)
+  file(path) {
+    return `${DOC_REPO}/${docRef(this.version)}/${path}`;
+  },
+  // "Blueprint importieren" über my.home-assistant.io – mit der installierten Version, damit
+  // auch Vorabversionen ihren Blueprint finden
+  blueprintImport(name) {
+    const url = this.file(`blueprints/automation/hauswacht/${name}`);
+    return `https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=${encodeURIComponent(url)}`;
+  },
   // Kleines „?“ mit Link, für Kopfzeilen von Karten und Seitenblättern
   help(key, lang, title) {
     const url = this.url(key, lang);

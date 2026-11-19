@@ -294,6 +294,12 @@ ausführen“ eingeschaltet sein.
    Anzeige-Entität des Hauswacht-Keypads wählen, speichern.
 3. Ausprobieren: PIN tippen, „Zuhause“ drücken.
 
+**Am bequemsten von der Einstellungsseite:** Beim „Keypad (allgemein)“ steht unter den Tasten
+„Ring Keypad v2: Blueprint importieren“. Der Knopf öffnet sich in einem **neuen Tab** und holt
+den Blueprint aus **genau deiner Hauswacht-Version** – auch bei Vorabversionen. Der Knopf hier in
+der Anleitung holt immer die neueste veröffentlichte Version (GitHub öffnet ihn im selben Tab;
+mit Strg- bzw. ⌘-Klick in einem neuen).
+
 Die Vorlage trägt eine **Versionsnummer** (in der Beschreibung). Gibt es eine neue, im Blueprint
 „Blueprint erneut importieren“ wählen.
 

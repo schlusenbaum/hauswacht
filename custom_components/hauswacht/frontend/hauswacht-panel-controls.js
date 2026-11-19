@@ -51,6 +51,10 @@ const CT = {
     genButtons: "Tasten → Alarmprofil",
     genButtonsHint: "Name der Taste, wie ihn dein Blueprint bzw. deine Automation als „button“ sendet (z. B. away). „disarm“ (unscharf) und „emergency“ (Notruf) gibt es immer.",
     genButton: "Tastenname",
+    templates: "Fertige Vorlagen (ungetestet – eigene Verantwortung)",
+    ringImport: "Ring Keypad v2: Blueprint importieren ↗",
+    espExample: "ESPHome-Beispiel ansehen ↗",
+    templatesHint: "Öffnet in einem neuen Tab, in genau deiner Hauswacht-Version.",
     hints: {
       generic_keypad: "Getestet – automatische Tests, noch ohne Rückmeldung mit echten Geräten. Für Keypads, die Hauswacht nicht selbst kennt: Ein Blueprint oder eine Automation meldet Taste und PIN/Karte mit der Aktion hauswacht.keypad_input. Was das Keypad zeigen soll, steht in der Entität „Name Anzeige“.",
       keypad: "Hauswacht empfängt Taste, PIN oder Karte und bestätigt jede Eingabe; danach zeigt das Keypad den Zustand. Den Sabotage-Kontakt des Keypads in eine Meldergruppe aufnehmen (Typ Manipulation).",
@@ -136,6 +140,10 @@ const CT = {
     genButtons: "Buttons → alarm profile",
     genButtonsHint: "Name of the button as your blueprint or automation sends it as \"button\" (e.g. away). \"disarm\" and \"emergency\" always exist.",
     genButton: "Button name",
+    templates: "Ready-made templates (untested – own responsibility)",
+    ringImport: "Ring Keypad v2: import blueprint ↗",
+    espExample: "View ESPHome example ↗",
+    templatesHint: "Opens in a new tab, in exactly your Hauswacht version.",
     pick: "Type a name or pick from the list",
     hints: {
       generic_keypad: "Tested – automated tests, no feedback with real devices yet. For keypads Hauswacht does not know itself: a blueprint or automation reports button and PIN/card with the action hauswacht.keypad_input. What the keypad should show is in the entity \"name display\".",
@@ -278,6 +286,17 @@ class HauswachtControlEditor extends HTMLElement {
       <datalist id="${listId}">${choices.map((c) => `<option value="${ce(c.name)}">${ce(c.id)}</option>`).join("")}</datalist>`;
   }
 
+  // Fertige Vorlagen für allgemeine Keypads – immer in einem neuen Tab
+  _templates() {
+    const docs = window.HauswachtDocs;
+    if (!docs?.blueprintImport) return "";
+    const link = (href, text) => `<a href="${ce(href)}" target="_blank" rel="noreferrer noopener">${ce(text)}</a>`;
+    return `<div class="box"><b>${ce(this._t("templates"))}</b>
+      <div>${link(docs.blueprintImport("ring_keypad_v2.yaml"), this._t("ringImport"))}</div>
+      <div>${link(docs.file("blueprints/esphome/hauswacht_keypad.yaml"), this._t("espExample"))}</div>
+      <div class="muted">${ce(this._t("templatesHint"))}</div></div>`;
+  }
+
   _controlForm() {
     const d = this._draft;
     const sys = this.settings.system;
@@ -296,6 +315,7 @@ class HauswachtControlEditor extends HTMLElement {
         .join("");
       fields = `<div class="box">${ce(this._t("ident"))}: ${this.item ? `<code>${ce(this.item)}</code>` : ce(this._t("identNew"))}</div>
         <label>${ce(this._t("genButtons"))}</label><div class="muted">${ce(this._t("genButtonsHint"))}</div>${rows}
+        ${this._templates()}
         <label>${ce(this._t("login"))}</label>${this._select("login", d.login || "pin_or_card", ["pin_or_card", "card_and_pin"].map((v) => [v, this._t("logins")[v]]))}
         <label>${ce(this._t("emergency"))}</label>${this._select("emergency", d.emergency || "off", ["off", "silent", "alarm"].map((v) => [v, this._t("emergencies")[v]]))}`;
     } else if (d.kind === "sticker" || d.kind === "reader") {

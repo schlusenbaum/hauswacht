@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.0b3] - 2026-11-19
+
+### Hinzugefügt
+- **Vorlagen direkt von der Einstellungsseite:** Beim „Keypad (allgemein)“ stehen „Ring Keypad v2:
+  Blueprint importieren“ und das ESPHome-Beispiel. Beide öffnen sich in einem **neuen Tab** und
+  nutzen genau die installierte Hauswacht-Version – so lassen sich Blueprints auch in
+  Vorabversionen ausprobieren.
+
 ## [0.58.0b2] - 2026-11-19
 
 **Vorabversion: fertige Vorlagen für allgemeine Keypads** (ADR 0012, Stufe 2).
