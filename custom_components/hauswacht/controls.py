@@ -27,9 +27,11 @@ from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, Home
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util import dt as dt_util
 
+from .const import DOMAIN, ISSUE_CODE_ENTITIES
 from .core.action_codes import ActionCode, CodeAction, find_action_code, parse_action_codes
 from .core.alarm_states import panel_value
 from .core.code_guard import remaining_lock
@@ -124,6 +126,36 @@ TAG_SCANNED = "tag_scanned"
 MQTT_DOMAIN = "mqtt"
 
 
+def code_entities_to_disable(
+    hass: HomeAssistant, topics: Iterable[str], handled: Iterable[str]
+) -> list[str]:
+    """Code-Entitäten (Zigbee2MQTT) der Hauswacht-Keypads, die noch aktiv sind.
+
+    ``handled``: schon einmal behandelt (abgeschaltet oder bewusst wieder eingeschaltet) –
+    danach fragt Hauswacht nicht mehr.
+    """
+    topics = list(topics)
+    done = set(handled)
+    ent_reg = er.async_get(hass)
+    dev_reg = dr.async_get(hass)
+    found: list[str] = []
+    for entry in ent_reg.entities.values():
+        if (
+            entry.platform != MQTT_DOMAIN
+            or entry.domain != "sensor"
+            or "_action_code_" not in f"{entry.unique_id}_"
+            or entry.entity_id in done
+            or entry.disabled_by is not None
+            or entry.device_id is None
+        ):
+            continue
+        device = dev_reg.async_get(entry.device_id)
+        names = {device.name, device.name_by_user} - {None} if device is not None else set()
+        if any(t.endswith(f"/{name}") for t in topics for name in names):
+            found.append(entry.entity_id)
+    return sorted(found)
+
+
 class ControlManager:
     def __init__(self, hass: HomeAssistant, runtime: HauswachtRuntime) -> None:
         self.hass = hass
@@ -159,6 +191,8 @@ class ControlManager:
     # --- Start/Stopp ----------------------------------------------------------
 
     async def async_start(self) -> None:
+        if not any(c.kind is ControlKind.KEYPAD and c.topic for c in self.controls.values()):
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_CODE_ENTITIES)
         if not self.controls:
             return
         kinds = {c.kind for c in self.controls.values()}
@@ -166,7 +200,7 @@ class ControlManager:
             self._unsubs.append(self.hass.bus.async_listen(TAG_SCANNED, self._on_tag))
         keypads = [c for c in self.controls.values() if c.kind is ControlKind.KEYPAD and c.topic]
         if keypads:
-            self._hide_code_entities()
+            self._check_code_entities()
             self._unsubs.append(
                 self.hass.bus.async_listen(
                     er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry_updated
@@ -206,49 +240,38 @@ class ControlManager:
 
     @callback
     def _on_registry_updated(self, event: Event[Any]) -> None:
-        if event.data.get("action") == "create":
-            self._hide_code_entities()
+        if event.data.get("action") in ("create", "update", "remove"):
+            self._check_code_entities()
 
     @callback
-    def _hide_code_entities(self) -> None:
-        """Code-Entität der Keypads in Zigbee2MQTT deaktivieren (einmalig je Entität).
+    def _check_code_entities(self) -> None:
+        """Code-Entität der Keypads in Zigbee2MQTT: Abschalten **anbieten** (Reparatur).
 
         Zigbee2MQTT legt für den am Keypad getippten Code eine eigene Entität an
         (``sensor.<keypad>_action_code``). Home Assistant speichert sie im Verlauf – also jede
         PIN im Klartext, auch in Backups. Hauswacht liest das Keypad direkt über MQTT und braucht
-        sie nicht. Wer sie danach bewusst wieder einschaltet, wird nicht überstimmt.
+        sie nicht. Die Entität gehört aber der MQTT-Integration: Hauswacht ändert sie nicht
+        selbst, sondern zeigt eine Reparatur-Meldung; erst wenn du dort bestätigst, wird sie
+        deaktiviert (``repairs.py``).
         """
-        ent_reg = er.async_get(self.hass)
-        dev_reg = dr.async_get(self.hass)
-        main = self.runtime.main
-        topics = [c.topic for c in self.controls.values() if c.kind is ControlKind.KEYPAD]
-        hidden: list[str] = []
-        for entry in list(ent_reg.entities.values()):
-            if (
-                entry.platform != MQTT_DOMAIN
-                or entry.domain != "sensor"
-                or "_action_code_" not in f"{entry.unique_id}_"
-                or entry.entity_id in main.code_entities_hidden
-                or entry.device_id is None
-            ):
-                continue
-            device = dev_reg.async_get(entry.device_id)
-            names = {device.name, device.name_by_user} - {None} if device is not None else set()
-            if not any(t.endswith(f"/{name}") for t in topics for name in names):
-                continue
-            main.code_entities_hidden.append(entry.entity_id)
-            if entry.disabled_by is None:
-                ent_reg.async_update_entity(
-                    entry.entity_id, disabled_by=er.RegistryEntryDisabler.USER
-                )
-                hidden.append(entry.entity_id)
-        if hidden:
-            self.hass.async_create_task(main.async_save_now(), "hauswacht_save")
-            _LOGGER.warning("Code-Entitäten deaktiviert (PINs im Klartext): %s", hidden)
-            self.runtime.notifier.send_system(
-                tr(self.runtime.lang, "code_entity_hidden_title"),
-                tr(self.runtime.lang, "code_entity_hidden", entities=", ".join(hidden)),
-            )
+        pending = code_entities_to_disable(
+            self.hass,
+            [c.topic for c in self.controls.values() if c.kind is ControlKind.KEYPAD],
+            self.runtime.main.code_entities_hidden,
+        )
+        if not pending:
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_CODE_ENTITIES)
+            return
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            ISSUE_CODE_ENTITIES,
+            is_fixable=True,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key=ISSUE_CODE_ENTITIES,
+            translation_placeholders={"entities": ", ".join(pending)},
+            data={"entities": ",".join(pending)},
+        )
 
     async def _subscribe(self, keypads: Iterable[Control]) -> None:
         from homeassistant.components import mqtt  # noqa: PLC0415

@@ -112,11 +112,18 @@ disarming".
 
 **PINs not in the history:** Zigbee2MQTT creates its own entity for the code typed at the keypad,
 e.g. `sensor.keypad_hallway_action_code`. Home Assistant stores it in the history – i.e. every PIN
-in plain text, also in backups. Hauswacht does not need it and **disables it automatically** as
-soon as the keypad is set up (also if it only appears later). You get a message about this once.
-If you deliberately enable it again (Settings → Entities), Hauswacht leaves it alone. Home
-Assistant deletes entries already stored with the normal history purge (default: 10 days) – at
-once with the action "Recorder: Purge entities" for this entity.
+in plain text, also in backups. Hauswacht does not need it. Because the entity belongs to the MQTT
+integration, Hauswacht does **not change it itself** but shows the issue "Hauswacht: PINs from
+the keypad end up in the history" under **Settings → Repairs** (also if the entity only appears
+later):
+
+- **Fix** → confirm: Hauswacht disables the entity (like Settings → Entities → Disable).
+- **Ignore**: the entity stays as it is.
+
+If you deliberately enable it again afterwards, Hauswacht does not ask again. If you disable it
+yourself, the issue disappears on its own. Home Assistant deletes entries already stored with the
+normal history purge (default: 10 days) – at once with the action "Recorder: Purge entities" for
+this entity.
 
 Where the keypad should hang so that you reach it during the entry delay is shown by the
 measurement ["Door open to disarmed"](observations.md#door-open-to-disarmed).

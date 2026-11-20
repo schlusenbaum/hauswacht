@@ -2107,6 +2107,18 @@
     "check_finding": {
       "title": "Hauswacht: {hint}",
       "description": "{hint}\n\n**Change it in:** {where}\n\nThis notice disappears by itself once fixed (checked hourly). All review notes are shown in the card “Hauswacht overview”."
+    },
+    "code_entities": {
+      "title": "Hauswacht: PINs from the keypad end up in the history",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Disable the code entity?",
+            "description": "Zigbee2MQTT creates its own entity for the code typed at the keypad. Home Assistant stores it in the history – i.e. every PIN in plain text, also in backups. Hauswacht reads the keypad directly and does not need it.\n\nAfter you confirm, these entities will be disabled (like Settings → Entities → Disable):\n\n{entities}\n\nYou can enable them again there at any time – Hauswacht will not ask again. Home Assistant deletes entries already stored with the normal history purge (default: 10 days), at once with the action \"Recorder: Purge entities\"."
+          }
+        }
+      },
+      "description": "Zigbee2MQTT creates its own entity for the code typed at the keypad: **{entities}**. Home Assistant stores it in the history – i.e. every PIN in plain text, also in backups. Hauswacht reads the keypad directly and does not need this entity.\n\nWith **Fix**, Hauswacht disables it – only after you confirm, because it belongs to the MQTT integration. If you want to keep it, choose **Ignore**."
     }
   }
 }

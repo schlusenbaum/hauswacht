@@ -15,7 +15,8 @@
   ],
   "config_flow": true,
   "dependencies": [
-    "persistent_notification"
+    "persistent_notification",
+    "repairs"
   ],
   "documentation": "https://github.com/schlusenbaum/hauswacht",
   "integration_type": "service",
@@ -23,5 +24,5 @@
   "issue_tracker": "https://github.com/schlusenbaum/hauswacht/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.58.2"
+  "version": "0.58.3"
 }

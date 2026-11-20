@@ -65,6 +65,8 @@ PUSH_LOST_TAG: Final = "hauswacht_lost"
 OPT_BUTTONS_WITHOUT_PIN: Final = "buttons_without_pin"
 MASTER_USER_ID: Final = "master"
 ISSUE_PIN_COVERAGE: Final = "users_without_pin"
+# Code-Entität der Keypads (Zigbee2MQTT) speichert PINs im Verlauf: Abschalten anbieten
+ISSUE_CODE_ENTITIES: Final = "code_entities"
 # Gleicher Hinweis, aber es gibt einen Master-PIN: sie schalten mit ihm statt mit eigenem PIN
 ISSUE_PIN_MASTER_ONLY: Final = "users_master_pin_only"
 MASTER_USER_NAME: Final = "Master-PIN"

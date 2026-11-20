@@ -120,12 +120,19 @@ zum Unscharfschalten“.
 
 **PINs nicht im Verlauf:** Zigbee2MQTT legt für den am Keypad getippten Code eine eigene
 Entität an, z. B. `sensor.keypad_flur_action_code`. Home Assistant speichert sie im Verlauf –
-also jede PIN im Klartext, auch in Backups. Hauswacht braucht sie nicht und **deaktiviert sie
-automatisch**, sobald das Keypad eingerichtet ist (auch wenn sie erst später entsteht). Du
-bekommst dazu einmal eine Nachricht. Schaltest du sie bewusst wieder ein (Einstellungen →
-Entitäten), lässt Hauswacht sie in Ruhe. Bereits gespeicherte Einträge löscht Home Assistant mit
-dem normalen Aufräumen des Verlaufs (Standard: 10 Tage) – sofort geht es mit der Aktion
-„Recorder: Entitäten bereinigen“ für diese Entität.
+also jede PIN im Klartext, auch in Backups. Hauswacht braucht sie nicht. Weil die Entität der
+MQTT-Integration gehört, ändert Hauswacht sie **nicht selbst**, sondern zeigt unter
+**Einstellungen → Reparaturen** die Meldung „Hauswacht: PINs vom Keypad landen im Verlauf“
+(auch wenn die Entität erst später entsteht):
+
+- **Beheben** → bestätigen: Hauswacht deaktiviert die Entität (wie Einstellungen → Entitäten →
+  Deaktivieren).
+- **Ignorieren**: Die Entität bleibt, wie sie ist.
+
+Schaltest du sie danach bewusst wieder ein, fragt Hauswacht nicht noch einmal. Deaktivierst du
+sie selbst, verschwindet die Meldung von allein. Bereits gespeicherte Einträge löscht Home
+Assistant mit dem normalen Aufräumen des Verlaufs (Standard: 10 Tage) – sofort geht es mit der
+Aktion „Recorder: Entitäten bereinigen“ für diese Entität.
 
 Wo das Keypad hängen sollte, damit man es in der Eingangsverzögerung erreicht, hilft die
 Messung [„Tür auf bis unscharf“](beobachtung.md#tür-auf-bis-unscharf).

@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.3] - 2026-11-20
+
+**Code-Entität der Keypads nur noch nach deiner Bestätigung abschalten.**
+
+### Geändert
+- **Code-Entität der Keypads (Zigbee2MQTT):** Hauswacht hat die Entität, in der Zigbee2MQTT den
+  am Keypad getippten Code ablegt (z. B. `sensor.keypad_flur_action_code`), bisher selbst
+  deaktiviert. Sie gehört aber der MQTT-Integration. Jetzt erscheint stattdessen unter
+  Einstellungen → Reparaturen „Hauswacht: PINs vom Keypad landen im Verlauf“: Mit **Beheben**
+  und Bestätigen wird sie deaktiviert, mit **Ignorieren** bleibt sie, wie sie ist. Schon früher
+  deaktivierte Entitäten bleiben deaktiviert; wer eine bewusst wieder eingeschaltet hat, wird
+  nicht erneut gefragt.
+
+### Dokumentation
+- Bedienteile, Installation (Entfernen), Roadmap – deutsch und englisch.
+
 ## [0.58.2] - 2026-11-20
 
 **Jede Meldung nur einmal – und alte verschwinden.**
