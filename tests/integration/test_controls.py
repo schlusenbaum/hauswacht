@@ -577,9 +577,6 @@ async def test_keypad_code_entity_offered_as_repair_not_changed(
     """Die Code-Entität gehört der MQTT-Integration: Hauswacht ändert sie nicht selbst, sondern
     bietet das Abschalten als Reparatur an – erst nach Bestätigung wird sie deaktiviert."""
     from homeassistant.components.repairs import repairs_flow_manager  # noqa: PLC0415
-    from homeassistant.components.repairs.issue_handler import (  # noqa: PLC0415
-        async_process_repairs_platforms,
-    )
     from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
     from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
 
@@ -598,7 +595,6 @@ async def test_keypad_code_entity_offered_as_repair_not_changed(
     assert other not in str(issue.translation_placeholders)
 
     # Bestätigen: jetzt wird nur die Code-Entität deaktiviert
-    await async_process_repairs_platforms(hass)
     manager = repairs_flow_manager(hass)
     assert manager is not None
     flow = await manager.async_init(DOMAIN, data={"issue_id": ISSUE_CODE_ENTITIES})
