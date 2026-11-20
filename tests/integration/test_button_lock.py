@@ -21,7 +21,7 @@ from pytest_homeassistant_custom_component.typing import MqttMockHAClient
 from custom_components.hauswacht.const import EVENT_HAUSWACHT
 from custom_components.hauswacht.core.pin import hash_pin
 
-from .conftest import PANEL, make_entry, setup_entry
+from .conftest import PANEL, WINDOW, make_entry, set_sensor, setup_entry
 
 BUTTON = "event.taster_flur"
 ACTION_SENSOR = "sensor.taster_keller_action"
@@ -168,6 +168,22 @@ async def test_button_refuses_when_pin_required(
     await _press(hass, "2026-11-15T12:00:00.000+00:00", "double")
     assert _panel(hass) == AlarmControlPanelState.DISARMED
     assert any("PIN" in str(call.data.get("message")) for call in notify)
+
+
+async def test_button_refused_arm_sends_one_message(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    """Offenes Fenster: nur "Scharfschalten nicht möglich" (mit Knopf), kein zweites
+    "Bedienteil abgelehnt"."""
+    notify = async_mock_service(hass, "notify", PHONE)
+    await _setup(hass)
+    set_sensor(hass, WINDOW, "on")
+    await hass.async_block_till_done()
+    await _press(hass, "2026-11-15T12:00:00.000+00:00", "double")
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    messages = [c for c in notify if c.data["message"] != "clear_notification"]
+    assert len(messages) == 1
+    assert "not armed" in messages[0].data["title"]
 
 
 # --- Türschloss: Nuki über MQTT ----------------------------------------------------

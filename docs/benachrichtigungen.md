@@ -36,7 +36,7 @@ werden so verschickt, wie sie eingetragen sind.
 | Alarm beendet | an | zuerst die des Profils |
 | Scharf geschaltet / Unscharf geschaltet | aus | Ereignis, sonst allgemein |
 | Scharfschaltung abgelehnt | an, mit Knöpfen | Ereignis, sonst allgemein |
-| Automatik (automatisch scharf/unscharf) | an | Ereignis, sonst allgemein |
+| Automatik (automatisch scharf/unscharf) – nur, wenn „Scharf/Unscharf geschaltet“ aus ist, [siehe unten](#jede-meldung-nur-einmal) | an | Ereignis, sonst allgemein |
 | Störung (Sensor ausgefallen, Manipulation, Infrastruktur) | an | Ereignis, sonst allgemein |
 | System (Neustart, PIN gesperrt, falscher PIN) | an | Ereignis, sonst allgemein |
 | Erinnerung „Alle weg“ | an, sobald eingerichtet | Ereignis, sonst allgemein |
@@ -52,16 +52,31 @@ werden so verschickt, wie sie eingetragen sind.
   Bedrohung als wichtige Hinweise“, Standard an). iPhone: kritischer Hinweis – beim ersten Mal
   in der App erlauben. Android: Kanal `alarm_stream`, klingt auch im lautlosen Modus. Alle
   anderen Meldungen gehen mit hoher Priorität, aber normal raus.
-- **Alte Nachrichten räumen sich auf** (Home-Assistant-App): Die Nachricht beim Scharfschalten
-  (bzw. der Hinweis) und die beim Unscharfschalten **ersetzen einander** – auf dem Handy steht
-  immer nur die neueste. Wer beim Unscharfschalten keine Nachricht bekommt, bei dem verschwindet
-  die Scharf-Nachricht einfach. Alarm-Nachrichten verschwinden beim Unscharfschalten, die Meldung
-  „Scharfschalten nicht möglich“, sobald es geklappt hat. Warnungen zu **falschen PINs** ersetzen
-  einander (es bleibt nur die letzte) und verschwinden, wenn die Falscheingaben zurückgesetzt
-  werden. Benachrichtigungs-Entitäten (z. B.
-  Telegram, WhatsApp) können Nachrichten nicht zurückziehen.
+- **Alte Nachrichten räumen sich auf** und **nichts kommt doppelt** – siehe
+  [Jede Meldung nur einmal](#jede-meldung-nur-einmal).
 - Im Testmodus werden Benachrichtigungen nur verschickt, wenn „Auch im Testmodus
   benachrichtigen“ an ist. Der Titel beginnt dann mit „[TEST]“.
+
+### Jede Meldung nur einmal
+
+Hauswacht schickt zu einem Vorgang **eine** Nachricht und räumt alte Nachrichten wieder weg
+(Home-Assistant-App). Benachrichtigungs-Entitäten (z. B. Telegram, WhatsApp) können Nachrichten
+nicht zurückziehen – dort bleiben sie stehen.
+
+| Vorgang | Was auf dem Handy passiert |
+|---|---|
+| Scharf, unscharf, Hinweis beim Scharfschalten | **Ersetzen einander** – es steht immer nur die neueste da. Wer beim Unscharfschalten keine Nachricht bekommt, bei dem verschwindet die Scharf-Nachricht einfach. |
+| **Automatisch** scharf/unscharf (Uhrzeit, alle weg, Rückkehr …) | Ist „Scharf geschaltet“ bzw. „Unscharf geschaltet“ an, steht der Grund **in dieser Nachricht** – es kommt keine zweite „Automatik“-Nachricht. Ist es aus, kommt nur die Automatik-Nachricht. Beide ersetzen einander wie oben. |
+| Unscharf über den **Push-Knopf** | Die Rückmeldung „unscharf geschaltet von …“ ersetzt die Scharf-Nachricht. |
+| Alarm | Verschwindet beim Unscharfschalten. Wird nur der Alarm beendet und es bleibt scharf, **ersetzt** „Alarm beendet“ die Alarm-Nachricht – und verschwindet beim Unscharfschalten. |
+| „Scharfschalten nicht möglich“ | Verschwindet, sobald es geklappt hat. Bei Taster, Kartenleser, NFC-Aufkleber und Türschloss kommt **nur** diese Nachricht, keine zusätzliche „Bedienteil abgelehnt“. |
+| **Melder ausgefallen** (während scharf) | Eine Nachricht **je Melder**, mit seinem Namen. Fällt er erneut aus, bevor er wieder da war, kommt keine zweite. Meldet er sich wieder, **verschwindet** sie. Hauswacht wartet 10 Sekunden: Ist der Melder bis dahin wieder da, kommt gar nichts. Fällt gleichzeitig die [überwachte Funknetz](melder.md#funknetz-und-gateways-überwachen) aus (z. B. Zigbee2MQTT), kommt nur die Störungsmeldung – nicht zusätzlich eine für jeden Melder. |
+| Falscher PIN | Warnungen ersetzen einander (es bleibt nur die letzte) und verschwinden, wenn die Falscheingaben zurückgesetzt werden. |
+
+**Beispiel:** Profil „Nacht“ schaltet um 00:30 automatisch scharf, „Scharf geschaltet“ ist an.
+Auf dem Handy steht eine Nachricht: „Hauswacht: scharf – Profil Nacht wurde automatisch scharf
+geschaltet (Uhrzeit).“ Um 06:00 wird sie ersetzt durch „Hauswacht: unscharf – Profil Nacht wurde
+automatisch unscharf geschaltet (Uhrzeit).“
 
 ## Eigene Texte und Platzhalter
 

@@ -34,7 +34,7 @@ as entered.
 | Alarm ended | on | first those of the profile |
 | Armed / Disarmed | off | event, otherwise general |
 | Arming rejected | on, with buttons | event, otherwise general |
-| Automation (armed/disarmed automatically) | on | event, otherwise general |
+| Automation (armed/disarmed automatically) – only if "Armed/Disarmed" is off, [see below](#every-message-only-once) | on | event, otherwise general |
 | Fault (sensor lost, tampering, infrastructure) | on | event, otherwise general |
 | System (restart, PIN locked, wrong PIN) | on | event, otherwise general |
 | Reminder "everyone away" | on, once set up | event, otherwise general |
@@ -50,14 +50,29 @@ as entered.
   critical alerts", default on). iPhone: critical alert – allow it in the app the first time.
   Android: channel `alarm_stream`, sounds even in silent mode. All other messages go out with
   high priority, but normally.
-- **Old messages tidy themselves up** (Home Assistant app): the message on arming (or the note)
-  and the one on disarming **replace each other** – the phone always shows only the newest. If
-  you get no message on disarming, the armed message simply disappears. Alarm messages disappear
-  on disarming, "Arming not possible" as soon as arming worked. Warnings about **wrong PINs**
-  replace each other (only the last one stays) and disappear when the wrong entries are reset. Notification entities (e.g.
-  Telegram, WhatsApp) cannot withdraw messages.
+- **Old messages tidy themselves up** and **nothing comes twice** – see
+  [Every message only once](#every-message-only-once).
 - In test mode, notifications are only sent if "Also notify in test mode" is on. The title then
   starts with "[TEST]".
+
+### Every message only once
+
+Hauswacht sends **one** message per event and removes old messages again (Home Assistant app).
+Notification entities (e.g. Telegram, WhatsApp) cannot withdraw messages – they stay there.
+
+| Event | What happens on the phone |
+|---|---|
+| Armed, disarmed, note on arming | **Replace each other** – only the newest is shown. If you get no message on disarming, the armed message simply disappears. |
+| Armed/disarmed **automatically** (time, everyone away, arrival …) | If "Armed" or "Disarmed" is on, the reason is **in that message** – no second "Automation" message. If it is off, only the automation message comes. Both replace each other as above. |
+| Disarmed with the **push button** | The reply "disarmed by …" replaces the armed message. |
+| Alarm | Disappears on disarming. If only the alarm is ended and the system stays armed, "Alarm ended" **replaces** the alarm message – and disappears on disarming. |
+| "Arming not possible" | Disappears as soon as arming worked. For buttons, card readers, NFC tags and door locks **only** this message comes, no extra "control device refused". |
+| **Sensor lost** (while armed) | One message **per sensor**, with its name. If it drops out again before it was back, no second one comes. When it reports again, the message **disappears**. Hauswacht waits 10 seconds: if the sensor is back by then, nothing comes at all. If the [monitored radio network](sensors.md#monitor-radio-networks-and-gateways) fails at the same time (e.g. Zigbee2MQTT), only the fault message comes – not one per sensor on top. |
+| Wrong PIN | Warnings replace each other (only the last one stays) and disappear when the wrong entries are reset. |
+
+**Example:** profile "Night" arms automatically at 00:30, "Armed" is on. The phone shows one
+message: "Hauswacht: armed – Profile Night was armed automatically (time)." At 06:00 it is
+replaced by "Hauswacht: disarmed – Profile Night was disarmed automatically (time)."
 
 ## Custom texts and placeholders
 

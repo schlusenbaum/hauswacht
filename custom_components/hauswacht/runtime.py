@@ -66,6 +66,7 @@ from .const import (
     PUSH_ARM_RETRY_PREFIX,
     PUSH_ARM_TAG,
     PUSH_CODE_TAG,
+    PUSH_LOST_TAG,
     PUSH_STATE_TAG,
     PUSH_TAG,
     STORAGE_VERSION,
@@ -107,6 +108,8 @@ from .core.profiles import (
 )
 from .core.reactions import (
     alarm_message,
+    auto_armed_message,
+    auto_disarmed_message,
     fault_message,
     invalid_code_message,
     parse_reaction,
@@ -233,6 +236,15 @@ from .siren_executor import SirenExecutor
 from .siren_test import SirenTester
 
 _LOGGER = logging.getLogger(__name__)
+
+# Ausgefallener Melder: so lange warten, bevor er einzeln gemeldet wird (Infrastruktur zuerst)
+LOST_SETTLE_SECONDS = 10
+
+
+def lost_tag(entity_id: str) -> str:
+    """Eigene Nachricht je ausgefallenem Melder: ersetzt sich selbst, weg, wenn er wieder da ist."""
+    return f"{PUSH_LOST_TAG}_{entity_id}"
+
 
 SIMULATION_REAL = "real"
 SIMULATION_VALUES = frozenset({"on", "off", "tilted", "unavailable", SIMULATION_REAL})
@@ -423,7 +435,14 @@ class HauswachtRuntime:
         self._state_pushed: set[str] = set()
         # Wer Warnungen zu falschen PINs bekommen hat (beim Zurücksetzen wegräumen)
         self._code_pushed: set[str] = set()
-        self._via_push = False
+        # Unscharf über den Push-Knopf: wer es war (die Rückmeldung ersetzt die Scharf-Nachricht)
+        self._via_push: tuple[str, tuple[str, ...]] | None = None
+        # Automatik schaltet: Grund für die eine Scharf-/Unscharf-Nachricht (statt zwei)
+        self._auto_arm_reason: str | None = None
+        self._auto_disarm_reason: tuple[str, str] | None = None  # (Profil, Grund)
+        # Ausgefallene Melder: eine Nachricht je Melder, weg, sobald er sich wieder meldet
+        self._lost_pushed: dict[str, set[str]] = {}
+        self._lost_timers: dict[str, CALLBACK_TYPE] = {}
         self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
             hass, entry.entry_id, dict(self.options), self.entry_doors, self._notify
@@ -902,6 +921,7 @@ class HauswachtRuntime:
         self._cancel_timer()
         self._cancel_settle()
         self._cancel_speech_repeat()
+        self._cancel_lost_timers()
         self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
@@ -1415,7 +1435,6 @@ class HauswachtRuntime:
         if self.ctx.state is AlarmState.DISARMED:
             return
         targets = self._alarm_targets()
-        test_mode = self.ctx.test_mode
         try:
             actor = await self.async_actor_for_user(user.id, self._action_for_disarm())
         except ServiceValidationError:
@@ -1423,22 +1442,16 @@ class HauswachtRuntime:
                 targets,
                 tr(self.lang, "push_denied_title"),
                 tr(self.lang, "push_denied", who=user.name),
-                test_mode=test_mode,
+                test_mode=self.ctx.test_mode,
             )
             return
         _LOGGER.warning("Push-Knopf durch %s (Zustand %s)", actor, self.ctx.state.value)
-        self._via_push = True
+        # Die Rückmeldung "unscharf geschaltet von …" verschickt _notify_state_change
+        self._via_push = (actor, targets)
         try:
             self.disarm_trusted(changed_by=actor)
         finally:
-            self._via_push = False
-        if self.ctx.state is AlarmState.DISARMED:
-            self.notifier.send(
-                targets,
-                tr(self.lang, "disarmed_title"),
-                tr(self.lang, "push_disarmed", who=actor),
-                test_mode=test_mode,
-            )
+            self._via_push = None
 
     async def _on_push_arm(self, prefix: str, token: str, user_id: str | None) -> None:
         """Push-Knöpfe "Trotzdem scharf", "Erneut versuchen", "Jetzt scharf"."""
@@ -2350,6 +2363,11 @@ class HauswachtRuntime:
             self._dispatch(BypassedSensorOpened(sensor_key=entity_id, role=role))
             return
         old_state, new_state = self._judged(old_state), self._judged(new_state)
+        if (entity_id in self._lost_pushed or entity_id in self._lost_timers) and new_state not in (
+            None,
+            *UNAVAILABLE_STATES,
+        ):
+            self._on_sensor_back(entity_id)
         if self.ctx.state is AlarmState.ARMING and entity_id in self._exit_doors:
             self._on_exit_door(new_state)
 
@@ -2438,18 +2456,51 @@ class HauswachtRuntime:
     def _on_sensor_lost(self, entity_id: str) -> None:
         _LOGGER.warning("Überwachter Sensor nicht mehr verfügbar: %s", entity_id)
         self.fire_event({"type": "SensorUnavailable", "sensor_key": entity_id})
-        self.notifier.notify(
-            NotifyEvent.FAULT,
-            *sensor_lost_message(entity_id, self.lang),
-            test_mode=self.ctx.test_mode,
-        )
-        title, message = sensor_lost_message(entity_id, self.lang)
+        title, message = sensor_lost_message(display_name(self.hass, entity_id), self.lang)
+        # Push erst nach kurzer Wartezeit: fällt gleichzeitig z. B. Zigbee2MQTT aus, meldet
+        # das die Störungsnachricht – nicht zusätzlich jeder einzelne Melder
+        if entity_id not in self._lost_pushed and entity_id not in self._lost_timers:
+
+            @callback
+            def _send(_now: Any) -> None:
+                self._lost_timers.pop(entity_id, None)
+                self._push_sensor_lost(entity_id, title, message)
+
+            self._lost_timers[entity_id] = async_call_later(self.hass, LOST_SETTLE_SECONDS, _send)
         persistent_notification.async_create(
             self.hass,
             message + tr(self.lang, "sensor_lost_armed"),
             title=title,
             notification_id=f"{NOTIFICATION_ALARM}_{entity_id}",
         )
+
+    def _push_sensor_lost(self, entity_id: str, title: str, message: str) -> None:
+        if self._effective_state(entity_id) not in (None, *UNAVAILABLE_STATES):
+            return  # schon wieder da
+        if self.main.faulty_infrastructure():
+            return  # die Störungsnachricht nennt die Ursache
+        sent = self.notifier.notify(
+            NotifyEvent.FAULT,
+            title,
+            message,
+            data={"tag": lost_tag(entity_id)},
+            test_mode=self.ctx.test_mode,
+        )
+        if sent:
+            self._lost_pushed[entity_id] = set(sent)
+
+    def _on_sensor_back(self, entity_id: str) -> None:
+        """Ausgefallener Melder meldet sich wieder: seine Ausfall-Nachricht verschwindet."""
+        if (timer := self._lost_timers.pop(entity_id, None)) is not None:
+            timer()
+        if (targets := self._lost_pushed.pop(entity_id, None)) is not None:
+            self.notifier.clear(targets, lost_tag(entity_id))
+        persistent_notification.async_dismiss(self.hass, f"{NOTIFICATION_ALARM}_{entity_id}")
+
+    def _cancel_lost_timers(self) -> None:
+        for timer in self._lost_timers.values():
+            timer()
+        self._lost_timers.clear()
 
     def _rejection_placeholders(
         self, open_sensors: frozenset[str], unavailable: frozenset[str]
@@ -2706,7 +2757,7 @@ class HauswachtRuntime:
     ) -> None:
         """Scharf-/Unscharf-Nachricht: ersetzt die vorige auf dem Handy (gleicher ``tag``),
         bei Empfängern, die diesmal nichts bekommen, wird die alte weggeräumt."""
-        sent = set(
+        self._state_replace(
             self.notifier.notify(
                 event,
                 title,
@@ -2716,9 +2767,13 @@ class HauswachtRuntime:
                 test_mode=self.ctx.test_mode,
             )
         )
-        if stale := self._state_pushed - sent:
+
+    def _state_replace(self, sent: list[str]) -> None:
+        """Neue Scharf-/Unscharf-Nachricht verschickt: bei den übrigen die alte wegräumen."""
+        now = set(sent)
+        if stale := self._state_pushed - now:
             self.notifier.clear(stale, self._state_tag)
-        self._state_pushed = sent
+        self._state_pushed = now
 
     def _clear_state_push(self) -> None:
         if self._state_pushed:
@@ -2741,11 +2796,24 @@ class HauswachtRuntime:
         values: dict[str, Any] = {"profil": profile, "wer": self.changed_by}
         if lines:
             values |= {"offen": ", ".join(open_names), "grund": gaps}
+        reason, self._auto_arm_reason = self._auto_arm_reason, None
+        tail = f" {tr(lang, 'arm_gaps_tail', items=gaps)}" if lines else ""
         if notify_enabled(self.entry.options, NotifyEvent.ARMED, push_disarm=self.push_disarm):
-            message = tr(lang, "armed", profile=profile, by=by)
-            if lines:
-                message = f"{message} {tr(lang, 'arm_gaps_tail', items=gaps)}"
-            self._state_push(NotifyEvent.ARMED, tr(lang, "armed_title"), message, values)
+            message = (
+                tr(lang, "auto_armed", profile=profile, reason=reason)
+                if reason is not None
+                else tr(lang, "armed", profile=profile, by=by)
+            )
+            self._state_push(NotifyEvent.ARMED, tr(lang, "armed_title"), message + tail, values)
+        elif reason is not None and self._automation_notify_on():
+            # Nur die Automatik-Nachricht (mit den Lücken), nicht zusätzlich den Hinweis
+            title, message = auto_armed_message(profile, reason, lang)
+            self._state_push(
+                NotifyEvent.AUTOMATION,
+                title,
+                message + tail,
+                {"profil": profile, "grund": reason},
+            )
         elif lines:
             message = tr(lang, "arm_gaps", profile=profile, by=by, items=gaps)
             self._state_push(NotifyEvent.ARM_HINT, tr(lang, "arm_hint_title"), message, values)
@@ -2779,21 +2847,72 @@ class HauswachtRuntime:
                 values={"wer": self.changed_by},
                 test_mode=self.ctx.test_mode,
             )
-        if (
-            effect.new is AlarmState.DISARMED
-            and effect.old is not AlarmState.DISARMED
-            and not self._via_push  # dort gibt es eine eigene Rückmeldung
-        ):
-            # Ersetzt die Scharf-Nachricht; wer keine Unscharf-Nachricht bekommt, bei dem
-            # verschwindet sie einfach
+        if effect.new is AlarmState.DISARMED and effect.old is not AlarmState.DISARMED:
+            self._notify_disarmed(by)
+
+    def _automation_notify_on(self) -> bool:
+        return notify_enabled(
+            self.entry.options, NotifyEvent.AUTOMATION, push_disarm=self.push_disarm
+        )
+
+    def _notify_disarmed(self, by: str) -> None:
+        """Eine Nachricht beim Unscharfschalten – sie ersetzt die Scharf-Nachricht; wer keine
+        Unscharf-Nachricht bekommt, bei dem verschwindet die alte einfach."""
+        lang = self.lang
+        self._auto_arm_reason = None
+        reason, self._auto_disarm_reason = self._auto_disarm_reason, None
+        if self._via_push is not None:
+            # Push-Knopf: Rückmeldung an die Alarm-Empfänger, ersetzt die Scharf-Nachricht
+            actor, targets = self._via_push
+            self._state_replace(
+                self.notifier.send(
+                    targets,
+                    tr(lang, "disarmed_title"),
+                    tr(lang, "push_disarmed", who=actor),
+                    test_mode=self.ctx.test_mode,
+                    data={"tag": self._state_tag},
+                )
+            )
+            return
+        profile = self.profile_name(reason[0]) if reason is not None else ""
+        if notify_enabled(self.entry.options, NotifyEvent.DISARMED, push_disarm=self.push_disarm):
+            message = (
+                tr(lang, "auto_disarmed", profile=profile, reason=reason[1])
+                if reason is not None
+                else tr(lang, "disarmed", by=by)
+            )
             self._state_push(
                 NotifyEvent.DISARMED,
                 tr(lang, "disarmed_title"),
-                tr(lang, "disarmed", by=by),
+                message,
                 {"wer": self.changed_by},
             )
-        elif effect.new is AlarmState.DISARMED and effect.old is not AlarmState.DISARMED:
+        elif reason is not None and self._automation_notify_on():
+            title, message = auto_disarmed_message(profile, reason[1], lang)
+            self._state_push(
+                NotifyEvent.AUTOMATION, title, message, {"profil": profile, "grund": reason[1]}
+            )
+        else:
             self._clear_state_push()
+
+    @callback
+    def auto_arm(self, profile_id: str, reason: str) -> None:
+        """Automatik schaltet scharf: der Grund steht dann in der einen Scharf-Nachricht."""
+        self._auto_arm_reason = reason
+        try:
+            self.arm(profile_id, changed_by=tr(self.lang, "automation_actor"))
+        finally:
+            if self.ctx.state is AlarmState.DISARMED:
+                self._auto_arm_reason = None  # gescheitert
+
+    @callback
+    def auto_disarm(self, profile_id: str, reason: str) -> None:
+        """Automatik schaltet unscharf: der Grund steht in der einen Unscharf-Nachricht."""
+        self._auto_disarm_reason = (profile_id, reason)
+        try:
+            self.disarm_trusted(changed_by=tr(self.lang, "automation_actor"))
+        finally:
+            self._auto_disarm_reason = None
 
     @callback
     def _on_acknowledged(self, effect: AlarmAcknowledged) -> None:
@@ -2807,18 +2926,22 @@ class HauswachtRuntime:
             message += tr(lang, "alarm_ended_bypassed", sensors=names)
         _LOGGER.warning(message)
         targets = parse_reaction(self.entry.options, effect.profile_id).notify
-        if self._pushed_targets:
-            self.notifier.clear(self._pushed_targets, PUSH_TAG)
-            self._pushed_targets.clear()
-        self.notifier.notify(
-            NotifyEvent.ALARM_ENDED,
-            tr(lang, "alarm_ended_title"),
-            message,
-            profile_targets=targets,
-            profile_speakers=self._profile_speakers(effect.profile_id),
-            values={"wer": self.changed_by, "profil": name},
-            test_mode=self.ctx.test_mode,
+        # Ersetzt die Alarm-Nachricht (gleicher tag) und verschwindet beim Unscharfschalten
+        sent = set(
+            self.notifier.notify(
+                NotifyEvent.ALARM_ENDED,
+                tr(lang, "alarm_ended_title"),
+                message,
+                profile_targets=targets,
+                profile_speakers=self._profile_speakers(effect.profile_id),
+                values={"wer": self.changed_by, "profil": name},
+                data={"tag": PUSH_TAG},
+                test_mode=self.ctx.test_mode,
+            )
         )
+        if stale := self._pushed_targets - sent:
+            self.notifier.clear(stale, PUSH_TAG)
+        self._pushed_targets = sent
         persistent_notification.async_dismiss(self.hass, NOTIFICATION_ALARM)
 
     @callback

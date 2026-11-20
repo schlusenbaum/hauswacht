@@ -55,6 +55,8 @@ class InputOutcome:
     # Aktions-Code ausgeführt (Zigbee2MQTT zeigt danach den Zustand statt der Taste)
     action_code: bool = False
     emergency: bool = False
+    # Scharfschalten gescheitert und schon gemeldet ("Scharfschalten nicht möglich" mit Knöpfen)
+    reported: bool = False
 
 
 def public_result(outcome: InputOutcome) -> str:

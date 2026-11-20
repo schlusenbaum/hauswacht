@@ -43,7 +43,6 @@ from .core.automation import (
 from .core.homecoming import presence
 from .core.notify_events import NotifyEvent
 from .core.profiles import profile_ids
-from .core.reactions import auto_armed_message, auto_disarmed_message
 from .core.state_machine import AlarmState
 from .core.texts import tr
 
@@ -327,7 +326,9 @@ class AutomationRunner:
             )
             return
         try:
-            runtime.arm(profile_id, changed_by=tr(runtime.lang, "automation_actor"))
+            # Die Nachricht "automatisch scharf" verschickt die Runtime – als eine Nachricht
+            # zusammen mit "Scharf geschaltet" (und den Lücken), nicht als zweite
+            runtime.auto_arm(profile_id, self._reason(reason))
         except HomeAssistantError as err:
             details = str(err) or type(err).__name__
             _LOGGER.warning("Automatisches Scharfschalten von %s fehlgeschlagen: %s", name, details)
@@ -336,12 +337,6 @@ class AutomationRunner:
             return
         self.auto_armed_by = profile_id
         self._event("AutoArmed", profile_id, reason=reason)
-        runtime.notifier.notify(
-            NotifyEvent.AUTOMATION,
-            *auto_armed_message(name, self._reason(reason), runtime.lang),
-            values={"profil": name, "grund": reason},
-            test_mode=runtime.ctx.test_mode,
-        )
 
     @callback
     def auto_disarm(
@@ -368,16 +363,8 @@ class AutomationRunner:
             return
         if only_if_auto and self.auto_armed_by != profile_id:
             return
-        runtime.disarm_trusted(changed_by=tr(runtime.lang, "automation_actor"))
+        runtime.auto_disarm(profile_id, self._reason(reason))
         self._event("AutoDisarmed", profile_id, reason=reason)
-        runtime.notifier.notify(
-            NotifyEvent.AUTOMATION,
-            *auto_disarmed_message(
-                runtime.profile_name(profile_id), self._reason(reason), runtime.lang
-            ),
-            values={"profil": runtime.profile_name(profile_id), "grund": reason},
-            test_mode=ctx.test_mode,
-        )
 
     def _reason(self, reason: str) -> str:
         """Grund für den Nachrichtentext in der Sprache von Home Assistant."""
