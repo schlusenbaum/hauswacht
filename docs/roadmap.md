@@ -32,7 +32,7 @@
 | 0.45 | Verhalten nach Neustart einstellbar: vorherigen Zustand wiederherstellen (Standard), immer scharf, immer unscharf |
 | 0.46 | Sirenen, die vor einem Neustart liefen, werden danach ausgeschaltet (nicht während eines Brandes) |
 | 0.47 | Namen für RFID-Karten, Finger und Schloss-Kennungen („Schlüsselbund“) – in Nachrichten, Logbuch und Systemübersicht |
-| 0.48 | Eigene Dialoge „Karten“ und „PINs“ mit Übersicht wer was hat, Karten deaktivieren, „zuletzt benutzt“, neue Karte am Keypad anlernen ohne Warten; die Code-Entität des Keypads wird automatisch deaktiviert (der eingegebene Code stand dort im Klartext) |
+| 0.48 | Eigene Dialoge „Karten“ und „PINs“ mit Übersicht wer was hat, Karten deaktivieren, „zuletzt benutzt“, neue Karte am Keypad anlernen ohne Warten; die Code-Entität des Keypads wird deaktiviert (der eingegebene Code stand dort im Klartext; seit 0.58.3 erst nach Bestätigung über eine Reparatur) |
 | 0.49 | Aktions-Codes: Code + Taste am Keypad startet eigene Automationen (Ereignis-Entität), schaltet Meldergruppen scharf oder löst einen stillen Notruf aus; Keypad als Gerät auswählen statt MQTT-Topic eintippen |
 | 0.50 | Scharf erzwingen am Keypad: bei offenen Meldern innerhalb von 10 s noch einmal bestätigen (Recht je Benutzer) |
 | 0.51 | Gastmodus (Schalter, Dienst, Alarmkarte; bis Uhrzeit oder bis aus) – keine Profil-Automatik und keine Erinnerungen; laufenden Alarm nach Neustart fortsetzen (Einstellung, Standard aus); „Alarm vor dem Neustart“ als wichtige Alarm-Nachricht |

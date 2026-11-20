@@ -2107,6 +2107,17 @@
     "check_finding": {
       "title": "Hauswacht: {hint}",
       "description": "{hint}\n\n**Ändern:** {where}\n\nDieser Hinweis verschwindet von selbst, sobald es behoben ist (Prüfung stündlich). Alle Prüfhinweise zeigt die Karte „Hauswacht Übersicht“."
+    },
+    "code_entities": {
+      "title": "Hauswacht: PINs vom Keypad landen im Verlauf",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Code-Entität deaktivieren?",
+            "description": "Zigbee2MQTT legt für den am Keypad getippten Code eine eigene Entität an. Home Assistant speichert sie im Verlauf – also jede PIN im Klartext, auch in Backups. Hauswacht liest das Keypad direkt und braucht sie nicht.\n\nNach deiner Bestätigung werden diese Entitäten deaktiviert (wie unter Einstellungen → Entitäten → Deaktivieren):\n\n{entities}\n\nDu kannst sie dort jederzeit wieder einschalten – Hauswacht fragt dann nicht noch einmal. Bereits gespeicherte Einträge löscht Home Assistant mit dem normalen Aufräumen des Verlaufs (Standard: 10 Tage), sofort mit der Aktion „Recorder: Entitäten bereinigen“."
+          }
+        }
+      }
     }
   }
 }

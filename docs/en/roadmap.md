@@ -32,7 +32,7 @@
 | 0.45 | configurable behaviour after restart: restore the previous state (default), always armed, always disarmed |
 | 0.46 | sirens that were on before a restart are switched off afterwards (not during a fire) |
 | 0.47 | names for RFID cards, fingers and lock IDs ("key ring") – in messages, logbook and system overview |
-| 0.48 | separate dialogs "Cards" and "PINs" with an overview of who has what, disable cards, "last used", learn a new card at the keypad without waiting; the keypad's code entity is disabled automatically (it showed the entered code in plain text) |
+| 0.48 | separate dialogs "Cards" and "PINs" with an overview of who has what, disable cards, "last used", learn a new card at the keypad without waiting; the keypad's code entity is disabled (it showed the entered code in plain text; since 0.58.3 only after you confirm a repair) |
 | 0.49 | action codes: code + key at the keypad starts your own automations (event entity), arms sensor groups or triggers a silent emergency; pick the keypad as a device instead of typing the MQTT topic |
 | 0.50 | force arm at the keypad: with open sensors, confirm again within 10 s (right per user) |
 | 0.51 | guest mode (switch, service, alarm card; until a time or until switched off) – no profile automation and no reminders; resume a running alarm after a restart (setting, default off); "alarm before the restart" as an important alarm message |

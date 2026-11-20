@@ -571,39 +571,69 @@ def _z2m_entity(hass: HomeAssistant, device_name: str, key: str) -> str:
     return entry.entity_id
 
 
-async def test_keypad_code_entity_is_disabled(
+async def test_keypad_code_entity_offered_as_repair_not_changed(
     hass: HomeAssistant, mqtt_mock: MqttMockHAClient
 ) -> None:
+    """Die Code-Entität gehört der MQTT-Integration: Hauswacht ändert sie nicht selbst, sondern
+    bietet das Abschalten als Reparatur an – erst nach Bestätigung wird sie deaktiviert."""
+    from homeassistant.components.repairs import repairs_flow_manager  # noqa: PLC0415
     from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
 
-    push = async_mock_service(hass, "notify", PHONE)
+    from custom_components.hauswacht.const import DOMAIN, ISSUE_CODE_ENTITIES  # noqa: PLC0415
+
     code = _z2m_entity(hass, "Keypad Flur", "action_code")
     zone = _z2m_entity(hass, "Keypad Flur", "action_zone")
     other = _z2m_entity(hass, "Anderes Keypad", "action_code")  # nicht in Hauswacht
     await _setup(hass)
     registry = er.async_get(hass)
+    assert registry.async_get(code).disabled_by is None  # nichts eigenmächtig geändert
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_CODE_ENTITIES)
+    assert issue is not None
+    assert issue.is_fixable
+    assert issue.data == {"entities": code}
+    assert other not in str(issue.translation_placeholders)
+
+    # Bestätigen: jetzt wird nur die Code-Entität deaktiviert
+    manager = repairs_flow_manager(hass)
+    assert manager is not None
+    flow = await manager.async_init(DOMAIN, data={"issue_id": ISSUE_CODE_ENTITIES})
+    assert flow["step_id"] == "confirm"
+    flow = await manager.async_configure(flow["flow_id"], {})
+    await hass.async_block_till_done()
     assert registry.async_get(code).disabled_by is er.RegistryEntryDisabler.USER
-    assert registry.async_get(zone).disabled_by is None  # nur der Code
+    assert registry.async_get(zone).disabled_by is None
     assert registry.async_get(other).disabled_by is None
-    assert any(code in c.data["message"] for c in push)
-    # bewusst wieder eingeschaltet: Hauswacht überstimmt das nicht (auch nicht nach Neustart)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_CODE_ENTITIES) is None
+
+    # bewusst wieder eingeschaltet: Hauswacht fragt nicht noch einmal (auch nach Neustart)
     registry.async_update_entity(code, disabled_by=None)
     await hass.async_block_till_done()
     entry = hass.config_entries.async_entries("hauswacht")[0]
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     assert registry.async_get(code).disabled_by is None
+    assert ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_CODE_ENTITIES) is None
 
 
-async def test_code_entity_created_later_is_disabled(
+async def test_code_entity_created_later_is_offered(
     hass: HomeAssistant, mqtt_mock: MqttMockHAClient
 ) -> None:
     from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    from custom_components.hauswacht.const import DOMAIN, ISSUE_CODE_ENTITIES  # noqa: PLC0415
 
     await _setup(hass)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_CODE_ENTITIES) is None
     code = _z2m_entity(hass, "Keypad Flur", "action_code")
     await hass.async_block_till_done()
-    assert er.async_get(hass).async_get(code).disabled_by is er.RegistryEntryDisabler.USER
+    assert er.async_get(hass).async_get(code).disabled_by is None
+    assert ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_CODE_ENTITIES) is not None
+    # Selbst deaktiviert: Meldung verschwindet
+    er.async_get(hass).async_update_entity(code, disabled_by=er.RegistryEntryDisabler.USER)
+    await hass.async_block_till_done()
+    assert ir.async_get(hass).async_get_issue(DOMAIN, ISSUE_CODE_ENTITIES) is None
 
 
 ACTION_CODES = {

@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.58.2:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.58.3:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -259,6 +259,7 @@ Special notes for very old versions:
 
 Settings → Devices & services → Hauswacht → ⋮ → **Delete**, then remove it in the Marketplace or
 in HACS. Hauswacht has not changed any devices, automations or scripts; nothing is left behind
-except threshold helpers you may have created yourself (under Helpers). Only exception: the code
-entity of the keypads (e.g. `sensor.keypad_hallway_action_code`) stays disabled – enable it again
-under Settings → Entities if needed.
+except threshold helpers you may have created yourself (under Helpers). If you confirmed the
+[repair for the keypads' code entity](control-devices.md), that entity (e.g.
+`sensor.keypad_hallway_action_code`) stays disabled – enable it again under Settings → Entities
+if needed.
