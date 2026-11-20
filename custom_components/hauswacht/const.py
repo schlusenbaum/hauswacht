@@ -59,6 +59,8 @@ PUSH_ARM_TAG: Final = "hauswacht_arm"
 PUSH_STATE_TAG: Final = "hauswacht_state"
 # Falsche PIN-Eingaben: nur die letzte Warnung bleibt auf dem Handy stehen
 PUSH_CODE_TAG: Final = "hauswacht_code"
+# Ausgefallener Melder: eine Nachricht je Melder (Tag + Entität), weg, sobald er wieder da ist
+PUSH_LOST_TAG: Final = "hauswacht_lost"
 # Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)
 OPT_BUTTONS_WITHOUT_PIN: Final = "buttons_without_pin"
 MASTER_USER_ID: Final = "master"

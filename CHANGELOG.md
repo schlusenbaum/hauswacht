@@ -6,6 +6,31 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.58.2] - 2026-11-20
+
+**Jede Meldung nur einmal – und alte verschwinden.**
+
+### Behoben
+- **Automatisch scharf/unscharf kam doppelt** – „Scharf geschaltet (Automatik)“ und zusätzlich
+  „Automatisch scharf geschaltet (Uhrzeit)“, ebenso beim Unscharfschalten. Jetzt kommt eine
+  Nachricht: Ist „Scharf geschaltet“ bzw. „Unscharf geschaltet“ an, steht der Grund darin, sonst
+  kommt nur die Automatik-Nachricht. Sie ersetzen einander wie das normale Scharf/Unscharf.
+- **Unscharf über den Push-Knopf:** Die Rückmeldung blieb dauerhaft stehen; jetzt ersetzt sie die
+  Scharf-Nachricht.
+- **Ausgefallene Melder** wurden bei jedem Ausfall neu gemeldet und nie weggeräumt, mit dem
+  technischen Namen (`binary_sensor.…`). Jetzt: eine Nachricht je Melder, mit seinem Namen; sie
+  verschwindet, sobald er sich wieder meldet. Hauswacht wartet dafür 10 Sekunden – ist er bis
+  dahin zurück, kommt nichts. Fällt gleichzeitig das Funknetz aus (z. B. Zigbee2MQTT), kommt nur
+  die Störungsmeldung statt zusätzlich einer für jeden Melder.
+- **Taster, Kartenleser, NFC-Aufkleber, Türschloss:** Scheitert das Scharfschalten, kam neben
+  „Scharfschalten nicht möglich“ (mit Knöpfen) noch „Bedienteil abgelehnt“. Jetzt nur die erste.
+- **„Alarm beendet“** (scharf bleibt) ersetzt jetzt die Alarm-Nachricht und verschwindet beim
+  Unscharfschalten, statt stehen zu bleiben.
+
+### Dokumentation
+- Benachrichtigungen: neuer Abschnitt „Jede Meldung nur einmal“ mit Beispiel – deutsch und
+  englisch.
+
 ## [0.58.1] - 2026-11-19
 
 **Jedes Handy nur einmal unter den Empfängern.**

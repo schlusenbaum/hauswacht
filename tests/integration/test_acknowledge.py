@@ -83,8 +83,10 @@ async def test_push_button_during_alarm_ends_alarm(
     await hass.async_block_till_done()
     assert _state(hass).state == AlarmControlPanelState.ARMED_NIGHT
     messages = [c.data["message"] for c in push[1:]]
-    assert "clear_notification" in messages
+    # "Alarm beendet" ersetzt die Alarm-Nachricht (gleicher tag) statt sie wegzuräumen
+    assert "clear_notification" not in messages
     assert any("Alarm ended by" in m and "stays armed" in m for m in messages)
+    assert push[-1].data["data"]["tag"] == push[0].data["data"]["tag"]
 
 
 # --- Knöpfe "Unscharf schalten" und "Alarm beenden" --------------------------

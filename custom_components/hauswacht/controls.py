@@ -730,20 +730,24 @@ class ControlManager:
             return None
         return self.random_seen
 
-    def _execute(  # noqa: PLR0913
+    def _execute_and_confirm(
         self,
         control: Control,
         action: Action,
         profile: str | None,
         identity: Identity | None,
-        actor: str | None = None,
-        *,
-        confirmed: bool = False,
+        who: str,
     ) -> str:
-        """Unscharf oder scharf schalten. Liefert "ok" oder eine Keypad-Antwort."""
-        outcome = self._execute_outcome(
-            control, action, profile, identity, actor, confirmed=confirmed
-        )
+        """Schalten und bei Ablehnung Bescheid geben – aber nur, wenn das nicht schon die
+        Nachricht "Scharfschalten nicht möglich" (mit Knöpfen) getan hat."""
+        outcome = self._execute_outcome(control, action, profile, identity)
+        result = self._reply_of(outcome, action)
+        if not outcome.reported:
+            self._confirm(control, action, result, who)
+        return result
+
+    @staticmethod
+    def _reply_of(outcome: InputOutcome, action: Action) -> str:
         if outcome.result == KeypadResult.OK:
             return "ok"
         if outcome.result == KeypadResult.ALREADY_DISARMED:
@@ -798,6 +802,7 @@ class ControlManager:
                 KeypadResult.NOT_READY.value,
                 open_sensors=err.open_sensors,
                 can_force=err.confirmable,
+                reported=True,
             )
         except HomeAssistantError:
             return InputOutcome(KeypadResult.NOT_READY.value)
@@ -939,9 +944,9 @@ class ControlManager:
                 tr(self.runtime.lang, "sticker_denied", sticker=sticker.name),
             )
             return "rejected"
-        result = self._execute(sticker, action, sticker.profile, Identity("phone", (user,)))
-        self._confirm(sticker, action, result, user.name)
-        return result
+        return self._execute_and_confirm(
+            sticker, action, sticker.profile, Identity("phone", (user,)), user.name
+        )
 
     async def _reader(self, reader: Control, tag_id: str) -> str:
         """Fester Leser: Karte eines Benutzers (allein oder mit PIN an einem Keypad)."""
@@ -952,9 +957,9 @@ class ControlManager:
             return "pending"
         if identity is None:
             return "rejected"
-        result = self._execute(reader, action, reader.profile, identity)
-        self._confirm(reader, action, result, identity_label(identity, self.runtime.lang))
-        return result
+        return self._execute_and_confirm(
+            reader, action, reader.profile, identity, identity_label(identity, self.runtime.lang)
+        )
 
     def _confirm(self, control: Control, action: Action, result: str, who: str) -> None:
         if result == "ok":
@@ -1022,9 +1027,7 @@ class ControlManager:
                 tr(lang, "button_pin_required", control=control.name),
             )
             return "pin_required"
-        result = self._execute(control, Action.ARM, profile, None)
-        self._confirm(control, Action.ARM, result, control.name)
-        return result
+        return self._execute_and_confirm(control, Action.ARM, profile, None, control.name)
 
     @callback
     def lock_identified(self, control: Control, event: LockEvent | None) -> None:
@@ -1099,16 +1102,12 @@ class ControlManager:
         if intent == UNLOCK:
             if not self._armed(control):
                 return "already_disarmed"
-            result = self._execute(control, Action.DISARM, None, found)
-            self._confirm(control, Action.DISARM, result, who)
-            return result
+            return self._execute_and_confirm(control, Action.DISARM, None, found, who)
         if intent == LOCK and control.profile:
             area = self._area_of_profile(control, control.profile)
             if area is None or not area.is_disarmed:
                 return "ignored"
-            result = self._execute(control, Action.ARM, control.profile, found)
-            self._confirm(control, Action.ARM, result, who)
-            return result
+            return self._execute_and_confirm(control, Action.ARM, control.profile, found, who)
         return "ignored"
 
     def _learn_lock(self, identity: str, control: Control) -> None:
