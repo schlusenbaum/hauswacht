@@ -396,6 +396,7 @@ async def test_departure_through_door_and_silent_pause(
     assert earliest["longest_pause_minutes"] == 40
     wifi = next(v for k, v in attributes["departure"].items() if "wifi" in k.casefold())
     assert wifi["max_seconds"] == 90
+    assert attributes["departure_days"] < 1  # zählt erst ab Beginn der Messung "Weggehen"
     advice = attributes["leaving_advice"]["Anna"]
     assert advice["status"] == "few"  # erst ab 3× Rausgehen und 2 Tagen
     assert advice["wait_minutes"] == 4  # 150 s + 1 min Puffer, aufgerundet

@@ -159,7 +159,7 @@ Heimkehr-Beobachtung**, im zweiten Schritt. Dieselben Signale nutzt auch die
 einer Stelle ein.
 
 Geeignet sind z. B. der WLAN-Sensor der Companion App, Bluetooth (Bermuda), ein Router-Tracker,
-die Richtung aus der Integration „Nähe“ oder ein beliebiger Binärsensor (an = zuhause) – etwa
+die Richtung aus der Integration „Nähe“ (oder „Places“) oder ein beliebiger Binärsensor (an = zuhause) – etwa
 eine HomeKit-Variable „Martin zuhause“.
 
 | Die Person gilt als … | wenn … |

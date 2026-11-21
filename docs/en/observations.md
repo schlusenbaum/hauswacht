@@ -58,6 +58,7 @@ under [Profiles → How Hauswacht knows who is home](profiles.md#how-hauswacht-k
 | Bluetooth | e.g. Bermuda with the BLE transmitter of the Android app | `device_tracker` = home |
 | Router | e.g. FRITZ!Box Tools (no app needed, but slow) | `device_tracker` = home |
 | Approach | integration **"Proximity"** (Settings → Devices & services → Add integration → Proximity; zone Home, persons): sensor `sensor.<proximity>_<person>_direction_of_travel` | towards or arrived; window 15 min instead of 5 min, because the approach often comes minutes before the door |
+| Approach (Places) | add-on integration **Places** (HACS): sensor `sensor.places_<person>_direction_of_travel` | "towards home" = home, "away from home" = away, "stationary" does not count (from 0.60) |
 | Binary sensor | any | on |
 
 In addition, Hauswacht evaluates the **"earliest signal"** per person: home as soon as any source
@@ -134,8 +135,9 @@ How to read it:
 - **recommended waiting time:** longest measured time from "door open" to "away" plus a buffer
   (25 %, at least 1 minute), rounded up to whole minutes, between 1 and 15 minutes. Later,
   Hauswacht would wait silently this long before raising the alarm.
-- **reliable:** the person left through a door at least 3 times, the observation ran for at least
-  2 days, and there was **no** silent pause longer than the waiting time.
+- **reliable:** the person left through a door at least 3 times, leaving has been measured for at
+  least 2 days (counted from installing 0.60, not from the start of the homecoming observation;
+  attribute `departure_days`), and there was **no** silent pause longer than the waiting time.
 - **Warning "silent":** all signals of the person were already quiet for longer than the waiting
   time without a door opening. If such a pause fell into the waiting time after a break-in,
   Hauswacht would take it for "leaving". Remedy: an additional signal that does not sleep – best
@@ -150,7 +152,8 @@ How to read it:
 Persons with a warning will **not be excluded** later – the warning only shows that detection
 would be uncertain for them.
 
-The values are also in the attributes `departure` (per source) and `leaving_advice` (per person)
+The values are also in the attributes `departure` (per source), `leaving_advice` (per person) and
+`departure_days` (days since the measurement started)
 of the sensor "Homecoming observation", and every single measurement as a "Leaving" row in the
 **table (CSV)**.
 

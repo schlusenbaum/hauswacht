@@ -122,6 +122,9 @@ def test_presence_for_more_signal_kinds() -> None:
     assert presence("arrived") is True
     assert presence("away_from") is False
     assert presence("stationary") is None
+    # Zusatz-Integration "Places"
+    assert presence("towards home") is True
+    assert presence("away from home") is False
     assert presence("home") is True
     assert presence("Arbeit") is False
 

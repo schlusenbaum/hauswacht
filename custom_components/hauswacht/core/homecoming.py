@@ -41,8 +41,10 @@ MAX_AGE = 60 * 86400  # s: ältere Daten werden verworfen
 MAX_RECORDS = 5000
 
 
-DIRECTION_HOME = frozenset({"towards", "arrived"})
-DIRECTION_AWAY = frozenset({"away_from"})
+# Richtung: Integration "Nähe" (towards, arrived, away_from, stationary) und die
+# Zusatz-Integration "Places" (towards home, away from home, stationary)
+DIRECTION_HOME = frozenset({"towards", "arrived", "towards home"})
+DIRECTION_AWAY = frozenset({"away_from", "away from home"})
 DIRECTION_NEUTRAL = frozenset({"stationary"})
 APPROACH_WINDOW = 900  # s: Annäherung kommt oft Minuten vor der Tür
 EARLIEST = "#frühestes"  # Kennung der Kombination je Person: "<person>#frühestes"
@@ -53,7 +55,8 @@ def presence(state: str | None, ssids: frozenset[str] = frozenset()) -> bool | N
 
     - Tracker/Person: ``home`` = zuhause, alles andere (``not_home``, andere Zone) = weg
     - Binärsensor: ``on`` = zuhause, ``off`` = weg
-    - Richtung (Nähe): nähert sich/angekommen = zuhause, entfernt sich = weg, steht = unbekannt
+    - Richtung (Nähe, Places): nähert sich/angekommen = zuhause, entfernt sich = weg,
+      steht = unbekannt
     - WLAN-Sensor: Name eines Heim-WLANs = zuhause, sonst weg
     """
     if state is None or state in IGNORED_STATES or state in DIRECTION_NEUTRAL:

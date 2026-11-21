@@ -100,6 +100,7 @@ class HomecomingObserver:
         self.arrivals: list[dict[str, Any]] = []
         self.departures: list[dict[str, Any]] = []
         self.since: float | None = None
+        self.departure_since: float | None = None  # Beginn der Messung "Weggehen"
         self.entries: list[dict[str, Any]] = []
         self._entry_open: dict[str, Any] | None = None
         self._combined: dict[str, PresenceState] = {}
@@ -118,10 +119,16 @@ class HomecomingObserver:
         self.departures = list(stored.get("departures", []))
         self.entries = list(stored.get("entries", []))
         self.since = stored.get("since")
+        self.departure_since = stored.get("departure_since")
         if not self.enabled:
             return
+        now = dt_util.utcnow().timestamp()
         if self.since is None:
-            self.since = dt_util.utcnow().timestamp()
+            self.since = now
+        if self.departure_since is None:
+            # Weggehen wird erst seit 0.60 gemessen – ältere Beobachtungstage zählen nicht
+            self.departure_since = now
+            self._store.async_delay_save(self._data, 10)
         self.refresh()
 
     @callback
@@ -263,6 +270,7 @@ class HomecomingObserver:
             "arrivals": self.arrivals,
             "departures": self.departures,
             "since": self.since,
+            "departure_since": self.departure_since,
             "entries": self.entries,
         }
 
@@ -330,7 +338,7 @@ class HomecomingObserver:
 
     def departure_advice(self) -> dict[str, dict[str, Any]]:
         """Je Person: Empfehlung für "Rausgehen ohne PIN erkennen" (ADR 0014)."""
-        return wait_advice(self.departure_verdicts(), self.days())
+        return wait_advice(self.departure_verdicts(), self.departure_days())
 
     @property
     def lang(self) -> str:
@@ -374,6 +382,12 @@ class HomecomingObserver:
         arrivals, doors = self._parsed()
         return evaluate(arrivals, doors, windows=self._windows(arrivals))
 
+    def departure_days(self) -> float:
+        """Tage, seit das Weggehen gemessen wird (für die Mindestdauer der Empfehlung)."""
+        if self.departure_since is None:
+            return 0.0
+        return max(0.0, (dt_util.utcnow().timestamp() - self.departure_since) / 86400)
+
     def days(self) -> float:
         if self.since is None:
             return 0.0
@@ -409,6 +423,7 @@ class HomecomingObserver:
                 names.get(k, k): v.as_dict()
                 for k, v in sorted(departure_stats(self.departure_verdicts()).items())
             },
+            "departure_days": round(self.departure_days(), 1),
             "leaving_advice": {
                 plain_name(self.hass, person): values
                 for person, values in self.departure_advice().items()
@@ -460,7 +475,7 @@ class HomecomingObserver:
         names = self.names()
         names.update({p: plain_name(self.hass, p) for p in self.persons})
         leaving = departure_lines(
-            departure_stats(verdicts), wait_advice(verdicts, self.days()), names, lang
+            departure_stats(verdicts), wait_advice(verdicts, self.departure_days()), names, lang
         )
         if leaving:
             text += "\n\n" + "\n".join(leaving)

@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b2] - 2026-11-21
+
+**Vorabversion: Beobachtung „Weggehen“ – Korrekturen.**
+
+### Behoben
+- Die Mindestdauer von 2 Tagen für die Empfehlung zählt jetzt ab Beginn der Messung „Weggehen“,
+  nicht ab Start der Heimkehr-Beobachtung. Neues Attribut `departure_days`.
+- Richtungssensoren der Zusatz-Integration **Places** werden verstanden: „towards home“ =
+  zuhause, „away from home“ = weg. Bisher galten beide als „weg“ – auch für die Profil-Automatik.
+
 ## [0.60.0b1] - 2026-11-21
 
 **Vorabversion: Beobachtung „Weggehen“** (ADR 0014, Messung für die spätere Ausgangserkennung).

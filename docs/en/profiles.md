@@ -153,7 +153,7 @@ second step. The [homecoming observation](observations.md#additional-signals-per
 the same signals; you set them in one place only.
 
 Suitable are e.g. the Wi-Fi sensor of the companion app, Bluetooth (Bermuda), a router tracker,
-the direction from the Proximity integration or any binary sensor (on = home) – such as a
+the direction from the Proximity integration (or Places) or any binary sensor (on = home) – such as a
 HomeKit variable "Martin home".
 
 | The person counts as … | when … |

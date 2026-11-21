@@ -58,6 +58,7 @@ selbst wenn die Beobachtung aus ist. Wie die Automatik die Signale verbindet, st
 | Bluetooth | z. B. Bermuda mit dem BLE-Sender der Android-App | `device_tracker` = zuhause |
 | Router | z. B. FRITZ!Box Tools (ohne App, aber träge) | `device_tracker` = zuhause |
 | Annäherung | Integration **„Nähe“** (Einstellungen → Geräte & Dienste → Integration hinzufügen → Nähe; Zone Zuhause, Personen): Sensor `sensor.<nähe>_<person>_direction_of_travel` | nähert sich oder angekommen; Fenster 15 min statt 5 min, weil die Annäherung oft Minuten vor der Tür kommt |
+| Annäherung (Places) | Zusatz-Integration **Places** (HACS): Sensor `sensor.places_<person>_direction_of_travel` | „towards home“ = zuhause, „away from home“ = weg, „stationary“ zählt nicht (ab 0.60) |
 | Binärsensor | beliebig | an |
 
 Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: zuhause, sobald
@@ -134,8 +135,9 @@ So liest du das:
 - **empfohlene Wartezeit:** längste gemessene Zeit von „Tür auf“ bis „weg“ plus Puffer (25 %,
   mindestens 1 Minute), auf ganze Minuten aufgerundet, zwischen 1 und 15 Minuten. So lange
   würde Hauswacht später still warten, bevor es Alarm gibt.
-- **zuverlässig:** Die Person ist mindestens 3× durch eine Tür rausgegangen, es wurde
-  mindestens 2 Tage beobachtet, und es gab **keine** Schweigepause, die länger war als die
+- **zuverlässig:** Die Person ist mindestens 3× durch eine Tür rausgegangen, das Weggehen
+  wurde mindestens 2 Tage gemessen (gezählt ab der Installation von 0.60, nicht ab dem Start der
+  Heimkehr-Beobachtung; Attribut `departure_days`), und es gab **keine** Schweigepause, die länger war als die
   Wartezeit.
 - **Warnhinweis „geschwiegen“:** Alle Signale der Person waren schon länger als die Wartezeit
   still, ohne dass eine Tür aufging. Fiele so eine Pause in die Wartezeit nach einem Einbruch,
@@ -151,7 +153,8 @@ So liest du das:
 Personen mit Warnhinweis werden später **nicht ausgeschlossen** – der Hinweis zeigt nur, dass
 die Erkennung für sie unsicher wäre.
 
-Die Werte stehen auch in den Attributen `departure` (je Quelle) und `leaving_advice` (je Person)
+Die Werte stehen auch in den Attributen `departure` (je Quelle), `leaving_advice` (je Person) und
+`departure_days` (Tage seit Beginn der Messung)
 des Sensors „Heimkehr-Beobachtung“, und jede einzelne Messung als Zeile „Weggehen“ in der
 **Tabelle (CSV)**.
 
