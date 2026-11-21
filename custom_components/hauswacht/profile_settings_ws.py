@@ -26,6 +26,7 @@ from .core.automation import (
 )
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
+from .core.passage import MAX_WINDOW as PASSAGE_MAX_WINDOW
 from .core.passage import parse_passage, passage_from_input
 from .core.profiles import (
     DEFAULT_ALARM_CYCLES,
@@ -208,5 +209,6 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "settle": MAX_SETTLE,
             "passage_duration": PASSAGE_MAX_DURATION,
             "passage_after": PASSAGE_MAX_AFTER,
+            "passage_window": PASSAGE_MAX_WINDOW,
         },
     }

@@ -10,16 +10,24 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import Context, HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
+    MockUser,
     async_fire_time_changed,
     async_mock_service,
 )
 
-from custom_components.hauswacht.const import DOMAIN, PUSH_PASSAGE_TAG, PUSH_TAG
+from custom_components.hauswacht.const import (
+    DOMAIN,
+    PUSH_ACTION_EVENT,
+    PUSH_PASSAGE_PREFIX,
+    PUSH_PASSAGE_TAG,
+    PUSH_TAG,
+)
 from custom_components.hauswacht.core.passage import PASSAGE_TARGET
 from custom_components.hauswacht.core.pin import hash_pin
 
@@ -308,3 +316,102 @@ async def test_passage_action(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
     assert _passage(hass)["direction"] == "in"
+
+
+# --- Push-Knopf "Reinlassen" (0.59.0b2) ----------------------------------------------
+
+
+async def test_push_button_lets_in(hass: HomeAssistant, hass_admin_user: MockUser) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    options = _options()
+    options["push_disarm"] = True
+    options["profiles"]["night"]["notify"] = [PHONE]
+    await setup_entry(hass, make_entry(options))
+    await _arm_night(hass)
+    await _set(hass, DOOR, "on")
+    actions = [a["action"] for c in push for a in c.data.get("data", {}).get("actions", [])]
+    let_in = next(a for a in actions if a.startswith(PUSH_PASSAGE_PREFIX))
+    hass.bus.async_fire(
+        PUSH_ACTION_EVENT, {"action": let_in}, context=Context(user_id=hass_admin_user.id)
+    )
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert _passage(hass)["direction"] == "in"
+
+
+async def test_push_button_only_with_passage(hass: HomeAssistant) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    options = _options(enabled=False)
+    options["push_disarm"] = True
+    options["profiles"]["night"]["notify"] = [PHONE]
+    await setup_entry(hass, make_entry(options))
+    await _arm_night(hass)
+    await _set(hass, DOOR, "on")
+    actions = [a["action"] for c in push for a in c.data.get("data", {}).get("actions", [])]
+    assert actions
+    assert not any(a.startswith(PUSH_PASSAGE_PREFIX) for a in actions)
+
+
+# --- Handy-Reinlassen (0.59.0b2) -----------------------------------------------------
+
+FINJA = "person.finja"
+
+
+async def _phone_setup(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> list[ServiceCall]:
+    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja"})
+    push = await _setup(hass, persons=[FINJA], window=5)
+    await _arm_night(hass)
+    freezer.tick(timedelta(minutes=6))  # lange genug weg
+    return push
+
+
+async def test_phone_after_door_lets_in(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    push = await _phone_setup(hass, freezer)
+    await _set(hass, DOOR, "on")
+    assert _panel(hass) == AlarmControlPanelState.PENDING
+    hass.states.async_set(FINJA, "home", {"friendly_name": "Finja"})
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert "Finja (phone)" in _messages(push)[-1].data["message"]
+
+
+async def test_phone_before_door_lets_in_once(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    await _phone_setup(hass, freezer)
+    hass.states.async_set(FINJA, "home", {"friendly_name": "Finja"})
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=2))
+    await _set(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _set(hass, DOOR, "off")
+    await _set(hass, DOOR, "on")  # dieselbe Heimkehr lässt nicht noch einmal rein
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.PENDING
+
+
+async def test_phone_too_early_or_short_away_does_not_let_in(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    await _phone_setup(hass, freezer)
+    hass.states.async_set(FINJA, "home", {"friendly_name": "Finja"})
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=6))  # Zeitfenster 5 Minuten vorbei
+    await _set(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.PENDING
+    await _key(hass, "home")  # mit PIN rein
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _set(hass, DOOR, "off")
+    # Kurz weg (1 Minute) und zurück: zählt nicht als Heimkehr
+    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja"})
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=1))
+    hass.states.async_set(FINJA, "home", {"friendly_name": "Finja"})
+    await hass.async_block_till_done()
+    await _set(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.PENDING

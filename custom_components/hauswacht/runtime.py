@@ -67,6 +67,7 @@ from .const import (
     PUSH_ARM_TAG,
     PUSH_CODE_TAG,
     PUSH_LOST_TAG,
+    PUSH_PASSAGE_PREFIX,
     PUSH_PASSAGE_TAG,
     PUSH_STATE_TAG,
     PUSH_TAG,
@@ -1389,17 +1390,24 @@ class HauswachtRuntime:
         title = title or tr(self.lang, "btn_disarm")
         if not self.push_disarm or self._session is None:
             return {"tag": PUSH_TAG}
-        return {
-            "tag": PUSH_TAG,
-            "actions": [
+        actions = [
+            {
+                "action": f"{PUSH_ACTION_PREFIX}{self._session}",
+                "title": title,
+                # iOS: nur mit entsperrtem Gerät (Face ID / Code)
+                "authenticationRequired": True,
+            }
+        ]
+        if self.ctx.state is AlarmState.PENDING and self.passage_ready:
+            # Durchgang (ADR 0013): reinlassen statt unscharf – das Profil bleibt scharf
+            actions.append(
                 {
-                    "action": f"{PUSH_ACTION_PREFIX}{self._session}",
-                    "title": title,
-                    # iOS: nur mit entsperrtem Gerät (Face ID / Code)
+                    "action": f"{PUSH_PASSAGE_PREFIX}{self._session}",
+                    "title": tr(self.lang, "btn_passage"),
                     "authenticationRequired": True,
                 }
-            ],
-        }
+            )
+        return {"tag": PUSH_TAG, "actions": actions}
 
     def _alarm_targets(self) -> tuple[str, ...]:
         if self.ctx.profile is None:
@@ -1669,6 +1677,9 @@ class HauswachtRuntime:
             if action.startswith(prefix):
                 await self._on_push_arm(prefix, action[len(prefix) :], event.context.user_id)
                 return
+        if action.startswith(PUSH_PASSAGE_PREFIX) and self.push_disarm:
+            await self._on_push_passage(action, event.context.user_id)
+            return
         if not action.startswith(PUSH_ACTION_PREFIX) or not self.push_disarm:
             return
         if self._session is None or action != f"{PUSH_ACTION_PREFIX}{self._session}":
@@ -1701,6 +1712,30 @@ class HauswachtRuntime:
             self.disarm_trusted(changed_by=actor)
         finally:
             self._via_push = None
+
+    async def _on_push_passage(self, action: str, user_id: str | None) -> None:
+        """Push-Knopf "Reinlassen" (Durchgang, ADR 0013): bleibt scharf, Tür frei bis zu."""
+        if self._session is None or action != f"{PUSH_PASSAGE_PREFIX}{self._session}":
+            _LOGGER.warning("Veralteter Push-Knopf „Reinlassen“ ignoriert")
+            return
+        user = await self.hass.auth.async_get_user(user_id) if user_id else None
+        if user is None or not user.is_active or user.system_generated:
+            _LOGGER.warning("Push-Knopf ohne gültigen Home-Assistant-Benutzer ignoriert")
+            return
+        if self.ctx.state is not AlarmState.PENDING or not self.passage_ready:
+            return  # Eingangsverzögerung vorbei (Alarm) oder schon unscharf
+        try:
+            actor = await self.async_actor_for_user(user.id, Action.PASSAGE)
+        except ServiceValidationError:
+            self.notifier.send(
+                self._alarm_targets(),
+                tr(self.lang, "push_denied_title"),
+                tr(self.lang, "push_denied", who=user.name),
+                test_mode=self.ctx.test_mode,
+            )
+            return
+        _LOGGER.warning("Push-Knopf „Reinlassen“ durch %s", actor)
+        self.passage(actor or user.name)
 
     async def _on_push_arm(self, prefix: str, token: str, user_id: str | None) -> None:
         """Push-Knöpfe "Trotzdem scharf", "Erneut versuchen", "Jetzt scharf"."""

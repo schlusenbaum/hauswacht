@@ -9,6 +9,7 @@ from ..always_active import DEFAULT_SETTLE
 from ..areas import MAIN_AREA, profile_area
 from ..automation import (
     ARRIVAL_AUTO_ONLY,
+    ARRIVAL_DOOR,
     ARRIVAL_MODES,
     ARRIVAL_OFF,
     DEFAULT_ARRIVAL_WINDOW,
@@ -81,6 +82,14 @@ def validate_profile(
         "auto_away_persons"
     ):
         errors["base"] = "arrival_needs_persons"
+    passage = data.get("passage") or {}
+    if (
+        auto.get("auto_arrival_mode") == ARRIVAL_DOOR
+        and passage.get("enabled")
+        and passage.get("persons")
+    ):
+        # Dieselbe Heimkehr kann nicht zugleich unscharf schalten und nur reinlassen (ADR 0013)
+        errors["base"] = "passage_door_proof"
     return errors
 
 

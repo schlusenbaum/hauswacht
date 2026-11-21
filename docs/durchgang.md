@@ -2,9 +2,9 @@
 
 **Deutsch** | [English](en/passage.md)
 
-> **Vorabversion 0.59.0b1.** Reinkommen und Rausgehen am Keypad und per Aktion. Push-Knopf
-> „Reinlassen“, automatisches Reinlassen per Handy sowie Türschloss, NFC-Aufkleber und
-> Kartenleser folgen in den nächsten Vorabversionen.
+> **Vorabversion 0.59.0b2.** Reinkommen und Rausgehen am Keypad, per Aktion, per Push-Knopf
+> „Reinlassen“ und automatisch per Handy. Türschloss, NFC-Aufkleber und Kartenleser folgen in der
+> nächsten Vorabversion.
 
 Ein **Durchgang** lässt eine Tür kurz frei – das Profil **bleibt scharf**. Alle anderen Melder
 lösen weiter aus.
@@ -35,6 +35,8 @@ Profil):
 | Rausgehen: Ende | **Nach Ablauf der Zeit** (man kann mehrmals raus und rein) oder **schon, wenn ich zurück bin und die Tür zu ist** (die Tür ging zum zweiten Mal zu: raus und zurück) | nach Ablauf der Zeit |
 | Melder auf dem Weg | Außenmelder, die auf dem Weg auslösen würden – z. B. ein Bewegungsmelder in der Einfahrt, am Gartentor oder an den Mülltonnen | keine |
 | Reinkommen: Weg noch frei nach dem Schließen | So lange bleiben die Melder auf dem Weg noch frei, nachdem die Tür zu ist | 60 Sekunden |
+| Handy-Reinlassen: diese Personen | Diese Personen lässt Hauswacht ohne PIN herein, wenn ihr Handy heimkommt – siehe [Reinlassen per Handy](#reinlassen-per-handy) | keine (aus) |
+| Handy darf so lange vor der Tür „zuhause“ melden | Zeitfenster für das Handy-Reinlassen | 5 Minuten (1–30) |
 
 Als **Tür** zählen alle Melder mit der Rolle **Eingang** (sie starten die Eingangsverzögerung).
 Eine eigene Taste brauchst du nicht: Während das Profil scharf ist oder die Eingangsverzögerung
@@ -57,6 +59,54 @@ So läuft es ab:
    ersetzt die Nachricht zur Eingangsverzögerung.
 
 Mit PIN und **„Unscharf“** wird wie bisher ganz unscharf geschaltet.
+
+### Reinlassen per Push-Knopf
+
+Ist „Unscharf über Push-Knopf“ an (siehe [Benachrichtigungen](benachrichtigungen.md)), hat die
+Nachricht zur Eingangsverzögerung neben **[Unscharf]** auch **[Reinlassen]** – sofern das Profil
+den Durchgang erlaubt. Wer tippt, muss als Home-Assistant-Benutzer **unscharf schalten** dürfen
+(wie beim Knopf „Unscharf“).
+
+Beispiele: Finja steht an der Tür und tippt selbst auf „Reinlassen“. Oder du liegst im Bett, das
+Handy zeigt „Haustür geöffnet“, du siehst, dass es Niklas ist, und tippst „Reinlassen“. Es muss
+während der Eingangsverzögerung passieren; danach ist es ein Alarm.
+
+### Reinlassen per Handy
+
+Unter **„Handy-Reinlassen: diese Personen“** wählst du Personen, die Hauswacht **ohne PIN**
+hereinlässt, wenn ihr Handy heimkommt. Die Erkennung ist dieselbe wie bei
+[„Unscharf mit Türbeleg“](profile.md#unscharf-bei-rückkehr) – nur dass am Ende nicht unscharf
+geschaltet, sondern hereingelassen wird:
+
+- Die Person **kommt heim**: Sie war vorher **mindestens 5 Minuten sicher weg** und ist jetzt
+  zuhause (Personen-Entität plus die Signale unter „Anwesenheit und Heimkehr“). Ein Handy, das
+  die ganze Nacht im Haus liegt, öffnet also nichts.
+- Eine **Eingangstür** geht auf.
+- Das Handy meldet sich **bis zu x Minuten vor dem Öffnen** (Zeitfenster, Standard 5 Minuten)
+  **oder danach, solange die Eingangsverzögerung läuft**.
+
+| Was passiert | Ergebnis (Eingangsverzögerung 30 s, Zeitfenster 5 Minuten) |
+|---|---|
+| Handy meldet „zuhause“, 2 Minuten später geht die Tür auf | Beim Öffnen **hereingelassen** |
+| Tür geht auf, 20 s später meldet das Handy „zuhause“ | Nach 20 s **hereingelassen** |
+| Tür geht auf, das Handy meldet sich erst nach 45 s | Nach 30 s **Alarm** wie immer; das Handy beendet ihn nicht |
+| Handy meldet „zuhause“, erst 7 Minuten später geht die Tür auf | Zu lange her: normale Eingangsverzögerung |
+| Person war nur 2 Minuten weg | Zählt nicht als Heimkehr: normale Eingangsverzögerung |
+
+- **Eine Heimkehr lässt einmal rein.** Für die nächste Türöffnung muss das Handy erst wieder weg
+  gewesen sein.
+- Die Nachricht lautet z. B. „Finja (Handy) hereingelassen (Haustür) – Profil Nacht bleibt
+  scharf“ – ein Reinlassen, das nicht stimmt, fällt so sofort auf.
+- **Nicht zusammen mit „Unscharf mit Türbeleg“** im selben Profil: Dieselbe Heimkehr kann nicht
+  zugleich unscharf schalten und nur reinlassen. Die Einstellung lässt nur eins zu.
+- **Welche Eingangsverzögerung brauche ich?** Meldet sich das Handy oft erst nach dem Öffnen,
+  muss die Eingangsverzögerung so lange reichen. Die
+  [Heimkehr-Beobachtung](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg) rechnet das je
+  Person aus – der Wert gilt hier genauso.
+
+> **Restrisiko:** Wer das Handy einer freigegebenen Person **und** Zugang zur Tür hat (z. B.
+> Handy und Schlüssel gestohlen), kommt ohne Alarm herein. Für Profile wie „Urlaub“ deshalb
+> besser keine Personen eintragen.
 
 **Kommen zwei nacheinander**, braucht jede neue Türöffnung ihren eigenen Ausweis: Ist die Tür
 nach Finja zu, ist sie wieder scharf. Kommt Niklas drei Minuten später, läuft für ihn wieder die

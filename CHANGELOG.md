@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.59.0b2] - 2026-11-21
+
+**Vorabversion: Durchgang – Reinlassen per Push-Knopf und per Handy** (ADR 0013, Stufe 2).
+
+### Hinzugefügt
+- **Push-Knopf „Reinlassen“** neben „Unscharf“ in der Nachricht zur Eingangsverzögerung (wenn
+  „Unscharf über Push-Knopf“ an ist und das Profil den Durchgang erlaubt). Wer tippt, braucht das
+  Recht „unscharf schalten“.
+- **Handy-Reinlassen** je Profil mit eigener Personenliste: Kommt eine dieser Personen heim
+  (vorher mindestens 5 Minuten sicher weg) und geht eine Eingangstür auf, lässt Hauswacht sie
+  ohne PIN herein – wenn das Handy bis zu x Minuten vor dem Öffnen (Standard 5) oder noch
+  während der Eingangsverzögerung „zuhause“ meldet. Kommt es später, bleibt der Alarm ein Alarm.
+  Eine Heimkehr lässt einmal rein. Nachricht „Finja (Handy) hereingelassen …“.
+- „Unscharf mit Türbeleg“ und Handy-Reinlassen schließen sich im selben Profil aus (Prüfung auf
+  der Einstellungsseite und im Dialog).
+- Ereignis `PhoneArrivalNoted`.
+
+### Dokumentation
+- Durchgang: Abschnitte „Reinlassen per Push-Knopf“ und „Reinlassen per Handy“ mit Tabelle der
+  Zeitabläufe und Restrisiko; Referenz – deutsch und englisch.
+
+
 ## [0.59.0b1] - 2026-11-21
 
 **Vorabversion: Durchgang – rein oder raus, ohne unscharf zu schalten** (ADR 0013, Stufe 1).

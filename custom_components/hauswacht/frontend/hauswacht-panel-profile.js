@@ -28,6 +28,9 @@ const PT = {
     passageOutEnd: "Rausgehen: Ende",
     passagePath: "Melder auf dem Weg (z. B. Bewegungsmelder in der Einfahrt)",
     passagePathAfter: "Reinkommen: Weg noch frei nach dem Schließen (s)",
+    passagePersons: "Handy-Reinlassen: diese Personen (keine = aus)",
+    passageWindow: "Handy darf so lange vor der Tür „zuhause“ melden (Minuten)",
+    passagePhoneHint: "Kommt eine dieser Personen heim (vorher mindestens 5 Minuten sicher weg) und geht eine Eingangstür auf, lässt Hauswacht sie ohne PIN herein – wenn das Handy bis zu dieser Zeit vor dem Öffnen oder noch während der Eingangsverzögerung „zuhause“ meldet. Danach kommt der Alarm wie immer. Restrisiko: Wer Handy und Schlüssel hat, kommt ohne Alarm rein. Nicht zusammen mit „Unscharf mit Türbeleg“.",
     outDoors: { first: "nur die erste Tür, die aufgeht", all: "alle Eingangstüren" },
     outEnd: { time: "nach Ablauf der Zeit", returned: "schon, wenn ich zurück bin und die Tür zu ist" },
     name: "Name",
@@ -83,6 +86,7 @@ const PT = {
       panel_mode_taken: "Diesen Knopf hat in diesem Bereich schon ein anderes Profil.",
       excluded_not_in_groups: "Ausgenommene Melder müssen in den gewählten Gruppen sein.",
       arrival_needs_persons: "„Unscharf bei Rückkehr“ braucht Personen.",
+      passage_door_proof: "„Unscharf mit Türbeleg“ und Handy-Reinlassen gehen im selben Profil nicht zusammen.",
       unknown_profile: "Dieses Profil gibt es nicht mehr.",
       disarm_first: "Erst alle Bereiche unscharf schalten – dann lässt sich speichern.",
       changed_elsewhere: "Inzwischen wurde woanders etwas geändert. Die Seite lädt neu – bitte noch einmal.",
@@ -112,6 +116,9 @@ const PT = {
     passageOutEnd: "Going out: end",
     passagePath: "Sensors on the way (e.g. motion sensor in the driveway)",
     passagePathAfter: "Coming in: way still free after closing (s)",
+    passagePersons: "Let in by phone: these persons (none = off)",
+    passageWindow: "Phone may report “home” this long before the door (minutes)",
+    passagePhoneHint: "If one of these persons comes home (safely away for at least 5 minutes before) and an entry door opens, Hauswacht lets them in without PIN – if the phone reports “home” up to this time before the opening or while the entry delay is still running. After that the alarm comes as always. Residual risk: whoever has phone and key gets in without alarm. Not together with “disarm with door proof”.",
     outDoors: { first: "only the first door that opens", all: "all entry doors" },
     outEnd: { time: "when the time is up", returned: "as soon as I am back and the door is closed" },
     name: "Name",
@@ -167,6 +174,7 @@ const PT = {
       panel_mode_taken: "Another profile in this area already has this button.",
       excluded_not_in_groups: "Excluded sensors must be in the chosen groups.",
       arrival_needs_persons: "“Disarm on arrival” needs persons.",
+      passage_door_proof: "“Disarm with door proof” and letting in by phone do not go together in one profile.",
       unknown_profile: "This profile no longer exists.",
       disarm_first: "Disarm all areas first – then saving works.",
       changed_elsewhere: "Something was changed elsewhere in the meantime. The page reloads – please try again.",
@@ -316,6 +324,9 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("passageOutDoors"))}</label><select data-p="out_doors">${["first", "all"].map((v) => `<option value="${v}" ${v === pass.out_doors ? "selected" : ""}>${pe(t("outDoors", v))}</option>`).join("")}</select>
       <label>${pe(this._t("passageOutEnd"))}</label><select data-p="out_end">${["time", "returned"].map((v) => `<option value="${v}" ${v === pass.out_end ? "selected" : ""}>${pe(t("outEnd", v))}</option>`).join("")}</select>
       <label>${pe(this._t("passagePath"))}</label>${members.map((id) => `<div class="chk"><input type="checkbox" data-pm="path" value="${pe(id)}" ${pass.path.includes(id) ? "checked" : ""}><span>${pe(this._name(id))}</span></div>`).join("") || `<div class="muted">${pe(this._t("noMembers"))}</div>`}
+      <label>${pe(this._t("passagePersons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-pm="persons" value="${pe(x.id)}" ${pass.persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
+      <label>${pe(this._t("passageWindow"))}</label><input class="small" type="number" min="1" max="${lim.passage_window}" data-p="window" data-num="1" value="${pe(pass.window)}">
+      <div class="muted">${pe(this._t("passagePhoneHint"))}</div>
       ${this._err("base")}`;
   }
 
@@ -350,6 +361,7 @@ class HauswachtProfileEditor extends HTMLElement {
       d.passage[el.dataset.p] = el.type === "checkbox" ? el.checked : el.dataset.num ? Number(el.value) : el.value;
     });
     d.passage.path = [...root.querySelectorAll('[data-pm="path"]')].filter((el) => el.checked).map((el) => el.value);
+    d.passage.persons = [...root.querySelectorAll('[data-pm="persons"]')].filter((el) => el.checked).map((el) => el.value);
     // Ausgenommene nur aus den gewählten Gruppen
     const members = this._members(d.zones);
     d.excluded = d.excluded.filter((id) => members.includes(id));

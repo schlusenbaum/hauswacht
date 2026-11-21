@@ -82,6 +82,8 @@ OPT_HOMECOMING_PERSONS: Final = "homecoming_persons"
 # Aktions-Knopf in der Push-Benachrichtigung (Home-Assistant-App)
 PUSH_ACTION_EVENT: Final = "mobile_app_notification_action"
 PUSH_ACTION_PREFIX: Final = "HAUSWACHT_DISARM_"
+# Push-Knopf "Reinlassen" in der Eingangs-Nachricht (Durchgang, ADR 0013)
+PUSH_PASSAGE_PREFIX: Final = "HAUSWACHT_PASSAGE_"
 PUSH_TAG: Final = "hauswacht"
 
 NOTIFICATION_RESTART: Final = "hauswacht_restart"

@@ -101,6 +101,8 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "duress_passage": "einen Durchgang geöffnet (die Anlage bleibt scharf)",
         "passage_title": "Hauswacht: Durchgang",
         "passage_key": "Durchgang (rein/raus, bleibt scharf)",
+        "passage_by_phone": "{who} (Handy)",
+        "btn_passage": "Reinlassen",
         "passage_in": "{who} hereingelassen ({door}) – Profil {profile} bleibt scharf.",
         "passage_out": "{who}: Durchgang für {minutes} Minuten – Profil {profile} bleibt scharf.",
         "passage_open": "{door} nach dem Durchgang noch offen – wird nicht überwacht, bis sie "
@@ -311,6 +313,8 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "duress_passage": "open a passage (the system stays armed)",
         "passage_title": "Hauswacht: passage",
         "passage_key": "Passage (in/out, stays armed)",
+        "passage_by_phone": "{who} (phone)",
+        "btn_passage": "Let in",
         "passage_in": "{who} let in ({door}) – profile {profile} stays armed.",
         "passage_out": "{who}: passage for {minutes} minutes – profile {profile} stays armed.",
         "passage_open": "{door} still open after the passage – not monitored until it is "

@@ -250,7 +250,9 @@
               "out_doors": "Rausgehen: welche Tür",
               "out_end": "Rausgehen: Ende",
               "path": "Melder auf dem Weg (z. B. Bewegungsmelder in der Einfahrt)",
-              "path_after": "Reinkommen: Weg noch frei nach dem Schließen der Tür"
+              "path_after": "Reinkommen: Weg noch frei nach dem Schließen der Tür",
+              "persons": "Handy-Reinlassen: diese Personen (leer = aus)",
+              "window": "Handy-Reinlassen: so lange vor der Tür darf das Handy „zuhause“ melden"
             }
           }
         },
@@ -1519,7 +1521,8 @@
       "mqtt_topic_missing": "Bitte ein Basis-Topic angeben.",
       "mqtt_topic_invalid": "Das Topic darf kein `+` oder `#` enthalten und nicht mit `/` beginnen.",
       "mqtt_topic_z2m": "Unter `zigbee2mqtt` lauschen die Zigbee2MQTT-Keypads – bitte ein anderes Topic.",
-      "mqtt_topic_taken": "Dieses Topic (oder ein überlappendes) nutzt schon eine andere MQTT-Schnittstelle."
+      "mqtt_topic_taken": "Dieses Topic (oder ein überlappendes) nutzt schon eine andere MQTT-Schnittstelle.",
+      "passage_door_proof": "„Unscharf mit Türbeleg“ und „Handy-Reinlassen“ (Durchgang) gehen im selben Profil nicht zusammen – bitte eins von beiden wählen."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",

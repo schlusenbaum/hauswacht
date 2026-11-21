@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.59.0b1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.59.0b2 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -42,7 +42,8 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   Zeitplan; **Gastmodus**, damit Besuch nicht ausgesperrt wird.
 - **Durchgang** (Vorabversion) – rein oder raus, **ohne unscharf zu schalten**: nachts heimkommen
   mit PIN und irgendeiner Taste, kurz den Müll rausbringen (ebenso) – nur die benutzte Tür ist frei, alles
-  andere bleibt scharf.
+  andere bleibt scharf. Auch per Push-Knopf „Reinlassen“ oder automatisch, wenn das Handy
+  heimkommt.
 - **Gekippte Fenster und Erschütterung** – Fenstersensoren und -griffe mit drei Stellungen (zu,
   gekippt, offen): nachts gekippt erlaubt, ganz öffnen löst aus; bei Abwesenheit zählt gekippt wie
   offen. Erschütterungsmelder mit Fehlalarmschutz („2 Stöße in 60 Sekunden“), auch als Zahl.

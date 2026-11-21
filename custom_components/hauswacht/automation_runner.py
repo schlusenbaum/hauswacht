@@ -42,6 +42,7 @@ from .core.automation import (
 )
 from .core.homecoming import presence
 from .core.notify_events import NotifyEvent
+from .core.passage import PassageConfig, parse_passage
 from .core.profiles import profile_ids
 from .core.state_machine import AlarmState
 from .core.texts import tr
@@ -58,6 +59,8 @@ REASON_ARRIVAL_DOOR = "Rückkehr mit Türbeleg"
 REASON_RESTART = "Neustart"
 REASON_SCHEDULE = "Zeitplan"
 _PROOF_STATES = (AlarmState.ARMED, AlarmState.PENDING)
+# Handy-Reinlassen (ADR 0013): so lange muss die Person vorher sicher weg gewesen sein
+MIN_AWAY_FOR_PASSAGE = 5 * 60
 
 
 class AutomationRunner:
@@ -75,6 +78,11 @@ class AutomationRunner:
         self._door_at: dict[str, float] = {}  # Profil -> letzte Türöffnung (scharf)
         self._doors: frozenset[str] = frozenset()
         self._unsub_doors: CALLBACK_TYPE | None = None
+        # Handy-Reinlassen (Durchgang, ADR 0013)
+        self.passages: dict[str, PassageConfig] = {}
+        self._away_since: dict[str, float] = {}  # Person -> seit wann sicher weg
+        self._phone_arrival: dict[str, tuple[float, str]] = {}  # Profil -> (Zeit, Person)
+        self._phone_door_at: dict[str, float] = {}  # Profil -> letzte Türöffnung (scharf)
 
     # --- Lebenszyklus --------------------------------------------------------
 
@@ -118,6 +126,13 @@ class AutomationRunner:
                     )
                 )
             persons.update(cfg.away_persons)
+        self.passages = {
+            pid: passage
+            for pid in profile_ids(options)
+            if (passage := parse_passage(options, pid)).enabled and passage.persons
+        }
+        for passage in self.passages.values():
+            persons.update(passage.persons)
         schedules = sorted({cfg.schedule for cfg in self.configs.values() if cfg.schedule})
         if schedules:
             self._unsubs.append(
@@ -128,6 +143,9 @@ class AutomationRunner:
             for person in persons:
                 watched.update(self.signals.get(person, ()))
             self._home = {p: self.person_home(p) for p in persons}
+            # Wer beim Start schon weg ist, zählt ab jetzt als weg
+            started = dt_util.utcnow().timestamp()
+            self._away_since = {p: started for p, home in self._home.items() if home is False}
             self._unsubs.append(
                 async_track_state_change_event(self.hass, sorted(watched), self._on_person)
             )
@@ -138,7 +156,7 @@ class AutomationRunner:
         """Eingangstüren für "Unscharf mit Türbeleg" (neu) abonnieren."""
         doors = (
             self.runtime.entry_doors()
-            if any(cfg.door_proof for cfg in self.configs.values())
+            if any(cfg.door_proof for cfg in self.configs.values()) or self.passages
             else frozenset()
         )
         if doors == self._doors and (self._unsub_doors is not None or not doors):
@@ -170,6 +188,8 @@ class AutomationRunner:
         self.auto_armed_by = None
         self._arrival_at.clear()
         self._door_at.clear()
+        self._phone_arrival.clear()
+        self._phone_door_at.clear()
 
     # --- Uhrzeiten -----------------------------------------------------------
 
@@ -227,12 +247,23 @@ class AutomationRunner:
     def _on_person(self, _event: Event[EventStateChangedData]) -> None:
         now = dt_util.utcnow().timestamp()
         arrived: list[str] = []
+        long_away: list[str] = []  # Heimkehr nach mindestens 5 Minuten sicher weg
         for person in list(self._home):
             new = self.person_home(person)
             if self._home[person] is False and new is True:
                 arrived.append(person)
+                if now - self._away_since.get(person, now) >= MIN_AWAY_FOR_PASSAGE:
+                    long_away.append(person)
+            if new is False and self._home[person] is not False:
+                self._away_since[person] = now
             if new is not None:
                 self._home[person] = new
+        for pid, passage in self.passages.items():
+            coming = [p for p in long_away if p in passage.persons]
+            if coming and self._proof_active(pid):
+                self._phone_arrival[pid] = (now, coming[0])
+                self._event("PhoneArrivalNoted", pid, persons=coming)
+                self._check_phone(pid, passage)
         for pid, cfg in self.configs.items():
             if not cfg.away_persons:
                 continue
@@ -289,11 +320,41 @@ class AutomationRunner:
     @callback
     def _door_opened(self, entity_id: str) -> None:
         now = dt_util.utcnow().timestamp()
+        for pid, passage in self.passages.items():
+            if self._proof_active(pid):
+                self._phone_door_at[pid] = now
+                self._check_phone(pid, passage)
         for pid, cfg in self.configs.items():
             if cfg.door_proof and self._proof_active(pid):
                 self._door_at[pid] = now
                 self._event("DoorNoted", pid, door=entity_id)
                 self._check_door_proof(pid, cfg)
+
+    @callback
+    def _check_phone(self, profile_id: str, passage: PassageConfig) -> None:
+        """Handy-Reinlassen: Heimkehr und Türöffnung passen zusammen -> reinlassen.
+
+        Das Handy darf sich bis zu ``window`` Minuten vor dem Öffnen melden oder danach,
+        solange die Eingangsverzögerung läuft. Eine Heimkehr lässt einmal rein.
+        """
+        arrival = self._phone_arrival.get(profile_id)
+        door_at = self._phone_door_at.get(profile_id)
+        if arrival is None or door_at is None:
+            return
+        if self.runtime.ctx.state is not AlarmState.PENDING:
+            return  # nur in der Eingangsverzögerung (ein Alarm wird nie beendet)
+        arrived_at, person = arrival
+        if arrived_at < door_at - passage.window * 60:
+            return  # Heimkehr zu lange vor dem Öffnen
+        self._phone_arrival.pop(profile_id, None)
+        self._phone_door_at.pop(profile_id, None)
+        state = self.hass.states.get(person)
+        name = state.name if state is not None else person
+        by = tr(self.runtime.lang, "passage_by_phone", who=name)
+        try:
+            self.runtime.passage(by)
+        except HomeAssistantError as err:
+            _LOGGER.warning("Handy-Reinlassen nicht möglich: %s", err)
 
     @callback
     def _check_door_proof(self, profile_id: str, cfg: AutoConfig) -> None:

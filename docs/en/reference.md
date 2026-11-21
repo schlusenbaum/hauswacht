@@ -236,6 +236,7 @@ proof), `Neustart` (restart).
 | `AutoDisarmed` | Disarmed automatically | `profile_id`, `reason` |
 | `AutoDisarmSkipped` | Not disarmed (e.g. alarm running, another profile armed) | `profile_id`, `reason` |
 | `ArrivalNoted` | "Disarm with door proof": arrival detected, profile armed | `profile_id`, `persons` |
+| `PhoneArrivalNoted` | [Let in by phone](passage.md#let-in-by-phone): arrival detected (away for at least 5 minutes before), profile armed | `profile_id`, `persons` |
 | `DoorNoted` | "Disarm with door proof": entry door detected | `profile_id`, `door` |
 
 ### Operation

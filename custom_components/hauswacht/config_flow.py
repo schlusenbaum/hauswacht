@@ -170,6 +170,7 @@ from .core.mqtt_keypad import DEFAULT_MQTT_BUTTONS, state_words_text
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
+from .core.passage import MAX_WINDOW as PASSAGE_MAX_WINDOW
 from .core.passage import PASSAGE_TARGET, OutDoors, OutEnd, PassageConfig, parse_passage
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
@@ -4418,6 +4419,14 @@ def _passage_schema(current: PassageConfig) -> vol.Schema:
                 EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
             ),
             vol.Optional("path_after", default=current.path_after): _seconds(PASSAGE_MAX_AFTER),
+            vol.Optional("persons", default=list(current.persons)): EntitySelector(
+                EntitySelectorConfig(domain="person", multiple=True)
+            ),
+            vol.Optional("window", default=current.window): NumberSelector(
+                NumberSelectorConfig(
+                    min=1, max=PASSAGE_MAX_WINDOW, step=1, mode=NumberSelectorMode.BOX
+                )
+            ),
         }
     )
 
