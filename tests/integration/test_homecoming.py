@@ -348,9 +348,7 @@ async def test_entry_time_door_to_disarm(
 
 
 async def test_departure_through_door_and_silent_pause(
-    hass: HomeAssistant,
-    freezer: FrozenDateTimeFactory,
-    hass_ws_client: WebSocketGenerator,
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:
     push = async_mock_service(hass, "notify", PHONE)
     _person(hass, "home", "home")
@@ -362,7 +360,6 @@ async def test_departure_through_door_and_silent_pause(
         "homecoming_signals": {PERSON: [WIFI]},
     }
     await setup_entry(hass, make_entry(options))
-    client = await hass_ws_client(hass)  # vor dem Zeitsprung anmelden (Token läuft ab)
 
     # Rausgehen: Tür auf, nach 90 s WLAN weg, nach 150 s auch der Router -> alle weg
     set_sensor(hass, DOOR, "on")
@@ -403,12 +400,8 @@ async def test_departure_through_door_and_silent_pause(
     assert advice["status"] == "few"  # erst ab 3× Rausgehen und 2 Tagen
     assert advice["wait_minutes"] == 4  # 150 s + 1 min Puffer, aufgerundet
 
-    await client.send_json_auto_id({"type": "hauswacht/homecoming/report"})
-    reply = await client.receive_json()
-    assert reply["success"], reply
-    markdown = reply["result"]["markdown"]
+    await _service(hass, "button", "press", entity_id=REPORT)
+    markdown = _async_get_or_create_notifications(hass)["hauswacht_homecoming_report"]["message"]
     assert "**Leaving**" in markdown
     assert "| Anna (earliest signal) | 1 | 150 s | 150 s | 1 | 40 min |" in markdown
     assert "Anna: not enough data yet" in markdown
-    lines = reply["result"]["csv"].lstrip("﻿").splitlines()
-    assert any(line.startswith("Leaving,") and ",150," in line for line in lines)
