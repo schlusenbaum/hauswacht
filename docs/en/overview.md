@@ -82,6 +82,7 @@ contradictions. Every hint says **where** to change it.
 | fire tone released for burglary ([experts](sirens.md#fire-tone-as-expert-release)) | ⚠️ |
 | fault of a monitored radio network/gateway | ⚠️ |
 | action code "arm" whose alarm profile was deleted – the code arms nothing | ⚠️ |
+| [Leaving](observations.md#leaving-preparation-for-detect-leaving-without-pin): leaving of a person cannot be detected reliably (long silent pauses or too slow) – with a tip for a better signal | ⚠️ |
 | profile without siren (notification only) | ℹ️ |
 | sirens in profiles, but not enabled yet | ℹ️ |
 | siren never tested or last test older than half a year | ℹ️ |
@@ -91,6 +92,7 @@ contradictions. Every hint says **where** to change it.
 | no radio network/gateway monitored | ℹ️ |
 | trigger rule that no profile uses | ℹ️ |
 | action code for a keypad that no longer exists | ℹ️ |
+| [Leaving](observations.md#leaving-preparation-for-detect-leaving-without-pin): leaving of a person is detected reliably – with the recommended waiting time | ℹ️ |
 | guest mode is on – with its end ("until 17 Nov 18:30") or "until switched off"; profile automation and reminders are paused | ℹ️ |
 
 Sensors of type **Technical** and always-active sensors do not count as "unused".

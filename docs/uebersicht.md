@@ -83,6 +83,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 | Brandton für Einbruch freigegeben ([Experten](sirenen.md#brandton-als-experten-freigabe)) | ⚠️ |
 | Störung eines überwachten Funknetzes/Gateways | ⚠️ |
 | Aktions-Code „scharf“, dessen Alarmprofil gelöscht wurde – der Code schaltet nichts | ⚠️ |
+| [Weggehen](beobachtung.md#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen): Rausgehen einer Person nicht sicher erkennbar (lange Schweigepausen oder zu langsam) – mit Tipp für ein besseres Signal | ⚠️ |
 | Profil ohne Sirene (nur Benachrichtigung) | ℹ️ |
 | Sirenen in Profilen, aber noch nicht freigegeben | ℹ️ |
 | Sirene nie getestet oder letzter Test älter als ein halbes Jahr | ℹ️ |
@@ -92,6 +93,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 | Kein Funknetz/Gateway überwacht | ℹ️ |
 | Auslöseregel, die kein Profil verwendet | ℹ️ |
 | Aktions-Code für ein Keypad, das es nicht mehr gibt | ℹ️ |
+| [Weggehen](beobachtung.md#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen): Rausgehen einer Person wird zuverlässig erkannt – mit empfohlener Wartezeit | ℹ️ |
 | Gastmodus ist an – mit Ende („bis 17.11. 18:30“) oder „bis zum Ausschalten“; Profil-Automatik und Erinnerungen ruhen | ℹ️ |
 
 Melder vom Typ **Technik** und immer aktive Melder gelten nicht als „ungenutzt“.

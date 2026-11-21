@@ -91,3 +91,69 @@ While an entry delay runs, Hauswacht measures how long it takes until disarming 
 was too late). Per door: number, in time, too late, typical and longest time and a
 **recommendation for the entry delay** (longest time plus 25 %, at least 5 s, rounded up to 5 s).
 Helpful e.g. to check the place for a control device on the wall.
+
+## Leaving (preparation for "detect leaving without PIN")
+
+From 0.60 on, the homecoming observation also measures **leaving**. This is the measurement for a
+later feature ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md), German): whoever forgets to enter the
+PIN while a profile is armed and walks out of the front door should not trigger an alarm –
+because their phone reports "away" shortly after. For that, Hauswacht has to know **how fast**
+your phones report "away" and **how often they are simply silent**. This measurement also
+**switches nothing**.
+
+One simple principle applies: **Nobody can leave without a door opening.**
+
+| Value | Meaning |
+|---|---|
+| left through a door | a source reports "away", and an entry door opened up to 15 minutes before |
+| typical / longest until "away" | time from "door open" to "away" |
+| silent pause | "away" without a door opening before: the phone is asleep, the Wi-Fi hiccups – the person is actually at home |
+| longest pause | how long the longest silent pause lasted |
+
+The most important line is **"earliest signal"** per person: it reports "away" only when **all**
+signals of the person say "away". This is exactly how the later feature is meant to decide.
+
+### Recommendation per person
+
+The report ends with **"Detect leaving without PIN – recommendation per person"**. The same
+sentences are shown on the settings page in the card **Presence and homecoming observation**, and
+the recommendation or warning also appears as a [check hint](overview.md#check-hints) (tab
+**Overview**). Example:
+
+```
+- Christian: leaving is detected reliably – recommended waiting time 3 min (from 12× leaving).
+- Niklas: all signals were silent 9× for longer than 4 min without a door opening. Leaving
+  could not be told apart from a break-in reliably. Tip: set up a second signal, e.g. the
+  Companion app with its Wi-Fi sensor.
+- Finja: not enough data yet (1× leaving) – the recommendation comes after at least
+  3× leaving and 2 days.
+```
+
+How to read it:
+
+- **recommended waiting time:** longest measured time from "door open" to "away" plus a buffer
+  (25 %, at least 1 minute), rounded up to whole minutes, between 1 and 15 minutes. Later,
+  Hauswacht would wait silently this long before raising the alarm.
+- **reliable:** the person left through a door at least 3 times, the observation ran for at least
+  2 days, and there was **no** silent pause longer than the waiting time.
+- **Warning "silent":** all signals of the person were already quiet for longer than the waiting
+  time without a door opening. If such a pause fell into the waiting time after a break-in,
+  Hauswacht would take it for "leaving". Remedy: an additional signal that does not sleep – best
+  the Wi-Fi sensor of the Companion app. A plain ping to an iPhone is usually not enough, because
+  sleeping iPhones do not answer.
+- **Warning "too late":** the signals notice leaving only after more than 15 minutes. Remedy: a
+  faster signal (Wi-Fi sensor or Bluetooth).
+- **Silent pauses of several persons at the same time** (within one minute) look like a Wi-Fi or
+  router outage. They do not count for the recommendation, because the later feature catches
+  such a case separately. They still appear in the report.
+
+Persons with a warning will **not be excluded** later – the warning only shows that detection
+would be uncertain for them.
+
+The values are also in the attributes `departure` (per source) and `leaving_advice` (per person)
+of the sensor "Homecoming observation", and every single measurement as a "Leaving" row in the
+**table (CSV)**.
+
+> Good to know: if a silent pause happens to fall into the 15 minutes after a door opening
+> (someone else goes out), it counts as "left through a door" with a long time. If a
+> recommendation looks too high, have a look at the CSV table.

@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b1] - 2026-11-21
+
+**Vorabversion: Beobachtung „Weggehen“** (ADR 0014, Messung für die spätere Ausgangserkennung).
+
+### Hinzugefügt
+- Die Heimkehr-Beobachtung misst jetzt auch das **Weggehen** – sie schaltet weiterhin nichts:
+  - je Signal und Person: wie lange es nach dem Öffnen einer Eingangstür dauert, bis „weg“
+    gemeldet wird (Tür bis zu 15 Minuten vorher);
+  - **Schweigepausen:** „weg“, ohne dass vorher eine Tür aufging (schlafendes Handy,
+    WLAN-Aussetzer) – wie oft und wie lange; gleichzeitige Pausen mehrerer Personen werden als
+    möglicher WLAN-Ausfall gekennzeichnet.
+- **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: empfohlene Wartezeit (1–15 min)
+  oder ein **Warnhinweis** mit Tipp (z. B. Companion App mit WLAN-Sensor), wenn das Rausgehen
+  zu langsam erkannt wird oder alle Signale zu lange schweigen. Im Bericht, auf der
+  Einstellungsseite (Karte „Anwesenheit und Heimkehr-Beobachtung“) und als Prüfhinweis.
+- Neue Attribute `departure` und `leaving_advice` am Sensor „Heimkehr-Beobachtung“; jede Messung
+  als Zeile „Weggehen“ in der CSV-Tabelle.
+
+### Dokumentation
+- Beobachtungen: neuer Abschnitt „Weggehen“ mit Beispiel und Lesehilfe; Prüfhinweise ergänzt –
+  deutsch und englisch.
+
 ## [0.59.0] - 2026-11-21
 
 **Durchgang – rein oder raus, ohne unscharf zu schalten** (ADR 0013, getestet über die

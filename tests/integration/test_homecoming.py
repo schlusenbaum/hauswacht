@@ -342,3 +342,73 @@ async def test_entry_time_door_to_disarm(
     assert door["in_time"] == 1
     assert door["max_seconds"] == 12
     assert door["recommended_entry_delay"] == 20
+
+
+# --- Beobachtung Weggehen (ADR 0014) -------------------------------------------
+
+
+async def test_departure_through_door_and_silent_pause(
+    hass: HomeAssistant,
+    freezer: FrozenDateTimeFactory,
+    hass_ws_client: WebSocketGenerator,
+) -> None:
+    push = async_mock_service(hass, "notify", PHONE)
+    _person(hass, "home", "home")
+    hass.states.async_set(WIFI, "Heimnetz")
+    options = {
+        "homecoming_observe": True,
+        "homecoming_persons": [PERSON],
+        "homecoming_ssids": ["Heimnetz"],
+        "homecoming_signals": {PERSON: [WIFI]},
+    }
+    await setup_entry(hass, make_entry(options))
+
+    # Rausgehen: Tür auf, nach 90 s WLAN weg, nach 150 s auch der Router -> alle weg
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=90))
+    hass.states.async_set(WIFI, "<not connected>")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=60))
+    _person(hass, "not_home", "not_home")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+
+    # Zurück (mit Tür), dann eine Schweigepause ohne Tür: 40 min alles weg
+    freezer.tick(timedelta(hours=2))
+    set_sensor(hass, DOOR, "on")
+    _person(hass, "home", "home")
+    hass.states.async_set(WIFI, "Heimnetz")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    freezer.tick(timedelta(hours=3))
+    hass.states.async_set(WIFI, "<not connected>")
+    _person(hass, "not_home", "not_home")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=40))
+    hass.states.async_set(WIFI, "Heimnetz")
+    await hass.async_block_till_done()
+
+    assert push == []  # die Beobachtung schaltet und verschickt nichts
+    attributes = hass.states.get(OBSERVER).attributes  # type: ignore[union-attr]
+    earliest = attributes["departure"]["Anna (earliest signal)"]
+    assert earliest["with_door"] == 1
+    assert earliest["max_seconds"] == 150
+    assert earliest["pauses"] == 1
+    assert earliest["longest_pause_minutes"] == 40
+    wifi = next(v for k, v in attributes["departure"].items() if "wifi" in k.casefold())
+    assert wifi["max_seconds"] == 90
+    advice = attributes["leaving_advice"]["Anna"]
+    assert advice["status"] == "few"  # erst ab 3× Rausgehen und 2 Tagen
+    assert advice["wait_minutes"] == 4  # 150 s + 1 min Puffer, aufgerundet
+
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "hauswacht/homecoming/report"})
+    reply = await client.receive_json()
+    assert reply["success"], reply
+    markdown = reply["result"]["markdown"]
+    assert "**Leaving**" in markdown
+    assert "| Anna (earliest signal) | 1 | 150 s | 150 s | 1 | 40 min |" in markdown
+    assert "Anna: not enough data yet" in markdown
+    lines = reply["result"]["csv"].lstrip("﻿").splitlines()
+    assert any(line.startswith("Leaving,") and ",150," in line for line in lines)

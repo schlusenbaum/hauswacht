@@ -362,18 +362,21 @@ def csv_header(lang: str = DE) -> tuple[str, ...]:
     return tuple(tr(lang, key) for key in CSV_COLUMNS)
 
 
-def csv_rows(
+def csv_rows(  # noqa: PLR0913
     verdicts: Iterable[Verdict],
     timings: Iterable[EntryTiming],
     names: Mapping[str, str],
     local: Callable[[float], str],
     lang: str = DE,
+    *,
+    extra: Iterable[tuple[float, tuple[str, ...]]] = (),
 ) -> list[tuple[str, ...]]:
     """Alle Heimkehrten und Eingänge als Tabelle (älteste zuerst), zum Herunterladen.
 
-    ``local`` formatiert einen Zeitstempel (UTC-Sekunden) als Ortszeit.
+    ``local`` formatiert einen Zeitstempel (UTC-Sekunden) als Ortszeit. ``extra`` sind weitere
+    Zeilen (Zeitpunkt, Zellen), z. B. aus der Beobachtung "Weggehen".
     """
-    rows: list[tuple[float, tuple[str, ...]]] = []
+    rows: list[tuple[float, tuple[str, ...]]] = list(extra)
     for v in verdicts:
         door = names.get(v.door.sensor, v.door.sensor) if v.door else ""
         delay = f"{v.delay:.0f}" if v.delay is not None else ""

@@ -92,3 +92,69 @@ Läuft eine Eingangsverzögerung, misst Hauswacht, wie lange es bis zum Unscharf
 (oder ob es zu spät war). Je Tür: Anzahl, rechtzeitig, zu spät, typische und längste Zeit und
 eine **Empfehlung für die Eingangsverzögerung** (längste Zeit plus 25 %, mindestens 5 s, auf
 5 s aufgerundet). Hilfreich z. B., um den Platz für ein Bedienteil an der Wand zu prüfen.
+
+## Weggehen (Vorbereitung für „Rausgehen ohne PIN erkennen“)
+
+Ab 0.60 misst die Heimkehr-Beobachtung auch das **Weggehen**. Das ist die Messung für eine
+spätere Funktion ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)): Wer bei scharfem
+Profil vergisst, den PIN einzugeben, und durch die Haustür rausgeht, soll keinen Alarm
+auslösen – weil sein Handy kurz danach „weg“ meldet. Dafür muss Hauswacht wissen, **wie schnell**
+eure Handys „weg“ melden und **wie oft sie einfach nur schweigen**. Auch diese Messung
+**schaltet nichts**.
+
+Es gilt ein einfacher Grundsatz: **Ohne geöffnete Tür kann niemand weggehen.**
+
+| Wert | Bedeutung |
+|---|---|
+| Rausgehen mit Tür | Eine Quelle meldet „weg“, und bis zu 15 Minuten vorher ging eine Eingangstür auf |
+| typisch / längste bis „weg“ | Zeit von „Tür auf“ bis „weg“ |
+| Schweigepause | „weg“, ohne dass vorher eine Tür aufging: Das Handy schläft, das WLAN hakt – die Person ist in Wahrheit zuhause |
+| längste Pause | wie lange die längste Schweigepause gedauert hat |
+
+Wichtig ist vor allem die Zeile **„frühestes Signal“** je Person: Sie meldet erst „weg“, wenn
+**alle** Signale der Person „weg“ sagen. Genau so soll die spätere Funktion entscheiden.
+
+### Empfehlung je Person
+
+Der Bericht endet mit **„Rausgehen ohne PIN erkennen – Empfehlung je Person“**. Dieselben
+Sätze stehen auf der Einstellungsseite in der Karte **Anwesenheit und Heimkehr-Beobachtung**,
+und Empfehlung bzw. Warnhinweis erscheinen zusätzlich als [Prüfhinweis](uebersicht.md#prüfhinweise) (Tab **Übersicht**). Beispiel:
+
+```
+- Christian: Rausgehen wird zuverlässig erkannt – empfohlene Wartezeit 3 min (aus 12× Rausgehen).
+- Niklas: Alle Signale haben 9× länger als 4 min geschwiegen, ohne dass eine Tür aufging.
+  So wäre Rausgehen nicht sicher von einem Einbruch zu unterscheiden. Tipp: ein zweites
+  Signal einrichten, z. B. die Companion App mit WLAN-Sensor.
+- Finja: noch zu wenig gemessen (1× Rausgehen) – die Empfehlung kommt nach mindestens
+  3× Rausgehen und 2 Tagen.
+```
+
+So liest du das:
+
+- **empfohlene Wartezeit:** längste gemessene Zeit von „Tür auf“ bis „weg“ plus Puffer (25 %,
+  mindestens 1 Minute), auf ganze Minuten aufgerundet, zwischen 1 und 15 Minuten. So lange
+  würde Hauswacht später still warten, bevor es Alarm gibt.
+- **zuverlässig:** Die Person ist mindestens 3× durch eine Tür rausgegangen, es wurde
+  mindestens 2 Tage beobachtet, und es gab **keine** Schweigepause, die länger war als die
+  Wartezeit.
+- **Warnhinweis „geschwiegen“:** Alle Signale der Person waren schon länger als die Wartezeit
+  still, ohne dass eine Tür aufging. Fiele so eine Pause in die Wartezeit nach einem Einbruch,
+  hielte Hauswacht das für „Rausgehen“. Abhilfe: ein zusätzliches Signal, das nicht schläft –
+  am besten der WLAN-Sensor der Companion App. Ein reiner Ping aufs iPhone reicht meist nicht,
+  weil schlafende iPhones nicht antworten.
+- **Warnhinweis „zu spät“:** Die Signale merken das Rausgehen erst nach mehr als 15 Minuten.
+  Abhilfe: ein schnelleres Signal (WLAN-Sensor oder Bluetooth).
+- **Schweigepausen bei mehreren Personen gleichzeitig** (innerhalb einer Minute) sehen nach
+  einem WLAN- oder Router-Ausfall aus. Sie zählen für die Empfehlung nicht mit, weil die spätere
+  Funktion so einen Fall eigens abfängt. Im Bericht stehen sie trotzdem.
+
+Personen mit Warnhinweis werden später **nicht ausgeschlossen** – der Hinweis zeigt nur, dass
+die Erkennung für sie unsicher wäre.
+
+Die Werte stehen auch in den Attributen `departure` (je Quelle) und `leaving_advice` (je Person)
+des Sensors „Heimkehr-Beobachtung“, und jede einzelne Messung als Zeile „Weggehen“ in der
+**Tabelle (CSV)**.
+
+> Gut zu wissen: Fällt eine Schweigepause zufällig in die 15 Minuten nach einer Türöffnung
+> (jemand anderes geht raus), zählt sie als „Rausgehen mit Tür“ mit langer Zeit. Wirkt eine
+> Empfehlung zu hoch, lohnt ein Blick in die CSV-Tabelle.

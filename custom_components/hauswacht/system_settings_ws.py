@@ -30,10 +30,25 @@ from .core.controls import (
     lock_id_label,
     parse_controls,
 )
+from .core.departure import advice_text
 from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info, stale_override_hours
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
 from .core.silence import format_duration
 from .names import display_name
+
+
+def _leaving(hass: HomeAssistant, main: Any, german: bool) -> list[dict[str, str]]:
+    observer = getattr(main, "homecoming", None)
+    if observer is None or not observer.enabled:
+        return []
+    lang = "de" if german else "en"
+    return [
+        {
+            "status": str(values["status"]),
+            "text": advice_text(values, display_name(hass, person), lang),
+        }
+        for person, values in observer.departure_advice().items()
+    ]
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
@@ -220,6 +235,8 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "signal_persons": _presence_persons(options),
             "person_choices": _entities(hass, ["person"]),
             "signal_choices": _entities(hass, ["device_tracker", "binary_sensor", "sensor"]),
+            # Beobachtung "Weggehen": Empfehlung bzw. Warnhinweis je Person (ADR 0014)
+            "leaving": _leaving(hass, main, german),
         },
         "areas": [
             {

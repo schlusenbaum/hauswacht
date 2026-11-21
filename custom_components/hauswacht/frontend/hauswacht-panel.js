@@ -683,6 +683,10 @@ class HauswachtPanel extends HTMLElement {
       h.persons.map((p) => name(h.person_choices, p)).join(", ") || null,
       h.ssids.length ? `${this._t("ssidsL")}: ${h.ssids.join(", ")}` : null,
     ].filter(Boolean).join(" · ");
+    // Beobachtung "Weggehen": Empfehlung oder Warnhinweis je Person (ADR 0014)
+    const leaving = (h.leaving || [])
+      .map((l) => `<div class="${l.status === "ok" || l.status === "few" ? "muted" : ""}">${l.status === "slow" || l.status === "pauses" ? "⚠️ " : ""}${escHtml(l.text)}</div>`)
+      .join("");
     const areas = sys.areas
       .map((a) => `<div class="item">${this._btn(`sys:area:${a.id}`, this._t("edit"))}<div class="n">${escHtml(a.name)}</div><div class="muted">${escHtml(a.profiles.join(", ") || "–")}</div></div>`)
       .join("");
@@ -691,7 +695,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
       this._card(this._t("silence"), this._silenceHtml(sys.silence) + edit("silence"), "silence") +
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
-      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}`, "homecoming") +
+      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${leaving}${edit("homecoming")}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
       this._card(this._t("page"), `<div>${escHtml(this._t("pageOn"))}</div>${edit("page")}`, "settingsPage")
     );

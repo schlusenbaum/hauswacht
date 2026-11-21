@@ -241,6 +241,33 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "hc_entry_in_time": "rechtzeitig unscharf (Verzögerung {delay} s)",
         "hc_entry_too_late": "zu spät – Alarm (Verzögerung {delay} s)",
         "hc_filename": "hauswacht-heimkehr",
+        # Beobachtung Weggehen (ADR 0014)
+        "dep_heading": "**Weggehen** – wie schnell melden die Signale „weg“?",
+        "dep_cols": "| Quelle | Rausgehen mit Tür | typisch bis „weg“ | längste | "
+        "Schweigepausen | längste Pause |",
+        "dep_legend": "**Rausgehen mit Tür**: Eine Tür ging bis zu 15 Minuten vorher auf. "
+        "**Schweigepause**: „weg“, ohne dass vorher eine Tür aufging – das Handy hat nur "
+        "geschwiegen (schläft, WLAN-Aussetzer).",
+        "dep_advice_heading": "**Rausgehen ohne PIN erkennen** – Empfehlung je Person:",
+        "dep_status_few": "{name}: noch zu wenig gemessen ({count}× Rausgehen) – die "
+        "Empfehlung kommt nach mindestens 3× Rausgehen und 2 Tagen.",
+        "dep_status_ok": "{name}: Rausgehen wird zuverlässig erkannt – empfohlene Wartezeit "
+        "{minutes} min (aus {count}× Rausgehen).",
+        "dep_status_slow": "{name}: Die Signale merken das Rausgehen erst nach bis zu {needed} "
+        "min – länger als die längste Wartezeit (15 min). Tipp: ein schnelleres Signal "
+        "einrichten, z. B. den WLAN-Sensor der Companion App.",
+        "dep_status_pauses": "{name}: Alle Signale haben {pauses}× länger als {minutes} min "
+        "geschwiegen, ohne dass eine Tür aufging. So wäre Rausgehen nicht sicher von einem "
+        "Einbruch zu unterscheiden. Tipp: ein zweites Signal einrichten, z. B. die Companion App "
+        "mit WLAN-Sensor.",
+        "dep_left": "{who}: {seconds} s nach dem Öffnen ({door}) „weg“",
+        "dep_pause": "{who}: Schweigepause ohne Tür, {minutes} min",
+        "dep_pause_open": "{who}: Schweigepause ohne Tür, seit {minutes} min",
+        "dep_pause_shared": "{who}: Schweigepause ohne Tür, {minutes} min – gleichzeitig bei "
+        "anderen (WLAN-Ausfall?)",
+        "dep_pause_shared_open": "{who}: Schweigepause ohne Tür, seit {minutes} min – "
+        "gleichzeitig bei anderen (WLAN-Ausfall?)",
+        "dep_csv_kind": "Weggehen",
     },
     EN: {
         "by": " by {who}",
@@ -442,6 +469,32 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "hc_entry_in_time": "disarmed in time (delay {delay} s)",
         "hc_entry_too_late": "too late – alarm (delay {delay} s)",
         "hc_filename": "hauswacht-homecoming",
+        # Departure observation (ADR 0014)
+        "dep_heading": "**Leaving** – how fast do the signals report “away”?",
+        "dep_cols": "| Source | Left through a door | typical until “away” | longest | "
+        "silent pauses | longest pause |",
+        "dep_legend": "**Left through a door**: a door opened up to 15 minutes before. "
+        "**Silent pause**: “away” without a door opening before – the phone was only silent "
+        "(asleep, Wi-Fi hiccup).",
+        "dep_advice_heading": "**Detect leaving without PIN** – recommendation per person:",
+        "dep_status_few": "{name}: not enough data yet ({count}× leaving) – the recommendation "
+        "comes after at least 3× leaving and 2 days.",
+        "dep_status_ok": "{name}: leaving is detected reliably – recommended waiting time "
+        "{minutes} min (from {count}× leaving).",
+        "dep_status_slow": "{name}: the signals notice leaving only after up to {needed} min – "
+        "longer than the longest waiting time (15 min). Tip: set up a faster signal, e.g. the "
+        "Wi-Fi sensor of the Companion app.",
+        "dep_status_pauses": "{name}: all signals were silent {pauses}× for longer than "
+        "{minutes} min without a door opening. Leaving could not be told apart from a break-in "
+        "reliably. Tip: set up a second signal, e.g. the Companion app with its Wi-Fi sensor.",
+        "dep_left": "{who}: “away” {seconds} s after opening ({door})",
+        "dep_pause": "{who}: silent pause without door, {minutes} min",
+        "dep_pause_open": "{who}: silent pause without door, for {minutes} min so far",
+        "dep_pause_shared": "{who}: silent pause without door, {minutes} min – at the same time "
+        "as others (Wi-Fi outage?)",
+        "dep_pause_shared_open": "{who}: silent pause without door, for {minutes} min so far – "
+        "at the same time as others (Wi-Fi outage?)",
+        "dep_csv_kind": "Leaving",
     },
 }
 
