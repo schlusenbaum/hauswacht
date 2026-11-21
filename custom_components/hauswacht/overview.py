@@ -31,6 +31,7 @@ from .core.automation import parse_automation
 from .core.checks import run_checks
 from .core.controls import learn_minutes, parse_controls
 from .core.notify_events import NotifyEvent, enabled, route
+from .core.passage import PASSAGE_TARGET
 from .core.profiles import (
     profile_behaviour,
     profile_info,
@@ -45,6 +46,7 @@ from .core.sensor_types import excluded_sensors
 from .core.sensors import resolve_zone
 from .core.siren_guard import FireIndicator, SirenDevice, is_fire_tone, select_tone
 from .core.speech import parse_speech
+from .core.texts import tr
 from .core.tilt import TILTED, parse_tilt_sources
 from .core.users import Action, User
 from .core.vibration import parse_vibration_sources, rule_for_zone_id
@@ -358,7 +360,12 @@ def _controls(main: HauswachtRuntime) -> list[dict[str, Any]]:
                 "area": areas.get(control.area) if control.area in areas else None,
                 "topic": control.topic or None,
                 "buttons": {
-                    key: profile_info(options, pid).name for key, pid in control.buttons.items()
+                    key: (
+                        tr(main.lang, "passage_key")
+                        if pid == PASSAGE_TARGET
+                        else profile_info(options, pid).name
+                    )
+                    for key, pid in control.buttons.items()
                 },
                 "login": control.login.value,
                 "emergency": control.emergency.value,

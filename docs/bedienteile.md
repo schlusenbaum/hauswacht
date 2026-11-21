@@ -58,6 +58,7 @@ MQTT-Integration in Home Assistant. Andere Keypads (ZHA, Z-Wave, ESPHome …): s
 | Keypad-Gerät | das Keypad aus der Liste (Geräte von Zigbee2MQTT bzw. MQTT). Daraus bildet Hauswacht das MQTT-Topic selbst: `zigbee2mqtt/<Name in Zigbee2MQTT>`, z. B. `zigbee2mqtt/Alarm-Tastatur` |
 | MQTT-Topic (nur für Experten) | **leer lassen** = automatisch aus dem Keypad-Gerät. Nur nötig, wenn in Zigbee2MQTT ein anderes Basis-Topic als `zigbee2mqtt` eingestellt ist oder das Gerät nicht in der Liste auftaucht. Dann: Basis-Topic + Gerätename, genau wie in Zigbee2MQTT geschrieben (Groß-/Kleinschreibung, Bindestriche), ohne `/set`. Ein eingetragenes Topic hat Vorrang |
 | Tasten „Tag“, „Nacht“, „Alle“ | je ein Alarmprofil zum **Scharfschalten**, z. B. Tag → „Zuhause“, Nacht → „Nacht“, Alle → „Abwesend“; Tasten ohne Profil antworten „nicht bereit“. Beim frient-Keypad: **Tag = 🏠 Haus**, **Nacht = 🌙 Mond**, **Alle = 🔒 Schloss**. Unscharf schaltet die eigene Taste 🔓 (offenes Schloss) – kein Profil dafür anlegen. Tasten mehrfach belegen: [Aktions-Codes](#aktions-codes) |
+| Taste für den Durchgang | Statt eines Profils kann eine Taste **„Durchgang (rein/raus, bleibt scharf)“** bekommen – nicht nötig: Ist der Durchgang im Profil an, öffnet ohnehin **jede** Profil-Taste mit PIN oder Karte den Durchgang, solange scharf ist oder die Eingangsverzögerung läuft (es wird nie umgeschaltet). Siehe [Durchgang](durchgang.md) |
 | Anmeldung | **PIN oder Karte** oder **Karte und PIN** (beide Ausweise desselben Benutzers innerhalb von 30 s; der erste wird mit „nicht bereit“ quittiert) |
 | Notruf-Taste | **aus** (Standard – dann passiert beim Drücken von SOS nichts Sichtbares), **still** (wichtige Push-Nachricht) oder **Alarm** (zusätzlich sofortiger Alarm – unscharf mit den Sirenen unter „Immer aktiv“, scharf mit denen des aktiven Profils) |
 
@@ -751,7 +752,7 @@ nichts.
 | Einstellung | Bedeutung |
 |---|---|
 | Aufkleber-ID | unter Einstellungen → Bereiche, Labels & Zonen → Tags (nach dem ersten Scannen) |
-| Aktion | unscharf schalten, scharf schalten (Profil) oder umschalten (scharf ↔ unscharf) |
+| Aktion | unscharf schalten, scharf schalten (Profil), umschalten (scharf ↔ unscharf) oder **Durchgang** (erlaubt das scharfe Profil ihn: [Durchgang](durchgang.md), sonst unscharf) |
 
 Das Handy muss entsperrt sein. Kein Tastendruck nötig.
 
@@ -763,7 +764,7 @@ PN532 oder RC522 über ESPHome. Anders als beim Keypad reicht **Karte vorhalten*
 | Einstellung | Bedeutung |
 |---|---|
 | Geräte-ID | steht im Ereignis „Tag gescannt“ (`device_id`) |
-| Aktion | unscharf schalten, scharf schalten (Profil) oder umschalten |
+| Aktion | unscharf schalten, scharf schalten (Profil), umschalten oder **Durchgang** (erlaubt das scharfe Profil ihn: [Durchgang](durchgang.md), sonst unscharf) |
 | Anmeldung | **Karte** oder **Karte und PIN** (danach innerhalb von 30 s PIN desselben Benutzers an einem Keypad im selben Bereich) |
 
 „Umschalten“ ist bequem, kann aber auch versehentlich scharf schalten. Einfache 125-kHz-Karten
@@ -929,6 +930,12 @@ Gut zu wissen:
 Ein elektronisches Türschloss schaltet **unscharf, wenn ein bekannter Benutzer aufschließt** –
 mit dessen Rechten je Bereich. Im Logbuch steht z. B. „Anna (Haustür-Schloss)“. Optional
 schaltet **Abschließen von außen** ein Profil scharf.
+
+Mit **„Aufschließen bei scharf: Durchgang“** bleibt die Anlage scharf, wenn das scharfe Profil
+einen [Durchgang](durchgang.md) erlaubt: Aufschließen in der Eingangsverzögerung lässt herein,
+Aufschließen vorher öffnet den Durchgang zum Rausgehen (die erste Tür, die danach aufgeht).
+Erlaubt das Profil keinen Durchgang (z. B. „Abwesend“), schaltet Aufschließen wie bisher
+unscharf.
 
 Dafür muss das Schloss sagen, **wer** aufgeschlossen hat. Das bloße Öffnen der Tür oder
 „aufgeschlossen“ ohne Person reicht nie.

@@ -55,6 +55,7 @@ from .core.controls import (
     Login,
     PendingForce,
     PendingLogin,
+    TagAction,
     force_confirmed,
     fresh_cards,
     generic_identity,
@@ -102,9 +103,11 @@ from .core.mqtt_keypad import (
     state_word,
 )
 from .core.notify_events import NotifyEvent
+from .core.passage import PASSAGE_TARGET
 from .core.profiles import find_profile
 from .core.reactions import FIRE_DEVICE_CLASSES
 from .core.siren_guard import FireIndicator
+from .core.state_machine import AlarmState
 from .core.texts import tr
 from .core.users import (
     Action,
@@ -121,6 +124,9 @@ if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
 
 _LOGGER = logging.getLogger(__name__)
+
+# Was ein Aufkleber/Leser tun soll (tag_intent) -> Recht
+_TAG_ACTIONS = {"disarm": Action.DISARM, "arm": Action.ARM, "passage": Action.PASSAGE}
 
 TAG_SCANNED = "tag_scanned"
 MQTT_DOMAIN = "mqtt"
@@ -540,6 +546,8 @@ class ControlManager:
             "buttons": sorted(keypad.buttons),
             "last_result": last[0] if last else None,
             "last_result_at": last[1] if last else None,
+            # Durchgang (ADR 0013): bleibt scharf, nur Tür/Weg kurz frei
+            "passage": next((info for a in areas if (info := a.passage_info())), None),
         }
 
     # --- Bereiche -------------------------------------------------------------
@@ -621,6 +629,11 @@ class ControlManager:
             return self._run_action_code(keypad, action_code)
         if button != KEY_DISARM and button not in keypad.buttons:
             return InputOutcome(KeypadResult.UNKNOWN_BUTTON.value)
+        if button != KEY_DISARM and (only := self._passage_key(keypad, button)) is not None:
+            # Durchgang (ADR 0013): eigene Taste, in der Eingangsverzögerung jede Profil-Taste
+            # ("schon gut, bleib scharf"), scharf mit Durchgang jede Profil-Taste ("lass mich
+            # kurz raus") – das laufende Profil bleibt, es wird nie umgeschaltet
+            return await self._passage_input(keypad, code, only or None)
         wanted = Action.DISARM if button == KEY_DISARM else Action.ARM
         identity = await self._login(keypad, code, wanted)
         # Zweiter Druck derselben Taste OHNE PIN/Karte bestätigt einen gescheiterten ersten
@@ -656,6 +669,50 @@ class ControlManager:
         if outcome.can_force and not may_force:
             outcome = replace(outcome, can_force=False)
         return outcome
+
+    def _passage_key(self, keypad: Control, button: str) -> list[HauswachtRuntime] | None:
+        """Ist dieser Tastendruck ein Durchgang? None = nein; sonst die Bereiche dafür (leer =
+        alle Bereiche des Keypads, in denen er gerade möglich ist)."""
+        target = keypad.buttons.get(button)
+        if target == PASSAGE_TARGET:
+            return []
+        if any(a.ctx.state is AlarmState.PENDING and a.passage_ready for a in self._areas(keypad)):
+            return []  # wer heimkommt, weiß oft nicht, welches Profil aktiv ist
+        area = self._area_of_profile(keypad, target) if target else None
+        if area is not None and area.ctx.state is AlarmState.ARMED and area.passage_ready:
+            # Scharf: jede Profil-Taste dieses Bereichs = rausgehen (statt "schon scharf")
+            return [area]
+        return None
+
+    async def _passage_input(
+        self, keypad: Control, code: str | None, only: list[HauswachtRuntime] | None = None
+    ) -> InputOutcome:
+        """Durchgang am Keypad – immer mit Ausweis (auch bei "Tasten ohne PIN")."""
+        identity = await self._login(keypad, code, Action.PASSAGE)
+        if identity is None:
+            locked = remaining_lock(self.runtime.main._code_guard, time.monotonic())
+            if locked:
+                return InputOutcome(KeypadResult.LOCKED.value, lock_seconds=locked)
+            return InputOutcome(KeypadResult.INVALID_CODE.value)
+        if identity == "pending":
+            return InputOutcome(KeypadResult.PENDING.value)
+        ready = [a for a in (only or self._areas(keypad)) if a.passage_ready]
+        if not ready:
+            return InputOutcome(KeypadResult.NOT_READY.value)
+        if not identity.duress:
+            # Bedrohungs-PIN: nach außen ein normaler Durchgang (der stille Alarm ist raus)
+            ready = [a for a in ready if a.permits(identity.users, Action.PASSAGE)]
+            if not ready:
+                return InputOutcome(NOT_ALLOWED)
+        # Läuft irgendwo eine Eingangsverzögerung, wird nur dort reingelassen
+        entering = [a for a in ready if a.ctx.state is AlarmState.PENDING]
+        changed_by = f"{identity_label(identity, self.runtime.lang)} ({keypad.name})"
+        for area in entering or ready:
+            try:
+                area.passage(changed_by)
+            except HomeAssistantError:
+                return InputOutcome(KeypadResult.NOT_READY.value)
+        return InputOutcome(KeypadResult.OK.value)
 
     def _find_action_code(
         self, keypad: Control, button: str, code: str | None
@@ -960,29 +1017,50 @@ class ControlManager:
         """NFC-Aufkleber: nur mit dem Handy eines bekannten, berechtigten Benutzers."""
         user = find_by_ha_user(self.runtime.users, user_id)
         intent = tag_intent(sticker.action, self._armed(sticker))
-        action = Action.DISARM if intent == "disarm" else Action.ARM
+        action = _TAG_ACTIONS[intent]
         if user is None or not any(user.may_in(action, a.area_id) for a in self._areas(sticker)):
             self.runtime.notifier.send_system(
                 tr(self.runtime.lang, "sticker_denied_title"),
                 tr(self.runtime.lang, "sticker_denied", sticker=sticker.name),
             )
             return "rejected"
-        return self._execute_and_confirm(
-            sticker, action, sticker.profile, Identity("phone", (user,)), user.name
-        )
+        identity = Identity("phone", (user,))
+        if action is Action.PASSAGE:
+            return self._passage_or_disarm(sticker, identity, user.name)
+        return self._execute_and_confirm(sticker, action, sticker.profile, identity, user.name)
 
     async def _reader(self, reader: Control, tag_id: str) -> str:
         """Fester Leser: Karte eines Benutzers (allein oder mit PIN an einem Keypad)."""
         intent = tag_intent(reader.action, self._armed(reader))
-        action = Action.DISARM if intent == "disarm" else Action.ARM
+        action = _TAG_ACTIONS[intent]
         identity = await self._login(reader, tag_id, action)
         if identity == "pending":
             return "pending"
         if identity is None:
             return "rejected"
-        return self._execute_and_confirm(
-            reader, action, reader.profile, identity, identity_label(identity, self.runtime.lang)
-        )
+        who = identity_label(identity, self.runtime.lang)
+        if action is Action.PASSAGE:
+            return self._passage_or_disarm(reader, identity, who)
+        return self._execute_and_confirm(reader, action, reader.profile, identity, who)
+
+    def _passage_or_disarm(self, control: Control, identity: Identity, who: str) -> str:
+        """Aufkleber, Leser, Schloss mit "Durchgang" (ADR 0013): erlaubt das scharfe Profil den
+        Durchgang, rein bzw. raus – sonst wie bisher unscharf."""
+        ready = [a for a in self._areas(control) if a.passage_ready]
+        if not identity.duress:
+            ready = [a for a in ready if a.permits(identity.users, Action.PASSAGE)]
+        if ready:
+            entering = [a for a in ready if a.ctx.state is AlarmState.PENDING]
+            for area in entering or ready:
+                try:
+                    area.passage(f"{who} ({control.name})")
+                except HomeAssistantError as err:
+                    _LOGGER.warning("Durchgang an %s nicht möglich: %s", control.name, err)
+                    return "not_ready"
+            return "ok"
+        if not self._armed(control):
+            return "already_disarmed"
+        return self._execute_and_confirm(control, Action.DISARM, None, identity, who)
 
     def _confirm(self, control: Control, action: Action, result: str, who: str) -> None:
         if result == "ok":
@@ -1125,6 +1203,8 @@ class ControlManager:
         if intent == UNLOCK:
             if not self._armed(control):
                 return "already_disarmed"
+            if control.action is TagAction.PASSAGE:
+                return self._passage_or_disarm(control, found, who)
             return self._execute_and_confirm(control, Action.DISARM, None, found, who)
         if intent == LOCK and control.profile:
             area = self._area_of_profile(control, control.profile)

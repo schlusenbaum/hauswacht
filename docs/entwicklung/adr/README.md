@@ -16,3 +16,5 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0010](0010-fenster-kippstellung-erschuetterung.md) | Fenster richtig überwachen: Kippstellung („gekippt“) je Profil und Erschütterung als eigener Typ |
 | [0011](0011-einstellungsseite.md) | Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog |
 | [0012](0012-keypads-allgemein.md) | Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT |
+| [0013](0013-durchgang.md) | Durchgang – rein oder raus, ohne unscharf zu schalten |
+| [0014](0014-ausgangserkennung.md) | Ausgangserkennung – Rausgehen ohne PIN erkennen (vorgeschlagen) |

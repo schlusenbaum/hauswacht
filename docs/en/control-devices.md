@@ -56,6 +56,7 @@ MQTT integration in Home Assistant. Other keypads (ZHA, Z-Wave, ESPHome …): se
 | Keypad device | the keypad from the list (devices of Zigbee2MQTT or MQTT). Hauswacht builds the MQTT topic from it: `zigbee2mqtt/<name in Zigbee2MQTT>`, e.g. `zigbee2mqtt/Alarm-Keypad` |
 | MQTT topic (experts only) | **leave empty** = automatically from the keypad device. Only needed if a base topic other than `zigbee2mqtt` is set in Zigbee2MQTT or the device does not appear in the list. Then: base topic + device name, written exactly as in Zigbee2MQTT (upper/lower case, hyphens), without `/set`. An entered topic takes precedence |
 | Keys "Day", "Night", "All" | one alarm profile each for **arming**, e.g. Day → "Home", Night → "Night", All → "Away"; keys without a profile answer "not ready". On the frient keypad: **Day = 🏠 house**, **Night = 🌙 moon**, **All = 🔒 lock**. The keypad's own key 🔓 (open lock) disarms – do not create a profile for it. Assigning keys several times: [action codes](#action-codes) |
+| Key for the passage | Instead of a profile, a key can get **"Passage (in/out, stays armed)"** – not required: if the passage is on in the profile, **any** profile key with PIN or card opens it while armed or during the entry delay (never switches profile). See [passage](passage.md) |
 | Login | **PIN or card** or **card and PIN** (both credentials of the same user within 30 s; the first is acknowledged with "not ready") |
 | Emergency key | **off** (default – then pressing SOS does nothing visible), **silent** (critical push message) or **alarm** (additionally an instant alarm – disarmed with the sirens under "Always active", armed with those of the active profile) |
 
@@ -728,7 +729,7 @@ linked to an authorised Hauswacht user. A copied sticker alone is therefore usel
 | Setting | Meaning |
 |---|---|
 | Sticker ID | under Settings → Areas, labels & zones → Tags (after the first scan) |
-| Action | disarm, arm (profile) or toggle (armed ↔ disarmed) |
+| Action | disarm, arm (profile), toggle (armed ↔ disarmed) or **passage** (if the armed profile allows it: [passage](passage.md), otherwise disarm) |
 
 The phone must be unlocked. No key press needed.
 
@@ -740,7 +741,7 @@ RC522 via ESPHome. Unlike the keypad, **holding up the card** is enough.
 | Setting | Meaning |
 |---|---|
 | Reader device | appears in the event "Tag scanned" (`device_id`) |
-| Action | disarm, arm (profile) or toggle |
+| Action | disarm, arm (profile), toggle or **passage** (if the armed profile allows it: [passage](passage.md), otherwise disarm) |
 | Login | **Card** or **card and PIN** (then within 30 s the PIN of the same user at a keypad in the same area) |
 
 "Toggle" is convenient but can also arm by accident. Simple 125 kHz cards are easy to copy –
@@ -903,6 +904,11 @@ Good to know:
 An electronic door lock **disarms when a known user unlocks** – with that user's rights per area.
 The logbook shows e.g. "Anna (Front door lock)". Optionally, **locking from outside** arms a
 profile.
+
+With **"Unlocking while armed: passage"** the system stays armed if the armed profile allows a
+[passage](passage.md): unlocking during the entry delay lets in, unlocking before opens the
+passage for going out (the first door that opens afterwards). If the profile allows no passage
+(e.g. "Away"), unlocking disarms as before.
 
 For this the lock must tell **who** unlocked. Merely opening the door, or "unlocked" without a
 person, is never enough.

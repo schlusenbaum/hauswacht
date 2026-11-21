@@ -36,6 +36,10 @@ const TEXT = {
     disarmAll: "Alle Bereiche unscharf",
     guest: "Gastmodus",
     guestOn: "Gastmodus an",
+    passageOut: "Durchgang",
+    passageIn: "Hereingelassen",
+    passageUntil: "bis",
+    passageFree: "frei",
     guestUntil: "bis",
     guestUntilOff: "bis zum Ausschalten",
     guestOff: "Gastmodus beenden",
@@ -81,6 +85,10 @@ const TEXT = {
     disarmAll: "Disarm all areas",
     guest: "Guest mode",
     guestOn: "Guest mode on",
+    passageOut: "Passage",
+    passageIn: "Let in",
+    passageUntil: "until",
+    passageFree: "free",
     guestUntil: "until",
     guestUntilOff: "until switched off",
     guestOff: "End guest mode",
@@ -694,6 +702,15 @@ class HauswachtAlarmCard extends HTMLElement {
     }
     if (this._opt("zeige_nicht_erreichbar") && (attrs.unavailable_sensors || []).length) {
       notes.push(["", "mdi:wifi-off", `<b>${this._t("unavailableSensors")}:</b> ${attrs.unavailable_sensors.map((e) => esc(this._nameOf(e))).join(", ")}`]);
+    }
+    if (attrs.passage && kind === "armed") {
+      // Durchgang (ADR 0013): bleibt scharf, nur Tür/Weg kurz frei
+      const p = attrs.passage;
+      const free = [...(p.doors || []), ...(p.sensors || []).filter((s) => !(p.doors || []).includes(s))];
+      const head = p.direction === "out" ? this._t("passageOut") : this._t("passageIn");
+      const until = p.until ? ` ${this._t("passageUntil")} ${esc(this._time(p.until))}` : "";
+      const names = free.length ? ` – ${this._t("passageFree")}: ${free.map((e) => esc(this._nameOf(e))).join(", ")}` : "";
+      notes.push(["info", "mdi:door-open", `<b>${head}</b>${until}${names}`]);
     }
     if (attrs.code_locked_until && area.pin.disarm) {
       notes.push(["", "mdi:lock-clock", `${this._t("locked")} ${esc(this._time(attrs.code_locked_until))}`]);

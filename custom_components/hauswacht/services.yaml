@@ -167,3 +167,14 @@ keypad_input:
       default: false
       selector:
         boolean:
+
+passage:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    code:
+      selector:
+        text:
+          type: password

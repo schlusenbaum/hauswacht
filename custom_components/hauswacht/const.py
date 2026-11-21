@@ -61,6 +61,8 @@ PUSH_STATE_TAG: Final = "hauswacht_state"
 PUSH_CODE_TAG: Final = "hauswacht_code"
 # Ausgefallener Melder: eine Nachricht je Melder (Tag + Entität), weg, sobald er wieder da ist
 PUSH_LOST_TAG: Final = "hauswacht_lost"
+# Durchgang (ADR 0013): "rausgehen" und die Warnung "noch offen" ersetzen einander
+PUSH_PASSAGE_TAG: Final = "hauswacht_passage"
 # Dashboard-Knöpfe trotz PIN erlauben (PIN schützt dann nur Bedienfeld und Sprachassistenten)
 OPT_BUTTONS_WITHOUT_PIN: Final = "buttons_without_pin"
 MASTER_USER_ID: Final = "master"
@@ -80,6 +82,8 @@ OPT_HOMECOMING_PERSONS: Final = "homecoming_persons"
 # Aktions-Knopf in der Push-Benachrichtigung (Home-Assistant-App)
 PUSH_ACTION_EVENT: Final = "mobile_app_notification_action"
 PUSH_ACTION_PREFIX: Final = "HAUSWACHT_DISARM_"
+# Push-Knopf "Reinlassen" in der Eingangs-Nachricht (Durchgang, ADR 0013)
+PUSH_PASSAGE_PREFIX: Final = "HAUSWACHT_PASSAGE_"
 PUSH_TAG: Final = "hauswacht"
 
 NOTIFICATION_RESTART: Final = "hauswacht_restart"

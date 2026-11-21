@@ -9,12 +9,14 @@ from ..always_active import DEFAULT_SETTLE
 from ..areas import MAIN_AREA, profile_area
 from ..automation import (
     ARRIVAL_AUTO_ONLY,
+    ARRIVAL_DOOR,
     ARRIVAL_MODES,
     ARRIVAL_OFF,
     DEFAULT_ARRIVAL_WINDOW,
     DEFAULT_AWAY_DELAY,
     WEEKDAYS,
 )
+from ..passage import passage_from_input
 from ..profiles import DEFAULT_ICON, PANEL_MODE_NONE, profile_infos
 from ..rules import parse_rules
 from ..sensors import parse_zones, resolve_zones, slugify
@@ -80,6 +82,14 @@ def validate_profile(
         "auto_away_persons"
     ):
         errors["base"] = "arrival_needs_persons"
+    passage = data.get("passage") or {}
+    if (
+        auto.get("auto_arrival_mode") == ARRIVAL_DOOR
+        and passage.get("enabled")
+        and passage.get("persons")
+    ):
+        # Dieselbe Heimkehr kann nicht zugleich unscharf schalten und nur reinlassen (ADR 0013)
+        errors["base"] = "passage_door_proof"
     return errors
 
 
@@ -155,6 +165,12 @@ def save_profile(
         stored["tilt_allowed"] = bool(data["tilt_allowed"])
     if not partial or "arm_on_close" in data:
         stored["arm_on_close"] = arm_on_close_from_input(data.get("arm_on_close") or {})
+    if not partial or "passage" in data:
+        # Felder, die ein Formular nicht kennt (z. B. Personen im Dialog), bleiben erhalten
+        before = stored.get("passage")
+        merged = dict(before) if isinstance(before, Mapping) else {}
+        merged.update(data.get("passage") or {})
+        stored["passage"] = passage_from_input(merged)
     profiles[new_id] = stored
     new[OPT_PROFILES] = profiles
     return Change(options=new, item_id=new_id)

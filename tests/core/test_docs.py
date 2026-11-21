@@ -82,6 +82,7 @@ PAGES = {
     "benachrichtigungen.md": "notifications.md",
     "testmodus.md": "test-mode.md",
     "beobachtung.md": "observations.md",
+    "durchgang.md": "passage.md",
     "uebersicht.md": "overview.md",
     "einstellungsseite.md": "settings-page.md",
     "referenz.md": "reference.md",

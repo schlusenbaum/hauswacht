@@ -6,6 +6,106 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-11-21
+
+**Durchgang – rein oder raus, ohne unscharf zu schalten** (ADR 0013, getestet über die
+Vorabversionen 0.59.0b1 bis b3).
+
+### Hinzugefügt
+- **Durchgang** je Profil (Standard aus): Das Profil bleibt scharf, nur eine Tür (und frei
+  gewählte Melder auf dem Weg) ist kurz frei – nachts heimkommen, kurz den Müll rausbringen.
+  - **Reinkommen:** in der Eingangsverzögerung PIN oder Karte und **irgendeine Profil-Taste**;
+    die geöffnete Tür ist frei, bis sie zu ist, die Melder auf dem Weg noch eine Nachlaufzeit
+    länger. Jede neue Türöffnung braucht einen eigenen Ausweis.
+  - **Rausgehen:** solange scharf, PIN oder Karte und **irgendeine Profil-Taste** (es wird nie
+    umgeschaltet). Die erste Eingangstür, die danach aufgeht, ist für die Durchgangszeit frei
+    (Standard 5 Minuten); alle anderen bleiben scharf.
+  - Tür am Ende noch offen: **Warnung statt Alarm**, wieder überwacht, sobald sie zu ist.
+- Weitere Wege: eigene **Durchgang-Taste**, Aktion **`hauswacht.passage`**, Push-Knopf
+  **„Reinlassen“**, **Handy-Reinlassen** mit eigener Personenliste, **Türschloss** („Aufschließen
+  bei scharf: Durchgang, sonst unscharf“), **NFC-Aufkleber** und **RFID-Leser** (Aktion
+  „Durchgang“).
+- Benachrichtigung **„Durchgang“**, Hinweis auf der Alarm-Karte, Attribut `passage`, Ereignisse
+  für Automationen. Immer mit Ausweis, Recht wie „unscharf schalten“, Bedrohungs-PIN wirkt still.
+
+### Dokumentation
+- Neue Seite **Durchgang** mit Beispielen und Restrisiko; ADR 0013; ADR 0014 „Ausgangserkennung“
+  (vorgeschlagen) und Roadmap 0.60/0.61 – deutsch und englisch.
+
+
+## [0.59.0b3] - 2026-11-21
+
+**Vorabversion: Durchgang – Türschloss, NFC-Aufkleber, Kartenleser** (ADR 0013, Stufe 3).
+
+### Hinzugefügt
+- **Türschloss:** neue Einstellung „Aufschließen bei scharf“ – **unscharf schalten** (wie
+  bisher, Standard) oder **Durchgang, wenn das Profil ihn erlaubt – sonst unscharf**.
+  Aufschließen in der Eingangsverzögerung lässt herein, vorher öffnet es den Durchgang zum
+  Rausgehen.
+- **NFC-Aufkleber und RFID-Leser:** neue Aktion **„Durchgang“** mit derselben Regel.
+
+### Dokumentation
+- Durchgang: Abschnitt „Türschloss, NFC-Aufkleber, Kartenleser“ mit Beispiel; Bedienteile –
+  deutsch und englisch.
+
+
+## [0.59.0b2] - 2026-11-21
+
+**Vorabversion: Durchgang – Reinlassen per Push-Knopf und per Handy** (ADR 0013, Stufe 2).
+
+### Hinzugefügt
+- **Push-Knopf „Reinlassen“** neben „Unscharf“ in der Nachricht zur Eingangsverzögerung (wenn
+  „Unscharf über Push-Knopf“ an ist und das Profil den Durchgang erlaubt). Wer tippt, braucht das
+  Recht „unscharf schalten“.
+- **Handy-Reinlassen** je Profil mit eigener Personenliste: Kommt eine dieser Personen heim
+  (vorher mindestens 5 Minuten sicher weg) und geht eine Eingangstür auf, lässt Hauswacht sie
+  ohne PIN herein – wenn das Handy bis zu x Minuten vor dem Öffnen (Standard 5) oder noch
+  während der Eingangsverzögerung „zuhause“ meldet. Kommt es später, bleibt der Alarm ein Alarm.
+  Eine Heimkehr lässt einmal rein. Nachricht „Finja (Handy) hereingelassen …“.
+- „Unscharf mit Türbeleg“ und Handy-Reinlassen schließen sich im selben Profil aus (Prüfung auf
+  der Einstellungsseite und im Dialog).
+- Ereignis `PhoneArrivalNoted`.
+
+### Dokumentation
+- Durchgang: Abschnitte „Reinlassen per Push-Knopf“ und „Reinlassen per Handy“ mit Tabelle der
+  Zeitabläufe und Restrisiko; Referenz – deutsch und englisch.
+
+
+## [0.59.0b1] - 2026-11-21
+
+**Vorabversion: Durchgang – rein oder raus, ohne unscharf zu schalten** (ADR 0013, Stufe 1).
+
+### Hinzugefügt
+- **Durchgang** je Profil (Standard aus): Das Profil bleibt scharf, nur eine Tür (und frei
+  gewählte Melder auf dem Weg) ist kurz frei.
+  - **Reinkommen:** In der Eingangsverzögerung PIN oder Karte und **irgendeine Profil-Taste**
+    (oder die Durchgang-Taste) am Keypad – kein Alarm, das laufende Profil bleibt. Die geöffnete
+    Tür ist frei, bis sie zu ist; die Melder auf dem Weg noch eine Nachlaufzeit länger
+    (Standard 60 s). Jede neue Türöffnung braucht einen eigenen Ausweis.
+  - **Rausgehen** (z. B. Müll): PIN oder Karte und **irgendeine Profil-Taste**, solange scharf
+    ist (es wird nie auf ein anderes Profil umgeschaltet), oder die Durchgang-Taste. Die erste
+    Eingangstür, die danach aufgeht, ist für die Durchgangszeit frei (Standard 5 Minuten) – alle
+    anderen bleiben scharf (einstellbar: alle Eingangstüren). Ende nach Ablauf der Zeit oder
+    schon, wenn man zurück und die Tür zu ist (einstellbar).
+  - Ist eine Tür am Ende noch offen: **kein Alarm**, sondern eine deutliche Warnung; sie wird
+    wieder überwacht, sobald sie zu ist.
+- **Taste „Durchgang“** bei jedem Keypad frei wählbar (Zigbee2MQTT-Keypad, Keypad (allgemein),
+  MQTT-Schnittstelle) – statt eines Profils; nötig ist sie nicht.
+- **Aktion `hauswacht.passage`** (mit PIN) für Dashboard-Knöpfe und Automationen.
+- **Benachrichtigung „Durchgang“** (Standard an): „… hereingelassen – Profil Nacht bleibt
+  scharf“ (ersetzt die Nachricht zur Eingangsverzögerung), „Durchgang für 5 Minuten“, Warnung
+  „noch offen“. Ereignisse `PassageGranted`, `PassageDoorUsed`, `PassageEnded`,
+  `PassageDoorOpen`; Attribut `passage` am Bedienfeld und an der Anzeige-Entität allgemeiner
+  Keypads; Hinweis auf der Alarm-Karte.
+- Immer mit Ausweis (auch bei „Tasten ohne PIN“), Recht wie „unscharf schalten“. Bedrohungs-PIN:
+  nach außen ein normaler Durchgang, still der Bedrohungsalarm. Kein Durchgang während eines
+  Alarms oder der Ausgangsverzögerung.
+
+### Dokumentation
+- Neue Seite **Durchgang** mit Beispielen; Bedienteile, Benachrichtigungen, Referenz, README,
+  Roadmap, ADR 0013 – deutsch und englisch.
+
+
 ## [0.58.3] - 2026-11-20
 
 **Code-Entität der Keypads nur noch nach deiner Bestätigung abschalten.**

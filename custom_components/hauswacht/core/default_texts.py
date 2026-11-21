@@ -33,6 +33,7 @@ _TITLES: dict[NotifyEvent, str] = {
     NotifyEvent.ARM_HINT: "arm_hint_title",
     NotifyEvent.UNCONFIRMED: "unconfirmed_title",
     NotifyEvent.UNCONFIRMED_FREQUENT: "lone_title",
+    NotifyEvent.PASSAGE: "passage_title",
 }
 
 

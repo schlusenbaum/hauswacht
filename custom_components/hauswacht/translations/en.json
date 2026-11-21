@@ -240,6 +240,20 @@
               "doors": "Exit doors",
               "settle": "Settle time after closing"
             }
+          },
+          "passage": {
+            "name": "Passage – in or out, stays armed",
+            "description": "The profile stays armed, only one door (and the sensors on the way) is briefly free. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad – the door is free until it is closed. Going out: while armed, PIN or card and any profile key (never switches profile) or the passage key. Meant for profiles that only watch the outer shell; sensors inside stay armed.",
+            "data": {
+              "enabled": "Allow passage",
+              "duration": "Passage time (minutes)",
+              "out_doors": "Going out: which door",
+              "out_end": "Going out: end",
+              "path": "Sensors on the way (e.g. motion sensor in the driveway)",
+              "path_after": "Coming in: way still free after the door is closed",
+              "persons": "Let in by phone: these persons (empty = off)",
+              "window": "Let in by phone: the phone may report \"home\" this long before the door"
+            }
           }
         },
         "data_description": {
@@ -759,6 +773,14 @@
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
             }
+          },
+          "event_passage": {
+            "name": "Passage",
+            "description": "Someone was let in or goes out briefly – the system stays armed. Also the warning if a door is still open after the passage. Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
           }
         }
       },
@@ -1048,7 +1070,8 @@
           "source": "Who unlocked? (source)",
           "topic": "Nuki: MQTT topic of the lock",
           "who": "Generic: sensor or event with the ID",
-          "profile": "Optional: arm when locking (alarm profile)"
+          "profile": "Optional: arm when locking (alarm profile)",
+          "action": "Unlocking while armed"
         },
         "data_description": {
           "topic": "E.g. `nuki/3A1B2C4D` (in the Nuki app under MQTT; without `/lockActionEvent`).",
@@ -1499,7 +1522,8 @@
       "mqtt_topic_missing": "Please enter a base topic.",
       "mqtt_topic_invalid": "The topic must not contain `+` or `#` and must not start with `/`.",
       "mqtt_topic_z2m": "The Zigbee2MQTT keypads listen below `zigbee2mqtt` – please use another topic.",
-      "mqtt_topic_taken": "This topic (or an overlapping one) is already used by another MQTT interface."
+      "mqtt_topic_taken": "This topic (or an overlapping one) is already used by another MQTT interface.",
+      "passage_door_proof": "\"Disarm with door proof\" and \"let in by phone\" (passage) do not go together in the same profile – please choose one."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1607,7 +1631,8 @@
         "unconfirmed_frequent": "Sensor often triggers alone",
         "arm_hint": "Hint when arming",
         "rule_notify": "Trigger rule “notification only”",
-        "always_active": "Always-active sensor"
+        "always_active": "Always-active sensor",
+        "passage": "Passage"
       }
     },
     "speech_mode": {
@@ -1653,7 +1678,8 @@
       "options": {
         "disarm": "Disarm",
         "arm": "Arm",
-        "toggle": "Toggle (armed ↔ disarmed)"
+        "toggle": "Toggle (armed ↔ disarmed)",
+        "passage": "Passage (if the profile allows it, otherwise disarm)"
       }
     },
     "user_rights_scope": {
@@ -1709,6 +1735,24 @@
         "default": "As general",
         "hours": "Own value (hours)",
         "off": "Never check"
+      }
+    },
+    "passage_out_doors": {
+      "options": {
+        "first": "Only the first door that opens",
+        "all": "All entry doors"
+      }
+    },
+    "passage_out_end": {
+      "options": {
+        "time": "When the time is up",
+        "returned": "As soon as I am back and the door is closed"
+      }
+    },
+    "lock_unlock": {
+      "options": {
+        "disarm": "Disarm",
+        "passage": "Passage if the profile allows it – otherwise disarm"
       }
     }
   },
@@ -1965,6 +2009,12 @@
     },
     "not_loaded": {
       "message": "Hauswacht is not loaded."
+    },
+    "passage_not_possible": {
+      "message": "Passage not possible right now: it only works while a profile that allows it is armed or the entry delay is running (not during an alarm)."
+    },
+    "passage_no_doors": {
+      "message": "Passage not possible: the armed profile has no entry door and no sensors on the way that could be freed."
     }
   },
   "services": {
@@ -2091,6 +2141,16 @@
         "force": {
           "name": "Arm anyway",
           "description": "Bypass open sensors if the profile and the user allow it."
+        }
+      }
+    },
+    "passage": {
+      "name": "Passage",
+      "description": "Open a passage without disarming: while the entry delay is running, the person is let in (the opened door is free until it is closed); otherwise the first entry door that opens is free for the passage time. Only if the armed profile allows passage.",
+      "fields": {
+        "code": {
+          "name": "PIN",
+          "description": "PIN or card (needed if PINs are set up)."
         }
       }
     }

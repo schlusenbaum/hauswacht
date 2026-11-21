@@ -408,3 +408,43 @@ async def test_options_add_lock(hass: HomeAssistant, mqtt_mock: MqttMockHAClient
     stored = entry.options["controls"]["gartentuer"]
     assert stored["topic"] == "nuki/ABCD"
     assert stored["profile"] is None
+
+
+async def test_nuki_passage_keeps_armed(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
+    """Schloss auf "Durchgang": erlaubt das scharfe Profil ihn, bleibt es scharf (ADR 0013)."""
+    hass.states.async_set(LOCK, "locked")
+    entry = await _setup(
+        hass,
+        profiles={"night": {"passage": {"enabled": True}}},
+    )
+    options = dict(entry.options)
+    controls = {k: dict(v) for k, v in options["controls"].items()}
+    controls["schloss"]["action"] = "passage"
+    hass.config_entries.async_update_entry(entry, options={**options, "controls": controls})
+    await hass.async_block_till_done()
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    await _nuki(hass, "1,0,52653,0,0")
+    await _lock(hass, "unlocked")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["passage"]["direction"] == "out"
+
+
+async def test_nuki_passage_without_profile_passage_disarms(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    entry = await _setup(hass)
+    options = dict(entry.options)
+    controls = {k: dict(v) for k, v in options["controls"].items()}
+    controls["schloss"]["action"] = "passage"
+    hass.config_entries.async_update_entry(entry, options={**options, "controls": controls})
+    await hass.async_block_till_done()
+    await _arm_away(hass)
+    await _nuki(hass, "1,0,52653,0,0")
+    await _lock(hass, "unlocked")
+    assert _panel(hass) == AlarmControlPanelState.DISARMED  # wie bisher

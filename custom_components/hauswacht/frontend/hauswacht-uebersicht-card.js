@@ -333,7 +333,7 @@ const LABELS = {
       alarm: "Alarm", entry: "Eingangsverzögerung", armed: "Scharf geschaltet", disarmed: "Unscharf geschaltet",
       alarm_ended: "Alarm beendet", arm_failed: "Scharfschalten abgelehnt", automation: "Automatik", fault: "Störung",
       system: "System", reminder: "Erinnerung „Alle weg“", always_active: "Immer aktiv", rule_notify: "Regel: nur Meldung",
-      arm_hint: "Hinweis beim Scharfschalten", unconfirmed: "Unbestätigte Auslösung", unconfirmed_frequent: "Melder löst häufig allein aus",
+      arm_hint: "Hinweis beim Scharfschalten", passage: "Durchgang", unconfirmed: "Unbestätigte Auslösung", unconfirmed_frequent: "Melder löst häufig allein aus",
     },
   },
   en: {
@@ -363,7 +363,7 @@ const LABELS = {
       alarm: "Alarm", entry: "Entry delay", armed: "Armed", disarmed: "Disarmed", alarm_ended: "Alarm ended",
       arm_failed: "Arming refused", automation: "Automation", fault: "Fault", system: "System",
       reminder: "Reminder “all away”", always_active: "Always active", rule_notify: "Rule: notification only",
-      arm_hint: "Hint when arming", unconfirmed: "Unconfirmed trigger", unconfirmed_frequent: "Sensor triggers often alone",
+      arm_hint: "Hint when arming", passage: "Passage", unconfirmed: "Unconfirmed trigger", unconfirmed_frequent: "Sensor triggers often alone",
     },
   },
 };

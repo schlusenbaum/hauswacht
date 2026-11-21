@@ -16,6 +16,7 @@ Gegenstück in der anderen Sprache.
 | [Einrichtungsassistent](assistent.md) | Geführte Einrichtung mit kurzer Einführung: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile – jeder Schritt überspringbar |
 | [Melder und Meldergruppen](melder.md) | Welche Sensoren gehen, Meldergruppen, Typen (Tür, Fenster, Bewegung …), immer aktive Melder, Funkstille, Funknetz und Gateways |
 | [Alarmprofile und Bereiche](profile.md) | Profile anlegen, Verzögerungen, Reaktion, Automatik, Scharf durch Schließen der Tür, mehrere Bereiche (z. B. Haus und Garage) |
+| [Durchgang](durchgang.md) | Rein oder raus, ohne unscharf zu schalten: nachts heimkommen, kurz den Müll rausbringen – das Profil bleibt scharf |
 | [Auslöseregeln](ausloeseregeln.md) | Abfolgen wie „Tür, dann Keller“, Ausnahmen, Bedingungen, YAML-Expertenmodus |
 | [Bedienung und Dashboard](dashboard.md) | Scharf und unscharf schalten, Alarm beenden, Beispielkarte, Karten „Hauswacht Einstellungen“ und „Hauswacht Test“ |
 | [Benutzer, PINs und Sperre](benutzer.md) | Benutzer, Rechte je Bereich, PIN-Regeln, Master-PIN, Sperre nach falschen Eingaben, Bedrohungs-PIN |

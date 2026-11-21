@@ -15,7 +15,7 @@ import logging
 import secrets
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import fields
+from dataclasses import dataclass, field, fields
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
@@ -67,6 +67,8 @@ from .const import (
     PUSH_ARM_TAG,
     PUSH_CODE_TAG,
     PUSH_LOST_TAG,
+    PUSH_PASSAGE_PREFIX,
+    PUSH_PASSAGE_TAG,
     PUSH_STATE_TAG,
     PUSH_TAG,
     STORAGE_VERSION,
@@ -95,6 +97,16 @@ from .core.controls import looks_like_card, normalize_tag
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
 from .core.notify_events import enabled as notify_enabled
+from .core.passage import (
+    CLOSES_FOR_RETURN,
+    Direction,
+    OutDoors,
+    OutEnd,
+    PassageConfig,
+    out_candidates,
+    parse_passage,
+    path_sensors,
+)
 from .core.profile_settings import SettingError
 from .core.profile_settings import write as write_setting
 from .core.profiles import (
@@ -180,6 +192,12 @@ from .core.state_machine import (
     EntryDelayElapsed,
     Event,
     ExitDelayElapsed,
+    PassageDoorUsed,
+    PassageEnd,
+    PassageEnded,
+    PassageGranted,
+    PassageIn,
+    PassageOut,
     ReactionTimeElapsed,
     Readiness,
     Rejected,
@@ -296,13 +314,25 @@ def _jsonable(value: Any) -> Any:
 def effect_payload(effect: Effect) -> dict[str, Any]:
     """Wandelt einen Effekt in Ereignisdaten für den HA-Event-Bus um."""
     payload: dict[str, Any] = {"type": type(effect).__name__}
-    for field in fields(effect):
-        payload[field.name] = _jsonable(getattr(effect, field.name))
+    for item in fields(effect):
+        payload[item.name] = _jsonable(getattr(effect, item.name))
     return payload
 
 
 # Gastmodus "bis ich ausschalte" (gespeicherter Wert statt eines Zeitpunkts)
 GUEST_UNTIL_OFF = -1.0
+
+
+@dataclass
+class PassageOutRun:
+    """Laufender Durchgang "rausgehen" (ADR 0013)."""
+
+    until: float  # Zeitpunkt (UTC-Sekunden)
+    by: str
+    end: OutEnd
+    sensors: set[str] = field(default_factory=set)  # Wegmelder und benutzte Türen
+    doors: set[str] = field(default_factory=set)  # benutzte Türen
+    closes: int = 0
 
 
 class HauswachtRuntime:
@@ -443,6 +473,11 @@ class HauswachtRuntime:
         # Ausgefallene Melder: eine Nachricht je Melder, weg, sobald er sich wieder meldet
         self._lost_pushed: dict[str, set[str]] = {}
         self._lost_timers: dict[str, CALLBACK_TYPE] = {}
+        # Durchgang (ADR 0013): reinkommen (Tür -> Wegmelder), rausgehen, Zeiten, Nachrichten
+        self._passage_in_doors: dict[str, frozenset[str]] = {}
+        self._passage_out: PassageOutRun | None = None
+        self._passage_timers: dict[str, CALLBACK_TYPE] = {}
+        self._passage_pushed: set[str] = set()
         self.users = parse_users(entry.options)
         self.homecoming = HomecomingObserver(
             hass, entry.entry_id, dict(self.options), self.entry_doors, self._notify
@@ -922,6 +957,7 @@ class HauswachtRuntime:
         self._cancel_settle()
         self._cancel_speech_repeat()
         self._cancel_lost_timers()
+        self._passage_reset()
         self._reset_rules()
         self.automation.stop()
         self.reminder.stop()
@@ -1284,6 +1320,7 @@ class HauswachtRuntime:
                 Action.ARM: "duress_arm",
                 Action.DISARM: "duress_disarm",
                 Action.END_ALARM: "duress_end_alarm",
+                Action.PASSAGE: "duress_passage",
             }[action],
         )
         self.notifier.send_duress(
@@ -1353,17 +1390,24 @@ class HauswachtRuntime:
         title = title or tr(self.lang, "btn_disarm")
         if not self.push_disarm or self._session is None:
             return {"tag": PUSH_TAG}
-        return {
-            "tag": PUSH_TAG,
-            "actions": [
+        actions = [
+            {
+                "action": f"{PUSH_ACTION_PREFIX}{self._session}",
+                "title": title,
+                # iOS: nur mit entsperrtem Gerät (Face ID / Code)
+                "authenticationRequired": True,
+            }
+        ]
+        if self.ctx.state is AlarmState.PENDING and self.passage_ready:
+            # Durchgang (ADR 0013): reinlassen statt unscharf – das Profil bleibt scharf
+            actions.append(
                 {
-                    "action": f"{PUSH_ACTION_PREFIX}{self._session}",
-                    "title": title,
-                    # iOS: nur mit entsperrtem Gerät (Face ID / Code)
+                    "action": f"{PUSH_PASSAGE_PREFIX}{self._session}",
+                    "title": tr(self.lang, "btn_passage"),
                     "authenticationRequired": True,
                 }
-            ],
-        }
+            )
+        return {"tag": PUSH_TAG, "actions": actions}
 
     def _alarm_targets(self) -> tuple[str, ...]:
         if self.ctx.profile is None:
@@ -1412,6 +1456,219 @@ class HauswachtRuntime:
             },
         )
 
+    # --- Durchgang (ADR 0013) ---------------------------------------------------
+
+    def passage_config(self) -> PassageConfig:
+        """Durchgang-Einstellungen des scharfen Profils (unscharf: aus)."""
+        profile = self.ctx.profile
+        return parse_passage(self.entry.options, profile.profile_id if profile else None)
+
+    @property
+    def passage_ready(self) -> bool:
+        """Durchgang gerade möglich? (Profil erlaubt ihn; scharf oder Eingangsverzögerung)"""
+        return self.ctx.state in (AlarmState.ARMED, AlarmState.PENDING) and (
+            self.passage_config().enabled
+        )
+
+    @callback
+    def passage(self, changed_by: str | None) -> Direction:
+        """Durchgang öffnen – in der Eingangsverzögerung reinkommen, sonst rausgehen.
+
+        Der Ausweis ist schon geprüft (Keypad, Aktion). Nicht möglich -> ServiceValidationError.
+        """
+        if not self.passage_ready:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="passage_not_possible"
+            )
+        config = self.passage_config()
+        by = changed_by or ""
+        if self.ctx.state is AlarmState.PENDING:
+            self._passage_in(config, by, self.ctx.trigger_sensor)
+            return Direction.IN
+        self._passage_out_start(config, by)
+        return Direction.OUT
+
+    def _active(self, entity_id: str) -> bool:
+        """Gerade offen bzw. in Bewegung?"""
+        return self._effective_state(entity_id) not in (None, "off", *UNAVAILABLE_STATES)
+
+    def _passage_in(self, config: PassageConfig, by: str, door: str | None) -> None:
+        if door is not None and not self._active(door):
+            door = None  # schon wieder zu: nichts zu überbrücken
+        path = path_sensors(config, self.armed_sensors, self.ctx.bypassed)
+        self.changed_by = by or self.changed_by
+        _LOGGER.warning("Durchgang reinkommen durch %s (Tür %s)", by, door)
+        self._dispatch(PassageIn(door=door, path=path, by=by))
+        if door is not None:
+            self._passage_in_doors[door] = path
+            self._passage_later(
+                f"guard:{door}", config.duration * 60, lambda: self._passage_door_guard(door)
+            )
+        elif path:
+            self._passage_later(
+                "path:-", config.path_after, lambda: self._passage_end_sensors(path)
+            )
+        door_name = display_name(self.hass, door) if door else "–"
+        message = tr(self.lang, "passage_in", who=by, door=door_name, profile=self._profile_label())
+        sent = self._passage_notify(message, {"wer": by, "melder": door_name}, tag=PUSH_TAG)
+        # Ersetzt die Nachricht zur Eingangsverzögerung (gleicher tag), sonst wegräumen
+        if stale := self._pushed_targets - set(sent):
+            self.notifier.clear(stale, PUSH_TAG)
+        self._pushed_targets = set(sent)
+        self._notify()  # Anzeige erst jetzt vollständig (Tür eingetragen)
+
+    def _passage_out_start(self, config: PassageConfig, by: str) -> None:
+        doors = out_candidates(self.entry_doors(), self.ctx.bypassed, self.armed_sensors)
+        path = path_sensors(config, self.armed_sensors, self.ctx.bypassed)
+        if not doors and not path:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="passage_no_doors"
+            )
+        self._passage_out_end(warn=False)  # ein neuer Ausgang ersetzt einen laufenden
+        _LOGGER.warning("Durchgang rausgehen durch %s (%s Min.)", by, config.duration)
+        self.changed_by = by or self.changed_by
+        self._dispatch(
+            PassageOut(doors=doors, path=path, first_only=config.out_doors is OutDoors.FIRST, by=by)
+        )
+        self._passage_out = PassageOutRun(
+            until=dt_util.utcnow().timestamp() + config.duration * 60,
+            by=by,
+            end=config.out_end,
+            sensors=set(path),
+        )
+        self._passage_later("out", config.duration * 60, self._passage_out_end)
+        message = tr(
+            self.lang,
+            "passage_out",
+            who=by,
+            minutes=config.duration,
+            profile=self._profile_label(),
+        )
+        self._passage_notify(message, {"wer": by}, tag=PUSH_PASSAGE_TAG)
+        self._notify()  # Anzeige erst jetzt vollständig (Ende eingetragen)
+
+    def _passage_door_used(self, door: str) -> None:
+        if self._passage_out is not None:
+            self._passage_out.doors.add(door)
+            self._passage_out.sensors.add(door)
+
+    def _passage_door_closed(self, door: str) -> None:
+        """Rausgehen: Tür wieder zu. Mit Ende "zurück": beim zweiten Mal (raus + zurück) aus."""
+        run = self._passage_out
+        if run is None or door not in run.doors:
+            return
+        run.closes += 1
+        if run.end is OutEnd.RETURNED and run.closes >= CLOSES_FOR_RETURN:
+            self._passage_out_end()
+
+    @callback
+    def _passage_out_end(self, warn: bool = True) -> None:
+        """Rausgehen vorbei: Wegmelder und Tür wieder überwachen – offene erst, wenn sie zu
+        sind (mit Warnung)."""
+        run, self._passage_out = self._passage_out, None
+        self._cancel_passage_timer("out")
+        if run is None:
+            return
+        active = frozenset(s for s in run.sensors if self._active(s))
+        self._dispatch(PassageEnd(sensors=frozenset(run.sensors), still_active=active))
+        open_doors = sorted(active & run.doors)
+        if warn and open_doors:
+            self._passage_warn(open_doors)
+        elif self._passage_pushed:
+            self.notifier.clear(self._passage_pushed, PUSH_PASSAGE_TAG)
+            self._passage_pushed.clear()
+
+    @callback
+    def _passage_door_guard(self, door: str) -> None:
+        """Reinkommen: Tür nach der Durchgangszeit noch offen -> Warnung, Wegmelder enden."""
+        self._passage_timers.pop(f"guard:{door}", None)
+        if door not in self._passage_in_doors or self.ctx.state is AlarmState.DISARMED:
+            return
+        self._passage_end_sensors(self._passage_in_doors[door])
+        self._passage_warn([door])
+
+    @callback
+    def _passage_end_sensors(self, sensors: frozenset[str]) -> None:
+        if not sensors or self.ctx.state is AlarmState.DISARMED:
+            return
+        active = frozenset(s for s in sensors if self._active(s))
+        self._dispatch(PassageEnd(sensors=sensors, still_active=active, close_doors=False))
+
+    def _passage_restored(self, sensors: frozenset[str]) -> None:
+        """Reinkommen: Tür wieder zu -> Wegmelder nach der Nachlaufzeit wieder überwachen."""
+        for door in sensors & self._passage_in_doors.keys():
+            path = self._passage_in_doors.pop(door)
+            self._cancel_passage_timer(f"guard:{door}")
+            if path:
+                after = self.passage_config().path_after
+                self._passage_later(
+                    f"path:{door}", after, lambda p=path: self._passage_end_sensors(p)
+                )
+
+    def _passage_warn(self, doors: list[str]) -> None:
+        names = ", ".join(display_name(self.hass, d) for d in doors)
+        _LOGGER.warning("Nach dem Durchgang noch offen, nicht überwacht: %s", names)
+        self.fire_event({"type": "PassageDoorOpen", "doors": doors})
+        message = tr(self.lang, "passage_open", door=names, profile=self._profile_label())
+        self._passage_notify(message, {"melder": names}, tag=PUSH_PASSAGE_TAG)
+
+    def _passage_notify(self, message: str, values: dict[str, Any], *, tag: str) -> list[str]:
+        sent = self.notifier.notify(
+            NotifyEvent.PASSAGE,
+            tr(self.lang, "passage_title"),
+            message,
+            values={"profil": self._profile_label(), **values},
+            data={"tag": tag},
+            test_mode=self.ctx.test_mode,
+        )
+        if tag == PUSH_PASSAGE_TAG:
+            if stale := self._passage_pushed - set(sent):
+                self.notifier.clear(stale, PUSH_PASSAGE_TAG)
+            self._passage_pushed = set(sent)
+        return sent
+
+    def _profile_label(self) -> str:
+        return self.profile_name(self.ctx.profile.profile_id) if self.ctx.profile else ""
+
+    def _passage_later(self, key: str, seconds: float, action: Callable[[], None]) -> None:
+        self._cancel_passage_timer(key)
+
+        @callback
+        def _fire(_now: Any) -> None:
+            self._passage_timers.pop(key, None)
+            action()
+
+        self._passage_timers[key] = async_call_later(self.hass, seconds, _fire)
+
+    def _cancel_passage_timer(self, key: str) -> None:
+        if (timer := self._passage_timers.pop(key, None)) is not None:
+            timer()
+
+    def _passage_reset(self) -> None:
+        """Unscharf oder Entladen: jeder Durchgang endet (Überbrückungen leert die Maschine)."""
+        for timer in self._passage_timers.values():
+            timer()
+        self._passage_timers.clear()
+        self._passage_in_doors.clear()
+        self._passage_out = None
+        if self._passage_pushed:
+            self.notifier.clear(self._passage_pushed, PUSH_PASSAGE_TAG)
+            self._passage_pushed.clear()
+
+    def passage_info(self) -> dict[str, Any] | None:
+        """Für Anzeige und Attribute: laufender Durchgang (sonst None)."""
+        run = self._passage_out
+        if run is None and not self._passage_in_doors and not self.ctx.passage:
+            return None
+        return {
+            "direction": Direction.OUT.value if run is not None else Direction.IN.value,
+            "until": dt_util.utc_from_timestamp(run.until).isoformat() if run else None,
+            "by": run.by if run else self.changed_by,
+            "doors": sorted(run.doors if run else self._passage_in_doors.keys()),
+            "doors_allowed": sorted(self.ctx.passage_doors),
+            "sensors": sorted(self.ctx.passage),
+        }
+
     async def _on_push_action(self, event: HaEventAny[Any]) -> None:
         action = event.data.get("action")
         if not isinstance(action, str):
@@ -1420,6 +1677,9 @@ class HauswachtRuntime:
             if action.startswith(prefix):
                 await self._on_push_arm(prefix, action[len(prefix) :], event.context.user_id)
                 return
+        if action.startswith(PUSH_PASSAGE_PREFIX) and self.push_disarm:
+            await self._on_push_passage(action, event.context.user_id)
+            return
         if not action.startswith(PUSH_ACTION_PREFIX) or not self.push_disarm:
             return
         if self._session is None or action != f"{PUSH_ACTION_PREFIX}{self._session}":
@@ -1452,6 +1712,30 @@ class HauswachtRuntime:
             self.disarm_trusted(changed_by=actor)
         finally:
             self._via_push = None
+
+    async def _on_push_passage(self, action: str, user_id: str | None) -> None:
+        """Push-Knopf "Reinlassen" (Durchgang, ADR 0013): bleibt scharf, Tür frei bis zu."""
+        if self._session is None or action != f"{PUSH_PASSAGE_PREFIX}{self._session}":
+            _LOGGER.warning("Veralteter Push-Knopf „Reinlassen“ ignoriert")
+            return
+        user = await self.hass.auth.async_get_user(user_id) if user_id else None
+        if user is None or not user.is_active or user.system_generated:
+            _LOGGER.warning("Push-Knopf ohne gültigen Home-Assistant-Benutzer ignoriert")
+            return
+        if self.ctx.state is not AlarmState.PENDING or not self.passage_ready:
+            return  # Eingangsverzögerung vorbei (Alarm) oder schon unscharf
+        try:
+            actor = await self.async_actor_for_user(user.id, Action.PASSAGE)
+        except ServiceValidationError:
+            self.notifier.send(
+                self._alarm_targets(),
+                tr(self.lang, "push_denied_title"),
+                tr(self.lang, "push_denied", who=user.name),
+                test_mode=self.ctx.test_mode,
+            )
+            return
+        _LOGGER.warning("Push-Knopf „Reinlassen“ durch %s", actor)
+        self.passage(actor or user.name)
 
     async def _on_push_arm(self, prefix: str, token: str, user_id: str | None) -> None:
         """Push-Knöpfe "Trotzdem scharf", "Erneut versuchen", "Jetzt scharf"."""
@@ -1895,6 +2179,8 @@ class HauswachtRuntime:
             self._dispatch(SensorTriggered(sensor_key=entity_id, role=role))
         if role is SensorRole.TAMPER_24H or entity_id not in self._engine.watched():
             return
+        if entity_id in self.ctx.passage:
+            return  # Durchgang: Weg und Tür zählen auch für Regeln nicht
         if self.ctx.state not in (AlarmState.ARMED, AlarmState.PENDING, AlarmState.ALARM_HOLD):
             return
         now = dt_util.utcnow().timestamp()
@@ -2405,6 +2691,13 @@ class HauswachtRuntime:
             and not self._in_startup_grace()  # beim Hochfahren normal; gemeldet wird danach
         ):
             self._on_sensor_lost(entity_id)
+        if (
+            self._passage_out is not None
+            and entity_id in self._passage_out.doors
+            and new_state == "off"
+            and old_state not in (None, "off", *UNAVAILABLE_STATES)
+        ):
+            self._passage_door_closed(entity_id)
         if entity_id in self.ctx.bypassed_until_closed and new_state == "off":
             self._dispatch(SensorClosed(sensor_key=entity_id))
             return
@@ -2579,6 +2872,7 @@ class HauswachtRuntime:
             self._reset_rules()
             self._engine = RuleEngine()
             self._exit_doors = frozenset()
+            self._passage_reset()
             self.automation.on_disarmed()
             if self.armed_sensors:
                 self.armed_sensors = frozenset()
@@ -2591,6 +2885,7 @@ class HauswachtRuntime:
             old_ctx.bypassed,
             old_ctx.bypassed_until_closed,
             old_ctx.trigger_sensor,
+            old_ctx.passage,
         ) != (
             self.ctx.state,
             self.ctx.profile,
@@ -2598,6 +2893,7 @@ class HauswachtRuntime:
             self.ctx.bypassed,
             self.ctx.bypassed_until_closed,
             self.ctx.trigger_sensor,
+            self.ctx.passage,
         ):
             self._store.async_delay_save(self._storage_data, 0)
         self._notify()
@@ -2615,7 +2911,8 @@ class HauswachtRuntime:
             "restore": saved_state(
                 profile_id=self.ctx.profile.profile_id if armed and self.ctx.profile else None,
                 state=self.ctx.state.value,
-                bypassed=self.ctx.bypassed,
+                # Ein Durchgang endet beim Neustart (ADR 0013)
+                bypassed=self.ctx.bypassed - self.ctx.passage,
                 bypassed_until_closed=self.ctx.bypassed_until_closed,
                 accepted_unavailable=self.ctx.accepted_unavailable,
                 trigger_sensor=self.ctx.trigger_sensor,
@@ -2683,6 +2980,17 @@ class HauswachtRuntime:
                 self._on_acknowledged(effect)
             case SensorsRestored():
                 _LOGGER.info("Wieder überwacht: %s", sorted(effect.sensors))
+                self._passage_restored(effect.sensors)
+            case PassageDoorUsed():
+                self._passage_door_used(effect.door)
+            case PassageEnded():
+                _LOGGER.info(
+                    "Durchgang beendet: wieder überwacht %s, offen %s",
+                    sorted(effect.restored),
+                    sorted(effect.still_open),
+                )
+            case PassageGranted():
+                pass
             case ArmingAborted():
                 _LOGGER.warning(
                     "Scharfschaltung abgebrochen: offen=%s, nicht verfügbar=%s",

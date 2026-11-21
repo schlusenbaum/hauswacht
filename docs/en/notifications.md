@@ -43,6 +43,7 @@ as entered.
 | Trigger rule "notification only" fulfilled | on | event, otherwise general |
 | Unconfirmed trigger (trigger rule only partly fulfilled, no alarm) | off | event, otherwise general |
 | Sensor often triggers alone (started a trigger rule 3× in one hour) | off | event, otherwise general |
+| [Passage](passage.md) (let in, going out, door still open afterwards) | on | event, otherwise general |
 
 - **Duress alarm** is not an event that can be switched off: always on, own recipients ("Duress
   alarm recipients").

@@ -136,6 +136,7 @@ DEFAULT_SPEECH_DE: Mapping[NotifyEvent, str] = {
     NotifyEvent.ARM_HINT: "Hinweis: Nicht überwacht: {grund}.",
     NotifyEvent.UNCONFIRMED: "{text}",
     NotifyEvent.UNCONFIRMED_FREQUENT: "{text}",
+    NotifyEvent.PASSAGE: "{text}",
 }
 DEFAULT_SPEECH_EN: Mapping[NotifyEvent, str] = {
     NotifyEvent.ALARM: "Attention, burglar alarm! Triggered by {sensor}.",
@@ -153,6 +154,7 @@ DEFAULT_SPEECH_EN: Mapping[NotifyEvent, str] = {
     NotifyEvent.ARM_HINT: "Note: not monitored: {reason}.",
     NotifyEvent.UNCONFIRMED: "{text}",
     NotifyEvent.UNCONFIRMED_FREQUENT: "{text}",
+    NotifyEvent.PASSAGE: "{text}",
 }
 
 
