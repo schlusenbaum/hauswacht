@@ -2,9 +2,6 @@
 
 **Deutsch** | [English](en/passage.md)
 
-> **Vorabversion 0.59.0b3.** Alle Wege sind dabei: Keypad, Aktion, Push-Knopf „Reinlassen“,
-> automatisch per Handy, Türschloss, NFC-Aufkleber und Kartenleser.
-
 Ein **Durchgang** lässt eine Tür kurz frei – das Profil **bleibt scharf**. Alle anderen Melder
 lösen weiter aus.
 

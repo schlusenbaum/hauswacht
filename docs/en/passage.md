@@ -2,9 +2,6 @@
 
 [Deutsch](../durchgang.md) | **English**
 
-> **Pre-release 0.59.0b3.** All ways are included: keypad, action, push button "Let in",
-> automatically by phone, door lock, NFC tags and card readers.
-
 A **passage** frees a door briefly – the profile **stays armed**. All other sensors still
 trigger.
 

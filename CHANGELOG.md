@@ -6,6 +6,33 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-11-21
+
+**Durchgang – rein oder raus, ohne unscharf zu schalten** (ADR 0013, getestet über die
+Vorabversionen 0.59.0b1 bis b3).
+
+### Hinzugefügt
+- **Durchgang** je Profil (Standard aus): Das Profil bleibt scharf, nur eine Tür (und frei
+  gewählte Melder auf dem Weg) ist kurz frei – nachts heimkommen, kurz den Müll rausbringen.
+  - **Reinkommen:** in der Eingangsverzögerung PIN oder Karte und **irgendeine Profil-Taste**;
+    die geöffnete Tür ist frei, bis sie zu ist, die Melder auf dem Weg noch eine Nachlaufzeit
+    länger. Jede neue Türöffnung braucht einen eigenen Ausweis.
+  - **Rausgehen:** solange scharf, PIN oder Karte und **irgendeine Profil-Taste** (es wird nie
+    umgeschaltet). Die erste Eingangstür, die danach aufgeht, ist für die Durchgangszeit frei
+    (Standard 5 Minuten); alle anderen bleiben scharf.
+  - Tür am Ende noch offen: **Warnung statt Alarm**, wieder überwacht, sobald sie zu ist.
+- Weitere Wege: eigene **Durchgang-Taste**, Aktion **`hauswacht.passage`**, Push-Knopf
+  **„Reinlassen“**, **Handy-Reinlassen** mit eigener Personenliste, **Türschloss** („Aufschließen
+  bei scharf: Durchgang, sonst unscharf“), **NFC-Aufkleber** und **RFID-Leser** (Aktion
+  „Durchgang“).
+- Benachrichtigung **„Durchgang“**, Hinweis auf der Alarm-Karte, Attribut `passage`, Ereignisse
+  für Automationen. Immer mit Ausweis, Recht wie „unscharf schalten“, Bedrohungs-PIN wirkt still.
+
+### Dokumentation
+- Neue Seite **Durchgang** mit Beispielen und Restrisiko; ADR 0013; ADR 0014 „Ausgangserkennung“
+  (vorgeschlagen) und Roadmap 0.60/0.61 – deutsch und englisch.
+
+
 ## [0.59.0b3] - 2026-11-21
 
 **Vorabversion: Durchgang – Türschloss, NFC-Aufkleber, Kartenleser** (ADR 0013, Stufe 3).

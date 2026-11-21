@@ -43,6 +43,7 @@
 | 0.56 | [Gekippte Fenster](melder.md#melder-mit-kippstellung-gekippt) je Profil erlaubt oder wie offen; [Erschütterungsmelder](melder.md#erschütterungsmelder) mit Fehlalarmschutz, auch als Zahl ([ADR 0010](entwicklung/adr/0010-fenster-kippstellung-erschuetterung.md)) |
 | 0.57 | [Einstellungsseite](einstellungsseite.md) in der Seitenleiste: alles auf einen Blick, Matrix „Melder × Profile“, alles direkt bearbeiten (Melder, Profile, Auslöseregeln als Formular oder YAML, Sirenen mit Ton, Benachrichtigungen, Personen, Karten, Bedienteile, PIN-Regeln, Aktions-Codes, System), Reiter Dokumentation und „?“ an jedem Abschnitt; [Funkstille je Melder](melder.md#eigene-grenze-je-melder); „Verhalten nach Neustart“ nur bei echtem Neustart ([ADR 0011](entwicklung/adr/0011-einstellungsseite.md)) |
 | 0.58 | [Keypads allgemein anbinden](entwicklung/adr/0012-keypads-allgemein.md): ein Eingang für jedes Keypad (Z-Wave, ESPHome, Node-RED …) mit Antwort und Anzeige-Entität, Blueprint Ring Keypad v2 und ESPHome-Beispiel, [MQTT-Schnittstelle](bedienteile.md#mqtt-schnittstelle); Warnungen zu falschen PINs räumen sich auf |
+| 0.59 | [Durchgang](durchgang.md) – rein oder raus, ohne unscharf zu schalten ([ADR 0013](entwicklung/adr/0013-durchgang.md)): am Keypad mit jeder Profil-Taste, per Push-Knopf „Reinlassen“, automatisch per Handy, Türschloss, NFC-Aufkleber, Kartenleser |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -50,7 +51,6 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| 0.59 (in Arbeit) | [Durchgang](durchgang.md) – rein oder raus, ohne unscharf zu schalten ([ADR 0013](entwicklung/adr/0013-durchgang.md)): b1 Keypad und Aktion, b2 Push-Knopf „Reinlassen“ und Handy-Reinlassen, b3 Türschloss, NFC-Aufkleber, Kartenleser |
 | 0.60 | Beobachtung „Weggehen“: wie schnell und wie zuverlässig jedes Anwesenheits-Signal das Rausgehen erkennt – Grundlage für die Ausgangserkennung ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)) |
 | 0.61 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |

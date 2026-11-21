@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.59.0b3 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.59.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -40,7 +40,7 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   oder wenn alle weg sind – mit Anwesenheit aus mehreren Signalen je Person (WLAN, Bluetooth,
   Router, Nähe …) – und unscharf bei Rückkehr mit Türbeleg. Je Wochentag andere Zeiten über einen
   Zeitplan; **Gastmodus**, damit Besuch nicht ausgesperrt wird.
-- **Durchgang** (Vorabversion) – rein oder raus, **ohne unscharf zu schalten**: nachts heimkommen
+- **Durchgang** – rein oder raus, **ohne unscharf zu schalten**: nachts heimkommen
   mit PIN und irgendeiner Taste, kurz den Müll rausbringen (ebenso) – nur die benutzte Tür ist frei, alles
   andere bleibt scharf. Auch per Push-Knopf „Reinlassen“ oder automatisch, wenn das Handy
   heimkommt.
