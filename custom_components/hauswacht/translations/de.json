@@ -1070,7 +1070,8 @@
           "source": "Wer hat aufgeschlossen? (Quelle)",
           "topic": "Nuki: MQTT-Topic des Schlosses",
           "who": "Allgemein: Sensor oder Ereignis mit der Kennung",
-          "profile": "Optional: beim Abschließen scharf schalten (Alarmprofil)"
+          "profile": "Optional: beim Abschließen scharf schalten (Alarmprofil)",
+          "action": "Aufschließen bei scharf"
         },
         "data_description": {
           "topic": "Z. B. `nuki/3A1B2C4D` (in der Nuki-App unter MQTT; ohne `/lockActionEvent`).",
@@ -1677,7 +1678,8 @@
       "options": {
         "disarm": "Unscharf schalten",
         "arm": "Scharf schalten",
-        "toggle": "Umschalten (scharf ↔ unscharf)"
+        "toggle": "Umschalten (scharf ↔ unscharf)",
+        "passage": "Durchgang (wenn das Profil ihn erlaubt, sonst unscharf)"
       }
     },
     "user_rights_scope": {
@@ -1745,6 +1747,12 @@
       "options": {
         "time": "Nach Ablauf der Zeit",
         "returned": "Schon, wenn ich zurück bin und die Tür zu ist"
+      }
+    },
+    "lock_unlock": {
+      "options": {
+        "disarm": "Unscharf schalten",
+        "passage": "Durchgang, wenn das Profil ihn erlaubt – sonst unscharf"
       }
     }
   },

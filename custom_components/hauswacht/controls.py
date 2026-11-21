@@ -55,6 +55,7 @@ from .core.controls import (
     Login,
     PendingForce,
     PendingLogin,
+    TagAction,
     force_confirmed,
     fresh_cards,
     generic_identity,
@@ -123,6 +124,9 @@ if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
 
 _LOGGER = logging.getLogger(__name__)
+
+# Was ein Aufkleber/Leser tun soll (tag_intent) -> Recht
+_TAG_ACTIONS = {"disarm": Action.DISARM, "arm": Action.ARM, "passage": Action.PASSAGE}
 
 TAG_SCANNED = "tag_scanned"
 MQTT_DOMAIN = "mqtt"
@@ -1013,29 +1017,50 @@ class ControlManager:
         """NFC-Aufkleber: nur mit dem Handy eines bekannten, berechtigten Benutzers."""
         user = find_by_ha_user(self.runtime.users, user_id)
         intent = tag_intent(sticker.action, self._armed(sticker))
-        action = Action.DISARM if intent == "disarm" else Action.ARM
+        action = _TAG_ACTIONS[intent]
         if user is None or not any(user.may_in(action, a.area_id) for a in self._areas(sticker)):
             self.runtime.notifier.send_system(
                 tr(self.runtime.lang, "sticker_denied_title"),
                 tr(self.runtime.lang, "sticker_denied", sticker=sticker.name),
             )
             return "rejected"
-        return self._execute_and_confirm(
-            sticker, action, sticker.profile, Identity("phone", (user,)), user.name
-        )
+        identity = Identity("phone", (user,))
+        if action is Action.PASSAGE:
+            return self._passage_or_disarm(sticker, identity, user.name)
+        return self._execute_and_confirm(sticker, action, sticker.profile, identity, user.name)
 
     async def _reader(self, reader: Control, tag_id: str) -> str:
         """Fester Leser: Karte eines Benutzers (allein oder mit PIN an einem Keypad)."""
         intent = tag_intent(reader.action, self._armed(reader))
-        action = Action.DISARM if intent == "disarm" else Action.ARM
+        action = _TAG_ACTIONS[intent]
         identity = await self._login(reader, tag_id, action)
         if identity == "pending":
             return "pending"
         if identity is None:
             return "rejected"
-        return self._execute_and_confirm(
-            reader, action, reader.profile, identity, identity_label(identity, self.runtime.lang)
-        )
+        who = identity_label(identity, self.runtime.lang)
+        if action is Action.PASSAGE:
+            return self._passage_or_disarm(reader, identity, who)
+        return self._execute_and_confirm(reader, action, reader.profile, identity, who)
+
+    def _passage_or_disarm(self, control: Control, identity: Identity, who: str) -> str:
+        """Aufkleber, Leser, Schloss mit "Durchgang" (ADR 0013): erlaubt das scharfe Profil den
+        Durchgang, rein bzw. raus – sonst wie bisher unscharf."""
+        ready = [a for a in self._areas(control) if a.passage_ready]
+        if not identity.duress:
+            ready = [a for a in ready if a.permits(identity.users, Action.PASSAGE)]
+        if ready:
+            entering = [a for a in ready if a.ctx.state is AlarmState.PENDING]
+            for area in entering or ready:
+                try:
+                    area.passage(f"{who} ({control.name})")
+                except HomeAssistantError as err:
+                    _LOGGER.warning("Durchgang an %s nicht möglich: %s", control.name, err)
+                    return "not_ready"
+            return "ok"
+        if not self._armed(control):
+            return "already_disarmed"
+        return self._execute_and_confirm(control, Action.DISARM, None, identity, who)
 
     def _confirm(self, control: Control, action: Action, result: str, who: str) -> None:
         if result == "ok":
@@ -1178,6 +1203,8 @@ class ControlManager:
         if intent == UNLOCK:
             if not self._armed(control):
                 return "already_disarmed"
+            if control.action is TagAction.PASSAGE:
+                return self._passage_or_disarm(control, found, who)
             return self._execute_and_confirm(control, Action.DISARM, None, found, who)
         if intent == LOCK and control.profile:
             area = self._area_of_profile(control, control.profile)

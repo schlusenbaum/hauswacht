@@ -3940,6 +3940,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             fields[
                 vol.Optional("profile", description={"suggested_value": source.get("profile")})
             ] = self._control_profile_selector()
+            fields[vol.Required("action", default=source.get("action", "disarm"))] = _select(
+                ["disarm", "passage"], "lock_unlock"
+            )
         else:
             if kind is ControlKind.STICKER:
                 fields[vol.Required("tag", default=source.get("tag", ""))] = TextSelector()
@@ -3948,7 +3951,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                     DeviceSelector(DeviceSelectorConfig())
                 )
             fields[vol.Required("action", default=source.get("action", "disarm"))] = _select(
-                ["disarm", "arm", "toggle"], "control_action"
+                ["disarm", "arm", "toggle", "passage"], "control_action"
             )
             fields[
                 vol.Optional("profile", description={"suggested_value": source.get("profile")})

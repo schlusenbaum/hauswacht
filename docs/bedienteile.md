@@ -752,7 +752,7 @@ nichts.
 | Einstellung | Bedeutung |
 |---|---|
 | Aufkleber-ID | unter Einstellungen → Bereiche, Labels & Zonen → Tags (nach dem ersten Scannen) |
-| Aktion | unscharf schalten, scharf schalten (Profil) oder umschalten (scharf ↔ unscharf) |
+| Aktion | unscharf schalten, scharf schalten (Profil), umschalten (scharf ↔ unscharf) oder **Durchgang** (erlaubt das scharfe Profil ihn: [Durchgang](durchgang.md), sonst unscharf) |
 
 Das Handy muss entsperrt sein. Kein Tastendruck nötig.
 
@@ -764,7 +764,7 @@ PN532 oder RC522 über ESPHome. Anders als beim Keypad reicht **Karte vorhalten*
 | Einstellung | Bedeutung |
 |---|---|
 | Geräte-ID | steht im Ereignis „Tag gescannt“ (`device_id`) |
-| Aktion | unscharf schalten, scharf schalten (Profil) oder umschalten |
+| Aktion | unscharf schalten, scharf schalten (Profil), umschalten oder **Durchgang** (erlaubt das scharfe Profil ihn: [Durchgang](durchgang.md), sonst unscharf) |
 | Anmeldung | **Karte** oder **Karte und PIN** (danach innerhalb von 30 s PIN desselben Benutzers an einem Keypad im selben Bereich) |
 
 „Umschalten“ ist bequem, kann aber auch versehentlich scharf schalten. Einfache 125-kHz-Karten
@@ -930,6 +930,12 @@ Gut zu wissen:
 Ein elektronisches Türschloss schaltet **unscharf, wenn ein bekannter Benutzer aufschließt** –
 mit dessen Rechten je Bereich. Im Logbuch steht z. B. „Anna (Haustür-Schloss)“. Optional
 schaltet **Abschließen von außen** ein Profil scharf.
+
+Mit **„Aufschließen bei scharf: Durchgang“** bleibt die Anlage scharf, wenn das scharfe Profil
+einen [Durchgang](durchgang.md) erlaubt: Aufschließen in der Eingangsverzögerung lässt herein,
+Aufschließen vorher öffnet den Durchgang zum Rausgehen (die erste Tür, die danach aufgeht).
+Erlaubt das Profil keinen Durchgang (z. B. „Abwesend“), schaltet Aufschließen wie bisher
+unscharf.
 
 Dafür muss das Schloss sagen, **wer** aufgeschlossen hat. Das bloße Öffnen der Tür oder
 „aufgeschlossen“ ohne Person reicht nie.

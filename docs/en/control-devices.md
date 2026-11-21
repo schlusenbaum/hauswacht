@@ -729,7 +729,7 @@ linked to an authorised Hauswacht user. A copied sticker alone is therefore usel
 | Setting | Meaning |
 |---|---|
 | Sticker ID | under Settings → Areas, labels & zones → Tags (after the first scan) |
-| Action | disarm, arm (profile) or toggle (armed ↔ disarmed) |
+| Action | disarm, arm (profile), toggle (armed ↔ disarmed) or **passage** (if the armed profile allows it: [passage](passage.md), otherwise disarm) |
 
 The phone must be unlocked. No key press needed.
 
@@ -741,7 +741,7 @@ RC522 via ESPHome. Unlike the keypad, **holding up the card** is enough.
 | Setting | Meaning |
 |---|---|
 | Reader device | appears in the event "Tag scanned" (`device_id`) |
-| Action | disarm, arm (profile) or toggle |
+| Action | disarm, arm (profile), toggle or **passage** (if the armed profile allows it: [passage](passage.md), otherwise disarm) |
 | Login | **Card** or **card and PIN** (then within 30 s the PIN of the same user at a keypad in the same area) |
 
 "Toggle" is convenient but can also arm by accident. Simple 125 kHz cards are easy to copy –
@@ -904,6 +904,11 @@ Good to know:
 An electronic door lock **disarms when a known user unlocks** – with that user's rights per area.
 The logbook shows e.g. "Anna (Front door lock)". Optionally, **locking from outside** arms a
 profile.
+
+With **"Unlocking while armed: passage"** the system stays armed if the armed profile allows a
+[passage](passage.md): unlocking during the entry delay lets in, unlocking before opens the
+passage for going out (the first door that opens afterwards). If the profile allows no passage
+(e.g. "Away"), unlocking disarms as before.
 
 For this the lock must tell **who** unlocked. Merely opening the door, or "unlocked" without a
 person, is never enough.

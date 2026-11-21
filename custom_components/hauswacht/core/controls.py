@@ -18,7 +18,7 @@ Rein und ohne Home Assistant.
       login / emergency wie beim Keypad
       # sticker (NFC-Aufkleber, gescannt mit der Companion App):
       tag: "<tag-id>"
-      action: disarm | arm | toggle
+      action: disarm | arm | toggle | passage
       profile: <profil>                      # für arm/toggle
       # reader (fester RFID-/NFC-Leser, z. B. ESPHome):
       device: "<geräte-id>"
@@ -81,6 +81,8 @@ class TagAction(StrEnum):
     DISARM = "disarm"
     ARM = "arm"
     TOGGLE = "toggle"
+    # Durchgang (ADR 0013): erlaubt das scharfe Profil ihn, Durchgang – sonst unscharf
+    PASSAGE = "passage"
 
 
 class Login(StrEnum):

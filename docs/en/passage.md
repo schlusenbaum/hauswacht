@@ -2,9 +2,8 @@
 
 [Deutsch](../durchgang.md) | **English**
 
-> **Pre-release 0.59.0b2.** Coming in and going out at the keypad, via the action, via the push
-> button "Let in" and automatically by phone. Door lock, NFC tags and card readers follow in the
-> next pre-release.
+> **Pre-release 0.59.0b3.** All ways are included: keypad, action, push button "Let in",
+> automatically by phone, door lock, NFC tags and card readers.
 
 A **passage** frees a door briefly – the profile **stays armed**. All other sensors still
 trigger.
@@ -167,6 +166,23 @@ sensor on the way that still reports motion at the end.
   passage ends without a warning or the system is disarmed.
 - Events for automations: `PassageGranted`, `PassageDoorUsed`, `PassageEnded`,
   `PassageDoorOpen` (see [reference](reference.md#events)).
+
+## Door lock, NFC tags, card readers
+
+For the [door lock](control-devices.md#door-lock-eg-nuki) set **"Unlocking while armed:
+passage"**, for [NFC stickers](control-devices.md#nfc-sticker-companion-app) and
+[RFID readers](control-devices.md#rfid-reader) the **action "passage"**. Then:
+
+| State | Unlocking, scanning the tag or holding the card |
+|---|---|
+| Entry delay running, profile allows passage | **Coming in** – door free until it is closed |
+| Armed, profile allows passage | **Going out** – the first door that opens afterwards is free |
+| Armed, profile allows **no** passage | **Disarm** as before |
+| Disarmed | nothing |
+
+Example: the Nuki at the front door is set to "passage". At night "Night" is armed (with
+passage): Finja unlocks with her Nuki app – Hauswacht lets her in, "Night" stays. During the day
+"Away" is armed (without passage): unlocking disarms.
 
 ## Via action or dashboard button
 

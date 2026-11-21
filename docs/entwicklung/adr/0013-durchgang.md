@@ -1,6 +1,6 @@
 # ADR 0013: Durchgang – rein oder raus, ohne unscharf zu schalten
 
-- Status: angenommen, in Entwicklung (Zweig `entwicklung/durchgang`); Stufe 1 in 0.59.0b1, Stufe 2 in 0.59.0b2
+- Status: angenommen, in Entwicklung (Zweig `entwicklung/durchgang`); Stufe 1 in 0.59.0b1, Stufe 2 in 0.59.0b2, Stufe 3 in 0.59.0b3
 - Datum: 2026-11-21
 
 ## Kontext
@@ -52,7 +52,7 @@ Ohne Ausweis gibt es keinen Durchgang – auch nicht mit „Tasten ohne PIN“.
 | **PIN oder Karte** + **irgendeine Profil-Taste**, während das Profil **scharf** ist (es wird nie umgeschaltet – wer ein anderes Profil will, schaltet erst unscharf) | – | ✅ – damit geht es auch, wenn alle Tasten mit Profilen belegt sind |
 | **PIN oder Karte** + eigene **Durchgang-Taste** (frei wählbar je Keypad, wie die Profil-Tasten) | ✅ | ✅ |
 | **Push-Knopf [Reinlassen]** neben [Unscharf] in der Eingangs-Nachricht (Home-Assistant-Benutzer mit Recht, wie „Unscharf über Push-Knopf“) | ✅ | – |
-| **Türschloss** (Nuki): Aufsperren durch einen berechtigten Benutzer, wenn das Schloss auf „Durchgang“ statt „Unscharf“ eingestellt ist | ✅ | ✅ (Aufsperren vor dem Öffnen) |
+| **Türschloss** (Nuki): Aufsperren durch einen berechtigten Benutzer, wenn das Schloss auf „Durchgang“ statt „Unscharf“ eingestellt ist – erlaubt das scharfe Profil keinen Durchgang, wie bisher unscharf | ✅ | ✅ (Aufsperren vor dem Öffnen) |
 | **NFC-Aufkleber / Kartenleser** mit der Aktion „Durchgang“ | ✅ | ✅ |
 | **Handy** (automatisch, siehe 3.) | ✅ | – |
 | Aktion `hauswacht.passage` (Dashboard-Knopf, Automationen; nur Administratoren und Automationen) | ✅ | ✅ |

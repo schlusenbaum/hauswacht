@@ -2,9 +2,8 @@
 
 **Deutsch** | [English](en/passage.md)
 
-> **Vorabversion 0.59.0b2.** Reinkommen und Rausgehen am Keypad, per Aktion, per Push-Knopf
-> „Reinlassen“ und automatisch per Handy. Türschloss, NFC-Aufkleber und Kartenleser folgen in der
-> nächsten Vorabversion.
+> **Vorabversion 0.59.0b3.** Alle Wege sind dabei: Keypad, Aktion, Push-Knopf „Reinlassen“,
+> automatisch per Handy, Türschloss, NFC-Aufkleber und Kartenleser.
 
 Ein **Durchgang** lässt eine Tür kurz frei – das Profil **bleibt scharf**. Alle anderen Melder
 lösen weiter aus.
@@ -171,6 +170,23 @@ einen Melder auf dem Weg, der am Ende noch Bewegung meldet.
   verschwinden, wenn der Durchgang ohne Warnung endet oder unscharf geschaltet wird.
 - Ereignisse für Automationen: `PassageGranted`, `PassageDoorUsed`, `PassageEnded`,
   `PassageDoorOpen` (siehe [Referenz](referenz.md#ereignisse)).
+
+## Türschloss, NFC-Aufkleber, Kartenleser
+
+Beim [Türschloss](bedienteile.md#türschloss-z-b-nuki) stellst du **„Aufschließen bei scharf:
+Durchgang“** ein, beim [NFC-Aufkleber](bedienteile.md#nfc-aufkleber-companion-app) und
+[RFID-Leser](bedienteile.md#rfid-leser) die **Aktion „Durchgang“**. Dann gilt:
+
+| Zustand | Aufschließen, Aufkleber scannen oder Karte vorhalten |
+|---|---|
+| Eingangsverzögerung läuft, Profil erlaubt Durchgang | **Reinkommen** – Tür frei, bis sie zu ist |
+| Scharf, Profil erlaubt Durchgang | **Rausgehen** – die erste Tür, die danach aufgeht, ist frei |
+| Scharf, Profil erlaubt **keinen** Durchgang | **Unscharf** wie bisher |
+| Unscharf | nichts |
+
+Beispiel: Das Nuki an der Haustür steht auf „Durchgang“. Nachts ist „Nacht“ scharf (mit
+Durchgang): Finja schließt mit ihrer Nuki-App auf – Hauswacht lässt sie herein, „Nacht“ bleibt.
+Tagsüber ist „Abwesend“ scharf (ohne Durchgang): Aufschließen schaltet unscharf.
 
 ## Per Aktion oder Dashboard-Knopf
 

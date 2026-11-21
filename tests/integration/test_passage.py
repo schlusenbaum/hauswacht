@@ -415,3 +415,50 @@ async def test_phone_too_early_or_short_away_does_not_let_in(
     await _set(hass, DOOR, "on")
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.PENDING
+
+
+# --- NFC-Aufkleber und Kartenleser (0.59.0b3) ------------------------------------------
+
+STICKER = "AA-BB-CC"
+CARD = "04A1B2C3"
+
+
+async def _tag_setup(hass: HomeAssistant, user_id: str) -> None:
+    options = _options()
+    options["users"]["anna"].update({"ha_user": user_id, "tags": [CARD]})
+    options["controls"].update(
+        {
+            "tuer": {
+                "name": "Aufkleber Tür",
+                "kind": "sticker",
+                "tag": STICKER,
+                "action": "passage",
+            },
+            "leser": {"name": "Leser", "kind": "reader", "device": "reader1", "action": "passage"},
+        }
+    )
+    async_mock_service(hass, "notify", PHONE)
+    await setup_entry(hass, make_entry(options))
+
+
+async def test_sticker_passage(hass: HomeAssistant, hass_admin_user: MockUser) -> None:
+    await _tag_setup(hass, hass_admin_user.id)
+    await _arm_night(hass)
+    hass.bus.async_fire(
+        "tag_scanned",
+        {"tag_id": "aa:bb:cc", "device_id": "x"},
+        context=Context(user_id=hass_admin_user.id),
+    )
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert _passage(hass)["direction"] == "out"
+
+
+async def test_reader_passage_lets_in(hass: HomeAssistant, hass_admin_user: MockUser) -> None:
+    await _tag_setup(hass, hass_admin_user.id)
+    await _arm_night(hass)
+    await _set(hass, DOOR, "on")
+    hass.bus.async_fire("tag_scanned", {"tag_id": CARD, "device_id": "reader1"})
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert _passage(hass)["direction"] == "in"

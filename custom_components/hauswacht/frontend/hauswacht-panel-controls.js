@@ -34,7 +34,9 @@ const CT = {
     tag: "Aufkleber-ID (Einstellungen → Bereiche, Labels & Zonen → Tags)",
     device: "Lesegerät",
     action: "Aktion",
-    actions: { disarm: "Unscharf schalten", arm: "Scharf schalten", toggle: "Umschalten (scharf ↔ unscharf)" },
+    actions: { disarm: "Unscharf schalten", arm: "Scharf schalten", toggle: "Umschalten (scharf ↔ unscharf)", passage: "Durchgang (wenn das Profil ihn erlaubt, sonst unscharf)" },
+    lockUnlock: "Aufschließen bei scharf",
+    unlocks: { disarm: "Unscharf schalten", passage: "Durchgang, wenn das Profil ihn erlaubt – sonst unscharf" },
     profile: "Alarmprofil (für scharf/umschalten)",
     entity: "Taster (Ereignis oder Aktions-Sensor)",
     presses: "Druckart → Alarmprofil",
@@ -135,7 +137,9 @@ const CT = {
     tag: "Sticker ID (Settings → Areas, labels & zones → Tags)",
     device: "Reader device",
     action: "Action",
-    actions: { disarm: "Disarm", arm: "Arm", toggle: "Toggle (armed ↔ disarmed)" },
+    actions: { disarm: "Disarm", arm: "Arm", toggle: "Toggle (armed ↔ disarmed)", passage: "Passage (if the profile allows it, otherwise disarm)" },
+    lockUnlock: "Unlocking while armed",
+    unlocks: { disarm: "Disarm", passage: "Passage if the profile allows it – otherwise disarm" },
     profile: "Alarm profile (for arm/toggle)",
     entity: "Button (event or action sensor)",
     presses: "Press type → alarm profile",
@@ -372,7 +376,7 @@ class HauswachtControlEditor extends HTMLElement {
         ? `<label>${ce(this._t("tag"))}</label><input data-f="tag" value="${ce(d.tag || "")}">${this._err("tag")}`
         : `<label>${ce(this._t("device"))}</label>${this._picker("device", d.device, ch.devices, "hw-dev")}${this._err("device")}
            <label>${ce(this._t("login"))}</label>${this._select("login", d.login || "card", ["card", "card_and_pin"].map((v) => [v, this._t("logins")[v]]))}`) +
-        `<label>${ce(this._t("action"))}</label>${this._select("action", d.action || "disarm", ["disarm", "arm", "toggle"].map((v) => [v, this._t("actions")[v]]))}
+        `<label>${ce(this._t("action"))}</label>${this._select("action", d.action || "disarm", ["disarm", "arm", "toggle", "passage"].map((v) => [v, this._t("actions")[v]]))}
         <label>${ce(this._t("profile"))}</label>${this._select("profile", d.profile || "", this._profiles())}${this._err("profile")}`;
     } else if (d.kind === "button") {
       const types = ch.event_types[d.entity] || [];
@@ -387,7 +391,8 @@ class HauswachtControlEditor extends HTMLElement {
         ${(d.source || "nuki_mqtt") === "nuki_mqtt"
           ? `<label>${ce(this._t("lockTopic"))}</label><input data-f="topic" value="${ce(d.topic || "")}">${this._err("topic")}`
           : `<label>${ce(this._t("who"))}</label>${this._picker("who", d.who, ch.who_entities, "hw-who")}${this._err("who")}`}
-        <label>${ce(this._t("lockProfile"))}</label>${this._select("profile", d.profile || "", this._profiles())}`;
+        <label>${ce(this._t("lockProfile"))}</label>${this._select("profile", d.profile || "", this._profiles())}
+        <label>${ce(this._t("lockUnlock"))}</label>${this._select("action", d.action || "disarm", ["disarm", "passage"].map((v) => [v, this._t("unlocks")[v]]))}`;
     }
     const kindSelect = this.item
       ? `<div class="muted">${ce(this._t("kinds")[d.kind])}</div>`

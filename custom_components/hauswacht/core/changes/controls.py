@@ -149,6 +149,8 @@ def control_data(
         data["topic"] = str(user_input.get("topic") or "").strip().rstrip("/")
         data["who"] = user_input.get("who") or ""
         data["profile"] = user_input.get("profile") or None
+        # Aufschließen: unscharf (Standard) oder Durchgang, wenn das Profil ihn erlaubt
+        data["action"] = "passage" if user_input.get("action") == "passage" else "disarm"
     else:
         data["action"] = user_input.get("action", "disarm")
         data["profile"] = user_input.get("profile") or None

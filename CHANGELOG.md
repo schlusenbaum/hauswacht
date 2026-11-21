@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.59.0b3] - 2026-11-21
+
+**Vorabversion: Durchgang – Türschloss, NFC-Aufkleber, Kartenleser** (ADR 0013, Stufe 3).
+
+### Hinzugefügt
+- **Türschloss:** neue Einstellung „Aufschließen bei scharf“ – **unscharf schalten** (wie
+  bisher, Standard) oder **Durchgang, wenn das Profil ihn erlaubt – sonst unscharf**.
+  Aufschließen in der Eingangsverzögerung lässt herein, vorher öffnet es den Durchgang zum
+  Rausgehen.
+- **NFC-Aufkleber und RFID-Leser:** neue Aktion **„Durchgang“** mit derselben Regel.
+
+### Dokumentation
+- Durchgang: Abschnitt „Türschloss, NFC-Aufkleber, Kartenleser“ mit Beispiel; Bedienteile –
+  deutsch und englisch.
+
+
 ## [0.59.0b2] - 2026-11-21
 
 **Vorabversion: Durchgang – Reinlassen per Push-Knopf und per Handy** (ADR 0013, Stufe 2).

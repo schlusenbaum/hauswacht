@@ -1070,7 +1070,8 @@
           "source": "Who unlocked? (source)",
           "topic": "Nuki: MQTT topic of the lock",
           "who": "Generic: sensor or event with the ID",
-          "profile": "Optional: arm when locking (alarm profile)"
+          "profile": "Optional: arm when locking (alarm profile)",
+          "action": "Unlocking while armed"
         },
         "data_description": {
           "topic": "E.g. `nuki/3A1B2C4D` (in the Nuki app under MQTT; without `/lockActionEvent`).",
@@ -1677,7 +1678,8 @@
       "options": {
         "disarm": "Disarm",
         "arm": "Arm",
-        "toggle": "Toggle (armed ↔ disarmed)"
+        "toggle": "Toggle (armed ↔ disarmed)",
+        "passage": "Passage (if the profile allows it, otherwise disarm)"
       }
     },
     "user_rights_scope": {
@@ -1745,6 +1747,12 @@
       "options": {
         "time": "When the time is up",
         "returned": "As soon as I am back and the door is closed"
+      }
+    },
+    "lock_unlock": {
+      "options": {
+        "disarm": "Disarm",
+        "passage": "Passage if the profile allows it – otherwise disarm"
       }
     }
   },
