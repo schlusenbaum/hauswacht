@@ -117,6 +117,9 @@ async def async_setup_entry(
     async_get_current_platform().async_register_entity_service(
         "reset_code_lock", {}, "async_reset_code_lock"
     )
+    async_get_current_platform().async_register_entity_service(
+        "passage", {vol.Optional("code"): cv.string}, "async_passage"
+    )
 
 
 class _SirenTestMixin(HauswachtEntity):
@@ -167,7 +170,30 @@ class _SirenTestMixin(HauswachtEntity):
         self.runtime.reset_code_guard(await self._admin_name("admin_only"))
 
 
-class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
+class _PassageMixin(HauswachtEntity):
+    """Dienst hauswacht.passage – Durchgang ohne Unscharfschalten (ADR 0013)."""
+
+    def _guest_areas(self) -> list[HauswachtRuntime]:
+        raise NotImplementedError
+
+    async def async_passage(self, code: str | None = None) -> None:
+        areas = [a for a in self._guest_areas() if a.passage_ready]
+        if not areas:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="passage_not_possible"
+            )
+        user_id = self._context.user_id if self._context else None
+        # Läuft irgendwo eine Eingangsverzögerung, wird nur dort hereingelassen
+        entering = [a for a in areas if a.ctx.state is AlarmState.PENDING]
+        targets = entering or areas
+        actor = await targets[0].async_authorize(
+            code=code, user_id=user_id, action=Action.PASSAGE, require_code=True
+        )
+        for area in targets:
+            area.passage(actor)
+
+
+class HauswachtAlarmPanel(_PassageMixin, _SirenTestMixin, AlarmControlPanelEntity):
     _attr_name = None  # Entität heißt wie das Gerät: "Hauswacht"
     _attr_translation_key = "panel"
 
@@ -225,6 +251,7 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
             "alarm_cycles": ctx.alarm_cycles,
             "bypassed_sensors": sorted(ctx.bypassed),
             "bypassed_until_closed": sorted(ctx.bypassed_until_closed),
+            "passage": self.runtime.passage_info(),
             "monitored_sensors": sorted(self.runtime.armed_sensors),
             "open_rule_sensors": sorted(self.runtime.open_rule_sensors()),
             "open_sensors": sorted(readiness.open_sensors),
@@ -311,7 +338,7 @@ class HauswachtAlarmPanel(_SirenTestMixin, AlarmControlPanelEntity):
         await self._arm_mode("custom", code)
 
 
-class HauswachtAllPanel(_SirenTestMixin, AlarmControlPanelEntity):
+class HauswachtAllPanel(_PassageMixin, _SirenTestMixin, AlarmControlPanelEntity):
     """Bedienfeld "Alle Bereiche": schaltet jeden Bereich mit dem Profil seines Knopfs.
 
     Bereiche ohne Profil für den gedrückten Knopf bleiben, wie sie sind. Unscharf schaltet alle.

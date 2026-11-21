@@ -1,6 +1,6 @@
 # ADR 0013: Durchgang – rein oder raus, ohne unscharf zu schalten
 
-- Status: angenommen, in Entwicklung (Zweig `entwicklung/durchgang`)
+- Status: angenommen, in Entwicklung (Zweig `entwicklung/durchgang`); Stufe 1 in 0.59.0b1
 - Datum: 2026-11-21
 
 ## Kontext

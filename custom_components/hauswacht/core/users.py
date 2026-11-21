@@ -34,6 +34,9 @@ class Action(StrEnum):
     ARM = "arm"
     DISARM = "disarm"
     END_ALARM = "end_alarm"
+    # Durchgang (ADR 0013): rein oder raus, ohne unscharf zu schalten – braucht das Recht
+    # "unscharf schalten" (wer reinlassen darf, dürfte auch unscharf schalten)
+    PASSAGE = "passage"
 
 
 RIGHTS_ALL = "all"
@@ -71,10 +74,13 @@ class User:
             Action.ARM: self.can_arm,
             Action.DISARM: self.can_disarm,
             Action.END_ALARM: self.can_end_alarm,
+            Action.PASSAGE: self.can_disarm,
         }[action]
 
     def may_in(self, action: Action, area_id: str) -> bool:
         """Darf der Benutzer die Aktion in diesem Bereich?"""
+        if action is Action.PASSAGE:
+            action = Action.DISARM
         if self.area_rights is not None:
             return action in dict(self.area_rights).get(area_id, frozenset())
         return (not self.areas or area_id in self.areas) and self.may(action)

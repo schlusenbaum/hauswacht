@@ -93,6 +93,7 @@ in its attributes. For automations **`phase`** is the most important trigger.
 | `tilted_sensors` | Currently tilted [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted). If the profile allows tilted windows, they are not in `open_sensors` | `["sensor.bedroom_window_opening_state"]` |
 | `open_rule_sensors` | Open sensors that only appear in trigger rules of the active profile | `[]` |
 | `bypassed_sensors`, `bypassed_until_closed` | Bypassed sensors (until disarmed or until closed) | `[]` |
+| `passage` | Running [passage](passage.md): `direction` (`in` coming in, `out` going out), `until` (end when going out), `by`, `doors` (doors used), `doors_allowed` (doors still allowed when going out), `sensors` (currently bypassed by the passage); otherwise empty | `{"direction": "out", "until": "…", …}` |
 | `zones` | Sensor groups with their actual sensors | `{"Outside": […]}` |
 | `last_contact` | Last contact per sensor | `{…}` |
 | `sirens_hardware_enabled` | Real siren control released | `true` |
@@ -194,6 +195,10 @@ Good to know:
 | `TamperDetected` | Tampering reported | `sensor_key`, `state` (state of the system at that moment) |
 | `AlwaysActiveTriggered` | [Always-active](sensors.md#always-active-sensors) sensor triggered | `sensor_key` |
 | `ArmedByClosingDoor` | [Armed by closing the door](profiles.md#arm-by-closing-the-door) | – |
+| `PassageGranted` | [Passage](passage.md) started, the system stays armed | `direction` (`in`/`out`), `door` (when coming in: the opened door), `path` (sensors on the way now free), `by` |
+| `PassageDoorUsed` | Going out: this door is now the passage door | `door` |
+| `PassageEnded` | Passage (or its way) over, sensors are monitored again | `restored` (monitored again), `still_open` (still open – free until closed) |
+| `PassageDoorOpen` | Door still open after the passage – not monitored until it is closed | `doors` |
 | `TestModeChanged` | Test mode on/off | `enabled` |
 
 **Reasons (`cause`) in `StateChanged`:** `arm_requested` (armed), `exit_delay_elapsed` (exit
@@ -201,7 +206,8 @@ delay over), `disarm_requested` (disarmed), `entry_sensor` (entry door → entry
 `entry_delay_elapsed`, `instant_sensor`, `follower_sensor`, `tamper_24h_sensor`, `tamper`,
 `instant_during_entry_delay`, `retrigger` (triggered again), `always_active`,
 `reaction_time_elapsed` (→ `alarm_hold`), `alarm_acknowledged`, `exit_check_failed` (arming
-aborted), `always_alarm_ended`, `restored` (after restart), `startup`.
+aborted), `always_alarm_ended`, `restored` (after restart), `startup`, `passage` (entry delay
+ended by a [passage](passage.md), stays armed).
 
 ### Restart
 
@@ -305,6 +311,7 @@ All actions are aimed at an alarm panel (`target: entity_id: alarm_control_panel
 |---|---|---|
 | `hauswacht.arm` | `profile` (name or ID), `confirm` (confirm open sensors), `code` | Arm a profile |
 | `hauswacht.guest_mode` | `on`, `until` (point in time, empty = until switched off) | [Guest mode](profiles.md#guest-mode) on/off; target an area or "All" |
+| `hauswacht.passage` | `code` (PIN or card; needed if PINs are set up) | [Passage](passage.md): during the entry delay let in, otherwise go out – stays armed |
 | `hauswacht.simulate_trigger` | `sensor` | Test mode: trigger a sensor briefly |
 | `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `tilted` – only sensors with tilt position, `unavailable`, `real`) | Test mode: simulate a sensor state |
 | `hauswacht.simulate_reset` | – | Test mode: reset all simulations |

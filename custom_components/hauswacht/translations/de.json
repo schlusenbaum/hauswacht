@@ -240,6 +240,18 @@
               "doors": "Ausgangstüren",
               "settle": "Beruhigungszeit nach dem Schließen"
             }
+          },
+          "passage": {
+            "name": "Durchgang – rein oder raus, bleibt scharf",
+            "description": "Das Profil bleibt scharf, nur eine Tür (und die Melder auf dem Weg) ist kurz frei. Reinkommen: in der Eingangsverzögerung PIN oder Karte und eine Profil-Taste (oder die Durchgang-Taste) am Keypad – die Tür ist frei, bis sie zu ist. Rausgehen: vorher PIN oder Karte und die Durchgang-Taste. Gedacht für Profile, die nur die Außenhaut überwachen; Melder im Haus bleiben scharf.",
+            "data": {
+              "enabled": "Durchgang erlauben",
+              "duration": "Durchgangszeit (Minuten)",
+              "out_doors": "Rausgehen: welche Tür",
+              "out_end": "Rausgehen: Ende",
+              "path": "Melder auf dem Weg (z. B. Bewegungsmelder in der Einfahrt)",
+              "path_after": "Reinkommen: Weg noch frei nach dem Schließen der Tür"
+            }
           }
         },
         "data_description": {
@@ -755,6 +767,14 @@
           "event_always_active": {
             "name": "Immer aktiver Melder",
             "description": "Ein immer aktiver Melder hat im unscharfen Zustand ausgelöst (ohne Sirene). Wichtiger Hinweis. Standard: an.",
+            "data": {
+              "enabled": "Benachrichtigen",
+              "targets": "Eigene Empfänger (leer = allgemeine)"
+            }
+          },
+          "event_passage": {
+            "name": "Durchgang",
+            "description": "Jemand wurde hereingelassen oder geht kurz raus – die Anlage bleibt scharf. Auch die Warnung, wenn eine Tür nach dem Durchgang noch offen ist. Standard: an.",
             "data": {
               "enabled": "Benachrichtigen",
               "targets": "Eigene Empfänger (leer = allgemeine)"
@@ -1607,7 +1627,8 @@
         "unconfirmed_frequent": "Melder löst häufig allein aus",
         "arm_hint": "Hinweis beim Scharfschalten",
         "rule_notify": "Auslöseregel „nur Benachrichtigung“",
-        "always_active": "Immer aktiver Melder"
+        "always_active": "Immer aktiver Melder",
+        "passage": "Durchgang"
       }
     },
     "speech_mode": {
@@ -1709,6 +1730,18 @@
         "default": "Wie allgemein",
         "hours": "Eigener Wert (Stunden)",
         "off": "Nie prüfen"
+      }
+    },
+    "passage_out_doors": {
+      "options": {
+        "first": "Nur die erste Tür, die aufgeht",
+        "all": "Alle Eingangstüren"
+      }
+    },
+    "passage_out_end": {
+      "options": {
+        "time": "Nach Ablauf der Zeit",
+        "returned": "Schon, wenn ich zurück bin und die Tür zu ist"
       }
     }
   },
@@ -1965,6 +1998,12 @@
     },
     "not_loaded": {
       "message": "Hauswacht ist nicht geladen."
+    },
+    "passage_not_possible": {
+      "message": "Durchgang gerade nicht möglich: Er geht nur, wenn ein Profil mit erlaubtem Durchgang scharf ist oder die Eingangsverzögerung läuft (nicht während eines Alarms)."
+    },
+    "passage_no_doors": {
+      "message": "Durchgang nicht möglich: Im scharfen Profil gibt es keine Eingangstür und keine Melder auf dem Weg, die frei werden könnten."
     }
   },
   "services": {
@@ -2091,6 +2130,16 @@
         "force": {
           "name": "Trotzdem scharf",
           "description": "Offene Melder überbrücken, wenn Profil und Benutzer das erlauben."
+        }
+      }
+    },
+    "passage": {
+      "name": "Durchgang",
+      "description": "Durchgang öffnen, ohne unscharf zu schalten: läuft die Eingangsverzögerung, wird hereingelassen (die geöffnete Tür ist frei, bis sie zu ist); sonst ist für die Durchgangszeit die erste Eingangstür frei, die aufgeht. Nur, wenn das scharfe Profil den Durchgang erlaubt.",
+      "fields": {
+        "code": {
+          "name": "PIN",
+          "description": "PIN oder Karte (nötig, wenn PINs eingerichtet sind)."
         }
       }
     }

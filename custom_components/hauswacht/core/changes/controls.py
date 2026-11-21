@@ -20,6 +20,7 @@ from ..mqtt_keypad import (
     parse_state_words,
     validate_base_topic,
 )
+from ..passage import PASSAGE_TARGET
 from ..profiles import profile_ids
 from ..sensors import slugify
 from . import Change, copy_options, failed
@@ -96,6 +97,8 @@ def validate_control(
         ).strip().strip("/"):
             errors["topic"] = "control_topic"
     for profile in profiles:
+        if profile == PASSAGE_TARGET:
+            continue  # Durchgang (ADR 0013) gilt im Bereich des Keypads
         if profile and area != ALL_AREAS and profile_area(options, profile) != area:
             errors["base"] = "control_profile_area"
     return errors

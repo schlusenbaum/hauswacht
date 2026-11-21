@@ -34,6 +34,7 @@ class NotifyEvent(StrEnum):
     ARM_HINT = "arm_hint"  # beim Scharfschalten: offene Melder, die nur in Regeln vorkommen
     UNCONFIRMED = "unconfirmed"  # Einzelauslösung ohne Bestätigung, kein Alarm
     UNCONFIRMED_FREQUENT = "unconfirmed_frequent"  # Melder löst häufig allein aus
+    PASSAGE = "passage"  # Durchgang (ADR 0013): reingelassen, rausgehen, Tür noch offen
 
 
 DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
@@ -52,6 +53,7 @@ DEFAULT_ENABLED: Mapping[NotifyEvent, bool] = {
     NotifyEvent.ARM_HINT: True,
     NotifyEvent.UNCONFIRMED: False,
     NotifyEvent.UNCONFIRMED_FREQUENT: False,
+    NotifyEvent.PASSAGE: True,
 }
 
 # Durchbrechen "Nicht stören" (wenn die Option dafür an ist)

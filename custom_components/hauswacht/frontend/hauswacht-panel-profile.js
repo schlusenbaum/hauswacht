@@ -20,6 +20,16 @@ const PT = {
     secReaction: "Reaktion bei Alarm",
     secAuto: "Automatik",
     secClose: "Scharf durch Schließen der Tür",
+    secPassage: "Durchgang – rein oder raus, bleibt scharf",
+    passageOn: "Durchgang erlauben",
+    passageHint: "Gedacht für Profile, die nur die Außenhaut überwachen: Melder im Haus bleiben scharf – der Durchgang hilft nur an den Außentüren. Reinkommen: in der Eingangsverzögerung PIN oder Karte und eine Profil-Taste (oder die Durchgang-Taste) am Keypad. Rausgehen: vorher PIN oder Karte und die Durchgang-Taste.",
+    passageDuration: "Durchgangszeit (Minuten)",
+    passageOutDoors: "Rausgehen: welche Tür",
+    passageOutEnd: "Rausgehen: Ende",
+    passagePath: "Melder auf dem Weg (z. B. Bewegungsmelder in der Einfahrt)",
+    passagePathAfter: "Reinkommen: Weg noch frei nach dem Schließen (s)",
+    outDoors: { first: "nur die erste Tür, die aufgeht", all: "alle Eingangstüren" },
+    outEnd: { time: "nach Ablauf der Zeit", returned: "schon, wenn ich zurück bin und die Tür zu ist" },
     name: "Name",
     icon: "Symbol (z. B. mdi:weather-night)",
     button: "Knopf am Bedienfeld",
@@ -94,6 +104,16 @@ const PT = {
     secReaction: "Reaction on alarm",
     secAuto: "Automation",
     secClose: "Arm by closing the door",
+    secPassage: "Passage – in or out, stays armed",
+    passageOn: "Allow passage",
+    passageHint: "Meant for profiles that only watch the outer shell: sensors inside stay armed – the passage only helps at the outer doors. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad. Going out: first PIN or card and the passage key.",
+    passageDuration: "Passage time (minutes)",
+    passageOutDoors: "Going out: which door",
+    passageOutEnd: "Going out: end",
+    passagePath: "Sensors on the way (e.g. motion sensor in the driveway)",
+    passagePathAfter: "Coming in: way still free after closing (s)",
+    outDoors: { first: "only the first door that opens", all: "all entry doors" },
+    outEnd: { time: "when the time is up", returned: "as soon as I am back and the door is closed" },
     name: "Name",
     icon: "Icon (e.g. mdi:weather-night)",
     button: "Button on the alarm panel",
@@ -242,6 +262,7 @@ class HauswachtProfileEditor extends HTMLElement {
     const lim = this.settings.profile_edit.limits;
     const a = d.automation;
     const close = d.arm_on_close;
+    const pass = d.passage;
     const members = this._members(d.zones);
     const doors = members.filter((id) => (this.settings.sensor_types[id] || "") === "door");
     const t = (group, v) => (this._t(group) || {})[v] || v;
@@ -287,6 +308,14 @@ class HauswachtProfileEditor extends HTMLElement {
       <div class="chk"><input type="checkbox" data-c="enabled" ${close.enabled ? "checked" : ""}><span>${pe(this._t("closeOn"))}</span></div>
       <label>${pe(this._t("doors"))}</label>${doors.map((id) => `<div class="chk"><input type="checkbox" data-cm="doors" value="${pe(id)}" ${close.doors.includes(id) ? "checked" : ""}><span>${pe(this._name(id))}</span></div>`).join("") || `<div class="muted">${pe(this._t("noDoors"))}</div>`}
       <label>${pe(this._t("settle"))}</label><input class="small" type="number" min="1" max="${lim.settle}" data-c="settle" data-num="1" value="${pe(close.settle)}">
+      <div class="sec">${pe(this._t("secPassage"))}</div>
+      <div class="chk"><input type="checkbox" data-p="enabled" ${pass.enabled ? "checked" : ""}><span>${pe(this._t("passageOn"))}</span></div>
+      <div class="muted">${pe(this._t("passageHint"))}</div>
+      <div class="two"><div><label>${pe(this._t("passageDuration"))}</label><input type="number" min="1" max="${lim.passage_duration}" data-p="duration" data-num="1" value="${pe(pass.duration)}"></div>
+      <div><label>${pe(this._t("passagePathAfter"))}</label><input type="number" min="0" max="${lim.passage_after}" data-p="path_after" data-num="1" value="${pe(pass.path_after)}"></div></div>
+      <label>${pe(this._t("passageOutDoors"))}</label><select data-p="out_doors">${["first", "all"].map((v) => `<option value="${v}" ${v === pass.out_doors ? "selected" : ""}>${pe(t("outDoors", v))}</option>`).join("")}</select>
+      <label>${pe(this._t("passageOutEnd"))}</label><select data-p="out_end">${["time", "returned"].map((v) => `<option value="${v}" ${v === pass.out_end ? "selected" : ""}>${pe(t("outEnd", v))}</option>`).join("")}</select>
+      <label>${pe(this._t("passagePath"))}</label>${members.map((id) => `<div class="chk"><input type="checkbox" data-pm="path" value="${pe(id)}" ${pass.path.includes(id) ? "checked" : ""}><span>${pe(this._name(id))}</span></div>`).join("") || `<div class="muted">${pe(this._t("noMembers"))}</div>`}
       ${this._err("base")}`;
   }
 
@@ -317,6 +346,10 @@ class HauswachtProfileEditor extends HTMLElement {
     });
     const doors = [...root.querySelectorAll('[data-cm="doors"]')];
     d.arm_on_close.doors = doors.filter((el) => el.checked).map((el) => el.value);
+    root.querySelectorAll("[data-p]").forEach((el) => {
+      d.passage[el.dataset.p] = el.type === "checkbox" ? el.checked : el.dataset.num ? Number(el.value) : el.value;
+    });
+    d.passage.path = [...root.querySelectorAll('[data-pm="path"]')].filter((el) => el.checked).map((el) => el.value);
     // Ausgenommene nur aus den gewählten Gruppen
     const members = this._members(d.zones);
     d.excluded = d.excluded.filter((id) => members.includes(id));

@@ -93,6 +93,7 @@ in seinen Attributen. Für Automationen ist **`phase`** der wichtigste Auslöser
 | `tilted_sensors` | Gerade gekippte [Melder mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt). Erlaubt das Profil gekippte Fenster, stehen sie nicht in `open_sensors` | `["sensor.fenster_schlafzimmer_opening_state"]` |
 | `open_rule_sensors` | Offene Melder, die im aktiven Profil nur in Auslöseregeln vorkommen | `[]` |
 | `bypassed_sensors`, `bypassed_until_closed` | Überbrückte Melder (bis unscharf bzw. bis zum Schließen) | `[]` |
+| `passage` | Laufender [Durchgang](durchgang.md): `direction` (`in` reinkommen, `out` rausgehen), `until` (Ende beim Rausgehen), `by`, `doors` (benutzte Türen), `doors_allowed` (beim Rausgehen noch erlaubte Türen), `sensors` (gerade vom Durchgang überbrückt); sonst leer | `{"direction": "out", "until": "…", …}` |
 | `zones` | Meldergruppen mit ihren tatsächlichen Meldern | `{"Außen": […]}` |
 | `last_contact` | Letzter Kontakt je Melder | `{…}` |
 | `sirens_hardware_enabled` | Echte Sirenenansteuerung freigegeben | `true` |
@@ -195,6 +196,10 @@ Gut zu wissen:
 | `VibrationCounted` | [Erschütterung](melder.md#erschütterungsmelder) gezählt, reicht aber noch nicht für einen Alarm (Fehlalarmschutz) | `sensor_key`, `count` (bisher im Zeitfenster), `needed` (nötig), `window` (Sekunden) |
 | `AlwaysActiveTriggered` | [Immer aktiver](melder.md#immer-aktive-melder) Melder ausgelöst | `sensor_key` |
 | `ArmedByClosingDoor` | [Scharf durch Schließen der Tür](profile.md#scharf-durch-schließen-der-tür) | – |
+| `PassageGranted` | [Durchgang](durchgang.md) begonnen, Anlage bleibt scharf | `direction` (`in`/`out`), `door` (beim Reinkommen die geöffnete Tür), `path` (frei gewordene Wegmelder), `by` |
+| `PassageDoorUsed` | Rausgehen: diese Tür ist jetzt die Durchgangstür | `door` |
+| `PassageEnded` | Durchgang (oder sein Weg) vorbei, Melder werden wieder überwacht | `restored` (wieder überwacht), `still_open` (noch offen – frei, bis sie zu sind) |
+| `PassageDoorOpen` | Tür nach dem Durchgang noch offen – wird nicht überwacht, bis sie zu ist | `doors` |
 | `TestModeChanged` | Testmodus ein/aus | `enabled` |
 
 **Gründe (`cause`) in `StateChanged`:** `arm_requested` (scharf geschaltet), `exit_delay_elapsed`
@@ -203,7 +208,8 @@ Gut zu wissen:
 `tamper_24h_sensor`, `tamper`, `instant_during_entry_delay`, `retrigger` (erneut ausgelöst),
 `always_active`, `reaction_time_elapsed` (→ `alarm_hold`), `alarm_acknowledged`,
 `exit_check_failed` (Scharfschalten abgebrochen), `always_alarm_ended`, `restored` (nach
-Neustart), `startup`.
+Neustart), `startup`, `passage` (Eingangsverzögerung durch einen [Durchgang](durchgang.md)
+beendet, bleibt scharf).
 
 ### Neustart
 
@@ -306,6 +312,7 @@ Alle Aktionen richten sich an ein Bedienfeld (`target: entity_id: alarm_control_
 |---|---|---|
 | `hauswacht.arm` | `profile` (Name oder Kennung), `confirm` (offene Melder bestätigen), `code` | Profil scharf schalten |
 | `hauswacht.guest_mode` | `on`, `until` (Zeitpunkt, leer = bis zum Ausschalten) | [Gastmodus](profile.md#gastmodus) ein/aus; Ziel ein Bereich oder „Alle“ |
+| `hauswacht.passage` | `code` (PIN oder Karte; nötig, wenn PINs eingerichtet sind) | [Durchgang](durchgang.md): in der Eingangsverzögerung reinlassen, sonst rausgehen – bleibt scharf |
 | `hauswacht.simulate_trigger` | `sensor` | Testmodus: Melder kurz auslösen |
 | `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `tilted` – nur Melder mit Kippstellung, `unavailable`, `real`) | Testmodus: Melderzustand simulieren |
 | `hauswacht.simulate_reset` | – | Testmodus: alle Simulationen zurück |

@@ -102,9 +102,11 @@ from .core.mqtt_keypad import (
     state_word,
 )
 from .core.notify_events import NotifyEvent
+from .core.passage import PASSAGE_TARGET
 from .core.profiles import find_profile
 from .core.reactions import FIRE_DEVICE_CLASSES
 from .core.siren_guard import FireIndicator
+from .core.state_machine import AlarmState
 from .core.texts import tr
 from .core.users import (
     Action,
@@ -540,6 +542,8 @@ class ControlManager:
             "buttons": sorted(keypad.buttons),
             "last_result": last[0] if last else None,
             "last_result_at": last[1] if last else None,
+            # Durchgang (ADR 0013): bleibt scharf, nur Tür/Weg kurz frei
+            "passage": next((info for a in areas if (info := a.passage_info())), None),
         }
 
     # --- Bereiche -------------------------------------------------------------
@@ -621,6 +625,12 @@ class ControlManager:
             return self._run_action_code(keypad, action_code)
         if button != KEY_DISARM and button not in keypad.buttons:
             return InputOutcome(KeypadResult.UNKNOWN_BUTTON.value)
+        if button != KEY_DISARM and (
+            keypad.buttons.get(button) == PASSAGE_TARGET or self._entry_with_passage(keypad)
+        ):
+            # Durchgang (ADR 0013): eigene Taste, oder in der Eingangsverzögerung jede
+            # Profil-Taste ("schon gut, bleib scharf" – das laufende Profil bleibt)
+            return await self._passage_input(keypad, code)
         wanted = Action.DISARM if button == KEY_DISARM else Action.ARM
         identity = await self._login(keypad, code, wanted)
         # Zweiter Druck derselben Taste OHNE PIN/Karte bestätigt einen gescheiterten ersten
@@ -656,6 +666,40 @@ class ControlManager:
         if outcome.can_force and not may_force:
             outcome = replace(outcome, can_force=False)
         return outcome
+
+    def _entry_with_passage(self, keypad: Control) -> bool:
+        """Läuft in einem Bereich dieses Keypads eine Eingangsverzögerung mit Durchgang?"""
+        return any(
+            a.ctx.state is AlarmState.PENDING and a.passage_ready for a in self._areas(keypad)
+        )
+
+    async def _passage_input(self, keypad: Control, code: str | None) -> InputOutcome:
+        """Durchgang am Keypad – immer mit Ausweis (auch bei "Tasten ohne PIN")."""
+        identity = await self._login(keypad, code, Action.PASSAGE)
+        if identity is None:
+            locked = remaining_lock(self.runtime.main._code_guard, time.monotonic())
+            if locked:
+                return InputOutcome(KeypadResult.LOCKED.value, lock_seconds=locked)
+            return InputOutcome(KeypadResult.INVALID_CODE.value)
+        if identity == "pending":
+            return InputOutcome(KeypadResult.PENDING.value)
+        ready = [a for a in self._areas(keypad) if a.passage_ready]
+        if not ready:
+            return InputOutcome(KeypadResult.NOT_READY.value)
+        if not identity.duress:
+            # Bedrohungs-PIN: nach außen ein normaler Durchgang (der stille Alarm ist raus)
+            ready = [a for a in ready if a.permits(identity.users, Action.PASSAGE)]
+            if not ready:
+                return InputOutcome(NOT_ALLOWED)
+        # Läuft irgendwo eine Eingangsverzögerung, wird nur dort reingelassen
+        entering = [a for a in ready if a.ctx.state is AlarmState.PENDING]
+        changed_by = f"{identity_label(identity, self.runtime.lang)} ({keypad.name})"
+        for area in entering or ready:
+            try:
+                area.passage(changed_by)
+            except HomeAssistantError:
+                return InputOutcome(KeypadResult.NOT_READY.value)
+        return InputOutcome(KeypadResult.OK.value)
 
     def _find_action_code(
         self, keypad: Control, button: str, code: str | None

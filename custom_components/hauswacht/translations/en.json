@@ -240,6 +240,18 @@
               "doors": "Exit doors",
               "settle": "Settle time after closing"
             }
+          },
+          "passage": {
+            "name": "Passage – in or out, stays armed",
+            "description": "The profile stays armed, only one door (and the sensors on the way) is briefly free. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad – the door is free until it is closed. Going out: first PIN or card and the passage key. Meant for profiles that only watch the outer shell; sensors inside stay armed.",
+            "data": {
+              "enabled": "Allow passage",
+              "duration": "Passage time (minutes)",
+              "out_doors": "Going out: which door",
+              "out_end": "Going out: end",
+              "path": "Sensors on the way (e.g. motion sensor in the driveway)",
+              "path_after": "Coming in: way still free after the door is closed"
+            }
           }
         },
         "data_description": {
@@ -755,6 +767,14 @@
           "event_always_active": {
             "name": "Always-active sensor",
             "description": "An always-active sensor triggered while disarmed (without siren). Critical. Default: on.",
+            "data": {
+              "enabled": "Notify",
+              "targets": "Own recipients (empty = general)"
+            }
+          },
+          "event_passage": {
+            "name": "Passage",
+            "description": "Someone was let in or goes out briefly – the system stays armed. Also the warning if a door is still open after the passage. Default: on.",
             "data": {
               "enabled": "Notify",
               "targets": "Own recipients (empty = general)"
@@ -1607,7 +1627,8 @@
         "unconfirmed_frequent": "Sensor often triggers alone",
         "arm_hint": "Hint when arming",
         "rule_notify": "Trigger rule “notification only”",
-        "always_active": "Always-active sensor"
+        "always_active": "Always-active sensor",
+        "passage": "Passage"
       }
     },
     "speech_mode": {
@@ -1709,6 +1730,18 @@
         "default": "As general",
         "hours": "Own value (hours)",
         "off": "Never check"
+      }
+    },
+    "passage_out_doors": {
+      "options": {
+        "first": "Only the first door that opens",
+        "all": "All entry doors"
+      }
+    },
+    "passage_out_end": {
+      "options": {
+        "time": "When the time is up",
+        "returned": "As soon as I am back and the door is closed"
       }
     }
   },
@@ -1965,6 +1998,12 @@
     },
     "not_loaded": {
       "message": "Hauswacht is not loaded."
+    },
+    "passage_not_possible": {
+      "message": "Passage not possible right now: it only works while a profile that allows it is armed or the entry delay is running (not during an alarm)."
+    },
+    "passage_no_doors": {
+      "message": "Passage not possible: the armed profile has no entry door and no sensors on the way that could be freed."
     }
   },
   "services": {
@@ -2091,6 +2130,16 @@
         "force": {
           "name": "Arm anyway",
           "description": "Bypass open sensors if the profile and the user allow it."
+        }
+      }
+    },
+    "passage": {
+      "name": "Passage",
+      "description": "Open a passage without disarming: while the entry delay is running, the person is let in (the opened door is free until it is closed); otherwise the first entry door that opens is free for the passage time. Only if the armed profile allows passage.",
+      "fields": {
+        "code": {
+          "name": "PIN",
+          "description": "PIN or card (needed if PINs are set up)."
         }
       }
     }

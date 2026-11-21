@@ -168,6 +168,9 @@ from .core.messages import (
 )
 from .core.mqtt_keypad import DEFAULT_MQTT_BUTTONS, state_words_text
 from .core.notify_events import NotifyEvent, enabled, event_targets
+from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
+from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
+from .core.passage import PASSAGE_TARGET, OutDoors, OutEnd, PassageConfig, parse_passage
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
     DEFAULT_ICON,
@@ -256,6 +259,7 @@ from .core.state_machine import (
     OpenSensorPolicy,
     UnavailableSensorPolicy,
 )
+from .core.texts import lang_of, tr
 from .core.tilt import (
     OPT_TILT_SENSORS,
     delete_tilt_source,
@@ -1038,6 +1042,9 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 vol.Optional("arm_on_close"): section(
                     _arm_on_close_schema(parse_arm_on_close(options, pid)),
                     {"collapsed": True},
+                ),
+                vol.Optional("passage"): section(
+                    _passage_schema(parse_passage(options, pid)), {"collapsed": True}
                 ),
             }
         )
@@ -3799,15 +3806,17 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             )
         )
 
-    def _control_profile_selector(self) -> SelectSelector:
+    def _control_profile_selector(self, *, passage: bool = False) -> SelectSelector:
+        """Profil je Taste; bei Keypads auch "Durchgang" (ADR 0013)."""
+        options = [
+            SelectOptionDict(value=i.profile_id, label=self._profile_label(i))
+            for i in profile_infos(self.config_entry.options)
+        ]
+        if passage:
+            label = tr(lang_of(self.hass.config.language), "passage_key")
+            options.append(SelectOptionDict(value=PASSAGE_TARGET, label=label))
         return SelectSelector(
-            SelectSelectorConfig(
-                options=[
-                    SelectOptionDict(value=i.profile_id, label=self._profile_label(i))
-                    for i in profile_infos(self.config_entry.options)
-                ],
-                mode=SelectSelectorMode.DROPDOWN,
-            )
+            SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
         )
 
     def _keypad_topic(self, device_id: str | None) -> str:
@@ -3898,7 +3907,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
             fields[vol.Optional("topic", description={"suggested_value": topic})] = TextSelector()
             for key in CONTROL_ARM_KEYS:
                 fields[vol.Optional(key, description={"suggested_value": buttons.get(key)})] = (
-                    self._control_profile_selector()
+                    self._control_profile_selector(passage=True)
                 )
             fields[vol.Required("login", default=source.get("login", "pin_or_card"))] = _select(
                 ["pin_or_card", "card_and_pin"], "control_login"
@@ -3985,7 +3994,7 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
                 TextSelector()
             )
             fields[vol.Optional(f"profile_{n}", description={"suggested_value": profile})] = (
-                self._control_profile_selector()
+                self._control_profile_selector(passage=True)
             )
         fields[vol.Required("login", default=source.get("login", "pin_or_card"))] = _select(
             ["pin_or_card", "card_and_pin"], "control_login"
@@ -4387,6 +4396,30 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
 def _current_value(state: Any, attribute: str | None) -> Any:
     """Aktueller Wert einer Quelle mit Kippstellung (Zustand oder Attribut)."""
     return state.state if attribute is None else state.attributes.get(attribute)
+
+
+def _passage_schema(current: PassageConfig) -> vol.Schema:
+    """Durchgang (ADR 0013): rein oder raus, ohne unscharf zu schalten (alles optional)."""
+    return vol.Schema(
+        {
+            vol.Optional("enabled", default=current.enabled): BooleanSelector(),
+            vol.Optional("duration", default=current.duration): NumberSelector(
+                NumberSelectorConfig(
+                    min=1, max=PASSAGE_MAX_DURATION, step=1, mode=NumberSelectorMode.BOX
+                )
+            ),
+            vol.Optional("out_doors", default=current.out_doors.value): _select(
+                [d.value for d in OutDoors], "passage_out_doors"
+            ),
+            vol.Optional("out_end", default=current.out_end.value): _select(
+                [e.value for e in OutEnd], "passage_out_end"
+            ),
+            vol.Optional("path", default=sorted(current.path)): EntitySelector(
+                EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
+            ),
+            vol.Optional("path_after", default=current.path_after): _seconds(PASSAGE_MAX_AFTER),
+        }
+    )
 
 
 def _arm_on_close_schema(current: ArmOnClose) -> vol.Schema:

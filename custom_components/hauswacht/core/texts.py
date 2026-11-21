@@ -98,6 +98,13 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "duress_arm": "scharf geschaltet",
         "duress_disarm": "unscharf geschaltet",
         "duress_end_alarm": "einen Alarm beendet",
+        "duress_passage": "einen Durchgang geöffnet (die Anlage bleibt scharf)",
+        "passage_title": "Hauswacht: Durchgang",
+        "passage_key": "Durchgang (rein/raus, bleibt scharf)",
+        "passage_in": "{who} hereingelassen ({door}) – Profil {profile} bleibt scharf.",
+        "passage_out": "{who}: Durchgang für {minutes} Minuten – Profil {profile} bleibt scharf.",
+        "passage_open": "{door} nach dem Durchgang noch offen – wird nicht überwacht, bis sie "
+        "zu ist. Profil {profile} bleibt scharf.",
         "sticker_denied_title": "Hauswacht: Aufkleber abgelehnt",
         "sticker_denied": "NFC-Aufkleber {sticker}: Das Handy gehört keinem berechtigten "
         "Hauswacht-Benutzer.",
@@ -301,6 +308,13 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "duress_arm": "arm",
         "duress_disarm": "disarm",
         "duress_end_alarm": "end an alarm",
+        "duress_passage": "open a passage (the system stays armed)",
+        "passage_title": "Hauswacht: passage",
+        "passage_key": "Passage (in/out, stays armed)",
+        "passage_in": "{who} let in ({door}) – profile {profile} stays armed.",
+        "passage_out": "{who}: passage for {minutes} minutes – profile {profile} stays armed.",
+        "passage_open": "{door} still open after the passage – not monitored until it is "
+        "closed. Profile {profile} stays armed.",
         "sticker_denied_title": "Hauswacht: tag rejected",
         "sticker_denied": "NFC tag {sticker}: the phone does not belong to an authorised "
         "Hauswacht user.",

@@ -50,6 +50,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| 0.59 (in Arbeit) | [Durchgang](durchgang.md) – rein oder raus, ohne unscharf zu schalten ([ADR 0013](entwicklung/adr/0013-durchgang.md)): b1 Keypad und Aktion, b2 Push-Knopf „Reinlassen“ und Handy-Reinlassen, b3 Türschloss, NFC-Aufkleber, Kartenleser |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |

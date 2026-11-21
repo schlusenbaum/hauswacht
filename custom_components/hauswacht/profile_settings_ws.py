@@ -24,6 +24,9 @@ from .core.automation import (
     WEEKDAYS,
     parse_automation,
 )
+from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
+from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
+from .core.passage import parse_passage, passage_from_input
 from .core.profiles import (
     DEFAULT_ALARM_CYCLES,
     DEFAULT_ENTRY_DELAY,
@@ -60,6 +63,7 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
     reaction = parse_reaction(options, pid)
     auto = parse_automation(options, pid)
     close = parse_arm_on_close(options, pid)
+    passage = parse_passage(options, pid)
     return {
         "id": pid,
         "name": info.name,
@@ -98,6 +102,18 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
             "doors": sorted(close.doors),
             "settle": close.settle,
         },
+        "passage": passage_from_input(
+            {
+                "enabled": passage.enabled,
+                "duration": passage.duration,
+                "out_doors": passage.out_doors.value,
+                "out_end": passage.out_end.value,
+                "path": sorted(passage.path),
+                "path_after": passage.path_after,
+                "persons": list(passage.persons),
+                "window": passage.window,
+            }
+        ),
     }
 
 
@@ -181,6 +197,7 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 "auto_arrival_window": DEFAULT_ARRIVAL_WINDOW,
             },
             "arm_on_close": {"enabled": False, "doors": [], "settle": DEFAULT_SETTLE},
+            "passage": passage_from_input({}),
         },
         "limits": {
             "delay": MAX_DELAY,
@@ -189,5 +206,7 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "away_delay": MAX_AWAY_DELAY,
             "arrival_window": MAX_ARRIVAL_WINDOW,
             "settle": MAX_SETTLE,
+            "passage_duration": PASSAGE_MAX_DURATION,
+            "passage_after": PASSAGE_MAX_AFTER,
         },
     }

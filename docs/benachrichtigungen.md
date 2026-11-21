@@ -45,6 +45,7 @@ werden so verschickt, wie sie eingetragen sind.
 | Auslöseregel „nur Benachrichtigung“ erfüllt | an | Ereignis, sonst allgemein |
 | Unbestätigte Auslösung (Auslöseregel nur teilweise erfüllt, kein Alarm) | aus | Ereignis, sonst allgemein |
 | Melder löst häufig allein aus (3× in einer Stunde eine Auslöseregel begonnen) | aus | Ereignis, sonst allgemein |
+| [Durchgang](durchgang.md) (hereingelassen, rausgehen, Tür danach noch offen) | an | Ereignis, sonst allgemein |
 
 - **Bedrohungsalarm** ist kein Ereignis zum Abschalten: immer an, eigene Empfänger
   („Empfänger Bedrohungsalarm“).

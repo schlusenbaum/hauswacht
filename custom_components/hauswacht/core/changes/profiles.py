@@ -15,6 +15,7 @@ from ..automation import (
     DEFAULT_AWAY_DELAY,
     WEEKDAYS,
 )
+from ..passage import passage_from_input
 from ..profiles import DEFAULT_ICON, PANEL_MODE_NONE, profile_infos
 from ..rules import parse_rules
 from ..sensors import parse_zones, resolve_zones, slugify
@@ -155,6 +156,12 @@ def save_profile(
         stored["tilt_allowed"] = bool(data["tilt_allowed"])
     if not partial or "arm_on_close" in data:
         stored["arm_on_close"] = arm_on_close_from_input(data.get("arm_on_close") or {})
+    if not partial or "passage" in data:
+        # Felder, die ein Formular nicht kennt (z. B. Personen im Dialog), bleiben erhalten
+        before = stored.get("passage")
+        merged = dict(before) if isinstance(before, Mapping) else {}
+        merged.update(data.get("passage") or {})
+        stored["passage"] = passage_from_input(merged)
     profiles[new_id] = stored
     new[OPT_PROFILES] = profiles
     return Change(options=new, item_id=new_id)

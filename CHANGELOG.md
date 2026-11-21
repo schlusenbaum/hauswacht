@@ -6,6 +6,40 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.59.0b1] - 2026-11-21
+
+**Vorabversion: Durchgang – rein oder raus, ohne unscharf zu schalten** (ADR 0013, Stufe 1).
+
+### Hinzugefügt
+- **Durchgang** je Profil (Standard aus): Das Profil bleibt scharf, nur eine Tür (und frei
+  gewählte Melder auf dem Weg) ist kurz frei.
+  - **Reinkommen:** In der Eingangsverzögerung PIN oder Karte und **irgendeine Profil-Taste**
+    (oder die Durchgang-Taste) am Keypad – kein Alarm, das laufende Profil bleibt. Die geöffnete
+    Tür ist frei, bis sie zu ist; die Melder auf dem Weg noch eine Nachlaufzeit länger
+    (Standard 60 s). Jede neue Türöffnung braucht einen eigenen Ausweis.
+  - **Rausgehen** (z. B. Müll): PIN oder Karte und die **Durchgang-Taste**. Die erste
+    Eingangstür, die danach aufgeht, ist für die Durchgangszeit frei (Standard 5 Minuten) – alle
+    anderen bleiben scharf (einstellbar: alle Eingangstüren). Ende nach Ablauf der Zeit oder
+    schon, wenn man zurück und die Tür zu ist (einstellbar).
+  - Ist eine Tür am Ende noch offen: **kein Alarm**, sondern eine deutliche Warnung; sie wird
+    wieder überwacht, sobald sie zu ist.
+- **Taste „Durchgang“** bei jedem Keypad frei wählbar (Zigbee2MQTT-Keypad, Keypad (allgemein),
+  MQTT-Schnittstelle) – statt eines Profils.
+- **Aktion `hauswacht.passage`** (mit PIN) für Dashboard-Knöpfe und Automationen.
+- **Benachrichtigung „Durchgang“** (Standard an): „… hereingelassen – Profil Nacht bleibt
+  scharf“ (ersetzt die Nachricht zur Eingangsverzögerung), „Durchgang für 5 Minuten“, Warnung
+  „noch offen“. Ereignisse `PassageGranted`, `PassageDoorUsed`, `PassageEnded`,
+  `PassageDoorOpen`; Attribut `passage` am Bedienfeld und an der Anzeige-Entität allgemeiner
+  Keypads; Hinweis auf der Alarm-Karte.
+- Immer mit Ausweis (auch bei „Tasten ohne PIN“), Recht wie „unscharf schalten“. Bedrohungs-PIN:
+  nach außen ein normaler Durchgang, still der Bedrohungsalarm. Kein Durchgang während eines
+  Alarms oder der Ausgangsverzögerung.
+
+### Dokumentation
+- Neue Seite **Durchgang** mit Beispielen; Bedienteile, Benachrichtigungen, Referenz, README,
+  Roadmap, ADR 0013 – deutsch und englisch.
+
+
 ## [0.58.3] - 2026-11-20
 
 **Code-Entität der Keypads nur noch nach deiner Bestätigung abschalten.**

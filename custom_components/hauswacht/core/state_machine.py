@@ -119,6 +119,12 @@ class AlarmContext:
     test_mode: bool = False
     # Alarm durch einen immer aktiven Melder im unscharfen Zustand: "Alarm beenden" -> unscharf
     return_to_disarmed: bool = False
+    # Durchgang (ADR 0013): vom Durchgang zeitlich überbrückte Melder (Teil von ``bypassed``)
+    passage: frozenset[str] = frozenset()
+    # Rausgehen: Türen, die noch als Durchgangstür benutzt werden dürfen
+    passage_doors: frozenset[str] = frozenset()
+    # Rausgehen mit "nur erste Tür": nach der ersten Tür keine weitere
+    passage_first_only: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +239,47 @@ class SetTestMode:
     enabled: bool
 
 
+@dataclass(frozen=True)
+class PassageIn:
+    """Durchgang reinkommen (ADR 0013): nur scharf oder in der Eingangsverzögerung.
+
+    Bricht die Eingangsverzögerung ab und bleibt scharf. ``door`` ist bis zum Schließen
+    überbrückt, ``path`` (Wegmelder) zeitlich – bis ``PassageEnd``.
+    """
+
+    door: str | None
+    path: frozenset[str] = frozenset()
+    by: str = ""
+
+
+@dataclass(frozen=True)
+class PassageOut:
+    """Durchgang rausgehen (ADR 0013): nur scharf.
+
+    ``doors`` dürfen als Durchgangstür benutzt werden (mit ``first_only`` nur die erste, die
+    aufgeht); ``path`` ist sofort zeitlich überbrückt – bis ``PassageEnd``.
+    """
+
+    doors: frozenset[str]
+    path: frozenset[str] = frozenset()
+    first_only: bool = True
+    by: str = ""
+
+
+@dataclass(frozen=True)
+class PassageEnd:
+    """Zeitliche Überbrückung des Durchgangs beenden.
+
+    ``sensors``: diese Melder (``None`` = alle des Durchgangs); ``still_active``: gerade offen bzw.
+    in Bewegung – sie bleiben überbrückt, bis sie wieder zu sind. ``close_doors``: keine
+    weitere Tür mehr als Durchgangstür.
+    """
+
+    sensors: frozenset[str] | None = None
+    still_active: frozenset[str] = frozenset()
+    close_doors: bool = True
+
+
 Event = (
     Startup
     | ArmRequested
@@ -247,6 +294,9 @@ Event = (
     | EntryDelayElapsed
     | ReactionTimeElapsed
     | SetTestMode
+    | PassageIn
+    | PassageOut
+    | PassageEnd
 )
 
 # ---------------------------------------------------------------------------
@@ -347,6 +397,31 @@ class TestModeChanged:
 
 
 @dataclass(frozen=True)
+class PassageGranted:
+    """Durchgang begonnen: reinkommen (Tür bis zum Schließen frei) oder rausgehen."""
+
+    direction: str  # "in" | "out"
+    door: str | None
+    path: frozenset[str]
+    by: str = ""
+
+
+@dataclass(frozen=True)
+class PassageDoorUsed:
+    """Rausgehen: diese Tür ist jetzt die Durchgangstür (frei bis zum Ende)."""
+
+    door: str
+
+
+@dataclass(frozen=True)
+class PassageEnded:
+    """Durchgang (zeitlicher Teil) beendet; ``still_open`` bleiben frei, bis sie zu sind."""
+
+    restored: frozenset[str]
+    still_open: frozenset[str]
+
+
+@dataclass(frozen=True)
 class Ignored:
     reason: str
 
@@ -366,6 +441,9 @@ Effect = (
     | TamperDetected
     | RestartedDisarmed
     | TestModeChanged
+    | PassageGranted
+    | PassageDoorUsed
+    | PassageEnded
     | Ignored
 )
 
@@ -591,6 +669,8 @@ def _on_disarm(ctx: AlarmContext, event: DisarmRequested) -> Result:
         alarm_cycles=0,
         trigger_sensor=None,
         bypassed_until_closed=frozenset(),
+        passage=frozenset(),
+        passage_doors=frozenset(),
     )
     return ctx, tuple(effects)
 
@@ -678,6 +758,16 @@ def _on_sensor(ctx: AlarmContext, event: SensorTriggered, now: float) -> Result:
         return ctx, (Ignored(reason="disarmed"),)
     if event.sensor_key in ctx.bypassed:
         return ctx, (Ignored(reason="bypassed"),)
+    if event.sensor_key in ctx.passage_doors and state in (AlarmState.ARMED, AlarmState.PENDING):
+        # Rausgehen: diese Tür ist jetzt die Durchgangstür (ADR 0013)
+        door = frozenset({event.sensor_key})
+        ctx = replace(
+            ctx,
+            bypassed=ctx.bypassed | door,
+            passage=ctx.passage | door,
+            passage_doors=frozenset() if ctx.passage_first_only else ctx.passage_doors - door,
+        )
+        return ctx, (PassageDoorUsed(door=event.sensor_key),)
     if state is AlarmState.ARMING:
         # Während der Ausgangsverzögerung wird nicht ausgelöst. Am Ende der
         # Verzögerung prüft die Bereitschaftsprüfung erneut, ob alles zu ist.
@@ -789,6 +879,56 @@ def _on_reaction_elapsed(ctx: AlarmContext, event: ReactionTimeElapsed) -> Resul
     return ctx, (changed, StopReaction(profile_id=profile.profile_id, test_mode=ctx.test_mode))
 
 
+def _on_passage_in(ctx: AlarmContext, event: PassageIn) -> Result:
+    if ctx.state not in (AlarmState.ARMED, AlarmState.PENDING):
+        return ctx, (Rejected(reason="passage_not_possible"),)
+    effects: list[Effect] = []
+    if ctx.state is AlarmState.PENDING:
+        ctx, cancel = _cancel_timer(ctx)
+        effects += cancel
+        ctx, changed = _goto(ctx, AlarmState.ARMED, "passage")
+        effects.append(changed)
+        ctx = replace(ctx, trigger_sensor=None)
+    door = frozenset({event.door}) - ctx.bypassed if event.door else frozenset()
+    path = event.path - ctx.bypassed - door
+    ctx = replace(
+        ctx,
+        bypassed=ctx.bypassed | door | path,
+        bypassed_until_closed=ctx.bypassed_until_closed | door,
+        passage=ctx.passage | path,
+    )
+    effects.append(PassageGranted(direction="in", door=event.door, path=path, by=event.by))
+    return ctx, tuple(effects)
+
+
+def _on_passage_out(ctx: AlarmContext, event: PassageOut) -> Result:
+    if ctx.state is not AlarmState.ARMED:
+        return ctx, (Rejected(reason="passage_not_possible"),)
+    path = event.path - ctx.bypassed
+    ctx = replace(
+        ctx,
+        bypassed=ctx.bypassed | path,
+        passage=ctx.passage | path,
+        passage_doors=event.doors - ctx.bypassed,
+        passage_first_only=event.first_only,
+    )
+    return ctx, (PassageGranted(direction="out", door=None, path=path, by=event.by),)
+
+
+def _on_passage_end(ctx: AlarmContext, event: PassageEnd) -> Result:
+    ending = (ctx.passage if event.sensors is None else event.sensors) & ctx.passage
+    keep = ending & event.still_active
+    restored = ending - keep
+    ctx = replace(
+        ctx,
+        bypassed=ctx.bypassed - restored,
+        bypassed_until_closed=ctx.bypassed_until_closed | keep,
+        passage=ctx.passage - ending,
+        passage_doors=frozenset() if event.close_doors else ctx.passage_doors,
+    )
+    return ctx, (PassageEnded(restored=restored, still_open=keep),)
+
+
 def _on_test_mode(ctx: AlarmContext, event: SetTestMode) -> Result:
     # Testmodus darf nur im unscharfen Zustand gewechselt werden. So kann ein
     # laufender echter Alarm nicht durch Umschalten "weggeschaltet" werden und
@@ -829,4 +969,10 @@ def step(ctx: AlarmContext, event: Event, now: float) -> Result:
             return _on_reaction_elapsed(ctx, event)
         case SetTestMode():
             return _on_test_mode(ctx, event)
+        case PassageIn():
+            return _on_passage_in(ctx, event)
+        case PassageOut():
+            return _on_passage_out(ctx, event)
+        case PassageEnd():
+            return _on_passage_end(ctx, event)
     raise TypeError(f"Unbekanntes Ereignis: {event!r}")  # pragma: no cover
