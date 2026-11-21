@@ -51,6 +51,8 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | When | Content |
 |---|---|
 | 0.59 (in progress) | [Passage](passage.md) – in or out without disarming ([ADR 0013](../entwicklung/adr/0013-durchgang.md)): b1 keypad and action, b2 push button "Let in" and letting in by phone, b3 door lock, NFC tags, card readers |
+| 0.60 | Observation "leaving": how fast and how reliably each presence signal detects going out – basis for exit detection ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md)) |
+| 0.61 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |

@@ -51,6 +51,8 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 | Wann | Inhalt |
 |---|---|
 | 0.59 (in Arbeit) | [Durchgang](durchgang.md) – rein oder raus, ohne unscharf zu schalten ([ADR 0013](entwicklung/adr/0013-durchgang.md)): b1 Keypad und Aktion, b2 Push-Knopf „Reinlassen“ und Handy-Reinlassen, b3 Türschloss, NFC-Aufkleber, Kartenleser |
+| 0.60 | Beobachtung „Weggehen“: wie schnell und wie zuverlässig jedes Anwesenheits-Signal das Rausgehen erkennt – Grundlage für die Ausgangserkennung ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)) |
+| 0.61 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |
