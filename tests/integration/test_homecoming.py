@@ -362,6 +362,7 @@ async def test_departure_through_door_and_silent_pause(
         "homecoming_signals": {PERSON: [WIFI]},
     }
     await setup_entry(hass, make_entry(options))
+    client = await hass_ws_client(hass)  # vor dem Zeitsprung anmelden (Token läuft ab)
 
     # Rausgehen: Tür auf, nach 90 s WLAN weg, nach 150 s auch der Router -> alle weg
     set_sensor(hass, DOOR, "on")
@@ -402,7 +403,6 @@ async def test_departure_through_door_and_silent_pause(
     assert advice["status"] == "few"  # erst ab 3× Rausgehen und 2 Tagen
     assert advice["wait_minutes"] == 4  # 150 s + 1 min Puffer, aufgerundet
 
-    client = await hass_ws_client(hass)
     await client.send_json_auto_id({"type": "hauswacht/homecoming/report"})
     reply = await client.receive_json()
     assert reply["success"], reply
