@@ -48,7 +48,7 @@ Ohne Ausweis gibt es keinen Durchgang – auch nicht mit „Tasten ohne PIN“.
 
 | Ausweis | Reinkommen | Rausgehen |
 |---|---|---|
-| **PIN oder Karte am Keypad** + Taste des **laufenden Profils** (z. B. „Nacht“) | ✅ während der Eingangsverzögerung: „schon gut, bleib scharf“ | – |
+| **PIN oder Karte am Keypad** + **irgendeine Profil-Taste** (wer heimkommt, weiß oft nicht, welches Profil aktiv ist) | ✅ während der Eingangsverzögerung: „schon gut, bleib scharf“ – das **laufende** Profil bleibt, es wird nicht gewechselt | – |
 | **PIN oder Karte** + eigene **Durchgang-Taste** (frei wählbar je Keypad, wie die Profil-Tasten) | ✅ | ✅ |
 | **Push-Knopf [Reinlassen]** neben [Unscharf] in der Eingangs-Nachricht (Home-Assistant-Benutzer mit Recht, wie „Unscharf über Push-Knopf“) | ✅ | – |
 | **Türschloss** (Nuki): Aufsperren durch einen berechtigten Benutzer, wenn das Schloss auf „Durchgang“ statt „Unscharf“ eingestellt ist | ✅ | ✅ (Aufsperren vor dem Öffnen) |
@@ -135,8 +135,8 @@ Zusätzlich fest:
   - Kontext bekommt `passage: frozenset[str]` (zeitlich überbrückt). Unscharf leert alles.
 - **Runtime:** Zeiten (Durchgangszeit, Nachlauf), „erste Tür“ beim Ausgang, Nachrichten,
   Anzeige.
-- **Keypad-Kern (ADR 0012):** neues Tastenziel „Durchgang“; die Taste des laufenden Profils
-  während der Eingangsverzögerung = Einlass. Gilt für Zigbee2MQTT-Keypad, allgemeines Keypad,
+- **Keypad-Kern (ADR 0012):** neues Tastenziel „Durchgang“; jede Profil-Taste während der
+  Eingangsverzögerung = Einlass (das laufende Profil bleibt). Gilt für Zigbee2MQTT-Keypad, allgemeines Keypad,
   MQTT-Schnittstelle.
 - **Profil-Optionen** (Block `passage`): `enabled`, `duration` (Minuten), `out_doors`
   (`first`/`all`), `out_end` (`time`/`closed`), `path` (Melder), `path_after` (Sekunden),
