@@ -1507,6 +1507,7 @@ class HauswachtRuntime:
         if stale := self._pushed_targets - set(sent):
             self.notifier.clear(stale, PUSH_TAG)
         self._pushed_targets = set(sent)
+        self._notify()  # Anzeige erst jetzt vollständig (Tür eingetragen)
 
     def _passage_out_start(self, config: PassageConfig, by: str) -> None:
         doors = out_candidates(self.entry_doors(), self.ctx.bypassed, self.armed_sensors)
@@ -1536,6 +1537,7 @@ class HauswachtRuntime:
             profile=self._profile_label(),
         )
         self._passage_notify(message, {"wer": by}, tag=PUSH_PASSAGE_TAG)
+        self._notify()  # Anzeige erst jetzt vollständig (Ende eingetragen)
 
     def _passage_door_used(self, door: str) -> None:
         if self._passage_out is not None:

@@ -89,7 +89,7 @@ def build_info(hass: HomeAssistant, main: HauswachtRuntime, user: HaUser) -> dic
             may = dict.fromkeys(ACTIONS, True)
         else:
             valid = linked.valid_at(now)
-            may = {a.value: valid and linked.may_in(a, area.area_id) for a in Action}
+            may = {a: valid and linked.may_in(Action(a), area.area_id) for a in ACTIONS}
         areas.append(
             {
                 "id": area.area_id,
