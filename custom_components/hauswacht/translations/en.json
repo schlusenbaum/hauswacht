@@ -243,7 +243,7 @@
           },
           "passage": {
             "name": "Passage – in or out, stays armed",
-            "description": "The profile stays armed, only one door (and the sensors on the way) is briefly free. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad – the door is free until it is closed. Going out: first PIN or card and the passage key. Meant for profiles that only watch the outer shell; sensors inside stay armed.",
+            "description": "The profile stays armed, only one door (and the sensors on the way) is briefly free. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad – the door is free until it is closed. Going out: while armed, PIN or card and any profile key (never switches profile) or the passage key. Meant for profiles that only watch the outer shell; sensors inside stay armed.",
             "data": {
               "enabled": "Allow passage",
               "duration": "Passage time (minutes)",

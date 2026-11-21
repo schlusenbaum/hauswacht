@@ -14,7 +14,7 @@ Two typical cases:
 - **Someone comes home at night.** "Night" is armed, Finja opens the front door, the entry delay
   runs. She enters her PIN at the keypad and presses a profile key – no alarm, and the house stays
   in "Night". Nobody has to arm again afterwards.
-- **Briefly out, e.g. taking out the bins.** PIN and the "Passage" key at the keypad – then a
+- **Briefly out, e.g. taking out the bins.** PIN and a profile key at the keypad – then a
   front door may open and close for 5 minutes. Everything else stays armed, including the back
   door.
 
@@ -36,9 +36,10 @@ profile):
 | Sensors on the way | Outdoor sensors that would trigger on the way – e.g. a motion sensor in the driveway, at the garden gate or at the bins | none |
 | Coming in: way still free after closing | How long the sensors on the way stay free after the door is closed | 60 seconds |
 
-All sensors with the role **entry** count as a **door** (they start the entry delay). You set the
-key for the passage at the keypad: instead of a profile choose **"Passage (in/out, stays
-armed)"** – freely selectable on every keypad (see [control devices](control-devices.md)).
+All sensors with the role **entry** count as a **door** (they start the entry delay). You do not
+need an extra key: while the profile is armed or the entry delay runs, **any profile key** with
+PIN or card opens the passage. If you have a free key, you can give it **"Passage (in/out, stays
+armed)"** instead of a profile at the keypad (see [control devices](control-devices.md)).
 
 ## Coming in
 
@@ -62,7 +63,9 @@ delay runs again for him.
 
 ## Going out
 
-1. First, at the keypad: **PIN or card** and the **passage key**.
+1. First, at the keypad: **PIN or card** and **any profile key** – or the passage key if you
+   have one. While the profile is armed, a profile key **never** switches to another profile;
+   to change, disarm first. So the passage also works if all keys are assigned to profiles.
 2. The message "Christian (Keypad hallway): passage for 5 minutes – profile Night stays armed"
    comes.
 3. The **first entry door that opens now** is free for the passage time – you can go out and in

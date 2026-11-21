@@ -625,12 +625,11 @@ class ControlManager:
             return self._run_action_code(keypad, action_code)
         if button != KEY_DISARM and button not in keypad.buttons:
             return InputOutcome(KeypadResult.UNKNOWN_BUTTON.value)
-        if button != KEY_DISARM and (
-            keypad.buttons.get(button) == PASSAGE_TARGET or self._entry_with_passage(keypad)
-        ):
-            # Durchgang (ADR 0013): eigene Taste, oder in der Eingangsverzögerung jede
-            # Profil-Taste ("schon gut, bleib scharf" – das laufende Profil bleibt)
-            return await self._passage_input(keypad, code)
+        if button != KEY_DISARM and (only := self._passage_key(keypad, button)) is not None:
+            # Durchgang (ADR 0013): eigene Taste, in der Eingangsverzögerung jede Profil-Taste
+            # ("schon gut, bleib scharf"), scharf mit Durchgang jede Profil-Taste ("lass mich
+            # kurz raus") – das laufende Profil bleibt, es wird nie umgeschaltet
+            return await self._passage_input(keypad, code, only or None)
         wanted = Action.DISARM if button == KEY_DISARM else Action.ARM
         identity = await self._login(keypad, code, wanted)
         # Zweiter Druck derselben Taste OHNE PIN/Karte bestätigt einen gescheiterten ersten
@@ -667,13 +666,23 @@ class ControlManager:
             outcome = replace(outcome, can_force=False)
         return outcome
 
-    def _entry_with_passage(self, keypad: Control) -> bool:
-        """Läuft in einem Bereich dieses Keypads eine Eingangsverzögerung mit Durchgang?"""
-        return any(
-            a.ctx.state is AlarmState.PENDING and a.passage_ready for a in self._areas(keypad)
-        )
+    def _passage_key(self, keypad: Control, button: str) -> list[HauswachtRuntime] | None:
+        """Ist dieser Tastendruck ein Durchgang? None = nein; sonst die Bereiche dafür (leer =
+        alle Bereiche des Keypads, in denen er gerade möglich ist)."""
+        target = keypad.buttons.get(button)
+        if target == PASSAGE_TARGET:
+            return []
+        if any(a.ctx.state is AlarmState.PENDING and a.passage_ready for a in self._areas(keypad)):
+            return []  # wer heimkommt, weiß oft nicht, welches Profil aktiv ist
+        area = self._area_of_profile(keypad, target) if target else None
+        if area is not None and area.ctx.state is AlarmState.ARMED and area.passage_ready:
+            # Scharf: jede Profil-Taste dieses Bereichs = rausgehen (statt "schon scharf")
+            return [area]
+        return None
 
-    async def _passage_input(self, keypad: Control, code: str | None) -> InputOutcome:
+    async def _passage_input(
+        self, keypad: Control, code: str | None, only: list[HauswachtRuntime] | None = None
+    ) -> InputOutcome:
         """Durchgang am Keypad – immer mit Ausweis (auch bei "Tasten ohne PIN")."""
         identity = await self._login(keypad, code, Action.PASSAGE)
         if identity is None:
@@ -683,7 +692,7 @@ class ControlManager:
             return InputOutcome(KeypadResult.INVALID_CODE.value)
         if identity == "pending":
             return InputOutcome(KeypadResult.PENDING.value)
-        ready = [a for a in self._areas(keypad) if a.passage_ready]
+        ready = [a for a in (only or self._areas(keypad)) if a.passage_ready]
         if not ready:
             return InputOutcome(KeypadResult.NOT_READY.value)
         if not identity.duress:

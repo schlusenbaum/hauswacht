@@ -17,14 +17,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
     (oder die Durchgang-Taste) am Keypad – kein Alarm, das laufende Profil bleibt. Die geöffnete
     Tür ist frei, bis sie zu ist; die Melder auf dem Weg noch eine Nachlaufzeit länger
     (Standard 60 s). Jede neue Türöffnung braucht einen eigenen Ausweis.
-  - **Rausgehen** (z. B. Müll): PIN oder Karte und die **Durchgang-Taste**. Die erste
+  - **Rausgehen** (z. B. Müll): PIN oder Karte und **irgendeine Profil-Taste**, solange scharf
+    ist (es wird nie auf ein anderes Profil umgeschaltet), oder die Durchgang-Taste. Die erste
     Eingangstür, die danach aufgeht, ist für die Durchgangszeit frei (Standard 5 Minuten) – alle
     anderen bleiben scharf (einstellbar: alle Eingangstüren). Ende nach Ablauf der Zeit oder
     schon, wenn man zurück und die Tür zu ist (einstellbar).
   - Ist eine Tür am Ende noch offen: **kein Alarm**, sondern eine deutliche Warnung; sie wird
     wieder überwacht, sobald sie zu ist.
 - **Taste „Durchgang“** bei jedem Keypad frei wählbar (Zigbee2MQTT-Keypad, Keypad (allgemein),
-  MQTT-Schnittstelle) – statt eines Profils.
+  MQTT-Schnittstelle) – statt eines Profils; nötig ist sie nicht.
 - **Aktion `hauswacht.passage`** (mit PIN) für Dashboard-Knöpfe und Automationen.
 - **Benachrichtigung „Durchgang“** (Standard an): „… hereingelassen – Profil Nacht bleibt
   scharf“ (ersetzt die Nachricht zur Eingangsverzögerung), „Durchgang für 5 Minuten“, Warnung

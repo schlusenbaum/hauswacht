@@ -14,7 +14,7 @@ Zwei typische Fälle:
 - **Jemand kommt nachts heim.** „Nacht“ ist scharf, Finja öffnet die Haustür, die
   Eingangsverzögerung läuft. Sie gibt am Keypad ihren PIN ein und drückt eine Profil-Taste –
   kein Alarm, und das Haus bleibt in „Nacht“. Niemand muss danach wieder scharf schalten.
-- **Kurz raus, z. B. den Müll rausbringen.** PIN und die Taste „Durchgang“ am Keypad – dann
+- **Kurz raus, z. B. den Müll rausbringen.** PIN und eine Profil-Taste am Keypad – dann
   darf eine Haustür 5 Minuten lang auf und zu gehen. Alles andere bleibt scharf, auch die
   Hintertür.
 
@@ -37,9 +37,10 @@ Profil):
 | Reinkommen: Weg noch frei nach dem Schließen | So lange bleiben die Melder auf dem Weg noch frei, nachdem die Tür zu ist | 60 Sekunden |
 
 Als **Tür** zählen alle Melder mit der Rolle **Eingang** (sie starten die Eingangsverzögerung).
-Die Taste für den Durchgang legst du beim Keypad fest: Statt eines Profils wählst du
-**„Durchgang (rein/raus, bleibt scharf)“** – bei jedem Keypad frei wählbar (siehe
-[Bedienteile](bedienteile.md)).
+Eine eigene Taste brauchst du nicht: Während das Profil scharf ist oder die Eingangsverzögerung
+läuft, öffnet **jede Profil-Taste** mit PIN oder Karte den Durchgang. Hast du eine Taste frei,
+kannst du ihr beim Keypad statt eines Profils **„Durchgang (rein/raus, bleibt scharf)“** geben
+(siehe [Bedienteile](bedienteile.md)).
 
 ## Reinkommen
 
@@ -63,7 +64,10 @@ Eingangsverzögerung.
 
 ## Rausgehen
 
-1. Vorher am Keypad: **PIN oder Karte** und die **Durchgang-Taste**.
+1. Vorher am Keypad: **PIN oder Karte** und **irgendeine Profil-Taste** – oder die
+   Durchgang-Taste, falls du eine hast. Solange das Profil scharf ist, schaltet eine Profil-Taste
+   **nie** auf ein anderes Profil um; wer wechseln will, schaltet erst unscharf. So geht der
+   Durchgang auch, wenn alle Tasten mit Profilen belegt sind.
 2. Die Nachricht „Christian (Keypad Flur): Durchgang für 5 Minuten – Profil Nacht bleibt scharf“
    kommt.
 3. Die **erste Eingangstür, die jetzt aufgeht**, ist für die Durchgangszeit frei – du kannst

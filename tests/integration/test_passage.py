@@ -231,6 +231,27 @@ async def test_going_out_frees_first_door_for_the_time(hass: HomeAssistant) -> N
     assert _panel(hass) == AlarmControlPanelState.PENDING
 
 
+async def test_going_out_with_any_profile_key_when_armed(hass: HomeAssistant) -> None:
+    """Alle Tasten belegt: scharf ist jede Profil-Taste "lass mich kurz raus" – nie umschalten."""
+    await _setup(hass)
+    await _arm_night(hass)
+    answer = await _key(hass, "home")
+    assert answer["result"] == "ok"
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT  # nicht auf "Zuhause" gewechselt
+    assert _passage(hass)["direction"] == "out"
+    await _set(hass, DOOR, "on")
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_profile_key_without_passage_does_not_switch(hass: HomeAssistant) -> None:
+    await _setup(hass, enabled=False)
+    await _arm_night(hass)
+    answer = await _key(hass, "home")
+    assert answer["result"] != "ok"
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+    assert _passage(hass) is None
+
+
 async def test_going_out_door_open_at_end_warns(hass: HomeAssistant) -> None:
     push = await _setup(hass)
     await _arm_night(hass)

@@ -41,7 +41,7 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   Router, Nähe …) – und unscharf bei Rückkehr mit Türbeleg. Je Wochentag andere Zeiten über einen
   Zeitplan; **Gastmodus**, damit Besuch nicht ausgesperrt wird.
 - **Durchgang** (Vorabversion) – rein oder raus, **ohne unscharf zu schalten**: nachts heimkommen
-  mit PIN und irgendeiner Taste, kurz den Müll rausbringen – nur die benutzte Tür ist frei, alles
+  mit PIN und irgendeiner Taste, kurz den Müll rausbringen (ebenso) – nur die benutzte Tür ist frei, alles
   andere bleibt scharf.
 - **Gekippte Fenster und Erschütterung** – Fenstersensoren und -griffe mit drei Stellungen (zu,
   gekippt, offen): nachts gekippt erlaubt, ganz öffnen löst aus; bei Abwesenheit zählt gekippt wie
