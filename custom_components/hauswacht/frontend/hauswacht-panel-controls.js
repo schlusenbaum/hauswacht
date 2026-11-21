@@ -25,6 +25,7 @@ const CT = {
     allAreas: "Alle Bereiche",
     keypadDevice: "Keypad-Gerät (aus Zigbee2MQTT)",
     topic: "MQTT-Topic (nur für Experten, leer = aus dem Gerät)",
+    passageKey: "Durchgang (rein/raus, bleibt scharf)",
     keys: { arm_day_zones: "Taste „Tag“ → Alarmprofil", arm_night_zones: "Taste „Nacht“ → Alarmprofil", arm_all_zones: "Taste „Alle“ → Alarmprofil" },
     login: "Anmeldung",
     logins: { pin_or_card: "PIN oder Karte", card: "Karte", card_and_pin: "Karte und PIN" },
@@ -125,6 +126,7 @@ const CT = {
     allAreas: "All areas",
     keypadDevice: "Keypad device (from Zigbee2MQTT)",
     topic: "MQTT topic (experts only, empty = from the device)",
+    passageKey: "Passage (in/out, stays armed)",
     keys: { arm_day_zones: "Key “day” → alarm profile", arm_night_zones: "Key “night” → alarm profile", arm_all_zones: "Key “all” → alarm profile" },
     login: "Login",
     logins: { pin_or_card: "PIN or card", card: "Card", card_and_pin: "Card and PIN" },
@@ -295,8 +297,10 @@ class HauswachtControlEditor extends HTMLElement {
     return `<select data-f="${field}">${entries.map(([v, l]) => `<option value="${ce(v)}" ${String(v) === String(value ?? "") ? "selected" : ""}>${ce(l)}</option>`).join("")}</select>`;
   }
 
-  _profiles(withNone = true) {
+  _profiles(withNone = true, passage = false) {
     const list = this.settings.system.profiles.map((p) => [p.id, p.name]);
+    // Keypad-Tasten: auch "Durchgang" (ADR 0013)
+    if (passage) list.push(["__passage__", this._t("passageKey")]);
     return withNone ? [["", this._t("none")], ...list] : list;
   }
 
@@ -337,12 +341,12 @@ class HauswachtControlEditor extends HTMLElement {
     if (d.kind === "keypad") {
       fields = `<label>${ce(this._t("keypadDevice"))}</label>${this._picker("keypad_device", d.keypad_device, ch.mqtt_devices, "hw-mqtt")}${this._err("keypad_device")}
         <label>${ce(this._t("topic"))}</label><input data-f="topic" value="${ce(d.topic || "")}">
-        ${ch.arm_keys.map((k) => `<label>${ce(this._t("keys")[k] || k)}</label>${this._select(`btn:${k}`, d.buttons[k] || "", this._profiles())}`).join("")}
+        ${ch.arm_keys.map((k) => `<label>${ce(this._t("keys")[k] || k)}</label>${this._select(`btn:${k}`, d.buttons[k] || "", this._profiles(true, true))}`).join("")}
         <label>${ce(this._t("login"))}</label>${this._select("login", d.login || "pin_or_card", ["pin_or_card", "card_and_pin"].map((v) => [v, this._t("logins")[v]]))}
         <label>${ce(this._t("emergency"))}</label>${this._select("emergency", d.emergency || "off", ["off", "silent", "alarm"].map((v) => [v, this._t("emergencies")[v]]))}`;
     } else if (d.kind === "mqtt_keypad") {
       const rows = this._btnRows
-        .map(([b, pid], i) => `<div class="inline"><div style="flex:1"><label>${ce(this._t("mqttWord"))}</label><input data-gb="${i}" value="${ce(b)}"></div><div style="flex:1"><label>&nbsp;</label>${this._select(`gp:${i}`, pid, this._profiles())}</div></div>`)
+        .map(([b, pid], i) => `<div class="inline"><div style="flex:1"><label>${ce(this._t("mqttWord"))}</label><input data-gb="${i}" value="${ce(b)}"></div><div style="flex:1"><label>&nbsp;</label>${this._select(`gp:${i}`, pid, this._profiles(true, true))}</div></div>`)
         .join("");
       const topic = d.topic || "hauswacht/…";
       fields = `<label>${ce(this._t("mqttTopic"))}</label><input data-f="topic" value="${ce(d.topic || "")}">${this._err("topic")}
@@ -356,7 +360,7 @@ class HauswachtControlEditor extends HTMLElement {
         <label>${ce(this._t("words"))}</label><textarea data-f="words" rows="4">${ce(this._wordsText(d.words))}</textarea>`;
     } else if (d.kind === "generic_keypad") {
       const rows = this._btnRows
-        .map(([b, pid], i) => `<div class="inline"><div style="flex:1"><label>${ce(this._t("genButton"))}</label><input data-gb="${i}" value="${ce(b)}"></div><div style="flex:1"><label>&nbsp;</label>${this._select(`gp:${i}`, pid, this._profiles())}</div></div>`)
+        .map(([b, pid], i) => `<div class="inline"><div style="flex:1"><label>${ce(this._t("genButton"))}</label><input data-gb="${i}" value="${ce(b)}"></div><div style="flex:1"><label>&nbsp;</label>${this._select(`gp:${i}`, pid, this._profiles(true, true))}</div></div>`)
         .join("");
       fields = `<div class="box">${ce(this._t("ident"))}: ${this.item ? `<code>${ce(this.item)}</code>` : ce(this._t("identNew"))}</div>
         <label>${ce(this._t("genButtons"))}</label><div class="muted">${ce(this._t("genButtonsHint"))}</div>${rows}
