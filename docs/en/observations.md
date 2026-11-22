@@ -58,7 +58,8 @@ block **Measurements**:
   |---|---|---|---|---|
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
-  It counts the **earliest signal** per person (all signals together).
+  Homecoming counts the **earliest signal** per person, leaving counts **all signals** together
+  (without direction sensors, see [Leaving](#leaving-preparation-for-detect-leaving-without-pin)).
 - **Recommendation per person** for "detect leaving without PIN": ✅ reliable with waiting time,
   ⚠️ warning with a tip, or grey "not enough data yet".
 - **Entries:** per door, how often the entry delay ran, the longest time until disarmed and the
@@ -148,8 +149,13 @@ One simple principle applies: **Nobody can leave without a door opening.**
 | silent pause | "away" without a door opening before: the phone is asleep, the Wi-Fi hiccups – the person is actually at home |
 | longest pause | how long the longest silent pause lasted |
 
-The most important line is **"earliest signal"** per person: it reports "away" only when **all**
-signals of the person say "away". This is exactly how the later feature is meant to decide.
+The most important line is **"all signals"** per person: it reports "away" only when no signal of
+the person says "home" any more (silent signals count as away), and "back" as soon as one reports
+"home" again. This is exactly how the later feature is meant to decide.
+
+**Direction sensors** (Proximity integration, Places) do **not** count here: "towards" does not
+mean "is here" – someone on the way back outside would otherwise count as "back", and a walk would
+count as leaving twice. They still appear as a line of their own in the table.
 
 ### Recommendation per person
 

@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b5] - 2026-11-22
+
+### Behoben
+- Weggehen: Ein Spaziergang zählte als zweimal Rausgehen. Die Kombination je Person heißt jetzt
+  **„alle Signale“** und lässt Richtungs-Sensoren (Nähe, Places) weg – „nähert sich“ draußen gilt
+  nicht mehr als „zurück“, „steht“ hält das „weg“ nicht mehr auf. Rückkehr und Dauer der
+  Schweigepausen werden für diese Kombination direkt mitgeschrieben.
+  Nach dem Update **Weggehen zurücksetzen**, damit alte Doppelzählungen verschwinden.
+
 ## [0.60.0b4] - 2026-11-22
 
 ### Hinzugefügt

@@ -389,7 +389,7 @@ async def test_departure_through_door_and_silent_pause(
 
     assert push == []  # die Beobachtung schaltet und verschickt nichts
     attributes = hass.states.get(OBSERVER).attributes  # type: ignore[union-attr]
-    earliest = attributes["departure"]["Anna (earliest signal)"]
+    earliest = attributes["departure"]["Anna (all signals)"]
     assert earliest["with_door"] == 1
     assert earliest["max_seconds"] == 150
     assert earliest["pauses"] == 1
@@ -404,7 +404,7 @@ async def test_departure_through_door_and_silent_pause(
     await _service(hass, "button", "press", entity_id=REPORT)
     markdown = _async_get_or_create_notifications(hass)["hauswacht_homecoming_report"]["message"]
     assert "**Leaving**" in markdown
-    assert "| Anna (earliest signal) | 1 | 150 s | 150 s | 1 | 40 min |" in markdown
+    assert "| Anna (all signals) | 1 | 150 s | 150 s | 1 | 40 min |" in markdown
     assert "Anna: not enough data yet" in markdown
 
 
@@ -489,3 +489,50 @@ async def test_measurements_on_settings_page_and_reset(  # noqa: PLR0915
     await hass.async_block_till_done()
     data = await measurements()
     assert data["persons"][0]["left"] == 1
+
+
+async def test_direction_does_not_split_leaving(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    """Richtung zählt beim Weggehen nicht: "nähert sich" draußen ist kein zweites Rausgehen."""
+    direction = "sensor.home_bewegung_von_anna"
+    _person(hass, "home", "home")
+    hass.states.async_set(WIFI, "Heimnetz")
+    hass.states.async_set(direction, "arrived")
+    options = {
+        "homecoming_observe": True,
+        "homecoming_persons": [PERSON],
+        "homecoming_ssids": ["Heimnetz"],
+        "homecoming_signals": {PERSON: [WIFI, direction]},
+    }
+    await setup_entry(hass, make_entry(options))
+
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    for seconds, entity, state in (
+        (60, WIFI, "<not connected>"),
+        (30, None, "not_home"),
+        (30, direction, "away_from"),
+        (80, direction, "towards"),
+        (100, direction, "away_from"),
+        (60, direction, "stationary"),
+    ):
+        freezer.tick(timedelta(seconds=seconds))
+        if entity is None:
+            _person(hass, state, state)
+        else:
+            hass.states.async_set(entity, state)
+        await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=20))
+    set_sensor(hass, DOOR, "off")
+    set_sensor(hass, DOOR, "on")
+    _person(hass, "home", "home")
+    hass.states.async_set(WIFI, "Heimnetz")
+    await hass.async_block_till_done()
+
+    attributes = hass.states.get(OBSERVER).attributes  # type: ignore[union-attr]
+    everything = attributes["departure"]["Anna (all signals)"]
+    assert everything["departures"] == 1
+    assert everything["with_door"] == 1
+    assert everything["max_seconds"] == 90  # WLAN und Person weg; Richtung zählt nicht
+    assert everything["pauses"] == 0

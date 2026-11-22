@@ -58,7 +58,8 @@ Heimkehr-Beobachtung** → Block **Messungen**:
   |---|---|---|---|---|
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
-  Gezählt wird das **frühestes Signal** je Person (alle Signale zusammen).
+  Gezählt wird beim Heimkommen das **frühestes Signal** je Person, beim Rausgehen **alle
+  Signale** zusammen (ohne Richtungs-Sensoren, siehe [Weggehen](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)).
 - **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: ✅ zuverlässig mit Wartezeit,
   ⚠️ Warnhinweis mit Tipp, oder grau „noch zu wenig gemessen“.
 - **Eingänge:** je Tür, wie oft die Eingangsverzögerung lief, die längste Zeit bis unscharf und
@@ -150,8 +151,13 @@ Es gilt ein einfacher Grundsatz: **Ohne geöffnete Tür kann niemand weggehen.**
 | Schweigepause | „weg“, ohne dass vorher eine Tür aufging: Das Handy schläft, das WLAN hakt – die Person ist in Wahrheit zuhause |
 | längste Pause | wie lange die längste Schweigepause gedauert hat |
 
-Wichtig ist vor allem die Zeile **„frühestes Signal“** je Person: Sie meldet erst „weg“, wenn
-**alle** Signale der Person „weg“ sagen. Genau so soll die spätere Funktion entscheiden.
+Wichtig ist vor allem die Zeile **„alle Signale“** je Person: Sie meldet erst „weg“, wenn kein
+Signal der Person mehr „zuhause“ sagt (schweigende Signale zählen als weg), und „zurück“, sobald
+eines wieder „zuhause“ meldet. Genau so soll die spätere Funktion entscheiden.
+
+**Richtungs-Sensoren** (Integration „Nähe“, Places) zählen hier **nicht** mit: „nähert sich“
+heißt nicht „ist da“ – wer draußen auf dem Rückweg ist, würde sonst als „zurück“ gelten, und ein
+Spaziergang zählte als zweimal Rausgehen. In der Tabelle stehen sie trotzdem als eigene Zeile.
 
 ### Empfehlung je Person
 

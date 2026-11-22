@@ -38,7 +38,8 @@ MIN_DAYS = 2.0  # so lange muss beobachtet sein, damit Schweigepausen auffallen 
 class Departure:
     at: float
     person: str
-    source: str  # Personen-Entität, einzelne Quelle oder "<person>#frühestes"
+    source: str  # Personen-Entität, einzelne Quelle oder "<person>#frühestes" (alle Signale)
+    back: float | None = None  # Rückkehr, wenn direkt mitgeschrieben (Kombination "alle Signale")
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,8 @@ def door_before(departure: Departure, doors: Sequence[DoorOpening]) -> DoorOpeni
 
 def _back_at(departure: Departure, arrivals: Sequence[Arrival]) -> float | None:
     """Erste Rückkehr derselben Quelle nach dem "Weg"."""
+    if departure.back is not None:
+        return departure.back
     times = [
         a.at
         for a in arrivals

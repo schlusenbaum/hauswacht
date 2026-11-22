@@ -105,6 +105,8 @@ class HomecomingObserver:
         self.entries: list[dict[str, Any]] = []
         self._entry_open: dict[str, Any] | None = None
         self._combined: dict[str, PresenceState] = {}
+        # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
+        self._present: dict[str, bool | None] = {}
         self._directions: set[str] = set()
         self._door_entities: frozenset[str] = frozenset()
         self._owners: dict[str, tuple[str, ...]] = {}  # Quelle -> Personen
@@ -165,6 +167,8 @@ class HomecomingObserver:
         for person in self.persons:
             if person not in self._combined:
                 self._combined[person] = self._initial_combined(person)
+            if person not in self._present:
+                self._present[person] = self._person_present(person)
         self.async_stop()
         wanted = sorted(set(self._owners) | doors)
         if wanted:
@@ -208,6 +212,44 @@ class HomecomingObserver:
         if values and all(v is False for v in values):
             return False
         return None
+
+    def _person_present(self, person: str) -> bool | None:
+        """Kombination fürs Weggehen.
+
+        Richtungs-Sensoren (Nähe, Places) zählen nicht: "nähert sich" heißt nicht "ist da", und
+        "steht" heißt nicht "ist weg". Zuhause, sobald ein Signal zuhause meldet; weg, sobald
+        mindestens eines "weg" meldet und keines "zuhause" (schweigende Signale zählen als weg).
+        """
+        values = [
+            self._presence.get(s, PresenceState()).home
+            for s in self._person_sources(person)
+            if s not in self._directions
+        ]
+        if any(v is True for v in values):
+            return True
+        if any(v is False for v in values):
+            return False
+        return None
+
+    def _track_leaving(self, person: str, now: float) -> bool:
+        """Weggehen und Rückkehr der Kombination "alle Signale" mitschreiben."""
+        before = self._present.get(person)
+        present = self._person_present(person)
+        if present is None or present == before:
+            return False
+        self._present[person] = present
+        source = person + EARLIEST
+        if before is True and present is False:
+            self.departures.append({"at": now, "person": person, "source": source})
+            return True
+        if present is True:
+            for record in reversed(self.departures):
+                if record["source"] == source:
+                    if record.get("back") is None:
+                        record["back"] = now
+                        return True
+                    break
+        return False
 
     # --- Aufzeichnung --------------------------------------------------------
 
@@ -253,11 +295,7 @@ class HomecomingObserver:
                         {"at": now, "person": person, "source": person + EARLIEST, "away": away}
                     )
                     changed = True
-                if before.home is True and combined.home is False:
-                    self.departures.append(
-                        {"at": now, "person": person, "source": person + EARLIEST}
-                    )
-                    changed = True
+                changed = self._track_leaving(person, now) or changed
         if changed:
             self.doors = prune(self.doors, now)
             self.arrivals = prune(self.arrivals, now)
@@ -365,10 +403,24 @@ class HomecomingObserver:
         ]
         return arrivals, doors
 
+    def _departure_names(self, names: dict[str, str]) -> dict[str, str]:
+        """Beim Weggehen heißt die Kombination "alle Signale" statt "frühestes Signal"."""
+        result = dict(names)
+        for person in self.persons:
+            result[person + EARLIEST] = tr(
+                self.lang, "dep_all", person=plain_name(self.hass, person)
+            )
+        return result
+
     def departure_verdicts(self) -> list[DepartureVerdict]:
         arrivals, doors = self._parsed(everything=True)
         departures = [
-            Departure(at=float(d["at"]), person=str(d["person"]), source=str(d["source"]))
+            Departure(
+                at=float(d["at"]),
+                person=str(d["person"]),
+                source=str(d["source"]),
+                back=float(d["back"]) if d.get("back") is not None else None,
+            )
             for d in self.departures
         ]
         return judge_departures(departures, arrivals, doors, dt_util.utcnow().timestamp())
@@ -457,7 +509,7 @@ class HomecomingObserver:
                 for person, values in door_proof_advice(self.stats()).items()
             },
             "departure": {
-                names.get(k, k): v.as_dict()
+                self._departure_names(names).get(k, k): v.as_dict()
                 for k, v in sorted(departure_stats(self.departure_verdicts()).items())
             },
             "departure_days": round(self.departure_days(), 1),
@@ -559,7 +611,10 @@ class HomecomingObserver:
         names = self.names()
         names.update({p: plain_name(self.hass, p) for p in self.persons})
         leaving = departure_lines(
-            departure_stats(verdicts), wait_advice(verdicts, self.departure_days()), names, lang
+            departure_stats(verdicts),
+            wait_advice(verdicts, self.departure_days()),
+            self._departure_names(names),
+            lang,
         )
         if leaving:
             text += "\n\n" + "\n".join(leaving)
@@ -598,7 +653,9 @@ class HomecomingObserver:
             names,
             local,
             lang,
-            extra=departure_csv_rows(self.departure_verdicts(), names, local, lang),
+            extra=departure_csv_rows(
+                self.departure_verdicts(), self._departure_names(names), local, lang
+            ),
         )
         return {
             "filename": f"{tr(lang, 'hc_filename')}-{now:%Y-%m-%d}",

@@ -220,6 +220,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "„Hauswacht Übersicht“ → Überwachung.",
         "hc_overall": "{person} (gesamt)",
         "hc_earliest": "{person} (frühestes Signal)",
+        "dep_all": "{person} (alle Signale)",
         "hc_proof_heading": "**Unscharf mit Türbeleg** – nötige Eingangsverzögerung je Person:",
         "hc_proof_line": "- {person}: mindestens {seconds} s (längste Erkennung nach dem "
         "Öffnen: {late} s; {count} Heimkehrten mit Tür, {phantom} ohne Tür – die würden "
@@ -449,6 +450,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "“Hauswacht Übersicht” (overview) → Monitoring.",
         "hc_overall": "{person} (overall)",
         "hc_earliest": "{person} (earliest signal)",
+        "dep_all": "{person} (all signals)",
         "hc_proof_heading": "**Disarm with door proof** – entry delay needed per person:",
         "hc_proof_line": "- {person}: at least {seconds} s (latest detection after opening: "
         "{late} s; {count} homecomings with door, {phantom} without door – those would be "
