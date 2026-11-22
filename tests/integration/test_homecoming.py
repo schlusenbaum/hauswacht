@@ -460,16 +460,20 @@ async def test_measurements_on_settings_page_and_reset(  # noqa: PLR0915
         assert reply["success"], reply
         await hass.async_block_till_done()
 
+    await reset("arrival")
+    data = await measurements()
+    assert data["persons"][0]["arrivals"] == 0
+    assert data["persons"][0]["left"] == 1  # Weggehen bleibt
+    assert data["doors"] == 0
+
     await reset("departure")
     data = await measurements()
     assert data["persons"][0]["left"] == 0
-    assert data["persons"][0]["arrivals"] == 1  # Heimkehr bleibt
     assert "has not left yet" in data["persons"][0]["advice"]
 
     await reset("homecoming")
     data = await measurements()
     assert data["persons"][0]["arrivals"] == 0
-    assert data["doors"] == 0
 
     await reset("silence")
     await client.send_json_auto_id({"type": "hauswacht/measurements/reset", "what": "x"})

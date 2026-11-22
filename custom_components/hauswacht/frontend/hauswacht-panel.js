@@ -67,7 +67,7 @@ const TEXTS = {
     staleAdviceL: "Empfehlung {h} h (ohne Melder mit eigenem Wert)",
     measTitle: "Messungen",
     measOff: "Die Beobachtung ist aus – es wird nichts gemessen.",
-    measSince: "Beobachtet seit {s} ({d} Tage) · Weggehen gemessen seit {w} ({x} Tage) · {n} Türöffnungen",
+    measSince: "Heimkommen gemessen seit {s} ({d} Tage, {n} Türöffnungen) · Weggehen gemessen seit {w} ({x} Tage)",
     measPerson: "Person",
     measHome: "Heimgekommen (mit Tür)",
     measLeft: "Rausgegangen mit Tür",
@@ -81,10 +81,12 @@ const TEXTS = {
     measHide: "Bericht ausblenden",
     measSaveMd: "Bericht speichern",
     measSaveCsv: "Tabelle speichern (CSV)",
+    measResetArrival: "Heimkommen zurücksetzen",
+    measAskArrival: "Messung „Heimkommen“ löschen und neu beginnen? Weggehen und Eingänge bleiben erhalten.",
     measResetLeaving: "Weggehen zurücksetzen",
     measResetAll: "Alle Messungen zurücksetzen",
     measResetSilence: "Messung zurücksetzen",
-    measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkehr und Eingänge bleiben erhalten.",
+    measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkommen und Eingänge bleiben erhalten.",
     measAskAll: "Alle Messungen der Heimkehr-Beobachtung löschen (Heimkehr, Eingänge, Weggehen) und neu beginnen? Einstellungen bleiben unverändert.",
     measAskSilence: "Funkstille-Messung aller Melder löschen und neu beginnen? Eigene Werte je Melder bleiben unverändert.",
     measDone: "Messung zurückgesetzt.",
@@ -211,7 +213,7 @@ const TEXTS = {
     staleAdviceL: "recommendation {h} h (without sensors with an own value)",
     measTitle: "Measurements",
     measOff: "The observation is off – nothing is being measured.",
-    measSince: "Observed since {s} ({d} days) · leaving measured since {w} ({x} days) · {n} door openings",
+    measSince: "Homecoming measured since {s} ({d} days, {n} door openings) · leaving measured since {w} ({x} days)",
     measPerson: "Person",
     measHome: "Came home (with door)",
     measLeft: "Left through a door",
@@ -225,6 +227,8 @@ const TEXTS = {
     measHide: "Hide report",
     measSaveMd: "Save report",
     measSaveCsv: "Save table (CSV)",
+    measResetArrival: "Reset homecoming",
+    measAskArrival: "Delete the “homecoming” measurement and start again? Leaving and entries are kept.",
     measResetLeaving: "Reset leaving",
     measResetAll: "Reset all measurements",
     measResetSilence: "Reset measurement",
@@ -746,7 +750,7 @@ class HauswachtPanel extends HTMLElement {
       <button class="e" data-a="hc-show">${escHtml(this._t(this._report ? "measHide" : "measShow"))}</button>
       <button class="e" data-a="hc-md">⬇ ${escHtml(this._t("measSaveMd"))}</button>
       <button class="e" data-a="hc-csv">⬇ ${escHtml(this._t("measSaveCsv"))}</button>
-      ${this._canEdit ? `<button class="e" data-a="reset-departure">${escHtml(this._t("measResetLeaving"))}</button><button class="e" data-a="reset-homecoming">${escHtml(this._t("measResetAll"))}</button>` : ""}
+      ${this._canEdit ? `<button class="e" data-a="reset-arrival">${escHtml(this._t("measResetArrival"))}</button><button class="e" data-a="reset-departure">${escHtml(this._t("measResetLeaving"))}</button><button class="e" data-a="reset-homecoming">${escHtml(this._t("measResetAll"))}</button>` : ""}
     </div>`;
     const report = this._report
       ? customElements.get("ha-markdown")
@@ -773,7 +777,7 @@ class HauswachtPanel extends HTMLElement {
   }
 
   async _resetMeasurement(what) {
-    const ask = { departure: "measAskLeaving", homecoming: "measAskAll", silence: "measAskSilence" }[what];
+    const ask = { arrival: "measAskArrival", departure: "measAskLeaving", homecoming: "measAskAll", silence: "measAskSilence" }[what];
     if (!window.confirm(this._t(ask))) return;
     try {
       await this._hass.callWS({ type: "hauswacht/measurements/reset", what });

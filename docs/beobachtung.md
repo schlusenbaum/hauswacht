@@ -50,8 +50,8 @@ Alles, was die Heimkehr-Beobachtung misst, steht auch auf der
 [Einstellungsseite](einstellungsseite.md) → **System** → Karte **Anwesenheit und
 Heimkehr-Beobachtung** → Block **Messungen**:
 
-- **Seit wann:** „Beobachtet seit 07.11.2026 (15 Tage) · Weggehen gemessen seit 21.11.2026
-  (1 Tag) · 84 Türöffnungen“.
+- **Seit wann:** „Heimkommen gemessen seit 07.11.2026 (15 Tage, 84 Türöffnungen) · Weggehen
+  gemessen seit 21.11.2026 (1 Tag)“.
 - **Tabelle je Person:**
 
   | Person | Heimgekommen (mit Tür) | Rausgegangen mit Tür | längste Zeit bis „weg“ | Schweigepausen (längste) |
@@ -71,8 +71,9 @@ Darunter die Knöpfe:
 | **Bericht anzeigen** | Zeigt den ganzen Bericht direkt auf der Seite (noch einmal drücken: ausblenden) |
 | **Bericht speichern** | Lädt den Bericht als Markdown-Datei herunter |
 | **Tabelle speichern (CSV)** | Lädt jede einzelne Messung als Tabelle herunter |
-| **Weggehen zurücksetzen** | Löscht nur die Messung „Weggehen“ und beginnt sie neu; Heimkehr und Eingänge bleiben |
-| **Alle Messungen zurücksetzen** | Löscht Heimkehr, Eingänge und Weggehen und beginnt neu |
+| **Heimkommen zurücksetzen** | Beginnt nur die Messung „Heimkommen“ neu (Heimkehrten, Türöffnungen, Empfehlung „Unscharf mit Türbeleg“); Weggehen und Eingänge bleiben |
+| **Weggehen zurücksetzen** | Löscht nur die Messung „Weggehen“ und beginnt sie neu; Heimkommen und Eingänge bleiben |
+| **Alle Messungen zurücksetzen** | Löscht Heimkommen, Eingänge und Weggehen und beginnt neu |
 
 Zurücksetzen fragt vorher nach, ändert **keine Einstellung** und schaltet nichts. Sinnvoll z. B.
 nach dem Einrichten neuer Signale (Companion App), damit alte Werte die Empfehlung nicht

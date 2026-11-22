@@ -50,8 +50,8 @@ Everything the homecoming observation measures is also shown on the
 [settings page](settings-page.md) → **System** → card **Presence and homecoming observation** →
 block **Measurements**:
 
-- **Since when:** "Observed since 2026-11-07 (15 days) · leaving measured since 2026-11-21
-  (1 day) · 84 door openings".
+- **Since when:** "Homecoming measured since 2026-11-07 (15 days, 84 door openings) · leaving
+  measured since 2026-11-21 (1 day)".
 - **Table per person:**
 
   | Person | Came home (with door) | Left through a door | longest time until "away" | Silent pauses (longest) |
@@ -71,6 +71,7 @@ Below it the buttons:
 | **Show report** | shows the whole report directly on the page (press again: hide) |
 | **Save report** | downloads the report as a Markdown file |
 | **Save table (CSV)** | downloads every single measurement as a table |
+| **Reset homecoming** | starts only the "homecoming" measurement again (homecomings, door openings, recommendation "Disarm with door proof"); leaving and entries are kept |
 | **Reset leaving** | deletes only the "leaving" measurement and starts it again; homecoming and entries are kept |
 | **Reset all measurements** | deletes homecoming, entries and leaving and starts again |
 

@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b4] - 2026-11-22
+
+### Hinzugefügt
+- Messungen: eigener Knopf **Heimkommen zurücksetzen** – beginnt nur die Heimkehr-Auswertung neu
+  (Heimkehrten, Türöffnungen, Empfehlung „Unscharf mit Türbeleg“); Weggehen und Eingänge bleiben.
+  WebSocket `hauswacht/measurements/reset` mit `what: arrival`.
+
 ## [0.60.0b3] - 2026-11-22
 
 **Vorabversion: Messungen auf der Einstellungsseite.**

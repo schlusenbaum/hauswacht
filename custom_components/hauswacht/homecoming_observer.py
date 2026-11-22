@@ -266,17 +266,21 @@ class HomecomingObserver:
             self._on_change()
 
     @callback
-    def reset(self, *, only_departure: bool = False) -> None:
+    def reset(self, part: str = "all") -> None:
         """Messungen löschen und neu beginnen (Einstellungsseite).
 
-        ``only_departure``: nur die Messung "Weggehen" – Heimkehr, Türen und Eingänge bleiben.
-        Der aktuelle Anwesenheitsstand bleibt erhalten, damit das nächste Kommen und Gehen
-        sofort wieder zählt.
+        ``part``: ``all`` (alles), ``departure`` (nur Weggehen) oder ``arrival`` (nur Heimkommen:
+        die Heimkehr-Auswertung beginnt neu; die Heimkehrten bleiben intern gespeichert, weil das
+        Weggehen mit ihnen erkennt, wann jemand zurück war). Der aktuelle Anwesenheitsstand
+        bleibt erhalten, damit das nächste Kommen und Gehen sofort wieder zählt.
         """
         now = dt_util.utcnow().timestamp()
-        self.departures = []
-        self.departure_since = now
-        if not only_departure:
+        if part == "arrival":
+            self.since = now
+        if part in ("departure", "all"):
+            self.departures = []
+            self.departure_since = now
+        if part == "all":
             self.doors = []
             self.arrivals = []
             self.entries = []
@@ -336,7 +340,14 @@ class HomecomingObserver:
 
     # --- Auswertung ----------------------------------------------------------
 
-    def _parsed(self) -> tuple[list[Arrival], list[DoorOpening]]:
+    def _parsed(self, *, everything: bool = False) -> tuple[list[Arrival], list[DoorOpening]]:
+        """Heimkehrten und Türöffnungen.
+
+        Für die Heimkehr-Auswertung nur ab ``since`` (nach "Heimkommen zurücksetzen" bleiben
+        ältere Heimkehrten gespeichert, weil das Weggehen mit ihnen die Rückkehr erkennt).
+        ``everything``: alles Gespeicherte (für die Messung "Weggehen").
+        """
+        start = 0.0 if everything or self.since is None else float(self.since)
         arrivals = [
             Arrival(
                 at=float(a["at"]),
@@ -345,12 +356,17 @@ class HomecomingObserver:
                 away_seconds=float(a["away"]),
             )
             for a in self.arrivals
+            if float(a["at"]) >= start
         ]
-        doors = [DoorOpening(at=float(d["at"]), sensor=str(d["sensor"])) for d in self.doors]
+        doors = [
+            DoorOpening(at=float(d["at"]), sensor=str(d["sensor"]))
+            for d in self.doors
+            if float(d["at"]) >= start
+        ]
         return arrivals, doors
 
     def departure_verdicts(self) -> list[DepartureVerdict]:
-        arrivals, doors = self._parsed()
+        arrivals, doors = self._parsed(everything=True)
         departures = [
             Departure(at=float(d["at"]), person=str(d["person"]), source=str(d["source"]))
             for d in self.departures
@@ -429,7 +445,7 @@ class HomecomingObserver:
         return {
             "enabled": self.enabled,
             "days": round(self.days(), 1),
-            "door_openings": len(self.doors),
+            "door_openings": len(self._parsed()[1]),
             "sources": {names.get(k, k): v.as_dict() for k, v in sorted(self.stats().items())},
             "recent": self.recent(),
             "entry_times": {
@@ -485,7 +501,7 @@ class HomecomingObserver:
             "days": round(self.days(), 1),
             "departure_since": self._when(self.departure_since) if self.departure_since else None,
             "departure_days": round(self.departure_days(), 1),
-            "doors": len(self.doors),
+            "doors": len(self._parsed()[1]),
             "persons": persons,
             "entries": [
                 {

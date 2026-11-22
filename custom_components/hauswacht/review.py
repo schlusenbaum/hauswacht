@@ -4,7 +4,8 @@
 - ``hauswacht/homecoming/report`` (nur Administratoren) liefert den Heimkehr-Bericht zum
   Herunterladen: Markdown und alle Einzelwerte als CSV.
 - ``hauswacht/measurements/reset`` (nur Administratoren) löscht Messungen: Heimkehr-Beobachtung
-  ganz (``homecoming``), nur das Weggehen (``departure``) oder die Funkstille (``silence``).
+  ganz (``homecoming``), nur das Heimkommen (``arrival``), nur das Weggehen (``departure``)
+  oder die Funkstille (``silence``).
 - Wichtige Prüfhinweise erscheinen zusätzlich unter Einstellungen → Reparaturen; sie werden beim
   Start (verzögert, bis die Melder ihren Zustand haben) und danach stündlich aktualisiert.
 """
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 WS_TYPE = f"{DOMAIN}/overview"
 WS_HOMECOMING = f"{DOMAIN}/homecoming/report"
 WS_RESET = f"{DOMAIN}/measurements/reset"
-RESET_PARTS = ("homecoming", "departure", "silence")
+RESET_PARTS = ("homecoming", "arrival", "departure", "silence")
 ISSUE_PREFIX = "check_"
 ISSUE_TRANSLATION = "check_finding"
 REFRESH = timedelta(hours=1)
@@ -97,7 +98,7 @@ def ws_measurements_reset(
         if main.silence is not None:
             main.silence.reset()
     else:
-        main.homecoming.reset(only_departure=what == "departure")
+        main.homecoming.reset("all" if what == "homecoming" else what)
     _LOGGER.info("Messung zurückgesetzt: %s", what)
     connection.send_result(msg["id"], {"ok": True})
 
