@@ -183,6 +183,10 @@ Assistant.
 **Alarm devices – sirens → Siren test (real siren!).** Checks each siren individually, briefly
 and quietly – via the same safe path as a real alarm.
 
+> From 0.60 on, the test also works on the [settings page](settings-page.md#siren-test-on-the-page-real-siren):
+> tab **Alarm devices** → card **Siren test** – with the tick "I am on site", a question per
+> siren and for administrators only. The locks below apply there just the same.
+
 1. Choose sirens (several are tested **one after another**), tone (burglar tones only), volume
    (default **low**) and duration (default **3 s**, at most **10 s**); tick "I am on site,
    housemates are informed".

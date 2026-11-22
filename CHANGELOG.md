@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b6] - 2026-11-22
+
+### Hinzugefügt
+- **Sirenentest auf der Einstellungsseite:** Reiter Alarmgeber → Karte „Sirenentest“. Jede Sirene
+  mit letztem Test (✅/❌); Häkchen „Ich bin vor Ort, Mitbewohner sind informiert“, Rückfrage vor
+  dem Ton, Stopp, „Gehört?“. Nur für Administratoren. Gleicher Weg und gleiche Sperren wie in der
+  Testkarte, die den Test weiterhin hat (ADR 0011, Nachtrag).
+
 ## [0.60.0b5] - 2026-11-22
 
 ### Behoben

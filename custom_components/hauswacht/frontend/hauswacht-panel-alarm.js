@@ -3,7 +3,7 @@
 // Seitenblatt <hauswacht-alarm-editor> mit drei Arten: sirens (Sirenen und Freigabe),
 // notify (Empfänger, Ereignisse, Erinnerung), text (eigener Text eines Ereignisses).
 // Gespeichert wird über hauswacht/settings/apply – dieselben Funktionen wie im Dialog.
-// Sirenen werden hier nie geschaltet; einen Sirenentest gibt es nur in der Testkarte.
+// Die Dialoge hier schalten nie eine Sirene; den Sirenentest gibt es in der Karte „Sirenentest“ der Seite und in der Testkarte.
 
 const AT = {
   de: {
@@ -20,7 +20,7 @@ const AT = {
     confirm: "Ich habe verstanden – Sirenen dürfen ab jetzt wirklich ertönen",
     allowSwitch: "Experten: auch Schalter als Sirene erlauben (switch.…)",
     allowSwitchNote: "Nach dem Speichern erscheinen Schalter in der Auswahl.",
-    tones: "Ton je Sirene, Sirenentest-Erinnerung und „Sirene aus Schalter“ stehen auf der Seite unter den Sirenen. Einen Sirenentest gibt es nur in der Testkarte.",
+    tones: "Ton je Sirene, Sirenentest-Erinnerung und „Sirene aus Schalter“ stehen auf der Seite unter den Sirenen. Den Sirenentest startest du in der Karte „Sirenentest“ oder in der Testkarte.",
     toneTitle: "Ton für {s}",
     toneKnown: "Töne, die diese Sirene meldet",
     toneNone: "– (diese Sirene meldet keine Töne)",
@@ -31,7 +31,7 @@ const AT = {
     smoke: "Diese Sirene hat eigene Brandsensoren (Rauchmelder) – ein Brandton für Einbruch ist hier nie möglich.",
     allowFire: "Experten: Brandton für Einbruch erlauben",
     confirmFire: "Ich bestätige: Diese Sirene ist kein Rauchmelder, und alle im Haus kennen den Ton als Einbruchalarm",
-    toneAfter: "Danach am besten einen kurzen, leisen Sirenentest in der Testkarte machen.",
+    toneAfter: "Danach am besten einen kurzen, leisen Sirenentest machen (Karte „Sirenentest“ oder Testkarte).",
     testTitle: "Sirenentest – Erinnerung und Vorwarnung",
     reminder: "Erinnerung, wenn eine Sirene so lange nicht getestet wurde",
     months: { 0: "Aus", 3: "Alle 3 Monate", 6: "Alle 6 Monate", 12: "Jährlich" },
@@ -110,7 +110,7 @@ const AT = {
     confirm: "I understand – sirens may really sound from now on",
     allowSwitch: "Experts: also allow switches as sirens (switch.…)",
     allowSwitchNote: "After saving, switches appear in the list.",
-    tones: "Tone per siren, the siren test reminder and “siren from switch” are on the page below the sirens. A siren test is only available in the test card.",
+    tones: "Tone per siren, the siren test reminder and “siren from switch” are on the page below the sirens. Start the siren test in the card “Siren test” or in the test card.",
     toneTitle: "Tone for {s}",
     toneKnown: "Tones this siren reports",
     toneNone: "– (this siren reports no tones)",
@@ -121,7 +121,7 @@ const AT = {
     smoke: "This siren has its own fire sensors (smoke detector) – a fire tone for intrusion is never possible here.",
     allowFire: "Experts: allow fire tone for intrusion",
     confirmFire: "I confirm: this siren is not a smoke detector, and everyone in the house knows the tone as the intrusion alarm",
-    toneAfter: "Afterwards, best do a short, quiet siren test in the test card.",
+    toneAfter: "Afterwards, best do a short, quiet siren test (card “Siren test” or test card).",
     testTitle: "Siren test – reminder and pre-warning",
     reminder: "Reminder if a siren has not been tested for this long",
     months: { 0: "Off", 3: "Every 3 months", 6: "Every 6 months", 12: "Yearly" },

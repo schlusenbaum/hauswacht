@@ -3,9 +3,9 @@
 [Deutsch](../einstellungsseite.md) | **English**
 
 > The page **shows** the whole setup and you edit **everything** directly on it.
-> The settings dialog (button "Edit in the dialog" at the top right) stays as a second way. Only
-> the **siren test** is deliberately started in the card "Hauswacht Test" – the page never
-> switches a siren.
+> The settings dialog (button "Edit in the dialog" at the top right) stays as a second way. The
+> page switches nothing – the only exception is the **siren test** (tab Alarm devices, card
+> "Siren test"), with confirmation and for administrators only.
 
 The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
 sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
@@ -228,11 +228,26 @@ Below in the same tab:
 | Card | On the page |
 |---|---|
 | **[Tone per siren](sirens.md#tone-per-siren)** | "Edit" per siren: the tones the device reports, "automatic" (burglar tone) or an own name. **Fire tones** are blocked; only as an expert with the tick "allow fire tone for intrusion" **and** an explicit confirmation – never for sirens with their own smoke detectors |
-| **[Siren test](sirens.md#siren-test)** | Reminder (off, every 3 / 6 months, yearly) and pre-warning "siren test in 10 seconds". You start the test itself in the test card |
+| **[Siren test](sirens.md#siren-test)** | Reminder (off, every 3 / 6 months, yearly) and pre-warning "siren test in 10 seconds". Below it the **test itself**, see below |
 | **[Create siren from switch](sirens.md#create-siren-from-switch)** | Choose the switch and confirm it is a pure alarm siren: Hauswacht creates the helper "change device type of a switch" (type siren) and registers the siren. The switch is **not** switched |
 
-There is deliberately **no siren test** on the page – only in the
-[test card](sirens.md#siren-test).
+### Siren test on the page (real siren!)
+
+At the bottom of the card **Siren test** each siren is listed with its last test (date, ✅ heard,
+❌ not heard). How to test:
+
+1. Tick **"I am on site, housemates are informed"**. Only then can the buttons be pressed.
+2. Press **Test …** at a siren.
+3. Question "The siren will sound quietly for 3 s. Really start?" → **Yes, start** or
+   **Cancel**.
+4. While it sounds, **Stop** is ready. Battery smoke detectors often react only after a few
+   seconds.
+5. "Did you hear the siren?" → **Yes, heard** or **No**. The result is stored with the date.
+
+It is the same way as in the [test card](sirens.md#siren-test), which still has it too. Hauswacht
+checks all locks in the background – no matter where you start: all areas disarmed, hardware
+release on, test mode off, no fire lock, burglar tones only, at most 10 s. If something is
+blocked, the card shows the reason (⛔). Only **administrators** may start it.
 
 ## Editing notifications
 
@@ -278,7 +293,8 @@ alarm announcement, quiet hours from–to; per event on/off, announcement or spe
 
 ## Good to know
 
-- The page **switches nothing** – neither sirens nor devices. It only changes settings, and only
+- The page **switches nothing** – no devices, no sirens; the only exception is the
+  [siren test](#siren-test-on-the-page-real-siren) with confirmation. It only changes settings, and only
   the ones you save. It only creates helpers when you explicitly want it ("create siren from
   switch", "create sensor from a measurement").
 - The **setup wizard** stays in the dialog (button "Edit in the dialog" → setup wizard).
