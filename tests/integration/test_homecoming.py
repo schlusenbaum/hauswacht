@@ -460,6 +460,7 @@ async def test_measurements_on_settings_page_and_reset(  # noqa: PLR0915
         assert reply["success"], reply
         await hass.async_block_till_done()
 
+    freezer.tick(timedelta(seconds=1))
     await reset("arrival")
     data = await measurements()
     assert data["persons"][0]["arrivals"] == 0
