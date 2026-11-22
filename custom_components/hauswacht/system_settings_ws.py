@@ -30,25 +30,17 @@ from .core.controls import (
     lock_id_label,
     parse_controls,
 )
-from .core.departure import advice_text
 from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info, stale_override_hours
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
 from .core.silence import format_duration
 from .names import display_name
 
 
-def _leaving(hass: HomeAssistant, main: Any, german: bool) -> list[dict[str, str]]:
+def _measurements(main: Any) -> dict[str, Any] | None:
     observer = getattr(main, "homecoming", None)
     if observer is None or not observer.enabled:
-        return []
-    lang = "de" if german else "en"
-    return [
-        {
-            "status": str(values["status"]),
-            "text": advice_text(values, display_name(hass, person), lang),
-        }
-        for person, values in observer.departure_advice().items()
-    ]
+        return None
+    return observer.measurements()  # type: ignore[no-any-return]
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
@@ -217,6 +209,13 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "observation": observation,
             "advice": silence.advice_hours() if silence is not None else None,
             "days": round(silence.days(), 1) if silence is not None else 0,
+            "since": (
+                dt_util.as_local(dt_util.utc_from_timestamp(silence.since)).strftime(
+                    "%d.%m.%Y" if german else "%Y-%m-%d"
+                )
+                if silence is not None and silence.since
+                else None
+            ),
             # Eigene Grenzen je Melder: Stunden, 0 = nie prüfen
             "overrides": stale_override_hours(options),
             # Beobachtung je Melder: längste Pause und Empfehlung für genau diesen Melder
@@ -235,8 +234,8 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "signal_persons": _presence_persons(options),
             "person_choices": _entities(hass, ["person"]),
             "signal_choices": _entities(hass, ["device_tracker", "binary_sensor", "sensor"]),
-            # Beobachtung "Weggehen": Empfehlung bzw. Warnhinweis je Person (ADR 0014)
-            "leaving": _leaving(hass, main, german),
+            # Messungen der Beobachtung (Heimkehr, Eingänge, Weggehen) – nur wenn sie läuft
+            "measurements": _measurements(main),
         },
         "areas": [
             {

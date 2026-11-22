@@ -251,6 +251,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "dep_advice_heading": "**Rausgehen ohne PIN erkennen** – Empfehlung je Person:",
         "dep_status_few": "{name}: noch zu wenig gemessen ({count}× Rausgehen) – die "
         "Empfehlung kommt nach mindestens 3× Rausgehen und 2 Tagen.",
+        "dep_status_none": "{name}: noch nicht weggegangen, seit gemessen wird.",
         "dep_status_ok": "{name}: Rausgehen wird zuverlässig erkannt – empfohlene Wartezeit "
         "{minutes} min (aus {count}× Rausgehen).",
         "dep_status_slow": "{name}: Die Signale merken das Rausgehen erst nach bis zu {needed} "
@@ -479,6 +480,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "dep_advice_heading": "**Detect leaving without PIN** – recommendation per person:",
         "dep_status_few": "{name}: not enough data yet ({count}× leaving) – the recommendation "
         "comes after at least 3× leaving and 2 days.",
+        "dep_status_none": "{name}: has not left yet since the measurement started.",
         "dep_status_ok": "{name}: leaving is detected reliably – recommended waiting time "
         "{minutes} min (from {count}× leaving).",
         "dep_status_slow": "{name}: the signals notice leaving only after up to {needed} min – "

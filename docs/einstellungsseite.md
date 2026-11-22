@@ -206,9 +206,9 @@ Darunter je Thema eine Karte mit **„Bearbeiten“**:
 | Karte | Inhalt |
 |---|---|
 | **Verhalten nach Neustart** | Vorherigen Zustand wiederherstellen · immer scharf (mit Profil je Bereich) · immer unscharf; „Laufenden Alarm fortsetzen“ – siehe [Verhalten nach einem Neustart](installation.md#verhalten-nach-einem-neustart) |
-| **Funkstille von Sensoren** | Allgemeiner Wert (Stunden bis „ausgefallen“, 0 = aus) und eine Tabelle **je Melder**: längste Pause, Empfehlung, eigener Wert – Melder anklicken, um ihm einen eigenen Wert zu geben. Siehe [Funkstille](melder.md#funkstille-von-sensoren) |
+| **Funkstille von Sensoren** | Allgemeiner Wert (Stunden bis „ausgefallen“, 0 = aus) und eine Tabelle **je Melder**: längste Pause, Empfehlung, eigener Wert – Melder anklicken, um ihm einen eigenen Wert zu geben. Seit wann gemessen wird, steht unten; **Messung zurücksetzen** löscht die Messung aller Melder und beginnt neu. Siehe [Funkstille](melder.md#funkstille-von-sensoren) |
 | **Funknetz und Gateways** | Statussensoren, z. B. die Zigbee2MQTT-Bridge – siehe [Funknetz](melder.md#funknetz-und-gateways-überwachen) |
-| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung) |
+| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
 | **Bereiche** | anlegen, umbenennen, Symbol, löschen (nur ohne Profile) – siehe [Bereiche](profile.md#bereiche) |
 | **Einstellungsseite** | diese Seite ausblenden. Danach verschwindet sie; wieder einblenden im Dialog unter Systemeinstellungen → Einstellungsseite |
 

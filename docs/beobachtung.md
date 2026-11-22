@@ -32,7 +32,9 @@ Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
   stehen im Attribut `sources`, die letzten zehn Heimkehrten im Attribut `recent`, die Zeiten
   „Tür auf bis unscharf“ im Attribut `entry_times`.
 - **Knopf „Heimkehr-Bericht“**: erstellt eine Übersicht als Benachrichtigung in Home Assistant.
-- **Herunterladen:** Karte [„Hauswacht Übersicht“](uebersicht.md) → Abschnitt **Überwachung** →
+- **Ansehen, speichern, zurücksetzen:** auf der Einstellungsseite, siehe
+  [Messungen auf der Einstellungsseite](#messungen-auf-der-einstellungsseite).
+- **Herunterladen:** auch in der Karte [„Hauswacht Übersicht“](uebersicht.md) → Abschnitt **Überwachung** →
   - **Bericht** – derselbe Bericht als Markdown-Datei, dazu die letzten Heimkehrten;
   - **Tabelle (CSV)** – jede einzelne Heimkehr und jeder Eingang als Zeile: Zeitpunkt, Person
     und Quelle, Tür, Sekunden nach dem Öffnen, wie lange die Person weg war, Ergebnis. Die
@@ -41,6 +43,41 @@ Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
 
 Nach zwei bis vier Wochen zeigt der Bericht, ob eine Heimkehr-Automatik bei euch zuverlässig
 wäre, für welche Personen und Ortungsquellen, und mit welcher Eingangsverzögerung.
+
+### Messungen auf der Einstellungsseite
+
+Alles, was die Heimkehr-Beobachtung misst, steht auch auf der
+[Einstellungsseite](einstellungsseite.md) → **System** → Karte **Anwesenheit und
+Heimkehr-Beobachtung** → Block **Messungen**:
+
+- **Seit wann:** „Beobachtet seit 07.11.2026 (15 Tage) · Weggehen gemessen seit 21.11.2026
+  (1 Tag) · 84 Türöffnungen“.
+- **Tabelle je Person:**
+
+  | Person | Heimgekommen (mit Tür) | Rausgegangen mit Tür | längste Zeit bis „weg“ | Schweigepausen (längste) |
+  |---|---|---|---|---|
+  | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
+
+  Gezählt wird das **frühestes Signal** je Person (alle Signale zusammen).
+- **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: ✅ zuverlässig mit Wartezeit,
+  ⚠️ Warnhinweis mit Tipp, oder grau „noch zu wenig gemessen“.
+- **Eingänge:** je Tür, wie oft die Eingangsverzögerung lief, die längste Zeit bis unscharf und
+  die empfohlene Eingangsverzögerung (siehe [Tür auf bis unscharf](#tür-auf-bis-unscharf)).
+
+Darunter die Knöpfe:
+
+| Knopf | Was passiert |
+|---|---|
+| **Bericht anzeigen** | Zeigt den ganzen Bericht direkt auf der Seite (noch einmal drücken: ausblenden) |
+| **Bericht speichern** | Lädt den Bericht als Markdown-Datei herunter |
+| **Tabelle speichern (CSV)** | Lädt jede einzelne Messung als Tabelle herunter |
+| **Weggehen zurücksetzen** | Löscht nur die Messung „Weggehen“ und beginnt sie neu; Heimkehr und Eingänge bleiben |
+| **Alle Messungen zurücksetzen** | Löscht Heimkehr, Eingänge und Weggehen und beginnt neu |
+
+Zurücksetzen fragt vorher nach, ändert **keine Einstellung** und schaltet nichts. Sinnvoll z. B.
+nach dem Einrichten neuer Signale (Companion App), damit alte Werte die Empfehlung nicht
+verfälschen. Tipp: vorher **Tabelle speichern**, wenn du die alten Werte behalten willst.
+Die Knöpfe zum Zurücksetzen sehen nur Administratoren.
 
 ## Zusätzliche Signale je Person
 

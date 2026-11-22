@@ -27,6 +27,7 @@ from .const import (
 from .core.departure import (
     Departure,
     DepartureVerdict,
+    advice_text,
     departure_csv_rows,
     departure_lines,
     departure_stats,
@@ -264,6 +265,26 @@ class HomecomingObserver:
             self._store.async_delay_save(self._data, 10)
             self._on_change()
 
+    @callback
+    def reset(self, *, only_departure: bool = False) -> None:
+        """Messungen löschen und neu beginnen (Einstellungsseite).
+
+        ``only_departure``: nur die Messung "Weggehen" – Heimkehr, Türen und Eingänge bleiben.
+        Der aktuelle Anwesenheitsstand bleibt erhalten, damit das nächste Kommen und Gehen
+        sofort wieder zählt.
+        """
+        now = dt_util.utcnow().timestamp()
+        self.departures = []
+        self.departure_since = now
+        if not only_departure:
+            self.doors = []
+            self.arrivals = []
+            self.entries = []
+            self._entry_open = None
+            self.since = now
+        self._store.async_delay_save(self._data, 1)
+        self._on_change()
+
     def _data(self) -> dict[str, Any]:
         return {
             "doors": self.doors,
@@ -428,6 +449,53 @@ class HomecomingObserver:
                 plain_name(self.hass, person): values
                 for person, values in self.departure_advice().items()
             },
+        }
+
+    def measurements(self) -> dict[str, Any]:
+        """Kurzfassung aller Messungen für die Einstellungsseite."""
+        stats = self.stats()
+        left = departure_stats(self.departure_verdicts())
+        advice = self.departure_advice()
+        lang = self.lang
+        persons = []
+        for person in self.persons:
+            home = stats.get(person + EARLIEST)
+            out = left.get(person + EARLIEST)
+            values = advice.get(person)
+            name = plain_name(self.hass, person)
+            persons.append(
+                {
+                    "name": name,
+                    "arrivals": home.arrivals if home else 0,
+                    "arrivals_with_door": home.with_door if home else 0,
+                    "left": out.with_door if out else 0,
+                    "longest_left": round(max(out.delays)) if out and out.delays else None,
+                    "pauses": len(out.pauses) if out else 0,
+                    "longest_pause": (round(max(out.pauses) / 60) if out and out.pauses else None),
+                    "status": values["status"] if values else "few",
+                    "advice": (
+                        advice_text(values, name, lang)
+                        if values
+                        else tr(lang, "dep_status_none", name=name)
+                    ),
+                }
+            )
+        return {
+            "since": self._when(self.since) if self.since else None,
+            "days": round(self.days(), 1),
+            "departure_since": self._when(self.departure_since) if self.departure_since else None,
+            "departure_days": round(self.departure_days(), 1),
+            "doors": len(self.doors),
+            "persons": persons,
+            "entries": [
+                {
+                    "door": display_name(self.hass, door),
+                    "count": values["entries"],
+                    "longest": values["max_seconds"],
+                    "recommended": values["recommended_entry_delay"],
+                }
+                for door, values in entry_stats(self.entry_timings()).items()
+            ],
         }
 
     def summary(self) -> int | None:

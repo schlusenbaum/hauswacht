@@ -32,7 +32,9 @@ Every homecoming after at least 5 minutes of absence is evaluated:
   in the attribute `sources`, the last ten homecomings in the attribute `recent`, the times "door
   open to disarmed" in the attribute `entry_times`.
 - **Button "Homecoming report"**: creates an overview as a notification in Home Assistant.
-- **Download:** card ["Hauswacht Übersicht"](overview.md) → section **Monitoring** →
+- **View, save, reset:** on the settings page, see
+  [Measurements on the settings page](#measurements-on-the-settings-page).
+- **Download:** also in the card ["Hauswacht Übersicht"](overview.md) → section **Monitoring** →
   - **Report** – the same report as a Markdown file, plus the last homecomings;
   - **Table (CSV)** – every single homecoming and every entry as one row: time, person and
     source, door, seconds after opening, how long the person was away, result. The file opens
@@ -41,6 +43,40 @@ Every homecoming after at least 5 minutes of absence is evaluated:
 
 After two to four weeks the report shows whether a homecoming automation would be reliable for
 you, for which persons and location sources, and with which entry delay.
+
+### Measurements on the settings page
+
+Everything the homecoming observation measures is also shown on the
+[settings page](settings-page.md) → **System** → card **Presence and homecoming observation** →
+block **Measurements**:
+
+- **Since when:** "Observed since 2026-11-07 (15 days) · leaving measured since 2026-11-21
+  (1 day) · 84 door openings".
+- **Table per person:**
+
+  | Person | Came home (with door) | Left through a door | longest time until "away" | Silent pauses (longest) |
+  |---|---|---|---|---|
+  | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
+
+  It counts the **earliest signal** per person (all signals together).
+- **Recommendation per person** for "detect leaving without PIN": ✅ reliable with waiting time,
+  ⚠️ warning with a tip, or grey "not enough data yet".
+- **Entries:** per door, how often the entry delay ran, the longest time until disarmed and the
+  recommended entry delay (see [Door open to disarmed](#door-open-to-disarmed)).
+
+Below it the buttons:
+
+| Button | What happens |
+|---|---|
+| **Show report** | shows the whole report directly on the page (press again: hide) |
+| **Save report** | downloads the report as a Markdown file |
+| **Save table (CSV)** | downloads every single measurement as a table |
+| **Reset leaving** | deletes only the "leaving" measurement and starts it again; homecoming and entries are kept |
+| **Reset all measurements** | deletes homecoming, entries and leaving and starts again |
+
+Resetting asks first, changes **no setting** and switches nothing. Useful e.g. after setting up
+new signals (Companion app), so that old values do not distort the recommendation. Tip: **save
+the table** first if you want to keep the old values. Only administrators see the reset buttons.
 
 ## Additional signals per person
 

@@ -65,6 +65,30 @@ const TEXTS = {
     staleNever: "nie prüfen",
     staleGeneralL: "Allgemein",
     staleAdviceL: "Empfehlung {h} h (ohne Melder mit eigenem Wert)",
+    measTitle: "Messungen",
+    measOff: "Die Beobachtung ist aus – es wird nichts gemessen.",
+    measSince: "Beobachtet seit {s} ({d} Tage) · Weggehen gemessen seit {w} ({x} Tage) · {n} Türöffnungen",
+    measPerson: "Person",
+    measHome: "Heimgekommen (mit Tür)",
+    measLeft: "Rausgegangen mit Tür",
+    measLongest: "längste Zeit bis „weg“",
+    measPauses: "Schweigepausen (längste)",
+    measEntryDoor: "Eingang",
+    measEntries: "Eingänge",
+    measEntryLongest: "längste Zeit bis unscharf",
+    measEntryAdvice: "Empfehlung Eingangsverzögerung",
+    measShow: "Bericht anzeigen",
+    measHide: "Bericht ausblenden",
+    measSaveMd: "Bericht speichern",
+    measSaveCsv: "Tabelle speichern (CSV)",
+    measResetLeaving: "Weggehen zurücksetzen",
+    measResetAll: "Alle Messungen zurücksetzen",
+    measResetSilence: "Messung zurücksetzen",
+    measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkehr und Eingänge bleiben erhalten.",
+    measAskAll: "Alle Messungen der Heimkehr-Beobachtung löschen (Heimkehr, Eingänge, Weggehen) und neu beginnen? Einstellungen bleiben unverändert.",
+    measAskSilence: "Funkstille-Messung aller Melder löschen und neu beginnen? Eigene Werte je Melder bleiben unverändert.",
+    measDone: "Messung zurückgesetzt.",
+    measSilenceSince: "gemessen seit {s}",
     staleTableHint: "Beobachtung je Melder seit {d} Tagen. Auf einen Melder klicken, um ihm einen eigenen Wert zu geben.",
     staleSensor: "Melder",
     staleLongest: "Längste Pause",
@@ -185,6 +209,30 @@ const TEXTS = {
     staleNever: "never check",
     staleGeneralL: "General",
     staleAdviceL: "recommendation {h} h (without sensors with an own value)",
+    measTitle: "Measurements",
+    measOff: "The observation is off – nothing is being measured.",
+    measSince: "Observed since {s} ({d} days) · leaving measured since {w} ({x} days) · {n} door openings",
+    measPerson: "Person",
+    measHome: "Came home (with door)",
+    measLeft: "Left through a door",
+    measLongest: "longest time until “away”",
+    measPauses: "Silent pauses (longest)",
+    measEntryDoor: "Entry",
+    measEntries: "Entries",
+    measEntryLongest: "longest time until disarmed",
+    measEntryAdvice: "Recommended entry delay",
+    measShow: "Show report",
+    measHide: "Hide report",
+    measSaveMd: "Save report",
+    measSaveCsv: "Save table (CSV)",
+    measResetLeaving: "Reset leaving",
+    measResetAll: "Reset all measurements",
+    measResetSilence: "Reset measurement",
+    measAskLeaving: "Delete the “leaving” measurement and start again? Homecoming and entries are kept.",
+    measAskAll: "Delete all measurements of the homecoming observation (homecoming, entries, leaving) and start again? Settings stay unchanged.",
+    measAskSilence: "Delete the silence measurement of all sensors and start again? Own values per sensor stay unchanged.",
+    measDone: "Measurement reset.",
+    measSilenceSince: "measured since {s}",
     staleTableHint: "Observation per sensor for {d} days. Click a sensor to give it an own value.",
     staleSensor: "Sensor",
     staleLongest: "Longest pause",
@@ -294,6 +342,10 @@ const PANEL_STYLE = `
   .note { color: var(--secondary-text-color); font-size: .9rem; margin: 0 0 12px; }
   ha-card { margin-bottom: 16px; }
   .tool { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .meas { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--divider-color); }
+  .meas > .n { font-weight: 500; margin-bottom: 4px; }
+  .report { margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: var(--secondary-background-color); overflow-x: auto; }
+  pre.report { white-space: pre-wrap; font-size: 12px; }
   button.e { font: inherit; font-size: .85rem; padding: 4px 12px; border-radius: 16px; cursor: pointer;
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-color); }
   a.lnk { color: var(--primary-color); cursor: pointer; }
@@ -650,6 +702,9 @@ class HauswachtPanel extends HTMLElement {
   _silenceHtml(sil) {
     // Allgemeiner Wert und Beobachtung je Melder mit Empfehlung und eigenem Wert
     const general = `<div>${escHtml(this._t("staleGeneralL"))}: ${escHtml(sil.hours ? this._fmt("hoursN", { h: sil.hours }) : this._t("silenceOff"))}${sil.advice ? ` · ${escHtml(this._fmt("staleAdviceL", { h: sil.advice }))}` : ""}</div>`;
+    const reset = this._canEdit
+      ? `<div class="tool">${sil.since ? `<span class="muted">${escHtml(this._fmt("measSilenceSince", { s: sil.since }))}</span> ` : ""}<button class="e" data-a="reset-silence">${escHtml(this._t("measResetSilence"))}</button></div>`
+      : "";
     const rows = Object.entries(sil.sensors || {})
       .map(([id, o]) => {
         const own = id in sil.overrides ? (sil.overrides[id] ? `${sil.overrides[id]} h` : this._t("staleNever")) : "–";
@@ -661,7 +716,74 @@ class HauswachtPanel extends HTMLElement {
     const table = rows
       ? `<div class="muted" style="margin-top:8px">${escHtml(this._fmt("staleTableHint", { d: sil.days }))}</div><div class="scroll"><table><tr><th>${escHtml(this._t("staleSensor"))}</th><th>${escHtml(this._t("staleLongest"))}</th><th>${escHtml(this._t("staleAdviceCol"))}</th><th>${escHtml(this._t("staleOwnCol"))}</th></tr>${rows}</table></div>`
       : `<div class="muted">${escHtml(sil.observation || "")}</div>`;
-    return general + table;
+    return general + table + reset;
+  }
+
+  _measurementsHtml(m) {
+    // Messungen der Heimkehr-Beobachtung: einsehen, speichern, zurücksetzen
+    if (!m) return `<div class="muted">${escHtml(this._t("measOff"))}</div>`;
+    const dash = (v, unit = "") => (v === null || v === undefined ? "–" : `${v}${unit}`);
+    const since = `<div class="muted">${escHtml(this._fmt("measSince", { s: m.since || "–", d: m.days, w: m.departure_since || "–", x: m.departure_days, n: m.doors }))}</div>`;
+    const rows = m.persons
+      .map((p) => `<tr><td>${escHtml(p.name)}</td><td class="nw">${p.arrivals} (${p.arrivals_with_door})</td><td class="nw">${p.left}</td><td class="nw">${escHtml(dash(p.longest_left, " s"))}</td><td class="nw">${p.pauses}${p.longest_pause !== null ? ` (${p.longest_pause} min)` : ""}</td></tr>`)
+      .join("");
+    const persons = rows
+      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th><th>${escHtml(this._t("measHome"))}</th><th>${escHtml(this._t("measLeft"))}</th><th>${escHtml(this._t("measLongest"))}</th><th>${escHtml(this._t("measPauses"))}</th></tr>${rows}</table></div>`
+      : "";
+    const advice = m.persons
+      .map((p) => {
+        const warn = p.status === "slow" || p.status === "pauses";
+        return `<div class="${warn ? "" : "muted"}">${warn ? "⚠️ " : p.status === "ok" ? "✅ " : ""}${escHtml(p.advice)}</div>`;
+      })
+      .join("");
+    const entryRows = m.entries
+      .map((e) => `<tr><td>${escHtml(e.door)}</td><td class="nw">${e.count}</td><td class="nw">${escHtml(dash(e.longest, " s"))}</td><td class="nw">${escHtml(dash(e.recommended, " s"))}</td></tr>`)
+      .join("");
+    const entries = entryRows
+      ? `<div class="scroll" style="margin-top:8px"><table><tr><th>${escHtml(this._t("measEntryDoor"))}</th><th>${escHtml(this._t("measEntries"))}</th><th>${escHtml(this._t("measEntryLongest"))}</th><th>${escHtml(this._t("measEntryAdvice"))}</th></tr>${entryRows}</table></div>`
+      : "";
+    const tools = `<div class="tool">
+      <button class="e" data-a="hc-show">${escHtml(this._t(this._report ? "measHide" : "measShow"))}</button>
+      <button class="e" data-a="hc-md">⬇ ${escHtml(this._t("measSaveMd"))}</button>
+      <button class="e" data-a="hc-csv">⬇ ${escHtml(this._t("measSaveCsv"))}</button>
+      ${this._canEdit ? `<button class="e" data-a="reset-departure">${escHtml(this._t("measResetLeaving"))}</button><button class="e" data-a="reset-homecoming">${escHtml(this._t("measResetAll"))}</button>` : ""}
+    </div>`;
+    const report = this._report
+      ? customElements.get("ha-markdown")
+        ? `<div class="report"><ha-markdown breaks data-report></ha-markdown></div>`
+        : `<pre class="report">${escHtml(this._report)}</pre>`
+      : "";
+    return `<div class="meas"><div class="n">${escHtml(this._t("measTitle"))}</div>${since}${persons}${advice}${entries}${tools}${report}</div>`;
+  }
+
+  async _toggleReport() {
+    if (this._report) {
+      this._report = null;
+      this._render();
+      return;
+    }
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/homecoming/report" });
+      this._report = r.markdown;
+      this._render();
+    } catch (err) {
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
+    }
+  }
+
+  async _resetMeasurement(what) {
+    const ask = { departure: "measAskLeaving", homecoming: "measAskAll", silence: "measAskSilence" }[what];
+    if (!window.confirm(this._t(ask))) return;
+    try {
+      await this._hass.callWS({ type: "hauswacht/measurements/reset", what });
+      this._report = null;
+      this._flash = this._t("measDone");
+      await this._load();
+    } catch (err) {
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
+    }
   }
 
   _systemTab(view) {
@@ -683,10 +805,8 @@ class HauswachtPanel extends HTMLElement {
       h.persons.map((p) => name(h.person_choices, p)).join(", ") || null,
       h.ssids.length ? `${this._t("ssidsL")}: ${h.ssids.join(", ")}` : null,
     ].filter(Boolean).join(" · ");
-    // Beobachtung "Weggehen": Empfehlung oder Warnhinweis je Person (ADR 0014)
-    const leaving = (h.leaving || [])
-      .map((l) => `<div class="${l.status === "ok" || l.status === "few" ? "muted" : ""}">${l.status === "slow" || l.status === "pauses" ? "⚠️ " : ""}${escHtml(l.text)}</div>`)
-      .join("");
+    // Messungen (Heimkehr, Eingänge, Weggehen – ADR 0014) mit Bericht, Speichern, Zurücksetzen
+    const leaving = this._measurementsHtml(h.measurements);
     const areas = sys.areas
       .map((a) => `<div class="item">${this._btn(`sys:area:${a.id}`, this._t("edit"))}<div class="n">${escHtml(a.name)}</div><div class="muted">${escHtml(a.profiles.join(", ") || "–")}</div></div>`)
       .join("");
@@ -695,7 +815,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
       this._card(this._t("silence"), this._silenceHtml(sys.silence) + edit("silence"), "silence") +
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
-      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${leaving}${edit("homecoming")}`, "homecoming") +
+      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
       this._card(this._t("page"), `<div>${escHtml(this._t("pageOn"))}</div>${edit("page")}`, "settingsPage")
     );
@@ -975,6 +1095,9 @@ class HauswachtPanel extends HTMLElement {
         this._render();
       })
     );
+    // Heimkehr-Bericht in der Einstellungsseite anzeigen (Markdown von Home Assistant)
+    const report = this.shadowRoot.querySelector("ha-markdown[data-report]");
+    if (report) report.content = this._report || "";
     this.shadowRoot.querySelectorAll("[data-a]").forEach((button) =>
       button.addEventListener("click", () => {
         const action = button.dataset.a;
@@ -983,6 +1106,8 @@ class HauswachtPanel extends HTMLElement {
         else if (action === "dialog") this._navigate("/config/integrations/integration/hauswacht");
         else if (action === "print" || action === "sheet") this._print(action);
         else if (action === "hc-md" || action === "hc-csv") this._downloadHomecoming(action === "hc-csv" ? "csv" : "markdown");
+        else if (action === "hc-show") this._toggleReport();
+        else if (action.startsWith("reset-")) this._resetMeasurement(action.slice(6));
       })
     );
     this.shadowRoot.querySelectorAll("[data-edit]").forEach((button) =>

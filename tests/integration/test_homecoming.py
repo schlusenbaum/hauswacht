@@ -406,3 +406,81 @@ async def test_departure_through_door_and_silent_pause(
     assert "**Leaving**" in markdown
     assert "| Anna (earliest signal) | 1 | 150 s | 150 s | 1 | 40 min |" in markdown
     assert "Anna: not enough data yet" in markdown
+
+
+async def test_measurements_on_settings_page_and_reset(  # noqa: PLR0915
+    hass: HomeAssistant,
+    freezer: FrozenDateTimeFactory,
+    hass_ws_client: WebSocketGenerator,
+) -> None:
+    _person(hass, "home", "home")
+    hass.states.async_set(WIFI, "Heimnetz")
+    options = {
+        "homecoming_observe": True,
+        "homecoming_persons": [PERSON],
+        "homecoming_ssids": ["Heimnetz"],
+        "homecoming_signals": {PERSON: [WIFI]},
+    }
+    await setup_entry(hass, make_entry(options))
+    client = await hass_ws_client(hass)
+
+    # Rausgehen und wieder heimkommen (kurz, damit die Anmeldung gültig bleibt)
+    set_sensor(hass, DOOR, "on")
+    freezer.tick(timedelta(seconds=40))
+    hass.states.async_set(WIFI, "<not connected>")
+    _person(hass, "not_home", "not_home")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    freezer.tick(timedelta(minutes=10))
+    set_sensor(hass, DOOR, "on")
+    _person(hass, "home", "home")
+    hass.states.async_set(WIFI, "Heimnetz")
+    await hass.async_block_till_done()
+
+    async def measurements() -> dict[str, Any]:
+        await client.send_json_auto_id({"type": "hauswacht/settings/get"})
+        reply = await client.receive_json()
+        assert reply["success"], reply
+        result: dict[str, Any] = reply["result"]["system"]["homecoming"]["measurements"]
+        return result
+
+    data = await measurements()
+    (anna,) = data["persons"]
+    assert anna["name"] == "Anna"
+    assert anna["arrivals"] == 1
+    assert anna["arrivals_with_door"] == 1
+    assert anna["left"] == 1
+    assert anna["longest_left"] == 40
+    assert anna["status"] == "few"
+    assert data["doors"] == 2
+
+    async def reset(what: str) -> None:
+        await client.send_json_auto_id({"type": "hauswacht/measurements/reset", "what": what})
+        reply = await client.receive_json()
+        assert reply["success"], reply
+        await hass.async_block_till_done()
+
+    await reset("departure")
+    data = await measurements()
+    assert data["persons"][0]["left"] == 0
+    assert data["persons"][0]["arrivals"] == 1  # Heimkehr bleibt
+    assert "has not left yet" in data["persons"][0]["advice"]
+
+    await reset("homecoming")
+    data = await measurements()
+    assert data["persons"][0]["arrivals"] == 0
+    assert data["doors"] == 0
+
+    await reset("silence")
+    await client.send_json_auto_id({"type": "hauswacht/measurements/reset", "what": "x"})
+    assert not (await client.receive_json())["success"]
+
+    # Nach dem Zurücksetzen wird sofort weiter gemessen
+    set_sensor(hass, DOOR, "off")
+    set_sensor(hass, DOOR, "on")
+    freezer.tick(timedelta(seconds=30))
+    hass.states.async_set(WIFI, "<not connected>")
+    _person(hass, "not_home", "not_home")
+    await hass.async_block_till_done()
+    data = await measurements()
+    assert data["persons"][0]["left"] == 1

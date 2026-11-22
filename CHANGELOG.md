@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b3] - 2026-11-22
+
+**Vorabversion: Messungen auf der Einstellungsseite.**
+
+### Hinzugefügt
+- Einstellungsseite → System → Karte „Anwesenheit und Heimkehr-Beobachtung“: neuer Block
+  **Messungen** – seit wann gemessen wird, Tabelle je Person (Heimkehr, Rausgehen, längste Zeit
+  bis „weg“, Schweigepausen), Empfehlung je Person (✅/⚠️) und die Eingänge je Tür.
+- Knöpfe **Bericht anzeigen** (direkt auf der Seite), **Bericht speichern**, **Tabelle speichern
+  (CSV)**, **Weggehen zurücksetzen** und **Alle Messungen zurücksetzen** (mit Rückfrage).
+- Karte „Funkstille von Sensoren“: Beginn der Messung und **Messung zurücksetzen**.
+- WebSocket-Befehl `hauswacht/measurements/reset` (nur Administratoren). Zurücksetzen ändert keine
+  Einstellung und schaltet nichts.
+
 ## [0.60.0b2] - 2026-11-21
 
 **Vorabversion: Beobachtung „Weggehen“ – Korrekturen.**

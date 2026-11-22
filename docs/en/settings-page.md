@@ -204,9 +204,9 @@ Below it one card per topic with **"Edit"**:
 | Card | Content |
 |---|---|
 | **Behaviour after restart** | Restore the previous state · always armed (with a profile per area) · always disarmed; "continue a running alarm" – see [behaviour after a restart](installation.md#behaviour-after-a-restart) |
-| **Sensor radio silence** | General value (hours until "failed", 0 = off) and a table **per sensor**: longest gap, recommendation, own value – click a sensor to give it an own value. See [radio silence](sensors.md#sensor-radio-silence) |
+| **Sensor radio silence** | General value (hours until "failed", 0 = off) and a table **per sensor**: longest gap, recommendation, own value – click a sensor to give it an own value. See [radio silence](sensors.md#sensor-radio-silence) Below it: since when it measures; **Reset measurement** deletes the measurement of all sensors and starts again |
 | **Radio networks and gateways** | Status sensors, e.g. the Zigbee2MQTT bridge – see [radio networks](sensors.md#monitor-radio-networks-and-gateways) |
-| **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation) |
+| **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation). Below it the block **Measurements**: view, save, reset – see [Measurements on the settings page](observations.md#measurements-on-the-settings-page) |
 | **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |
 | **Settings page** | hide this page. It then disappears; to show it again: in the dialog under system settings → settings page |
 
