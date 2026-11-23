@@ -86,7 +86,7 @@ In the second step of the form you choose additional signals per person. The ear
 reliable a signal, the better.
 
 The signals **also apply to the profile automation** ("Arm when all of these persons are away",
-"Disarm on arrival"). The second step therefore also shows the persons from the automation of the
+"On return"). The second step therefore also shows the persons from the automation of the
 profiles, even if the observation is off. How the automation combines the signals is described
 under [Profiles → How Hauswacht knows who is home](profiles.md#how-hauswacht-knows-who-is-home).
 
@@ -157,8 +157,12 @@ One simple principle applies: **Nobody can leave without a door opening.**
 | longest pause | how long the longest silent pause lasted |
 
 The most important line is **"all signals"** per person: it reports "away" only when no signal of
-the person says "home" any more (silent signals count as away), and "back" as soon as one reports
-"home" again. This is exactly how the later feature is meant to decide.
+the person says "home" any more (silent signals count as away) **and** there is proof – door and
+then a location outside, or a fresh, precise location outside (from 0.61, exactly like the
+automation, see ["away" only with proof](profiles.md#away-only-with-proof)). It reports "back" as
+soon as one reports "home" again. A sleeping phone therefore no longer shows up in this line as
+leaving and homecoming. The lines of the individual signals keep measuring without proof – there
+you see how often a signal alone reports "away".
 
 **Direction sensors** (Proximity integration, Places) count here as in the profile automation only
 with **"arrived"** (home) and **"away from"** (away). "Towards" and "stationary" are skipped – so

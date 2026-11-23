@@ -40,6 +40,26 @@ const ST = {
     ssids: "Heim-WLAN(s), durch Komma getrennt",
     signals: "Zusätzliche Signale je Person",
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
+    proofTitle: "Wann gilt jemand als weg?",
+    proofIntro: "Gilt für die Profil-Automatik („Scharf, wenn alle weg“, „Bei Rückkehr“) und die Beobachtung. Ein schlafendes Handy (WLAN weg) macht niemanden abwesend – es braucht einen Beleg: eine Ortung außerhalb (Companion App, iCloud3, GPS-Tracker). WLAN, Ping und Bluetooth bestätigen nur.",
+    proofAccuracy: "Ortung außerhalb prüfen",
+    proofAccuracies: { strict: "genau prüfen (empfohlen)", simple: "einfach" },
+    proofWindow: "Zeitfenster für den Beleg (Minuten)",
+    proofRecDefault: "Empfehlung: 15 Minuten.",
+    proofRecMeasured: "Empfehlung: {r} Minuten – gemessen: Weggehen dauerte bis zu {m} Minuten, plus 5 Minuten Puffer.",
+    proofNoFix: "{names}: keine Ortung mit Koordinaten gefunden – gilt nie als weg. „Scharf, wenn alle weg“ wartet dann für immer. Abhilfe: Standort in der Companion App auf „Immer“ oder einen GPS-Tracker als Signal eintragen.",
+    proofHow: {
+      strict: "Weg ist jemand, wenn alle Signale „weg“ melden UND entweder eine Eingangstür aufging und das Handy danach (bis {w} Minuten) außerhalb geortet wurde, ODER das Handy gerade frisch (letzte {w} Minuten) und sicher außerhalb geortet ist – weiter weg als der Radius der Zone „Zuhause“ plus die gemeldete Ungenauigkeit. Ein GPS-Sprung im Haus zählt also nicht.",
+      simple: "Weg ist jemand, wenn alle Signale „weg“ melden UND entweder eine Eingangstür aufging und das Handy danach (bis {w} Minuten) außerhalb geortet wurde, ODER das Handy gerade frisch (letzte {w} Minuten) außerhalb der Zone „Zuhause“ ist – egal wie ungenau. Achtung: Ein GPS-Sprung im Haus kann so als „weg“ zählen.",
+    },
+    proofInfo: {
+      accuracy: "„Genau prüfen“ rechnet die Entfernung zum Zuhause aus und zieht die Ungenauigkeit des GPS ab. Ein Handy im Haus, dessen GPS 300 m daneben liegt, gilt damit nicht als weg. „Einfach“ nimmt nur die Zone – nur wählen, wenn eure Ortung sehr ungenaue Werte meldet und sonst nie „weg“ erkannt wird.",
+      window: "Wie lange nach einer Türöffnung die Ortung außerhalb kommen darf – und wie alt eine Ortung höchstens sein darf, um allein zu zählen. Zu kurz: Wer weggeht, wird erst spät oder gar nicht als weg erkannt. Zu lang: eine alte Ortung kann zu lange zählen.",
+    },
+    infoLabel: "Erklärung",
+    howLabel: "So verhält sich das:",
+    moreSettings: "Mehr Einstellungen",
+    apply: "übernehmen",
     area: "Bereich",
     areaNew: "Bereich anlegen",
     name: "Name",
@@ -145,6 +165,26 @@ const ST = {
     ssids: "Home Wi-Fi(s), separated by commas",
     signals: "Additional signals per person",
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
+    proofTitle: "When does someone count as away?",
+    proofIntro: "Applies to the profile automation (“arm when all away”, “On return”) and the observation. A sleeping phone (Wi-Fi gone) makes nobody away – it needs proof: a location outside (Companion app, iCloud3, GPS tracker). Wi-Fi, ping and Bluetooth only confirm.",
+    proofAccuracy: "Check location outside",
+    proofAccuracies: { strict: "check precisely (recommended)", simple: "simple" },
+    proofWindow: "Time window for the proof (minutes)",
+    proofRecDefault: "Recommendation: 15 minutes.",
+    proofRecMeasured: "Recommendation: {r} minutes – measured: leaving took up to {m} minutes, plus 5 minutes buffer.",
+    proofNoFix: "{names}: no location with coordinates found – never counts as away. “Arm when all away” then waits forever. Fix: set the location in the Companion app to “Always” or add a GPS tracker as a signal.",
+    proofHow: {
+      strict: "Someone is away when all signals report “away” AND either an entry door opened and the phone was located outside afterwards (up to {w} minutes), OR the phone is freshly (last {w} minutes) and surely located outside – further away than the radius of the zone “Home” plus the reported inaccuracy. So a GPS jump inside the house does not count.",
+      simple: "Someone is away when all signals report “away” AND either an entry door opened and the phone was located outside afterwards (up to {w} minutes), OR the phone is freshly (last {w} minutes) outside the zone “Home” – no matter how inaccurate. Caution: a GPS jump inside the house may count as “away” this way.",
+    },
+    proofInfo: {
+      accuracy: "“Check precisely” calculates the distance to home and takes the GPS inaccuracy into account. A phone in the house whose GPS is 300 m off does not count as away. “Simple” only uses the zone – choose it only if your location reports very inaccurate values and away is otherwise never detected.",
+      window: "How long after a door opening the location outside may come – and how old a location may be at most to count on its own. Too short: someone leaving is detected late or not at all. Too long: an old location may count for too long.",
+    },
+    infoLabel: "Explanation",
+    howLabel: "This is how it behaves:",
+    moreSettings: "More settings",
+    apply: "apply",
     area: "Area",
     areaNew: "Add area",
     name: "Name",
@@ -279,6 +319,42 @@ class HauswachtSystemEditor extends HTMLElement {
     return `<div class="err">${se(text)}</div>`;
   }
 
+  // --- „weg“ nur mit Beleg (ADR 0015) ---------------------------------------------
+
+  _info(key) {
+    // ⓘ: Mauszeiger drauf zeigt den Text, Tippen klappt ihn auf
+    const text = this._t("proofInfo")[key] || "";
+    return `<button type="button" class="info" data-info="${key}" title="${se(text)}" aria-label="${se(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${key}" hidden>${se(text)}</div>`;
+  }
+
+  _proofRecommend(d) {
+    // Aus der Messung „Weggehen“: längste Zeit Tür → weg, plus 5 Minuten Puffer
+    const longest = Math.max(0, ...((d.measurements?.persons || []).map((p) => p.longest_left || 0)));
+    if (!longest) return { minutes: 15, measured: null };
+    return { minutes: Math.min(d.proof_max_window, Math.max(15, Math.ceil(longest / 60) + 5)), measured: Math.ceil(longest / 60) };
+  }
+
+  _proofHow(d) {
+    const text = this._t("proofHow")[d.proof_accuracy] || "";
+    return text.replaceAll("{w}", String(d.proof_window));
+  }
+
+  _proofForm(d) {
+    const rec = this._proofRecommend(d);
+    const recText = rec.measured === null ? this._t("proofRecDefault") : this._t("proofRecMeasured").replace("{m}", rec.measured).replace("{r}", rec.minutes);
+    const noFix = d.no_fix.length ? `<div class="warn">${se(this._t("proofNoFix").replace("{names}", d.no_fix.join(", ")))}</div>` : "";
+    return `<div class="box"><b>${se(this._t("proofTitle"))}</b>
+        <div class="muted">${se(this._t("proofIntro"))}</div>
+        <label>${se(this._t("proofAccuracy"))} ${this._info("accuracy")}</label>${this._select("proof_accuracy", d.proof_accuracy, d.proof_accuracies.map((x) => [x, this._t("proofAccuracies")[x] || x]))}
+        <div class="how"><b>${se(this._t("howLabel"))}</b> <span data-how>${se(this._proofHow(d))}</span></div>
+        ${noFix}
+        <details class="more" ${this._moreOpen ? "open" : ""}><summary>${se(this._t("moreSettings"))}</summary>
+          <label>${se(this._t("proofWindow"))} ${this._info("window")}</label>
+          <input class="small" type="number" min="1" max="${d.proof_max_window}" data-f="proof_window" value="${se(d.proof_window)}">
+          <div class="muted">${se(recText)} ${Number(d.proof_window) === rec.minutes ? "" : `<button type="button" class="b" data-act="proof-rec" data-value="${rec.minutes}">${se(this._t("apply"))}</button>`}</div>
+        </details></div>`;
+  }
+
   _chk(field, checked, label) {
     return `<div class="chk"><input type="checkbox" data-b="${field}" ${checked ? "checked" : ""}><span>${se(label)}</span></div>`;
   }
@@ -341,7 +417,8 @@ class HauswachtSystemEditor extends HTMLElement {
         ${this._chk("observe", d.observe, this._t("observe"))}
         <label>${se(this._t("persons"))}</label>${this._entityList("per", d.persons, d.person_choices)}${this._datalist("per", d.person_choices)}
         <label>${se(this._t("ssids"))}</label><input data-f="ssids" value="${se(d.ssids.join(", "))}">
-        <label>${se(this._t("signals"))}</label><div class="muted">${se(this._t("signalsHint"))}</div>${signals}${this._datalist("sig", d.signal_choices)}`;
+        <label>${se(this._t("signals"))}</label><div class="muted">${se(this._t("signalsHint"))}</div>${signals}${this._datalist("sig", d.signal_choices)}
+        ${this._proofForm(d)}`;
     }
     if (k === "area") {
       return `<h2>${se(this.item ? this._t("area") : this._t("areaNew"))}</h2>
@@ -413,6 +490,11 @@ class HauswachtSystemEditor extends HTMLElement {
     if (this.kind === "homecoming" && typeof d.ssids === "string") {
       d.ssids = d.ssids.split(",").map((s) => s.trim()).filter(Boolean);
     }
+    if (this.kind === "homecoming") {
+      d.proof_window = Number(d.proof_window) || 15;
+      const more = root.querySelector("details.more");
+      if (more) this._moreOpen = more.open;
+    }
   }
 
   _list(where) {
@@ -442,7 +524,7 @@ class HauswachtSystemEditor extends HTMLElement {
       case "network":
         return ["network_save", { entities: d.entities }];
       case "homecoming":
-        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals }];
+        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy }];
       case "area":
         return ["area_save", { id: this.item, name: d.name, icon: d.icon }];
       case "page":
@@ -491,7 +573,12 @@ class HauswachtSystemEditor extends HTMLElement {
     const style = `.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
       .chip { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--divider-color); border-radius: 14px; padding: 2px 4px 2px 10px; font-size: .9rem; }
       .chip .x { font-size: 1rem; padding: 0 4px; }
-      .warn { border: 1px solid var(--warning-color, #ffa600); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: .9rem; }`;
+      .warn { border: 1px solid var(--warning-color, #ffa600); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: .9rem; }
+      .info { border: none; background: none; color: var(--primary-color); cursor: help; font-size: 1rem; padding: 0 2px; }
+      .tip { font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); font-weight: normal; }
+      .how { margin: 8px 0 4px; font-size: .9rem; }
+      details.more { margin-top: 10px; }
+      details.more summary { cursor: pointer; color: var(--primary-color); }`;
     this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style}</style><div class="sheet">${this._form()}
       ${["restart", "area"].includes(this.kind) ? "" : this._err("base")}
       ${this.kind === "helper" ? ["upper", "lower", "hysteresis", "type", "target"].map((k) => this._err(k)).join("") : ""}
@@ -556,6 +643,24 @@ class HauswachtSystemEditor extends HTMLElement {
         this._render();
       })
     );
+    // ⓘ antippen klappt die Erklärung auf
+    root.querySelectorAll("[data-info]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const tip = root.querySelector(`[data-tip="${btn.dataset.info}"]`);
+        if (tip) tip.hidden = !tip.hidden;
+      })
+    );
+    // Empfehlung übernehmen; Erklärsatz zieht mit
+    root.querySelector('[data-act="proof-rec"]')?.addEventListener("click", (ev) => {
+      this._collect();
+      this._draft.proof_window = Number(ev.currentTarget.dataset.value);
+      this._render();
+    });
+    root.querySelector('[data-f="proof_window"]')?.addEventListener("input", (ev) => {
+      const how = root.querySelector("[data-how]");
+      if (how) how.textContent = this._proofHow({ ...this._draft, proof_window: Number(ev.target.value) || this._draft.proof_window });
+    });
+    root.querySelector('[data-f="proof_accuracy"]')?.addEventListener("change", redraw);
     // Auswahl, die andere Felder ein- oder ausblendet
     root.querySelectorAll('[data-f="behavior"], [data-f="action"], [data-b="enabled"]').forEach((el) => el.addEventListener("change", redraw));
   }

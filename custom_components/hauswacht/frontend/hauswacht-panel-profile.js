@@ -74,6 +74,8 @@ const PT = {
     moreSettings: "Mehr Einstellungen",
     howLabel: "So verhält sich das:",
     infoLabel: "Erklärung",
+    noFix: "⚠ keine Ortung – gilt nie als weg",
+    noFixHint: "Hauswacht findet für diese Person keine Ortung mit Koordinaten (z. B. Companion App mit Standort). Ohne Ortung außerhalb gilt sie nie als weg: „Scharf, wenn alle weg“ wartet dann für immer, „Bei Rückkehr“ löst nie aus. Abhilfe: in der Companion App den Standort auf „Immer“ stellen oder unter System → Anwesenheit einen GPS-Tracker als Signal eintragen.",
     returnModes: { off: "Nichts", auto_only: "Unscharf, nur wenn automatisch scharf", door: "Unscharf mit Türbeleg", always: "Unscharf, auch nach Scharfschalten von Hand", passage: "Reinlassen (Durchgang)" },
     returnHow: {
       off: "Hauswacht tut nichts, wenn jemand heimkommt. Unscharf geht nur per PIN, Karte, Keypad oder App.",
@@ -179,6 +181,8 @@ const PT = {
     moreSettings: "More settings",
     howLabel: "This is how it behaves:",
     infoLabel: "Explanation",
+    noFix: "⚠ no location – never counts as away",
+    noFixHint: "Hauswacht finds no location with coordinates for this person (e.g. Companion app with location). Without a location outside, the person never counts as away: “arm when all away” then waits forever, “On return” never triggers. Fix: set the location in the Companion app to “Always” or add a GPS tracker as a signal under System → Presence.",
     returnModes: { off: "Nothing", auto_only: "Disarm, only if armed automatically", door: "Disarm with door proof", always: "Disarm, also after arming by hand", passage: "Let in (passage)" },
     returnHow: {
       off: "Hauswacht does nothing when someone comes home. Disarming only by PIN, card, keypad or app.",
@@ -224,6 +228,7 @@ const PROFILE_STYLE = `
   .days .chk { padding: 2px 0; }
   .tool { display: flex; gap: 8px; flex-wrap: wrap; }
   a.b { text-decoration: none; font-size: .9rem; padding: 6px 14px; }
+  .nofix { margin-left: 8px; font-size: .85rem; color: var(--warning-color, #ff9800); cursor: help; }
   .info { border: none; background: none; color: var(--primary-color); cursor: help; font-size: 1rem; padding: 0 2px; }
   .tip { font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); }
   .how { margin: 8px 0 4px; font-size: .9rem; }
@@ -348,7 +353,7 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("schedule"))}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
       <div class="tool" style="margin-top:6px"><a class="b" href="/config/helpers" target="_blank" rel="noopener">${pe(this._t("scheduleCreate"))}</a><button class="b" data-act="refresh">${pe(this._t("refreshLists"))}</button></div>
       <div class="muted">${pe(this._t("scheduleHint"))}</div>
-      <label>${pe(this._t("persons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
+      <label>${pe(this._t("persons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span>${this._noFix(x)}</div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
       <label>${pe(this._t("awayDelay"))}</label><input class="small" type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}">
 ${this._returnSection(c, lim, t)}
       <div class="sec">${pe(this._t("secClose"))}</div>
@@ -375,6 +380,11 @@ ${this._returnSection(c, lim, t)}
     return `<button type="button" class="info" data-info="${key}" title="${pe(text)}" aria-label="${pe(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${key}" hidden>${pe(text)}</div>`;
   }
 
+  _noFix(person) {
+    // Ohne Ortung gilt die Person nie als weg („weg“ nur mit Beleg, ADR 0015)
+    return person.locatable === false ? `<span class="nofix" title="${pe(this._t("noFixHint"))}">${pe(this._t("noFix"))}</span>` : "";
+  }
+
   _returnHow(back) {
     const text = (this._t("returnHow") || {})[back.mode] || "";
     return text.replace("{w}", String(back.window));
@@ -382,7 +392,7 @@ ${this._returnSection(c, lim, t)}
 
   _returnSection(c, lim, t) {
     const back = this._draft.return;
-    const persons = c.persons.map((x) => `<div class="chk"><input type="checkbox" data-rm="persons" value="${pe(x.id)}" ${back.persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`;
+    const persons = c.persons.map((x) => `<div class="chk"><input type="checkbox" data-rm="persons" value="${pe(x.id)}" ${back.persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span>${this._noFix(x)}</div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`;
     const usesWindow = ["door", "passage"].includes(back.mode);
     return `
       <div class="sec">${pe(this._t("secReturn"))}</div>

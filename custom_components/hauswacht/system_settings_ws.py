@@ -20,6 +20,8 @@ from .const import MASTER_USER_ID
 from .core.action_codes import ACTION_CODE_KEYS, ALL_KEYPADS, CodeAction, parse_action_codes
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
+from .core.away_proof import ACCURACY_MODES, parse_proof_settings
+from .core.away_proof import MAX_WINDOW as PROOF_MAX_WINDOW
 from .core.changes.cards import all_cards
 from .core.controls import (
     ALL_AREAS,
@@ -35,6 +37,7 @@ from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
 from .core.returning import parse_return
 from .core.silence import format_duration
 from .names import display_name
+from .presence_proof import locatable
 
 
 def _measurements(main: Any) -> dict[str, Any] | None:
@@ -42,6 +45,12 @@ def _measurements(main: Any) -> dict[str, Any] | None:
     if observer is None or not observer.enabled:
         return None
     return observer.measurements()  # type: ignore[no-any-return]
+
+
+def _signals(options: Mapping[str, Any], person: str) -> tuple[str, ...]:
+    raw = options.get("homecoming_signals", {})
+    entities = raw.get(person, []) if isinstance(raw, Mapping) else []
+    return tuple(e for e in entities if isinstance(e, str))
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
@@ -183,6 +192,7 @@ def _unknown_keypads(main: Any) -> list[dict[str, str]]:
 def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     areas = parse_areas(options)
+    proof = parse_proof_settings(options)
     profiles = [
         {"id": pid, "name": profile_info(options, pid).name, "area": profile_area(options, pid)}
         for pid in profile_ids(options)
@@ -238,6 +248,16 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "signal_choices": _entities(hass, ["device_tracker", "binary_sensor", "sensor"]),
             # Messungen der Beobachtung (Heimkehr, Eingänge, Weggehen) – nur wenn sie läuft
             "measurements": _measurements(main),
+            # „weg“ nur mit Beleg (ADR 0015)
+            "proof_window": proof.window,
+            "proof_accuracy": proof.accuracy,
+            "proof_max_window": PROOF_MAX_WINDOW,
+            "proof_accuracies": list(ACCURACY_MODES),
+            "no_fix": [
+                display_name(hass, p)
+                for p in _presence_persons(options)
+                if not locatable(hass, p, _signals(options, p))
+            ],
         },
         "areas": [
             {

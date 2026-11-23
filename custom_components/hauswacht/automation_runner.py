@@ -40,6 +40,7 @@ from .core.automation import (
     person_value,
     schedule_action,
 )
+from .core.away_proof import AwayTracker, parse_proof_settings
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
 from .core.profiles import profile_ids
@@ -51,6 +52,7 @@ from .core.returning import (
 )
 from .core.state_machine import AlarmState
 from .core.texts import tr
+from .presence_proof import locatable, person_fixes
 
 if TYPE_CHECKING:
     from .runtime import HauswachtRuntime
@@ -89,12 +91,15 @@ class AutomationRunner:
         self._away_since: dict[str, float] = {}  # Person -> seit wann sicher weg
         self._phone_arrival: dict[str, tuple[float, str]] = {}  # Profil -> (Zeit, Person)
         self._phone_door_at: dict[str, float] = {}  # Profil -> letzte Türöffnung (scharf)
+        # „weg“ nur mit Beleg (ADR 0015): Türöffnungen und belegte Abwesenheit je Person
+        self.proof = AwayTracker()
 
     # --- Lebenszyklus --------------------------------------------------------
 
     @callback
     def start(self) -> None:
         options = self.runtime.options
+        self.proof.settings = parse_proof_settings(options)
         self.configs = {
             pid: cfg
             for pid in profile_ids(options)
@@ -146,6 +151,10 @@ class AutomationRunner:
             watched = set(persons)
             for person in persons:
                 watched.update(self.signals.get(person, ()))
+                state = self.hass.states.get(person)
+                trackers = state.attributes.get("device_trackers", []) if state else []
+                if isinstance(trackers, list):  # Ortungen der Person (Frische, Beleg)
+                    watched.update(t for t in trackers if isinstance(t, str))
             self._home = {p: self.person_home(p) for p in persons}
             # Wer beim Start schon weg ist, zählt ab jetzt als weg
             started = dt_util.utcnow().timestamp()
@@ -157,10 +166,10 @@ class AutomationRunner:
 
     @callback
     def refresh_doors(self) -> None:
-        """Eingangstüren für "Unscharf mit Türbeleg" (neu) abonnieren."""
+        """Eingangstüren abonnieren: Beleg für „weg“ und „Bei Rückkehr“ mit Tür."""
         doors = (
             self.runtime.entry_doors()
-            if any(back.with_door for back in self.returns.values())
+            if self._home or any(back.with_door for back in self.returns.values())
             else frozenset()
         )
         if doors == self._doors and (self._unsub_doors is not None or not doors):
@@ -241,15 +250,28 @@ class AutomationRunner:
     def person_home(self, person: str) -> bool | None:
         """Person zuhause (True), sicher weg (False) oder unbekannt (None) – aus allen Signalen.
 
-        Richtung "nähert sich"/"steht" zählt nicht (siehe ``direction_hint``).
+        Richtung "nähert sich"/"steht" zählt nicht (siehe ``direction_hint``). „Weg“ gilt nur mit
+        Beleg – Tür und Ortung außerhalb oder eine frische, genaue Ortung außerhalb (ADR 0015);
+        sonst ist die Person unbekannt.
         """
-        states = [self._state(s) for s in self.signals.get(person, ())]
-        return combine(
+        signals = self.signals.get(person, ())
+        states = [self._state(s) for s in signals]
+        combined = combine(
             [
                 person_value(self._state(person)),
                 *(presence(state, self.ssids) for state in states if not direction_hint(state)),
             ]
         )
+        fixes = (
+            person_fixes(self.hass, person, signals, self.proof.settings.accuracy)
+            if combined is False
+            else []
+        )
+        return self.proof.judge(person, combined, fixes, dt_util.utcnow().timestamp())
+
+    def unlocatable(self) -> list[str]:
+        """Personen der Automatik ohne jede Ortung – sie gelten nie als weg (Hinweis)."""
+        return [p for p in self._home if not locatable(self.hass, p, self.signals.get(p, ()))]
 
     @callback
     def _on_person(self, _event: Event[EventStateChangedData]) -> None:
@@ -330,6 +352,7 @@ class AutomationRunner:
         new = event.data["new_state"]
         if new is None or new.state != "on" or (old is not None and old.state != "off"):
             return
+        self.proof.note_door(dt_util.utcnow().timestamp())  # Beleg für „weg“
         # Erst die Alarmanlage reagieren lassen (Eingangsverzögerung oder Sofortalarm),
         # dann prüfen – so zählt eine Tür, die sofort Alarm auslöst, nie als Beleg.
         self.hass.loop.call_soon(self._door_opened, event.data["entity_id"])

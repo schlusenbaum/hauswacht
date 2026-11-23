@@ -135,8 +135,15 @@ async def test_push_disarm_off_by_default(hass: HomeAssistant) -> None:
 # --- Heimkehr-Beobachtung ----------------------------------------------------
 
 
+# Ortung weit weg vom Zuhause – „weg“ braucht seit 0.61 einen Beleg (ADR 0015)
+FAR = {"latitude": 0.0, "longitude": 0.0, "gps_accuracy": 10}
+
+
 def _person(hass: HomeAssistant, state: str, tracker: str) -> None:
-    hass.states.async_set(PERSON, state, {"friendly_name": "Anna", "device_trackers": [ROUTER]})
+    where = FAR if state == "not_home" else {}
+    hass.states.async_set(
+        PERSON, state, {"friendly_name": "Anna", "device_trackers": [ROUTER], **where}
+    )
     hass.states.async_set(ROUTER, tracker, {"friendly_name": "Router"})
 
 

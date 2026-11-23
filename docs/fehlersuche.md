@@ -47,6 +47,12 @@ Eine Person gilt erst als weg, wenn die Person selbst **und alle** ihre zusätzl
 „weg“ melden. Ein Signal auf „nicht verfügbar“ oder „unbekannt“ hält die Automatik an. Prüfe
 unter Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung, welche Signale gewählt
 sind, und deren Zustand unter Entwicklerwerkzeuge → Zustände.
+Seit 0.61 braucht „weg“ außerdem einen **Beleg**: Tür und danach Ortung außerhalb oder eine
+frische, genaue Ortung außerhalb ([„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). Steht an
+der Person „⚠ keine Ortung“, fehlt eine Ortung mit Koordinaten – Standort in der Companion App
+auf „Immer“ stellen. Meldet das GPS im Haus oft „außerhalb“, aber ungenau, bleibt „genau prüfen“
+die richtige Wahl; kommt bei euch nie „weg“, obwohl die Ortung stimmt, das Zeitfenster für den
+Beleg verlängern.
 
 **„Bei Rückkehr – Unscharf mit Türbeleg“ schaltet nicht unscharf.**
 Ist die Person unter „Bei Rückkehr“ → „Für diese Personen“ angekreuzt? Die Liste ist seit 0.61

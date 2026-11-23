@@ -164,8 +164,8 @@ eine HomeKit-Variable „Martin zuhause“.
 | Die Person gilt als … | wenn … |
 |---|---|
 | **zuhause** | irgendein Signal zuhause meldet (die Person selbst oder eines der Signale) |
-| **weg** | **alle** Signale sicher „weg“ melden |
-| unbekannt | sonst, z. B. ein Signal ist „nicht verfügbar“ – das zählt **nie** als weg |
+| **weg** | **alle** Signale sicher „weg“ melden **und** es einen Beleg gibt (ab 0.61, siehe [unten](#weg-nur-mit-beleg)) |
+| unbekannt | sonst, z. B. ein Signal ist „nicht verfügbar“ oder es fehlt der Beleg – das zählt **nie** als weg |
 
 **Richtung (Nähe, Places)** zählt nur mit zwei Werten: **„angekommen“** = zuhause und
 **„entfernt sich“** = weg. **„Nähert sich“** und **„steht“** werden übergangen (ab 0.60): Wer
@@ -179,6 +179,54 @@ weg ist, beginnt die Wartezeit.
 
 So schaltet ein kurz aussetzendes Signal nicht gleich scharf, und das schnellste Signal
 erkennt die Rückkehr.
+
+#### „weg“ nur mit Beleg
+
+*Ab 0.61.* Ein schlafendes Handy darf niemanden abwesend machen. Fällt nachts das WLAN eines
+Handys im Haus weg, melden vielleicht alle Signale „weg“ – trotzdem ist die Person da. Deshalb
+gilt jemand erst als **weg**, wenn es zusätzlich einen **Beleg** gibt, dass die Person draußen ist:
+
+1. **Tür und Ortung:** Eine Eingangstür ging auf, und danach – höchstens das Zeitfenster
+   später (Standard 15 Minuten) – wurde das Handy **außerhalb** der Zone „Zuhause“ geortet.
+   Wie genau die Ortung ist, spielt hier keine Rolle: Die Tür ist der zweite Beleg.
+2. **Frische Ortung allein:** Das Handy ist gerade **außerhalb** geortet, die Ortung ist
+   **frisch** (in den letzten 15 Minuten gemeldet) und **genau genug**. Das hilft, wenn die
+   Türöffnung fehlt – z. B. Home Assistant war gerade im Neustart oder es war die Terrassentür
+   ohne Kontakt.
+
+Als **Ortung** zählt alles mit Koordinaten: die Companion App (GPS), iCloud3, ein GPS-Tracker,
+die Person selbst, wenn sie gerade per GPS geortet wird. **WLAN, Ping, Router und Bluetooth**
+haben keine Koordinaten – sie bestätigen nur, ein Beleg sind sie nie.
+
+**Genau genug** – einstellbar unter Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung:
+
+| Einstellung | „außerhalb“ heißt | Beispiel |
+|---|---|---|
+| **genau prüfen** (Standard, empfohlen) | weiter weg als der Radius der Zone „Zuhause“ **plus** die gemeldete Ungenauigkeit | Handy im Keller, GPS meldet 250 m daneben mit ±300 m Ungenauigkeit → zählt **nicht** |
+| **einfach** | außerhalb der Zone, egal wie ungenau | dasselbe Handy → zählt als außerhalb |
+
+**Beispiele:**
+
+- *Christian fährt zur Arbeit:* Haustür auf, eine Minute später meldet die Companion App den
+  Standort an der Straßenecke, kurz darauf ist das WLAN weg → **weg** (Tür und Ortung).
+- *Niklas’ Handy schläft im Bett:* Um 2 Uhr fällt das WLAN weg, die App meldet seit Stunden
+  keinen neuen Standort → **nicht weg** (kein Beleg). „Scharf, wenn alle weg“ schaltet nicht.
+  Und weil er nie „weg“ war, kann es morgens auch keine falsche „Heimkehr“ geben.
+- *Home Assistant startet neu, während Petra unterwegs ist:* Keine Türöffnung bekannt, aber ihr
+  Handy meldet einen frischen, genauen Standort in der Stadt → **weg** (frische Ortung).
+
+Ist jemand einmal belegt weg, bleibt das so, bis die Person wieder zuhause ist – auch wenn die
+Ortung danach einschläft. Türen und Ortungen von vor der letzten Heimkehr zählen nicht.
+
+**Personen ohne Ortung** (z. B. Standort in der Companion App abgeschaltet, nur ein
+Router-Tracker) gelten **nie** als weg. „Scharf, wenn alle weg“ wartet mit so einer Person in
+der Liste für immer – das ist die sichere Seite. Hauswacht zeigt das an der Personenauswahl im
+Profil („⚠ keine Ortung – gilt nie als weg“), in den Systemeinstellungen und als
+[Prüfhinweis](uebersicht.md#prüfhinweise). Abhilfe: in der Companion App den Standort auf
+**„Immer“** stellen oder einen GPS-Tracker als Signal eintragen.
+
+Dasselbe gilt für die [Heimkehr-Beobachtung](beobachtung.md): Sie zählt „weg“ genauso, damit
+Messung und Automatik übereinstimmen.
 
 ### Bei Rückkehr
 

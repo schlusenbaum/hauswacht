@@ -11,6 +11,7 @@ from typing import Any
 
 from ..action_codes import is_action_code, parse_action_codes
 from ..areas import MAIN_AREA, parse_areas, profile_area
+from ..away_proof import OPT_AWAY_ACCURACY, OPT_AWAY_WINDOW, parse_proof_settings
 from ..pin import hash_pin, is_valid_pin_format
 from ..profiles import MAX_STALE_HOURS, profile_ids
 from ..restart import (
@@ -89,7 +90,8 @@ def save_infrastructure(options: Mapping[str, Any], entities: Iterable[Any] | No
 def save_homecoming(options: Mapping[str, Any], data: Mapping[str, Any]) -> Change:
     """Anwesenheit und Heimkehr-Beobachtung.
 
-    ``data``: observe, persons, ssids (Liste oder Text mit Kommas), signals {Person: [Entitäten]}.
+    ``data``: observe, persons, ssids (Liste oder Text mit Kommas), signals {Person: [Entitäten]},
+    optional proof_window (Minuten) und proof_accuracy (strict | simple).
     """
     ssids = data.get("ssids") or []
     if isinstance(ssids, str):
@@ -102,6 +104,16 @@ def save_homecoming(options: Mapping[str, Any], data: Mapping[str, Any]) -> Chan
     new[OPT_HOMECOMING_SIGNALS] = {
         str(person): _clean(entities) for person, entities in (signals or {}).items() if entities
     }
+    # „weg“ nur mit Beleg (ADR 0015): nur übernehmen, wenn mitgeschickt (der Dialog kennt es nicht)
+    if "proof_window" in data or "proof_accuracy" in data:
+        proof = parse_proof_settings(
+            {
+                OPT_AWAY_WINDOW: data.get("proof_window", options.get(OPT_AWAY_WINDOW)),
+                OPT_AWAY_ACCURACY: data.get("proof_accuracy", options.get(OPT_AWAY_ACCURACY)),
+            }
+        )
+        new[OPT_AWAY_WINDOW] = proof.window
+        new[OPT_AWAY_ACCURACY] = proof.accuracy
     return Change(options=new)
 
 

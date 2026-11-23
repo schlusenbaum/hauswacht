@@ -59,8 +59,12 @@ async def _later(hass: HomeAssistant, minutes: int) -> None:
     await hass.async_block_till_done()
 
 
+# Ortung weit weg vom Zuhause – „weg“ braucht seit 0.61 einen Beleg (ADR 0015)
+FAR = {"latitude": 0.0, "longitude": 0.0, "gps_accuracy": 10}
+
+
 async def _person(hass: HomeAssistant, entity_id: str, state: str) -> None:
-    hass.states.async_set(entity_id, state)
+    hass.states.async_set(entity_id, state, FAR if state not in ("home", "unknown") else {})
     await hass.async_block_till_done()
 
 
@@ -152,6 +156,56 @@ async def test_return_within_delay_cancels(hass: HomeAssistant) -> None:
     await _person(hass, B, "home")  # z. B. Handy war nur kurz aus dem WLAN
     await _later(hass, 20)
     assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+# --- 0.61: „weg“ nur mit Beleg (ADR 0015) -------------------------------------
+
+
+async def test_away_without_location_never_arms(hass: HomeAssistant) -> None:
+    """Nur „nicht zuhause“ ohne Koordinaten (Router, WLAN): kein Beleg, nie weg."""
+    await _setup(hass, auto_away_persons=[A], auto_away_delay=1)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    hass.states.async_set(A, "not_home")
+    await hass.async_block_till_done()
+    await _later(hass, 5)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    assert not [e for e in events if e.data["type"] == "AutoArmScheduled"]
+
+
+async def test_gps_jump_in_house_needs_door(hass: HomeAssistant) -> None:
+    """Ungenaue Ortung kurz neben dem Haus zählt nur nach einer Türöffnung."""
+    near = {
+        "latitude": hass.config.latitude + 0.002,  # gut 200 m daneben
+        "longitude": hass.config.longitude,
+        "gps_accuracy": 300,
+    }
+    await _setup(hass, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home", near)
+    await hass.async_block_till_done()
+    await _later(hass, 5)
+    assert _state(hass) == AlarmControlPanelState.DISARMED  # GPS-Sprung im Haus
+    hass.states.async_set(A, "home")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(A, "not_home", near)  # nach der Tür geortet
+    await hass.async_block_till_done()
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_simple_accuracy_counts_gps_jump(hass: HomeAssistant) -> None:
+    near = {
+        "latitude": hass.config.latitude + 0.002,
+        "longitude": hass.config.longitude,
+        "gps_accuracy": 300,
+    }
+    await _setup(hass, {"away_proof_accuracy": "simple"}, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home", near)
+    await hass.async_block_till_done()
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
 
 
 async def test_unknown_person_is_not_away(hass: HomeAssistant) -> None:

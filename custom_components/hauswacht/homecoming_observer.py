@@ -24,6 +24,7 @@ from .const import (
     OPT_HOMECOMING_SIGNALS,
     OPT_HOMECOMING_SSIDS,
 )
+from .core.away_proof import AwayTracker, parse_proof_settings
 from .core.departure import (
     Departure,
     DepartureVerdict,
@@ -62,6 +63,7 @@ from .core.homecoming import (
 )
 from .core.texts import DE, lang_of, tr
 from .names import display_name, plain_name
+from .presence_proof import person_fixes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -110,6 +112,8 @@ class HomecomingObserver:
         self._entry_open: dict[str, Any] | None = None
         # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
         self._present: dict[str, bool | None] = {}
+        # „weg“ nur mit Beleg – wie die Automatik (ADR 0015)
+        self.proof = AwayTracker(parse_proof_settings(options))
         self._absent_since: dict[str, float] = {}  # Person: seit wann "alle Signale" weg
         self._direction_state: dict[str, str | None] = {}  # Richtung: aktueller Wert
         self._directions: set[str] = set()
@@ -215,23 +219,33 @@ class HomecomingObserver:
         "nähert sich" und "steht" werden übergangen (``direction_hint``), genau wie in der
         Automatik. Zuhause, sobald ein Signal zuhause meldet; weg, sobald mindestens eines "weg"
         meldet und keines "zuhause" (schweigende Signale zählen als weg).
+        „Weg“ zählt nur mit Beleg (Tür und Ortung außerhalb oder frische, genaue Ortung außerhalb,
+        ADR 0015) – sonst unbekannt, wie in der Automatik.
 
         Daraus entstehen Weggehen, Rückkehr und das "frühestes Signal" der Heimkehr – so misst
         die Beobachtung genau das, worauf "Unscharf mit Türbeleg" und der Durchgang reagieren.
         """
         values: list[bool | None] = []
-        for source in self._person_sources(person):
+        sources = self._person_sources(person)
+        for source in sources:
             if source in self._directions:
                 raw = self._direction_state.get(source)
                 if not direction_hint(raw):
                     values.append(presence(raw, self.ssids))
             else:
                 values.append(self._presence.get(source, PresenceState()).home)
+        raw: bool | None = None
         if any(v is True for v in values):
-            return True
-        if any(v is False for v in values):
-            return False
-        return None
+            raw = True
+        elif any(v is False for v in values):
+            raw = False
+        signals = tuple(s for s in sources if s != person)
+        fixes = (
+            person_fixes(self.hass, person, signals, self.proof.settings.accuracy)
+            if raw is False
+            else []
+        )
+        return self.proof.judge(person, raw, fixes, dt_util.utcnow().timestamp())
 
     def _track_leaving(self, person: str, now: float) -> bool:
         """Weggehen und Rückkehr der Kombination "alle Signale" mitschreiben."""
@@ -278,6 +292,7 @@ class HomecomingObserver:
         opened = new is not None and new.state == "on" and (old is None or old.state == "off")
         if entity_id in self._door_entities and opened:
             self.doors.append({"at": now, "sensor": entity_id})
+            self.proof.note_door(now)
             changed = True
         if entity_id in self._owners and new is not None:
             trackers_changed = (

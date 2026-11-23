@@ -493,6 +493,14 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
                     main.homecoming.departure_advice() if main.homecoming.enabled else {}
                 ).items()
             ],
+            # Personen der Automatik ohne Ortung – gelten nie als weg (ADR 0015)
+            "no_fix": sorted(
+                {
+                    _name(hass, p)
+                    for area in main.areas.values()
+                    for p in area.automation.unlocatable()
+                }
+            ),
         },
     }
 

@@ -6,6 +6,31 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.61.0b2] - 2026-11-23
+
+**Vorabversion: „weg“ nur mit Beleg** (ADR 0015, Schritt 2 von 4).
+
+### Sicherheit
+- **Ein schlafendes Handy macht niemanden mehr abwesend.** Eine Person gilt für die Automatik
+  („Scharf, wenn alle weg“, „Bei Rückkehr“, Reinlassen) erst als weg, wenn alle Signale „weg“
+  melden **und** es einen Beleg gibt: eine Eingangstür ging auf und danach (bis 15 Minuten) wurde
+  das Handy außerhalb geortet – oder das Handy ist frisch (letzte 15 Minuten) und genau genug
+  außerhalb geortet. WLAN, Ping, Router und Bluetooth bestätigen nur. Damit gibt es auch keine
+  falsche „Heimkehr“ mehr, nachdem nachts das WLAN eines Handys im Haus weggefallen ist.
+
+### Hinzugefügt
+- Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung: **„Wann gilt jemand als weg?“** –
+  Ortung **genau prüfen** (Entfernung größer als Zonenradius plus Ungenauigkeit, Standard) oder
+  **einfach** (außerhalb der Zone); **Zeitfenster für den Beleg** (Standard 15 Minuten) mit
+  Empfehlung aus der Messung „Weggehen“ und Knopf „übernehmen“; ⓘ je Feld und „So verhält sich das:“.
+- Hinweis „⚠ keine Ortung – gilt nie als weg“ an der Personenauswahl im Profil, in den
+  Systemeinstellungen und als Prüfhinweis.
+
+### Geändert
+- Die Heimkehr-Beobachtung zählt „weg“ in der Zeile „alle Signale“ genauso mit Beleg.
+- Personen, die nur per Router, WLAN oder Ping erfasst werden, gelten nicht mehr als weg.
+
+
 ## [0.61.0b1] - 2026-11-23
 
 **Vorabversion: „Bei Rückkehr“ je Profil** (ADR 0015, Schritt 1 von 4).

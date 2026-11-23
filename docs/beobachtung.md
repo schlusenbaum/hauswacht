@@ -86,7 +86,7 @@ Die Knöpfe zum Zurücksetzen sehen nur Administratoren.
 Im zweiten Schritt des Formulars wählst du je Person weitere Signale. Je früher und
 zuverlässiger ein Signal, desto besser.
 
-Die Signale gelten **auch für die Profil-Automatik** („Scharf, wenn alle weg“, „Unscharf bei
+Die Signale gelten **auch für die Profil-Automatik** („Scharf, wenn alle weg“, „Bei
 Rückkehr“). Der zweite Schritt zeigt deshalb auch die Personen aus der Automatik der Profile,
 selbst wenn die Beobachtung aus ist. Wie die Automatik die Signale verbindet, steht unter
 [Profile → Woran Hauswacht erkennt, wer zuhause ist](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist).
@@ -160,8 +160,12 @@ Es gilt ein einfacher Grundsatz: **Ohne geöffnete Tür kann niemand weggehen.**
 | längste Pause | wie lange die längste Schweigepause gedauert hat |
 
 Wichtig ist vor allem die Zeile **„alle Signale“** je Person: Sie meldet erst „weg“, wenn kein
-Signal der Person mehr „zuhause“ sagt (schweigende Signale zählen als weg), und „zurück“, sobald
-eines wieder „zuhause“ meldet. Genau so soll die spätere Funktion entscheiden.
+Signal der Person mehr „zuhause“ sagt (schweigende Signale zählen als weg) **und** es einen
+Beleg gibt – Tür und danach Ortung außerhalb oder eine frische, genaue Ortung außerhalb (ab 0.61,
+genau wie die Automatik, siehe [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). „Zurück“
+meldet sie, sobald eines wieder „zuhause“ meldet. Ein schlafendes Handy erscheint in dieser
+Zeile deshalb nicht mehr als Rausgehen und Heimkehr. Die Zeilen der einzelnen Signale messen
+weiter ohne Beleg – dort siehst du, wie oft ein Signal allein „weg“ meldet.
 
 **Richtungs-Sensoren** (Integration „Nähe“, Places) zählen hier wie in der Profil-Automatik nur
 mit **„angekommen“** (zuhause) und **„entfernt sich“** (weg). „Nähert sich“ und „steht“ werden

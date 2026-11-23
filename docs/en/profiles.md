@@ -158,8 +158,8 @@ HomeKit variable "Martin home".
 | The person counts as … | when … |
 |---|---|
 | **home** | any signal reports home (the person itself or one of the signals) |
-| **away** | **all** signals reliably report "away" |
-| unknown | otherwise, e.g. a signal is "unavailable" – this **never** counts as away |
+| **away** | **all** signals reliably report "away" **and** there is proof (from 0.61, see [below](#away-only-with-proof)) |
+| unknown | otherwise, e.g. a signal is "unavailable" or the proof is missing – this **never** counts as away |
 
 **Direction (Proximity, Places)** counts with two values only: **"arrived"** = home and
 **"away from"** = away. **"Towards"** and **"stationary"** are skipped (from 0.60): someone
@@ -173,6 +173,54 @@ the Wi-Fi is gone too does the delay start.
 
 This way a signal that drops out briefly does not arm right away, and the fastest signal
 detects the arrival.
+
+#### "Away" only with proof
+
+*From 0.61.* A sleeping phone must not make anybody away. If a phone in the house loses its Wi-Fi
+at night, all signals may report "away" – yet the person is there. So someone only counts as
+**away** when there is also **proof** that the person is outside:
+
+1. **Door and location:** an entry door opened, and afterwards – at most the time window later
+   (default 15 minutes) – the phone was located **outside** the zone "Home". How precise the
+   location is does not matter here: the door is the second proof.
+2. **Fresh location alone:** the phone is located **outside** right now, the location is
+   **fresh** (reported in the last 15 minutes) and **precise enough**. This helps when the door
+   opening is missing – e.g. Home Assistant was restarting or it was the patio door without a
+   contact.
+
+Anything with coordinates counts as a **location**: the Companion app (GPS), iCloud3, a GPS
+tracker, the person itself while located by GPS. **Wi-Fi, ping, router and Bluetooth** have no
+coordinates – they only confirm, they are never proof.
+
+**Precise enough** – set under System settings → Presence and homecoming observation:
+
+| Setting | "outside" means | Example |
+|---|---|---|
+| **check precisely** (default, recommended) | further away than the radius of the zone "Home" **plus** the reported inaccuracy | phone in the basement, GPS reports 250 m off with ±300 m inaccuracy → does **not** count |
+| **simple** | outside the zone, no matter how inaccurate | the same phone → counts as outside |
+
+**Examples:**
+
+- *Christian drives to work:* front door opens, a minute later the Companion app reports the
+  location at the street corner, shortly after the Wi-Fi is gone → **away** (door and location).
+- *Niklas's phone sleeps in bed:* at 2 am the Wi-Fi drops, the app has not reported a new
+  location for hours → **not away** (no proof). "Arm when all away" does not arm. And since he
+  was never "away", there can be no false "homecoming" in the morning either.
+- *Home Assistant restarts while Petra is out:* no door opening known, but her phone reports a
+  fresh, precise location in town → **away** (fresh location).
+
+Once someone is proven away, that stays so until the person is home again – even if the location
+falls asleep afterwards. Doors and locations from before the last homecoming do not count.
+
+**Persons without a location** (e.g. location switched off in the Companion app, only a router
+tracker) **never** count as away. "Arm when all away" waits forever with such a person in the
+list – that is the safe side. Hauswacht shows this at the person selection in the profile
+("⚠ no location – never counts as away"), in the system settings and as a
+[check hint](overview.md#check-hints). Fix: set the location in the Companion app to
+**"Always"** or add a GPS tracker as a signal.
+
+The same applies to the [homecoming observation](observations.md): it counts "away" the same
+way, so that measurement and automation match.
 
 ### On return
 

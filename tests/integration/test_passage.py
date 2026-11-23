@@ -355,10 +355,12 @@ async def test_push_button_only_with_passage(hass: HomeAssistant) -> None:
 # --- Handy-Reinlassen (0.59.0b2) -----------------------------------------------------
 
 FINJA = "person.finja"
+# Ortung weit weg – „weg“ braucht seit 0.61 einen Beleg (ADR 0015)
+FAR = {"latitude": 0.0, "longitude": 0.0, "gps_accuracy": 10}
 
 
 async def _phone_setup(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> list[ServiceCall]:
-    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja"})
+    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja", **FAR})
     push = await _setup(hass, persons=[FINJA], window=5)
     await _arm_night(hass)
     freezer.tick(timedelta(minutes=6))  # lange genug weg
@@ -407,7 +409,7 @@ async def test_phone_too_early_or_short_away_does_not_let_in(
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
     await _set(hass, DOOR, "off")
     # Kurz weg (1 Minute) und zurück: zählt nicht als Heimkehr
-    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja"})
+    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja", **FAR})
     await hass.async_block_till_done()
     freezer.tick(timedelta(minutes=1))
     hass.states.async_set(FINJA, "home", {"friendly_name": "Finja"})
@@ -421,7 +423,7 @@ async def test_return_passage_lets_in_without_passage_switch(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:
     """„Bei Rückkehr: reinlassen“ (0.61) braucht den Durchgang selbst nicht eingeschaltet."""
-    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja"})
+    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja", **FAR})
     options = _options(enabled=False)
     options["profiles"]["night"]["return"] = {"mode": "passage", "persons": [FINJA], "window": 5}
     async_mock_service(hass, "notify", PHONE)

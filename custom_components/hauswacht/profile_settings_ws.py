@@ -7,6 +7,7 @@ Liefert je Profil alle Werte im Format des Einstellungsdialogs und die Auswahlm�
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -49,6 +50,7 @@ from .core.state_machine import OpenSensorPolicy, UnavailableSensorPolicy
 from .core.tilt import parse_tilt_sources
 from .names import display_name
 from .notify_targets import notify_choices
+from .presence_proof import locatable
 
 
 def _time(value: Any) -> str | None:
@@ -133,6 +135,12 @@ def _speaker_choices(hass: HomeAssistant) -> list[dict[str, str]]:
     return [{"id": k, "name": v} for k, v in sorted(found.items(), key=lambda i: i[1].casefold())]
 
 
+def _signals(options: Mapping[str, Any], person: str) -> tuple[str, ...]:
+    raw = options.get("homecoming_signals", {})
+    entities = raw.get(person, []) if isinstance(raw, Mapping) else []
+    return tuple(e for e in entities if isinstance(e, str))
+
+
 def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     rules = parse_rules(options)
@@ -151,8 +159,14 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "volumes": list(VOLUME_LEVELS),
             "notify": _notify_choices(hass),
             "speakers": _speaker_choices(hass),
+            # locatable: kann außerhalb geortet werden – sonst gilt die Person nie als weg
             "persons": [
-                {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("person")
+                {
+                    "id": s.entity_id,
+                    "name": s.name,
+                    "locatable": locatable(hass, s.entity_id, _signals(options, s.entity_id)),
+                }
+                for s in hass.states.async_all("person")
             ],
             "schedules": [
                 {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("schedule")
