@@ -285,7 +285,7 @@ class HauswachtRuleEditor extends HTMLElement {
 
   _sensorChips(where, list) {
     const chips = list.map((id, i) => `<span class="chip" title="${re(id)}">${re(this._sensorName(id))}<button class="x" data-rm="${where}:${i}">✕</button></span>`).join("");
-    return `<div class="chips">${chips}</div><input list="hw-rule-sensors" data-add="${where}" placeholder="${re(this._t("addSensor"))}">`;
+    return `<div class="chips">${chips}</div><input list="hw-rule-sensors" data-add="${re(where)}" placeholder="${re(this._t("addSensor"))}">`;
   }
 
   _stepHtml(step, i, total) {

@@ -40,6 +40,9 @@ REDACT = {
     "homecoming_ssids",
     "auto_away_persons",
     "away_persons",
+    "persons",  # Durchgang (Handy-Reinlassen)
+    "person",  # Bedingungen in Auslöseregeln
+    "leaving",  # Übersicht: Empfehlung „Weggehen“ je Person
     "speakers",
     "targets",
     "alarm_targets",
