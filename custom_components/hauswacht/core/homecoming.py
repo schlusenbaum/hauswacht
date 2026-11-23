@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import io
 import statistics
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -138,6 +139,45 @@ def nearest_door(
     return best
 
 
+class DoorIndex:
+    """Türöffnungen nach Zeit sortiert – schnelles Nachschlagen statt "jede mit jeder".
+
+    Bei Wochen voller Daten (Tausende Einträge) dauerte der Vergleich jeder Ankunft mit jeder
+    Tür sonst Sekunden – und das bei jeder Signaländerung im Ereignis-Takt von Home Assistant.
+    """
+
+    def __init__(self, doors: Iterable[DoorOpening]) -> None:
+        self.doors = sorted(doors, key=lambda d: d.at)
+        self.times = [d.at for d in self.doors]
+
+    def nearest(self, at: float, window: float) -> DoorOpening | None:
+        """Nächste Tür im Fenster; bei gleichem Abstand die frühere (wie ``nearest_door``)."""
+        i = bisect_left(self.times, at)
+        best: DoorOpening | None = None
+        for j in (i - 1, i):
+            if 0 <= j < len(self.doors):
+                door = self.doors[j]
+                diff = abs(at - door.at)
+                if diff <= window and (best is None or diff < abs(at - best.at)):
+                    best = door
+        # Gleich weit entfernte frühere Türen mit demselben Zeitpunkt: die erste nehmen
+        if best is not None:
+            k = bisect_left(self.times, best.at)
+            best = self.doors[k]
+        return best
+
+    def latest_between(self, start: float, end: float) -> DoorOpening | None:
+        """Späteste Tür mit ``start <= at <= end``."""
+        i = bisect_right(self.times, end) - 1
+        if i >= 0 and self.times[i] >= start:
+            return self.doors[i]
+        return None
+
+    def any_within(self, at: float, window: float) -> bool:
+        i = bisect_left(self.times, at - window)
+        return i < len(self.times) and self.times[i] <= at + window
+
+
 def judge(
     arrivals: Iterable[Arrival],
     doors: Sequence[DoorOpening],
@@ -147,10 +187,11 @@ def judge(
     windows: Mapping[str, int] | None = None,
 ) -> list[Verdict]:
     verdicts: list[Verdict] = []
+    index = DoorIndex(doors)
     for arrival in arrivals:
         if arrival.away_seconds < min_away:
             continue
-        door = nearest_door(arrival, doors, (windows or {}).get(arrival.source, window))
+        door = index.nearest(arrival.at, (windows or {}).get(arrival.source, window))
         delay = arrival.at - door.at if door else None
         verdicts.append(Verdict(arrival=arrival, door=door, delay=delay))
     return verdicts
@@ -185,8 +226,10 @@ def doors_without_arrival(
     sources: frozenset[str] | None = None,
 ) -> int:
     """Türöffnungen ohne Ankunft (Hinausgehen, Besuch, Lüften …) – nur zur Einordnung."""
-    relevant = [a for a in arrivals if sources is None or a.source in sources]
-    return sum(1 for door in doors if not any(abs(a.at - door.at) <= window for a in relevant))
+    relevant = DoorIndex(
+        DoorOpening(at=a.at, sensor="") for a in arrivals if sources is None or a.source in sources
+    )
+    return sum(1 for door in doors if not relevant.any_within(door.at, window))
 
 
 def describe(verdict: Verdict, name: Mapping[str, str], lang: str = DE) -> str:

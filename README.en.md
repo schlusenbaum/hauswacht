@@ -15,7 +15,7 @@ Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can g
 Hauswacht provides everything it knows as entities, attributes and events, you connect it with
 **everything Home Assistant can do** – lights, cameras, shutters, heating, speakers.
 
-> **Status: 0.60.0b9 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.60.0 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -76,11 +76,12 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
   automations noticing.
 - **Settings page** in the sidebar – everything at a glance, with a matrix "sensor ×
   profile", edit everything right there, with a "?" to the matching place in the docs; in addition to
-  the dialog.
+  the dialog. Also the siren test (with confirmation) and all measurements to view, save and
+  reset.
 - **System overview** – the whole configuration at a glance, printable, with an emergency sheet
   for the family and check hints that find gaps and forgotten items.
-- **Observe instead of guess** – homecoming and radio silence observation deliver numbers before
-  you automate anything.
+- **Observe instead of guess** – homecoming, leaving and radio silence observation deliver numbers
+  before you automate anything – with a recommendation per person, e.g. for the entry delay.
 
 ## Open to everything: Hauswacht as a building block
 

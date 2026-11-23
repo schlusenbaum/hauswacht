@@ -6,6 +6,62 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0] - 2026-11-23
+
+**Beobachtung „Weggehen“, Messungen und Sirenentest auf der Einstellungsseite, Sicherheitskorrektur
+bei der Richtung** (ADR 0014, getestet über die Vorabversionen 0.60.0b1 bis b8).
+
+### Sicherheit
+- **Profil-Automatik:** Die Richtung (Nähe, Places) „nähert sich“ galt als „zuhause“. Eine Fahrt
+  in der Umgebung konnte so „Unscharf bei Rückkehr“ auslösen oder beim Durchgang per Handy als
+  Ankunft zählen. Richtungs-Sensoren zählen jetzt nur mit „angekommen“ (zuhause) und „entfernt
+  sich“ (weg); „nähert sich“ und „steht“ werden übergangen – „steht“ hält damit auch „Scharf, wenn
+  alle weg“ nicht mehr auf.
+
+### Hinzugefügt
+- **Beobachtung „Weggehen“** (schaltet nichts): je Signal und Person, wie lange es nach dem
+  Öffnen einer Tür bis „weg“ dauert, und **Schweigepausen** ohne Tür (schlafendes Handy,
+  WLAN-Aussetzer); Pausen mehrerer Personen gleichzeitig als möglicher WLAN-Ausfall gekennzeichnet.
+- **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: Wartezeit (1–15 min) oder
+  Warnhinweis mit Tipp – im Bericht, auf der Einstellungsseite und als Prüfhinweis; Attribute
+  `departure`, `leaving_advice`, `departure_days`; Zeilen „Weggehen“ in der CSV-Tabelle.
+- **Messungen auf der Einstellungsseite** (System → Anwesenheit und Heimkehr-Beobachtung): Beginn
+  der Messung, Tabelle je Person, Empfehlungen, Eingänge je Tür; Knöpfe **Bericht anzeigen**,
+  **Bericht speichern**, **Tabelle speichern (CSV)**, **Heimkommen / Weggehen / Alle Messungen
+  zurücksetzen**; bei der Funkstille **Messung zurücksetzen** (nur Administratoren, mit Rückfrage,
+  ändert keine Einstellung).
+- **Sirenentest auf der Einstellungsseite** (Alarmgeber → Sirenentest): Häkchen „Ich bin vor
+  Ort“, Rückfrage, Stopp, „Gehört?“ – gleiche Sperren wie in der Testkarte, die ihn weiterhin hat
+  (ADR 0011, Nachtrag). Ein Test hält fest, dass die Seite sonst keine Dienste aufruft.
+
+### Geändert
+- Das **frühestes Signal** und die Kombination **„alle Signale“** der Beobachtung zählen genau
+  wie die Profil-Automatik – so zeigt die Empfehlung für „Unscharf mit Türbeleg“, was die
+  Automatik wirklich braucht. „Nähert sich“ ist keine Heimkehr mehr, ein Spaziergang zählt nicht
+  mehr als zweimal Rausgehen.
+- Richtungssensoren der Zusatz-Integration **Places** werden verstanden („towards home“, „away
+  from home“).
+
+### Behoben
+- **Beobachtung schneller:** Die Auswertung lief bei Wochen voller Daten bei jeder Signaländerung
+  mehrere Sekunden und bremste dabei Home Assistant. Jetzt per Nachschlagen statt „jede mit jeder“
+  und nur einmal je Änderung – Millisekunden statt Sekunden.
+- Ein Eingang per **Durchgang** zählte als „zu spät – Alarm“; jetzt „per Durchgang reingelassen“,
+  ohne in die Statistik einzugehen.
+- Einstellungsseite: Wurde beim Speichern etwas abgelehnt, stand die Meldung oft außer Sicht;
+  jetzt rückt sie ins Bild. Im Profil-Dialog stehen die Meldungen zu „Unscharf bei Rückkehr“
+  direkt am Auswahlfeld.
+- Funkstille zurücksetzen speichert den Stand nach dem ersten Abgleich, nicht einen leeren.
+
+### Dokumentation
+- Beobachtungen: Abschnitte „Weggehen“ und „Messungen auf der Einstellungsseite“;
+  Einstellungsseite: Sirenentest; Profile: Richtung in der Automatik; Roadmap – deutsch und
+  englisch.
+
+> Nach dem Update: Einstellungen → System → Messungen → **Alle Messungen zurücksetzen**, damit
+> Werte aus den Vorabversionen die Empfehlungen nicht verfälschen.
+
+
 ## [0.60.0b9] - 2026-11-23
 
 ### Behoben

@@ -494,7 +494,7 @@ async def test_measurements_on_settings_page_and_reset(  # noqa: PLR0915
 async def test_direction_does_not_split_leaving(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:
-    """Richtung zählt beim Weggehen nicht: "nähert sich" draußen ist kein zweites Rausgehen."""
+    """Richtung zählt nur mit "angekommen"/"entfernt sich": "nähert sich" teilt nichts."""
     direction = "sensor.home_bewegung_von_anna"
     _person(hass, "home", "home")
     hass.states.async_set(WIFI, "Heimnetz")
@@ -534,14 +534,16 @@ async def test_direction_does_not_split_leaving(
     everything = attributes["departure"]["Anna (all signals)"]
     assert everything["departures"] == 1
     assert everything["with_door"] == 1
-    assert everything["max_seconds"] == 90  # WLAN und Person weg; Richtung zählt nicht
+    # Erst "entfernt sich" beendet "angekommen" – wie in der Automatik; "nähert sich" draußen
+    # zählt nicht und teilt den Spaziergang nicht in zwei
+    assert everything["max_seconds"] == 120
     assert everything["pauses"] == 0
 
 
 async def test_earliest_signal_needs_a_real_homecoming(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:
-    """ "Nähert sich" allein ist keine Heimkehr – nur der frühere Zeitpunkt einer echten."""
+    """Das frühestes Signal zählt wie die Automatik: "nähert sich" ist keine Heimkehr."""
     _person(hass, "not_home", "not_home")
     hass.states.async_set(DIRECTION, "away_from")
     options = {
@@ -570,5 +572,5 @@ async def test_earliest_signal_needs_a_real_homecoming(
     earliest = sources["Anna (earliest signal)"]
     assert earliest["arrivals"] == 1
     assert earliest["with_door"] == 1
-    assert earliest["median_delay"] == -480
+    assert earliest["median_delay"] == 30  # erst die Person zählt, nicht "nähert sich"
     assert sources["Anna (overall)"]["median_delay"] == 30

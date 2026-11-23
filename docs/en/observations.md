@@ -59,7 +59,7 @@ block **Measurements**:
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
   Homecoming counts the **earliest signal** per person, leaving counts **all signals** together
-  (without direction sensors, see [Leaving](#leaving-preparation-for-detect-leaving-without-pin)).
+  – both as the profile automation counts (see [Leaving](#leaving-preparation-for-detect-leaving-without-pin)).
 - **Recommendation per person** for "detect leaving without PIN": ✅ reliable with waiting time,
   ⚠️ warning with a tip, or grey "not enough data yet".
 - **Entries:** per door, how often the entry delay ran, the longest time until disarmed and the
@@ -99,11 +99,13 @@ under [Profiles → How Hauswacht knows who is home](profiles.md#how-hauswacht-k
 | Approach (Places) | add-on integration **Places** (HACS): sensor `sensor.places_<person>_direction_of_travel` | "towards home" = home, "away from home" = away, "stationary" does not count (from 0.60) |
 | Binary sensor | any | on |
 
-In addition, Hauswacht evaluates the **"earliest signal"** per person: the earliest moment of a
-**real** homecoming. Real means: a presence signal (person, ping, Wi-Fi, Bluetooth …) reports
-"home" again. If the direction (Proximity, Places) reported "towards" up to 15 minutes before,
-that earlier moment counts. **"Towards" alone is no homecoming** – otherwise every drive in the
-area that briefly heads towards home would count as coming home (from 0.60). The observation also includes the person's device trackers individually.
+In addition, Hauswacht evaluates the **"earliest signal"** per person: the moment the person counts
+as home again – **exactly as the profile automation decides**: person, ping, Wi-Fi, Bluetooth …
+and the direction (Proximity, Places) only with **"arrived"**. **"Towards" does not count** –
+otherwise every drive in the area that briefly heads towards home would count as coming home. So
+the recommendation for "Disarm with door proof" (below) shows what the automation really needs
+(from 0.60). How early the approach comes is still shown in the direction sensor's own line. The
+observation also includes the person's device trackers individually.
 
 ### Recommendation for "Disarm with door proof"
 
@@ -158,9 +160,10 @@ The most important line is **"all signals"** per person: it reports "away" only 
 the person says "home" any more (silent signals count as away), and "back" as soon as one reports
 "home" again. This is exactly how the later feature is meant to decide.
 
-**Direction sensors** (Proximity integration, Places) do **not** count here: "towards" does not
-mean "is here" – someone on the way back outside would otherwise count as "back", and a walk would
-count as leaving twice. They still appear as a line of their own in the table.
+**Direction sensors** (Proximity integration, Places) count here as in the profile automation only
+with **"arrived"** (home) and **"away from"** (away). "Towards" and "stationary" are skipped – so
+someone on the way back outside does not count as "back", and a walk does not count as leaving
+twice. They also appear as a line of their own in the table.
 
 ### Recommendation per person
 

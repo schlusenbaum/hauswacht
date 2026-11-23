@@ -18,11 +18,12 @@ ist deshalb eine Schweigepause.
 from __future__ import annotations
 
 import statistics
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from .homecoming import EARLIEST, Arrival, DoorOpening
+from .homecoming import EARLIEST, Arrival, DoorIndex, DoorOpening
 from .texts import DE, tr
 
 DEPARTURE_WINDOW = 900  # s: so lange vor dem "Weg" darf die Tür aufgegangen sein
@@ -101,11 +102,26 @@ def judge_departures(
     doors: Sequence[DoorOpening],
     now: float,
 ) -> list[DepartureVerdict]:
+    """Jedes "Weg" einordnen: mit Tür (und wie schnell) oder Schweigepause (und wie lange).
+
+    Sortiert und per Nachschlagen statt "jede mit jeder" – sonst dauert das bei Wochen voller
+    Daten Sekunden, und das bei jeder Signaländerung.
+    """
     items = sorted(departures, key=lambda d: d.at)
+    index = DoorIndex(doors)
+    returns: dict[tuple[str, str], list[float]] = {}
+    for arrival in arrivals:
+        returns.setdefault((arrival.person, arrival.source), []).append(arrival.at)
+    for times in returns.values():
+        times.sort()
     verdicts: list[DepartureVerdict] = []
     for departure in items:
-        door = door_before(departure, doors)
-        back = _back_at(departure, arrivals)
+        door = index.latest_between(departure.at - DEPARTURE_WINDOW, departure.at + DEPARTURE_EARLY)
+        back = departure.back
+        if back is None:
+            times = returns.get((departure.person, departure.source), [])
+            i = bisect_right(times, departure.at)
+            back = times[i] if i < len(times) else None
         verdicts.append(
             DepartureVerdict(
                 departure=departure,
@@ -117,15 +133,14 @@ def judge_departures(
         )
     # Schweigepausen der Kombination, die bei mehreren Personen gleichzeitig beginnen
     pauses = [v for v in verdicts if v.door is None and v.departure.source.endswith(EARLIEST)]
-    shared = {
-        id(v)
-        for v in pauses
-        if any(
-            o.departure.person != v.departure.person
-            and abs(o.departure.at - v.departure.at) <= SHARED_WINDOW
-            for o in pauses
-        )
-    }
+    starts = [v.departure.at for v in pauses]  # schon nach Zeit sortiert
+    shared: set[int] = set()
+    for i, v in enumerate(pauses):
+        lo = bisect_left(starts, v.departure.at - SHARED_WINDOW)
+        hi = bisect_right(starts, v.departure.at + SHARED_WINDOW)
+        if any(pauses[j].departure.person != v.departure.person for j in range(lo, hi)):
+            shared.add(i)
+    shared_ids = {id(pauses[i]) for i in shared}
     return [
         DepartureVerdict(
             departure=v.departure,
@@ -133,7 +148,7 @@ def judge_departures(
             delay=v.delay,
             away=v.away,
             back=v.back,
-            shared=id(v) in shared,
+            shared=id(v) in shared_ids,
         )
         for v in verdicts
     ]

@@ -59,7 +59,7 @@ Heimkehr-Beobachtung** → Block **Messungen**:
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
   Gezählt wird beim Heimkommen das **frühestes Signal** je Person, beim Rausgehen **alle
-  Signale** zusammen (ohne Richtungs-Sensoren, siehe [Weggehen](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)).
+  Signale** zusammen – beides so, wie die Profil-Automatik zählt (siehe [Weggehen](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)).
 - **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: ✅ zuverlässig mit Wartezeit,
   ⚠️ Warnhinweis mit Tipp, oder grau „noch zu wenig gemessen“.
 - **Eingänge:** je Tür, wie oft die Eingangsverzögerung lief, die längste Zeit bis unscharf und
@@ -100,12 +100,14 @@ selbst wenn die Beobachtung aus ist. Wie die Automatik die Signale verbindet, st
 | Annäherung (Places) | Zusatz-Integration **Places** (HACS): Sensor `sensor.places_<person>_direction_of_travel` | „towards home“ = zuhause, „away from home“ = weg, „stationary“ zählt nicht (ab 0.60) |
 | Binärsensor | beliebig | an |
 
-Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: der früheste Zeitpunkt
-einer **echten** Heimkehr. Echt heißt: Ein Anwesenheits-Signal (Person, Ping, WLAN, Bluetooth …)
-meldet wieder „zuhause“. Hat die Richtung (Nähe, Places) bis zu 15 Minuten davor „nähert sich“
-gemeldet, zählt dieser frühere Zeitpunkt. **„Nähert sich“ allein ist keine Heimkehr** – sonst
-würde jede Fahrt in der Umgebung, die kurz Richtung Zuhause führt, als Heimkommen gezählt
-(ab 0.60). Die Beobachtung nimmt dabei auch die Geräte-Tracker der Person einzeln dazu.
+Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: der Zeitpunkt, an dem
+die Person wieder als zuhause gilt – **genau so, wie die Profil-Automatik entscheidet**: Person,
+Ping, WLAN, Bluetooth … und die Richtung (Nähe, Places) nur mit **„angekommen“**.
+**„Nähert sich“ zählt nicht** – sonst würde jede Fahrt in der Umgebung, die kurz Richtung
+Zuhause führt, als Heimkommen gelten. So zeigt die Empfehlung für „Unscharf mit Türbeleg“
+(unten), was die Automatik wirklich braucht (ab 0.60). Wie früh die Annäherung kommt, steht
+weiter in der eigenen Zeile des Richtungssensors. Die Beobachtung nimmt dabei auch die
+Geräte-Tracker der Person einzeln dazu.
 
 ### Empfehlung für „Unscharf mit Türbeleg“
 
@@ -161,9 +163,10 @@ Wichtig ist vor allem die Zeile **„alle Signale“** je Person: Sie meldet ers
 Signal der Person mehr „zuhause“ sagt (schweigende Signale zählen als weg), und „zurück“, sobald
 eines wieder „zuhause“ meldet. Genau so soll die spätere Funktion entscheiden.
 
-**Richtungs-Sensoren** (Integration „Nähe“, Places) zählen hier **nicht** mit: „nähert sich“
-heißt nicht „ist da“ – wer draußen auf dem Rückweg ist, würde sonst als „zurück“ gelten, und ein
-Spaziergang zählte als zweimal Rausgehen. In der Tabelle stehen sie trotzdem als eigene Zeile.
+**Richtungs-Sensoren** (Integration „Nähe“, Places) zählen hier wie in der Profil-Automatik nur
+mit **„angekommen“** (zuhause) und **„entfernt sich“** (weg). „Nähert sich“ und „steht“ werden
+übergangen – wer draußen auf dem Rückweg ist, gilt also nicht als „zurück“, und ein Spaziergang
+zählt nicht als zweimal Rausgehen. In der Tabelle stehen sie zusätzlich als eigene Zeile.
 
 ### Empfehlung je Person
 

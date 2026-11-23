@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.60.0b9 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.60.0 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -74,11 +74,12 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   Automationen etwas merken.
 - **Einstellungsseite** in der Seitenleiste – alles auf einen Blick, mit Matrix „Melder ×
   Profile“, alles direkt bearbeiten, mit „?“ zur passenden Stelle der Anleitung; zusätzlich zum
-  Dialog.
+  Dialog. Auch der Sirenentest (mit Rückfrage) und alle Messungen zum Ansehen, Speichern und
+  Zurücksetzen.
 - **Anlagenübersicht** – die ganze Konfiguration auf einen Blick, zum Drucken, mit Notfallblatt
   für die Familie und Prüfhinweisen, die Lücken und Vergessenes finden.
-- **Beobachten statt raten** – Heimkehr- und Funkstille-Beobachtung liefern Zahlen, bevor man
-  etwas automatisiert.
+- **Beobachten statt raten** – Heimkehr-, Weggehen- und Funkstille-Beobachtung liefern Zahlen,
+  bevor man etwas automatisiert – mit Empfehlung je Person, z. B. für die Eingangsverzögerung.
 
 ## Offen für alles: Hauswacht als Baustein
 

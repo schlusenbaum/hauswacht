@@ -19,6 +19,9 @@ def test_settings_page_calls_only_siren_test_services() -> None:
         text = path.read_text(encoding="utf-8")
         found = re.findall(r"callService\(\s*\"([a-z_]+)\",\s*\"([a-z_]+)\"", text)
         assert text.count("callService(") == len(found), f"{path.name}: unklarer Dienstaufruf"
+        # Auch kein Dienstaufruf über WebSocket oder REST
+        assert "call_service" not in text, f"{path.name}: Dienstaufruf über call_service"
+        assert "/api/services" not in text, f"{path.name}: Dienstaufruf über die REST-API"
         for domain, service in found:
             assert domain == "hauswacht", f"{path.name}: {domain}.{service}"
             calls.setdefault(path.name, set()).add(service)

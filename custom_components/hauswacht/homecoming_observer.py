@@ -47,12 +47,14 @@ from .core.homecoming import (
     SourceStats,
     csv_rows,
     describe,
+    direction_hint,
     door_proof_advice,
     door_proof_lines,
     doors_without_arrival,
     entry_stats,
     evaluate,
     judge,
+    presence,
     prune,
     report_markdown,
     to_csv,
@@ -99,6 +101,9 @@ class HomecomingObserver:
         self.doors: list[dict[str, Any]] = []
         self.arrivals: list[dict[str, Any]] = []
         self.departures: list[dict[str, Any]] = []
+        # Auswertung nur einmal je Änderung berechnen (Attribute, Messungen, Bericht)
+        self._rev = 0
+        self._cache: dict[str, tuple[Any, Any]] = {}
         self.since: float | None = None
         self.departure_since: float | None = None  # Beginn der Messung "Weggehen"
         self.entries: list[dict[str, Any]] = []
@@ -106,7 +111,7 @@ class HomecomingObserver:
         # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
         self._present: dict[str, bool | None] = {}
         self._absent_since: dict[str, float] = {}  # Person: seit wann "alle Signale" weg
-        self._direction_home_at: dict[str, float] = {}  # Richtung: seit wann "nähert sich"
+        self._direction_state: dict[str, str | None] = {}  # Richtung: aktueller Wert
         self._directions: set[str] = set()
         self._door_entities: frozenset[str] = frozenset()
         self._owners: dict[str, tuple[str, ...]] = {}  # Quelle -> Personen
@@ -179,6 +184,8 @@ class HomecomingObserver:
         if state is None:
             return PresenceState()
         self._note_direction(source, state.state)
+        if source in self._directions:
+            self._direction_state[source] = state.state
         initial, _ = track(PresenceState(), state.state, state.last_changed.timestamp(), self.ssids)
         return initial
 
@@ -202,17 +209,24 @@ class HomecomingObserver:
         return [s for s, persons in self._owners.items() if person in persons]
 
     def _person_present(self, person: str) -> bool | None:
-        """Kombination fürs Weggehen.
+        """Kombination "alle Signale" – zählt wie die Profil-Automatik.
 
-        Richtungs-Sensoren (Nähe, Places) zählen nicht: "nähert sich" heißt nicht "ist da", und
-        "steht" heißt nicht "ist weg". Zuhause, sobald ein Signal zuhause meldet; weg, sobald
-        mindestens eines "weg" meldet und keines "zuhause" (schweigende Signale zählen als weg).
+        Richtung (Nähe, Places) nur mit "angekommen" (zuhause) oder "entfernt sich" (weg);
+        "nähert sich" und "steht" werden übergangen (``direction_hint``), genau wie in der
+        Automatik. Zuhause, sobald ein Signal zuhause meldet; weg, sobald mindestens eines "weg"
+        meldet und keines "zuhause" (schweigende Signale zählen als weg).
+
+        Daraus entstehen Weggehen, Rückkehr und das "frühestes Signal" der Heimkehr – so misst
+        die Beobachtung genau das, worauf "Unscharf mit Türbeleg" und der Durchgang reagieren.
         """
-        values = [
-            self._presence.get(s, PresenceState()).home
-            for s in self._person_sources(person)
-            if s not in self._directions
-        ]
+        values: list[bool | None] = []
+        for source in self._person_sources(person):
+            if source in self._directions:
+                raw = self._direction_state.get(source)
+                if not direction_hint(raw):
+                    values.append(presence(raw, self.ssids))
+            else:
+                values.append(self._presence.get(source, PresenceState()).home)
         if any(v is True for v in values):
             return True
         if any(v is False for v in values):
@@ -243,34 +257,14 @@ class HomecomingObserver:
             if before is False and left is not None:
                 self.arrivals.append(
                     {
-                        "at": (at := self._earliest_arrival(person, now, left)),
+                        "at": now,
                         "person": person,
                         "source": source,
-                        "away": at - left,
+                        "away": now - left,
                     }
                 )
                 changed = True
         return changed
-
-    def _earliest_arrival(self, person: str, now: float, left: float) -> float:
-        """Frühestes Signal einer echten Heimkehr.
-
-        Gezählt wird nur, wenn ein echtes Anwesenheits-Signal wieder "zuhause" meldet. Hat eine
-        Richtung (Nähe, Places) kurz davor – höchstens 15 Minuten und nach dem Weggehen –
-        "nähert sich" gemeldet, gilt dieser frühere Zeitpunkt. "Nähert sich" allein ist also
-        keine Heimkehr mehr (z. B. bei Fahrten in der Umgebung).
-        """
-        earliest = now
-        for source in self._person_sources(person):
-            at = self._direction_home_at.get(source)
-            if (
-                source in self._directions
-                and at is not None
-                and left < at <= now
-                and now - at <= APPROACH_WINDOW
-            ):
-                earliest = min(earliest, at)
-        return earliest
 
     # --- Aufzeichnung --------------------------------------------------------
 
@@ -298,12 +292,7 @@ class HomecomingObserver:
             state, away = track(prev, new.state, now, self.ssids)
             self._presence[entity_id] = state
             if entity_id in self._directions:
-                # Wann die Richtung zuletzt "nähert sich/angekommen" meldete (Hinweis fürs
-                # frühestes Signal – zählt nur, wenn danach wirklich jemand heimkommt)
-                if state.home is True and prev.home is not True:
-                    self._direction_home_at[entity_id] = now
-                elif state.home is False:
-                    self._direction_home_at.pop(entity_id, None)
+                self._direction_state[entity_id] = new.state
             if away is not None:
                 for person in self._owners[entity_id]:
                     self.arrivals.append(
@@ -321,6 +310,7 @@ class HomecomingObserver:
             self.arrivals = prune(self.arrivals, now)
             self.departures = prune(self.departures, now)
             self._store.async_delay_save(self._data, 10)
+            self._rev += 1
             self._on_change()
 
     @callback
@@ -345,6 +335,7 @@ class HomecomingObserver:
             self._entry_open = None
             self.since = now
         self._store.async_delay_save(self._data, 1)
+        self._rev += 1
         self._on_change()
 
     def _data(self) -> dict[str, Any]:
@@ -388,6 +379,7 @@ class HomecomingObserver:
         )
         self.entries = prune(self.entries, now)
         self._store.async_delay_save(self._data, 10)
+        self._rev += 1
         self._on_change()
 
     def entry_timings(self) -> list[EntryTiming]:
@@ -439,7 +431,21 @@ class HomecomingObserver:
             )
         return result
 
+    def _cached(self, name: str, key: Any, compute: Callable[[], Any]) -> Any:
+        hit = self._cache.get(name)
+        if hit is not None and hit[0] == key:
+            return hit[1]
+        value = compute()
+        self._cache[name] = (key, value)
+        return value
+
     def departure_verdicts(self) -> list[DepartureVerdict]:
+        # Offene Pausen zählen bis "jetzt" – deshalb höchstens eine Minute alt
+        now = int(dt_util.utcnow().timestamp() // 60)
+        key = (self._rev, self.since, self.departure_since, now)
+        return self._cached("departures", key, self._departure_verdicts)  # type: ignore[no-any-return]
+
+    def _departure_verdicts(self) -> list[DepartureVerdict]:
         arrivals, doors = self._parsed(everything=True)
         departures = [
             Departure(
@@ -495,8 +501,12 @@ class HomecomingObserver:
         }
 
     def stats(self) -> dict[str, SourceStats]:
-        arrivals, doors = self._parsed()
-        return evaluate(arrivals, doors, windows=self._windows(arrivals))
+        def compute() -> dict[str, SourceStats]:
+            arrivals, doors = self._parsed()
+            return evaluate(arrivals, doors, windows=self._windows(arrivals))
+
+        key = (self._rev, self.since)
+        return self._cached("stats", key, compute)  # type: ignore[no-any-return]
 
     def departure_days(self) -> float:
         """Tage, seit das Weggehen gemessen wird (für die Mindestdauer der Empfehlung)."""

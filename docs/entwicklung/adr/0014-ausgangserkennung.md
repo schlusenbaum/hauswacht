@@ -1,6 +1,6 @@
 # ADR 0014: Ausgangserkennung – Rausgehen ohne PIN erkennen
 
-- Status: vorgeschlagen (Messung ab 0.60.0b1 in der Heimkehr-Beobachtung, Umsetzung in 0.61)
+- Status: vorgeschlagen (Messung umgesetzt in 0.60.0, Umsetzung der Ausgangserkennung in 0.61)
 - Datum: 2026-11-21
 - Baut auf: [ADR 0013 Durchgang](0013-durchgang.md)
 
