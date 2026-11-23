@@ -41,8 +41,15 @@ from .core.profiles import (
     profile_settings,
 )
 from .core.reactions import DEFAULT_TONE, DEFAULT_VOLUME, parse_reaction
+from .core.returning import (
+    MAX_APPROACH_DELAY,
+    MAX_APPROACH_VALID,
+    RETURN_MODES,
+    ReturnConfig,
+    parse_return,
+    return_to_storage,
+)
 from .core.returning import MAX_WINDOW as RETURN_MAX_WINDOW
-from .core.returning import RETURN_MODES, ReturnConfig, parse_return, return_to_storage
 from .core.rules import parse_rules, profile_rule_ids
 from .core.sensor_types import excluded_sensors
 from .core.siren_guard import BURGLAR_TONE_ORDER, VOLUME_LEVELS
@@ -142,6 +149,11 @@ def _signals(options: Mapping[str, Any], person: str) -> tuple[str, ...]:
     return tuple(e for e in entities if isinstance(e, str))
 
 
+def _return_advice(main: Any) -> dict[str, Any]:
+    observer = getattr(main, "homecoming", None)
+    return observer.approach_advice() if observer is not None else {}
+
+
 def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     rules = parse_rules(options)
@@ -150,6 +162,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
     return {
         "profiles": [_profile(options, pid) for pid in options.get("profiles", {})],
+        # Empfehlungen aus der Heimkehr-Beobachtung je Person (Annäherung, ADR 0015)
+        "return_advice": _return_advice(main),
         "choices": {
             "panel_modes": ["none", *PANEL_MODES],
             "areas": [{"id": a.area_id, "name": a.name} for a in areas.values()],
@@ -218,6 +232,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "cycles": MAX_ALARM_CYCLES,
             "away_delay": MAX_AWAY_DELAY,
             "return_window": RETURN_MAX_WINDOW,
+            "approach_delay": MAX_APPROACH_DELAY,
+            "approach_valid": MAX_APPROACH_VALID,
             "settle": MAX_SETTLE,
             "passage_duration": PASSAGE_MAX_DURATION,
             "passage_after": PASSAGE_MAX_AFTER,

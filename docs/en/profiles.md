@@ -255,6 +255,7 @@ Home Assistant (usually the phone) plus the person's [signals](#how-hauswacht-kn
 | When someone comes home | One of the five levels below | **Nothing** |
 | For these persons | Who triggers "On return". Its own list – independent of "Arm when all of these persons are away". Without a person, any level other than "Nothing" cannot be saved | none |
 | Time window phone and door (under "More settings") | Only for "Disarm with door proof" and "Let in": how far apart the phone report and the door opening may be. 1–30 minutes. Does **not** delay the alarm, see [What the time window means](#what-the-time-window-means) | 5 minutes |
+| Entry delay after approach, approach is valid for (under "More settings") | Only for "Disarm with door proof" and "Let in": more time for the phone if the person approached before – see [approach](#approach-extends-the-entry-delay) | off, 15 minutes |
 
 Next to each field there is an **ⓘ**: hovering shows the explanation, tapping (phone, tablet)
 expands it. Below the selection, one sentence says **"This is how it behaves:"** – it changes
@@ -296,6 +297,44 @@ options dialog are gone; there is a hint pointing to the settings page instead.
 - *Phantom homecoming:* Niklas's phone reports "home" at night although he is out. Without an
   opened door, **nothing** happens.
 - *Burglary:* someone opens the door, but nobody has come home → normal entry delay and alarm.
+
+#### Approach extends the entry delay
+
+*From 0.61, only for "Disarm with door proof" and "Let in" – under "More settings".*
+
+Some phones only report "home" once the door is already open – sometimes after 60 or 70 seconds.
+With a 30 s entry delay that would mean an alarm. Extending the entry delay for **everyone**
+would also give a burglar more time. So Hauswacht uses the **direction** (Proximity integration
+or Places, added as a signal of the person under System settings → Presence):
+
+> If a person from the "On return" list approached in the last **15 minutes** (direction
+> "towards") and an entry door then opens, Hauswacht waits **longer** for their phone – e.g. 90 s
+> instead of 30 s. Whoever did not approach still only has the normal time.
+
+| Setting | Effect | Default |
+|---|---|---|
+| Entry delay after approach | seconds in total; 0 = off. Only has an effect when longer than the profile's normal entry delay – it never shortens | 0 (off) |
+| Approach is valid for | minutes after "towards" | 15 |
+
+Both fields show a **recommendation from the homecoming observation** with an **"apply"**
+button (the persons need to be in the observation for this):
+
+- Extension: longest measured time from "door open" to "home" plus buffer – the same value as the
+  [recommendation for "Disarm with door proof"](observations.md#recommendation-for-disarm-with-door-proof).
+- Validity: longest time from "towards" to the door plus 5 minutes.
+
+**Example:** entry delay 30 s, after approach 90 s. Christian drives home, Proximity reports
+"towards" at 18:02. At 18:06 he opens the front door, his iPhone only reports "home" after 70 s →
+disarmed, no alarm. A burglar at 3 am, before whom nobody approached → alarm after 30 s as always.
+
+- The direction **never disarms by itself** and never lets anyone in – it only gives the phone
+  more time.
+- A door with an instant alarm stays an instant alarm.
+- The push message for the entry delay states the extended time; the event `EntryDelayExtended`
+  names who approached.
+
+> **Residual risk:** if someone breaks in exactly while a person from the list approaches, they
+> have the longer time. That is a narrow, rare window.
 
 #### What the time window means
 

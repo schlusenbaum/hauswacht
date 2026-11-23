@@ -81,6 +81,8 @@ def test_migrate_keeps_old_keys_and_reports_both() -> None:
         "mode": "passage",
         "persons": [A, B],
         "window": 5,
+        "approach_delay": 0,
+        "approach_valid": 15,
     }
     assert new["profiles"]["night"]["auto_arrival_mode"] == "auto_only"  # bleibt für ältere
     assert new["profiles"]["away"]["return"]["mode"] == "door"
@@ -93,5 +95,22 @@ def test_from_input() -> None:
         "mode": "always",
         "persons": [A],
         "window": 4,
+        "approach_delay": 0,
+        "approach_valid": 15,
     }
     assert return_from_input({"mode": "nonsense"})["mode"] == RETURN_OFF
+
+
+def test_approach_settings() -> None:
+    """ADR 0015: Annäherung verlängert die Eingangsverzögerung – nur mit Tür."""
+    door = return_from_input(
+        {"mode": "door", "persons": [A], "approach_delay": 9999, "approach_valid": 0}
+    )
+    assert door["approach_delay"] == 600
+    assert door["approach_valid"] == 1
+    options = {"profiles": {"p": {"return": door}}}
+    assert parse_return(options, "p").extends
+    options["profiles"]["p"]["return"] = {**door, "mode": "always"}
+    assert not parse_return(options, "p").extends  # ohne Tür entscheidet nichts nach der Tür
+    options["profiles"]["p"]["return"] = {**door, "approach_delay": 0}
+    assert not parse_return(options, "p").extends

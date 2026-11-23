@@ -444,7 +444,13 @@ async def test_migration_passage_wins_and_explains(hass: HomeAssistant) -> None:
     entry = make_entry(options)
     await setup_entry(hass, entry)
     back = entry.options["profiles"]["night"]["return"]
-    assert back == {"mode": "passage", "persons": [FINJA], "window": 4}
+    assert back == {
+        "mode": "passage",
+        "persons": [FINJA],
+        "window": 4,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
     from homeassistant.components.persistent_notification import (  # noqa: PLC0415
         _async_get_or_create_notifications,
     )

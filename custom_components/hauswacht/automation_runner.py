@@ -41,6 +41,7 @@ from .core.automation import (
     schedule_action,
 )
 from .core.away_proof import AwayTracker, parse_proof_settings
+from .core.homecoming import DIRECTION_HINT as DIRECTION_APPROACH
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
 from .core.profiles import profile_ids
@@ -94,6 +95,7 @@ class AutomationRunner:
         # „weg“ nur mit Beleg (ADR 0015): Türöffnungen und belegte Abwesenheit je Person
         self.proof = AwayTracker()
         self._owners: dict[str, tuple[str, ...]] = {}  # Signal -> Personen (Tür + Signal)
+        self._approach_at: dict[str, float] = {}  # Person -> letzte Annäherung (Richtung)
 
     # --- Lebenszyklus --------------------------------------------------------
 
@@ -302,6 +304,10 @@ class AutomationRunner:
         ):
             for owner in self._owners.get(entity_id, ()):
                 self.proof.note_signal_left(owner, now)
+        # Annäherung (Richtung „nähert sich“) – verlängert die Eingangsverzögerung (ADR 0015)
+        if new_state is not None and new_state.state in DIRECTION_APPROACH:
+            for owner in self._owners.get(entity_id, ()):
+                self._approach_at[owner] = now
         arrived: list[str] = []
         long_away: list[str] = []  # Heimkehr nach mindestens 5 Minuten sicher weg
         for person in list(self._home):
@@ -361,6 +367,25 @@ class AutomationRunner:
         cfg = self.configs.get(profile_id)
         if cfg is not None and all_away_values(self.person_home(p) for p in cfg.away_persons):
             self.auto_arm(profile_id, REASON_AWAY)
+
+    # --- Annäherung verlängert die Eingangsverzögerung (ADR 0015) -----------------
+
+    def entry_extension(self, profile_id: str | None, now: float) -> tuple[int, list[str]]:
+        """Eingangsverzögerung nach Annäherung (Sekunden) und wer sich genähert hat.
+
+        ``(0, [])``, wenn nichts verlängert wird: Profil ohne „Bei Rückkehr“ mit Tür, ohne
+        eingestellte Verlängerung, oder niemand aus der Liste hat sich in der Gültigkeit genähert.
+        """
+        back = self.returns.get(profile_id or "")
+        if back is None or not back.extends:
+            return 0, []
+        valid = back.approach_valid * 60
+        near = [
+            p
+            for p in back.persons
+            if (at := self._approach_at.get(p)) is not None and now - at <= valid
+        ]
+        return (back.approach_delay, near) if near else (0, [])
 
     # --- Türbeleg -------------------------------------------------------------
 

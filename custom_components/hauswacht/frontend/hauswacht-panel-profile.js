@@ -74,6 +74,15 @@ const PT = {
     moreSettings: "Mehr Einstellungen",
     howLabel: "So verhält sich das:",
     infoLabel: "Erklärung",
+    approachDelay: "Eingangsverzögerung nach Annäherung (Sekunden, 0 = aus)",
+    approachValid: "Annäherung gilt (Minuten)",
+    approachDelayRec: "Empfehlung aus der Messung: {r} s (längste Zeit „Tür auf“ bis „zuhause“ plus Puffer).",
+    approachDelayRecDefault: "Noch keine Messung. Typisch: 60–120 s. Empfehlung kommt, sobald die Personen in der Heimkehr-Beobachtung sind und ein paar Mal heimgekommen sind.",
+    approachValidRec: "Empfehlung aus der Messung: {r} min (längste Zeit „nähert sich“ bis zur Tür plus 5 min).",
+    approachValidRecDefault: "Empfehlung: 15 Minuten.",
+    approachTooShort: "Wirkt nicht: nicht länger als die normale Eingangsverzögerung ({n} s). Verlängert wird nur, nie verkürzt.",
+    approachHow: "Hat sich eine der Personen in den letzten {v} Minuten genähert (Richtung „nähert sich“), wartet Hauswacht nach dem Öffnen {s} s statt {n} s auf das Handy. Wer sich nicht genähert hat – etwa ein Einbrecher –, hat weiter nur {n} s.",
+    apply: "übernehmen",
     noFix: "⚠ keine Ortung – gilt nie als weg",
     noFixHint: "Hauswacht findet für diese Person keine Ortung mit Koordinaten (z. B. Companion App mit Standort). Ohne Ortung außerhalb gilt sie nie als weg: „Scharf, wenn alle weg“ wartet dann für immer, „Bei Rückkehr“ löst nie aus. Abhilfe: in der Companion App den Standort auf „Immer“ stellen oder unter System → Anwesenheit einen GPS-Tracker als Signal eintragen.",
     returnModes: { off: "Nichts", auto_only: "Unscharf, nur wenn automatisch scharf", door: "Unscharf mit Türbeleg", always: "Unscharf, auch nach Scharfschalten von Hand", passage: "Reinlassen (Durchgang)" },
@@ -87,6 +96,8 @@ const PT = {
     info: {
       mode: "Wähle, wie Hauswacht reagiert, wenn eine der Personen unten heimkommt. „Unscharf mit Türbeleg“ ist für die meisten Häuser die beste Wahl: Es braucht das Handy UND eine Tür. „Reinlassen (Durchgang)“ passt zu Nachtprofilen, in denen der Rest im Haus scharf bleiben soll.",
       persons: "Nur diese Personen lösen „Bei Rückkehr“ aus. Die Liste ist unabhängig von „Scharf, wenn alle diese Personen weg sind“. Ohne Person lässt sich der Modus nicht speichern.",
+      approachDelay: "Braucht einen Richtungs-Sensor der Person (Integration „Nähe“ oder Places) unter System → Anwesenheit. Meldet er „nähert sich“ und geht danach eine Eingangstür auf, bekommt die Person so viel Zeit, bis ihr Handy „zuhause“ meldet. Die Richtung allein schaltet nie unscharf. Nur länger als die normale Eingangsverzögerung wirkt.",
+      approachValid: "So lange nach „nähert sich“ gilt die Annäherung. Zu kurz: Wer langsam kommt (Parkplatz suchen), bekommt keine Verlängerung. Zu lang: Die längere Zeit gilt auch noch für eine spätere Türöffnung.",
       window: "So weit dürfen Handy-Meldung „zuhause“ und Türöffnung auseinanderliegen. Manche Handys melden erst spät. Zu kurz: Hauswacht erkennt dich nicht. Zu lang: ein größeres Fenster für Fremde.",
     },
     closeOn: "Ausgangsverzögerung endet, sobald die Tür zu ist",
@@ -181,6 +192,15 @@ const PT = {
     moreSettings: "More settings",
     howLabel: "This is how it behaves:",
     infoLabel: "Explanation",
+    approachDelay: "Entry delay after approach (seconds, 0 = off)",
+    approachValid: "Approach is valid for (minutes)",
+    approachDelayRec: "Recommendation from the measurement: {r} s (longest time “door open” to “home” plus buffer).",
+    approachDelayRecDefault: "No measurement yet. Typical: 60–120 s. A recommendation appears once the persons are in the homecoming observation and have come home a few times.",
+    approachValidRec: "Recommendation from the measurement: {r} min (longest time “approaching” to the door plus 5 min).",
+    approachValidRecDefault: "Recommendation: 15 minutes.",
+    approachTooShort: "Has no effect: not longer than the normal entry delay ({n} s). It only extends, never shortens.",
+    approachHow: "If one of the persons approached in the last {v} minutes (direction “towards”), Hauswacht waits {s} s instead of {n} s for the phone after the door opens. Whoever did not approach – such as a burglar – still only has {n} s.",
+    apply: "apply",
     noFix: "⚠ no location – never counts as away",
     noFixHint: "Hauswacht finds no location with coordinates for this person (e.g. Companion app with location). Without a location outside, the person never counts as away: “arm when all away” then waits forever, “On return” never triggers. Fix: set the location in the Companion app to “Always” or add a GPS tracker as a signal under System → Presence.",
     returnModes: { off: "Nothing", auto_only: "Disarm, only if armed automatically", door: "Disarm with door proof", always: "Disarm, also after arming by hand", passage: "Let in (passage)" },
@@ -194,6 +214,8 @@ const PT = {
     info: {
       mode: "Choose how Hauswacht reacts when one of the persons below comes home. “Disarm with door proof” is the best choice for most homes: it needs the phone AND a door. “Let in (passage)” suits night profiles in which the rest of the house should stay armed.",
       persons: "Only these persons trigger “On return”. The list is independent of “Arm when all these persons are away”. Without a person the mode cannot be saved.",
+      approachDelay: "Needs a direction sensor of the person (Proximity integration or Places) under System → Presence. If it reports “towards” and an entry door opens afterwards, the person gets this much time until their phone reports “home”. The direction alone never disarms. Only longer than the normal entry delay has an effect.",
+      approachValid: "How long an approach stays valid after “towards”. Too short: whoever comes slowly (looking for parking) gets no extension. Too long: the longer time also applies to a later door opening.",
       window: "How far apart the phone reporting “home” and the door opening may be. Some phones report late. Too short: Hauswacht does not recognise you. Too long: a bigger window for strangers.",
     },
     closeOn: "Exit delay ends as soon as the door is closed",
@@ -386,8 +408,44 @@ ${this._returnSection(c, lim, t)}
   }
 
   _returnHow(back) {
-    const text = (this._t("returnHow") || {})[back.mode] || "";
-    return text.replace("{w}", String(back.window));
+    let text = ((this._t("returnHow") || {})[back.mode] || "").replace("{w}", String(back.window));
+    const normal = Number(this._draft.entry_delay) || 0;
+    if (["door", "passage"].includes(back.mode) && back.approach_delay > normal) {
+      text += " " + this._t("approachHow").replace("{v}", String(back.approach_valid)).replace("{s}", String(back.approach_delay)).replaceAll("{n}", String(normal));
+    }
+    return text;
+  }
+
+  _approachRec(back) {
+    // Empfehlungen aus der Heimkehr-Beobachtung für die Personen der Liste
+    const advice = this.settings.profile_edit.return_advice || {};
+    const rows = back.persons.map((p) => advice[p]).filter(Boolean);
+    const delays = rows.map((r) => r.entry_delay).filter((v) => v);
+    const valid = rows.map((r) => r.approach_minutes).filter((v) => v);
+    return {
+      delay: delays.length ? Math.max(...delays) : null,
+      valid: valid.length ? Math.min(Math.max(...valid), this.settings.profile_edit.limits.approach_valid) : null,
+    };
+  }
+
+  _recLine(field, value, current, textMeasured, textDefault) {
+    const text = value === null ? textDefault : textMeasured.replace("{r}", String(value));
+    const button = value !== null && Number(current) !== value ? ` <button type="button" class="b" data-rec="${field}" data-value="${value}">${pe(this._t("apply"))}</button>` : "";
+    return `<div class="muted">${pe(text)}${button}</div>`;
+  }
+
+  _approachFields(back, lim) {
+    const rec = this._approachRec(back);
+    const normal = Number(this._draft.entry_delay) || 0;
+    const weak = back.approach_delay > 0 && back.approach_delay <= normal;
+    return `
+        <label>${pe(this._t("approachDelay"))} ${this._info("approachDelay")}</label>
+        <input class="small" type="number" min="0" max="${lim.approach_delay}" data-r="approach_delay" data-num="1" value="${pe(back.approach_delay)}">
+        ${this._recLine("approach_delay", rec.delay, back.approach_delay, this._t("approachDelayRec"), this._t("approachDelayRecDefault"))}
+        ${weak ? `<div class="warn">${pe(this._t("approachTooShort").replace("{n}", String(normal)))}</div>` : ""}
+        ${back.approach_delay > 0 ? `<label>${pe(this._t("approachValid"))} ${this._info("approachValid")}</label>
+        <input class="small" type="number" min="1" max="${lim.approach_valid}" data-r="approach_valid" data-num="1" value="${pe(back.approach_valid)}">
+        ${this._recLine("approach_valid", rec.valid, back.approach_valid, this._t("approachValidRec"), this._t("approachValidRecDefault"))}` : ""}`;
   }
 
   _returnSection(c, lim, t) {
@@ -407,6 +465,7 @@ ${this._returnSection(c, lim, t)}
         <label>${pe(this._t("returnWindow"))} ${this._info("window")}</label>
         <input class="small" type="number" min="1" max="${lim.return_window}" data-r="window" data-num="1" value="${pe(back.window)}">
         <div class="muted">${pe(this._t("returnWindowRec"))}</div>
+        ${this._approachFields(back, lim)}
       </details>` : ""}`;
   }
 
@@ -511,12 +570,30 @@ ${this._returnSection(c, lim, t)}
         if (tip) tip.hidden = !tip.hidden;
       })
     );
-    // Zeitfenster: Erklärsatz sofort mitziehen
-    const win = this.shadowRoot.querySelector('[data-r="window"]');
-    win?.addEventListener("input", () => {
-      const how = this.shadowRoot.querySelector("[data-how]");
-      if (how) how.textContent = this._returnHow({ ...this._draft.return, window: Number(win.value) || this._draft.return.window });
-    });
+    // Zeitfenster und Annäherung: Erklärsatz sofort mitziehen
+    this.shadowRoot.querySelectorAll('[data-r="window"], [data-r="approach_valid"]').forEach((el) =>
+      el.addEventListener("input", () => {
+        const how = this.shadowRoot.querySelector("[data-how]");
+        if (how) how.textContent = this._returnHow({ ...this._draft.return, [el.dataset.r]: Number(el.value) || this._draft.return[el.dataset.r] });
+      })
+    );
+    // Verlängerung an/aus blendet die Gültigkeit ein; Empfehlung übernehmen
+    const redraw = () => {
+      const top = this.shadowRoot.querySelector(".sheet").scrollTop;
+      this._collect();
+      this._render();
+      this.shadowRoot.querySelector(".sheet").scrollTop = top;
+    };
+    this.shadowRoot.querySelector('[data-r="approach_delay"]')?.addEventListener("change", redraw);
+    this.shadowRoot.querySelectorAll("[data-rec]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        this._collect();
+        this._draft.return[btn.dataset.rec] = Number(btn.dataset.value);
+        const top = this.shadowRoot.querySelector(".sheet").scrollTop;
+        this._render();
+        this.shadowRoot.querySelector(".sheet").scrollTop = top;
+      })
+    );
     // Gruppen ändern die Listen "Ausgenommen" und "Ausgangstüren", der Modus bei Rückkehr die Felder
     this.shadowRoot.querySelectorAll('[data-m="zones"], [data-r="mode"]').forEach((el) =>
       el.addEventListener("change", () => {

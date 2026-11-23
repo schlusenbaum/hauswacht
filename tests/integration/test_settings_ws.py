@@ -214,7 +214,13 @@ async def test_apply_profile_save_return(hass: HomeAssistant, hass_ws_client: An
     edit = data["profile_edit"]
     assert edit["choices"]["return_modes"] == ["off", "auto_only", "door", "always", "passage"]
     night = next(p for p in edit["profiles"] if p["id"] == "night")
-    assert night["return"] == {"mode": "off", "persons": [], "window": 5}
+    assert night["return"] == {
+        "mode": "off",
+        "persons": [],
+        "window": 5,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
     refused = await _ws(
         hass_ws_client,
         hass,
@@ -224,7 +230,13 @@ async def test_apply_profile_save_return(hass: HomeAssistant, hass_ws_client: An
         data={**night, "return": {"mode": "door", "persons": [], "window": 5}},
     )
     assert refused["errors"] == {"return": "return_needs_persons"}
-    back = {"mode": "door", "persons": ["person.anna"], "window": 7}
+    back = {
+        "mode": "door",
+        "persons": ["person.anna"],
+        "window": 7,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
     result = await _ws(
         hass_ws_client,
         hass,

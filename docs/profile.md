@@ -262,6 +262,7 @@ der Person. „Heimkommen“ heißt immer: Die Person war vorher sicher weg und 
 | Wenn jemand heimkommt | Eine der fünf Stufen unten | **Nichts** |
 | Für diese Personen | Wer „Bei Rückkehr“ auslöst. Eigene Liste – unabhängig von „Scharf, wenn alle diese Personen weg sind“. Ohne Person lässt sich eine Stufe außer „Nichts“ nicht speichern | keine |
 | Zeitfenster Handy und Tür (unter „Mehr Einstellungen“) | Nur für „Unscharf mit Türbeleg“ und „Reinlassen“: so weit dürfen Handy-Meldung und Türöffnung auseinanderliegen. 1–30 Minuten. Verzögert den Alarm **nicht**, siehe [Was das Zeitfenster bedeutet](#was-das-zeitfenster-bedeutet) | 5 Minuten |
+| Eingangsverzögerung nach Annäherung, Annäherung gilt (unter „Mehr Einstellungen“) | Nur für „Unscharf mit Türbeleg“ und „Reinlassen“: mehr Zeit fürs Handy, wenn sich die Person vorher genähert hat – siehe [Annäherung](#annäherung-verlängert-die-eingangsverzögerung) | aus, 15 Minuten |
 
 Neben jedem Feld steht ein **ⓘ**: Mauszeiger drauf zeigt die Erklärung, Antippen (Handy,
 Tablet) klappt sie auf. Unter der Auswahl steht in einem Satz **„So verhält sich das:“** – er
@@ -307,6 +308,46 @@ ein Hinweis auf die Einstellungsseite.
   geöffnete Tür passiert **nichts**.
 - *Einbruch:* Jemand öffnet die Tür, aber niemand ist heimgekommen → normale
   Eingangsverzögerung und Alarm.
+
+#### Annäherung verlängert die Eingangsverzögerung
+
+*Ab 0.61, nur bei „Unscharf mit Türbeleg“ und „Reinlassen“ – unter „Mehr Einstellungen“.*
+
+Manche Handys melden „zuhause“ erst, wenn die Tür schon offen ist – manchmal nach 60 oder 70
+Sekunden. Mit 30 s Eingangsverzögerung gäbe es dann Alarm. Die Eingangsverzögerung für **alle**
+zu verlängern, gäbe aber auch einem Einbrecher mehr Zeit. Deshalb nutzt Hauswacht die
+**Richtung** (Integration „Nähe“ oder Places, als Signal der Person unter Systemeinstellungen →
+Anwesenheit eingetragen):
+
+> Hat sich eine Person aus der Liste „Bei Rückkehr“ in den letzten **15 Minuten** genähert
+> (Richtung „nähert sich“) und geht dann eine Eingangstür auf, wartet Hauswacht **länger** auf
+> ihr Handy – z. B. 90 s statt 30 s. Wer sich nicht genähert hat, hat weiter nur die normale Zeit.
+
+| Einstellung | Wirkung | Standard |
+|---|---|---|
+| Eingangsverzögerung nach Annäherung | Sekunden insgesamt; 0 = aus. Wirkt nur, wenn länger als die normale Eingangsverzögerung des Profils – verkürzt wird nie | 0 (aus) |
+| Annäherung gilt | Minuten nach „nähert sich“ | 15 |
+
+Beide Felder zeigen eine **Empfehlung aus der Heimkehr-Beobachtung** mit Knopf
+**„übernehmen“** (dafür müssen die Personen in der Beobachtung sein):
+
+- Verlängerung: längste gemessene Zeit von „Tür auf“ bis „zuhause“ plus Puffer – derselbe Wert
+  wie die [Empfehlung für „Unscharf mit Türbeleg“](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg).
+- Gültigkeit: längste Zeit von „nähert sich“ bis zur Tür plus 5 Minuten.
+
+**Beispiel:** Eingangsverzögerung 30 s, nach Annäherung 90 s. Christian fährt heim, „Nähe“
+meldet um 18:02 „nähert sich“. Um 18:06 öffnet er die Haustür, sein iPhone meldet erst nach 70 s
+„zuhause“ → unscharf, kein Alarm. Ein Einbrecher um 3 Uhr nachts, vor dem sich niemand genähert
+hat → nach 30 s Alarm wie immer.
+
+- Die Richtung **schaltet nie selbst unscharf** und lässt nie herein – sie gibt nur dem Handy
+  mehr Zeit.
+- Eine Tür mit Sofortalarm bleibt Sofortalarm.
+- In der Push-Nachricht zur Eingangsverzögerung steht die verlängerte Zeit; das Ereignis
+  `EntryDelayExtended` nennt, wer sich genähert hat.
+
+> **Restrisiko:** Bricht jemand genau dann ein, wenn sich eine Person aus der Liste nähert, hat
+> er die längere Zeit. Das ist ein enges, seltenes Fenster.
 
 #### Was das Zeitfenster bedeutet
 

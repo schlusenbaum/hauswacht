@@ -145,7 +145,13 @@ def test_return_saved_from_form_and_dialog_keeps_it() -> None:
     change = save_profile(_options(), "night", form)
     assert change.options is not None
     stored = change.options["profiles"]["night"]
-    assert stored["return"] == {"mode": "passage", "persons": ["person.a"], "window": 7}
+    assert stored["return"] == {
+        "mode": "passage",
+        "persons": ["person.a"],
+        "window": 7,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
     # Der Dialog kennt „Bei Rückkehr“ nicht – die Einstellung bleibt
     again = save_profile(change.options, "night", _form(name="Nacht"))
     assert again.options is not None

@@ -86,6 +86,8 @@ def test_arrival_mode_select_reads_old_switch_and_writes_return() -> None:
         "mode": "passage",
         "persons": ["person.a"],  # aus der alten Liste übernommen
         "window": 5,
+        "approach_delay": 0,
+        "approach_valid": 15,
     }
     assert read_select(new, "away", "auto_arrival_mode") == "passage"
     new = write(new, "away", "auto_arrival_window", 9)

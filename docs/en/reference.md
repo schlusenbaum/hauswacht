@@ -238,6 +238,7 @@ proof), `Neustart` (restart).
 | `ArrivalNoted` | "Disarm with door proof": arrival detected, profile armed | `profile_id`, `persons` |
 | `PhoneArrivalNoted` | [On return: let in](passage.md#let-in-by-phone): arrival detected (away for at least 5 minutes before), profile armed | `profile_id`, `persons` |
 | `DoorNoted` | "Disarm with door proof": entry door detected | `profile_id`, `door` |
+| `EntryDelayExtended` | [Approach](profiles.md#approach-extends-the-entry-delay): entry delay extended because a person from "On return" approached | `profile_id`, `seconds`, `normal`, `persons` |
 
 ### Operation
 

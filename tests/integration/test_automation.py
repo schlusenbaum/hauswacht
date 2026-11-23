@@ -323,6 +323,47 @@ async def test_door_proof_disarms_during_entry_delay(hass: HomeAssistant) -> Non
     assert disarmed[0].data["reason"] == "Rückkehr mit Türbeleg"
 
 
+DIRECTION = "sensor.nahe_a_direction_of_travel"
+
+
+async def _seconds(hass: HomeAssistant, seconds: int) -> None:
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=seconds))
+    await hass.async_block_till_done()
+
+
+async def _approach_setup(hass: HomeAssistant) -> list[Any]:
+    hass.states.async_set(DIRECTION, "stationary")
+    back = {"mode": "door", "persons": [A], "window": 5, "approach_delay": 90}
+    await _setup(hass, {"homecoming_signals": {A: [DIRECTION]}}, entry_delay=30, **{"return": back})
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=PANEL)
+    return events
+
+
+async def test_approach_extends_entry_delay(hass: HomeAssistant) -> None:
+    """ADR 0015: „nähert sich“ vorher → 90 s statt 30 s Eingangsverzögerung."""
+    events = await _approach_setup(hass)
+    hass.states.async_set(DIRECTION, "towards")
+    await hass.async_block_till_done()
+    await _door(hass)
+    assert _state(hass) == AlarmControlPanelState.PENDING
+    extended = [e for e in events if e.data["type"] == "EntryDelayExtended"]
+    assert extended[0].data["seconds"] == 90
+    assert extended[0].data["persons"] == [A]
+    await _seconds(hass, 45)
+    assert _state(hass) == AlarmControlPanelState.PENDING  # normal wäre schon Alarm
+    await _seconds(hass, 95)
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_no_approach_keeps_normal_entry_delay(hass: HomeAssistant) -> None:
+    events = await _approach_setup(hass)
+    await _door(hass)
+    await _seconds(hass, 35)
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+    assert not [e for e in events if e.data["type"] == "EntryDelayExtended"]
+
+
 async def test_door_proof_arrival_first_then_door(hass: HomeAssistant) -> None:
     """Ortung vor der Tür (manuell scharf geschaltet): unscharf, sobald die Tür aufgeht."""
     await _armed_and_away(hass)
@@ -425,7 +466,7 @@ async def test_earliest_signal_counts_as_arrival(hass: HomeAssistant) -> None:
 async def test_options_flow_keeps_return_settings(hass: HomeAssistant) -> None:
     """„Bei Rückkehr“ gibt es nur auf der Einstellungsseite – der Dialog lässt es stehen."""
     hass.states.async_set(A, "home")
-    back = {"mode": "door", "persons": [A], "window": 3}
+    back = {"mode": "door", "persons": [A], "window": 3, "approach_delay": 0, "approach_valid": 15}
     entry = make_entry({"profiles": {"away": {"return": back}}})
     await setup_entry(hass, entry)
 
@@ -468,7 +509,13 @@ async def test_old_settings_are_migrated_to_return(hass: HomeAssistant) -> None:
     await setup_entry(hass, entry)
     assert entry.minor_version == 2
     away = entry.options["profiles"]["away"]
-    assert away["return"] == {"mode": "door", "persons": [A], "window": 4}
+    assert away["return"] == {
+        "mode": "door",
+        "persons": [A],
+        "window": 4,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
     assert away["auto_arrival_mode"] == "door"  # bleibt für ältere Versionen stehen
     from homeassistant.components.persistent_notification import (  # noqa: PLC0415
         _async_get_or_create_notifications,

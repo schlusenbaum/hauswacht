@@ -1440,18 +1440,19 @@ class HauswachtRuntime:
         if self.ctx.profile is None:
             return
         sensor = self.ctx.trigger_sensor or ""
+        seconds, _near = self._entry_seconds(self.ctx.profile.entry_delay)
         self._send_alarm_push(
             tr(self.lang, "entry_title"),
             tr(
                 self.lang,
                 "entry",
                 sensor=display_name(self.hass, sensor),
-                seconds=self.ctx.profile.entry_delay,
+                seconds=seconds,
                 profile=self.profile_name(self.ctx.profile.profile_id),
             ),
             {
                 "melder": display_name(self.hass, sensor),
-                "sekunden": self.ctx.profile.entry_delay,
+                "sekunden": seconds,
                 "profil": self.profile_name(self.ctx.profile.profile_id),
             },
         )
@@ -3374,10 +3375,34 @@ class HauswachtRuntime:
             self._speech_repeat()
             self._speech_repeat = None
 
+    def _entry_seconds(self, seconds: int) -> tuple[int, list[str]]:
+        """Eingangsverzögerung – länger, wenn sich vorher jemand aus „Bei Rückkehr“ genähert hat.
+
+        Nur verlängern, nie kürzen (ADR 0015). Rückgabe: Sekunden und wer sich genähert hat.
+        """
+        profile = self.ctx.profile
+        extra, near = self.automation.entry_extension(
+            profile.profile_id if profile else None, dt_util.utcnow().timestamp()
+        )
+        return (extra, near) if extra > seconds else (seconds, [])
+
     @callback
     def _start_timer(self, effect: StartTimer) -> None:
         self._cancel_timer()
-        self.delay_ends_at = dt_util.utcnow() + timedelta(seconds=effect.seconds)
+        seconds = effect.seconds
+        if effect.kind is TimerKind.ENTRY_DELAY:
+            seconds, near = self._entry_seconds(seconds)
+            if near:
+                self.fire_event(
+                    {
+                        "type": "EntryDelayExtended",
+                        "profile_id": self.ctx.profile.profile_id if self.ctx.profile else None,
+                        "seconds": seconds,
+                        "normal": effect.seconds,
+                        "persons": near,
+                    }
+                )
+        self.delay_ends_at = dt_util.utcnow() + timedelta(seconds=seconds)
 
         @callback
         def _elapsed(_now: datetime) -> None:
@@ -3385,7 +3410,7 @@ class HauswachtRuntime:
             self.delay_ends_at = None
             self._dispatch(self._timer_event(effect.kind, effect.token))
 
-        self._timer_cancel = async_call_later(self.hass, effect.seconds, _elapsed)
+        self._timer_cancel = async_call_later(self.hass, seconds, _elapsed)
 
     def _timer_event(self, kind: TimerKind, token: int) -> Event:
         if kind is TimerKind.EXIT_DELAY:

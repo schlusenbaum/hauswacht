@@ -239,6 +239,7 @@ Türbeleg`, `Neustart`.
 | `ArrivalNoted` | „Unscharf mit Türbeleg“: Rückkehr erkannt, Profil scharf | `profile_id`, `persons` |
 | `PhoneArrivalNoted` | [Bei Rückkehr: Reinlassen](durchgang.md#reinlassen-per-handy): Heimkehr erkannt (vorher mindestens 5 Minuten weg), Profil scharf | `profile_id`, `persons` |
 | `DoorNoted` | „Unscharf mit Türbeleg“: Eingangstür erkannt | `profile_id`, `door` |
+| `EntryDelayExtended` | [Annäherung](profile.md#annäherung-verlängert-die-eingangsverzögerung): Eingangsverzögerung verlängert, weil sich eine Person aus „Bei Rückkehr“ genähert hat | `profile_id`, `seconds`, `normal`, `persons` |
 
 ### Bedienung
 

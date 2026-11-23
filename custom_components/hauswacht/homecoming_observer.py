@@ -572,6 +572,31 @@ class HomecomingObserver:
             },
         }
 
+    def approach_advice(self) -> dict[str, dict[str, int | None]]:
+        """Je Person: Empfehlungen für „Annäherung verlängert die Eingangsverzögerung“.
+
+        ``entry_delay``: nötige Eingangsverzögerung (längste Zeit Tür auf → zuhause, plus Puffer)
+        ``approach_minutes``: längste Zeit „nähert sich“ → Tür, plus 5 Minuten (Gültigkeit)
+        """
+        if not self.enabled:
+            return {}
+        stats = self.stats()
+        proof = door_proof_advice(stats)
+        result: dict[str, dict[str, int | None]] = {}
+        for person in self.persons:
+            leads = [
+                -d
+                for source in self._person_sources(person)
+                if source in self._directions and (entry := stats.get(source)) is not None
+                for d in entry.delays
+                if d < 0
+            ]
+            result[person] = {
+                "entry_delay": proof.get(person, {}).get("recommended_entry_delay"),
+                "approach_minutes": int(-(-max(leads) // 60)) + 5 if leads else None,
+            }
+        return result
+
     def _longest_signal_left(self, person: str, left: Mapping[str, Any]) -> int | None:
         """Längste Zeit „Tür auf“ → ein einzelnes Signal „weg“ (Sekunden), ohne Richtung."""
         delays = [

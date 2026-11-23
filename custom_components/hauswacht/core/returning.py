@@ -10,6 +10,10 @@ Rein und ohne Home Assistant. Gespeichert unter ``profiles.<id>.return``:
   - ``passage``: reinlassen – das Profil bleibt scharf, die Tür ist frei (Durchgang, ADR 0013)
 - ``persons``: eigene Personenliste (unabhängig von „Scharf, wenn alle weg“)
 - ``window``: Minuten zwischen Handy-Ankunft und Türöffnung (``door`` und ``passage``)
+- ``approach_delay``: Eingangsverzögerung in Sekunden, wenn sich eine Person der Liste vorher
+  genähert hat (Richtung „nähert sich“); 0 = aus. Nur für ``door`` und ``passage`` – dort
+  entscheidet das Handy-Signal nach der Tür. Gilt nur, wenn länger als die normale.
+- ``approach_valid``: so lange (Minuten) gilt eine Annäherung
 
 Bis 0.60 stand das an zwei Stellen: „Unscharf bei Rückkehr“ in der Automatik (mit den Personen
 von „Scharf, wenn alle weg“) und Handy-Reinlassen im Durchgang. ``legacy_return`` rechnet das um;
@@ -41,6 +45,9 @@ WITH_DOOR: frozenset[str] = frozenset({RETURN_DOOR, RETURN_PASSAGE})
 
 DEFAULT_WINDOW = 5  # Minuten
 MAX_WINDOW = 30
+MAX_APPROACH_DELAY = 600  # Sekunden
+DEFAULT_APPROACH_VALID = 15  # Minuten
+MAX_APPROACH_VALID = 60
 KEY = "return"
 
 
@@ -49,6 +56,13 @@ class ReturnConfig:
     mode: str = RETURN_OFF
     persons: tuple[str, ...] = ()
     window: int = DEFAULT_WINDOW  # Minuten
+    approach_delay: int = 0  # Sekunden, 0 = aus
+    approach_valid: int = DEFAULT_APPROACH_VALID  # Minuten
+
+    @property
+    def extends(self) -> bool:
+        """Verlängert eine Annäherung die Eingangsverzögerung?"""
+        return self.with_door and self.approach_delay > 0
 
     @property
     def active(self) -> bool:
@@ -86,6 +100,23 @@ def _window(value: Any) -> int:
     return min(max(number, 1), MAX_WINDOW)
 
 
+def _int_in(value: Any, default: int, low: int, high: int) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return default
+    return min(max(number, low), high)
+
+
+def _approach(raw: Mapping[str, Any]) -> dict[str, int]:
+    return {
+        "approach_delay": _int_in(raw.get("approach_delay"), 0, 0, MAX_APPROACH_DELAY),
+        "approach_valid": _int_in(
+            raw.get("approach_valid"), DEFAULT_APPROACH_VALID, 1, MAX_APPROACH_VALID
+        ),
+    }
+
+
 def _profile(options: Mapping[str, Any], profile_id: str | None) -> Mapping[str, Any]:
     profiles = options.get("profiles", {})
     if not isinstance(profiles, Mapping) or not profile_id:
@@ -114,34 +145,38 @@ def legacy_return(stored: Mapping[str, Any]) -> ReturnConfig:
     return ReturnConfig(str(mode), persons, _window(stored.get("auto_arrival_window")))
 
 
+def _from_raw(raw: Mapping[str, Any]) -> ReturnConfig:
+    mode = raw.get("mode")
+    return ReturnConfig(
+        mode=str(mode) if mode in RETURN_MODES else RETURN_OFF,
+        persons=_strings(raw.get("persons")),
+        window=_window(raw.get("window")),
+        **_approach(raw),
+    )
+
+
 def parse_return(options: Mapping[str, Any], profile_id: str | None) -> ReturnConfig:
     """„Bei Rückkehr“ eines Profils; ohne gespeicherten Abschnitt aus den alten Einstellungen."""
     stored = _profile(options, profile_id)
     raw = stored.get(KEY)
     if not isinstance(raw, Mapping):
         return legacy_return(stored)
-    mode = raw.get("mode")
-    return ReturnConfig(
-        mode=str(mode) if mode in RETURN_MODES else RETURN_OFF,
-        persons=_strings(raw.get("persons")),
-        window=_window(raw.get("window")),
-    )
+    return _from_raw(raw)
 
 
 def return_to_storage(config: ReturnConfig) -> dict[str, Any]:
-    return {"mode": config.mode, "persons": list(config.persons), "window": config.window}
+    return {
+        "mode": config.mode,
+        "persons": list(config.persons),
+        "window": config.window,
+        "approach_delay": config.approach_delay,
+        "approach_valid": config.approach_valid,
+    }
 
 
 def return_from_input(data: Mapping[str, Any]) -> dict[str, Any]:
     """Gespeicherte Form aus dem Formular (Abschnitt "return")."""
-    mode = data.get("mode")
-    return return_to_storage(
-        ReturnConfig(
-            mode=str(mode) if mode in RETURN_MODES else RETURN_OFF,
-            persons=_strings(data.get("persons")),
-            window=_window(data.get("window")),
-        )
-    )
+    return return_to_storage(_from_raw(data))
 
 
 def migrate_return(options: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:

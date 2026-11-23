@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.61.0b3] - 2026-11-23
+
+**Vorabversion: Annäherung verlängert die Eingangsverzögerung** (ADR 0015, Schritt 3 von 4).
+
+### Hinzugefügt
+- „Bei Rückkehr“ → „Mehr Einstellungen“ (nur „Unscharf mit Türbeleg“ und „Reinlassen“):
+  **Eingangsverzögerung nach Annäherung** (Sekunden, 0 = aus) und **Annäherung gilt** (Minuten,
+  Standard 15). Hat sich eine Person aus der Liste vorher genähert (Richtung „nähert sich“ aus
+  „Nähe“ oder Places), wartet Hauswacht nach dem Öffnen länger auf ihr Handy – z. B. 90 s statt
+  30 s. Wer sich nicht genähert hat, hat weiter nur die normale Zeit. Die Richtung schaltet nie
+  selbst unscharf.
+- Empfehlungen aus der Heimkehr-Beobachtung mit Knopf „übernehmen“, ⓘ-Erklärungen, Warnung,
+  wenn der Wert nicht länger als die normale Eingangsverzögerung ist; der Satz „So verhält sich
+  das:“ nennt die Verlängerung.
+- Ereignis `EntryDelayExtended`; die Push-Nachricht zur Eingangsverzögerung nennt die
+  verlängerte Zeit.
+
 ## [0.61.0b2] - 2026-11-23
 
 **Vorabversion: „weg“ nur mit Beleg** (ADR 0015, Schritt 2 von 4).
