@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b9] - 2026-11-23
+
+### Behoben
+- Einstellungsseite: Wurde beim Speichern etwas abgelehnt, stand die Meldung oft unten außer
+  Sicht – es sah aus, als würde nicht gespeichert. Jetzt rückt die erste Fehlermeldung nach dem
+  Speichern ins Bild (alle Dialoge).
+- Profil-Dialog: Die Meldungen zu **„Unscharf bei Rückkehr“** stehen jetzt direkt unter dem
+  Auswahlfeld, mit Hinweis, was nötig ist (Personen bei „Scharf, wenn alle diese Personen weg
+  sind“; „mit Türbeleg“ nicht zusammen mit Handy-Reinlassen beim Durchgang).
+
 ## [0.60.0b8] - 2026-11-23
 
 ### Behoben

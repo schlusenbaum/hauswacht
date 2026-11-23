@@ -411,6 +411,7 @@ class HauswachtRuleEditor extends HTMLElement {
       this._messages = (check && check.messages) || [base];
     }
     this._render();
+    window.HauswachtRevealError?.(this.shadowRoot); // Fehlermeldung ins Bild holen
   }
 
   _save() {

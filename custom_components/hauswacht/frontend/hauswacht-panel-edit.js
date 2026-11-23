@@ -665,6 +665,7 @@ class HauswachtSensorEditor extends HTMLElement {
       this.dispatchEvent(new CustomEvent("hw-stale", { bubbles: true, composed: true }));
     }
     this._render();
+    window.HauswachtRevealError?.(this.shadowRoot); // Fehlermeldung ins Bild holen
   }
 
   _deleteAction() {
@@ -824,3 +825,14 @@ if (!customElements.get("hauswacht-sensor-editor")) {
 
 // Für weitere Seitenblätter (Profile …): dieselbe Gestaltung
 window.HauswachtEditStyle = window.HauswachtEditStyle || EDIT_STYLE;
+
+// Nach einem abgelehnten Speichern: erste Fehlermeldung ins Bild holen. Die Dialoge sind lang;
+// ohne das stand die Meldung oft unten außer Sicht, und es sah aus, als würde nicht gespeichert.
+window.HauswachtRevealError =
+  window.HauswachtRevealError ||
+  ((root) => {
+    requestAnimationFrame(() => {
+      const err = root && root.querySelector(".err, .msgs, .error");
+      if (err) err.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  });
