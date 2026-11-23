@@ -8,16 +8,13 @@ from typing import Any
 from ..always_active import DEFAULT_SETTLE
 from ..areas import MAIN_AREA, profile_area
 from ..automation import (
-    ARRIVAL_AUTO_ONLY,
-    ARRIVAL_DOOR,
-    ARRIVAL_MODES,
-    ARRIVAL_OFF,
-    DEFAULT_ARRIVAL_WINDOW,
     DEFAULT_AWAY_DELAY,
     WEEKDAYS,
 )
 from ..passage import passage_from_input
 from ..profiles import DEFAULT_ICON, PANEL_MODE_NONE, profile_infos
+from ..returning import KEY as RETURN_KEY
+from ..returning import RETURN_OFF, return_from_input
 from ..rules import parse_rules
 from ..sensors import parse_zones, resolve_zones, slugify
 from . import Change, copy_options, failed
@@ -27,21 +24,18 @@ OPT_SIRENS = "sirens"
 
 
 def automation_from_input(data: Mapping[str, Any]) -> dict[str, Any]:
-    """Profil-Automatik aus dem Formular (Abschnitt "automation")."""
-    mode = data.get("auto_arrival_mode")
-    if mode not in ARRIVAL_MODES:
-        mode = ARRIVAL_AUTO_ONLY if data.get("auto_disarm_on_arrival") else ARRIVAL_OFF
+    """Profil-Automatik aus dem Formular (Abschnitt "automation").
+
+    „Unscharf bei Rückkehr“ gehört seit 0.61 zu „Bei Rückkehr“ (Abschnitt "return", ADR 0015);
+    die alten Schlüssel ``auto_arrival_*`` schreibt das Formular nicht mehr.
+    """
     return {
         "auto_arm_time": data.get("auto_arm_time") or None,
         "auto_disarm_time": data.get("auto_disarm_time") or None,
         "auto_weekdays": [d for d in data.get("auto_weekdays", []) if d in WEEKDAYS],
         "auto_away_persons": list(data.get("auto_away_persons") or []),
         "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
-        "auto_arrival_mode": mode,
-        "auto_arrival_window": int(data.get("auto_arrival_window") or DEFAULT_ARRIVAL_WINDOW),
         "auto_schedule": data.get("auto_schedule") or None,
-        # alter Schalter (bis 0.41) passend mitführen
-        "auto_disarm_on_arrival": mode == ARRIVAL_AUTO_ONLY,
     }
 
 
@@ -77,19 +71,13 @@ def validate_profile(
     chosen = resolve_zones(data.get("zones") or [], parse_zones(options), entities_by_label or {})
     if set(data.get("excluded") or []) - chosen:
         errors["excluded"] = "excluded_not_in_groups"
-    auto = data.get("automation") or {}
-    if auto.get("auto_arrival_mode", ARRIVAL_OFF) != ARRIVAL_OFF and not auto.get(
-        "auto_away_persons"
-    ):
-        errors["base"] = "arrival_needs_persons"
-    passage = data.get("passage") or {}
+    back = data.get(RETURN_KEY)
     if (
-        auto.get("auto_arrival_mode") == ARRIVAL_DOOR
-        and passage.get("enabled")
-        and passage.get("persons")
+        isinstance(back, Mapping)
+        and back.get("mode", RETURN_OFF) != RETURN_OFF
+        and not back.get("persons")
     ):
-        # Dieselbe Heimkehr kann nicht zugleich unscharf schalten und nur reinlassen (ADR 0013)
-        errors["base"] = "passage_door_proof"
+        errors["return"] = "return_needs_persons"
     return errors
 
 
@@ -165,8 +153,10 @@ def save_profile(
         stored["tilt_allowed"] = bool(data["tilt_allowed"])
     if not partial or "arm_on_close" in data:
         stored["arm_on_close"] = arm_on_close_from_input(data.get("arm_on_close") or {})
+    if isinstance(data.get(RETURN_KEY), Mapping):
+        stored[RETURN_KEY] = return_from_input(data[RETURN_KEY])
     if not partial or "passage" in data:
-        # Felder, die ein Formular nicht kennt (z. B. Personen im Dialog), bleiben erhalten
+        # Felder, die ein Formular nicht kennt, bleiben erhalten
         before = stored.get("passage")
         merged = dict(before) if isinstance(before, Mapping) else {}
         merged.update(data.get("passage") or {})

@@ -256,10 +256,11 @@ Small things can be changed without the settings dialog. The entities are on the
 
 1. **Edit profile** (`select.hauswacht_edit_profile`): which profile the following settings show
    and change.
-2. Numbers: exit and entry delay, alarm reaction time, alarm cycles, away delay, door proof
-   (location before door).
-3. Selections: open or unavailable sensors when arming, siren tone, volume, disarm on arrival
-   (Off / As before / With door proof).
+2. Numbers: exit and entry delay, alarm reaction time, alarm cycles, away delay, On return: time
+   window phone and door.
+3. Selections: open or unavailable sensors when arming, siren tone, volume, [On return](profiles.md#on-return)
+   (Nothing / Disarm only if armed automatically / Disarm with door proof / Disarm also after
+   arming by hand / Let in). The persons for it are set on the settings page.
 4. Switches: silent alarm, tamper triggers alarm.
 5. Times: arm automatically at / disarm automatically at.
 

@@ -73,7 +73,7 @@ def test_new_profile_from_full_form() -> None:
     assert stored["sirens"] == ["siren.flur"]  # nur eingetragene Sirenen
     assert stored["panel_mode"] == "away"
     assert stored["exit_delay"] == 60
-    assert stored["auto_arrival_mode"] == "off"
+    assert "auto_arrival_mode" not in stored  # gehört seit 0.61 zu „Bei Rückkehr“
     assert stored["arm_on_close"]["enabled"] is False
 
 
@@ -119,8 +119,8 @@ def test_validation() -> None:
     }
     excluded = _form(zones=["aussen"], excluded=[MOTION])
     assert save_profile(_options(), None, excluded).errors == {"excluded": "excluded_not_in_groups"}
-    arrival = _form(automation={"auto_arrival_mode": "auto"})
-    assert save_profile(_options(), None, arrival).errors == {"base": "arrival_needs_persons"}
+    back = _form(**{"return": {"mode": "door", "persons": []}})
+    assert save_profile(_options(), None, back).errors == {"return": "return_needs_persons"}
     # eigener Name und eigener Knopf beim Ändern erlaubt
     assert save_profile(_options(), "night", _form(name="Nacht", panel_mode="night")).ok
 
@@ -134,10 +134,22 @@ def test_panel_mode_free_in_other_area() -> None:
     assert change.options["profiles"]["abwesend"]["area"] == "wohnung"
 
 
-def test_old_arrival_switch_is_translated() -> None:
-    auto = automation_from_input({"auto_disarm_on_arrival": True, "auto_away_persons": ["p"]})
-    assert auto["auto_arrival_mode"] == "auto_only"
-    assert auto["auto_disarm_on_arrival"] is True
+def test_automation_form_no_longer_writes_arrival() -> None:
+    auto = automation_from_input({"auto_arrival_mode": "door", "auto_away_persons": ["p"]})
+    assert "auto_arrival_mode" not in auto
+    assert "auto_disarm_on_arrival" not in auto
+
+
+def test_return_saved_from_form_and_dialog_keeps_it() -> None:
+    form = _form(**{"return": {"mode": "passage", "persons": ["person.a"], "window": 7}})
+    change = save_profile(_options(), "night", form)
+    assert change.options is not None
+    stored = change.options["profiles"]["night"]
+    assert stored["return"] == {"mode": "passage", "persons": ["person.a"], "window": 7}
+    # Der Dialog kennt „Bei Rückkehr“ nicht – die Einstellung bleibt
+    again = save_profile(change.options, "night", _form(name="Nacht"))
+    assert again.options is not None
+    assert again.options["profiles"]["night"]["return"]["mode"] == "passage"
 
 
 def test_delete_profile() -> None:

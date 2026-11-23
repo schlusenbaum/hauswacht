@@ -13,13 +13,8 @@ from datetime import time
 from typing import Any
 
 from .automation import (
-    ARRIVAL_MODES,
-    ARRIVAL_OFF,
-    DEFAULT_ARRIVAL_WINDOW,
     DEFAULT_AWAY_DELAY,
-    MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
-    arrival_mode,
     parse_time,
 )
 from .profiles import (
@@ -32,6 +27,17 @@ from .profiles import (
     MAX_REACTION_TIME,
 )
 from .reactions import DEFAULT_TONE, DEFAULT_VOLUME
+from .returning import (
+    DEFAULT_WINDOW,
+    MAX_WINDOW,
+    RETURN_MODES,
+    RETURN_OFF,
+    parse_return,
+    return_to_storage,
+)
+from .returning import (
+    KEY as RETURN_KEY,
+)
 from .siren_guard import BURGLAR_TONES, VOLUME_LEVELS
 from .state_machine import OpenSensorPolicy, UnavailableSensorPolicy
 
@@ -57,7 +63,8 @@ NUMBERS: Mapping[str, NumberSetting] = {
     "reaction_time": NumberSetting(10, MAX_REACTION_TIME, 10, DEFAULT_REACTION_TIME, "s"),
     "max_alarm_cycles": NumberSetting(1, MAX_ALARM_CYCLES, 1, DEFAULT_ALARM_CYCLES, None),
     "auto_away_delay": NumberSetting(1, MAX_AWAY_DELAY, 1, DEFAULT_AWAY_DELAY, "min"),
-    "auto_arrival_window": NumberSetting(1, MAX_ARRIVAL_WINDOW, 1, DEFAULT_ARRIVAL_WINDOW, "min"),
+    # „Bei Rückkehr“ (ADR 0015): Schlüssel der Entitäten bleiben, gespeichert unter "return"
+    "auto_arrival_window": NumberSetting(1, MAX_WINDOW, 1, DEFAULT_WINDOW, "min"),
 }
 
 SELECTS: Mapping[str, SelectSetting] = {
@@ -69,7 +76,7 @@ SELECTS: Mapping[str, SelectSetting] = {
     ),
     "siren_tone": SelectSetting(tuple(sorted(BURGLAR_TONES)), DEFAULT_TONE),
     "siren_volume": SelectSetting(tuple(VOLUME_LEVELS), DEFAULT_VOLUME),
-    "auto_arrival_mode": SelectSetting(ARRIVAL_MODES, ARRIVAL_OFF),
+    "auto_arrival_mode": SelectSetting(RETURN_MODES, RETURN_OFF),
 }
 
 SWITCHES: Mapping[str, bool] = {
@@ -90,8 +97,14 @@ def _stored(options: Mapping[str, Any], profile_id: str) -> Mapping[str, Any]:
     return stored if isinstance(stored, Mapping) else {}
 
 
+# Einstellungs-Entität -> Feld in "return"
+_RETURN_FIELDS = {"auto_arrival_mode": "mode", "auto_arrival_window": "window"}
+
+
 def read_number(options: Mapping[str, Any], profile_id: str, key: str) -> int:
     setting = NUMBERS[key]
+    if key == "auto_arrival_window":
+        return parse_return(options, profile_id).window
     try:
         value = int(_stored(options, profile_id).get(key, setting.default))
     except (TypeError, ValueError):
@@ -102,7 +115,7 @@ def read_number(options: Mapping[str, Any], profile_id: str, key: str) -> int:
 def read_select(options: Mapping[str, Any], profile_id: str, key: str) -> str:
     setting = SELECTS[key]
     if key == "auto_arrival_mode":
-        return arrival_mode(_stored(options, profile_id))  # übernimmt den alten Schalter
+        return parse_return(options, profile_id).mode
     value = _stored(options, profile_id).get(key)
     return value if value in setting.options else setting.default
 
@@ -144,8 +157,10 @@ def write(options: Mapping[str, Any], profile_id: str, key: str, value: Any) -> 
     if profile_id not in options.get("profiles", {}):
         raise SettingError(profile_id)
     new = copy.deepcopy(dict(options))
+    if key in _RETURN_FIELDS:
+        back = return_to_storage(parse_return(options, profile_id))
+        back[_RETURN_FIELDS[key]] = _validated(key, value)
+        new["profiles"][profile_id][RETURN_KEY] = back
+        return new
     new["profiles"][profile_id][key] = _validated(key, value)
-    if key == "auto_arrival_mode":
-        # alter Schalter (bis 0.41) passend mitführen
-        new["profiles"][profile_id]["auto_disarm_on_arrival"] = value == "auto_only"
     return new

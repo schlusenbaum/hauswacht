@@ -214,21 +214,17 @@
         "sections": {
           "automation": {
             "name": "Automatik",
-            "description": "Optional: wann dieses Profil von selbst scharf oder unscharf wird. Automatisch scharf geschaltet wird nur aus „unscharf“ heraus; offene Sensoren werden dabei nie überbrückt. Ein laufender Alarm wird nie automatisch beendet.",
+            "description": "Optional: wann dieses Profil von selbst scharf oder unscharf wird. Automatisch scharf geschaltet wird nur aus „unscharf“ heraus; offene Sensoren werden dabei nie überbrückt. Ein laufender Alarm wird nie automatisch beendet. **Bei Rückkehr** (unscharf oder reinlassen, wenn jemand heimkommt) stellst du seit 0.61 auf der Einstellungsseite ein: Seitenleiste → Hauswacht → Profile.",
             "data": {
               "auto_arm_time": "Scharf um",
               "auto_disarm_time": "Unscharf um",
               "auto_schedule": "Oder nach Zeitplan (Helfer)",
               "auto_weekdays": "An diesen Tagen (leer = täglich)",
               "auto_away_persons": "Scharf, wenn alle diese Personen weg sind",
-              "auto_away_delay": "Wartezeit, bevor scharf geschaltet wird",
-              "auto_arrival_mode": "Unscharf, wenn eine dieser Personen heimkommt",
-              "auto_arrival_window": "Türbeleg: so lange vor der Tür darf das Handy „zuhause“ melden"
+              "auto_away_delay": "Wartezeit, bevor scharf geschaltet wird"
             },
             "data_description": {
               "auto_away_delay": "Handys, die nur über das WLAN erkannt werden, melden im Standby manchmal kurz „weg“. Die Wartezeit verhindert, dass dann versehentlich scharf geschaltet wird.",
-              "auto_arrival_mode": "**Wie bisher:** nur wenn Hauswacht das Profil selbst scharf geschaltet hat und noch keine Tür aufging. **Mit Türbeleg:** Rückkehr UND Öffnen einer Eingangstür innerhalb des Zeitfensters, egal in welcher Reihenfolge – auch während der Eingangsverzögerung. Ein laufender Alarm wird nie beendet. Achtung: Wer das Handy einer dieser Personen hat, schaltet damit unscharf.",
-              "auto_arrival_window": "Nur für „mit Türbeleg“, Standard 5 Minuten. Verzögert den Alarm **nicht**: Der kommt wie immer nach der Eingangsverzögerung. Beispiel: Das Handy meldet an der Straßenecke „zuhause“, 2 Minuten später geht die Haustür auf → sofort unscharf. Meldet sich das Handy erst nach der Tür, muss das innerhalb der Eingangsverzögerung passieren.",
               "auto_schedule": "Für **je Wochentag andere Zeiten**: einen Zeitplan-Helfer wählen (Einstellungen → Geräte & Dienste → Helfer → Zeitplan). Beginnt ein Zeitblock, wird das Profil scharf; endet er, unscharf. Beispiel: Mo–Do 22:30–6:00, Fr–Sa 0:30–8:00. Die Wochentage oben gelten dafür nicht. Nach einem Neustart schaltet der Zeitplan nichts nach."
             }
           },
@@ -243,16 +239,14 @@
           },
           "passage": {
             "name": "Durchgang – rein oder raus, bleibt scharf",
-            "description": "Das Profil bleibt scharf, nur eine Tür (und die Melder auf dem Weg) ist kurz frei. Reinkommen: in der Eingangsverzögerung PIN oder Karte und eine Profil-Taste (oder die Durchgang-Taste) am Keypad – die Tür ist frei, bis sie zu ist. Rausgehen: solange scharf, PIN oder Karte und irgendeine Profil-Taste (es wird nie umgeschaltet) oder die Durchgang-Taste. Gedacht für Profile, die nur die Außenhaut überwachen; Melder im Haus bleiben scharf.",
+            "description": "Das Profil bleibt scharf, nur eine Tür (und die Melder auf dem Weg) ist kurz frei. Reinkommen: in der Eingangsverzögerung PIN oder Karte und eine Profil-Taste (oder die Durchgang-Taste) am Keypad – die Tür ist frei, bis sie zu ist. Rausgehen: solange scharf, PIN oder Karte und irgendeine Profil-Taste (es wird nie umgeschaltet) oder die Durchgang-Taste. Gedacht für Profile, die nur die Außenhaut überwachen; Melder im Haus bleiben scharf. Handy-Reinlassen gehört seit 0.61 zu **Bei Rückkehr** auf der Einstellungsseite.",
             "data": {
               "enabled": "Durchgang erlauben",
               "duration": "Durchgangszeit (Minuten)",
               "out_doors": "Rausgehen: welche Tür",
               "out_end": "Rausgehen: Ende",
               "path": "Melder auf dem Weg (z. B. Bewegungsmelder in der Einfahrt)",
-              "path_after": "Reinkommen: Weg noch frei nach dem Schließen der Tür",
-              "persons": "Handy-Reinlassen: diese Personen (leer = aus)",
-              "window": "Handy-Reinlassen: so lange vor der Tür darf das Handy „zuhause“ melden"
+              "path_after": "Reinkommen: Weg noch frei nach dem Schließen der Tür"
             }
           }
         },
@@ -350,7 +344,7 @@
       },
       "homecoming": {
         "title": "Anwesenheit und Heimkehr-Beobachtung",
-        "description": "Hier stellst du ein, woran Hauswacht erkennt, ob jemand zuhause ist. Das gilt für die **Profil-Automatik** („Scharf, wenn alle weg“, „Unscharf bei Rückkehr“) und für die **Heimkehr-Beobachtung**.\n\n**Heimkehr beobachten:** Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.\n\n**Heim-WLAN(s):** Namen eurer WLANs, durch Komma getrennt (z. B. für den WLAN-Sensor der Companion App). Im nächsten Schritt wählst du je Person zusätzliche Signale – auch für die Personen aus der Profil-Automatik.\n\nAußerdem misst die Beobachtung, wie lange es von „Tür auf“ bis „unscharf“ dauert – daraus ergibt sich eine Empfehlung für die Eingangsverzögerung.",
+        "description": "Hier stellst du ein, woran Hauswacht erkennt, ob jemand zuhause ist. Das gilt für die **Profil-Automatik** („Scharf, wenn alle weg“, „Bei Rückkehr“) und für die **Heimkehr-Beobachtung**.\n\n**Heimkehr beobachten:** Hauswacht zeichnet auf, wann Eingangstüren geöffnet und Personen als heimgekommen erkannt werden – getrennt nach Ortungsquelle – und rechnet aus, ob eine automatische Heimkehr zuverlässig wäre. Die Beobachtung schaltet NICHTS. Den Bericht erstellt der Knopf „Heimkehr-Bericht“.\n\n**Heim-WLAN(s):** Namen eurer WLANs, durch Komma getrennt (z. B. für den WLAN-Sensor der Companion App). Im nächsten Schritt wählst du je Person zusätzliche Signale – auch für die Personen aus der Profil-Automatik.\n\nAußerdem misst die Beobachtung, wie lange es von „Tür auf“ bis „unscharf“ dauert – daraus ergibt sich eine Empfehlung für die Eingangsverzögerung.",
         "data": {
           "homecoming_observe": "Heimkehr beobachten",
           "homecoming_persons": "Personen für die Beobachtung",
@@ -1496,7 +1490,6 @@
       "siren_tone_fire": "Ein Brandton ist für Einbruch gesperrt – nur mit der Experten-Freigabe unten.",
       "siren_tone_fire_detector": "Diese Sirene hat eigene Brandsensoren (Rauchmelder) – ein Brandton für Einbruch ist hier nie erlaubt.",
       "siren_tone_fire_confirm": "Bitte die Experten-Freigabe ausdrücklich bestätigen.",
-      "arrival_needs_persons": "„Unscharf bei Rückkehr“ braucht mindestens eine Person unter „Scharf, wenn alle diese Personen weg sind“.",
       "control_entity": "Bitte eine Entität wählen.",
       "control_who": "Für die allgemeine Quelle einen Sensor oder ein Ereignis mit der Kennung wählen.",
       "button_no_press": "Mindestens eine Druckart einem Alarmprofil zuordnen.",
@@ -1523,7 +1516,7 @@
       "mqtt_topic_invalid": "Das Topic darf kein `+` oder `#` enthalten und nicht mit `/` beginnen.",
       "mqtt_topic_z2m": "Unter `zigbee2mqtt` lauschen die Zigbee2MQTT-Keypads – bitte ein anderes Topic.",
       "mqtt_topic_taken": "Dieses Topic (oder ein überlappendes) nutzt schon eine andere MQTT-Schnittstelle.",
-      "passage_door_proof": "„Unscharf mit Türbeleg“ und „Handy-Reinlassen“ (Durchgang) gehen im selben Profil nicht zusammen – bitte eins von beiden wählen."
+      "return_needs_persons": "„Bei Rückkehr“ braucht mindestens eine Person."
     },
     "abort": {
       "disarm_first": "Bitte Hauswacht zuerst unscharf schalten, bevor Optionen geändert werden.",
@@ -1695,13 +1688,6 @@
         "end_alarm": "Alarm beenden"
       }
     },
-    "arrival_mode": {
-      "options": {
-        "off": "Aus",
-        "auto_only": "Wie bisher (nur nach automatischem Scharfschalten)",
-        "door": "Mit Türbeleg (Rückkehr und Eingangstür)"
-      }
-    },
     "lock_source": {
       "options": {
         "nuki_mqtt": "Nuki über MQTT (lockActionEvent)",
@@ -1864,11 +1850,13 @@
         }
       },
       "setting_auto_arrival_mode": {
-        "name": "Unscharf bei Rückkehr",
+        "name": "Bei Rückkehr",
         "state": {
-          "off": "Aus",
-          "auto_only": "Wie bisher (nur nach automatischem Scharfschalten)",
-          "door": "Mit Türbeleg (Rückkehr und Eingangstür)"
+          "off": "Nichts",
+          "auto_only": "Unscharf, nur wenn automatisch scharf",
+          "door": "Unscharf mit Türbeleg",
+          "always": "Unscharf, auch nach Scharfschalten von Hand",
+          "passage": "Reinlassen (Durchgang)"
         }
       }
     },
@@ -1906,7 +1894,7 @@
         "name": "Wartezeit bei Abwesenheit"
       },
       "setting_auto_arrival_window": {
-        "name": "Türbeleg: Ortung vor der Tür"
+        "name": "Bei Rückkehr: Zeitfenster Handy und Tür"
       }
     },
     "time": {

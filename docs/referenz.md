@@ -60,8 +60,8 @@ Einstellungen“, für Automationen selten nötig.
 | `number.hauswacht_dauer_der_alarmreaktion` | `number.hauswacht_alarm_reaction_time` | Dauer der Alarmreaktion (s) |
 | `number.hauswacht_alarmzyklen` | `number.hauswacht_alarm_cycles` | Höchstzahl Alarmzyklen |
 | `number.hauswacht_wartezeit_bei_abwesenheit` | `number.hauswacht_away_delay` | Automatik: Wartezeit, wenn alle weg sind |
-| `number.hauswacht_turbeleg_ortung_vor_der_tur` | `number.hauswacht_door_proof_location_before_door` | Automatik: Türbeleg-Fenster |
-| `select.hauswacht_unscharf_bei_ruckkehr` | `select.hauswacht_disarm_on_arrival` | Automatik: Aus, Wie bisher, Mit Türbeleg |
+| `number.hauswacht_turbeleg_ortung_vor_der_tur` | `number.hauswacht_door_proof_location_before_door` | [Bei Rückkehr](profile.md#bei-rückkehr): Zeitfenster Handy und Tür (seit 0.61 heißt die Entität „Bei Rückkehr: Zeitfenster Handy und Tür“; bei bestehenden Installationen bleibt die ID) |
+| `select.hauswacht_unscharf_bei_ruckkehr` | `select.hauswacht_disarm_on_arrival` | [Bei Rückkehr](profile.md#bei-rückkehr): Nichts, Unscharf nur wenn automatisch scharf, Unscharf mit Türbeleg, Unscharf auch nach Scharfschalten von Hand, Reinlassen (seit 0.61 heißt die Entität „Bei Rückkehr“; bei bestehenden Installationen bleibt die ID) |
 | `select.hauswacht_offene_sensoren_beim_scharfschalten` | `select.hauswacht_open_sensors_when_arming` | Verhalten bei offenen Meldern |
 | `select.hauswacht_ausgefallene_sensoren_beim_scharfschalten` | `select.hauswacht_unavailable_sensors_when_arming` | Verhalten bei ausgefallenen Meldern |
 | `select.hauswacht_sirenenton` | `select.hauswacht_siren_tone` | Sirenenton |
@@ -237,7 +237,7 @@ Türbeleg`, `Neustart`.
 | `AutoDisarmed` | Automatisch unscharf | `profile_id`, `reason` |
 | `AutoDisarmSkipped` | Nicht unscharf (z. B. Alarm läuft, anderes Profil scharf) | `profile_id`, `reason` |
 | `ArrivalNoted` | „Unscharf mit Türbeleg“: Rückkehr erkannt, Profil scharf | `profile_id`, `persons` |
-| `PhoneArrivalNoted` | [Handy-Reinlassen](durchgang.md#reinlassen-per-handy): Heimkehr erkannt (vorher mindestens 5 Minuten weg), Profil scharf | `profile_id`, `persons` |
+| `PhoneArrivalNoted` | [Bei Rückkehr: Reinlassen](durchgang.md#reinlassen-per-handy): Heimkehr erkannt (vorher mindestens 5 Minuten weg), Profil scharf | `profile_id`, `persons` |
 | `DoorNoted` | „Unscharf mit Türbeleg“: Eingangstür erkannt | `profile_id`, `door` |
 
 ### Bedienung

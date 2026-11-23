@@ -417,6 +417,40 @@ async def test_phone_too_early_or_short_away_does_not_let_in(
     assert _panel(hass) == AlarmControlPanelState.PENDING
 
 
+async def test_return_passage_lets_in_without_passage_switch(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    """„Bei Rückkehr: reinlassen“ (0.61) braucht den Durchgang selbst nicht eingeschaltet."""
+    hass.states.async_set(FINJA, "not_home", {"friendly_name": "Finja"})
+    options = _options(enabled=False)
+    options["profiles"]["night"]["return"] = {"mode": "passage", "persons": [FINJA], "window": 5}
+    async_mock_service(hass, "notify", PHONE)
+    await setup_entry(hass, make_entry(options))
+    await _arm_night(hass)
+    freezer.tick(timedelta(minutes=6))
+    await _set(hass, DOOR, "on")
+    assert _panel(hass) == AlarmControlPanelState.PENDING
+    hass.states.async_set(FINJA, "home", {"friendly_name": "Finja"})
+    await hass.async_block_till_done()
+    assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_migration_passage_wins_and_explains(hass: HomeAssistant) -> None:
+    """Waren „Unscharf bei Rückkehr“ und Handy-Reinlassen beide an, gewinnt reinlassen."""
+    options = _options(persons=[FINJA], window=4)
+    options["profiles"]["night"].update(auto_away_persons=[FINJA], auto_arrival_mode="door")
+    entry = make_entry(options)
+    await setup_entry(hass, entry)
+    back = entry.options["profiles"]["night"]["return"]
+    assert back == {"mode": "passage", "persons": [FINJA], "window": 4}
+    from homeassistant.components.persistent_notification import (  # noqa: PLC0415
+        _async_get_or_create_notifications,
+    )
+
+    notes = _async_get_or_create_notifications(hass)
+    assert any(key.startswith("hauswacht_return_") for key in notes)
+
+
 # --- NFC-Aufkleber und Kartenleser (0.59.0b3) ------------------------------------------
 
 STICKER = "AA-BB-CC"

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import time
-from typing import Any
 
 import pytest
 
@@ -44,7 +43,6 @@ def test_parse_automation() -> None:
                 "auto_weekdays": ["mon", "tue", "xyz"],
                 "auto_away_persons": ["person.a", "person.b", "person.a"],
                 "auto_away_delay": 20,
-                "auto_disarm_on_arrival": True,
             }
         }
     }
@@ -54,7 +52,6 @@ def test_parse_automation() -> None:
     assert config.weekdays == {"mon", "tue"}
     assert config.away_persons == ("person.a", "person.b")
     assert config.away_delay == 20
-    assert config.disarm_on_arrival
     assert config.enabled
 
 
@@ -101,40 +98,7 @@ def test_anyone_home() -> None:
 # --- 0.42: Anwesenheit aus mehreren Signalen, Unscharf mit Türbeleg -------------------
 
 
-def test_arrival_mode_takes_over_old_switch() -> None:
-    from custom_components.hauswacht.core.automation import (  # noqa: PLC0415
-        ARRIVAL_AUTO_ONLY,
-        ARRIVAL_DOOR,
-        ARRIVAL_OFF,
-        arrival_mode,
-    )
-
-    assert arrival_mode({}) == ARRIVAL_OFF
-    assert arrival_mode({"auto_disarm_on_arrival": True}) == ARRIVAL_AUTO_ONLY
-    assert arrival_mode({"auto_disarm_on_arrival": False}) == ARRIVAL_OFF
-    # Die neue Auswahl gewinnt gegen den alten Schalter
-    assert arrival_mode({"auto_arrival_mode": "door", "auto_disarm_on_arrival": True}) == (
-        ARRIVAL_DOOR
-    )
-    assert arrival_mode({"auto_arrival_mode": "quatsch"}) == ARRIVAL_OFF
-
-
-def test_door_proof_needs_persons() -> None:
-    options: dict[str, Any] = {"profiles": {"p": {"auto_arrival_mode": "door"}}}
-    config = parse_automation(options, "p")
-    assert config.arrival_mode == "door"
-    assert not config.door_proof
-    assert not config.disarm_on_arrival
-    options["profiles"]["p"]["auto_away_persons"] = ["person.a"]
-    config = parse_automation(options, "p")
-    assert config.door_proof
-    assert config.disarm_on_arrival
-
-
-@pytest.mark.parametrize(("value", "expected"), [(10, 10), (0, 5), (31, 5), ("x", 5), (None, 5)])
-def test_arrival_window(value: object, expected: int) -> None:
-    options = {"profiles": {"p": {"auto_arrival_window": value}}}
-    assert parse_automation(options, "p").arrival_window == expected
+# „Unscharf bei Rückkehr“ und sein Zeitfenster stehen seit 0.61 in test_returning.py
 
 
 @pytest.mark.parametrize(

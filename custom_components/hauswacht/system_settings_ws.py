@@ -32,6 +32,7 @@ from .core.controls import (
 )
 from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info, stale_override_hours
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
+from .core.returning import parse_return
 from .core.silence import format_duration
 from .names import display_name
 
@@ -44,10 +45,11 @@ def _measurements(main: Any) -> dict[str, Any] | None:
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
-    """Personen der Heimkehr-Beobachtung und der Profil-Automatik (ohne Doppelte)."""
+    """Personen der Heimkehr-Beobachtung, der Automatik und „Bei Rückkehr“ (ohne Doppelte)."""
     persons = [p for p in options.get("homecoming_persons", []) if isinstance(p, str)]
     for pid in profile_ids(options):
         persons.extend(parse_automation(options, pid).away_persons)
+        persons.extend(parse_return(options, pid).persons)  # „Bei Rückkehr“ (0.61)
     return list(dict.fromkeys(persons))
 
 

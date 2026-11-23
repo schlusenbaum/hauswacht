@@ -244,16 +244,3 @@ def test_save_profile_keeps_unknown_passage_fields() -> None:
     assert stored["path"] == [DRIVEWAY]
     assert stored["persons"] == ["person.finja"]  # Dialog kennt die Personen nicht
     assert stored["window"] == 7
-
-
-def test_phone_passage_and_door_proof_exclude_each_other() -> None:
-    from custom_components.hauswacht.core.changes.profiles import validate_profile  # noqa: PLC0415
-
-    data = {
-        "name": "Nacht",
-        "automation": {"auto_arrival_mode": "door", "auto_away_persons": ["person.finja"]},
-        "passage": {"enabled": True, "persons": ["person.finja"]},
-    }
-    assert validate_profile({"profiles": {}}, None, data)["base"] == "passage_door_proof"
-    data["passage"] = {"enabled": True, "persons": []}
-    assert "base" not in validate_profile({"profiles": {}}, None, data)

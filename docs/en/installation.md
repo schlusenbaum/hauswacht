@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.60.0:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.61.0b1:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -189,8 +189,8 @@ from the moment Home Assistant has finished starting):
 Hauswacht is armed again, profile "Night", and sends "armed again after restart (Night)". The
 tilted bathroom window was already bypassed before and stays bypassed.
 
-The profile automation also remembers whether it had armed – "Disarm on arrival – as before"
-keeps working after a restart.
+The profile automation also remembers whether it had armed – "On return – Disarm, only if armed
+automatically" keeps working after a restart.
 
 ### Always armed
 

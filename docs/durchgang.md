@@ -31,8 +31,6 @@ Profil):
 | Rausgehen: Ende | **Nach Ablauf der Zeit** (man kann mehrmals raus und rein) oder **schon, wenn ich zurück bin und die Tür zu ist** (die Tür ging zum zweiten Mal zu: raus und zurück) | nach Ablauf der Zeit |
 | Melder auf dem Weg | Außenmelder, die auf dem Weg auslösen würden – z. B. ein Bewegungsmelder in der Einfahrt, am Gartentor oder an den Mülltonnen | keine |
 | Reinkommen: Weg noch frei nach dem Schließen | So lange bleiben die Melder auf dem Weg noch frei, nachdem die Tür zu ist | 60 Sekunden |
-| Handy-Reinlassen: diese Personen | Diese Personen lässt Hauswacht ohne PIN herein, wenn ihr Handy heimkommt – siehe [Reinlassen per Handy](#reinlassen-per-handy) | keine (aus) |
-| Handy darf so lange vor der Tür „zuhause“ melden | Zeitfenster für das Handy-Reinlassen | 5 Minuten (1–30) |
 
 Als **Tür** zählen alle Melder mit der Rolle **Eingang** (sie starten die Eingangsverzögerung).
 Eine eigene Taste brauchst du nicht: Während das Profil scharf ist oder die Eingangsverzögerung
@@ -69,10 +67,14 @@ während der Eingangsverzögerung passieren; danach ist es ein Alarm.
 
 ### Reinlassen per Handy
 
-Unter **„Handy-Reinlassen: diese Personen“** wählst du Personen, die Hauswacht **ohne PIN**
-hereinlässt, wenn ihr Handy heimkommt. Die Erkennung ist dieselbe wie bei
-[„Unscharf mit Türbeleg“](profile.md#unscharf-bei-rückkehr) – nur dass am Ende nicht unscharf
-geschaltet, sondern hereingelassen wird:
+*Seit 0.61 eingestellt unter [Bei Rückkehr](profile.md#bei-rückkehr) → Stufe
+**„Reinlassen (Durchgang)“** (Einstellungsseite → Profil). Personen und Zeitfenster stehen dort;
+„Durchgang erlauben“ muss dafür nicht eingeschaltet sein.*
+
+Bei „Reinlassen (Durchgang)“ lässt Hauswacht die gewählten Personen **ohne PIN** herein, wenn
+ihr Handy heimkommt. Die Erkennung ist dieselbe wie bei
+[„Unscharf mit Türbeleg“](profile.md#bei-rückkehr) – nur dass am Ende nicht unscharf
+geschaltet, sondern hereingelassen wird; das Profil bleibt scharf:
 
 - Die Person **kommt heim**: Sie war vorher **mindestens 5 Minuten sicher weg** und ist jetzt
   zuhause (Personen-Entität plus die Signale unter „Anwesenheit und Heimkehr“). Ein Handy, das
@@ -93,8 +95,9 @@ geschaltet, sondern hereingelassen wird:
   gewesen sein.
 - Die Nachricht lautet z. B. „Finja (Handy) hereingelassen (Haustür) – Profil Nacht bleibt
   scharf“ – ein Reinlassen, das nicht stimmt, fällt so sofort auf.
-- **Nicht zusammen mit „Unscharf mit Türbeleg“** im selben Profil: Dieselbe Heimkehr kann nicht
-  zugleich unscharf schalten und nur reinlassen. Die Einstellung lässt nur eins zu.
+- **Nur eins von beiden:** „Bei Rückkehr“ hat genau eine Stufe – entweder „Unscharf mit
+  Türbeleg“ oder „Reinlassen“. Dieselbe Heimkehr kann nicht zugleich unscharf schalten und nur
+  reinlassen.
 - **Welche Eingangsverzögerung brauche ich?** Meldet sich das Handy oft erst nach dem Öffnen,
   muss die Eingangsverzögerung so lange reichen. Die
   [Heimkehr-Beobachtung](beobachtung.md#empfehlung-für-unscharf-mit-türbeleg) rechnet das je
@@ -102,7 +105,7 @@ geschaltet, sondern hereingelassen wird:
 
 > **Restrisiko:** Wer das Handy einer freigegebenen Person **und** Zugang zur Tür hat (z. B.
 > Handy und Schlüssel gestohlen), kommt ohne Alarm herein. Für Profile wie „Urlaub“ deshalb
-> besser keine Personen eintragen.
+> „Bei Rückkehr“ auf **Nichts** lassen.
 
 **Kommen zwei nacheinander**, braucht jede neue Türöffnung ihren eigenen Ausweis: Ist die Tür
 nach Finja zu, ist sie wieder scharf. Kommt Niklas drei Minuten später, läuft für ihn wieder die

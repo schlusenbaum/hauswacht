@@ -31,8 +31,6 @@ profile):
 | Going out: end | **When the time is up** (you can go out and in several times) or **as soon as I am back and the door is closed** (the door closed for the second time: out and back) | when the time is up |
 | Sensors on the way | Outdoor sensors that would trigger on the way – e.g. a motion sensor in the driveway, at the garden gate or at the bins | none |
 | Coming in: way still free after closing | How long the sensors on the way stay free after the door is closed | 60 seconds |
-| Let in by phone: these persons | Hauswacht lets these persons in without PIN when their phone comes home – see [let in by phone](#let-in-by-phone) | none (off) |
-| Phone may report "home" this long before the door | Time window for letting in by phone | 5 minutes (1–30) |
 
 All sensors with the role **entry** count as a **door** (they start the entry delay). You do not
 need an extra key: while the profile is armed or the entry delay runs, **any profile key** with
@@ -67,10 +65,13 @@ delay; after that it is an alarm.
 
 ### Let in by phone
 
-Under **"Let in by phone: these persons"** you choose persons that Hauswacht lets in **without
-PIN** when their phone comes home. The detection is the same as for
-["disarm with door proof"](profiles.md#disarm-on-arrival) – only that at the end the person is let
-in instead of disarming:
+*Since 0.61 set at [On return](profiles.md#on-return) → level **"Let in (passage)"** (settings
+page → profile). Persons and time window are there; "Allow passage" does not need to be on for
+it.*
+
+With "Let in (passage)" Hauswacht lets the chosen persons in **without PIN** when their phone
+comes home. The detection is the same as for ["Disarm with door proof"](profiles.md#on-return) –
+only that at the end the person is let in instead of disarming; the profile stays armed:
 
 - The person **comes home**: they were **safely away for at least 5 minutes** before and are home
   now (person entity plus the signals under "Presence and homecoming"). A phone lying in the house
@@ -91,16 +92,16 @@ in instead of disarming:
   first.
 - The message reads e.g. "Finja (phone) let in (front door) – profile Night stays armed" – a wrong
   let-in is noticed at once.
-- **Not together with "disarm with door proof"** in the same profile: the same homecoming cannot
-  disarm and only let in at the same time. The setting only allows one of them.
+- **Only one of the two:** "On return" has exactly one level – either "Disarm with door proof" or
+  "Let in". The same homecoming cannot disarm and only let in at the same time.
 - **Which entry delay do I need?** If the phone often reports only after the opening, the entry
   delay has to be long enough. The
   [homecoming observation](observations.md#recommendation-for-disarm-with-door-proof) calculates
   this per person – the value applies here just the same.
 
 > **Residual risk:** whoever has the phone of an allowed person **and** access to the door (e.g.
-> phone and key stolen) gets in without alarm. For profiles like "Vacation", better enter no
-> persons.
+> phone and key stolen) gets in without alarm. For profiles like "Vacation", better leave
+> "On return" at **Nothing**.
 
 **If two come one after the other**, every new door opening needs its own credential: once the
 door is closed after Finja, it is armed again. If Niklas comes three minutes later, the entry

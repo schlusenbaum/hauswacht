@@ -16,17 +16,13 @@ from homeassistant.helpers import entity_registry as er
 from .core.always_active import DEFAULT_SETTLE, MAX_SETTLE, parse_arm_on_close
 from .core.areas import MAIN_AREA, parse_areas, profile_area
 from .core.automation import (
-    ARRIVAL_MODES,
-    DEFAULT_ARRIVAL_WINDOW,
     DEFAULT_AWAY_DELAY,
-    MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
     WEEKDAYS,
     parse_automation,
 )
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
-from .core.passage import MAX_WINDOW as PASSAGE_MAX_WINDOW
 from .core.passage import parse_passage, passage_from_input
 from .core.profiles import (
     DEFAULT_ALARM_CYCLES,
@@ -43,6 +39,8 @@ from .core.profiles import (
     profile_settings,
 )
 from .core.reactions import DEFAULT_TONE, DEFAULT_VOLUME, parse_reaction
+from .core.returning import MAX_WINDOW as RETURN_MAX_WINDOW
+from .core.returning import RETURN_MODES, ReturnConfig, parse_return, return_to_storage
 from .core.rules import parse_rules, profile_rule_ids
 from .core.sensor_types import excluded_sensors
 from .core.siren_guard import BURGLAR_TONE_ORDER, VOLUME_LEVELS
@@ -95,9 +93,9 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
             "auto_schedule": auto.schedule,
             "auto_away_persons": list(auto.away_persons),
             "auto_away_delay": auto.away_delay,
-            "auto_arrival_mode": auto.arrival_mode,
-            "auto_arrival_window": auto.arrival_window,
         },
+        # „Bei Rückkehr“ (ADR 0015)
+        "return": return_to_storage(parse_return(options, pid)),
         "arm_on_close": {
             "enabled": close.enabled,
             "doors": sorted(close.doors),
@@ -111,8 +109,6 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
                 "out_end": passage.out_end.value,
                 "path": sorted(passage.path),
                 "path_after": passage.path_after,
-                "persons": list(passage.persons),
-                "window": passage.window,
             }
         ),
     }
@@ -162,7 +158,7 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("schedule")
             ],
             "weekdays": list(WEEKDAYS),
-            "arrival_modes": list(ARRIVAL_MODES),
+            "return_modes": list(RETURN_MODES),
             "tilt": bool(parse_tilt_sources(options)),
         },
         "defaults": {
@@ -194,9 +190,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 "auto_schedule": None,
                 "auto_away_persons": [],
                 "auto_away_delay": DEFAULT_AWAY_DELAY,
-                "auto_arrival_mode": "off",
-                "auto_arrival_window": DEFAULT_ARRIVAL_WINDOW,
             },
+            "return": return_to_storage(ReturnConfig()),
             "arm_on_close": {"enabled": False, "doors": [], "settle": DEFAULT_SETTLE},
             "passage": passage_from_input({}),
         },
@@ -205,10 +200,9 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "reaction": MAX_REACTION_TIME,
             "cycles": MAX_ALARM_CYCLES,
             "away_delay": MAX_AWAY_DELAY,
-            "arrival_window": MAX_ARRIVAL_WINDOW,
+            "return_window": RETURN_MAX_WINDOW,
             "settle": MAX_SETTLE,
             "passage_duration": PASSAGE_MAX_DURATION,
             "passage_after": PASSAGE_MAX_AFTER,
-            "passage_window": PASSAGE_MAX_WINDOW,
         },
     }

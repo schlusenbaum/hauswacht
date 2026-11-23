@@ -48,7 +48,9 @@ Eine Person gilt erst als weg, wenn die Person selbst **und alle** ihre zusätzl
 unter Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung, welche Signale gewählt
 sind, und deren Zustand unter Entwicklerwerkzeuge → Zustände.
 
-**„Unscharf bei Rückkehr – mit Türbeleg“ schaltet nicht unscharf.**
+**„Bei Rückkehr – Unscharf mit Türbeleg“ schaltet nicht unscharf.**
+Ist die Person unter „Bei Rückkehr“ → „Für diese Personen“ angekreuzt? Die Liste ist seit 0.61
+unabhängig von „Scharf, wenn alle weg“.
 Es braucht beides: Die Person war vorher sicher **weg** und meldet jetzt **zuhause**, und eine
 **Eingangstür** (Rolle „Eingang“) geht auf – solange das Profil scharf ist oder die
 Eingangsverzögerung läuft. Die Ortung darf höchstens das Zeitfenster (Standard 5 Minuten)

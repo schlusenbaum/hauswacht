@@ -1471,12 +1471,17 @@ class HauswachtRuntime:
         )
 
     @callback
-    def passage(self, changed_by: str | None) -> Direction:
+    def passage(self, changed_by: str | None, *, by_return: bool = False) -> Direction:
         """Durchgang öffnen – in der Eingangsverzögerung reinkommen, sonst rausgehen.
 
         Der Ausweis ist schon geprüft (Keypad, Aktion). Nicht möglich -> ServiceValidationError.
+        ``by_return``: „Bei Rückkehr: reinlassen“ (ADR 0015) – gilt auch, wenn der Durchgang für
+        Keypad und Co. nicht eingeschaltet ist; die Einstellungen (Weg, Nachlauf) gelten trotzdem.
         """
-        if not self.passage_ready:
+        ready = self.passage_ready or (
+            by_return and self.ctx.state in (AlarmState.ARMED, AlarmState.PENDING)
+        )
+        if not ready:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key="passage_not_possible"
             )

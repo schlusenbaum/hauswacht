@@ -44,7 +44,9 @@ A person only counts as away when the person itself **and all** their additional
 settings → Presence and homecoming observation which signals are selected, and their state under
 Developer tools → States.
 
-**"Disarm on arrival – with door proof" does not disarm.**
+**"On return – Disarm with door proof" does not disarm.**
+Is the person ticked under "On return" → "For these persons"? Since 0.61 that list is independent
+of "Arm when all away".
 Both are needed: the person was reliably **away** before and now reports **home**, and an **entry
 door** (role "entry") opens – while the profile is armed or the entry delay is running. The
 location may be at most the time window (default 5 minutes) **before** the door; **after** the

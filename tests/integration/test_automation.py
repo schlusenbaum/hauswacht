@@ -348,9 +348,11 @@ async def test_earliest_signal_counts_as_arrival(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 
-async def test_options_flow_saves_arrival_mode(hass: HomeAssistant) -> None:
+async def test_options_flow_keeps_return_settings(hass: HomeAssistant) -> None:
+    """„Bei Rückkehr“ gibt es nur auf der Einstellungsseite – der Dialog lässt es stehen."""
     hass.states.async_set(A, "home")
-    entry = make_entry()
+    back = {"mode": "door", "persons": [A], "window": 3}
+    entry = make_entry({"profiles": {"away": {"return": back}}})
     await setup_entry(hass, entry)
 
     async def _edit(automation: dict[str, Any]) -> Any:
@@ -368,18 +370,38 @@ async def test_options_flow_saves_arrival_mode(hass: HomeAssistant) -> None:
             flow["flow_id"], {"name": "Abwesend", "automation": automation}
         )
 
-    flow = await _edit({"auto_arrival_mode": "door"})
-    assert flow["type"] is FlowResultType.FORM
-    assert flow["errors"] == {"base": "arrival_needs_persons"}
-
-    flow = await _edit(
-        {"auto_away_persons": [A], "auto_arrival_mode": "door", "auto_arrival_window": 3}
-    )
+    flow = await _edit({"auto_away_persons": [B]})
     assert flow["type"] is FlowResultType.MENU
     away = entry.options["profiles"]["away"]
-    assert away["auto_arrival_mode"] == "door"
-    assert away["auto_arrival_window"] == 3
-    assert away["auto_disarm_on_arrival"] is False
+    assert away["return"] == back
+    assert away["auto_away_persons"] == [B]
+    assert "auto_arrival_mode" not in away
+
+
+async def test_old_settings_are_migrated_to_return(hass: HomeAssistant) -> None:
+    """Update auf 0.61: „Unscharf bei Rückkehr“ wird zu „Bei Rückkehr“ (Version 5.2)."""
+    entry = make_entry(
+        {
+            "profiles": {
+                "away": {
+                    "auto_away_persons": [A],
+                    "auto_arrival_mode": "door",
+                    "auto_arrival_window": 4,
+                }
+            }
+        }
+    )
+    await setup_entry(hass, entry)
+    assert entry.minor_version == 2
+    away = entry.options["profiles"]["away"]
+    assert away["return"] == {"mode": "door", "persons": [A], "window": 4}
+    assert away["auto_arrival_mode"] == "door"  # bleibt für ältere Versionen stehen
+    from homeassistant.components.persistent_notification import (  # noqa: PLC0415
+        _async_get_or_create_notifications,
+    )
+
+    notes = _async_get_or_create_notifications(hass)
+    assert not any(key.startswith("hauswacht_return_") for key in notes)
 
 
 # --- Gastmodus ----------------------------------------------------------------

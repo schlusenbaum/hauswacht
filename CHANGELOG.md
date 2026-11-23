@@ -6,6 +6,36 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.61.0b1] - 2026-11-23
+
+**Vorabversion: „Bei Rückkehr“ je Profil** (ADR 0015, Schritt 1 von 4).
+
+### Hinzugefügt
+- **Bei Rückkehr** – eine Einstellung je Profil statt zwei verstreuter: was passiert, wenn eine
+  Person heimkommt. Fünf Stufen: **Nichts**, **Unscharf, nur wenn automatisch scharf** (wie bisher
+  „Wie bisher“), **Unscharf mit Türbeleg**, **Unscharf, auch nach Scharfschalten von Hand** (neu,
+  nur Handy, mit Warnung) und **Reinlassen (Durchgang)** (bisher Handy-Reinlassen beim Durchgang;
+  das Profil bleibt scharf, „Durchgang erlauben“ muss nicht an sein).
+- Eigene Personenliste für „Bei Rückkehr“ – unabhängig von „Scharf, wenn alle weg“.
+- Auf der Einstellungsseite: Abschnitt **Bei Rückkehr** mit **ⓘ** je Feld (Mauszeiger oder
+  antippen), dem Satz **„So verhält sich das:“**, einer Warnung bei „auch nach Scharfschalten von
+  Hand“ und dem Zeitfenster unter **„Mehr Einstellungen“**.
+- Die Signale unter „Anwesenheit und Heimkehr“ zeigen auch die Personen aus „Bei Rückkehr“.
+
+### Geändert
+- Die Felder „Unscharf bei Rückkehr“, „Türbeleg-Fenster“ sowie Personen und Zeitfenster des
+  Handy-Reinlassens sind aus dem Optionen-Dialog und der Durchgang-Einstellung verschwunden;
+  der Dialog verweist auf die Einstellungsseite.
+- Die Entitäten heißen jetzt „Bei Rückkehr“ und „Bei Rückkehr: Zeitfenster Handy und Tür“
+  (bestehende Entitäts-IDs bleiben).
+- Übersichtskarte: Zeile „Bei Rückkehr“ je Profil.
+
+### Migration
+- Bestehende Einstellungen werden beim Update übernommen (Config-Eintrag 5.2). Waren in einem
+  Profil „Unscharf bei Rückkehr“ **und** Handy-Reinlassen an, gewinnt **Reinlassen** (das Profil
+  bleibt scharf); dazu kommt eine Benachrichtigung. Die alten Schlüssel bleiben stehen, damit ein
+  Zurückgehen auf 0.60 funktioniert.
+
 ## [0.60.0] - 2026-11-23
 
 **Beobachtung „Weggehen“, Messungen und Sirenentest auf der Einstellungsseite, Sicherheitskorrektur

@@ -115,11 +115,13 @@ sections match the dialog:
 | **Times** | Exit and entry delay, duration of the alarm reaction, maximum alarm cycles |
 | **When arming** | Open sensors, failed sensors, tampering triggers an alarm |
 | **Reaction on alarm** | Sirens (those registered under alarm devices), tone, volume, silent alarm, recipients, additional speakers |
-| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time, disarm on arrival, door-proof window – see [automation](profiles.md#automation). **"Create schedule ↗"** opens the helpers in a new window ("Create helper" → "Schedule"); then **"Refresh list"** – your entries in the profile are kept |
+| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time – see [automation](profiles.md#automation). **"Create schedule ↗"** opens the helpers in a new window ("Create helper" → "Schedule"); then **"Refresh list"** – your entries in the profile are kept |
+| **On return** *(new in 0.61, only here)* | What happens when someone comes home: level (Nothing, Disarm only if armed automatically, Disarm with door proof, Disarm also after arming by hand, Let in), its own list of persons, under **"More settings"** the time window phone and door. With an **ⓘ** per field, the sentence **"This is how it behaves:"** and a warning for "also after arming by hand" – see [On return](profiles.md#on-return) |
 | **Arm by closing the door** | On/off, exit doors (the sensors of type door in the chosen groups), settle time |
+| **Passage** | Allow passage, times, which door, sensors on the way – see [passage](passage.md). Letting in by phone has moved to "On return" |
 
 The same rules as in the dialog apply: a name is needed and must be unique, every button only
-once per area, "disarm on arrival" only with persons. **Delete** asks once.
+once per area, "On return" (except "Nothing") only with at least one person. **Delete** asks once.
 
 ## Editing trigger rules
 

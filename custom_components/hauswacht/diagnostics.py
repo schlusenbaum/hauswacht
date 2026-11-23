@@ -40,6 +40,7 @@ REDACT = {
     "homecoming_ssids",
     "auto_away_persons",
     "away_persons",
+    "persons",  # „Bei Rückkehr“ und alter Durchgang
     "speakers",
     "targets",
     "alarm_targets",

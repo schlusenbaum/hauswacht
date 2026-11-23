@@ -115,11 +115,13 @@ Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgab
 | **Zeiten** | Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Höchstzahl Alarmzyklen |
 | **Beim Scharfschalten** | Offene Melder, ausgefallene Melder, Manipulation löst Alarm aus |
 | **Reaktion bei Alarm** | Sirenen (die unter Alarmgeber eingetragenen), Ton, Lautstärke, stiller Alarm, Empfänger, zusätzliche Lautsprecher |
-| **Automatik** | Scharf um / unscharf um, Wochentage, Zeitplan, Personen („alle weg“), Wartezeit, unscharf bei Rückkehr, Türbeleg-Fenster – siehe [Automatik](profile.md#automatik). **„Zeitplan anlegen ↗“** öffnet die Helfer in einem neuen Fenster („Helfer erstellen“ → „Zeitplan“); danach **„Liste aktualisieren“** – deine Eingaben im Profil bleiben dabei erhalten |
+| **Automatik** | Scharf um / unscharf um, Wochentage, Zeitplan, Personen („alle weg“), Wartezeit – siehe [Automatik](profile.md#automatik). **„Zeitplan anlegen ↗“** öffnet die Helfer in einem neuen Fenster („Helfer erstellen“ → „Zeitplan“); danach **„Liste aktualisieren“** – deine Eingaben im Profil bleiben dabei erhalten |
+| **Bei Rückkehr** *(neu in 0.61, nur hier)* | Was passiert, wenn jemand heimkommt: Stufe (Nichts, Unscharf nur wenn automatisch scharf, Unscharf mit Türbeleg, Unscharf auch nach Scharfschalten von Hand, Reinlassen), eigene Personenliste, unter **„Mehr Einstellungen“** das Zeitfenster Handy und Tür. Mit **ⓘ** je Feld, dem Satz **„So verhält sich das:“** und einer Warnung bei „auch nach Scharfschalten von Hand“ – siehe [Bei Rückkehr](profile.md#bei-rückkehr) |
 | **Scharf durch Schließen der Tür** | An/aus, Ausgangstüren (die Melder vom Typ Tür in den gewählten Gruppen), Beruhigungszeit |
+| **Durchgang** | Durchgang erlauben, Zeiten, welche Tür, Melder auf dem Weg – siehe [Durchgang](durchgang.md). Das Handy-Reinlassen ist zu „Bei Rückkehr“ umgezogen |
 
 Es gelten dieselben Regeln wie im Dialog: Name nötig und eindeutig, jeder Knopf nur einmal je
-Bereich, „Unscharf bei Rückkehr“ nur mit Personen. **Löschen** fragt einmal nach.
+Bereich, „Bei Rückkehr“ (außer „Nichts“) nur mit mindestens einer Person. **Löschen** fragt einmal nach.
 
 ## Auslöseregeln bearbeiten
 

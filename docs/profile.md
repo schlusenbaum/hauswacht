@@ -57,8 +57,6 @@ Im Profil, aufklappbar unter **Automatik**. Alle Felder sind optional – leer h
 | An diesen Tagen | Tage, an denen die Uhrzeiten gelten; leer = täglich. Über Nacht siehe [unten](#uhrzeiten-über-nacht-und-scharf-von-hand) |
 | Scharf, wenn alle diese Personen weg sind | Sind alle gewählten Personen nicht zu Hause, wird nach der Wartezeit scharf geschaltet |
 | Wartezeit | Standard 15 Minuten. Kommt in dieser Zeit jemand zurück, wird nichts geschaltet |
-| Unscharf, wenn eine dieser Personen heimkommt | **Aus** (Standard), **Wie bisher** oder **Mit Türbeleg**, siehe [unten](#unscharf-bei-rückkehr) |
-| Türbeleg: so lange vor der Tür darf das Handy „zuhause“ melden | Nur für „Mit Türbeleg“. Standard 5 Minuten, 1–30. Verzögert den Alarm **nicht**, siehe [Was das Zeitfenster bedeutet](#was-das-zeitfenster-bedeutet) |
 
 Sicherheitsregeln:
 
@@ -67,7 +65,8 @@ Sicherheitsregeln:
   überbrückt sie ohnehin automatisch). Klappt das
   Scharfschalten deshalb nicht, kommt eine Systemmeldung.
 - Ein **laufender Alarm** wird nie automatisch beendet. Eine laufende Eingangsverzögerung nur
-  mit Türbeleg.
+  über [Bei Rückkehr](#bei-rückkehr) („Unscharf mit Türbeleg“, „Unscharf, auch nach
+  Scharfschalten von Hand“ oder „Reinlassen“).
 - Eine Person mit unbekanntem oder nicht verfügbarem Aufenthalt gilt **nicht** als weg.
 - Nach einem Neustart gilt das [Verhalten nach Neustart](installation.md#verhalten-nach-einem-neustart)
   (Standard: vorheriger Zustand); die Anwesenheits-Automatik greift erst beim nächsten Wechsel
@@ -171,7 +170,7 @@ eine HomeKit-Variable „Martin zuhause“.
 **Richtung (Nähe, Places)** zählt nur mit zwei Werten: **„angekommen“** = zuhause und
 **„entfernt sich“** = weg. **„Nähert sich“** und **„steht“** werden übergangen (ab 0.60): Wer
 sich nähert, ist noch nicht da – sonst würde eine Fahrt in der Umgebung, die kurz Richtung
-Zuhause führt, schon als Rückkehr gelten und z. B. „Unscharf bei Rückkehr“ auslösen. Und „steht“
+Zuhause führt, schon als Rückkehr gelten und z. B. „Bei Rückkehr“ auslösen. Und „steht“
 (etwa im Büro) hält „alle weg“ nicht auf.
 
 **Beispiel:** Anna ist laut Person „nicht zuhause“, ihr WLAN-Sensor meldet aber noch das
@@ -181,17 +180,55 @@ weg ist, beginnt die Wartezeit.
 So schaltet ein kurz aussetzendes Signal nicht gleich scharf, und das schnellste Signal
 erkennt die Rückkehr.
 
-### Unscharf bei Rückkehr
+### Bei Rückkehr
 
-Drei Stufen, Standard ist **Aus**:
+*Neu in 0.61. Einstellen nur auf der [Einstellungsseite](einstellungsseite.md) → Profile →
+Profil → Abschnitt **„Bei Rückkehr“**.*
 
-| Stufe | Wann unscharf | Was schützt vor einer falschen Ortung |
+Hier legst du fest, was passiert, wenn eine bestimmte Person nach Hause kommt. Grundlage ist der
+Personen-Status in Home Assistant (meist das Handy) plus die [Signale](#woran-hauswacht-erkennt-wer-zuhause-ist)
+der Person. „Heimkommen“ heißt immer: Die Person war vorher sicher weg und ist jetzt zuhause.
+
+| Einstellung | Wirkung | Standard |
 |---|---|---|
-| **Aus** | nie | – |
-| **Wie bisher** | Eine der Personen kommt heim – nur wenn Hauswacht das Profil **selbst** scharf geschaltet hat und noch keine Tür aufging (nicht in der Eingangsverzögerung) | Kopplung an „Scharf, wenn alle weg“ |
-| **Mit Türbeleg** | Eine der Personen kommt heim **und** eine Eingangstür wird geöffnet – beides innerhalb des Zeitfensters, egal in welcher Reihenfolge. Auch während der Eingangsverzögerung, egal wie scharf geschaltet wurde | zwei Belege: Ortung **und** Tür |
+| Wenn jemand heimkommt | Eine der fünf Stufen unten | **Nichts** |
+| Für diese Personen | Wer „Bei Rückkehr“ auslöst. Eigene Liste – unabhängig von „Scharf, wenn alle diese Personen weg sind“. Ohne Person lässt sich eine Stufe außer „Nichts“ nicht speichern | keine |
+| Zeitfenster Handy und Tür (unter „Mehr Einstellungen“) | Nur für „Unscharf mit Türbeleg“ und „Reinlassen“: so weit dürfen Handy-Meldung und Türöffnung auseinanderliegen. 1–30 Minuten. Verzögert den Alarm **nicht**, siehe [Was das Zeitfenster bedeutet](#was-das-zeitfenster-bedeutet) | 5 Minuten |
 
-**„Mit Türbeleg“ im Alltag**
+Neben jedem Feld steht ein **ⓘ**: Mauszeiger drauf zeigt die Erklärung, Antippen (Handy,
+Tablet) klappt sie auf. Unter der Auswahl steht in einem Satz **„So verhält sich das:“** – er
+ändert sich sofort mit der Stufe und dem Zeitfenster.
+
+| Stufe | Was passiert | Was schützt vor einer falschen Ortung | Gut für |
+|---|---|---|---|
+| **Nichts** | Hauswacht tut nichts. Unscharf nur per PIN, Karte, Keypad oder App | – | Urlaub |
+| **Unscharf, nur wenn automatisch scharf** | Eine der Personen kommt heim → unscharf. Nur wenn Hauswacht das Profil **selbst** scharf geschaltet hat (z. B. „alle weg“) und noch keine Tür aufging | Kopplung an die Automatik: von Hand scharf bleibt scharf | wie bis 0.60 „Wie bisher“ |
+| **Unscharf mit Türbeleg** | Eine der Personen kommt heim **und** eine Eingangstür geht auf – beides innerhalb des Zeitfensters, egal in welcher Reihenfolge. Auch in der Eingangsverzögerung, egal wie scharf geschaltet wurde | zwei Belege: Ortung **und** Tür | „Abwesend“ – die **Empfehlung** für die meisten Häuser |
+| **Unscharf, auch nach Scharfschalten von Hand** | Eine der Personen kommt heim (vorher mindestens 5 Minuten weg) → sofort unscharf, egal wie scharf geschaltet wurde. Keine Tür nötig | nur die Ortung – deshalb die Warnung im Formular | wenn du bequem willst und das Risiko kennst |
+| **Reinlassen (Durchgang)** | Eine Eingangstür geht auf und das Handy einer Person meldet bis zum Zeitfenster davor oder noch in der Eingangsverzögerung „zuhause“ (vorher mindestens 5 Minuten weg) → Hauswacht lässt sie **ohne PIN herein, das Profil bleibt scharf** | Ortung **und** Tür; der Rest im Haus bleibt scharf | „Nacht“: die anderen schlafen, die Anlage bleibt an. Einzelheiten unter [Reinlassen per Handy](durchgang.md#reinlassen-per-handy) |
+
+**Beispiel „Nacht“ mit Reinlassen:** Christian und Petra schlafen, die Anlage steht auf „Nacht“.
+Niklas kommt um 1 Uhr heim. Sein Handy meldet in der Einfahrt „zuhause“, eine Minute später
+schließt er die Haustür auf → kein Alarm, keine PIN, „Nacht“ bleibt scharf. Ein Fremder an
+derselben Tür bekommt die normale Eingangsverzögerung und dann Alarm.
+
+**Beispiel „Abwesend“ mit Türbeleg:** Alle sind weg, Hauswacht hat automatisch scharf
+geschaltet. Petra kommt vom Einkaufen, ihr Handy meldet „zuhause“, sie öffnet die Haustür →
+sofort unscharf.
+
+> **Warum ist „Unscharf, auch nach Scharfschalten von Hand“ nicht die Empfehlung?** Hier reicht
+> das Handy allein. Wer das Handy einer Person hat – oder ein gefundenes Handy –, kommt heim und
+> die Anlage ist aus. Bei „Unscharf mit Türbeleg“ muss zusätzlich eine Tür aufgehen, und erst
+> dann zählt die Heimkehr.
+
+**Nach dem Update auf 0.61** übernimmt Hauswacht deine bisherigen Einstellungen:
+„Unscharf bei Rückkehr“ (Wie bisher / Mit Türbeleg) mit den Personen aus „Scharf, wenn alle weg“
+und das Handy-Reinlassen aus dem Durchgang. Waren in einem Profil **beide** an, gewinnt
+**Reinlassen** – das Profil bleibt dann scharf, also die sichere Seite –, und du bekommst eine
+Benachrichtigung in Home Assistant. Die alten Felder im Optionen-Dialog sind weg; dort steht
+ein Hinweis auf die Einstellungsseite.
+
+**„Unscharf mit Türbeleg“ im Alltag**
 
 - *Die Ortung kommt zu spät:* Christian öffnet die Haustür, die Eingangsverzögerung läuft.
   20 Sekunden später meldet sein Handy „zuhause“ → Hauswacht schaltet unscharf, noch bevor
@@ -240,8 +277,6 @@ rechnet das je Person aus und nennt einen Wert.
 > **Restrisiko:** Wer das Handy einer der Personen **und** Zugang zur Tür hat (z. B. Handy und
 > Schlüssel gestohlen), schaltet damit unscharf. Für „Urlaub“ deshalb besser **Aus**.
 
-Die Stufe „Wie bisher“ entspricht dem früheren Schalter „Unscharf beim Heimkommen“;
-bestehende Einstellungen werden übernommen.
 
 ### Gastmodus
 
@@ -251,7 +286,7 @@ das Haus leer aus. Damit die Automatik dann nicht scharf schaltet, gibt es den *
 **Solange er an ist,** schaltet Hauswacht den Bereich **nicht automatisch** scharf: weder nach
 Uhrzeit noch „wenn alle weg“ noch „immer scharf nach Neustart“. Die Erinnerung „niemand zuhause,
 nicht scharf“ entfällt. **Von Hand** scharf schalten (Keypad, Karte, Tablet, Alexa) geht
-weiterhin; „Unscharf bei Rückkehr“ funktioniert normal. Will die Automatik scharf schalten, kommt
+weiterhin; „Bei Rückkehr“ funktioniert normal. Will die Automatik scharf schalten, kommt
 die Nachricht „Gastmodus an – ‚Nacht‘ wurde nicht automatisch scharf geschaltet“.
 
 **Einschalten:**

@@ -28,9 +28,6 @@ const PT = {
     passageOutEnd: "Rausgehen: Ende",
     passagePath: "Melder auf dem Weg (z. B. Bewegungsmelder in der Einfahrt)",
     passagePathAfter: "Reinkommen: Weg noch frei nach dem Schließen (s)",
-    passagePersons: "Handy-Reinlassen: diese Personen (keine = aus)",
-    passageWindow: "Handy darf so lange vor der Tür „zuhause“ melden (Minuten)",
-    passagePhoneHint: "Kommt eine dieser Personen heim (vorher mindestens 5 Minuten sicher weg) und geht eine Eingangstür auf, lässt Hauswacht sie ohne PIN herein – wenn das Handy bis zu dieser Zeit vor dem Öffnen oder noch während der Eingangsverzögerung „zuhause“ meldet. Danach kommt der Alarm wie immer. Restrisiko: Wer Handy und Schlüssel hat, kommt ohne Alarm rein. Nicht zusammen mit „Unscharf mit Türbeleg“.",
     outDoors: { first: "nur die erste Tür, die aufgeht", all: "alle Eingangstüren" },
     outEnd: { time: "nach Ablauf der Zeit", returned: "schon, wenn ich zurück bin und die Tür zu ist" },
     name: "Name",
@@ -66,9 +63,30 @@ const PT = {
     refreshLists: "↻ Liste aktualisieren",
     persons: "Scharf, wenn alle diese Personen weg sind",
     awayDelay: "Wartezeit, wenn alle weg sind (min)",
-    arrival: "Unscharf bei Rückkehr",
-    arrivalHint: "Gilt für die Personen oben bei „Scharf, wenn alle diese Personen weg sind“ – ohne angekreuzte Person lässt sich das nicht einschalten. „Mit Türbeleg“ geht nicht zusammen mit Handy-Reinlassen beim Durchgang (unten).",
-    arrivalWindow: "Türbeleg: Rückkehr bis Türöffnung (min)",
+    passagePhoneMoved: "Handy-Reinlassen ist umgezogen: oben bei „Bei Rückkehr“ → „Reinlassen (Durchgang)“.",
+    secReturn: "Bei Rückkehr",
+    returnIntro: "Was Hauswacht tut, wenn eine bestimmte Person nach Hause kommt. Grundlage ist der Personen-Status in Home Assistant (meist das Handy).",
+    returnMode: "Wenn jemand heimkommt",
+    returnPersons: "Für diese Personen",
+    returnWindow: "Zeitfenster Handy und Tür (Minuten)",
+    returnWindowRec: "Empfehlung: 5 Minuten. Länger macht es bequemer, aber auch etwas unsicherer.",
+    returnAlwaysWarn: "Achtung: In diesem Modus reicht das Handy allein. Wer das Handy einer Person hat (oder es verliert und jemand findet es), kann nach Hause kommen und die Anlage schaltet unscharf – ohne Tür, ohne PIN. Sicherer ist „Unscharf mit Türbeleg“.",
+    moreSettings: "Mehr Einstellungen",
+    howLabel: "So verhält sich das:",
+    infoLabel: "Erklärung",
+    returnModes: { off: "Nichts", auto_only: "Unscharf, nur wenn automatisch scharf", door: "Unscharf mit Türbeleg", always: "Unscharf, auch nach Scharfschalten von Hand", passage: "Reinlassen (Durchgang)" },
+    returnHow: {
+      off: "Hauswacht tut nichts, wenn jemand heimkommt. Unscharf geht nur per PIN, Karte, Keypad oder App.",
+      auto_only: "Kommt eine der Personen heim, schaltet Hauswacht unscharf – aber nur, wenn das Profil vorher automatisch scharf geworden ist (zum Beispiel, weil alle weg waren). Hast du von Hand scharf geschaltet, bleibt es scharf.",
+      door: "Meldet das Handy einer Person „zuhause“ und geht höchstens {w} Minuten davor oder danach eine Eingangstür auf, schaltet Hauswacht unscharf – auch wenn von Hand scharf geschaltet wurde. Ohne Türöffnung passiert nichts. Beispiel: Du fährst in die Einfahrt, das Handy meldet „zuhause“, du schließt die Haustür auf – unscharf, kein Alarm.",
+      always: "Meldet das Handy einer Person „zuhause“ und war sie vorher mindestens 5 Minuten weg, schaltet Hauswacht sofort unscharf – egal wie scharf geschaltet wurde. Eine Tür muss dafür nicht aufgehen.",
+      passage: "Geht eine Eingangstür auf und meldet das Handy einer Person bis zu {w} Minuten vorher oder noch während der Eingangsverzögerung „zuhause“ (vorher mindestens 5 Minuten weg), lässt Hauswacht sie ohne PIN herein. Das Profil bleibt scharf – wie beim Durchgang. Kommt das Handy nicht rechtzeitig, gibt es Alarm wie immer.",
+    },
+    info: {
+      mode: "Wähle, wie Hauswacht reagiert, wenn eine der Personen unten heimkommt. „Unscharf mit Türbeleg“ ist für die meisten Häuser die beste Wahl: Es braucht das Handy UND eine Tür. „Reinlassen (Durchgang)“ passt zu Nachtprofilen, in denen der Rest im Haus scharf bleiben soll.",
+      persons: "Nur diese Personen lösen „Bei Rückkehr“ aus. Die Liste ist unabhängig von „Scharf, wenn alle diese Personen weg sind“. Ohne Person lässt sich der Modus nicht speichern.",
+      window: "So weit dürfen Handy-Meldung „zuhause“ und Türöffnung auseinanderliegen. Manche Handys melden erst spät. Zu kurz: Hauswacht erkennt dich nicht. Zu lang: ein größeres Fenster für Fremde.",
+    },
     closeOn: "Ausgangsverzögerung endet, sobald die Tür zu ist",
     doors: "Ausgangstüren",
     noDoors: "In den gewählten Gruppen gibt es keine Melder vom Typ Tür.",
@@ -80,14 +98,12 @@ const PT = {
     tones: { burglar: "Einbruch", emergency: "Notfall", police_panic: "Polizei-Panik", emergency_panic: "Notfall-Panik" },
     volumes: { low: "leise", medium: "mittel", high: "laut", very_high: "sehr laut" },
     days: { mon: "Mo", tue: "Di", wed: "Mi", thu: "Do", fri: "Fr", sat: "Sa", sun: "So" },
-    arrivalModes: { off: "aus", auto_only: "wie bisher (Anwesenheit)", door: "mit Türbeleg" },
     errors: {
       profile_name_required: "Bitte einen Namen eingeben.",
       profile_name_taken: "Diesen Namen gibt es schon.",
       panel_mode_taken: "Diesen Knopf hat in diesem Bereich schon ein anderes Profil.",
       excluded_not_in_groups: "Ausgenommene Melder müssen in den gewählten Gruppen sein.",
-      arrival_needs_persons: "„Unscharf bei Rückkehr“ braucht Personen – bitte oben bei „Scharf, wenn alle diese Personen weg sind“ mindestens eine ankreuzen.",
-      passage_door_proof: "„Unscharf mit Türbeleg“ und Handy-Reinlassen gehen im selben Profil nicht zusammen.",
+      return_needs_persons: "„Bei Rückkehr“ braucht mindestens eine Person – bitte bei „Für diese Personen“ eine ankreuzen.",
       unknown_profile: "Dieses Profil gibt es nicht mehr.",
       disarm_first: "Erst alle Bereiche unscharf schalten – dann lässt sich speichern.",
       changed_elsewhere: "Inzwischen wurde woanders etwas geändert. Die Seite lädt neu – bitte noch einmal.",
@@ -117,9 +133,6 @@ const PT = {
     passageOutEnd: "Going out: end",
     passagePath: "Sensors on the way (e.g. motion sensor in the driveway)",
     passagePathAfter: "Coming in: way still free after closing (s)",
-    passagePersons: "Let in by phone: these persons (none = off)",
-    passageWindow: "Phone may report “home” this long before the door (minutes)",
-    passagePhoneHint: "If one of these persons comes home (safely away for at least 5 minutes before) and an entry door opens, Hauswacht lets them in without PIN – if the phone reports “home” up to this time before the opening or while the entry delay is still running. After that the alarm comes as always. Residual risk: whoever has phone and key gets in without alarm. Not together with “disarm with door proof”.",
     outDoors: { first: "only the first door that opens", all: "all entry doors" },
     outEnd: { time: "when the time is up", returned: "as soon as I am back and the door is closed" },
     name: "Name",
@@ -155,9 +168,30 @@ const PT = {
     refreshLists: "↻ Refresh list",
     persons: "Arm when all these persons are away",
     awayDelay: "Waiting time when everyone is away (min)",
-    arrival: "Disarm on arrival",
-    arrivalHint: "Applies to the persons above at “Arm when all these persons are away” – without a ticked person it cannot be switched on. “With door proof” does not go together with letting in by phone at passage (below).",
-    arrivalWindow: "Door proof: arrival until door opening (min)",
+    passagePhoneMoved: "Letting in by phone has moved: above at “On return” → “Let in (passage)”.",
+    secReturn: "On return",
+    returnIntro: "What Hauswacht does when a certain person comes home. It is based on the person state in Home Assistant (usually the phone).",
+    returnMode: "When someone comes home",
+    returnPersons: "For these persons",
+    returnWindow: "Time window phone and door (minutes)",
+    returnWindowRec: "Recommendation: 5 minutes. Longer is more convenient, but also a bit less secure.",
+    returnAlwaysWarn: "Caution: in this mode the phone alone is enough. Whoever has a person's phone (or finds a lost one) can come home and the system disarms – without door, without PIN. “Disarm with door proof” is safer.",
+    moreSettings: "More settings",
+    howLabel: "This is how it behaves:",
+    infoLabel: "Explanation",
+    returnModes: { off: "Nothing", auto_only: "Disarm, only if armed automatically", door: "Disarm with door proof", always: "Disarm, also after arming by hand", passage: "Let in (passage)" },
+    returnHow: {
+      off: "Hauswacht does nothing when someone comes home. Disarming only by PIN, card, keypad or app.",
+      auto_only: "If one of the persons comes home, Hauswacht disarms – but only if the profile was armed automatically before (for example because everyone was away). If you armed by hand, it stays armed.",
+      door: "If a person's phone reports “home” and an entry door opens at most {w} minutes before or after, Hauswacht disarms – even if armed by hand. Without a door opening nothing happens. Example: you drive into the driveway, the phone reports “home”, you unlock the front door – disarmed, no alarm.",
+      always: "If a person's phone reports “home” and the person was away for at least 5 minutes before, Hauswacht disarms right away – no matter how it was armed. No door needs to open.",
+      passage: "If an entry door opens and a person's phone reports “home” up to {w} minutes before or while the entry delay is still running (away for at least 5 minutes before), Hauswacht lets them in without PIN. The profile stays armed – like a passage. If the phone is too late, the alarm comes as always.",
+    },
+    info: {
+      mode: "Choose how Hauswacht reacts when one of the persons below comes home. “Disarm with door proof” is the best choice for most homes: it needs the phone AND a door. “Let in (passage)” suits night profiles in which the rest of the house should stay armed.",
+      persons: "Only these persons trigger “On return”. The list is independent of “Arm when all these persons are away”. Without a person the mode cannot be saved.",
+      window: "How far apart the phone reporting “home” and the door opening may be. Some phones report late. Too short: Hauswacht does not recognise you. Too long: a bigger window for strangers.",
+    },
     closeOn: "Exit delay ends as soon as the door is closed",
     doors: "Exit doors",
     noDoors: "The chosen groups contain no sensors of type door.",
@@ -169,14 +203,12 @@ const PT = {
     tones: { burglar: "Burglar", emergency: "Emergency", police_panic: "Police panic", emergency_panic: "Emergency panic" },
     volumes: { low: "low", medium: "medium", high: "high", very_high: "very high" },
     days: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
-    arrivalModes: { off: "off", auto_only: "as before (presence)", door: "with door proof" },
     errors: {
       profile_name_required: "Please enter a name.",
       profile_name_taken: "This name already exists.",
       panel_mode_taken: "Another profile in this area already has this button.",
       excluded_not_in_groups: "Excluded sensors must be in the chosen groups.",
-      arrival_needs_persons: "“Disarm on arrival” needs persons – please tick at least one above at “Arm when all these persons are away”.",
-      passage_door_proof: "“Disarm with door proof” and letting in by phone do not go together in one profile.",
+      return_needs_persons: "“On return” needs at least one person – please tick one at “For these persons”.",
       unknown_profile: "This profile no longer exists.",
       disarm_first: "Disarm all areas first – then saving works.",
       changed_elsewhere: "Something was changed elsewhere in the meantime. The page reloads – please try again.",
@@ -192,6 +224,12 @@ const PROFILE_STYLE = `
   .days .chk { padding: 2px 0; }
   .tool { display: flex; gap: 8px; flex-wrap: wrap; }
   a.b { text-decoration: none; font-size: .9rem; padding: 6px 14px; }
+  .info { border: none; background: none; color: var(--primary-color); cursor: help; font-size: 1rem; padding: 0 2px; }
+  .tip { font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); }
+  .how { margin: 8px 0 4px; font-size: .9rem; }
+  .warn { margin: 6px 0; padding: 8px 10px; border-radius: 6px; border-left: 3px solid var(--warning-color, #ff9800); background: var(--secondary-background-color); font-size: .9rem; }
+  details.more { margin-top: 10px; }
+  details.more summary { cursor: pointer; color: var(--primary-color); }
 `;
 
 const pe = (value) =>
@@ -311,11 +349,8 @@ class HauswachtProfileEditor extends HTMLElement {
       <div class="tool" style="margin-top:6px"><a class="b" href="/config/helpers" target="_blank" rel="noopener">${pe(this._t("scheduleCreate"))}</a><button class="b" data-act="refresh">${pe(this._t("refreshLists"))}</button></div>
       <div class="muted">${pe(this._t("scheduleHint"))}</div>
       <label>${pe(this._t("persons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
-      <div class="two"><div><label>${pe(this._t("awayDelay"))}</label><input type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}"></div>
-      <div><label>${pe(this._t("arrivalWindow"))}</label><input type="number" min="1" max="${lim.arrival_window}" data-a="auto_arrival_window" data-num="1" value="${pe(a.auto_arrival_window)}"></div></div>
-      <label>${pe(this._t("arrival"))}</label><select data-a="auto_arrival_mode">${c.arrival_modes.map((m) => `<option value="${m}" ${m === a.auto_arrival_mode ? "selected" : ""}>${pe(t("arrivalModes", m))}</option>`).join("")}</select>
-      ${["arrival_needs_persons", "passage_door_proof"].includes(this._errors.base) ? this._err("base") : ""}
-      <div class="muted">${pe(this._t("arrivalHint"))}</div>
+      <label>${pe(this._t("awayDelay"))}</label><input class="small" type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}">
+${this._returnSection(c, lim, t)}
       <div class="sec">${pe(this._t("secClose"))}</div>
       <div class="chk"><input type="checkbox" data-c="enabled" ${close.enabled ? "checked" : ""}><span>${pe(this._t("closeOn"))}</span></div>
       <label>${pe(this._t("doors"))}</label>${doors.map((id) => `<div class="chk"><input type="checkbox" data-cm="doors" value="${pe(id)}" ${close.doors.includes(id) ? "checked" : ""}><span>${pe(this._name(id))}</span></div>`).join("") || `<div class="muted">${pe(this._t("noDoors"))}</div>`}
@@ -328,10 +363,41 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("passageOutDoors"))}</label><select data-p="out_doors">${["first", "all"].map((v) => `<option value="${v}" ${v === pass.out_doors ? "selected" : ""}>${pe(t("outDoors", v))}</option>`).join("")}</select>
       <label>${pe(this._t("passageOutEnd"))}</label><select data-p="out_end">${["time", "returned"].map((v) => `<option value="${v}" ${v === pass.out_end ? "selected" : ""}>${pe(t("outEnd", v))}</option>`).join("")}</select>
       <label>${pe(this._t("passagePath"))}</label>${members.map((id) => `<div class="chk"><input type="checkbox" data-pm="path" value="${pe(id)}" ${pass.path.includes(id) ? "checked" : ""}><span>${pe(this._name(id))}</span></div>`).join("") || `<div class="muted">${pe(this._t("noMembers"))}</div>`}
-      <label>${pe(this._t("passagePersons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-pm="persons" value="${pe(x.id)}" ${pass.persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
-      <label>${pe(this._t("passageWindow"))}</label><input class="small" type="number" min="1" max="${lim.passage_window}" data-p="window" data-num="1" value="${pe(pass.window)}">
-      <div class="muted">${pe(this._t("passagePhoneHint"))}</div>
-      ${["arrival_needs_persons", "passage_door_proof"].includes(this._errors.base) ? "" : this._err("base")}`;
+      <div class="muted">${pe(this._t("passagePhoneMoved"))}</div>
+      ${this._err("base")}`;
+  }
+
+  // --- Bei Rückkehr (ADR 0015) ----------------------------------------------------
+
+  _info(key) {
+    // ⓘ: Mauszeiger drauf zeigt den Text, Tippen klappt ihn auf
+    const text = this._t("info")[key] || "";
+    return `<button type="button" class="info" data-info="${key}" title="${pe(text)}" aria-label="${pe(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${key}" hidden>${pe(text)}</div>`;
+  }
+
+  _returnHow(back) {
+    const text = (this._t("returnHow") || {})[back.mode] || "";
+    return text.replace("{w}", String(back.window));
+  }
+
+  _returnSection(c, lim, t) {
+    const back = this._draft.return;
+    const persons = c.persons.map((x) => `<div class="chk"><input type="checkbox" data-rm="persons" value="${pe(x.id)}" ${back.persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`;
+    const usesWindow = ["door", "passage"].includes(back.mode);
+    return `
+      <div class="sec">${pe(this._t("secReturn"))}</div>
+      <div class="muted">${pe(this._t("returnIntro"))}</div>
+      <label>${pe(this._t("returnMode"))} ${this._info("mode")}</label>
+      <select data-r="mode">${c.return_modes.map((m) => `<option value="${m}" ${m === back.mode ? "selected" : ""}>${pe(t("returnModes", m))}</option>`).join("")}</select>
+      <div class="how"><b>${pe(this._t("howLabel"))}</b> <span data-how>${pe(this._returnHow(back))}</span></div>
+      ${back.mode === "always" ? `<div class="warn">${pe(this._t("returnAlwaysWarn"))}</div>` : ""}
+      ${back.mode === "off" ? "" : `<label>${pe(this._t("returnPersons"))} ${this._info("persons")}</label>${persons}`}
+      ${this._err("return")}
+      ${usesWindow ? `<details class="more" ${this._moreOpen ? "open" : ""}><summary>${pe(this._t("moreSettings"))}</summary>
+        <label>${pe(this._t("returnWindow"))} ${this._info("window")}</label>
+        <input class="small" type="number" min="1" max="${lim.return_window}" data-r="window" data-num="1" value="${pe(back.window)}">
+        <div class="muted">${pe(this._t("returnWindowRec"))}</div>
+      </details>` : ""}`;
   }
 
   _collect() {
@@ -365,7 +431,12 @@ class HauswachtProfileEditor extends HTMLElement {
       d.passage[el.dataset.p] = el.type === "checkbox" ? el.checked : el.dataset.num ? Number(el.value) : el.value;
     });
     d.passage.path = [...root.querySelectorAll('[data-pm="path"]')].filter((el) => el.checked).map((el) => el.value);
-    d.passage.persons = [...root.querySelectorAll('[data-pm="persons"]')].filter((el) => el.checked).map((el) => el.value);
+    root.querySelectorAll("[data-r]").forEach((el) => (d.return[el.dataset.r] = el.dataset.num ? Number(el.value) : el.value));
+    if (root.querySelector('[data-rm="persons"]')) {
+      d.return.persons = [...root.querySelectorAll('[data-rm="persons"]')].filter((el) => el.checked).map((el) => el.value);
+    }
+    const more = root.querySelector("details.more");
+    if (more) this._moreOpen = more.open;
     // Ausgenommene nur aus den gewählten Gruppen
     const members = this._members(d.zones);
     d.excluded = d.excluded.filter((id) => members.includes(id));
@@ -423,8 +494,21 @@ class HauswachtProfileEditor extends HTMLElement {
         }
       })
     );
-    // Gruppen ändern die Listen "Ausgenommen" und "Ausgangstüren"
-    this.shadowRoot.querySelectorAll('[data-m="zones"]').forEach((el) =>
+    // ⓘ antippen klappt die Erklärung auf
+    this.shadowRoot.querySelectorAll("[data-info]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const tip = this.shadowRoot.querySelector(`[data-tip="${btn.dataset.info}"]`);
+        if (tip) tip.hidden = !tip.hidden;
+      })
+    );
+    // Zeitfenster: Erklärsatz sofort mitziehen
+    const win = this.shadowRoot.querySelector('[data-r="window"]');
+    win?.addEventListener("input", () => {
+      const how = this.shadowRoot.querySelector("[data-how]");
+      if (how) how.textContent = this._returnHow({ ...this._draft.return, window: Number(win.value) || this._draft.return.window });
+    });
+    // Gruppen ändern die Listen "Ausgenommen" und "Ausgangstüren", der Modus bei Rückkehr die Felder
+    this.shadowRoot.querySelectorAll('[data-m="zones"], [data-r="mode"]').forEach((el) =>
       el.addEventListener("change", () => {
         const top = this.shadowRoot.querySelector(".sheet").scrollTop;
         this._collect();
