@@ -74,8 +74,9 @@ const ST = {
     icon: "Symbol (z. B. mdi:garage)",
     areaProfiles: "Profile in diesem Bereich",
     page: "Einstellungsseite",
-    pageShow: "Seite „Hauswacht“ in der Seitenleiste anzeigen",
-    pageWarn: "Ausgeblendet verschwindet diese Seite nach dem Speichern. Wieder einblenden: im Dialog unter Systemeinstellungen → Einstellungsseite.",
+    pageShow: "In der Seitenleiste zeigen",
+    pageHint: "Die Seite gibt es immer (nur Administratoren). Hier stellst du nur ein, ob sie in der Seitenleiste steht. Jeder Benutzer kann sie außerdem über „Seitenleiste bearbeiten“ für sich ausblenden.",
+    pageWarn: "Ausgeblendet verschwindet nur der Eintrag in der Seitenleiste. Du erreichst die Seite weiter über die Geräteseite von Hauswacht (Link in der Geräteinfo), über den Link oben im Dialog „Konfigurieren“ oder direkt unter /hauswacht-settings – am besten als Lesezeichen speichern.",
     pinrules: "PIN-Regeln und Master-PIN",
     pinUsers: "Personen mit PIN",
     master: "Master-PIN",
@@ -207,8 +208,9 @@ const ST = {
     icon: "Icon (e.g. mdi:garage)",
     areaProfiles: "Profiles in this area",
     page: "Settings page",
-    pageShow: "Show the page “Hauswacht” in the sidebar",
-    pageWarn: "When hidden, this page disappears after saving. To show it again: in the dialog under system settings → settings page.",
+    pageShow: "Show in the sidebar",
+    pageHint: "The page always exists (administrators only). Here you only choose whether it is shown in the sidebar. Every user can also hide it for themselves via “Edit sidebar”.",
+    pageWarn: "When hidden, only the sidebar entry disappears. You still reach the page from the Hauswacht device page (link in the device info), from the link at the top of the “Configure” dialog or directly at /hauswacht-settings – best saved as a bookmark.",
     pinrules: "PIN rules and master PIN",
     pinUsers: "People with PIN",
     master: "Master PIN",
@@ -470,7 +472,7 @@ class HauswachtSystemEditor extends HTMLElement {
         ${this.item ? `<label>${se(this._t("areaProfiles"))}</label><div class="muted">${se(d.profiles.join(", ") || this._t("none"))}</div>` : ""}${this._err("base")}`;
     }
     if (k === "page") {
-      return `<h2>${se(this._t("page"))}</h2>${this._chk("enabled", d.enabled, this._t("pageShow"))}
+      return `<h2>${se(this._t("page"))}</h2><div class="muted">${se(this._t("pageHint"))}</div>${this._chk("enabled", d.enabled, this._t("pageShow"))}
         ${d.enabled ? "" : `<div class="warn">${se(this._t("pageWarn"))}</div>`}`;
     }
     if (k === "pinrules") {

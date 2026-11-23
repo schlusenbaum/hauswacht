@@ -167,7 +167,7 @@
           "system": "Systemeinstellungen",
           "done": "Fertig – schließen"
         },
-        "description": "{saved}Jede Änderung wird beim Bestätigen des Formulars sofort gespeichert; danach geht es zurück ins Menü."
+        "description": "**Einstellungsseite:** [Hauswacht öffnen](/hauswacht-settings) – alles übersichtlich, mit Erklärungen. Neue Einstellungen (z. B. „Bei Rückkehr“) gibt es nur dort.\n\n{saved}Jede Änderung wird beim Bestätigen des Formulars sofort gespeichert; danach geht es zurück ins Menü."
       },
       "code": {
         "title": "PIN-Regeln",
@@ -214,7 +214,7 @@
         "sections": {
           "automation": {
             "name": "Automatik",
-            "description": "Optional: wann dieses Profil von selbst scharf oder unscharf wird. Automatisch scharf geschaltet wird nur aus „unscharf“ heraus; offene Sensoren werden dabei nie überbrückt. Ein laufender Alarm wird nie automatisch beendet. **Bei Rückkehr** (unscharf oder reinlassen, wenn jemand heimkommt) stellst du seit 0.61 auf der Einstellungsseite ein: Seitenleiste → Hauswacht → Profile.",
+            "description": "Optional: wann dieses Profil von selbst scharf oder unscharf wird. Automatisch scharf geschaltet wird nur aus „unscharf“ heraus; offene Sensoren werden dabei nie überbrückt. Ein laufender Alarm wird nie automatisch beendet. **Bei Rückkehr** (unscharf oder reinlassen, wenn jemand heimkommt) stellst du seit 0.61 auf der Einstellungsseite ein: [Einstellungsseite](/hauswacht-settings) → Profile.",
             "data": {
               "auto_arm_time": "Scharf um",
               "auto_disarm_time": "Unscharf um",
@@ -468,7 +468,7 @@
           "infrastructure": "Funknetz und Gateways überwachen (Zigbee, MQTT …)",
           "homecoming": "Anwesenheit und Heimkehr-Beobachtung",
           "restart": "Verhalten nach Neustart",
-          "settings_page": "Einstellungsseite in der Seitenleiste",
+          "settings_page": "Einstellungsseite: in der Seitenleiste zeigen",
           "init": "← Zurück"
         },
         "description": "{saved}"
@@ -1380,10 +1380,10 @@
         }
       },
       "settings_page": {
-        "title": "Einstellungsseite",
-        "description": "Die Seite **Hauswacht** in der Seitenleiste zeigt die ganze Einrichtung auf einen Blick (nur für Administratoren): Melder mit Gruppen und Profilen als Tabelle, Profile, Regeln, Sirenen, Benachrichtigungen, Personen. Der Einstellungsdialog bleibt immer vollständig – die Seite ist ein zusätzlicher Weg.",
+        "title": "Einstellungsseite in der Seitenleiste",
+        "description": "Die Einstellungsseite **Hauswacht** gibt es immer (nur für Administratoren). Hier stellst du nur ein, ob sie in der **Seitenleiste** steht. Ausgeblendet erreichst du sie weiter über die Geräteseite von Hauswacht (Link in der Geräteinfo), über den Link oben im Menü „Konfigurieren“ oder direkt: [/hauswacht-settings](/hauswacht-settings). Jeder Benutzer kann sie außerdem über „Seitenleiste bearbeiten“ in Home Assistant für sich ausblenden.",
         "data": {
-          "enabled": "Seite „Hauswacht“ in der Seitenleiste anzeigen"
+          "enabled": "In der Seitenleiste zeigen"
         }
       },
       "stale_sensor": {

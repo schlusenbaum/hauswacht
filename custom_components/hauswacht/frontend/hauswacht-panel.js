@@ -123,6 +123,7 @@ const TEXTS = {
     addArea: "Bereich anlegen",
     page: "Einstellungsseite",
     pageOn: "in der Seitenleiste sichtbar",
+    pageOff: "in der Seitenleiste ausgeblendet – erreichbar über die Geräteseite oder /hauswacht-settings",
     noRules: "Noch keine Auslöseregel. Eine Regel löst erst bei einer Abfolge aus, z. B. „Haustür, dann innerhalb von 60 s Keller“.",
     yamlOnly: "nur YAML",
     inProfiles: "Profile",
@@ -285,6 +286,7 @@ const TEXTS = {
     addArea: "Add area",
     page: "Settings page",
     pageOn: "visible in the sidebar",
+    pageOff: "hidden in the sidebar – reachable from the device page or /hauswacht-settings",
     noRules: "No trigger rule yet. A rule only triggers on a sequence, e.g. “front door, then basement within 60 s”.",
     yamlOnly: "YAML only",
     inProfiles: "Profiles",
@@ -963,7 +965,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
       this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
-      this._card(this._t("page"), `<div>${escHtml(this._t("pageOn"))}</div>${edit("page")}`, "settingsPage")
+      this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage")
     );
   }
 

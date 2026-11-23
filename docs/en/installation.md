@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.61.0b3:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.61.0b4:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -131,8 +131,9 @@ Then as needed: [Users and PINs](users.md), [Control devices](control-devices.md
 
 One device **"Hauswacht"** with alarm panel, profile selection, buttons, test mode, system
 status and profile settings; one more device "Hauswacht &lt;area&gt;" for each additional area.
-The complete list is in the [reference](reference.md#entities). On the device page, a link
-leads to these instructions.
+The complete list is in the [reference](reference.md#entities). On the device page, the link in the
+device info leads to the [settings page](settings-page.md) (from 0.61; these instructions are
+there in the **Documentation** tab).
 
 ## Behaviour after a restart
 

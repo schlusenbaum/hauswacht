@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.61.0b3:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.61.0b4:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -136,8 +136,9 @@ Danach nach Bedarf: [Benutzer und PINs](benutzer.md), [Bedienteile](bedienteile.
 
 Ein Gerät **„Hauswacht“** mit Bedienfeld, Profilauswahl, Knöpfen, Testmodus, Systemstatus und
 Profil-Einstellungen; je weiterem Bereich ein Gerät „Hauswacht <Bereich>“. Die vollständige
-Liste steht in der [Referenz](referenz.md#entitäten). Auf der Geräteseite führt ein Link zu
-dieser Anleitung.
+Liste steht in der [Referenz](referenz.md#entitäten). Auf der Geräteseite führt der Link in der
+Geräteinfo zur [Einstellungsseite](einstellungsseite.md) (ab 0.61; dort steht diese Anleitung
+im Reiter **Dokumentation**).
 
 ## Verhalten nach einem Neustart
 

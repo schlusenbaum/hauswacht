@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.61.0b4] - 2026-11-23
+
+**Vorabversion: Einstellungsseite ausblenden statt abschalten** (ADR 0011 Nachtrag 0.61, Schritt 4
+von 4).
+
+### Geändert
+- Die Einstellungsseite gibt es jetzt **immer** (nur Administratoren). Die Einstellung heißt
+  „**In der Seitenleiste zeigen**“: Ausgeblendet verschwindet nur der Eintrag in der Seitenleiste.
+- Der Link auf der **Geräteseite** von Hauswacht führt jetzt zur Einstellungsseite (bisher zur
+  Anleitung auf GitHub – die steht auf der Seite im Reiter „Dokumentation“).
+- Dialog „Konfigurieren“: ganz oben ein Link zur Einstellungsseite; die Hinweise auf
+  „Bei Rückkehr“ verlinken direkt dorthin.
+
+### Sicherheit
+- Korrekturen aus 0.60.1 übernommen (HACS-Review: Attribute maskieren, Personen-IDs in der
+  Diagnose schwärzen).
+
 ## [0.61.0b3] - 2026-11-23
 
 **Vorabversion: Annäherung verlängert die Eingangsverzögerung** (ADR 0015, Schritt 3 von 4).

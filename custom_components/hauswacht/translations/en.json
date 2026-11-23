@@ -167,7 +167,7 @@
           "system": "System settings",
           "done": "Done – close"
         },
-        "description": "{saved}Every change is saved as soon as you submit the form; you then return to the menu."
+        "description": "**Settings page:** [open Hauswacht](/hauswacht-settings) – everything at a glance, with explanations. New settings (e.g. “On return”) are only there.\n\n{saved}Every change is saved as soon as you submit the form; you then return to the menu."
       },
       "code": {
         "title": "PIN rules",
@@ -214,7 +214,7 @@
         "sections": {
           "automation": {
             "name": "Automation",
-            "description": "Optional: when this profile arms or disarms by itself. Automatic arming only happens from \"disarmed\"; open sensors are never bypassed automatically. A running alarm is never ended automatically. **On return** (disarm or let in when someone comes home) is set on the settings page since 0.61: sidebar → Hauswacht → Profiles.",
+            "description": "Optional: when this profile arms or disarms by itself. Automatic arming only happens from \"disarmed\"; open sensors are never bypassed automatically. A running alarm is never ended automatically. **On return** (disarm or let in when someone comes home) is set on the settings page since 0.61: [settings page](/hauswacht-settings) → Profiles.",
             "data": {
               "auto_arm_time": "Arm at",
               "auto_disarm_time": "Disarm at",
@@ -468,7 +468,7 @@
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Presence and homecoming observation",
           "restart": "Behaviour after restart",
-          "settings_page": "Settings page in the sidebar",
+          "settings_page": "Settings page: show in the sidebar",
           "init": "← Back"
         },
         "description": "{saved}"
@@ -1380,10 +1380,10 @@
         }
       },
       "settings_page": {
-        "title": "Settings page",
-        "description": "The page **Hauswacht** in the sidebar shows the whole setup at a glance (administrators only): sensors with groups and profiles as a table, profiles, rules, sirens, notifications, people. The settings dialog always stays complete – the page is an additional way.",
+        "title": "Settings page in the sidebar",
+        "description": "The settings page **Hauswacht** always exists (administrators only). Here you only choose whether it is shown in the **sidebar**. When hidden, you still reach it from the Hauswacht device page (link in the device info), from the link at the top of the “Configure” menu or directly: [/hauswacht-settings](/hauswacht-settings). Every user can also hide it for themselves via “Edit sidebar” in Home Assistant.",
         "data": {
-          "enabled": "Show the page “Hauswacht” in the sidebar"
+          "enabled": "Show in the sidebar"
         }
       },
       "stale_sensor": {

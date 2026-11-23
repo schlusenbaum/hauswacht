@@ -104,6 +104,29 @@ async def test_panel_registered_for_admins(hass: HomeAssistant) -> None:
     assert kwargs["module_url"] == f"/hauswacht/{PANEL_FILE}?v=1.2.3"
 
 
+async def test_hidden_panel_stays_reachable(hass: HomeAssistant) -> None:
+    """0.61: „In der Seitenleiste zeigen“ aus – die Seite gibt es weiter, nur ohne Eintrag."""
+    hass.config.components.add("frontend")
+    with (
+        patch.object(hass, "http", MagicMock()),
+        patch(
+            "homeassistant.components.panel_custom.async_register_panel", new=AsyncMock()
+        ) as register,
+    ):
+        await async_register_panel(hass, "1.2.3", sidebar=False)
+    kwargs = register.await_args.kwargs
+    assert kwargs["frontend_url_path"] == PANEL_URL_PATH
+    assert kwargs["sidebar_title"] is None
+    assert kwargs["sidebar_icon"] is None
+    assert kwargs["require_admin"] is True
+
+
+def test_device_page_links_to_settings_page() -> None:
+    from custom_components.hauswacht.entity import PAGE_URL  # noqa: PLC0415
+
+    assert f"homeassistant://{PANEL_URL_PATH}" == PAGE_URL
+
+
 async def test_panel_skipped_without_frontend(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.components.panel_custom.async_register_panel", new=AsyncMock()

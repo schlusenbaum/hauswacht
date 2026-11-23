@@ -14,7 +14,16 @@ which profile they are armed, who gets which message.
 - Visible to **administrators** only.
 - **In addition** to the dialog and the [setup wizard](setup-wizard.md) – all ways use the same
   settings. What is changed in the dialog appears on the page right after "Reload".
-- To hide it: Configure → System → **Settings page in the sidebar** → untick.
+- **Open it:** from the sidebar, from the link in the device info on the Hauswacht device page,
+  from the link at the very top of the "Configure" dialog or directly at `/hauswacht-settings`
+  (e.g. `http://homeassistant.local:8123/hauswacht-settings`).
+- **Hide instead of switch off** (from 0.61): the page always exists. Under System → **Settings
+  page** (or in the dialog: Configure → System → **Settings page: show in the sidebar**) you only
+  choose whether it is shown in the sidebar. When hidden, you reach it the ways above. Every user
+  can also hide it for themselves via "Edit sidebar" in Home Assistant.
+- **New settings are only here** (from 0.61, e.g. ["On return"](profiles.md#on-return) and
+  ["away" only with proof](profiles.md#away-only-with-proof)). The dialog shows a hint with a link
+  at that place.
 
 ## The tabs
 
@@ -210,7 +219,7 @@ Below it one card per topic with **"Edit"**:
 | **Radio networks and gateways** | Status sensors, e.g. the Zigbee2MQTT bridge – see [radio networks](sensors.md#monitor-radio-networks-and-gateways) |
 | **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation). Below that **"When does someone count as away?"** (from 0.61, only here): location outside **check precisely** or **simple**, under "More settings" the **time window for the proof** (default 15 minutes) with a recommendation from the "leaving" measurement and an **apply** button; per person **"Proof for 'away'"**: location only (safe) or also door + signal (uncertain, with a warning and its own time window); warning for persons without a location – see ["away" only with proof](profiles.md#away-only-with-proof). Below it the block **Measurements**: view, save, reset – see [Measurements on the settings page](observations.md#measurements-on-the-settings-page) |
 | **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |
-| **Settings page** | hide this page. It then disappears; to show it again: in the dialog under system settings → settings page |
+| **Settings page** | **Show in the sidebar** on/off. When hidden, only the sidebar entry disappears – the page stays reachable from the device page, the link in the dialog and `/hauswacht-settings` |
 
 ## Editing alarm devices
 
