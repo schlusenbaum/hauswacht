@@ -203,7 +203,6 @@ async def test_options_flow_saves_automation(hass: HomeAssistant) -> None:
                 "auto_arm_time": "22:45:00",
                 "auto_weekdays": ["fri", "sat"],
                 "auto_away_delay": 20,
-                "auto_arrival_mode": "off",
             },
         },
     )
