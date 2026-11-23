@@ -40,7 +40,12 @@ REDACT = {
     "homecoming_ssids",
     "auto_away_persons",
     "away_persons",
-    "persons",  # „Bei Rückkehr“ und alter Durchgang
+    "persons",  # „Bei Rückkehr“, Durchgang
+    "person",  # Bedingungen in Auslöseregeln
+    "away_proof_weak",  # Personen mit „Tür + Signal“
+    "no_fix",  # Übersicht: Personen ohne Ortung
+    "weak_proof",  # Übersicht: Personen mit „Tür + Signal“
+    "leaving",  # Übersicht: Empfehlung „Weggehen“ je Person
     "speakers",
     "targets",
     "alarm_targets",

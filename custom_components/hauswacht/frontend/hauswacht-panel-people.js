@@ -206,7 +206,7 @@ class HauswachtPersonEditor extends HTMLElement {
     if (scope) d.rights = scope.value;
     if (root.querySelector("[data-ar]")) {
       for (const area of this.settings.people.areas) {
-        d.area_rights[area.id] = [...root.querySelectorAll(`[data-ar="${area.id}"]`)].filter((el) => el.checked).map((el) => el.dataset.v);
+        d.area_rights[area.id] = [...root.querySelectorAll(`[data-ar="${CSS.escape(area.id)}"]`)].filter((el) => el.checked).map((el) => el.dataset.v);
       }
     }
   }

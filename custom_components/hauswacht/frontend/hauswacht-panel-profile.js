@@ -291,24 +291,24 @@ class HauswachtProfileEditor extends HTMLElement {
   // --- Bausteine ---------------------------------------------------------------
 
   _text(key, value, label) {
-    return `<label>${pe(label)}</label><input data-k="${key}" value="${pe(value ?? "")}">${this._err(key)}`;
+    return `<label>${pe(label)}</label><input data-k="${pe(key)}" value="${pe(value ?? "")}">${this._err(key)}`;
   }
 
   _num(key, value, label, min, max) {
-    return `<div><label>${pe(label)}</label><input type="number" min="${min}" max="${max}" data-k="${key}" data-num="1" value="${pe(value)}"></div>`;
+    return `<div><label>${pe(label)}</label><input type="number" min="${min}" max="${max}" data-k="${pe(key)}" data-num="1" value="${pe(value)}"></div>`;
   }
 
   _select(key, value, label, options) {
-    return `<label>${pe(label)}</label><select data-k="${key}">${options.map(([v, l]) => `<option value="${pe(v)}" ${v === value ? "selected" : ""}>${pe(l)}</option>`).join("")}</select>${this._err(key)}`;
+    return `<label>${pe(label)}</label><select data-k="${pe(key)}">${options.map(([v, l]) => `<option value="${pe(v)}" ${v === value ? "selected" : ""}>${pe(l)}</option>`).join("")}</select>${this._err(key)}`;
   }
 
   _check(key, value, label) {
-    return `<div class="chk"><input type="checkbox" data-k="${key}" data-bool="1" ${value ? "checked" : ""}><span>${pe(label)}</span></div>`;
+    return `<div class="chk"><input type="checkbox" data-k="${pe(key)}" data-bool="1" ${value ? "checked" : ""}><span>${pe(label)}</span></div>`;
   }
 
   _multi(key, chosen, items, label, empty) {
     const body = items.length
-      ? items.map(([v, l]) => `<div class="chk"><input type="checkbox" data-m="${key}" value="${pe(v)}" ${chosen.includes(v) ? "checked" : ""}><span>${pe(l)}</span></div>`).join("")
+      ? items.map(([v, l]) => `<div class="chk"><input type="checkbox" data-m="${pe(key)}" value="${pe(v)}" ${chosen.includes(v) ? "checked" : ""}><span>${pe(l)}</span></div>`).join("")
       : `<div class="muted">${pe(empty || this._t("none"))}</div>`;
     return `<label>${pe(label)}</label>${body}${this._err(key)}`;
   }
@@ -399,7 +399,7 @@ ${this._returnSection(c, lim, t)}
   _info(key) {
     // ⓘ: Mauszeiger drauf zeigt den Text, Tippen klappt ihn auf
     const text = this._t("info")[key] || "";
-    return `<button type="button" class="info" data-info="${key}" title="${pe(text)}" aria-label="${pe(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${key}" hidden>${pe(text)}</div>`;
+    return `<button type="button" class="info" data-info="${pe(key)}" title="${pe(text)}" aria-label="${pe(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${pe(key)}" hidden>${pe(text)}</div>`;
   }
 
   _noFix(person) {
@@ -430,7 +430,7 @@ ${this._returnSection(c, lim, t)}
 
   _recLine(field, value, current, textMeasured, textDefault) {
     const text = value === null ? textDefault : textMeasured.replace("{r}", String(value));
-    const button = value !== null && Number(current) !== value ? ` <button type="button" class="b" data-rec="${field}" data-value="${value}">${pe(this._t("apply"))}</button>` : "";
+    const button = value !== null && Number(current) !== value ? ` <button type="button" class="b" data-rec="${pe(field)}" data-value="${value}">${pe(this._t("apply"))}</button>` : "";
     return `<div class="muted">${pe(text)}${button}</div>`;
   }
 
@@ -566,7 +566,7 @@ ${this._returnSection(c, lim, t)}
     // ⓘ antippen klappt die Erklärung auf
     this.shadowRoot.querySelectorAll("[data-info]").forEach((btn) =>
       btn.addEventListener("click", () => {
-        const tip = this.shadowRoot.querySelector(`[data-tip="${btn.dataset.info}"]`);
+        const tip = this.shadowRoot.querySelector(`[data-tip="${CSS.escape(btn.dataset.info)}"]`);
         if (tip) tip.hidden = !tip.hidden;
       })
     );

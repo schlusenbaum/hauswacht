@@ -170,10 +170,31 @@ async def test_important_findings_become_repairs(hass: HomeAssistant) -> None:
 
 
 async def test_diagnostics_are_redacted(hass: HomeAssistant) -> None:
-    entry = make_entry(OPTIONS)
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Zed"})
+    options = {
+        **OPTIONS,
+        "away_proof_weak": ["person.anna"],
+        "profiles": {
+            "night": {
+                "passage": {"enabled": True, "persons": ["person.anna"]},
+                "return": {"mode": "door", "persons": ["person.anna"]},
+            }
+        },
+        "rules": {
+            **OPTIONS["rules"],
+            "wer": {
+                "name": "Nur wenn niemand da",
+                "result": "alarm",
+                "steps": [{"any": [{"sensor": DOOR}]}],
+                "conditions": [{"person": {"entity": "person.anna", "in": "not_home"}}],
+            },
+        },
+    }
+    entry = make_entry(options)
     await setup_entry(hass, entry)
     data = await async_get_config_entry_diagnostics(hass, entry)
     text = json.dumps(data, ensure_ascii=False)
+    assert "person.anna" not in text  # HACS-Review: keine Personen-IDs
     assert "Anna" not in text
     assert CARD not in text
     assert "annas_handy" not in text

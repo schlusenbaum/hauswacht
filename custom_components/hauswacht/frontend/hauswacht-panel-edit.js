@@ -372,7 +372,7 @@ class HauswachtSensorEditor extends HTMLElement {
   }
 
   _groupSelect(name, current) {
-    return `<select data-f="${name}"><option value="">${e(this._t("noGroupChoice"))}</option>${this.settings.groups.map((g) => `<option value="${e(g.id)}" ${g.id === current ? "selected" : ""}>${e(g.name)}</option>`).join("")}</select>`;
+    return `<select data-f="${e(name)}"><option value="">${e(this._t("noGroupChoice"))}</option>${this.settings.groups.map((g) => `<option value="${e(g.id)}" ${g.id === current ? "selected" : ""}>${e(g.name)}</option>`).join("")}</select>`;
   }
 
   _err(field) {
