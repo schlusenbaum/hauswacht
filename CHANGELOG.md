@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.1] - 2026-11-23
+
+**Korrekturen aus dem HACS-Review.**
+
+### Sicherheit
+- Einstellungsseite: Werte aus anderen Integrationen (z. B. Ereignis-Typen von Knöpfen) werden
+  jetzt auch in HTML-Attributen maskiert. Ein Wert mit Anführungszeichen konnte vorher fremdes
+  HTML in die Seite einschleusen.
+- Diagnose-Datei: Personen-IDs (`person.…`) aus dem Durchgang, aus Bedingungen von
+  Auslöseregeln und aus der Empfehlung „Weggehen“ werden geschwärzt.
+
 ## [0.60.0] - 2026-11-23
 
 **Beobachtung „Weggehen“, Messungen und Sirenentest auf der Einstellungsseite, Sicherheitskorrektur
