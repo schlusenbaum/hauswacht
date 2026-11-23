@@ -162,6 +162,12 @@ HomeKit variable "Martin home".
 | **away** | **all** signals reliably report "away" |
 | unknown | otherwise, e.g. a signal is "unavailable" – this **never** counts as away |
 
+**Direction (Proximity, Places)** counts with two values only: **"arrived"** = home and
+**"away from"** = away. **"Towards"** and **"stationary"** are skipped (from 0.60): someone
+approaching is not there yet – otherwise a drive in the area that briefly heads towards home
+would already count as a return and e.g. trigger "disarm on return". And "stationary" (e.g. at
+the office) does not hold up "all away".
+
 **Example:** Anna is "away" according to her person entity, but her Wi-Fi sensor still reports
 the home Wi-Fi. Then Anna is home, and "Arm when all of these persons are away" waits. Only when
 the Wi-Fi is gone too does the delay start.

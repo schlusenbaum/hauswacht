@@ -168,6 +168,12 @@ eine HomeKit-Variable „Martin zuhause“.
 | **weg** | **alle** Signale sicher „weg“ melden |
 | unbekannt | sonst, z. B. ein Signal ist „nicht verfügbar“ – das zählt **nie** als weg |
 
+**Richtung (Nähe, Places)** zählt nur mit zwei Werten: **„angekommen“** = zuhause und
+**„entfernt sich“** = weg. **„Nähert sich“** und **„steht“** werden übergangen (ab 0.60): Wer
+sich nähert, ist noch nicht da – sonst würde eine Fahrt in der Umgebung, die kurz Richtung
+Zuhause führt, schon als Rückkehr gelten und z. B. „Unscharf bei Rückkehr“ auslösen. Und „steht“
+(etwa im Büro) hält „alle weg“ nicht auf.
+
 **Beispiel:** Anna ist laut Person „nicht zuhause“, ihr WLAN-Sensor meldet aber noch das
 Heim-WLAN. Dann ist Anna zuhause, „Scharf, wenn alle weg“ wartet. Erst wenn auch das WLAN
 weg ist, beginnt die Wartezeit.

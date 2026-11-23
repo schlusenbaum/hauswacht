@@ -13,6 +13,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   (Nähe, Places) kurz „nähert sich“ meldete. Das **frühestes Signal** zählt jetzt nur echte
   Heimkehrten (ein Anwesenheits-Signal meldet wieder „zuhause“); „nähert sich“ bis zu 15 Minuten
   davor macht den Zeitpunkt nur früher. Nach dem Update **Heimkommen zurücksetzen**.
+- **Sicherheit – Profil-Automatik:** Die Richtung (Nähe, Places) „nähert sich“ galt als „zuhause“.
+  Eine Fahrt in der Umgebung konnte so „Unscharf bei Rückkehr“ auslösen oder beim Durchgang per
+  Handy als Ankunft zählen. Jetzt zählen Richtungs-Sensoren nur mit „angekommen“ (zuhause) und
+  „entfernt sich“ (weg); „nähert sich“ und „steht“ werden übergangen – „steht“ hält damit auch
+  „Scharf, wenn alle weg“ nicht mehr auf.
 
 ## [0.60.0b6] - 2026-11-22
 

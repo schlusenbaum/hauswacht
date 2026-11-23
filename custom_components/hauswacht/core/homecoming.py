@@ -46,6 +46,8 @@ MAX_RECORDS = 5000
 DIRECTION_HOME = frozenset({"towards", "arrived", "towards home"})
 DIRECTION_AWAY = frozenset({"away_from", "away from home"})
 DIRECTION_NEUTRAL = frozenset({"stationary"})
+# Nur Hinweis, kein Beleg für "zuhause": wer sich nähert, ist noch nicht da
+DIRECTION_HINT = frozenset({"towards", "towards home"})
 APPROACH_WINDOW = 900  # s: Annäherung kommt oft Minuten vor der Tür
 EARLIEST = "#frühestes"  # Kennung der Kombination je Person: "<person>#frühestes"
 
@@ -113,6 +115,16 @@ class Verdict:
     arrival: Arrival
     door: DoorOpening | None
     delay: float | None  # s nach der Türöffnung; None ohne Tür
+
+
+def direction_hint(state: str | None) -> bool:
+    """Richtung "nähert sich" oder "steht": für die Profil-Automatik kein Beleg.
+
+    Richtungs-Sensoren (Nähe, Places) zählen dort nur mit "angekommen" (zuhause) oder
+    "entfernt sich" (weg). "Nähert sich" und "steht" werden übergangen – sie machen niemanden
+    zuhause und halten "alle weg" nicht auf.
+    """
+    return state in DIRECTION_HINT or state in DIRECTION_NEUTRAL
 
 
 def nearest_door(
