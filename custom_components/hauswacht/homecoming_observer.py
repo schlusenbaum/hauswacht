@@ -24,6 +24,16 @@ from .const import (
     OPT_HOMECOMING_SIGNALS,
     OPT_HOMECOMING_SSIDS,
 )
+from .core.departure import (
+    Departure,
+    DepartureVerdict,
+    advice_text,
+    departure_csv_rows,
+    departure_lines,
+    departure_stats,
+    judge_departures,
+    wait_advice,
+)
 from .core.homecoming import (
     APPROACH_WINDOW,
     DIRECTION_AWAY,
@@ -37,17 +47,18 @@ from .core.homecoming import (
     SourceStats,
     csv_rows,
     describe,
+    direction_hint,
     door_proof_advice,
     door_proof_lines,
     doors_without_arrival,
     entry_stats,
     evaluate,
     judge,
+    presence,
     prune,
     report_markdown,
     to_csv,
     track,
-    track_value,
 )
 from .core.texts import DE, lang_of, tr
 from .names import display_name, plain_name
@@ -89,10 +100,18 @@ class HomecomingObserver:
         )
         self.doors: list[dict[str, Any]] = []
         self.arrivals: list[dict[str, Any]] = []
+        self.departures: list[dict[str, Any]] = []
+        # Auswertung nur einmal je Änderung berechnen (Attribute, Messungen, Bericht)
+        self._rev = 0
+        self._cache: dict[str, tuple[Any, Any]] = {}
         self.since: float | None = None
+        self.departure_since: float | None = None  # Beginn der Messung "Weggehen"
         self.entries: list[dict[str, Any]] = []
         self._entry_open: dict[str, Any] | None = None
-        self._combined: dict[str, PresenceState] = {}
+        # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
+        self._present: dict[str, bool | None] = {}
+        self._absent_since: dict[str, float] = {}  # Person: seit wann "alle Signale" weg
+        self._direction_state: dict[str, str | None] = {}  # Richtung: aktueller Wert
         self._directions: set[str] = set()
         self._door_entities: frozenset[str] = frozenset()
         self._owners: dict[str, tuple[str, ...]] = {}  # Quelle -> Personen
@@ -105,12 +124,19 @@ class HomecomingObserver:
         stored = await self._store.async_load() or {}
         self.doors = list(stored.get("doors", []))
         self.arrivals = list(stored.get("arrivals", []))
+        self.departures = list(stored.get("departures", []))
         self.entries = list(stored.get("entries", []))
         self.since = stored.get("since")
+        self.departure_since = stored.get("departure_since")
         if not self.enabled:
             return
+        now = dt_util.utcnow().timestamp()
         if self.since is None:
-            self.since = dt_util.utcnow().timestamp()
+            self.since = now
+        if self.departure_since is None:
+            # Weggehen wird erst seit 0.60 gemessen – ältere Beobachtungstage zählen nicht
+            self.departure_since = now
+            self._store.async_delay_save(self._data, 10)
         self.refresh()
 
     @callback
@@ -144,8 +170,10 @@ class HomecomingObserver:
             if source not in self._presence:
                 self._presence[source] = self._initial_presence(source)
         for person in self.persons:
-            if person not in self._combined:
-                self._combined[person] = self._initial_combined(person)
+            if person not in self._present:
+                self._present[person] = self._person_present(person)
+                if self._present[person] is False:
+                    self._absent_since[person] = self._initial_absent(person)
         self.async_stop()
         wanted = sorted(set(self._owners) | doors)
         if wanted:
@@ -156,6 +184,8 @@ class HomecomingObserver:
         if state is None:
             return PresenceState()
         self._note_direction(source, state.state)
+        if source in self._directions:
+            self._direction_state[source] = state.state
         initial, _ = track(PresenceState(), state.state, state.last_changed.timestamp(), self.ssids)
         return initial
 
@@ -164,31 +194,77 @@ class HomecomingObserver:
         if state in DIRECTION_HOME | DIRECTION_AWAY | DIRECTION_NEUTRAL:
             self._directions.add(source)
 
-    def _initial_combined(self, person: str) -> PresenceState:
-        """Kombination beim Start; "weg seit" = spätester Abschied der Quellen."""
-        home = self._person_home(person)
-        if home is not False:
-            return PresenceState(home=home)
+    def _initial_absent(self, person: str) -> float:
+        """Beim Start schon weg: "weg seit" = spätester Abschied der Quellen (ohne Richtung)."""
         since = [
             state.away_since
             for source in self._person_sources(person)
-            if (state := self._presence.get(source)) is not None and state.away_since
+            if source not in self._directions
+            and (state := self._presence.get(source)) is not None
+            and state.away_since
         ]
-        return PresenceState(
-            home=False, away_since=max(since) if since else dt_util.utcnow().timestamp()
-        )
+        return max(since) if since else dt_util.utcnow().timestamp()
 
     def _person_sources(self, person: str) -> list[str]:
         return [s for s, persons in self._owners.items() if person in persons]
 
-    def _person_home(self, person: str) -> bool | None:
-        """Kombination: irgendeine Quelle zuhause -> zuhause; alle bekannt weg -> weg."""
-        values = [self._presence.get(s, PresenceState()).home for s in self._person_sources(person)]
+    def _person_present(self, person: str) -> bool | None:
+        """Kombination "alle Signale" – zählt wie die Profil-Automatik.
+
+        Richtung (Nähe, Places) nur mit "angekommen" (zuhause) oder "entfernt sich" (weg);
+        "nähert sich" und "steht" werden übergangen (``direction_hint``), genau wie in der
+        Automatik. Zuhause, sobald ein Signal zuhause meldet; weg, sobald mindestens eines "weg"
+        meldet und keines "zuhause" (schweigende Signale zählen als weg).
+
+        Daraus entstehen Weggehen, Rückkehr und das "frühestes Signal" der Heimkehr – so misst
+        die Beobachtung genau das, worauf "Unscharf mit Türbeleg" und der Durchgang reagieren.
+        """
+        values: list[bool | None] = []
+        for source in self._person_sources(person):
+            if source in self._directions:
+                raw = self._direction_state.get(source)
+                if not direction_hint(raw):
+                    values.append(presence(raw, self.ssids))
+            else:
+                values.append(self._presence.get(source, PresenceState()).home)
         if any(v is True for v in values):
             return True
-        if values and all(v is False for v in values):
+        if any(v is False for v in values):
             return False
         return None
+
+    def _track_leaving(self, person: str, now: float) -> bool:
+        """Weggehen und Rückkehr der Kombination "alle Signale" mitschreiben."""
+        before = self._present.get(person)
+        present = self._person_present(person)
+        if present is None or present == before:
+            return False
+        self._present[person] = present
+        source = person + EARLIEST
+        if before is True and present is False:
+            self.departures.append({"at": now, "person": person, "source": source})
+            self._absent_since[person] = now
+            return True
+        changed = False
+        if present is True:
+            for record in reversed(self.departures):
+                if record["source"] == source:
+                    if record.get("back") is None:
+                        record["back"] = now
+                        changed = True
+                    break
+            left = self._absent_since.pop(person, None)
+            if before is False and left is not None:
+                self.arrivals.append(
+                    {
+                        "at": now,
+                        "person": person,
+                        "source": source,
+                        "away": now - left,
+                    }
+                )
+                changed = True
+        return changed
 
     # --- Aufzeichnung --------------------------------------------------------
 
@@ -212,37 +288,63 @@ class HomecomingObserver:
             if trackers_changed:
                 self.hass.loop.call_soon(self.refresh)
             self._note_direction(entity_id, new.state)
-            state, away = track(
-                self._presence.get(entity_id, PresenceState()), new.state, now, self.ssids
-            )
+            prev = self._presence.get(entity_id, PresenceState())
+            state, away = track(prev, new.state, now, self.ssids)
             self._presence[entity_id] = state
+            if entity_id in self._directions:
+                self._direction_state[entity_id] = new.state
             if away is not None:
                 for person in self._owners[entity_id]:
                     self.arrivals.append(
                         {"at": now, "person": person, "source": entity_id, "away": away}
                     )
                 changed = True
+            if prev.home is True and state.home is False:
+                for person in self._owners[entity_id]:
+                    self.departures.append({"at": now, "person": person, "source": entity_id})
+                changed = True
             for person in self._owners[entity_id]:
-                combined, away = track_value(
-                    self._combined.get(person, PresenceState()), self._person_home(person), now
-                )
-                self._combined[person] = combined
-                if away is not None:
-                    self.arrivals.append(
-                        {"at": now, "person": person, "source": person + EARLIEST, "away": away}
-                    )
-                    changed = True
+                changed = self._track_leaving(person, now) or changed
         if changed:
             self.doors = prune(self.doors, now)
             self.arrivals = prune(self.arrivals, now)
+            self.departures = prune(self.departures, now)
             self._store.async_delay_save(self._data, 10)
+            self._rev += 1
             self._on_change()
+
+    @callback
+    def reset(self, part: str = "all") -> None:
+        """Messungen löschen und neu beginnen (Einstellungsseite).
+
+        ``part``: ``all`` (alles), ``departure`` (nur Weggehen) oder ``arrival`` (nur Heimkommen:
+        die Heimkehr-Auswertung beginnt neu; die Heimkehrten bleiben intern gespeichert, weil das
+        Weggehen mit ihnen erkennt, wann jemand zurück war). Der aktuelle Anwesenheitsstand
+        bleibt erhalten, damit das nächste Kommen und Gehen sofort wieder zählt.
+        """
+        now = dt_util.utcnow().timestamp()
+        if part == "arrival":
+            self.since = now
+        if part in ("departure", "all"):
+            self.departures = []
+            self.departure_since = now
+        if part == "all":
+            self.doors = []
+            self.arrivals = []
+            self.entries = []
+            self._entry_open = None
+            self.since = now
+        self._store.async_delay_save(self._data, 1)
+        self._rev += 1
+        self._on_change()
 
     def _data(self) -> dict[str, Any]:
         return {
             "doors": self.doors,
             "arrivals": self.arrivals,
+            "departures": self.departures,
             "since": self.since,
+            "departure_since": self.departure_since,
             "entries": self.entries,
         }
 
@@ -260,17 +362,24 @@ class HomecomingObserver:
         }
 
     @callback
-    def entry_finished(self, *, in_time: bool) -> None:
-        """Eingangsverzögerung beendet: unscharf (rechtzeitig) oder Alarm (zu spät)."""
+    def entry_finished(self, *, in_time: bool, passage: bool = False) -> None:
+        """Eingangsverzögerung beendet: unscharf (rechtzeitig), Alarm (zu spät) oder per
+        Durchgang reingelassen (bleibt scharf; zählt in der Auswertung nicht mit)."""
         started, self._entry_open = self._entry_open, None
         if started is None or not self.enabled:
             return
         now = dt_util.utcnow().timestamp()
         self.entries.append(
-            {**started, "seconds": round(now - float(started["at"]), 1), "in_time": in_time}
+            {
+                **started,
+                "seconds": round(now - float(started["at"]), 1),
+                "in_time": in_time,
+                "passage": passage,
+            }
         )
         self.entries = prune(self.entries, now)
         self._store.async_delay_save(self._data, 10)
+        self._rev += 1
         self._on_change()
 
     def entry_timings(self) -> list[EntryTiming]:
@@ -281,13 +390,21 @@ class HomecomingObserver:
                 seconds=float(e["seconds"]),
                 in_time=bool(e["in_time"]),
                 delay=int(e.get("delay", 0)),
+                passage=bool(e.get("passage", False)),
             )
             for e in self.entries
         ]
 
     # --- Auswertung ----------------------------------------------------------
 
-    def _parsed(self) -> tuple[list[Arrival], list[DoorOpening]]:
+    def _parsed(self, *, everything: bool = False) -> tuple[list[Arrival], list[DoorOpening]]:
+        """Heimkehrten und Türöffnungen.
+
+        Für die Heimkehr-Auswertung nur ab ``since`` (nach "Heimkommen zurücksetzen" bleiben
+        ältere Heimkehrten gespeichert, weil das Weggehen mit ihnen die Rückkehr erkennt).
+        ``everything``: alles Gespeicherte (für die Messung "Weggehen").
+        """
+        start = 0.0 if everything or self.since is None else float(self.since)
         arrivals = [
             Arrival(
                 at=float(a["at"]),
@@ -296,9 +413,54 @@ class HomecomingObserver:
                 away_seconds=float(a["away"]),
             )
             for a in self.arrivals
+            if float(a["at"]) >= start
         ]
-        doors = [DoorOpening(at=float(d["at"]), sensor=str(d["sensor"])) for d in self.doors]
+        doors = [
+            DoorOpening(at=float(d["at"]), sensor=str(d["sensor"]))
+            for d in self.doors
+            if float(d["at"]) >= start
+        ]
         return arrivals, doors
+
+    def _departure_names(self, names: dict[str, str]) -> dict[str, str]:
+        """Beim Weggehen heißt die Kombination "alle Signale" statt "frühestes Signal"."""
+        result = dict(names)
+        for person in self.persons:
+            result[person + EARLIEST] = tr(
+                self.lang, "dep_all", person=plain_name(self.hass, person)
+            )
+        return result
+
+    def _cached(self, name: str, key: Any, compute: Callable[[], Any]) -> Any:
+        hit = self._cache.get(name)
+        if hit is not None and hit[0] == key:
+            return hit[1]
+        value = compute()
+        self._cache[name] = (key, value)
+        return value
+
+    def departure_verdicts(self) -> list[DepartureVerdict]:
+        # Offene Pausen zählen bis "jetzt" – deshalb höchstens eine Minute alt
+        now = int(dt_util.utcnow().timestamp() // 60)
+        key = (self._rev, self.since, self.departure_since, now)
+        return self._cached("departures", key, self._departure_verdicts)  # type: ignore[no-any-return]
+
+    def _departure_verdicts(self) -> list[DepartureVerdict]:
+        arrivals, doors = self._parsed(everything=True)
+        departures = [
+            Departure(
+                at=float(d["at"]),
+                person=str(d["person"]),
+                source=str(d["source"]),
+                back=float(d["back"]) if d.get("back") is not None else None,
+            )
+            for d in self.departures
+        ]
+        return judge_departures(departures, arrivals, doors, dt_util.utcnow().timestamp())
+
+    def departure_advice(self) -> dict[str, dict[str, Any]]:
+        """Je Person: Empfehlung für "Rausgehen ohne PIN erkennen" (ADR 0014)."""
+        return wait_advice(self.departure_verdicts(), self.departure_days())
 
     @property
     def lang(self) -> str:
@@ -316,14 +478,17 @@ class HomecomingObserver:
         names: dict[str, str] = {}
         arrivals, doors = self._parsed()
         lang = self.lang
-        for arrival in arrivals:
-            person = plain_name(self.hass, arrival.person)
-            if arrival.source == arrival.person:
-                names[arrival.source] = tr(lang, "hc_overall", person=person)
-            elif arrival.source.endswith(EARLIEST):
-                names[arrival.source] = tr(lang, "hc_earliest", person=person)
+        seen = [(a.person, a.source) for a in arrivals] + [
+            (str(d["person"]), str(d["source"])) for d in self.departures
+        ]
+        for owner, source in seen:
+            person = plain_name(self.hass, owner)
+            if source == owner:
+                names[source] = tr(lang, "hc_overall", person=person)
+            elif source.endswith(EARLIEST):
+                names[source] = tr(lang, "hc_earliest", person=person)
             else:
-                names[arrival.source] = f"{person} – {plain_name(self.hass, arrival.source)}"
+                names[source] = f"{person} – {plain_name(self.hass, source)}"
         for door in doors:
             names[door.sensor] = display_name(self.hass, door.sensor)
         return names
@@ -336,8 +501,18 @@ class HomecomingObserver:
         }
 
     def stats(self) -> dict[str, SourceStats]:
-        arrivals, doors = self._parsed()
-        return evaluate(arrivals, doors, windows=self._windows(arrivals))
+        def compute() -> dict[str, SourceStats]:
+            arrivals, doors = self._parsed()
+            return evaluate(arrivals, doors, windows=self._windows(arrivals))
+
+        key = (self._rev, self.since)
+        return self._cached("stats", key, compute)  # type: ignore[no-any-return]
+
+    def departure_days(self) -> float:
+        """Tage, seit das Weggehen gemessen wird (für die Mindestdauer der Empfehlung)."""
+        if self.departure_since is None:
+            return 0.0
+        return max(0.0, (dt_util.utcnow().timestamp() - self.departure_since) / 86400)
 
     def days(self) -> float:
         if self.since is None:
@@ -359,7 +534,7 @@ class HomecomingObserver:
         return {
             "enabled": self.enabled,
             "days": round(self.days(), 1),
-            "door_openings": len(self.doors),
+            "door_openings": len(self._parsed()[1]),
             "sources": {names.get(k, k): v.as_dict() for k, v in sorted(self.stats().items())},
             "recent": self.recent(),
             "entry_times": {
@@ -370,6 +545,62 @@ class HomecomingObserver:
                 plain_name(self.hass, person): values
                 for person, values in door_proof_advice(self.stats()).items()
             },
+            "departure": {
+                self._departure_names(names).get(k, k): v.as_dict()
+                for k, v in sorted(departure_stats(self.departure_verdicts()).items())
+            },
+            "departure_days": round(self.departure_days(), 1),
+            "leaving_advice": {
+                plain_name(self.hass, person): values
+                for person, values in self.departure_advice().items()
+            },
+        }
+
+    def measurements(self) -> dict[str, Any]:
+        """Kurzfassung aller Messungen für die Einstellungsseite."""
+        stats = self.stats()
+        left = departure_stats(self.departure_verdicts())
+        advice = self.departure_advice()
+        lang = self.lang
+        persons = []
+        for person in self.persons:
+            home = stats.get(person + EARLIEST)
+            out = left.get(person + EARLIEST)
+            values = advice.get(person)
+            name = plain_name(self.hass, person)
+            persons.append(
+                {
+                    "name": name,
+                    "arrivals": home.arrivals if home else 0,
+                    "arrivals_with_door": home.with_door if home else 0,
+                    "left": out.with_door if out else 0,
+                    "longest_left": round(max(out.delays)) if out and out.delays else None,
+                    "pauses": len(out.pauses) if out else 0,
+                    "longest_pause": (round(max(out.pauses) / 60) if out and out.pauses else None),
+                    "status": values["status"] if values else "few",
+                    "advice": (
+                        advice_text(values, name, lang)
+                        if values
+                        else tr(lang, "dep_status_none", name=name)
+                    ),
+                }
+            )
+        return {
+            "since": self._when(self.since) if self.since else None,
+            "days": round(self.days(), 1),
+            "departure_since": self._when(self.departure_since) if self.departure_since else None,
+            "departure_days": round(self.departure_days(), 1),
+            "doors": len(self._parsed()[1]),
+            "persons": persons,
+            "entries": [
+                {
+                    "door": display_name(self.hass, door),
+                    "count": values["entries"],
+                    "longest": values["max_seconds"],
+                    "recommended": values["recommended_entry_delay"],
+                }
+                for door, values in entry_stats(self.entry_timings()).items()
+            ],
         }
 
     def summary(self) -> int | None:
@@ -413,6 +644,17 @@ class HomecomingObserver:
         )
         if proof:
             text += "\n\n" + "\n".join(proof)
+        verdicts = self.departure_verdicts()
+        names = self.names()
+        names.update({p: plain_name(self.hass, p) for p in self.persons})
+        leaving = departure_lines(
+            departure_stats(verdicts),
+            wait_advice(verdicts, self.departure_days()),
+            self._departure_names(names),
+            lang,
+        )
+        if leaving:
+            text += "\n\n" + "\n".join(leaving)
         if not self.enabled:
             text = tr(lang, "hc_off") + "\n\n" + text
         return text
@@ -438,12 +680,19 @@ class HomecomingObserver:
             )
             + "\n"
         )
+
+        def local(at: float) -> str:
+            return self._when(at, seconds=True)
+
         rows = csv_rows(
             judge(arrivals, doors, windows=self._windows(arrivals)),
             timings,
             names,
-            lambda at: self._when(at, seconds=True),
+            local,
             lang,
+            extra=departure_csv_rows(
+                self.departure_verdicts(), self._departure_names(names), local, lang
+            ),
         )
         return {
             "filename": f"{tr(lang, 'hc_filename')}-{now:%Y-%m-%d}",

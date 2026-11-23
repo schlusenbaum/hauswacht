@@ -96,6 +96,20 @@ class SilenceObserver:
                 lambda: {"records": dump(self.records), "since": self.since}, 30
             )
 
+    @callback
+    def reset(self) -> None:
+        """Funkstille-Messung löschen und neu beginnen (Einstellungsseite)."""
+        self.records = {}
+        self._previous = {}
+        self._baseline = set()
+        self.since = dt_util.utcnow().timestamp()
+        self.sample()
+        # Den Stand nach dem ersten Abgleich speichern (nicht einen leeren) – sonst fehlt nach
+        # einem baldigen Neustart der Ausgangspunkt je Melder
+        self._store.async_delay_save(
+            lambda: {"records": dump(self.records), "since": self.since}, 1
+        )
+
     def days(self) -> float:
         if self.since is None:
             return 0.0

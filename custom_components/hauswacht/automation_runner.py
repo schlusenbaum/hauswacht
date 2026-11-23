@@ -40,7 +40,7 @@ from .core.automation import (
     person_value,
     schedule_action,
 )
-from .core.homecoming import presence
+from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
 from .core.passage import PassageConfig, parse_passage
 from .core.profiles import profile_ids
@@ -235,11 +235,15 @@ class AutomationRunner:
         return state.state if state else None
 
     def person_home(self, person: str) -> bool | None:
-        """Person zuhause (True), sicher weg (False) oder unbekannt (None) – aus allen Signalen."""
+        """Person zuhause (True), sicher weg (False) oder unbekannt (None) – aus allen Signalen.
+
+        Richtung "nähert sich"/"steht" zählt nicht (siehe ``direction_hint``).
+        """
+        states = [self._state(s) for s in self.signals.get(person, ())]
         return combine(
             [
                 person_value(self._state(person)),
-                *(presence(self._state(s), self.ssids) for s in self.signals.get(person, ())),
+                *(presence(state, self.ssids) for state in states if not direction_hint(state)),
             ]
         )
 

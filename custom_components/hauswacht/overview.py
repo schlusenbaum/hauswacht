@@ -481,6 +481,13 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
             "enabled": main.homecoming.enabled,
             "days": round(main.homecoming.days(), 1),
             "arrivals": main.homecoming.summary() or 0,
+            # Empfehlung je Person für "Rausgehen ohne PIN erkennen" (ADR 0014)
+            "leaving": [
+                {"name": _name(hass, person), **values}
+                for person, values in (
+                    main.homecoming.departure_advice() if main.homecoming.enabled else {}
+                ).items()
+            ],
         },
     }
 

@@ -13,7 +13,7 @@ const TEXTS = {
     loading: "Lade …",
     refresh: "Neu laden",
     dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick – und alles direkt hier bearbeiten. Der Einstellungsdialog („Im Dialog bearbeiten“) bleibt als zweiter Weg. Nur den Sirenentest startest du in der Karte „Hauswacht Test“.",
+    hint: "Die ganze Einrichtung auf einen Blick – und alles direkt hier bearbeiten. Der Einstellungsdialog („Im Dialog bearbeiten“) bleibt als zweiter Weg. Auch der Sirenentest geht hier (Reiter Alarmgeber) – mit Rückfrage, nur für Administratoren.",
     addRule: "Auslöseregel anlegen",
     addPerson: "Person anlegen",
     noPeople: "Noch keine Person. Ohne Personen schaltet jeder ohne PIN – mit Personen bekommt jede ihren PIN, ihre Karten und ihre Rechte.",
@@ -46,7 +46,23 @@ const TEXTS = {
     testEvery: "Erinnerung alle {m} Monate",
     testOff: "keine Erinnerung",
     prewarnOn: "mit Vorwarnung",
-    testCard: "Den Test selbst startest du in der Karte „Hauswacht Test“ – die Seite schaltet nie eine Sirene.",
+    testCard: "Den Test startest du hier unten oder in der Karte „Hauswacht Test“. Sonst schaltet die Seite nie eine Sirene.",
+    stWarn: "🔊 Hier ertönt eine echte Sirene – kurz und leise (3 s). Nur testen, wenn du vor Ort bist und Mitbewohner informiert sind.",
+    stOk: "Ich bin vor Ort, Mitbewohner sind informiert",
+    stLast: "Zuletzt getestet:",
+    stNever: "Noch nie getestet",
+    stTest: "Testen …",
+    stAsk: "Sirene ertönt jetzt 3 s leise. Wirklich starten?",
+    stStart: "Ja, starten",
+    stCancel: "Abbrechen",
+    stRunning: "Läuft … Rauchmelder mit Batterie reagieren oft erst nach einigen Sekunden – kurz warten.",
+    stStop: "Stopp",
+    stHeard: "Hast du die Sirene gehört?",
+    stYes: "Ja, gehört",
+    stNo: "Nein",
+    stNone: "Keine Sirenen eingerichtet.",
+    stAdmin: "Den Sirenentest dürfen nur Administratoren starten.",
+    stBlocked: { siren_test_running: "Ein Sirenentest läuft gerade.", siren_test_armed: "Nur möglich, wenn alle Bereiche unscharf sind." },
     switchTitle: "Sirene aus Schalter erstellen",
     switchHint: "Für Sirenen, die in Home Assistant nur als Schalter erscheinen: legt den Helfer „Gerätetyp eines Schalters ändern“ an und trägt die Sirene ein.",
     masterSet: "Master-PIN gesetzt",
@@ -65,6 +81,32 @@ const TEXTS = {
     staleNever: "nie prüfen",
     staleGeneralL: "Allgemein",
     staleAdviceL: "Empfehlung {h} h (ohne Melder mit eigenem Wert)",
+    measTitle: "Messungen",
+    measOff: "Die Beobachtung ist aus – es wird nichts gemessen.",
+    measSince: "Heimkommen gemessen seit {s} ({d} Tage, {n} Türöffnungen) · Weggehen gemessen seit {w} ({x} Tage)",
+    measPerson: "Person",
+    measHome: "Heimgekommen (mit Tür)",
+    measLeft: "Rausgegangen mit Tür",
+    measLongest: "längste Zeit bis „weg“",
+    measPauses: "Schweigepausen (längste)",
+    measEntryDoor: "Eingang",
+    measEntries: "Eingänge",
+    measEntryLongest: "längste Zeit bis unscharf",
+    measEntryAdvice: "Empfehlung Eingangsverzögerung",
+    measShow: "Bericht anzeigen",
+    measHide: "Bericht ausblenden",
+    measSaveMd: "Bericht speichern",
+    measSaveCsv: "Tabelle speichern (CSV)",
+    measResetArrival: "Heimkommen zurücksetzen",
+    measAskArrival: "Messung „Heimkommen“ löschen und neu beginnen? Weggehen und Eingänge bleiben erhalten.",
+    measResetLeaving: "Weggehen zurücksetzen",
+    measResetAll: "Alle Messungen zurücksetzen",
+    measResetSilence: "Messung zurücksetzen",
+    measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkommen und Eingänge bleiben erhalten.",
+    measAskAll: "Alle Messungen der Heimkehr-Beobachtung löschen (Heimkehr, Eingänge, Weggehen) und neu beginnen? Einstellungen bleiben unverändert.",
+    measAskSilence: "Funkstille-Messung aller Melder löschen und neu beginnen? Eigene Werte je Melder bleiben unverändert.",
+    measDone: "Messung zurückgesetzt.",
+    measSilenceSince: "gemessen seit {s}",
     staleTableHint: "Beobachtung je Melder seit {d} Tagen. Auf einen Melder klicken, um ihm einen eigenen Wert zu geben.",
     staleSensor: "Melder",
     staleLongest: "Längste Pause",
@@ -133,7 +175,7 @@ const TEXTS = {
     loading: "Loading …",
     refresh: "Reload",
     dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance – and edit everything right here. The settings dialog (“Edit in the dialog”) stays as a second way. Only the siren test is started in the card “Hauswacht Test”.",
+    hint: "The whole setup at a glance – and edit everything right here. The settings dialog (“Edit in the dialog”) stays as a second way. The siren test also works here (tab Alarm devices) – with confirmation, administrators only.",
     addRule: "Add trigger rule",
     addPerson: "Add person",
     noPeople: "No person yet. Without people anyone operates without a PIN – with people, each gets their PIN, cards and rights.",
@@ -166,7 +208,23 @@ const TEXTS = {
     testEvery: "Reminder every {m} months",
     testOff: "no reminder",
     prewarnOn: "with pre-warning",
-    testCard: "You start the test itself in the card “Hauswacht Test” – the page never switches a siren.",
+    testCard: "Start the test down here or in the card “Hauswacht Test”. Otherwise the page never switches a siren.",
+    stWarn: "🔊 A real siren sounds here – short and quiet (3 s). Only test when you are on site and housemates are informed.",
+    stOk: "I am on site, housemates are informed",
+    stLast: "Last tested:",
+    stNever: "Never tested",
+    stTest: "Test …",
+    stAsk: "The siren will sound quietly for 3 s. Really start?",
+    stStart: "Yes, start",
+    stCancel: "Cancel",
+    stRunning: "Running … battery smoke detectors often react only after a few seconds – wait a moment.",
+    stStop: "Stop",
+    stHeard: "Did you hear the siren?",
+    stYes: "Yes, heard",
+    stNo: "No",
+    stNone: "No sirens set up.",
+    stAdmin: "Only administrators may start the siren test.",
+    stBlocked: { siren_test_running: "A siren test is running.", siren_test_armed: "Only possible when all areas are disarmed." },
     switchTitle: "Create siren from switch",
     switchHint: "For sirens that appear in Home Assistant only as a switch: creates the helper “change device type of a switch” and registers the siren.",
     masterSet: "master PIN set",
@@ -185,6 +243,32 @@ const TEXTS = {
     staleNever: "never check",
     staleGeneralL: "General",
     staleAdviceL: "recommendation {h} h (without sensors with an own value)",
+    measTitle: "Measurements",
+    measOff: "The observation is off – nothing is being measured.",
+    measSince: "Homecoming measured since {s} ({d} days, {n} door openings) · leaving measured since {w} ({x} days)",
+    measPerson: "Person",
+    measHome: "Came home (with door)",
+    measLeft: "Left through a door",
+    measLongest: "longest time until “away”",
+    measPauses: "Silent pauses (longest)",
+    measEntryDoor: "Entry",
+    measEntries: "Entries",
+    measEntryLongest: "longest time until disarmed",
+    measEntryAdvice: "Recommended entry delay",
+    measShow: "Show report",
+    measHide: "Hide report",
+    measSaveMd: "Save report",
+    measSaveCsv: "Save table (CSV)",
+    measResetArrival: "Reset homecoming",
+    measAskArrival: "Delete the “homecoming” measurement and start again? Leaving and entries are kept.",
+    measResetLeaving: "Reset leaving",
+    measResetAll: "Reset all measurements",
+    measResetSilence: "Reset measurement",
+    measAskLeaving: "Delete the “leaving” measurement and start again? Homecoming and entries are kept.",
+    measAskAll: "Delete all measurements of the homecoming observation (homecoming, entries, leaving) and start again? Settings stay unchanged.",
+    measAskSilence: "Delete the silence measurement of all sensors and start again? Own values per sensor stay unchanged.",
+    measDone: "Measurement reset.",
+    measSilenceSince: "measured since {s}",
     staleTableHint: "Observation per sensor for {d} days. Click a sensor to give it an own value.",
     staleSensor: "Sensor",
     staleLongest: "Longest pause",
@@ -294,6 +378,13 @@ const PANEL_STYLE = `
   .note { color: var(--secondary-text-color); font-size: .9rem; margin: 0 0 12px; }
   ha-card { margin-bottom: 16px; }
   .tool { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .sirentest { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--divider-color); }
+  .sirentest .warn { color: var(--error-color); margin-bottom: 6px; }
+  .sirentest .st-ok { display: block; margin: 6px 0; cursor: pointer; }
+  .meas { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--divider-color); }
+  .meas > .n { font-weight: 500; margin-bottom: 4px; }
+  .report { margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: var(--secondary-background-color); overflow-x: auto; }
+  pre.report { white-space: pre-wrap; font-size: 12px; }
   button.e { font: inherit; font-size: .85rem; padding: 4px 12px; border-radius: 16px; cursor: pointer;
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-color); }
   a.lnk { color: var(--primary-color); cursor: pointer; }
@@ -328,6 +419,113 @@ class HauswachtPanel extends HTMLElement {
     if (first) {
       this.attachShadow({ mode: "open" });
       this._start();
+      return;
+    }
+    // Sirenentest: nur den Kasten neu zeichnen, wenn sich der Test-Sensor ändert
+    const id = this._sirenTestEntity();
+    const state = id ? hass.states[id] : undefined;
+    if (state !== this._stState) this._renderSirenTest();
+  }
+
+  // --- Sirenentest (echte Sirene!) – gleicher Weg wie die Testkarte -------------------------
+  // Alle Sperren prüft Hauswacht im Hintergrund (unscharf, Freigabe, Testmodus aus, keine
+  // Brandsperre, nur Einbruchtöne, höchstens 10 s, nur Administratoren). Die Seite ruft nur die
+  // Dienste hauswacht.siren_test / siren_test_result / siren_test_stop auf.
+
+  _sirenTestEntity() {
+    if (this._stIds === undefined || !this._stIds.sensor) {
+      const ids = {};
+      for (const [entityId, entry] of Object.entries((this._hass && this._hass.entities) || {})) {
+        if (entry.platform !== "hauswacht") continue;
+        if (entityId.startsWith("sensor.") && entry.translation_key === "siren_test") ids.sensor = entityId;
+        if (entityId.startsWith("alarm_control_panel.") && !ids.panel) ids.panel = entityId;
+      }
+      this._stIds = ids;
+    }
+    return this._stIds.sensor;
+  }
+
+  _renderSirenTest() {
+    const box = this.shadowRoot && this.shadowRoot.getElementById("sirentest");
+    if (!box) return;
+    const id = this._sirenTestEntity();
+    const state = id ? this._hass.states[id] : undefined;
+    this._stState = state;
+    const info = (state && state.attributes) || {};
+    const sirens = Array.isArray(info.sirens) ? info.sirens : [];
+    const parts = [`<div class="hint warn">${escHtml(this._t("stWarn"))}</div>`];
+    if (!this._hass.user || !this._hass.user.is_admin) {
+      box.innerHTML = parts.join("") + `<div class="muted">${escHtml(this._t("stAdmin"))}</div>`;
+      return;
+    }
+    if (!id || !sirens.length) {
+      box.innerHTML = parts.join("") + `<div class="muted">${escHtml(this._t("stNone"))}</div>`;
+      return;
+    }
+    if (info.blocked) parts.push(`<div class="muted">⛔ ${escHtml((this._t("stBlocked") || {})[info.blocked] || info.blocked)}</div>`);
+    parts.push(`<label class="st-ok"><input type="checkbox" data-st="ok" ${this._stOk ? "checked" : ""}> ${escHtml(this._t("stOk"))}</label>`);
+    const ask = this._stAsk;
+    for (const unit of sirens) {
+      const sid = escHtml(unit.entity_id);
+      const mark = unit.heard === true ? " ✅" : unit.heard === false ? " ❌" : "";
+      let line = unit.last_test
+        ? `${this._t("stLast")} ${new Date(unit.last_test).toLocaleString(this._hass.language)}${mark}`
+        : this._t("stNever");
+      let buttons = "";
+      if (info.running === unit.entity_id) {
+        line = this._t("stRunning");
+        buttons = `<button class="e" data-st="stop">${escHtml(this._t("stStop"))}</button>`;
+      } else if (ask && ask.siren === unit.entity_id && ask.step === "confirm") {
+        line = this._t("stAsk");
+        buttons = `<button class="e" data-st="start" data-siren="${sid}">${escHtml(this._t("stStart"))}</button><button class="e" data-st="cancel">${escHtml(this._t("stCancel"))}</button>`;
+      } else if (ask && ask.siren === unit.entity_id && ask.step === "heard") {
+        line = this._t("stHeard");
+        buttons = `<button class="e" data-st="heard" data-siren="${sid}" data-heard="1">${escHtml(this._t("stYes"))}</button><button class="e" data-st="heard" data-siren="${sid}" data-heard="0">${escHtml(this._t("stNo"))}</button>`;
+      } else {
+        const off = info.blocked || ask || !this._stOk ? "disabled" : "";
+        buttons = `<button class="e" data-st="ask" data-siren="${sid}" ${off}>${escHtml(this._t("stTest"))}</button>`;
+      }
+      parts.push(`<div class="item"><div class="tool" style="float:right;margin:0">${buttons}</div><div class="n">${escHtml(unit.name || unit.entity_id)}</div><div class="muted">${escHtml(line)}</div></div>`);
+    }
+    box.innerHTML = parts.join("");
+    box.querySelectorAll("[data-st]").forEach((el) => {
+      const kind = el.dataset.st;
+      el.addEventListener(kind === "ok" ? "change" : "click", () => this._sirenTestAction(kind, el));
+    });
+  }
+
+  async _sirenTestAction(kind, el) {
+    const panel = this._stIds && this._stIds.panel;
+    const siren = el.dataset.siren;
+    const redraw = () => this._renderSirenTest();
+    if (kind === "ok") {
+      this._stOk = el.checked;
+      return redraw();
+    }
+    if (kind === "ask") {
+      this._stAsk = { siren, step: "confirm" };
+      return redraw();
+    }
+    if (kind === "cancel") {
+      this._stAsk = null;
+      return redraw();
+    }
+    try {
+      if (kind === "start") {
+        this._stAsk = { siren, step: "heard" };
+        redraw();
+        await this._hass.callService("hauswacht", "siren_test", { entity_id: panel, siren });
+      } else if (kind === "stop") {
+        await this._hass.callService("hauswacht", "siren_test_stop", { entity_id: panel });
+      } else if (kind === "heard") {
+        this._stAsk = null;
+        redraw();
+        await this._hass.callService("hauswacht", "siren_test_result", { entity_id: panel, siren, heard: el.dataset.heard === "1" });
+      }
+    } catch (err) {
+      if (kind === "start") this._stAsk = null; // abgelehnt (z. B. Testmodus): keine Rückfrage
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
     }
   }
 
@@ -650,6 +848,9 @@ class HauswachtPanel extends HTMLElement {
   _silenceHtml(sil) {
     // Allgemeiner Wert und Beobachtung je Melder mit Empfehlung und eigenem Wert
     const general = `<div>${escHtml(this._t("staleGeneralL"))}: ${escHtml(sil.hours ? this._fmt("hoursN", { h: sil.hours }) : this._t("silenceOff"))}${sil.advice ? ` · ${escHtml(this._fmt("staleAdviceL", { h: sil.advice }))}` : ""}</div>`;
+    const reset = this._canEdit
+      ? `<div class="tool">${sil.since ? `<span class="muted">${escHtml(this._fmt("measSilenceSince", { s: sil.since }))}</span> ` : ""}<button class="e" data-a="reset-silence">${escHtml(this._t("measResetSilence"))}</button></div>`
+      : "";
     const rows = Object.entries(sil.sensors || {})
       .map(([id, o]) => {
         const own = id in sil.overrides ? (sil.overrides[id] ? `${sil.overrides[id]} h` : this._t("staleNever")) : "–";
@@ -661,7 +862,74 @@ class HauswachtPanel extends HTMLElement {
     const table = rows
       ? `<div class="muted" style="margin-top:8px">${escHtml(this._fmt("staleTableHint", { d: sil.days }))}</div><div class="scroll"><table><tr><th>${escHtml(this._t("staleSensor"))}</th><th>${escHtml(this._t("staleLongest"))}</th><th>${escHtml(this._t("staleAdviceCol"))}</th><th>${escHtml(this._t("staleOwnCol"))}</th></tr>${rows}</table></div>`
       : `<div class="muted">${escHtml(sil.observation || "")}</div>`;
-    return general + table;
+    return general + table + reset;
+  }
+
+  _measurementsHtml(m) {
+    // Messungen der Heimkehr-Beobachtung: einsehen, speichern, zurücksetzen
+    if (!m) return `<div class="muted">${escHtml(this._t("measOff"))}</div>`;
+    const dash = (v, unit = "") => (v === null || v === undefined ? "–" : `${v}${unit}`);
+    const since = `<div class="muted">${escHtml(this._fmt("measSince", { s: m.since || "–", d: m.days, w: m.departure_since || "–", x: m.departure_days, n: m.doors }))}</div>`;
+    const rows = m.persons
+      .map((p) => `<tr><td>${escHtml(p.name)}</td><td class="nw">${p.arrivals} (${p.arrivals_with_door})</td><td class="nw">${p.left}</td><td class="nw">${escHtml(dash(p.longest_left, " s"))}</td><td class="nw">${p.pauses}${p.longest_pause !== null ? ` (${p.longest_pause} min)` : ""}</td></tr>`)
+      .join("");
+    const persons = rows
+      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th><th>${escHtml(this._t("measHome"))}</th><th>${escHtml(this._t("measLeft"))}</th><th>${escHtml(this._t("measLongest"))}</th><th>${escHtml(this._t("measPauses"))}</th></tr>${rows}</table></div>`
+      : "";
+    const advice = m.persons
+      .map((p) => {
+        const warn = p.status === "slow" || p.status === "pauses";
+        return `<div class="${warn ? "" : "muted"}">${warn ? "⚠️ " : p.status === "ok" ? "✅ " : ""}${escHtml(p.advice)}</div>`;
+      })
+      .join("");
+    const entryRows = m.entries
+      .map((e) => `<tr><td>${escHtml(e.door)}</td><td class="nw">${e.count}</td><td class="nw">${escHtml(dash(e.longest, " s"))}</td><td class="nw">${escHtml(dash(e.recommended, " s"))}</td></tr>`)
+      .join("");
+    const entries = entryRows
+      ? `<div class="scroll" style="margin-top:8px"><table><tr><th>${escHtml(this._t("measEntryDoor"))}</th><th>${escHtml(this._t("measEntries"))}</th><th>${escHtml(this._t("measEntryLongest"))}</th><th>${escHtml(this._t("measEntryAdvice"))}</th></tr>${entryRows}</table></div>`
+      : "";
+    const tools = `<div class="tool">
+      <button class="e" data-a="hc-show">${escHtml(this._t(this._report ? "measHide" : "measShow"))}</button>
+      <button class="e" data-a="hc-md">⬇ ${escHtml(this._t("measSaveMd"))}</button>
+      <button class="e" data-a="hc-csv">⬇ ${escHtml(this._t("measSaveCsv"))}</button>
+      ${this._canEdit ? `<button class="e" data-a="reset-arrival">${escHtml(this._t("measResetArrival"))}</button><button class="e" data-a="reset-departure">${escHtml(this._t("measResetLeaving"))}</button><button class="e" data-a="reset-homecoming">${escHtml(this._t("measResetAll"))}</button>` : ""}
+    </div>`;
+    const report = this._report
+      ? customElements.get("ha-markdown")
+        ? `<div class="report"><ha-markdown breaks data-report></ha-markdown></div>`
+        : `<pre class="report">${escHtml(this._report)}</pre>`
+      : "";
+    return `<div class="meas"><div class="n">${escHtml(this._t("measTitle"))}</div>${since}${persons}${advice}${entries}${tools}${report}</div>`;
+  }
+
+  async _toggleReport() {
+    if (this._report) {
+      this._report = null;
+      this._render();
+      return;
+    }
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/homecoming/report" });
+      this._report = r.markdown;
+      this._render();
+    } catch (err) {
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
+    }
+  }
+
+  async _resetMeasurement(what) {
+    const ask = { arrival: "measAskArrival", departure: "measAskLeaving", homecoming: "measAskAll", silence: "measAskSilence" }[what];
+    if (!window.confirm(this._t(ask))) return;
+    try {
+      await this._hass.callWS({ type: "hauswacht/measurements/reset", what });
+      this._report = null;
+      this._flash = this._t("measDone");
+      await this._load();
+    } catch (err) {
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
+    }
   }
 
   _systemTab(view) {
@@ -683,6 +951,8 @@ class HauswachtPanel extends HTMLElement {
       h.persons.map((p) => name(h.person_choices, p)).join(", ") || null,
       h.ssids.length ? `${this._t("ssidsL")}: ${h.ssids.join(", ")}` : null,
     ].filter(Boolean).join(" · ");
+    // Messungen (Heimkehr, Eingänge, Weggehen – ADR 0014) mit Bericht, Speichern, Zurücksetzen
+    const leaving = this._measurementsHtml(h.measurements);
     const areas = sys.areas
       .map((a) => `<div class="item">${this._btn(`sys:area:${a.id}`, this._t("edit"))}<div class="n">${escHtml(a.name)}</div><div class="muted">${escHtml(a.profiles.join(", ") || "–")}</div></div>`)
       .join("");
@@ -691,7 +961,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
       this._card(this._t("silence"), this._silenceHtml(sys.silence) + edit("silence"), "silence") +
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
-      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}`, "homecoming") +
+      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
       this._card(this._t("page"), `<div>${escHtml(this._t("pageOn"))}</div>${edit("page")}`, "settingsPage")
     );
@@ -728,7 +998,7 @@ class HauswachtPanel extends HTMLElement {
     return (
       this._card(parts.sirens[0], tools + parts.sirens[2], "sirens") +
       this._card(this._t("tonesTitle"), tones, "sirenTone") +
-      this._card(this._t("testTitle"), `<div>${escHtml(testText)}</div><div class="muted">${escHtml(this._t("testCard"))}</div>${this._armedOr(`<div class="tool">${this._btn("sirentest:", this._t("edit"))}</div>`)}`, "sirenTest") +
+      this._card(this._t("testTitle"), `<div>${escHtml(testText)}</div><div class="muted">${escHtml(this._t("testCard"))}</div>${this._armedOr(`<div class="tool">${this._btn("sirentest:", this._t("edit"))}</div>`)}<div class="sirentest" id="sirentest"></div>`, "sirenTest") +
       this._card(this._t("switchTitle"), `<div class="muted">${escHtml(this._t("switchHint"))}</div>${this._armedOr(`<div class="tool">${this._btn("fromswitch:", "+ " + this._t("switchTitle"))}</div>`)}`, "sirenSwitch")
     );
   }
@@ -971,6 +1241,10 @@ class HauswachtPanel extends HTMLElement {
         this._render();
       })
     );
+    this._renderSirenTest();
+    // Heimkehr-Bericht in der Einstellungsseite anzeigen (Markdown von Home Assistant)
+    const report = this.shadowRoot.querySelector("ha-markdown[data-report]");
+    if (report) report.content = this._report || "";
     this.shadowRoot.querySelectorAll("[data-a]").forEach((button) =>
       button.addEventListener("click", () => {
         const action = button.dataset.a;
@@ -979,6 +1253,8 @@ class HauswachtPanel extends HTMLElement {
         else if (action === "dialog") this._navigate("/config/integrations/integration/hauswacht");
         else if (action === "print" || action === "sheet") this._print(action);
         else if (action === "hc-md" || action === "hc-csv") this._downloadHomecoming(action === "hc-csv" ? "csv" : "markdown");
+        else if (action === "hc-show") this._toggleReport();
+        else if (action.startsWith("reset-")) this._resetMeasurement(action.slice(6));
       })
     );
     this.shadowRoot.querySelectorAll("[data-edit]").forEach((button) =>

@@ -3,8 +3,8 @@
 **Deutsch** | [English](en/settings-page.md)
 
 > Die Seite **zeigt** die ganze Einrichtung und du bearbeitest **alles** direkt auf ihr. Der Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) bleibt als zweiter
-> Weg. Nur den **Sirenentest** startest du bewusst in der Karte „Hauswacht Test“ – die Seite
-> schaltet nie eine Sirene.
+> Weg. Die Seite schaltet nichts – einzige Ausnahme ist der **Sirenentest** (Reiter Alarmgeber,
+> Karte „Sirenentest“), mit Rückfrage und nur für Administratoren.
 
 Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
 Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
@@ -206,9 +206,9 @@ Darunter je Thema eine Karte mit **„Bearbeiten“**:
 | Karte | Inhalt |
 |---|---|
 | **Verhalten nach Neustart** | Vorherigen Zustand wiederherstellen · immer scharf (mit Profil je Bereich) · immer unscharf; „Laufenden Alarm fortsetzen“ – siehe [Verhalten nach einem Neustart](installation.md#verhalten-nach-einem-neustart) |
-| **Funkstille von Sensoren** | Allgemeiner Wert (Stunden bis „ausgefallen“, 0 = aus) und eine Tabelle **je Melder**: längste Pause, Empfehlung, eigener Wert – Melder anklicken, um ihm einen eigenen Wert zu geben. Siehe [Funkstille](melder.md#funkstille-von-sensoren) |
+| **Funkstille von Sensoren** | Allgemeiner Wert (Stunden bis „ausgefallen“, 0 = aus) und eine Tabelle **je Melder**: längste Pause, Empfehlung, eigener Wert – Melder anklicken, um ihm einen eigenen Wert zu geben. Seit wann gemessen wird, steht unten; **Messung zurücksetzen** löscht die Messung aller Melder und beginnt neu. Siehe [Funkstille](melder.md#funkstille-von-sensoren) |
 | **Funknetz und Gateways** | Statussensoren, z. B. die Zigbee2MQTT-Bridge – siehe [Funknetz](melder.md#funknetz-und-gateways-überwachen) |
-| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung) |
+| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
 | **Bereiche** | anlegen, umbenennen, Symbol, löschen (nur ohne Profile) – siehe [Bereiche](profile.md#bereiche) |
 | **Einstellungsseite** | diese Seite ausblenden. Danach verschwindet sie; wieder einblenden im Dialog unter Systemeinstellungen → Einstellungsseite |
 
@@ -231,11 +231,29 @@ Darunter im selben Reiter:
 | Karte | Auf der Seite |
 |---|---|
 | **[Ton je Sirene](sirenen.md#ton-je-sirene)** | je Sirene „Bearbeiten“: die Töne, die das Gerät meldet, „automatisch“ (Einbruchton) oder ein eigener Name. **Brandtöne** sind gesperrt; nur als Experte mit Haken „Brandton für Einbruch erlauben“ **und** ausdrücklicher Bestätigung – für Sirenen mit eigenen Rauchmeldern nie |
-| **[Sirenentest](sirenen.md#sirenentest)** | Erinnerung (aus, alle 3 / 6 Monate, jährlich) und Vorwarnung „Sirenentest in 10 Sekunden“. Den Test selbst startest du in der Testkarte |
+| **[Sirenentest](sirenen.md#sirenentest)** | Erinnerung (aus, alle 3 / 6 Monate, jährlich) und Vorwarnung „Sirenentest in 10 Sekunden“. Darunter der **Test selbst**, siehe unten |
 | **[Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)** | Schalter wählen und bestätigen, dass es eine reine Alarmsirene ist: Hauswacht legt den Helfer „Gerätetyp eines Schalters ändern“ (Typ Sirene) an und trägt die Sirene ein. Der Schalter wird dabei **nicht** geschaltet |
 
-Einen **Sirenentest** gibt es auf der Seite bewusst nicht – nur in der
-[Testkarte](sirenen.md#sirenentest).
+### Sirenentest auf der Seite (echte Sirene!)
+
+Unten in der Karte **Sirenentest** steht jede Sirene mit ihrem letzten Test (Datum, ✅ gehört,
+❌ nicht gehört). So testest du:
+
+1. Anhaken: **„Ich bin vor Ort, Mitbewohner sind informiert“**. Erst dann lassen sich die Knöpfe
+   drücken.
+2. Bei einer Sirene **Testen …** drücken.
+3. Rückfrage „Sirene ertönt jetzt 3 s leise. Wirklich starten?“ → **Ja, starten** oder
+   **Abbrechen**.
+4. Während des Tons steht **Stopp** bereit. Rauchmelder mit Batterie reagieren oft erst nach
+   einigen Sekunden.
+5. „Hast du die Sirene gehört?“ → **Ja, gehört** oder **Nein**. Das Ergebnis wird mit Datum
+   gespeichert.
+
+Es ist derselbe Weg wie in der [Testkarte](sirenen.md#sirenentest), die ihn weiterhin auch hat.
+Alle Sperren prüft Hauswacht im Hintergrund – unabhängig davon, wo du startest: alle Bereiche
+unscharf, Hardware-Freigabe an, Testmodus aus, keine Brandsperre, nur Einbruchtöne, höchstens
+10 s. Ist etwas gesperrt, steht der Grund in der Karte (⛔). Starten dürfen nur
+**Administratoren**.
 
 ## Benachrichtigungen bearbeiten
 
@@ -283,7 +301,8 @@ Siehe [Sprachausgabe](benachrichtigungen.md#sprachausgabe-lautsprecher).
 
 ## Gut zu wissen
 
-- Die Seite **schaltet nichts** – weder Sirenen noch Geräte. Sie ändert nur Einstellungen, und
+- Die Seite **schaltet nichts** – keine Geräte, keine Sirenen; einzige Ausnahme ist der
+  [Sirenentest](#sirenentest-auf-der-seite-echte-sirene) mit Rückfrage. Sie ändert nur Einstellungen, und
   nur die, die du speicherst. Helfer legt sie nur an, wenn du es ausdrücklich willst („Sirene aus
   Schalter erstellen“, „Melder aus Messwert erstellen“).
 - Der **Einrichtungsassistent** bleibt im Dialog (Knopf „Im Dialog bearbeiten“ → Einrichtungsassistent).

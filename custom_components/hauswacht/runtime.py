@@ -3358,7 +3358,10 @@ class HauswachtRuntime:
                 self.ctx.trigger_sensor, profile.entry_delay if profile else 0
             )
         elif effect.old is AlarmState.PENDING and effect.new is not AlarmState.PENDING:
-            self.homecoming.entry_finished(in_time=effect.new is AlarmState.DISARMED)
+            self.homecoming.entry_finished(
+                in_time=effect.new is AlarmState.DISARMED,
+                passage=effect.new is AlarmState.ARMED,  # Durchgang: bleibt scharf
+            )
 
     @callback
     def _cancel_speech_repeat(self) -> None:

@@ -3,12 +3,16 @@
 - ``hauswacht/overview`` (nur Administratoren) liefert die Übersicht samt Prüfhinweisen.
 - ``hauswacht/homecoming/report`` (nur Administratoren) liefert den Heimkehr-Bericht zum
   Herunterladen: Markdown und alle Einzelwerte als CSV.
+- ``hauswacht/measurements/reset`` (nur Administratoren) löscht Messungen: Heimkehr-Beobachtung
+  ganz (``homecoming``), nur das Heimkommen (``arrival``), nur das Weggehen (``departure``)
+  oder die Funkstille (``silence``).
 - Wichtige Prüfhinweise erscheinen zusätzlich unter Einstellungen → Reparaturen; sie werden beim
   Start (verzögert, bis die Melder ihren Zustand haben) und danach stündlich aktualisiert.
 """
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
@@ -27,11 +31,14 @@ if TYPE_CHECKING:
 
 WS_TYPE = f"{DOMAIN}/overview"
 WS_HOMECOMING = f"{DOMAIN}/homecoming/report"
+WS_RESET = f"{DOMAIN}/measurements/reset"
+RESET_PARTS = ("homecoming", "arrival", "departure", "silence")
 ISSUE_PREFIX = "check_"
 ISSUE_TRANSLATION = "check_finding"
 REFRESH = timedelta(hours=1)
 FIRST_DELAY = 120  # s nach dem Start: Melder und Funkstille sollen erst ankommen
 DATA_WS = f"{DOMAIN}_ws_registered"
+_LOGGER = logging.getLogger(__name__)
 
 
 def issue_id(finding: dict[str, Any]) -> str:
@@ -73,12 +80,36 @@ def ws_homecoming_report(
     connection.send_result(msg["id"], main.homecoming.export())
 
 
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {vol.Required("type"): WS_RESET, vol.Required("what"): vol.In(RESET_PARTS)}
+)
+@callback
+def ws_measurements_reset(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Messungen zurücksetzen. Schaltet nichts und ändert keine Einstellung."""
+    main = _main(hass)
+    if main is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
+        return
+    what = msg["what"]
+    if what == "silence":
+        if main.silence is not None:
+            main.silence.reset()
+    else:
+        main.homecoming.reset("all" if what == "homecoming" else what)
+    _LOGGER.info("Messung zurückgesetzt: %s", what)
+    connection.send_result(msg["id"], {"ok": True})
+
+
 @callback
 def async_register_websocket(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS):
         return
     websocket_api.async_register_command(hass, ws_overview)
     websocket_api.async_register_command(hass, ws_homecoming_report)
+    websocket_api.async_register_command(hass, ws_measurements_reset)
     hass.data[DATA_WS] = True
 
 

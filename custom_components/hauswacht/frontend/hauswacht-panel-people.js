@@ -229,6 +229,7 @@ class HauswachtPersonEditor extends HTMLElement {
     this._details = result.details || {};
     if (this._errors.base === "changed_elsewhere") this.dispatchEvent(new CustomEvent("hw-stale", { bubbles: true, composed: true }));
     this._render();
+    window.HauswachtRevealError?.(this.shadowRoot); // Fehlermeldung ins Bild holen
   }
 
   _render() {

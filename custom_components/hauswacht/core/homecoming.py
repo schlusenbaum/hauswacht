@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import io
 import statistics
+from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -41,9 +42,13 @@ MAX_AGE = 60 * 86400  # s: ältere Daten werden verworfen
 MAX_RECORDS = 5000
 
 
-DIRECTION_HOME = frozenset({"towards", "arrived"})
-DIRECTION_AWAY = frozenset({"away_from"})
+# Richtung: Integration "Nähe" (towards, arrived, away_from, stationary) und die
+# Zusatz-Integration "Places" (towards home, away from home, stationary)
+DIRECTION_HOME = frozenset({"towards", "arrived", "towards home"})
+DIRECTION_AWAY = frozenset({"away_from", "away from home"})
 DIRECTION_NEUTRAL = frozenset({"stationary"})
+# Nur Hinweis, kein Beleg für "zuhause": wer sich nähert, ist noch nicht da
+DIRECTION_HINT = frozenset({"towards", "towards home"})
 APPROACH_WINDOW = 900  # s: Annäherung kommt oft Minuten vor der Tür
 EARLIEST = "#frühestes"  # Kennung der Kombination je Person: "<person>#frühestes"
 
@@ -53,7 +58,8 @@ def presence(state: str | None, ssids: frozenset[str] = frozenset()) -> bool | N
 
     - Tracker/Person: ``home`` = zuhause, alles andere (``not_home``, andere Zone) = weg
     - Binärsensor: ``on`` = zuhause, ``off`` = weg
-    - Richtung (Nähe): nähert sich/angekommen = zuhause, entfernt sich = weg, steht = unbekannt
+    - Richtung (Nähe, Places): nähert sich/angekommen = zuhause, entfernt sich = weg,
+      steht = unbekannt
     - WLAN-Sensor: Name eines Heim-WLANs = zuhause, sonst weg
     """
     if state is None or state in IGNORED_STATES or state in DIRECTION_NEUTRAL:
@@ -112,6 +118,16 @@ class Verdict:
     delay: float | None  # s nach der Türöffnung; None ohne Tür
 
 
+def direction_hint(state: str | None) -> bool:
+    """Richtung "nähert sich" oder "steht": für die Profil-Automatik kein Beleg.
+
+    Richtungs-Sensoren (Nähe, Places) zählen dort nur mit "angekommen" (zuhause) oder
+    "entfernt sich" (weg). "Nähert sich" und "steht" werden übergangen – sie machen niemanden
+    zuhause und halten "alle weg" nicht auf.
+    """
+    return state in DIRECTION_HINT or state in DIRECTION_NEUTRAL
+
+
 def nearest_door(
     arrival: Arrival, doors: Sequence[DoorOpening], window: int = DEFAULT_WINDOW
 ) -> DoorOpening | None:
@@ -123,6 +139,45 @@ def nearest_door(
     return best
 
 
+class DoorIndex:
+    """Türöffnungen nach Zeit sortiert – schnelles Nachschlagen statt "jede mit jeder".
+
+    Bei Wochen voller Daten (Tausende Einträge) dauerte der Vergleich jeder Ankunft mit jeder
+    Tür sonst Sekunden – und das bei jeder Signaländerung im Ereignis-Takt von Home Assistant.
+    """
+
+    def __init__(self, doors: Iterable[DoorOpening]) -> None:
+        self.doors = sorted(doors, key=lambda d: d.at)
+        self.times = [d.at for d in self.doors]
+
+    def nearest(self, at: float, window: float) -> DoorOpening | None:
+        """Nächste Tür im Fenster; bei gleichem Abstand die frühere (wie ``nearest_door``)."""
+        i = bisect_left(self.times, at)
+        best: DoorOpening | None = None
+        for j in (i - 1, i):
+            if 0 <= j < len(self.doors):
+                door = self.doors[j]
+                diff = abs(at - door.at)
+                if diff <= window and (best is None or diff < abs(at - best.at)):
+                    best = door
+        # Gleich weit entfernte frühere Türen mit demselben Zeitpunkt: die erste nehmen
+        if best is not None:
+            k = bisect_left(self.times, best.at)
+            best = self.doors[k]
+        return best
+
+    def latest_between(self, start: float, end: float) -> DoorOpening | None:
+        """Späteste Tür mit ``start <= at <= end``."""
+        i = bisect_right(self.times, end) - 1
+        if i >= 0 and self.times[i] >= start:
+            return self.doors[i]
+        return None
+
+    def any_within(self, at: float, window: float) -> bool:
+        i = bisect_left(self.times, at - window)
+        return i < len(self.times) and self.times[i] <= at + window
+
+
 def judge(
     arrivals: Iterable[Arrival],
     doors: Sequence[DoorOpening],
@@ -132,10 +187,11 @@ def judge(
     windows: Mapping[str, int] | None = None,
 ) -> list[Verdict]:
     verdicts: list[Verdict] = []
+    index = DoorIndex(doors)
     for arrival in arrivals:
         if arrival.away_seconds < min_away:
             continue
-        door = nearest_door(arrival, doors, (windows or {}).get(arrival.source, window))
+        door = index.nearest(arrival.at, (windows or {}).get(arrival.source, window))
         delay = arrival.at - door.at if door else None
         verdicts.append(Verdict(arrival=arrival, door=door, delay=delay))
     return verdicts
@@ -170,8 +226,10 @@ def doors_without_arrival(
     sources: frozenset[str] | None = None,
 ) -> int:
     """Türöffnungen ohne Ankunft (Hinausgehen, Besuch, Lüften …) – nur zur Einordnung."""
-    relevant = [a for a in arrivals if sources is None or a.source in sources]
-    return sum(1 for door in doors if not any(abs(a.at - door.at) <= window for a in relevant))
+    relevant = DoorIndex(
+        DoorOpening(at=a.at, sensor="") for a in arrivals if sources is None or a.source in sources
+    )
+    return sum(1 for door in doors if not relevant.any_within(door.at, window))
 
 
 def describe(verdict: Verdict, name: Mapping[str, str], lang: str = DE) -> str:
@@ -276,6 +334,7 @@ class EntryTiming:
     seconds: float
     in_time: bool  # False = Zeit abgelaufen, Alarm
     delay: int  # eingestellte Eingangsverzögerung
+    passage: bool = False  # per Durchgang reingelassen (bleibt scharf) – zählt nicht mit
 
 
 def recommended_entry_delay(longest: float) -> int:
@@ -288,6 +347,8 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
     """Je Tür: Anzahl, rechtzeitig, zu spät, typische und längste Zeit, Empfehlung."""
     by_door: dict[str, list[EntryTiming]] = {}
     for timing in timings:
+        if timing.passage:
+            continue  # Durchgang: niemand musste unscharf schalten
         by_door.setdefault(timing.door, []).append(timing)
     result: dict[str, dict[str, Any]] = {}
     for door, items in by_door.items():
@@ -306,9 +367,10 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
 def door_proof_advice(stats: Mapping[str, SourceStats]) -> dict[str, dict[str, int]]:
     """Je Person: welche Eingangsverzögerung "Unscharf mit Türbeleg" bräuchte.
 
-    Grundlage ist die Kombination "frühestes Signal" (irgendein Signal meldet zuhause) – so
-    entscheidet auch die Profil-Automatik. Kommt die Erkennung erst nach dem Öffnen der Tür,
-    muss die Eingangsverzögerung so lange reichen. Heimkehrten ohne Tür würden ignoriert.
+    Grundlage ist die Kombination "frühestes Signal" (frühester Zeitpunkt einer echten Heimkehr,
+    eine Richtung "nähert sich" kurz davor eingeschlossen). Kommt die Erkennung erst nach dem
+    Öffnen der Tür, muss die Eingangsverzögerung so lange reichen. Heimkehrten ohne Tür würden
+    ignoriert.
     """
     advice: dict[str, dict[str, int]] = {}
     for source, entry in stats.items():
@@ -362,18 +424,21 @@ def csv_header(lang: str = DE) -> tuple[str, ...]:
     return tuple(tr(lang, key) for key in CSV_COLUMNS)
 
 
-def csv_rows(
+def csv_rows(  # noqa: PLR0913
     verdicts: Iterable[Verdict],
     timings: Iterable[EntryTiming],
     names: Mapping[str, str],
     local: Callable[[float], str],
     lang: str = DE,
+    *,
+    extra: Iterable[tuple[float, tuple[str, ...]]] = (),
 ) -> list[tuple[str, ...]]:
     """Alle Heimkehrten und Eingänge als Tabelle (älteste zuerst), zum Herunterladen.
 
-    ``local`` formatiert einen Zeitstempel (UTC-Sekunden) als Ortszeit.
+    ``local`` formatiert einen Zeitstempel (UTC-Sekunden) als Ortszeit. ``extra`` sind weitere
+    Zeilen (Zeitpunkt, Zellen), z. B. aus der Beobachtung "Weggehen".
     """
-    rows: list[tuple[float, tuple[str, ...]]] = []
+    rows: list[tuple[float, tuple[str, ...]]] = list(extra)
     for v in verdicts:
         door = names.get(v.door.sensor, v.door.sensor) if v.door else ""
         delay = f"{v.delay:.0f}" if v.delay is not None else ""
@@ -393,7 +458,14 @@ def csv_rows(
             )
         )
     for t in timings:
-        result = tr(lang, "hc_entry_in_time" if t.in_time else "hc_entry_too_late", delay=t.delay)
+        key = (
+            "hc_entry_passage"
+            if t.passage
+            else "hc_entry_in_time"
+            if t.in_time
+            else "hc_entry_too_late"
+        )
+        result = tr(lang, key, delay=t.delay)
         rows.append(
             (
                 t.at,

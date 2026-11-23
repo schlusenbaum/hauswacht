@@ -44,6 +44,7 @@
 | 0.57 | [Settings page](settings-page.md) in the sidebar: everything at a glance, matrix "sensor × profile", edit everything directly (sensors, profiles, trigger rules as form or YAML, sirens with tone, notifications, people, cards, control devices, PIN rules, action codes, system), tab documentation and "?" at every section; [radio silence per sensor](sensors.md#own-limit-per-sensor); "behaviour after restart" only on a real restart ([ADR 0011](../entwicklung/adr/0011-einstellungsseite.md)) |
 | 0.58 | [Generic keypads](../entwicklung/adr/0012-keypads-allgemein.md): one input for every keypad (Z-Wave, ESPHome, Node-RED …) with response and display entity, blueprint Ring Keypad v2 and ESPHome example, [MQTT interface](control-devices.md#mqtt-interface); wrong-PIN warnings tidy themselves up |
 | 0.59 | [Passage](passage.md) – in or out without disarming ([ADR 0013](../entwicklung/adr/0013-durchgang.md)): at the keypad with any profile key, push button "Let in", automatically by phone, door lock, NFC tags, card readers |
+| 0.60 | Observation [leaving](observations.md#leaving-preparation-for-detect-leaving-without-pin) with a recommendation per person ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md)); [measurements](observations.md#measurements-on-the-settings-page) on the settings page to view, save and reset; [siren test](settings-page.md#siren-test-on-the-page-real-siren) also on the settings page; safety fix: direction "towards" no longer counts as "home" |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -51,7 +52,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| 0.60 | Observation "leaving": how fast and how reliably each presence signal detects going out – basis for exit detection ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md)) |
+| after 0.60 | "On return" as one setting: nothing, disarm, disarm with door proof or let in (passage) – with its own person list; approach ("towards") lengthens the entry delay instead of disarming – under discussion |
 | 0.61 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |

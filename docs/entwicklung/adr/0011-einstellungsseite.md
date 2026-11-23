@@ -1,7 +1,7 @@
 # ADR 0011: Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog
 
 - Status: umgesetzt in 0.57.0 (Vorabversionen 0.57.0b1–b14; alle fünf Stufen; alles lässt sich auf der
-  Seite einstellen – nur der Sirenentest bleibt bewusst in der Testkarte)
+  Seite einstellen; seit 0.60 auch der Sirenentest, siehe Nachtrag)
 - Datum: 2026-11-18
 
 ## Kontext
@@ -134,3 +134,20 @@ und wächst mit.
   CI), damit Brüche bei Home-Assistant-Updates früh auffallen.
 - Die Logikschicht wird vollständig – auch Dialog und Assistent profitieren davon.
 - Keine Migration: Die Seite liest und schreibt die vorhandenen Einstellungen.
+
+## Nachtrag 0.60: Sirenentest auch auf der Seite
+
+- Datum: 2026-11-22
+
+Der Sirenentest war bewusst nur in der Testkarte (Abschnitt 5). Wunsch aus dem Betrieb: alles an
+einem Ort. **Entscheidung:** Die Karte „Sirenentest“ im Reiter Alarmgeber bekommt den Test
+**zusätzlich** – die Testkarte behält ihn.
+
+- Gleicher Weg wie die Testkarte: die Dienste `hauswacht.siren_test`, `siren_test_result` und
+  `siren_test_stop`. Alle Sperren liegen im Hintergrund und gelten unverändert (unscharf,
+  Freigabe, Testmodus aus, keine Brandsperre, nur Einbruchtöne, höchstens 10 s, Administratoren).
+- Zusätzlich auf der Seite: Häkchen „Ich bin vor Ort, Mitbewohner sind informiert“, dann je
+  Sirene eine Rückfrage vor dem Ton; nur für Administratoren sichtbar bedienbar.
+- „Die Seite schaltet keine Geräte“ gilt weiter – mit dieser einen Ausnahme. Ein Test
+  (`tests/core/test_panel_safety.py`) hält fest, dass die Seite keine anderen Dienste aufruft.
+

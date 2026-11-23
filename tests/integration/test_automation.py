@@ -503,3 +503,40 @@ async def test_schedule_end_leaves_other_profile_armed(hass: HomeAssistant) -> N
     assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
     await _schedule(hass, "off")
     assert _state(hass) == AlarmControlPanelState.ARMED_NIGHT
+
+
+async def test_direction_towards_is_no_arrival(hass: HomeAssistant) -> None:
+    """Richtung "nähert sich" macht niemanden zuhause – keine Rückkehr, kein Unscharf."""
+    direction = "sensor.home_bewegung_von_a"
+    hass.states.async_set(direction, "away_from")
+    await _setup(
+        hass,
+        {"homecoming_signals": {A: [direction]}},
+        auto_away_persons=[A, B],
+        auto_away_delay=1,
+        auto_disarm_on_arrival=True,
+    )
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    # Fahrt in der Umgebung Richtung Zuhause: bleibt scharf
+    await _person(hass, direction, "towards")
+    await _later(hass, 1)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    # Angekommen in der Zone: das ist ein Beleg
+    await _person(hass, direction, "arrived")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_direction_stationary_does_not_block_all_away(hass: HomeAssistant) -> None:
+    """Richtung "steht" (z. B. im Büro) hält "alle weg" nicht auf."""
+    direction = "sensor.home_bewegung_von_a"
+    hass.states.async_set(direction, "stationary")
+    await _setup(
+        hass, {"homecoming_signals": {A: [direction]}}, auto_away_persons=[A, B], auto_away_delay=1
+    )
+    await _person(hass, A, "not_home")
+    await _person(hass, B, "not_home")
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY

@@ -184,6 +184,10 @@ eine Sirene aus.
 **Alarmgeber – Sirenen → Sirenentest (echte Sirene!).** Prüft jede Sirene einzeln, kurz und
 leise – über denselben sicheren Weg wie ein echter Alarm.
 
+> Ab 0.60 geht der Test auch auf der [Einstellungsseite](einstellungsseite.md#sirenentest-auf-der-seite-echte-sirene):
+> Reiter **Alarmgeber** → Karte **Sirenentest** – mit Häkchen „Ich bin vor Ort“, Rückfrage je
+> Sirene und nur für Administratoren. Die Sperren unten gelten dort genauso.
+
 1. Sirenen wählen (mehrere werden **nacheinander** getestet), Ton (nur Einbruchtöne),
    Lautstärke (Standard **leise**) und Dauer (Standard **3 s**, höchstens **10 s**); anhaken
    „Ich bin vor Ort, Mitbewohner sind informiert“.

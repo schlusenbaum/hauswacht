@@ -153,7 +153,7 @@ second step. The [homecoming observation](observations.md#additional-signals-per
 the same signals; you set them in one place only.
 
 Suitable are e.g. the Wi-Fi sensor of the companion app, Bluetooth (Bermuda), a router tracker,
-the direction from the Proximity integration or any binary sensor (on = home) – such as a
+the direction from the Proximity integration (or Places) or any binary sensor (on = home) – such as a
 HomeKit variable "Martin home".
 
 | The person counts as … | when … |
@@ -161,6 +161,12 @@ HomeKit variable "Martin home".
 | **home** | any signal reports home (the person itself or one of the signals) |
 | **away** | **all** signals reliably report "away" |
 | unknown | otherwise, e.g. a signal is "unavailable" – this **never** counts as away |
+
+**Direction (Proximity, Places)** counts with two values only: **"arrived"** = home and
+**"away from"** = away. **"Towards"** and **"stationary"** are skipped (from 0.60): someone
+approaching is not there yet – otherwise a drive in the area that briefly heads towards home
+would already count as a return and e.g. trigger "disarm on return". And "stationary" (e.g. at
+the office) does not hold up "all away".
 
 **Example:** Anna is "away" according to her person entity, but her Wi-Fi sensor still reports
 the home Wi-Fi. Then Anna is home, and "Arm when all of these persons are away" waits. Only when

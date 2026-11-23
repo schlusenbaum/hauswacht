@@ -32,7 +32,9 @@ Every homecoming after at least 5 minutes of absence is evaluated:
   in the attribute `sources`, the last ten homecomings in the attribute `recent`, the times "door
   open to disarmed" in the attribute `entry_times`.
 - **Button "Homecoming report"**: creates an overview as a notification in Home Assistant.
-- **Download:** card ["Hauswacht Übersicht"](overview.md) → section **Monitoring** →
+- **View, save, reset:** on the settings page, see
+  [Measurements on the settings page](#measurements-on-the-settings-page).
+- **Download:** also in the card ["Hauswacht Übersicht"](overview.md) → section **Monitoring** →
   - **Report** – the same report as a Markdown file, plus the last homecomings;
   - **Table (CSV)** – every single homecoming and every entry as one row: time, person and
     source, door, seconds after opening, how long the person was away, result. The file opens
@@ -41,6 +43,42 @@ Every homecoming after at least 5 minutes of absence is evaluated:
 
 After two to four weeks the report shows whether a homecoming automation would be reliable for
 you, for which persons and location sources, and with which entry delay.
+
+### Measurements on the settings page
+
+Everything the homecoming observation measures is also shown on the
+[settings page](settings-page.md) → **System** → card **Presence and homecoming observation** →
+block **Measurements**:
+
+- **Since when:** "Homecoming measured since 2026-11-07 (15 days, 84 door openings) · leaving
+  measured since 2026-11-21 (1 day)".
+- **Table per person:**
+
+  | Person | Came home (with door) | Left through a door | longest time until "away" | Silent pauses (longest) |
+  |---|---|---|---|---|
+  | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
+
+  Homecoming counts the **earliest signal** per person, leaving counts **all signals** together
+  – both as the profile automation counts (see [Leaving](#leaving-preparation-for-detect-leaving-without-pin)).
+- **Recommendation per person** for "detect leaving without PIN": ✅ reliable with waiting time,
+  ⚠️ warning with a tip, or grey "not enough data yet".
+- **Entries:** per door, how often the entry delay ran, the longest time until disarmed and the
+  recommended entry delay (see [Door open to disarmed](#door-open-to-disarmed)).
+
+Below it the buttons:
+
+| Button | What happens |
+|---|---|
+| **Show report** | shows the whole report directly on the page (press again: hide) |
+| **Save report** | downloads the report as a Markdown file |
+| **Save table (CSV)** | downloads every single measurement as a table |
+| **Reset homecoming** | starts only the "homecoming" measurement again (homecomings, door openings, recommendation "Disarm with door proof"); leaving and entries are kept |
+| **Reset leaving** | deletes only the "leaving" measurement and starts it again; homecoming and entries are kept |
+| **Reset all measurements** | deletes homecoming, entries and leaving and starts again |
+
+Resetting asks first, changes **no setting** and switches nothing. Useful e.g. after setting up
+new signals (Companion app), so that old values do not distort the recommendation. Tip: **save
+the table** first if you want to keep the old values. Only administrators see the reset buttons.
 
 ## Additional signals per person
 
@@ -58,12 +96,16 @@ under [Profiles → How Hauswacht knows who is home](profiles.md#how-hauswacht-k
 | Bluetooth | e.g. Bermuda with the BLE transmitter of the Android app | `device_tracker` = home |
 | Router | e.g. FRITZ!Box Tools (no app needed, but slow) | `device_tracker` = home |
 | Approach | integration **"Proximity"** (Settings → Devices & services → Add integration → Proximity; zone Home, persons): sensor `sensor.<proximity>_<person>_direction_of_travel` | towards or arrived; window 15 min instead of 5 min, because the approach often comes minutes before the door |
+| Approach (Places) | add-on integration **Places** (HACS): sensor `sensor.places_<person>_direction_of_travel` | "towards home" = home, "away from home" = away, "stationary" does not count (from 0.60) |
 | Binary sensor | any | on |
 
-In addition, Hauswacht evaluates the **"earliest signal"** per person: home as soon as any source
-reports home. The profile automation decides the same way. (The observation also includes the
-person's device trackers individually; the automation uses the person itself and the chosen
-signals.)
+In addition, Hauswacht evaluates the **"earliest signal"** per person: the moment the person counts
+as home again – **exactly as the profile automation decides**: person, ping, Wi-Fi, Bluetooth …
+and the direction (Proximity, Places) only with **"arrived"**. **"Towards" does not count** –
+otherwise every drive in the area that briefly heads towards home would count as coming home. So
+the recommendation for "Disarm with door proof" (below) shows what the automation really needs
+(from 0.60). How early the approach comes is still shown in the direction sensor's own line. The
+observation also includes the person's device trackers individually.
 
 ### Recommendation for "Disarm with door proof"
 
@@ -91,3 +133,81 @@ While an entry delay runs, Hauswacht measures how long it takes until disarming 
 was too late). Per door: number, in time, too late, typical and longest time and a
 **recommendation for the entry delay** (longest time plus 25 %, at least 5 s, rounded up to 5 s).
 Helpful e.g. to check the place for a control device on the wall.
+
+If you are let in by [passage](passage.md) (e.g. by phone), the system stays armed and nobody has
+to disarm. Such an entry appears in the CSV table as "let in by passage", but counts **neither as
+in time nor as too late** (from 0.60).
+
+## Leaving (preparation for "detect leaving without PIN")
+
+From 0.60 on, the homecoming observation also measures **leaving**. This is the measurement for a
+later feature ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md), German): whoever forgets to enter the
+PIN while a profile is armed and walks out of the front door should not trigger an alarm –
+because their phone reports "away" shortly after. For that, Hauswacht has to know **how fast**
+your phones report "away" and **how often they are simply silent**. This measurement also
+**switches nothing**.
+
+One simple principle applies: **Nobody can leave without a door opening.**
+
+| Value | Meaning |
+|---|---|
+| left through a door | a source reports "away", and an entry door opened up to 15 minutes before |
+| typical / longest until "away" | time from "door open" to "away" |
+| silent pause | "away" without a door opening before: the phone is asleep, the Wi-Fi hiccups – the person is actually at home |
+| longest pause | how long the longest silent pause lasted |
+
+The most important line is **"all signals"** per person: it reports "away" only when no signal of
+the person says "home" any more (silent signals count as away), and "back" as soon as one reports
+"home" again. This is exactly how the later feature is meant to decide.
+
+**Direction sensors** (Proximity integration, Places) count here as in the profile automation only
+with **"arrived"** (home) and **"away from"** (away). "Towards" and "stationary" are skipped – so
+someone on the way back outside does not count as "back", and a walk does not count as leaving
+twice. They also appear as a line of their own in the table.
+
+### Recommendation per person
+
+The report ends with **"Detect leaving without PIN – recommendation per person"**. The same
+sentences are shown on the settings page in the card **Presence and homecoming observation**, and
+the recommendation or warning also appears as a [check hint](overview.md#check-hints) (tab
+**Overview**). Example:
+
+```
+- Christian: leaving is detected reliably – recommended waiting time 3 min (from 12× leaving).
+- Niklas: all signals were silent 9× for longer than 4 min without a door opening. Leaving
+  could not be told apart from a break-in reliably. Tip: set up a second signal, e.g. the
+  Companion app with its Wi-Fi sensor.
+- Finja: not enough data yet (1× leaving) – the recommendation comes after at least
+  3× leaving and 2 days.
+```
+
+How to read it:
+
+- **recommended waiting time:** longest measured time from "door open" to "away" plus a buffer
+  (25 %, at least 1 minute), rounded up to whole minutes, between 1 and 15 minutes. Later,
+  Hauswacht would wait silently this long before raising the alarm.
+- **reliable:** the person left through a door at least 3 times, leaving has been measured for at
+  least 2 days (counted from installing 0.60, not from the start of the homecoming observation;
+  attribute `departure_days`), and there was **no** silent pause longer than the waiting time.
+- **Warning "silent":** all signals of the person were already quiet for longer than the waiting
+  time without a door opening. If such a pause fell into the waiting time after a break-in,
+  Hauswacht would take it for "leaving". Remedy: an additional signal that does not sleep – best
+  the Wi-Fi sensor of the Companion app. A plain ping to an iPhone is usually not enough, because
+  sleeping iPhones do not answer.
+- **Warning "too late":** the signals notice leaving only after more than 15 minutes. Remedy: a
+  faster signal (Wi-Fi sensor or Bluetooth).
+- **Silent pauses of several persons at the same time** (within one minute) look like a Wi-Fi or
+  router outage. They do not count for the recommendation, because the later feature catches
+  such a case separately. They still appear in the report.
+
+Persons with a warning will **not be excluded** later – the warning only shows that detection
+would be uncertain for them.
+
+The values are also in the attributes `departure` (per source), `leaving_advice` (per person) and
+`departure_days` (days since the measurement started)
+of the sensor "Homecoming observation", and every single measurement as a "Leaving" row in the
+**table (CSV)**.
+
+> Good to know: if a silent pause happens to fall into the 15 minutes after a door opening
+> (someone else goes out), it counts as "left through a door" with a long time. If a
+> recommendation looks too high, have a look at the CSV table.

@@ -284,6 +284,11 @@ days of observation. You enter the value yourself; the observation changes nothi
 diagnostic sensor `sensor.hauswacht_radio_silence_observation` shows the recommendation and the
 gaps – also the **recommendation per sensor** (`recommended_hours`).
 
+To start again (e.g. after replacing many batteries or a radio coordinator):
+[settings page](settings-page.md) → **System** → card **Sensor radio silence** → **Reset
+measurement**. Only the measured gaps are deleted; the general value and the own values per
+sensor are kept.
+
 ### Own limit per sensor
 
 If a single sensor reports much less often than the others – e.g. a battery door contact that

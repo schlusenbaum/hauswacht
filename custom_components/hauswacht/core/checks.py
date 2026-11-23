@@ -231,6 +231,47 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
             "Notifications",
         ),
     },
+    "leaving_ok": {
+        "de": (
+            "Heimkehr-Beobachtung: {name} – Rausgehen wird zuverlässig erkannt, empfohlene "
+            "Wartezeit {minutes} min (aus {count}× Rausgehen).",
+            "Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung",
+        ),
+        "en": (
+            "Homecoming observation: {name} – leaving is detected reliably, recommended waiting "
+            "time {minutes} min (from {count}× leaving).",
+            "System settings → presence and homecoming observation",
+        ),
+    },
+    "leaving_slow": {
+        "de": (
+            "Heimkehr-Beobachtung: Bei {name} merken die Signale das Rausgehen erst nach bis zu "
+            "{needed} min – zu spät. Tipp: ein schnelleres Signal einrichten, z. B. den "
+            "WLAN-Sensor der Companion App.",
+            "Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung",
+        ),
+        "en": (
+            "Homecoming observation: for {name} the signals notice leaving only after up to "
+            "{needed} min – too late. Tip: set up a faster signal, e.g. the Wi-Fi sensor of the "
+            "Companion app.",
+            "System settings → presence and homecoming observation",
+        ),
+    },
+    "leaving_pauses": {
+        "de": (
+            "Heimkehr-Beobachtung: Bei {name} haben alle Signale {pauses}× länger als {minutes} "
+            "min geschwiegen, ohne dass eine Tür aufging – Rausgehen ist so nicht sicher "
+            "erkennbar. Tipp: ein zweites Signal einrichten, z. B. die Companion App mit "
+            "WLAN-Sensor.",
+            "Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung",
+        ),
+        "en": (
+            "Homecoming observation: for {name} all signals were silent {pauses}× for longer "
+            "than {minutes} min without a door opening – leaving cannot be detected reliably. "
+            "Tip: set up a second signal, e.g. the Companion app with its Wi-Fi sensor.",
+            "System settings → presence and homecoming observation",
+        ),
+    },
     "rule_unused": {
         "de": ("Auslöseregel {name} wird in keinem Profil verwendet.", "Alarmprofile"),
         "en": ("Trigger rule {name} is used in no profile.", "Alarm profiles"),
@@ -416,6 +457,23 @@ def _monitoring(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
                     advice=own_advice,
                 )
             )
+    for person in monitoring.get("homecoming", {}).get("leaving", []):
+        status = person.get("status")
+        if status not in ("ok", "slow", "pauses"):
+            continue  # noch zu wenig gemessen
+        found.append(
+            _finding(
+                "leaving_" + status,
+                lang,
+                severity="info" if status == "ok" else "warning",
+                key=person["name"],
+                name=person["name"],
+                minutes=person.get("wait_minutes"),
+                needed=person.get("needed_minutes"),
+                count=person.get("with_door"),
+                pauses=person.get("pauses_longer"),
+            )
+        )
     infrastructure = monitoring.get("infrastructure", [])
     if not infrastructure:
         found.append(_finding("no_infrastructure", lang))

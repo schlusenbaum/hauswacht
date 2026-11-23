@@ -286,6 +286,11 @@ Tagen Beobachtung. Eingetragen wird der Wert von dir; die Beobachtung ändert ni
 Diagnose-Sensor `sensor.hauswacht_funkstille_beobachtung` zeigt Empfehlung und Pausen – auch die
 **Empfehlung je Melder** (`recommended_hours`).
 
+Neu beginnen (z. B. nach dem Tausch vieler Batterien oder eines Funk-Koordinators):
+[Einstellungsseite](einstellungsseite.md) → **System** → Karte **Funkstille von Sensoren** →
+**Messung zurücksetzen**. Gelöscht werden nur die gemessenen Pausen; der allgemeine Wert und die
+eigenen Werte je Melder bleiben.
+
 ### Eigene Grenze je Melder
 
 Meldet sich ein einzelner Melder viel seltener als die anderen – z. B. ein Batterie-Türkontakt,

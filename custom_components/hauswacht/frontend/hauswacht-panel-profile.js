@@ -67,6 +67,7 @@ const PT = {
     persons: "Scharf, wenn alle diese Personen weg sind",
     awayDelay: "Wartezeit, wenn alle weg sind (min)",
     arrival: "Unscharf bei Rückkehr",
+    arrivalHint: "Gilt für die Personen oben bei „Scharf, wenn alle diese Personen weg sind“ – ohne angekreuzte Person lässt sich das nicht einschalten. „Mit Türbeleg“ geht nicht zusammen mit Handy-Reinlassen beim Durchgang (unten).",
     arrivalWindow: "Türbeleg: Rückkehr bis Türöffnung (min)",
     closeOn: "Ausgangsverzögerung endet, sobald die Tür zu ist",
     doors: "Ausgangstüren",
@@ -85,7 +86,7 @@ const PT = {
       profile_name_taken: "Diesen Namen gibt es schon.",
       panel_mode_taken: "Diesen Knopf hat in diesem Bereich schon ein anderes Profil.",
       excluded_not_in_groups: "Ausgenommene Melder müssen in den gewählten Gruppen sein.",
-      arrival_needs_persons: "„Unscharf bei Rückkehr“ braucht Personen.",
+      arrival_needs_persons: "„Unscharf bei Rückkehr“ braucht Personen – bitte oben bei „Scharf, wenn alle diese Personen weg sind“ mindestens eine ankreuzen.",
       passage_door_proof: "„Unscharf mit Türbeleg“ und Handy-Reinlassen gehen im selben Profil nicht zusammen.",
       unknown_profile: "Dieses Profil gibt es nicht mehr.",
       disarm_first: "Erst alle Bereiche unscharf schalten – dann lässt sich speichern.",
@@ -155,6 +156,7 @@ const PT = {
     persons: "Arm when all these persons are away",
     awayDelay: "Waiting time when everyone is away (min)",
     arrival: "Disarm on arrival",
+    arrivalHint: "Applies to the persons above at “Arm when all these persons are away” – without a ticked person it cannot be switched on. “With door proof” does not go together with letting in by phone at passage (below).",
     arrivalWindow: "Door proof: arrival until door opening (min)",
     closeOn: "Exit delay ends as soon as the door is closed",
     doors: "Exit doors",
@@ -173,7 +175,7 @@ const PT = {
       profile_name_taken: "This name already exists.",
       panel_mode_taken: "Another profile in this area already has this button.",
       excluded_not_in_groups: "Excluded sensors must be in the chosen groups.",
-      arrival_needs_persons: "“Disarm on arrival” needs persons.",
+      arrival_needs_persons: "“Disarm on arrival” needs persons – please tick at least one above at “Arm when all these persons are away”.",
       passage_door_proof: "“Disarm with door proof” and letting in by phone do not go together in one profile.",
       unknown_profile: "This profile no longer exists.",
       disarm_first: "Disarm all areas first – then saving works.",
@@ -312,6 +314,8 @@ class HauswachtProfileEditor extends HTMLElement {
       <div class="two"><div><label>${pe(this._t("awayDelay"))}</label><input type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}"></div>
       <div><label>${pe(this._t("arrivalWindow"))}</label><input type="number" min="1" max="${lim.arrival_window}" data-a="auto_arrival_window" data-num="1" value="${pe(a.auto_arrival_window)}"></div></div>
       <label>${pe(this._t("arrival"))}</label><select data-a="auto_arrival_mode">${c.arrival_modes.map((m) => `<option value="${m}" ${m === a.auto_arrival_mode ? "selected" : ""}>${pe(t("arrivalModes", m))}</option>`).join("")}</select>
+      ${["arrival_needs_persons", "passage_door_proof"].includes(this._errors.base) ? this._err("base") : ""}
+      <div class="muted">${pe(this._t("arrivalHint"))}</div>
       <div class="sec">${pe(this._t("secClose"))}</div>
       <div class="chk"><input type="checkbox" data-c="enabled" ${close.enabled ? "checked" : ""}><span>${pe(this._t("closeOn"))}</span></div>
       <label>${pe(this._t("doors"))}</label>${doors.map((id) => `<div class="chk"><input type="checkbox" data-cm="doors" value="${pe(id)}" ${close.doors.includes(id) ? "checked" : ""}><span>${pe(this._name(id))}</span></div>`).join("") || `<div class="muted">${pe(this._t("noDoors"))}</div>`}
@@ -327,7 +331,7 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("passagePersons"))}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-pm="persons" value="${pe(x.id)}" ${pass.persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span></div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
       <label>${pe(this._t("passageWindow"))}</label><input class="small" type="number" min="1" max="${lim.passage_window}" data-p="window" data-num="1" value="${pe(pass.window)}">
       <div class="muted">${pe(this._t("passagePhoneHint"))}</div>
-      ${this._err("base")}`;
+      ${["arrival_needs_persons", "passage_door_proof"].includes(this._errors.base) ? "" : this._err("base")}`;
   }
 
   _collect() {
@@ -386,6 +390,7 @@ class HauswachtProfileEditor extends HTMLElement {
       this.dispatchEvent(new CustomEvent("hw-stale", { bubbles: true, composed: true }));
     }
     this._render();
+    window.HauswachtRevealError?.(this.shadowRoot); // Fehlermeldung ins Bild holen
   }
 
   _payload() {

@@ -32,7 +32,9 @@ Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
   stehen im Attribut `sources`, die letzten zehn Heimkehrten im Attribut `recent`, die Zeiten
   „Tür auf bis unscharf“ im Attribut `entry_times`.
 - **Knopf „Heimkehr-Bericht“**: erstellt eine Übersicht als Benachrichtigung in Home Assistant.
-- **Herunterladen:** Karte [„Hauswacht Übersicht“](uebersicht.md) → Abschnitt **Überwachung** →
+- **Ansehen, speichern, zurücksetzen:** auf der Einstellungsseite, siehe
+  [Messungen auf der Einstellungsseite](#messungen-auf-der-einstellungsseite).
+- **Herunterladen:** auch in der Karte [„Hauswacht Übersicht“](uebersicht.md) → Abschnitt **Überwachung** →
   - **Bericht** – derselbe Bericht als Markdown-Datei, dazu die letzten Heimkehrten;
   - **Tabelle (CSV)** – jede einzelne Heimkehr und jeder Eingang als Zeile: Zeitpunkt, Person
     und Quelle, Tür, Sekunden nach dem Öffnen, wie lange die Person weg war, Ergebnis. Die
@@ -41,6 +43,43 @@ Ausgewertet wird jede Heimkehr nach mindestens 5 Minuten Abwesenheit:
 
 Nach zwei bis vier Wochen zeigt der Bericht, ob eine Heimkehr-Automatik bei euch zuverlässig
 wäre, für welche Personen und Ortungsquellen, und mit welcher Eingangsverzögerung.
+
+### Messungen auf der Einstellungsseite
+
+Alles, was die Heimkehr-Beobachtung misst, steht auch auf der
+[Einstellungsseite](einstellungsseite.md) → **System** → Karte **Anwesenheit und
+Heimkehr-Beobachtung** → Block **Messungen**:
+
+- **Seit wann:** „Heimkommen gemessen seit 07.11.2026 (15 Tage, 84 Türöffnungen) · Weggehen
+  gemessen seit 21.11.2026 (1 Tag)“.
+- **Tabelle je Person:**
+
+  | Person | Heimgekommen (mit Tür) | Rausgegangen mit Tür | längste Zeit bis „weg“ | Schweigepausen (längste) |
+  |---|---|---|---|---|
+  | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
+
+  Gezählt wird beim Heimkommen das **frühestes Signal** je Person, beim Rausgehen **alle
+  Signale** zusammen – beides so, wie die Profil-Automatik zählt (siehe [Weggehen](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)).
+- **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: ✅ zuverlässig mit Wartezeit,
+  ⚠️ Warnhinweis mit Tipp, oder grau „noch zu wenig gemessen“.
+- **Eingänge:** je Tür, wie oft die Eingangsverzögerung lief, die längste Zeit bis unscharf und
+  die empfohlene Eingangsverzögerung (siehe [Tür auf bis unscharf](#tür-auf-bis-unscharf)).
+
+Darunter die Knöpfe:
+
+| Knopf | Was passiert |
+|---|---|
+| **Bericht anzeigen** | Zeigt den ganzen Bericht direkt auf der Seite (noch einmal drücken: ausblenden) |
+| **Bericht speichern** | Lädt den Bericht als Markdown-Datei herunter |
+| **Tabelle speichern (CSV)** | Lädt jede einzelne Messung als Tabelle herunter |
+| **Heimkommen zurücksetzen** | Beginnt nur die Messung „Heimkommen“ neu (Heimkehrten, Türöffnungen, Empfehlung „Unscharf mit Türbeleg“); Weggehen und Eingänge bleiben |
+| **Weggehen zurücksetzen** | Löscht nur die Messung „Weggehen“ und beginnt sie neu; Heimkommen und Eingänge bleiben |
+| **Alle Messungen zurücksetzen** | Löscht Heimkommen, Eingänge und Weggehen und beginnt neu |
+
+Zurücksetzen fragt vorher nach, ändert **keine Einstellung** und schaltet nichts. Sinnvoll z. B.
+nach dem Einrichten neuer Signale (Companion App), damit alte Werte die Empfehlung nicht
+verfälschen. Tipp: vorher **Tabelle speichern**, wenn du die alten Werte behalten willst.
+Die Knöpfe zum Zurücksetzen sehen nur Administratoren.
 
 ## Zusätzliche Signale je Person
 
@@ -58,12 +97,17 @@ selbst wenn die Beobachtung aus ist. Wie die Automatik die Signale verbindet, st
 | Bluetooth | z. B. Bermuda mit dem BLE-Sender der Android-App | `device_tracker` = zuhause |
 | Router | z. B. FRITZ!Box Tools (ohne App, aber träge) | `device_tracker` = zuhause |
 | Annäherung | Integration **„Nähe“** (Einstellungen → Geräte & Dienste → Integration hinzufügen → Nähe; Zone Zuhause, Personen): Sensor `sensor.<nähe>_<person>_direction_of_travel` | nähert sich oder angekommen; Fenster 15 min statt 5 min, weil die Annäherung oft Minuten vor der Tür kommt |
+| Annäherung (Places) | Zusatz-Integration **Places** (HACS): Sensor `sensor.places_<person>_direction_of_travel` | „towards home“ = zuhause, „away from home“ = weg, „stationary“ zählt nicht (ab 0.60) |
 | Binärsensor | beliebig | an |
 
-Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: zuhause, sobald
-irgendeine Quelle zuhause meldet. So entscheidet auch die Profil-Automatik. (Die Beobachtung
-nimmt dabei auch die Geräte-Tracker der Person einzeln dazu; die Automatik nutzt die Person
-selbst und die gewählten Signale.)
+Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: der Zeitpunkt, an dem
+die Person wieder als zuhause gilt – **genau so, wie die Profil-Automatik entscheidet**: Person,
+Ping, WLAN, Bluetooth … und die Richtung (Nähe, Places) nur mit **„angekommen“**.
+**„Nähert sich“ zählt nicht** – sonst würde jede Fahrt in der Umgebung, die kurz Richtung
+Zuhause führt, als Heimkommen gelten. So zeigt die Empfehlung für „Unscharf mit Türbeleg“
+(unten), was die Automatik wirklich braucht (ab 0.60). Wie früh die Annäherung kommt, steht
+weiter in der eigenen Zeile des Richtungssensors. Die Beobachtung nimmt dabei auch die
+Geräte-Tracker der Person einzeln dazu.
 
 ### Empfehlung für „Unscharf mit Türbeleg“
 
@@ -92,3 +136,81 @@ Läuft eine Eingangsverzögerung, misst Hauswacht, wie lange es bis zum Unscharf
 (oder ob es zu spät war). Je Tür: Anzahl, rechtzeitig, zu spät, typische und längste Zeit und
 eine **Empfehlung für die Eingangsverzögerung** (längste Zeit plus 25 %, mindestens 5 s, auf
 5 s aufgerundet). Hilfreich z. B., um den Platz für ein Bedienteil an der Wand zu prüfen.
+
+Wirst du per [Durchgang](durchgang.md) reingelassen (z. B. per Handy), bleibt die Anlage scharf
+und niemand muss unscharf schalten. So ein Eingang steht in der CSV-Tabelle als „per Durchgang
+reingelassen“, zählt aber **weder als rechtzeitig noch als zu spät** (ab 0.60).
+
+## Weggehen (Vorbereitung für „Rausgehen ohne PIN erkennen“)
+
+Ab 0.60 misst die Heimkehr-Beobachtung auch das **Weggehen**. Das ist die Messung für eine
+spätere Funktion ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)): Wer bei scharfem
+Profil vergisst, den PIN einzugeben, und durch die Haustür rausgeht, soll keinen Alarm
+auslösen – weil sein Handy kurz danach „weg“ meldet. Dafür muss Hauswacht wissen, **wie schnell**
+eure Handys „weg“ melden und **wie oft sie einfach nur schweigen**. Auch diese Messung
+**schaltet nichts**.
+
+Es gilt ein einfacher Grundsatz: **Ohne geöffnete Tür kann niemand weggehen.**
+
+| Wert | Bedeutung |
+|---|---|
+| Rausgehen mit Tür | Eine Quelle meldet „weg“, und bis zu 15 Minuten vorher ging eine Eingangstür auf |
+| typisch / längste bis „weg“ | Zeit von „Tür auf“ bis „weg“ |
+| Schweigepause | „weg“, ohne dass vorher eine Tür aufging: Das Handy schläft, das WLAN hakt – die Person ist in Wahrheit zuhause |
+| längste Pause | wie lange die längste Schweigepause gedauert hat |
+
+Wichtig ist vor allem die Zeile **„alle Signale“** je Person: Sie meldet erst „weg“, wenn kein
+Signal der Person mehr „zuhause“ sagt (schweigende Signale zählen als weg), und „zurück“, sobald
+eines wieder „zuhause“ meldet. Genau so soll die spätere Funktion entscheiden.
+
+**Richtungs-Sensoren** (Integration „Nähe“, Places) zählen hier wie in der Profil-Automatik nur
+mit **„angekommen“** (zuhause) und **„entfernt sich“** (weg). „Nähert sich“ und „steht“ werden
+übergangen – wer draußen auf dem Rückweg ist, gilt also nicht als „zurück“, und ein Spaziergang
+zählt nicht als zweimal Rausgehen. In der Tabelle stehen sie zusätzlich als eigene Zeile.
+
+### Empfehlung je Person
+
+Der Bericht endet mit **„Rausgehen ohne PIN erkennen – Empfehlung je Person“**. Dieselben
+Sätze stehen auf der Einstellungsseite in der Karte **Anwesenheit und Heimkehr-Beobachtung**,
+und Empfehlung bzw. Warnhinweis erscheinen zusätzlich als [Prüfhinweis](uebersicht.md#prüfhinweise) (Tab **Übersicht**). Beispiel:
+
+```
+- Christian: Rausgehen wird zuverlässig erkannt – empfohlene Wartezeit 3 min (aus 12× Rausgehen).
+- Niklas: Alle Signale haben 9× länger als 4 min geschwiegen, ohne dass eine Tür aufging.
+  So wäre Rausgehen nicht sicher von einem Einbruch zu unterscheiden. Tipp: ein zweites
+  Signal einrichten, z. B. die Companion App mit WLAN-Sensor.
+- Finja: noch zu wenig gemessen (1× Rausgehen) – die Empfehlung kommt nach mindestens
+  3× Rausgehen und 2 Tagen.
+```
+
+So liest du das:
+
+- **empfohlene Wartezeit:** längste gemessene Zeit von „Tür auf“ bis „weg“ plus Puffer (25 %,
+  mindestens 1 Minute), auf ganze Minuten aufgerundet, zwischen 1 und 15 Minuten. So lange
+  würde Hauswacht später still warten, bevor es Alarm gibt.
+- **zuverlässig:** Die Person ist mindestens 3× durch eine Tür rausgegangen, das Weggehen
+  wurde mindestens 2 Tage gemessen (gezählt ab der Installation von 0.60, nicht ab dem Start der
+  Heimkehr-Beobachtung; Attribut `departure_days`), und es gab **keine** Schweigepause, die länger war als die
+  Wartezeit.
+- **Warnhinweis „geschwiegen“:** Alle Signale der Person waren schon länger als die Wartezeit
+  still, ohne dass eine Tür aufging. Fiele so eine Pause in die Wartezeit nach einem Einbruch,
+  hielte Hauswacht das für „Rausgehen“. Abhilfe: ein zusätzliches Signal, das nicht schläft –
+  am besten der WLAN-Sensor der Companion App. Ein reiner Ping aufs iPhone reicht meist nicht,
+  weil schlafende iPhones nicht antworten.
+- **Warnhinweis „zu spät“:** Die Signale merken das Rausgehen erst nach mehr als 15 Minuten.
+  Abhilfe: ein schnelleres Signal (WLAN-Sensor oder Bluetooth).
+- **Schweigepausen bei mehreren Personen gleichzeitig** (innerhalb einer Minute) sehen nach
+  einem WLAN- oder Router-Ausfall aus. Sie zählen für die Empfehlung nicht mit, weil die spätere
+  Funktion so einen Fall eigens abfängt. Im Bericht stehen sie trotzdem.
+
+Personen mit Warnhinweis werden später **nicht ausgeschlossen** – der Hinweis zeigt nur, dass
+die Erkennung für sie unsicher wäre.
+
+Die Werte stehen auch in den Attributen `departure` (je Quelle), `leaving_advice` (je Person) und
+`departure_days` (Tage seit Beginn der Messung)
+des Sensors „Heimkehr-Beobachtung“, und jede einzelne Messung als Zeile „Weggehen“ in der
+**Tabelle (CSV)**.
+
+> Gut zu wissen: Fällt eine Schweigepause zufällig in die 15 Minuten nach einer Türöffnung
+> (jemand anderes geht raus), zählt sie als „Rausgehen mit Tür“ mit langer Zeit. Wirkt eine
+> Empfehlung zu hoch, lohnt ein Blick in die CSV-Tabelle.
