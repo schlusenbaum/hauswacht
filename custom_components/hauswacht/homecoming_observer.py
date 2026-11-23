@@ -8,7 +8,7 @@ Die Auswertung selbst steckt in core/homecoming.py.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from homeassistant.components import persistent_notification
@@ -317,6 +317,7 @@ class HomecomingObserver:
             if prev.home is True and state.home is False:
                 for person in self._owners[entity_id]:
                     self.departures.append({"at": now, "person": person, "source": entity_id})
+                    self.proof.note_signal_left(person, now)  # „Tür + Signal“ (unsicher)
                 changed = True
             for person in self._owners[entity_id]:
                 changed = self._track_leaving(person, now) or changed
@@ -571,6 +572,17 @@ class HomecomingObserver:
             },
         }
 
+    def _longest_signal_left(self, person: str, left: Mapping[str, Any]) -> int | None:
+        """Längste Zeit „Tür auf“ → ein einzelnes Signal „weg“ (Sekunden), ohne Richtung."""
+        delays = [
+            max(stats.delays)
+            for source in self._person_sources(person)
+            if source not in self._directions
+            and (stats := left.get(source)) is not None
+            and stats.delays
+        ]
+        return round(max(delays)) if delays else None
+
     def measurements(self) -> dict[str, Any]:
         """Kurzfassung aller Messungen für die Einstellungsseite."""
         stats = self.stats()
@@ -585,11 +597,14 @@ class HomecomingObserver:
             name = plain_name(self.hass, person)
             persons.append(
                 {
+                    "id": person,
                     "name": name,
                     "arrivals": home.arrivals if home else 0,
                     "arrivals_with_door": home.with_door if home else 0,
                     "left": out.with_door if out else 0,
                     "longest_left": round(max(out.delays)) if out and out.delays else None,
+                    # Einzelne Signale (ohne Richtung): für „Tür + Signal“ (Nachtrag 0.61)
+                    "longest_signal_left": self._longest_signal_left(person, left),
                     "pauses": len(out.pauses) if out else 0,
                     "longest_pause": (round(max(out.pauses) / 60) if out and out.pauses else None),
                     "status": values["status"] if values else "few",

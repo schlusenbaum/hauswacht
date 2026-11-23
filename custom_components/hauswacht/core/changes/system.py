@@ -11,7 +11,13 @@ from typing import Any
 
 from ..action_codes import is_action_code, parse_action_codes
 from ..areas import MAIN_AREA, parse_areas, profile_area
-from ..away_proof import OPT_AWAY_ACCURACY, OPT_AWAY_WINDOW, parse_proof_settings
+from ..away_proof import (
+    OPT_AWAY_ACCURACY,
+    OPT_AWAY_WEAK,
+    OPT_AWAY_WEAK_WINDOW,
+    OPT_AWAY_WINDOW,
+    parse_proof_settings,
+)
 from ..pin import hash_pin, is_valid_pin_format
 from ..profiles import MAX_STALE_HOURS, profile_ids
 from ..restart import (
@@ -91,7 +97,8 @@ def save_homecoming(options: Mapping[str, Any], data: Mapping[str, Any]) -> Chan
     """Anwesenheit und Heimkehr-Beobachtung.
 
     ``data``: observe, persons, ssids (Liste oder Text mit Kommas), signals {Person: [Entitäten]},
-    optional proof_window (Minuten) und proof_accuracy (strict | simple).
+    optional proof_window (Minuten), proof_accuracy (strict | simple), proof_weak (Personen mit
+    „Tür + Signal“) und proof_weak_window (Minuten).
     """
     ssids = data.get("ssids") or []
     if isinstance(ssids, str):
@@ -105,15 +112,23 @@ def save_homecoming(options: Mapping[str, Any], data: Mapping[str, Any]) -> Chan
         str(person): _clean(entities) for person, entities in (signals or {}).items() if entities
     }
     # „weg“ nur mit Beleg (ADR 0015): nur übernehmen, wenn mitgeschickt (der Dialog kennt es nicht)
-    if "proof_window" in data or "proof_accuracy" in data:
+    keys = ("proof_window", "proof_accuracy", "proof_weak", "proof_weak_window")
+    if any(key in data for key in keys):
+        weak = data.get("proof_weak", options.get(OPT_AWAY_WEAK, []))
         proof = parse_proof_settings(
             {
                 OPT_AWAY_WINDOW: data.get("proof_window", options.get(OPT_AWAY_WINDOW)),
                 OPT_AWAY_ACCURACY: data.get("proof_accuracy", options.get(OPT_AWAY_ACCURACY)),
+                OPT_AWAY_WEAK: list(weak) if isinstance(weak, list | tuple) else [],
+                OPT_AWAY_WEAK_WINDOW: data.get(
+                    "proof_weak_window", options.get(OPT_AWAY_WEAK_WINDOW)
+                ),
             }
         )
         new[OPT_AWAY_WINDOW] = proof.window
         new[OPT_AWAY_ACCURACY] = proof.accuracy
+        new[OPT_AWAY_WEAK] = sorted(proof.weak)
+        new[OPT_AWAY_WEAK_WINDOW] = proof.weak_window
     return Change(options=new)
 
 

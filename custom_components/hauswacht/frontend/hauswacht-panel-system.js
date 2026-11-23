@@ -40,8 +40,14 @@ const ST = {
     ssids: "Heim-WLAN(s), durch Komma getrennt",
     signals: "Zusätzliche Signale je Person",
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
+    proofKind: "Beleg für „weg“",
+    proofKinds: { fix: "nur Ortung (sicher)", weak: "auch Tür + Signal (unsicher)" },
+    proofWeakWarn: "Unsicher: Weg gilt auch, wenn eine Eingangstür aufgeht und kurz danach ein Signal dieser Person (WLAN, Ping, Bluetooth) von „da“ auf „weg“ wechselt. Öffnet jemand anderes die Tür, während dieses Handy zufällig einschläft, gilt die Person fälschlich als weg – „Scharf, wenn alle weg“ kann dann scharf schalten, obwohl sie zuhause ist. Nur wählen, wenn es für die Person keine Ortung gibt.",
+    weakWindow: "Zeitfenster Tür + Signal (Minuten)",
+    weakRecDefault: "Empfehlung: 5 Minuten.",
+    weakRecMeasured: "Empfehlung: {r} Minuten – gemessen: ein Signal meldete „weg“ bis zu {m} Minuten nach der Tür, plus 2 Minuten Puffer.",
     proofTitle: "Wann gilt jemand als weg?",
-    proofIntro: "Gilt für die Profil-Automatik („Scharf, wenn alle weg“, „Bei Rückkehr“) und die Beobachtung. Ein schlafendes Handy (WLAN weg) macht niemanden abwesend – es braucht einen Beleg: eine Ortung außerhalb (Companion App, iCloud3, GPS-Tracker). WLAN, Ping und Bluetooth bestätigen nur.",
+    proofIntro: "Gilt für die Profil-Automatik („Scharf, wenn alle weg“, „Bei Rückkehr“) und die Beobachtung. Ein schlafendes Handy (WLAN weg) macht niemanden abwesend – es braucht einen Beleg: eine Ortung außerhalb (Companion App, iCloud3, GPS-Tracker). WLAN, Ping und Bluetooth bestätigen nur – außer du stellst bei einer Person oben „auch Tür + Signal“ ein.",
     proofAccuracy: "Ortung außerhalb prüfen",
     proofAccuracies: { strict: "genau prüfen (empfohlen)", simple: "einfach" },
     proofWindow: "Zeitfenster für den Beleg (Minuten)",
@@ -54,6 +60,8 @@ const ST = {
     },
     proofInfo: {
       accuracy: "„Genau prüfen“ rechnet die Entfernung zum Zuhause aus und zieht die Ungenauigkeit des GPS ab. Ein Handy im Haus, dessen GPS 300 m daneben liegt, gilt damit nicht als weg. „Einfach“ nimmt nur die Zone – nur wählen, wenn eure Ortung sehr ungenaue Werte meldet und sonst nie „weg“ erkannt wird.",
+      weak: "„Nur Ortung“: weg nur mit Ortung außerhalb (sicher). „Auch Tür + Signal“: zusätzlich weg, wenn eine Tür aufgeht und danach ein Signal der Person (WLAN, Ping, Bluetooth) auf „weg“ wechselt – für Personen ohne Ortung, z. B. wenn der Standort in der App aus ist. Ein Handy, das ohne Tür einschläft, macht auch hier niemanden abwesend.",
+      weakWindow: "So lange nach der Türöffnung darf das Signal auf „weg“ wechseln. Kurz halten: Je länger, desto eher fällt zufällig ein schlafendes Handy in das Fenster, nachdem jemand anderes die Tür geöffnet hat.",
       window: "Wie lange nach einer Türöffnung die Ortung außerhalb kommen darf – und wie alt eine Ortung höchstens sein darf, um allein zu zählen. Zu kurz: Wer weggeht, wird erst spät oder gar nicht als weg erkannt. Zu lang: eine alte Ortung kann zu lange zählen.",
     },
     infoLabel: "Erklärung",
@@ -165,8 +173,14 @@ const ST = {
     ssids: "Home Wi-Fi(s), separated by commas",
     signals: "Additional signals per person",
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
+    proofKind: "Proof for “away”",
+    proofKinds: { fix: "location only (safe)", weak: "also door + signal (uncertain)" },
+    proofWeakWarn: "Uncertain: away also counts when an entry door opens and shortly after a signal of this person (Wi-Fi, ping, Bluetooth) changes from “there” to “away”. If someone else opens the door while this phone happens to fall asleep, the person wrongly counts as away – “arm when all away” may then arm although the person is home. Only choose this if there is no location for the person.",
+    weakWindow: "Time window door + signal (minutes)",
+    weakRecDefault: "Recommendation: 5 minutes.",
+    weakRecMeasured: "Recommendation: {r} minutes – measured: a signal reported “away” up to {m} minutes after the door, plus 2 minutes buffer.",
     proofTitle: "When does someone count as away?",
-    proofIntro: "Applies to the profile automation (“arm when all away”, “On return”) and the observation. A sleeping phone (Wi-Fi gone) makes nobody away – it needs proof: a location outside (Companion app, iCloud3, GPS tracker). Wi-Fi, ping and Bluetooth only confirm.",
+    proofIntro: "Applies to the profile automation (“arm when all away”, “On return”) and the observation. A sleeping phone (Wi-Fi gone) makes nobody away – it needs proof: a location outside (Companion app, iCloud3, GPS tracker). Wi-Fi, ping and Bluetooth only confirm – unless you set “also door + signal” for a person above.",
     proofAccuracy: "Check location outside",
     proofAccuracies: { strict: "check precisely (recommended)", simple: "simple" },
     proofWindow: "Time window for the proof (minutes)",
@@ -179,6 +193,8 @@ const ST = {
     },
     proofInfo: {
       accuracy: "“Check precisely” calculates the distance to home and takes the GPS inaccuracy into account. A phone in the house whose GPS is 300 m off does not count as away. “Simple” only uses the zone – choose it only if your location reports very inaccurate values and away is otherwise never detected.",
+      weak: "“Location only”: away only with a location outside (safe). “Also door + signal”: additionally away when a door opens and afterwards a signal of the person (Wi-Fi, ping, Bluetooth) changes to “away” – for persons without a location, e.g. when location is switched off in the app. A phone falling asleep without a door makes nobody away here either.",
+      weakWindow: "How long after the door opening the signal may change to “away”. Keep it short: the longer it is, the more likely a sleeping phone falls into the window by chance after someone else opened the door.",
       window: "How long after a door opening the location outside may come – and how old a location may be at most to count on its own. Too short: someone leaving is detected late or not at all. Too long: an old location may count for too long.",
     },
     infoLabel: "Explanation",
@@ -321,10 +337,11 @@ class HauswachtSystemEditor extends HTMLElement {
 
   // --- „weg“ nur mit Beleg (ADR 0015) ---------------------------------------------
 
-  _info(key) {
+  _info(key, suffix = "") {
     // ⓘ: Mauszeiger drauf zeigt den Text, Tippen klappt ihn auf
     const text = this._t("proofInfo")[key] || "";
-    return `<button type="button" class="info" data-info="${key}" title="${se(text)}" aria-label="${se(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${key}" hidden>${se(text)}</div>`;
+    const id = suffix ? `${key}:${suffix}` : key;
+    return `<button type="button" class="info" data-info="${se(id)}" title="${se(text)}" aria-label="${se(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${se(id)}" hidden>${se(text)}</div>`;
   }
 
   _proofRecommend(d) {
@@ -332,6 +349,23 @@ class HauswachtSystemEditor extends HTMLElement {
     const longest = Math.max(0, ...((d.measurements?.persons || []).map((p) => p.longest_left || 0)));
     if (!longest) return { minutes: 15, measured: null };
     return { minutes: Math.min(d.proof_max_window, Math.max(15, Math.ceil(longest / 60) + 5)), measured: Math.ceil(longest / 60) };
+  }
+
+  _weakPick(person, d) {
+    // Beleg für „weg“ je Person: nur Ortung (sicher) oder auch Tür + Signal (unsicher)
+    const weak = d.proof_weak.includes(person);
+    const opts = [["fix", this._t("proofKinds").fix], ["weak", this._t("proofKinds").weak]];
+    return `<label>${se(this._t("proofKind"))} ${this._info("weak", person)}</label>
+      <select data-weak="${se(person)}">${opts.map(([v, l]) => `<option value="${v}" ${(v === "weak") === weak ? "selected" : ""}>${se(l)}</option>`).join("")}</select>
+      ${weak ? `<div class="warn">${se(this._t("proofWeakWarn"))}</div>` : ""}`;
+  }
+
+  _weakRecommend(d) {
+    // Längste Zeit „Tür auf“ → ein einzelnes Signal „weg“ bei den Personen mit Tür + Signal, plus 2 min
+    const rows = (d.measurements?.persons || []).filter((p) => d.proof_weak.includes(p.id));
+    const longest = Math.max(0, ...rows.map((p) => p.longest_signal_left || 0));
+    if (!longest) return { minutes: 5, measured: null };
+    return { minutes: Math.min(d.proof_weak_max, Math.max(3, Math.ceil(longest / 60) + 2)), measured: Math.ceil(longest / 60) };
   }
 
   _proofHow(d) {
@@ -351,8 +385,17 @@ class HauswachtSystemEditor extends HTMLElement {
         <details class="more" ${this._moreOpen ? "open" : ""}><summary>${se(this._t("moreSettings"))}</summary>
           <label>${se(this._t("proofWindow"))} ${this._info("window")}</label>
           <input class="small" type="number" min="1" max="${d.proof_max_window}" data-f="proof_window" value="${se(d.proof_window)}">
-          <div class="muted">${se(recText)} ${Number(d.proof_window) === rec.minutes ? "" : `<button type="button" class="b" data-act="proof-rec" data-value="${rec.minutes}">${se(this._t("apply"))}</button>`}</div>
+          <div class="muted">${se(recText)} ${Number(d.proof_window) === rec.minutes ? "" : `<button type="button" class="b" data-act="proof-rec" data-field="proof_window" data-value="${rec.minutes}">${se(this._t("apply"))}</button>`}</div>
+          ${d.proof_weak.length ? this._weakWindow(d) : ""}
         </details></div>`;
+  }
+
+  _weakWindow(d) {
+    const rec = this._weakRecommend(d);
+    const recText = rec.measured === null ? this._t("weakRecDefault") : this._t("weakRecMeasured").replace("{m}", rec.measured).replace("{r}", rec.minutes);
+    return `<label>${se(this._t("weakWindow"))} ${this._info("weakWindow")}</label>
+          <input class="small" type="number" min="1" max="${d.proof_weak_max}" data-f="proof_weak_window" value="${se(d.proof_weak_window)}">
+          <div class="muted">${se(recText)} ${Number(d.proof_weak_window) === rec.minutes ? "" : `<button type="button" class="b" data-act="proof-rec" data-field="proof_weak_window" data-value="${rec.minutes}">${se(this._t("apply"))}</button>`}</div>`;
   }
 
   _chk(field, checked, label) {
@@ -411,7 +454,7 @@ class HauswachtSystemEditor extends HTMLElement {
     if (k === "homecoming") {
       const persons = [...new Set([...d.persons, ...d.signal_persons])];
       const signals = persons
-        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}</div>`)
+        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._weakPick(p, d)}</div>`)
         .join("");
       return `<h2>${se(this._t("homecoming"))}</h2>
         ${this._chk("observe", d.observe, this._t("observe"))}
@@ -492,6 +535,12 @@ class HauswachtSystemEditor extends HTMLElement {
     }
     if (this.kind === "homecoming") {
       d.proof_window = Number(d.proof_window) || 15;
+      d.proof_weak_window = Number(d.proof_weak_window) || 5;
+      root.querySelectorAll("[data-weak]").forEach((el) => {
+        const p = el.dataset.weak;
+        d.proof_weak = d.proof_weak.filter((x) => x !== p);
+        if (el.value === "weak") d.proof_weak.push(p);
+      });
       const more = root.querySelector("details.more");
       if (more) this._moreOpen = more.open;
     }
@@ -524,7 +573,7 @@ class HauswachtSystemEditor extends HTMLElement {
       case "network":
         return ["network_save", { entities: d.entities }];
       case "homecoming":
-        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy }];
+        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window }];
       case "area":
         return ["area_save", { id: this.item, name: d.name, icon: d.icon }];
       case "page":
@@ -651,11 +700,14 @@ class HauswachtSystemEditor extends HTMLElement {
       })
     );
     // Empfehlung übernehmen; Erklärsatz zieht mit
-    root.querySelector('[data-act="proof-rec"]')?.addEventListener("click", (ev) => {
-      this._collect();
-      this._draft.proof_window = Number(ev.currentTarget.dataset.value);
-      this._render();
-    });
+    root.querySelectorAll('[data-act="proof-rec"]').forEach((btn) =>
+      btn.addEventListener("click", (ev) => {
+        this._collect();
+        this._draft[ev.currentTarget.dataset.field] = Number(ev.currentTarget.dataset.value);
+        this._render();
+      })
+    );
+    root.querySelectorAll("[data-weak]").forEach((el) => el.addEventListener("change", redraw));
     root.querySelector('[data-f="proof_window"]')?.addEventListener("input", (ev) => {
       const how = root.querySelector("[data-how]");
       if (how) how.textContent = this._proofHow({ ...this._draft, proof_window: Number(ev.target.value) || this._draft.proof_window });

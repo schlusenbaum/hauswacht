@@ -212,8 +212,27 @@ coordinates – they only confirm, they are never proof.
 Once someone is proven away, that stays so until the person is home again – even if the location
 falls asleep afterwards. Doors and locations from before the last homecoming do not count.
 
-**Persons without a location** (e.g. location switched off in the Companion app, only a router
-tracker) **never** count as away. "Arm when all away" waits forever with such a person in the
+**Persons without a location – "also door + signal (uncertain)":** if a person has no location
+(e.g. only a Wi-Fi sensor or ping), you can choose **"Proof for 'away': also door + signal
+(uncertain)"** for them under System settings → Presence and homecoming observation, in the
+person's box. Then this also counts as proof: an entry door opened, and **afterwards** – at most
+the **time window door + signal** later (default 5 minutes, under "More settings", with a
+recommendation from the measurement) – a signal of the person changed from "there" to "away".
+
+| What happens (time window 5 minutes) | Result for Niklas (Wi-Fi only, "uncertain") |
+|---|---|
+| Front door opens, 2 minutes later his Wi-Fi is gone | **away** |
+| At night his Wi-Fi drops, no door | not away – sleeping phone |
+| Petra goes out at 7 am, exactly in the 5 minutes after that Niklas's phone falls asleep | **wrongly away** – this is the residual risk |
+
+> **Why "uncertain"?** Hauswacht does not know **who** opened the door. If the phone happens to
+> fall asleep shortly after someone else opened the door, the person counts as away. If everyone
+> is away then, "arm when all away" arms although the person is home – when they get up, there is
+> a false alarm. It does not make a burglary easier. Hence: a warning at the setting, a check hint
+> and a short time window. A location stays better (location in the Companion app on "Always").
+
+**Persons without a location and without "door + signal"** (e.g. location switched off in the
+Companion app, only a router tracker) **never** count as away. "Arm when all away" waits forever with such a person in the
 list – that is the safe side. Hauswacht shows this at the person selection in the profile
 ("⚠ no location – never counts as away"), in the system settings and as a
 [check hint](overview.md#check-hints). Fix: set the location in the Companion app to

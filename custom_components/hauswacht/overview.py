@@ -28,6 +28,7 @@ from .core.action_codes import ALL_KEYPADS, CodeAction, parse_action_codes
 from .core.always_active import parse_always_active, parse_arm_on_close
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
+from .core.away_proof import parse_proof_settings
 from .core.checks import run_checks
 from .core.controls import learn_minutes, parse_controls
 from .core.notify_events import NotifyEvent, enabled, route
@@ -493,6 +494,10 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
                     main.homecoming.departure_advice() if main.homecoming.enabled else {}
                 ).items()
             ],
+            # Personen mit dem unsicheren Beleg „Tür + Signal“ (Nachtrag 0.61, ADR 0015)
+            "weak_proof": sorted(
+                _name(hass, p) for p in parse_proof_settings(main.entry.options).weak
+            ),
             # Personen der Automatik ohne Ortung – gelten nie als weg (ADR 0015)
             "no_fix": sorted(
                 {

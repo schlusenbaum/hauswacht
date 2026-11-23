@@ -195,6 +195,27 @@ async def test_gps_jump_in_house_needs_door(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
 
 
+async def test_weak_proof_door_then_wifi_gone(hass: HomeAssistant) -> None:
+    """„Tür + Signal“ (unsicher): ohne Ortung weg, wenn das WLAN nach der Tür wegfällt."""
+    hass.states.async_set(SIGNAL, "on")
+    weak = {"homecoming_signals": {A: [SIGNAL]}, "away_proof_weak": [A]}
+    await _setup(hass, weak, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home")  # Person ohne Koordinaten (z. B. Router)
+    hass.states.async_set(SIGNAL, "off")  # WLAN fällt ohne Tür weg: schlafendes Handy
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    hass.states.async_set(SIGNAL, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(SIGNAL, "off")  # nach der Tür
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
 async def test_simple_accuracy_counts_gps_jump(hass: HomeAssistant) -> None:
     near = {
         "latitude": hass.config.latitude + 0.002,

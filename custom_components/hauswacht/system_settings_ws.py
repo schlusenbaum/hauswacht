@@ -21,6 +21,7 @@ from .core.action_codes import ACTION_CODE_KEYS, ALL_KEYPADS, CodeAction, parse_
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
 from .core.away_proof import ACCURACY_MODES, parse_proof_settings
+from .core.away_proof import MAX_WEAK_WINDOW as PROOF_MAX_WEAK_WINDOW
 from .core.away_proof import MAX_WINDOW as PROOF_MAX_WINDOW
 from .core.changes.cards import all_cards
 from .core.controls import (
@@ -253,10 +254,14 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "proof_accuracy": proof.accuracy,
             "proof_max_window": PROOF_MAX_WINDOW,
             "proof_accuracies": list(ACCURACY_MODES),
+            "proof_weak": sorted(proof.weak),
+            "proof_weak_window": proof.weak_window,
+            "proof_weak_max": PROOF_MAX_WEAK_WINDOW,
+            # ohne Ortung und ohne „Tür + Signal“: gilt nie als weg
             "no_fix": [
                 display_name(hass, p)
                 for p in _presence_persons(options)
-                if not locatable(hass, p, _signals(options, p))
+                if p not in proof.weak and not locatable(hass, p, _signals(options, p))
             ],
         },
         "areas": [

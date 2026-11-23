@@ -218,8 +218,28 @@ haben keine Koordinaten – sie bestätigen nur, ein Beleg sind sie nie.
 Ist jemand einmal belegt weg, bleibt das so, bis die Person wieder zuhause ist – auch wenn die
 Ortung danach einschläft. Türen und Ortungen von vor der letzten Heimkehr zählen nicht.
 
-**Personen ohne Ortung** (z. B. Standort in der Companion App abgeschaltet, nur ein
-Router-Tracker) gelten **nie** als weg. „Scharf, wenn alle weg“ wartet mit so einer Person in
+**Personen ohne Ortung – „auch Tür + Signal (unsicher)“:** Hat eine Person keine Ortung (z. B.
+nur WLAN-Sensor oder Ping), kannst du für sie unter Systemeinstellungen → Anwesenheit und
+Heimkehr-Beobachtung, im Kasten der Person, **„Beleg für ‚weg‘: auch Tür + Signal (unsicher)“**
+wählen. Dann gilt zusätzlich als Beleg: Eine Eingangstür ging auf, und **danach** – höchstens das
+**Zeitfenster Tür + Signal** später (Standard 5 Minuten, unter „Mehr Einstellungen“, mit
+Empfehlung aus der Messung) – wechselte ein Signal der Person von „da“ auf „weg“.
+
+| Was passiert (Zeitfenster 5 Minuten) | Ergebnis für Niklas (nur WLAN, „unsicher“) |
+|---|---|
+| Haustür auf, 2 Minuten später ist sein WLAN weg | **weg** |
+| Nachts fällt sein WLAN weg, keine Tür | nicht weg – schlafendes Handy |
+| Petra geht um 7 Uhr raus, genau in den 5 Minuten danach schläft Niklas’ Handy ein | **fälschlich weg** – das ist das Restrisiko |
+
+> **Warum „unsicher“?** Hauswacht weiß nicht, **wer** die Tür geöffnet hat. Schläft das Handy
+> zufällig kurz nach einer fremden Türöffnung ein, gilt die Person als weg. Sind dann alle weg,
+> schaltet „Scharf, wenn alle weg“ scharf, obwohl sie zuhause ist – steht sie auf, gibt es
+> Fehlalarm. Einen Einbruch macht das nicht leichter. Deshalb: Warnung an der Einstellung, ein
+> Prüfhinweis und ein kurzes Zeitfenster. Besser bleibt eine Ortung (Standort in der Companion
+> App auf „Immer“).
+
+**Personen ohne Ortung und ohne „Tür + Signal“** (z. B. Standort in der Companion App
+abgeschaltet, nur ein Router-Tracker) gelten **nie** als weg. „Scharf, wenn alle weg“ wartet mit so einer Person in
 der Liste für immer – das ist die sichere Seite. Hauswacht zeigt das an der Personenauswahl im
 Profil („⚠ keine Ortung – gilt nie als weg“), in den Systemeinstellungen und als
 [Prüfhinweis](uebersicht.md#prüfhinweise). Abhilfe: in der Companion App den Standort auf

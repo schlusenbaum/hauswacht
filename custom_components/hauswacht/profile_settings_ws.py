@@ -22,6 +22,7 @@ from .core.automation import (
     WEEKDAYS,
     parse_automation,
 )
+from .core.away_proof import parse_proof_settings
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
 from .core.passage import parse_passage, passage_from_input
@@ -145,6 +146,7 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     rules = parse_rules(options)
     areas = parse_areas(options)
+    weak = parse_proof_settings(options).weak
     registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
     return {
         "profiles": [_profile(options, pid) for pid in options.get("profiles", {})],
@@ -159,12 +161,13 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "volumes": list(VOLUME_LEVELS),
             "notify": _notify_choices(hass),
             "speakers": _speaker_choices(hass),
-            # locatable: kann außerhalb geortet werden – sonst gilt die Person nie als weg
+            # locatable: kann als weg erkannt werden (Ortung oder „Tür + Signal“) – sonst nie
             "persons": [
                 {
                     "id": s.entity_id,
                     "name": s.name,
-                    "locatable": locatable(hass, s.entity_id, _signals(options, s.entity_id)),
+                    "locatable": s.entity_id in weak
+                    or locatable(hass, s.entity_id, _signals(options, s.entity_id)),
                 }
                 for s in hass.states.async_all("person")
             ],

@@ -1,6 +1,6 @@
 # ADR 0015: Rückkehr neu geregelt – „Bei Rückkehr“, „weg“ nur mit Beleg, Annäherung
 
-- Status: vorgeschlagen (Umsetzung in 0.61)
+- Status: angenommen (Umsetzung in 0.61; Nachtrag 0.61.0b2)
 - Datum: 2026-11-23
 - Baut auf: [ADR 0013 Durchgang](0013-durchgang.md), [ADR 0014 Ausgangserkennung](0014-ausgangserkennung.md)
 - Ändert: [ADR 0011 Einstellungsseite](0011-einstellungsseite.md) (Nachtrag 0.61)
@@ -176,3 +176,32 @@ einen Hinweis mit Link zur Seite (Nachtrag 0.61 zu ADR 0011).
 | 0.62 | ⓘ, „So verhält sich das“ und „Mehr Einstellungen“ für alle übrigen Einstellungen |
 | 0.63 | Ausgangserkennung ([ADR 0014](0014-ausgangserkennung.md)) |
 | später | Einrichtungsassistent auf die Seite; Dialog nur noch Wegweiser |
+
+## Nachtrag 0.61.0b2: „Tür + Signal“ als unsicherer Beleg je Person
+
+**Anlass:** Mit „weg nur mit Ortung“ wäre eine Person ohne Ortung (nur WLAN, Ping, Router) nie
+weg – „Scharf, wenn alle weg“ schaltet mit ihr in der Liste nie scharf.
+
+**Entscheidung:** Je Person einstellbar (Systemeinstellungen → Anwesenheit, im Kasten der
+Person): **„nur Ortung (sicher)“** (Standard) oder **„auch Tür + Signal (unsicher)“**. Bei
+„unsicher“ gilt zusätzlich als Beleg:
+
+> Eine Eingangstür ging auf, und danach – höchstens das **Zeitfenster Tür + Signal** später
+> (Standard 5 Minuten, 1–30, einstellbar) – wechselte **irgendein** Signal der Person (WLAN, Ping,
+> Bluetooth, Router, die Person selbst) von „da“ auf „weg“; und alle Signale melden „weg“.
+
+- Der Wechsel muss **nach** der Tür kommen. Ein Signal, das ohne Tür wegfällt (schlafendes
+  Handy), belegt weiterhin nichts.
+- Eigenes, kürzeres Zeitfenster, weil die Gefahr mit der Länge wächst; Empfehlung aus der
+  Messung „Weggehen“ (längste Zeit Tür → einzelnes Signal „weg“, plus 2 Minuten), Knopf
+  „übernehmen“.
+- Jedes Signal der Person zählt – auswählen je Signal wäre fein, aber selten nötig: am Ende
+  müssen ohnehin alle Signale „weg“ melden.
+- Warnhinweis an der Einstellung und ein Prüfhinweis (Hinweis, nicht „wichtig“), solange eine
+  Person auf „unsicher“ steht.
+
+**Restrisiko:** Öffnet jemand anderes die Tür, während das Handy dieser Person zufällig im
+Zeitfenster einschläft, gilt sie fälschlich als weg. Folgen: „Scharf, wenn alle weg“ kann scharf
+schalten, während sie zuhause ist (Fehlalarm, wenn sie aufsteht); wacht das Handy wieder auf,
+kann das als Heimkehr zählen – bei „Unscharf mit Türbeleg“ braucht es dafür aber wieder eine Tür.
+Einen Einbruch macht das nicht leichter.

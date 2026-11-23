@@ -23,6 +23,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Ortung **genau prüfen** (Entfernung größer als Zonenradius plus Ungenauigkeit, Standard) oder
   **einfach** (außerhalb der Zone); **Zeitfenster für den Beleg** (Standard 15 Minuten) mit
   Empfehlung aus der Messung „Weggehen“ und Knopf „übernehmen“; ⓘ je Feld und „So verhält sich das:“.
+- Je Person **„Beleg für ‚weg‘“**: nur Ortung (sicher, Standard) oder **auch Tür + Signal
+  (unsicher)** – für Personen ohne Ortung: Eingangstür auf und danach (bis 5 Minuten,
+  einstellbar, mit Empfehlung aus der Messung) wechselt ein Signal (WLAN, Ping, Bluetooth) auf
+  „weg“. Mit Warnhinweis und Prüfhinweis.
 - Hinweis „⚠ keine Ortung – gilt nie als weg“ an der Personenauswahl im Profil, in den
   Systemeinstellungen und als Prüfhinweis.
 

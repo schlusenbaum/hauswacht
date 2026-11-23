@@ -34,6 +34,11 @@ MAX_WINDOW = 120
 
 OPT_AWAY_WINDOW = "away_proof_window"
 OPT_AWAY_ACCURACY = "away_proof_accuracy"
+# Unsicherer Beleg „Tür + Signal“ je Person (Nachtrag 0.61 zu ADR 0015)
+OPT_AWAY_WEAK = "away_proof_weak"
+OPT_AWAY_WEAK_WINDOW = "away_proof_weak_window"
+DEFAULT_WEAK_WINDOW = 5  # Minuten
+MAX_WEAK_WINDOW = 30
 
 _NOT_LOCATED = frozenset({"unknown", "unavailable", ""})
 _EARTH_RADIUS_M = 6_371_000.0
@@ -61,10 +66,17 @@ class Fix:
 class ProofSettings:
     window: int = DEFAULT_WINDOW  # Minuten
     accuracy: str = DEFAULT_ACCURACY
+    # Personen, bei denen auch „Tür + Signal weg“ reicht (unsicher), und dessen Zeitfenster
+    weak: frozenset[str] = frozenset()
+    weak_window: int = DEFAULT_WEAK_WINDOW  # Minuten
 
     @property
     def seconds(self) -> float:
         return self.window * 60.0
+
+    @property
+    def weak_seconds(self) -> float:
+        return self.weak_window * 60.0
 
 
 def parse_proof_settings(options: Mapping[str, Any]) -> ProofSettings:
@@ -77,7 +89,18 @@ def parse_proof_settings(options: Mapping[str, Any]) -> ProofSettings:
     accuracy = options.get(OPT_AWAY_ACCURACY)
     if accuracy not in ACCURACY_MODES:
         accuracy = DEFAULT_ACCURACY
-    return ProofSettings(window, str(accuracy))
+    raw_weak = options.get(OPT_AWAY_WEAK, [])
+    weak = (
+        frozenset(p for p in raw_weak if isinstance(p, str))
+        if isinstance(raw_weak, list)
+        else frozenset()
+    )
+    try:
+        weak_window = int(options.get(OPT_AWAY_WEAK_WINDOW, DEFAULT_WEAK_WINDOW))
+    except (TypeError, ValueError):
+        weak_window = DEFAULT_WEAK_WINDOW
+    weak_window = min(max(weak_window, 1), MAX_WEAK_WINDOW)
+    return ProofSettings(window, str(accuracy), weak, weak_window)
 
 
 def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -159,6 +182,21 @@ def prune_doors(doors: Iterable[float], now: float) -> list[float]:
     return [d for d in doors if now - d <= DOOR_MEMORY][-DOOR_MAX:]
 
 
+def weak_proof(
+    doors: Iterable[float], left: Iterable[float], settings: ProofSettings, since: float | None
+) -> bool:
+    """Unsicherer Beleg: eine Tür ging auf, und danach (höchstens ``weak_window`` später)
+    wechselte ein Signal der Person von „da“ auf „weg“ (WLAN, Ping, Bluetooth …).
+
+    Ein Signal, das ohne Tür wegfällt (schlafendes Handy), belegt nichts. Unsicher, weil
+    jemand anderes die Tür geöffnet haben kann, während das Handy zufällig einschläft.
+    """
+    start = since if since is not None else float("-inf")
+    opened = [d for d in doors if d >= start]
+    window = settings.weak_seconds
+    return any(d <= t <= d + window for t in left if t >= start for d in opened)
+
+
 class AwayTracker:
     """Merkt sich je Person, ob „weg“ belegt ist (bleibt belegt, bis sie wieder zuhause ist).
 
@@ -173,9 +211,14 @@ class AwayTracker:
         self._proven: set[str] = set()
         self._home_since: dict[str, float] = {}
         self._home: set[str] = set()
+        self._left: dict[str, list[float]] = {}  # Person -> wann ein Signal „weg“ wurde
 
     def note_door(self, now: float) -> None:
         self.doors = prune_doors([*self.doors, now], now)
+
+    def note_signal_left(self, person: str, now: float) -> None:
+        """Ein Signal der Person wechselte von „da“ auf „weg“ (für „Tür + Signal“)."""
+        self._left[person] = prune_doors([*self._left.get(person, []), now], now)
 
     def judge(
         self, person: str, combined: bool | None, fixes: Iterable[Fix], now: float
@@ -191,7 +234,11 @@ class AwayTracker:
             return None
         if person in self._proven:
             return False
-        if proven_away(fixes, self.doors, now, self.settings, self._home_since.get(person)):
+        since = self._home_since.get(person)
+        if proven_away(fixes, self.doors, now, self.settings, since) or (
+            person in self.settings.weak
+            and weak_proof(self.doors, self._left.get(person, []), self.settings, since)
+        ):
             self._proven.add(person)
             return False
         return None

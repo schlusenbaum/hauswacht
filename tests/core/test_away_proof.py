@@ -103,3 +103,52 @@ def test_check_hint_for_person_without_location() -> None:
     assert len(found) == 1
     assert found[0]["severity"] == "warning"
     assert found[0]["text"].startswith("Niklas kann nicht als weg erkannt werden")
+
+
+def test_weak_proof_door_then_signal_left() -> None:
+    """Nachtrag 0.61: „Tür + Signal“ (unsicher), nur für gewählte Personen."""
+    weak = ProofSettings(weak=frozenset({"niklas"}), weak_window=5)
+    tracker = AwayTracker(weak)
+    tracker.judge("niklas", True, [], 0)
+    tracker.judge("anna", True, [], 0)
+    # WLAN fällt nachts ohne Tür weg: nicht weg
+    tracker.note_signal_left("niklas", 100)
+    assert tracker.judge("niklas", False, [], 100) is None
+    tracker.judge("niklas", True, [], 200)
+    # Tür, 3 Minuten später WLAN weg: weg
+    tracker.note_door(1000)
+    tracker.note_signal_left("niklas", 1180)
+    assert tracker.judge("niklas", False, [], 1180) is False
+    # Anna hat „Tür + Signal“ nicht gewählt: kein Beleg
+    tracker.note_signal_left("anna", 1180)
+    assert tracker.judge("anna", False, [], 1180) is None
+
+
+def test_weak_proof_signal_too_late_or_before_door() -> None:
+    weak = ProofSettings(weak=frozenset({"niklas"}), weak_window=5)
+    tracker = AwayTracker(weak)
+    tracker.judge("niklas", True, [], 0)
+    tracker.note_signal_left("niklas", 900)  # vor der Tür
+    tracker.note_door(1000)
+    tracker.note_signal_left("niklas", 1000 + 6 * 60)  # zu spät
+    assert tracker.judge("niklas", False, [], 1400) is None
+
+
+def test_parse_weak_settings() -> None:
+    proof = parse_proof_settings(
+        {"away_proof_weak": ["person.niklas", 3], "away_proof_weak_window": 99}
+    )
+    assert proof.weak == frozenset({"person.niklas"})
+    assert proof.weak_window == 30
+
+
+def test_check_hint_for_weak_proof() -> None:
+    from custom_components.hauswacht.core.checks import run_checks  # noqa: PLC0415
+
+    overview = {
+        "profiles": [],
+        "monitoring": {"homecoming": {"weak_proof": ["Niklas"]}, "infrastructure": [{"ok": True}]},
+    }
+    found = [f for f in run_checks(overview, "de") if f["code"] == "away_weak"]
+    assert len(found) == 1
+    assert found[0]["severity"] == "info"

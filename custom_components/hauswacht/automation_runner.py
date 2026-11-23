@@ -93,6 +93,7 @@ class AutomationRunner:
         self._phone_door_at: dict[str, float] = {}  # Profil -> letzte Türöffnung (scharf)
         # „weg“ nur mit Beleg (ADR 0015): Türöffnungen und belegte Abwesenheit je Person
         self.proof = AwayTracker()
+        self._owners: dict[str, tuple[str, ...]] = {}  # Signal -> Personen (Tür + Signal)
 
     # --- Lebenszyklus --------------------------------------------------------
 
@@ -148,13 +149,17 @@ class AutomationRunner:
                 async_track_state_change_event(self.hass, schedules, self._on_schedule)
             )
         if persons:
-            watched = set(persons)
+            owners: dict[str, list[str]] = {}
             for person in persons:
-                watched.update(self.signals.get(person, ()))
+                sources = [person, *self.signals.get(person, ())]
                 state = self.hass.states.get(person)
                 trackers = state.attributes.get("device_trackers", []) if state else []
                 if isinstance(trackers, list):  # Ortungen der Person (Frische, Beleg)
-                    watched.update(t for t in trackers if isinstance(t, str))
+                    sources.extend(t for t in trackers if isinstance(t, str))
+                for source in dict.fromkeys(sources):
+                    owners.setdefault(source, []).append(person)
+            self._owners = {k: tuple(v) for k, v in owners.items()}
+            watched = set(self._owners)
             self._home = {p: self.person_home(p) for p in persons}
             # Wer beim Start schon weg ist, zählt ab jetzt als weg
             started = dt_util.utcnow().timestamp()
@@ -270,12 +275,33 @@ class AutomationRunner:
         return self.proof.judge(person, combined, fixes, dt_util.utcnow().timestamp())
 
     def unlocatable(self) -> list[str]:
-        """Personen der Automatik ohne jede Ortung – sie gelten nie als weg (Hinweis)."""
-        return [p for p in self._home if not locatable(self.hass, p, self.signals.get(p, ()))]
+        """Personen der Automatik ohne Ortung und ohne „Tür + Signal“ – nie weg (Hinweis)."""
+        return [
+            p
+            for p in self._home
+            if p not in self.proof.settings.weak
+            and not locatable(self.hass, p, self.signals.get(p, ()))
+        ]
+
+    def _signal_value(self, entity_id: str, state: str | None) -> bool | None:
+        if entity_id.startswith("person."):
+            return person_value(state)
+        return None if direction_hint(state) else presence(state, self.ssids)
 
     @callback
-    def _on_person(self, _event: Event[EventStateChangedData]) -> None:
+    def _on_person(self, event: Event[EventStateChangedData]) -> None:
         now = dt_util.utcnow().timestamp()
+        # „Tür + Signal“: ein Signal wechselt von „da“ auf „weg“ (Nachtrag 0.61, ADR 0015)
+        entity_id = event.data["entity_id"]
+        old, new_state = event.data["old_state"], event.data["new_state"]
+        if (
+            old is not None
+            and new_state is not None
+            and self._signal_value(entity_id, old.state) is True
+            and self._signal_value(entity_id, new_state.state) is False
+        ):
+            for owner in self._owners.get(entity_id, ()):
+                self.proof.note_signal_left(owner, now)
         arrived: list[str] = []
         long_away: list[str] = []  # Heimkehr nach mindestens 5 Minuten sicher weg
         for person in list(self._home):

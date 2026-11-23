@@ -72,6 +72,10 @@ def test_silence_network_homecoming_learn() -> None:
     assert proof.options is not None
     assert proof.options["away_proof_window"] == 30
     assert proof.options["away_proof_accuracy"] == "simple"
+    weak = save_homecoming(options, {"proof_weak": ["person.niklas"], "proof_weak_window": 3})
+    assert weak.options is not None
+    assert weak.options["away_proof_weak"] == ["person.niklas"]
+    assert weak.options["away_proof_weak_window"] == 3
     learn = save_learn_minutes(options, 500)
     assert learn.options is not None
     assert learn.options["card_learn_minutes"] == 60

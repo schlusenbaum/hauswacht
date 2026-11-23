@@ -246,6 +246,20 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
             "System settings → presence and homecoming observation",
         ),
     },
+    "away_weak": {
+        "de": (
+            "{name}: „weg“ gilt auch mit Tür + Signal (unsicher). Öffnet jemand anderes die Tür, "
+            "während {name}s Handy zufällig einschläft, gilt {name} fälschlich als weg – "
+            "„Scharf, wenn alle weg“ kann dann scharf schalten, obwohl {name} zuhause ist.",
+            "Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung",
+        ),
+        "en": (
+            "{name}: “away” also counts with door + signal (uncertain). If someone else opens the "
+            "door while {name}'s phone happens to fall asleep, {name} wrongly counts as away – "
+            "“arm when all away” may then arm although {name} is home.",
+            "System settings → presence and homecoming observation",
+        ),
+    },
     "leaving_ok": {
         "de": (
             "Heimkehr-Beobachtung: {name} – Rausgehen wird zuverlässig erkannt, empfohlene "
@@ -472,6 +486,8 @@ def _monitoring(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
                     advice=own_advice,
                 )
             )
+    for name in monitoring.get("homecoming", {}).get("weak_proof", []):
+        found.append(_finding("away_weak", lang, key=name, name=name))
     for name in monitoring.get("homecoming", {}).get("no_fix", []):
         found.append(_finding("away_no_fix", lang, severity="warning", key=name, name=name))
     for person in monitoring.get("homecoming", {}).get("leaving", []):
