@@ -227,4 +227,4 @@ async def test_entities_explain_themselves(hass: HomeAssistant) -> None:
     device = dr.async_get(hass).async_get(simulation.device_id or "")
     assert device is not None
     assert device.configuration_url is not None
-    assert "docs/installation.md" in device.configuration_url
+    assert device.configuration_url == "homeassistant://hauswacht-settings"  # Einstellungsseite
