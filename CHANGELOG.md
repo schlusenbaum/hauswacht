@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.60.0b7] - 2026-11-23
+
+### Behoben
+- Heimkehr-Beobachtung: Eine Fahrt in der Umgebung zählte als Heimkommen, sobald die Richtung
+  (Nähe, Places) kurz „nähert sich“ meldete. Das **frühestes Signal** zählt jetzt nur echte
+  Heimkehrten (ein Anwesenheits-Signal meldet wieder „zuhause“); „nähert sich“ bis zu 15 Minuten
+  davor macht den Zeitpunkt nur früher. Nach dem Update **Heimkommen zurücksetzen**.
+
 ## [0.60.0b6] - 2026-11-22
 
 ### Hinzugefügt

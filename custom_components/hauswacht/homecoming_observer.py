@@ -57,7 +57,6 @@ from .core.homecoming import (
     report_markdown,
     to_csv,
     track,
-    track_value,
 )
 from .core.texts import DE, lang_of, tr
 from .names import display_name, plain_name
@@ -104,9 +103,10 @@ class HomecomingObserver:
         self.departure_since: float | None = None  # Beginn der Messung "Weggehen"
         self.entries: list[dict[str, Any]] = []
         self._entry_open: dict[str, Any] | None = None
-        self._combined: dict[str, PresenceState] = {}
         # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
         self._present: dict[str, bool | None] = {}
+        self._absent_since: dict[str, float] = {}  # Person: seit wann "alle Signale" weg
+        self._direction_home_at: dict[str, float] = {}  # Richtung: seit wann "nähert sich"
         self._directions: set[str] = set()
         self._door_entities: frozenset[str] = frozenset()
         self._owners: dict[str, tuple[str, ...]] = {}  # Quelle -> Personen
@@ -165,10 +165,10 @@ class HomecomingObserver:
             if source not in self._presence:
                 self._presence[source] = self._initial_presence(source)
         for person in self.persons:
-            if person not in self._combined:
-                self._combined[person] = self._initial_combined(person)
             if person not in self._present:
                 self._present[person] = self._person_present(person)
+                if self._present[person] is False:
+                    self._absent_since[person] = self._initial_absent(person)
         self.async_stop()
         wanted = sorted(set(self._owners) | doors)
         if wanted:
@@ -187,31 +187,19 @@ class HomecomingObserver:
         if state in DIRECTION_HOME | DIRECTION_AWAY | DIRECTION_NEUTRAL:
             self._directions.add(source)
 
-    def _initial_combined(self, person: str) -> PresenceState:
-        """Kombination beim Start; "weg seit" = spätester Abschied der Quellen."""
-        home = self._person_home(person)
-        if home is not False:
-            return PresenceState(home=home)
+    def _initial_absent(self, person: str) -> float:
+        """Beim Start schon weg: "weg seit" = spätester Abschied der Quellen (ohne Richtung)."""
         since = [
             state.away_since
             for source in self._person_sources(person)
-            if (state := self._presence.get(source)) is not None and state.away_since
+            if source not in self._directions
+            and (state := self._presence.get(source)) is not None
+            and state.away_since
         ]
-        return PresenceState(
-            home=False, away_since=max(since) if since else dt_util.utcnow().timestamp()
-        )
+        return max(since) if since else dt_util.utcnow().timestamp()
 
     def _person_sources(self, person: str) -> list[str]:
         return [s for s, persons in self._owners.items() if person in persons]
-
-    def _person_home(self, person: str) -> bool | None:
-        """Kombination: irgendeine Quelle zuhause -> zuhause; alle bekannt weg -> weg."""
-        values = [self._presence.get(s, PresenceState()).home for s in self._person_sources(person)]
-        if any(v is True for v in values):
-            return True
-        if values and all(v is False for v in values):
-            return False
-        return None
 
     def _person_present(self, person: str) -> bool | None:
         """Kombination fürs Weggehen.
@@ -241,15 +229,48 @@ class HomecomingObserver:
         source = person + EARLIEST
         if before is True and present is False:
             self.departures.append({"at": now, "person": person, "source": source})
+            self._absent_since[person] = now
             return True
+        changed = False
         if present is True:
             for record in reversed(self.departures):
                 if record["source"] == source:
                     if record.get("back") is None:
                         record["back"] = now
-                        return True
+                        changed = True
                     break
-        return False
+            left = self._absent_since.pop(person, None)
+            if before is False and left is not None:
+                self.arrivals.append(
+                    {
+                        "at": (at := self._earliest_arrival(person, now, left)),
+                        "person": person,
+                        "source": source,
+                        "away": at - left,
+                    }
+                )
+                changed = True
+        return changed
+
+    def _earliest_arrival(self, person: str, now: float, left: float) -> float:
+        """Frühestes Signal einer echten Heimkehr.
+
+        Gezählt wird nur, wenn ein echtes Anwesenheits-Signal wieder "zuhause" meldet. Hat eine
+        Richtung (Nähe, Places) kurz davor – höchstens 15 Minuten und nach dem Weggehen –
+        "nähert sich" gemeldet, gilt dieser frühere Zeitpunkt. "Nähert sich" allein ist also
+        keine Heimkehr mehr (z. B. bei Fahrten in der Umgebung).
+        """
+        earliest = now
+        for source in self._person_sources(person):
+            at = self._direction_home_at.get(source)
+            if (
+                source in self._directions
+                and at is not None
+                and left < at <= now
+                and now - at <= APPROACH_WINDOW
+            ):
+                earliest = min(earliest, at)
+        return earliest
 
     # --- Aufzeichnung --------------------------------------------------------
 
@@ -276,6 +297,13 @@ class HomecomingObserver:
             prev = self._presence.get(entity_id, PresenceState())
             state, away = track(prev, new.state, now, self.ssids)
             self._presence[entity_id] = state
+            if entity_id in self._directions:
+                # Wann die Richtung zuletzt "nähert sich/angekommen" meldete (Hinweis fürs
+                # frühestes Signal – zählt nur, wenn danach wirklich jemand heimkommt)
+                if state.home is True and prev.home is not True:
+                    self._direction_home_at[entity_id] = now
+                elif state.home is False:
+                    self._direction_home_at.pop(entity_id, None)
             if away is not None:
                 for person in self._owners[entity_id]:
                     self.arrivals.append(
@@ -287,14 +315,6 @@ class HomecomingObserver:
                     self.departures.append({"at": now, "person": person, "source": entity_id})
                 changed = True
             for person in self._owners[entity_id]:
-                before = self._combined.get(person, PresenceState())
-                combined, away = track_value(before, self._person_home(person), now)
-                self._combined[person] = combined
-                if away is not None:
-                    self.arrivals.append(
-                        {"at": now, "person": person, "source": person + EARLIEST, "away": away}
-                    )
-                    changed = True
                 changed = self._track_leaving(person, now) or changed
         if changed:
             self.doors = prune(self.doors, now)

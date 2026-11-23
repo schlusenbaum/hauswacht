@@ -309,9 +309,10 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
 def door_proof_advice(stats: Mapping[str, SourceStats]) -> dict[str, dict[str, int]]:
     """Je Person: welche Eingangsverzögerung "Unscharf mit Türbeleg" bräuchte.
 
-    Grundlage ist die Kombination "frühestes Signal" (irgendein Signal meldet zuhause) – so
-    entscheidet auch die Profil-Automatik. Kommt die Erkennung erst nach dem Öffnen der Tür,
-    muss die Eingangsverzögerung so lange reichen. Heimkehrten ohne Tür würden ignoriert.
+    Grundlage ist die Kombination "frühestes Signal" (frühester Zeitpunkt einer echten Heimkehr,
+    eine Richtung "nähert sich" kurz davor eingeschlossen). Kommt die Erkennung erst nach dem
+    Öffnen der Tür, muss die Eingangsverzögerung so lange reichen. Heimkehrten ohne Tür würden
+    ignoriert.
     """
     advice: dict[str, dict[str, int]] = {}
     for source, entry in stats.items():

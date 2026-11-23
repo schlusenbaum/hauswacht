@@ -536,3 +536,39 @@ async def test_direction_does_not_split_leaving(
     assert everything["with_door"] == 1
     assert everything["max_seconds"] == 90  # WLAN und Person weg; Richtung zählt nicht
     assert everything["pauses"] == 0
+
+
+async def test_earliest_signal_needs_a_real_homecoming(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    """ "Nähert sich" allein ist keine Heimkehr – nur der frühere Zeitpunkt einer echten."""
+    _person(hass, "not_home", "not_home")
+    hass.states.async_set(DIRECTION, "away_from")
+    options = {
+        "homecoming_observe": True,
+        "homecoming_persons": [PERSON],
+        "homecoming_signals": {PERSON: [DIRECTION]},
+    }
+    await setup_entry(hass, make_entry(options))
+    # Fahrt in der Umgebung: nähert sich, entfernt sich wieder – ohne heimzukommen
+    for minutes, state in ((20, "towards"), (10, "away_from"), (10, "towards"), (5, "away_from")):
+        freezer.tick(timedelta(minutes=minutes))
+        hass.states.async_set(DIRECTION, state)
+        await hass.async_block_till_done()
+    # Echte Heimkehr: nähert sich, 8 min später Tür, dann meldet die Person zuhause
+    freezer.tick(timedelta(minutes=10))
+    hass.states.async_set(DIRECTION, "towards")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=8))
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=30))
+    _person(hass, "home", "home")
+    await hass.async_block_till_done()
+
+    sources = hass.states.get(OBSERVER).attributes["sources"]  # type: ignore[union-attr]
+    earliest = sources["Anna (earliest signal)"]
+    assert earliest["arrivals"] == 1
+    assert earliest["with_door"] == 1
+    assert earliest["median_delay"] == -480
+    assert sources["Anna (overall)"]["median_delay"] == 30

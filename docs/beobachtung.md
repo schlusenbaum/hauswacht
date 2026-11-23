@@ -100,10 +100,12 @@ selbst wenn die Beobachtung aus ist. Wie die Automatik die Signale verbindet, st
 | Annäherung (Places) | Zusatz-Integration **Places** (HACS): Sensor `sensor.places_<person>_direction_of_travel` | „towards home“ = zuhause, „away from home“ = weg, „stationary“ zählt nicht (ab 0.60) |
 | Binärsensor | beliebig | an |
 
-Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: zuhause, sobald
-irgendeine Quelle zuhause meldet. So entscheidet auch die Profil-Automatik. (Die Beobachtung
-nimmt dabei auch die Geräte-Tracker der Person einzeln dazu; die Automatik nutzt die Person
-selbst und die gewählten Signale.)
+Zusätzlich wertet Hauswacht je Person das **„frühestes Signal“** aus: der früheste Zeitpunkt
+einer **echten** Heimkehr. Echt heißt: Ein Anwesenheits-Signal (Person, Ping, WLAN, Bluetooth …)
+meldet wieder „zuhause“. Hat die Richtung (Nähe, Places) bis zu 15 Minuten davor „nähert sich“
+gemeldet, zählt dieser frühere Zeitpunkt. **„Nähert sich“ allein ist keine Heimkehr** – sonst
+würde jede Fahrt in der Umgebung, die kurz Richtung Zuhause führt, als Heimkommen gezählt
+(ab 0.60). Die Beobachtung nimmt dabei auch die Geräte-Tracker der Person einzeln dazu.
 
 ### Empfehlung für „Unscharf mit Türbeleg“
 

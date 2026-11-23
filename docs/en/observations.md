@@ -99,10 +99,11 @@ under [Profiles → How Hauswacht knows who is home](profiles.md#how-hauswacht-k
 | Approach (Places) | add-on integration **Places** (HACS): sensor `sensor.places_<person>_direction_of_travel` | "towards home" = home, "away from home" = away, "stationary" does not count (from 0.60) |
 | Binary sensor | any | on |
 
-In addition, Hauswacht evaluates the **"earliest signal"** per person: home as soon as any source
-reports home. The profile automation decides the same way. (The observation also includes the
-person's device trackers individually; the automation uses the person itself and the chosen
-signals.)
+In addition, Hauswacht evaluates the **"earliest signal"** per person: the earliest moment of a
+**real** homecoming. Real means: a presence signal (person, ping, Wi-Fi, Bluetooth …) reports
+"home" again. If the direction (Proximity, Places) reported "towards" up to 15 minutes before,
+that earlier moment counts. **"Towards" alone is no homecoming** – otherwise every drive in the
+area that briefly heads towards home would count as coming home (from 0.60). The observation also includes the person's device trackers individually.
 
 ### Recommendation for "Disarm with door proof"
 
