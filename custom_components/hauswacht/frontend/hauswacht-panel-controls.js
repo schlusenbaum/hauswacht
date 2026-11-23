@@ -298,7 +298,7 @@ class HauswachtControlEditor extends HTMLElement {
   }
 
   _select(field, value, entries) {
-    return `<select data-f="${field}">${entries.map(([v, l]) => `<option value="${ce(v)}" ${String(v) === String(value ?? "") ? "selected" : ""}>${ce(l)}</option>`).join("")}</select>`;
+    return `<select data-f="${ce(field)}">${entries.map(([v, l]) => `<option value="${ce(v)}" ${String(v) === String(value ?? "") ? "selected" : ""}>${ce(l)}</option>`).join("")}</select>`;
   }
 
   _profiles(withNone = true, passage = false) {
@@ -311,7 +311,7 @@ class HauswachtControlEditor extends HTMLElement {
   // Auswahl aus vielen Einträgen: Eingabe mit Vorschlägen (Name oder ID)
   _picker(field, value, choices, listId) {
     const shown = (choices.find((c) => c.id === value) || { name: value || "" }).name;
-    return `<input data-pick="${field}" list="${listId}" value="${ce(shown)}" placeholder="${ce(this._t("pick"))}">
+    return `<input data-pick="${ce(field)}" list="${listId}" value="${ce(shown)}" placeholder="${ce(this._t("pick"))}">
       <datalist id="${listId}">${choices.map((c) => `<option value="${ce(c.name)}">${ce(c.id)}</option>`).join("")}</datalist>`;
   }
 

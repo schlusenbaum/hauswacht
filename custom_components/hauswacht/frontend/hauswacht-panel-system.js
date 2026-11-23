@@ -280,25 +280,25 @@ class HauswachtSystemEditor extends HTMLElement {
   }
 
   _chk(field, checked, label) {
-    return `<div class="chk"><input type="checkbox" data-b="${field}" ${checked ? "checked" : ""}><span>${se(label)}</span></div>`;
+    return `<div class="chk"><input type="checkbox" data-b="${se(field)}" ${checked ? "checked" : ""}><span>${se(label)}</span></div>`;
   }
 
   _select(field, value, entries) {
-    return `<select data-f="${field}">${entries.map(([v, l]) => `<option value="${se(v)}" ${v === value ? "selected" : ""}>${se(l)}</option>`).join("")}</select>`;
+    return `<select data-f="${se(field)}">${entries.map(([v, l]) => `<option value="${se(v)}" ${v === value ? "selected" : ""}>${se(l)}</option>`).join("")}</select>`;
   }
 
   // Liste von Entitäten mit ✕ und Eingabe mit Vorschlägen
   _entityList(where, list, choices) {
     const name = (id) => (choices.find((c) => c.id === id) || { name: id }).name;
     const chips = list.map((id, i) => `<span class="chip" title="${se(id)}">${se(name(id))}<button class="x" data-rm="${where}:${i}">✕</button></span>`).join("");
-    return `<div class="chips">${chips}</div><input list="hw-sys-${where.split(":")[0]}" data-add="${where}" placeholder="${se(this._t("addEntity"))}">`;
+    return `<div class="chips">${chips}</div><input list="hw-sys-${where.split(":")[0]}" data-add="${se(where)}" placeholder="${se(this._t("addEntity"))}">`;
   }
 
   // Eine Entität wählen: Eingabe mit Vorschlägen (Name oder ID)
   _entityPick(field, value, choices) {
     this._picks = { ...(this._picks || {}), [field]: choices };
     const shown = (choices.find((c) => c.id === value) || { name: value || "" }).name;
-    return `<input data-pick="${field}" list="hw-sys-pick-${field}" value="${se(shown)}" placeholder="${se(this._t("addEntity"))}">${this._datalist(`pick-${field}`, choices)}`;
+    return `<input data-pick="${se(field)}" list="hw-sys-pick-${field}" value="${se(shown)}" placeholder="${se(this._t("addEntity"))}">${this._datalist(`pick-${field}`, choices)}`;
   }
 
   _datalist(id, choices) {
