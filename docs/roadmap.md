@@ -52,8 +52,9 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| nach 0.60 | „Bei Rückkehr“ als eine Einstellung: nichts, unscharf, unscharf mit Türbeleg oder reinlassen (Durchgang) – mit eigener Personenliste; Annäherung („nähert sich“) verlängert die Eingangsverzögerung, statt unscharf zu schalten – wird besprochen |
-| 0.61 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
+| 0.61 | Rückkehr neu geregelt ([ADR 0015](entwicklung/adr/0015-rueckkehr.md)): „Bei Rückkehr“ je Profil (nichts, unscharf, mit Türbeleg, reinlassen) mit eigener Personenliste; „weg“ nur mit Beleg (Tür und Ortung außerhalb) – keine falschen Heimkehrten durch schlafende Handys; Annäherung verlängert die Eingangsverzögerung statt unscharf zu schalten; Erklärungen direkt an der Einstellung (ⓘ, „So verhält sich das“); Seite ausblenden statt abschalten, Aufruf über die Geräteseite |
+| 0.62 | Erklärungen (ⓘ, „So verhält sich das“, „Mehr Einstellungen“) für alle übrigen Einstellungen |
+| 0.63 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |

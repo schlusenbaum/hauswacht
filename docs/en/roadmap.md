@@ -52,8 +52,9 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| after 0.60 | "On return" as one setting: nothing, disarm, disarm with door proof or let in (passage) – with its own person list; approach ("towards") lengthens the entry delay instead of disarming – under discussion |
-| 0.61 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
+| 0.61 | Return reworked ([ADR 0015](../entwicklung/adr/0015-rueckkehr.md), German): "On return" per profile (nothing, disarm, with door proof, let in) with its own person list; "away" only with proof (door and location outside) – no false homecomings from sleeping phones; approach lengthens the entry delay instead of disarming; explanations right at the setting (ⓘ, "this is how it behaves"); hide the page instead of switching it off, open it from the device page |
+| 0.62 | Explanations (ⓘ, "this is how it behaves", "more settings") for all other settings |
+| 0.63 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
