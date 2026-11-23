@@ -60,18 +60,34 @@ Neuer Abschnitt **„Bei Rückkehr“** im Profil. Eine Auswahl, eine eigene Per
 
 ### 2. „weg“ nur mit Beleg – für die ganze Automatik
 
-Grundsatz aus ADR 0014: **Ohne geöffnete Tür kann niemand weggehen.**
+Ein schlafendes Handy darf niemanden abwesend machen. Eine Person gilt für die Automatik erst als
+**weg**, wenn **eines** davon zutrifft:
 
-Eine Person gilt für die Automatik erst als **weg**, wenn
-
-1. eine **Eingangstür aufging** und
-2. das Handy danach **außerhalb geortet** wurde – innerhalb von 15 Minuten (einstellbar).
+1. **Tür und Ortung:** Eine Eingangstür ging auf, und danach wurde das Handy **außerhalb
+   geortet** – innerhalb von 15 Minuten (einstellbar). Grundsatz aus ADR 0014: Ohne geöffnete Tür
+   kann niemand weggehen.
+2. **Frische Ortung allein:** Das Handy wird außerhalb geortet, die Ortung ist **frisch** (hat
+   sich in den letzten 15 Minuten aktualisiert, einstellbar) und **genau genug** (siehe unten).
+   Für den Fall, dass die Türöffnung fehlt – Home Assistant war im Neustart, der Türkontakt war
+   kurz weg, eine Tür ohne Kontakt (Terrasse).
 
 | Zählt als „außerhalb geortet“ | Bestätigt nur, reicht allein nicht |
 |---|---|
 | GPS bzw. Zone „nicht zuhause“ (Companion App, iCloud3 …) | WLAN getrennt |
 | die Person „nicht zuhause“, wenn das aus einer Ortung kommt | Ping antwortet nicht |
 | | Bluetooth sieht das Handy nicht |
+
+**Genau genug** – umschaltbar:
+
+| Einstellung | „außerhalb“ heißt |
+|---|---|
+| **genau prüfen** (Standard) | Entfernung zum Zuhause größer als Zonenradius **plus** gemeldete Ungenauigkeit – ein Sprung des GPS im Haus um 200 m zählt nicht |
+| **einfach** | außerhalb der Zone, egal wie ungenau |
+
+Warum nicht jede Ortung allein genügt: Ortungen können **alt** sein (iCloud liefert manchmal
+Stunden alte Standorte), **ungenau** (GPS im Haus springt aus der Zone) oder **eingefroren bzw.
+gefälscht** (Standort in der App abgeschaltet, der Tracker zeigt dauerhaft einen alten Ort). Eine
+Ortung, die sich nicht mehr aktualisiert, zählt deshalb nur zusammen mit einer Türöffnung.
 
 - Ein schlafendes Handy macht niemanden abwesend – also gibt es auch **keine falsche Heimkehr**.
 - Gilt für **„Scharf, wenn alle weg“**, **„Bei Rückkehr“** (jede Auswahl) und das Reinlassen.
@@ -134,6 +150,10 @@ einen Hinweis mit Link zur Seite (Nachtrag 0.61 zu ADR 0011).
   entscheidet, nicht die Person; je Profil ist einfacher.
 - **„weg“ wie bisher, wenn alle Signale weg melden:** verworfen – schlafende Handys erzeugen
   falsche Heimkehrten.
+- **„weg“ nur mit Türöffnung:** verworfen – fehlt die Türöffnung (Neustart, Kontakt kurz weg),
+  gälte jemand als zuhause, der längst unterwegs ist.
+- **Jede Ortung außerhalb genügt:** verworfen – alte, ungenaue oder eingefrorene Ortungen machen
+  sonst jemanden abwesend, der zuhause ist.
 - **Eingangsverzögerung für alle verlängern:** verworfen – schenkt auch jedem Einbrecher die Zeit.
 - **„nähert sich“ wieder als „zuhause“:** verworfen (Sicherheitskorrektur 0.60).
 - **Nur Mouseover als Erklärung:** verworfen – am Handy und Tablet gibt es kein Darüberfahren.
