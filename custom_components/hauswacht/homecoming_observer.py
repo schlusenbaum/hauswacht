@@ -371,14 +371,20 @@ class HomecomingObserver:
         }
 
     @callback
-    def entry_finished(self, *, in_time: bool) -> None:
-        """Eingangsverzögerung beendet: unscharf (rechtzeitig) oder Alarm (zu spät)."""
+    def entry_finished(self, *, in_time: bool, passage: bool = False) -> None:
+        """Eingangsverzögerung beendet: unscharf (rechtzeitig), Alarm (zu spät) oder per
+        Durchgang reingelassen (bleibt scharf; zählt in der Auswertung nicht mit)."""
         started, self._entry_open = self._entry_open, None
         if started is None or not self.enabled:
             return
         now = dt_util.utcnow().timestamp()
         self.entries.append(
-            {**started, "seconds": round(now - float(started["at"]), 1), "in_time": in_time}
+            {
+                **started,
+                "seconds": round(now - float(started["at"]), 1),
+                "in_time": in_time,
+                "passage": passage,
+            }
         )
         self.entries = prune(self.entries, now)
         self._store.async_delay_save(self._data, 10)
@@ -392,6 +398,7 @@ class HomecomingObserver:
                 seconds=float(e["seconds"]),
                 in_time=bool(e["in_time"]),
                 delay=int(e.get("delay", 0)),
+                passage=bool(e.get("passage", False)),
             )
             for e in self.entries
         ]

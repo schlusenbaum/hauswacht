@@ -18,6 +18,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Handy als Ankunft zählen. Jetzt zählen Richtungs-Sensoren nur mit „angekommen“ (zuhause) und
   „entfernt sich“ (weg); „nähert sich“ und „steht“ werden übergangen – „steht“ hält damit auch
   „Scharf, wenn alle weg“ nicht mehr auf.
+- Heimkehr-Beobachtung: Ein Eingang, bei dem man per **Durchgang** (z. B. per Handy) reingelassen
+  wurde, zählte als „zu spät – Alarm“. Er steht jetzt als „per Durchgang reingelassen“ in der
+  Tabelle und zählt weder als rechtzeitig noch als zu spät.
 
 ## [0.60.0b6] - 2026-11-22
 

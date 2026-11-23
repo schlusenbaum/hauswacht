@@ -291,6 +291,7 @@ class EntryTiming:
     seconds: float
     in_time: bool  # False = Zeit abgelaufen, Alarm
     delay: int  # eingestellte Eingangsverzögerung
+    passage: bool = False  # per Durchgang reingelassen (bleibt scharf) – zählt nicht mit
 
 
 def recommended_entry_delay(longest: float) -> int:
@@ -303,6 +304,8 @@ def entry_stats(timings: Sequence[EntryTiming]) -> dict[str, dict[str, Any]]:
     """Je Tür: Anzahl, rechtzeitig, zu spät, typische und längste Zeit, Empfehlung."""
     by_door: dict[str, list[EntryTiming]] = {}
     for timing in timings:
+        if timing.passage:
+            continue  # Durchgang: niemand musste unscharf schalten
         by_door.setdefault(timing.door, []).append(timing)
     result: dict[str, dict[str, Any]] = {}
     for door, items in by_door.items():
@@ -412,7 +415,14 @@ def csv_rows(  # noqa: PLR0913
             )
         )
     for t in timings:
-        result = tr(lang, "hc_entry_in_time" if t.in_time else "hc_entry_too_late", delay=t.delay)
+        key = (
+            "hc_entry_passage"
+            if t.passage
+            else "hc_entry_in_time"
+            if t.in_time
+            else "hc_entry_too_late"
+        )
+        result = tr(lang, key, delay=t.delay)
         rows.append(
             (
                 t.at,

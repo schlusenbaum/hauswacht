@@ -135,6 +135,10 @@ Läuft eine Eingangsverzögerung, misst Hauswacht, wie lange es bis zum Unscharf
 eine **Empfehlung für die Eingangsverzögerung** (längste Zeit plus 25 %, mindestens 5 s, auf
 5 s aufgerundet). Hilfreich z. B., um den Platz für ein Bedienteil an der Wand zu prüfen.
 
+Wirst du per [Durchgang](durchgang.md) reingelassen (z. B. per Handy), bleibt die Anlage scharf
+und niemand muss unscharf schalten. So ein Eingang steht in der CSV-Tabelle als „per Durchgang
+reingelassen“, zählt aber **weder als rechtzeitig noch als zu spät** (ab 0.60).
+
 ## Weggehen (Vorbereitung für „Rausgehen ohne PIN erkennen“)
 
 Ab 0.60 misst die Heimkehr-Beobachtung auch das **Weggehen**. Das ist die Messung für eine

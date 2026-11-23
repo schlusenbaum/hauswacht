@@ -241,6 +241,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "hc_csv_entry": "Eingang",
         "hc_entry_in_time": "rechtzeitig unscharf (Verzögerung {delay} s)",
         "hc_entry_too_late": "zu spät – Alarm (Verzögerung {delay} s)",
+        "hc_entry_passage": "per Durchgang reingelassen, blieb scharf – zählt nicht mit",
         "hc_filename": "hauswacht-heimkehr",
         # Beobachtung Weggehen (ADR 0014)
         "dep_heading": "**Weggehen** – wie schnell melden die Signale „weg“?",
@@ -471,6 +472,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "hc_csv_entry": "Entry",
         "hc_entry_in_time": "disarmed in time (delay {delay} s)",
         "hc_entry_too_late": "too late – alarm (delay {delay} s)",
+        "hc_entry_passage": "let in by passage, stayed armed – not counted",
         "hc_filename": "hauswacht-homecoming",
         # Departure observation (ADR 0014)
         "dep_heading": "**Leaving** – how fast do the signals report “away”?",

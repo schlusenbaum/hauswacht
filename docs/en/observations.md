@@ -132,6 +132,10 @@ was too late). Per door: number, in time, too late, typical and longest time and
 **recommendation for the entry delay** (longest time plus 25 %, at least 5 s, rounded up to 5 s).
 Helpful e.g. to check the place for a control device on the wall.
 
+If you are let in by [passage](passage.md) (e.g. by phone), the system stays armed and nobody has
+to disarm. Such an entry appears in the CSV table as "let in by passage", but counts **neither as
+in time nor as too late** (from 0.60).
+
 ## Leaving (preparation for "detect leaving without PIN")
 
 From 0.60 on, the homecoming observation also measures **leaving**. This is the measurement for a

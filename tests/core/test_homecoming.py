@@ -143,6 +143,8 @@ def test_entry_stats() -> None:
         EntryTiming(at=1, door="d", seconds=12, in_time=True, delay=30),
         EntryTiming(at=2, door="d", seconds=20, in_time=True, delay=30),
         EntryTiming(at=3, door="d", seconds=30, in_time=False, delay=30),
+        # Per Durchgang reingelassen (Handy): niemand schaltete unscharf – zählt nicht mit
+        EntryTiming(at=4, door="d", seconds=0, in_time=False, delay=30, passage=True),
     ]
     stats = entry_stats(timings)["d"]
     assert stats["entries"] == 3
