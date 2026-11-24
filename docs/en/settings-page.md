@@ -115,11 +115,23 @@ As safe as the dialog:
 
 The tab **Profiles** lists every profile with its values; **"Edit"** opens the side sheet,
 **"+ Add alarm profile"** an empty one with the usual defaults (30 s delay, 180 s alarm …). The
-sections match the dialog:
+sections match the dialog.
+
+**Explanations right at the field** (from 0.62):
+
+- Every field has an **ⓘ**: hovering shows the explanation, tapping (phone, tablet) expands it.
+- Below the most important fields of a section there is the sentence **"This is how it
+  behaves:"**. It changes right away when you set something – e.g. "After arming you have 30 s
+  to leave. If you then open an entry door, you have 30 s to disarm …".
+- Rarely changed fields are under **"More settings"** to expand: icon; duration of the alarm
+  reaction and alarm cycles; failed sensors and tampering; tone, volume and speakers; schedule;
+  settle time; for the passage "which door" and "end".
+- Fields that only make sense with a switch (exit doors, passage times) only appear when the
+  switch is on.
 
 | Section | Content |
 |---|---|
-| **General** | Name, icon (e.g. `mdi:weather-night`), button on the alarm panel, area (only with several areas) |
+| **General** | Name, button on the alarm panel, area (only with several areas); under "More settings" the icon (e.g. `mdi:weather-night`) |
 | **What is monitored** | Sensor groups (every sensor triggers on its own), **excluded** – the list shows exactly the sensors of the ticked groups –, trigger rules, "Tilted windows allowed" (only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted)) |
 | **Times** | Exit and entry delay, duration of the alarm reaction, maximum alarm cycles |
 | **When arming** | Open sensors, failed sensors, tampering triggers an alarm |

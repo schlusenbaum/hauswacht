@@ -116,11 +116,24 @@ So sicher wie der Dialog:
 
 Im Reiter **Profile** steht jedes Profil mit seinen Werten; **„Bearbeiten“** öffnet das
 Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgaben (30 s Verzögerung,
-180 s Alarm …). Die Abschnitte entsprechen dem Dialog:
+180 s Alarm …). Die Abschnitte entsprechen dem Dialog.
+
+**Erklärungen direkt am Feld** (ab 0.62):
+
+- Hinter jedem Feld steht ein **ⓘ**: Mauszeiger drauf zeigt die Erklärung, Antippen (Handy,
+  Tablet) klappt sie auf.
+- Unter den wichtigsten Feldern eines Abschnitts steht der Satz **„So verhält sich das:“**. Er
+  ändert sich sofort, wenn du etwas einstellst – z. B. „Nach dem Scharfschalten hast du 30 s zum
+  Verlassen. Öffnest du danach eine Eingangstür, hast du 30 s zum Unscharfschalten …“.
+- Selten geänderte Felder stehen unter **„Mehr Einstellungen“** zum Aufklappen: Symbol; Dauer
+  der Alarmreaktion und Alarmzyklen; ausgefallene Melder und Manipulation; Ton, Lautstärke und
+  Lautsprecher; Zeitplan; Beruhigungszeit; beim Durchgang „welche Tür“ und „Ende“.
+- Felder, die nur mit einem Schalter Sinn ergeben (Ausgangstüren, Durchgangszeiten), erscheinen
+  erst, wenn der Schalter an ist.
 
 | Abschnitt | Inhalt |
 |---|---|
-| **Allgemein** | Name, Symbol (z. B. `mdi:weather-night`), Knopf am Bedienfeld, Bereich (nur bei mehreren Bereichen) |
+| **Allgemein** | Name, Knopf am Bedienfeld, Bereich (nur bei mehreren Bereichen); unter „Mehr Einstellungen“ das Symbol (z. B. `mdi:weather-night`) |
 | **Was wird überwacht** | Meldergruppen (jeder Melder löst allein aus), **Ausgenommene** – die Liste zeigt genau die Melder der angehakten Gruppen –, Auslöseregeln, „Gekippte Fenster erlaubt“ (nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt)) |
 | **Zeiten** | Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Höchstzahl Alarmzyklen |
 | **Beim Scharfschalten** | Offene Melder, ausgefallene Melder, Manipulation löst Alarm aus |

@@ -6,6 +6,22 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.62.0b1] - 2026-11-24
+
+**Vorabversion: Erklärungen im Profil** (Roadmap 0.62, Schritt 1).
+
+### Hinzugefügt
+- Einstellungsseite → Profil: **ⓘ an jedem Feld** (Mauszeiger oder antippen) mit einer
+  Erklärung in einfacher Sprache.
+- Je Abschnitt der Satz **„So verhält sich das:“**, der sich beim Einstellen sofort ändert
+  (Zeiten, Scharfschalten, Reaktion, Automatik, Bei Rückkehr, Scharf durch Schließen, Durchgang).
+
+### Geändert
+- Selten geänderte Felder stehen unter **„Mehr Einstellungen“** zum Aufklappen (Symbol, Dauer
+  der Alarmreaktion, Alarmzyklen, ausgefallene Melder, Manipulation, Ton, Lautstärke,
+  Lautsprecher, Zeitplan, Beruhigungszeit, Durchgang „welche Tür“ und „Ende“).
+- Ausgangstüren und Durchgangszeiten erscheinen erst, wenn der Schalter dazu an ist.
+
 ## [0.61.0] - 2026-11-24
 
 **„Bei Rückkehr“ je Profil, „weg“ nur mit Beleg, Annäherung verlängert die
