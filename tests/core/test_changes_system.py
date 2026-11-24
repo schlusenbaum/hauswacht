@@ -67,6 +67,15 @@ def test_silence_network_homecoming_learn() -> None:
     assert home.options is not None
     assert home.options["homecoming_ssids"] == ["Heim", "Gast"]
     assert home.options["homecoming_signals"] == {"person.anna": ["sensor.wlan"]}
+    assert "away_proof_window" not in home.options  # Dialog schickt es nicht mit
+    proof = save_homecoming(options, {"proof_window": 30, "proof_accuracy": "simple"})
+    assert proof.options is not None
+    assert proof.options["away_proof_window"] == 30
+    assert proof.options["away_proof_accuracy"] == "simple"
+    weak = save_homecoming(options, {"proof_weak": ["person.niklas"], "proof_weak_window": 3})
+    assert weak.options is not None
+    assert weak.options["away_proof_weak"] == ["person.niklas"]
+    assert weak.options["away_proof_weak_window"] == 3
     learn = save_learn_minutes(options, 500)
     assert learn.options is not None
     assert learn.options["card_learn_minutes"] == 60

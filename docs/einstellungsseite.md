@@ -14,7 +14,17 @@ Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
 - **Zusätzlich** zum Dialog und zum [Einrichtungsassistenten](assistent.md) – alle Wege nutzen
   dieselben Einstellungen. Was im Dialog geändert wird, steht nach „Neu laden“ sofort auf der
   Seite.
-- Ausblenden: Konfigurieren → System → **Einstellungsseite in der Seitenleiste** → Haken weg.
+- **Öffnen:** über die Seitenleiste, über den Link in der Geräteinfo auf der Geräteseite von
+  Hauswacht, über den Link ganz oben im Dialog „Konfigurieren“ oder direkt unter
+  `/hauswacht-settings` (z. B. `http://homeassistant.local:8123/hauswacht-settings`).
+- **Ausblenden statt abschalten** (ab 0.61): Die Seite gibt es immer. Unter System →
+  **Einstellungsseite** (oder im Dialog: Konfigurieren → System → **Einstellungsseite: in der
+  Seitenleiste zeigen**) stellst du nur ein, ob sie in der Seitenleiste steht. Ausgeblendet
+  erreichst du sie über die Wege oben. Jeder Benutzer kann sie außerdem über „Seitenleiste
+  bearbeiten“ in Home Assistant für sich ausblenden.
+- **Neue Einstellungen gibt es nur hier** (ab 0.61, z. B. [„Bei Rückkehr“](profile.md#bei-rückkehr)
+  und [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). Der Dialog zeigt an der Stelle einen
+  Hinweis mit Link.
 
 ## Die Reiter
 
@@ -115,11 +125,13 @@ Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgab
 | **Zeiten** | Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Höchstzahl Alarmzyklen |
 | **Beim Scharfschalten** | Offene Melder, ausgefallene Melder, Manipulation löst Alarm aus |
 | **Reaktion bei Alarm** | Sirenen (die unter Alarmgeber eingetragenen), Ton, Lautstärke, stiller Alarm, Empfänger, zusätzliche Lautsprecher |
-| **Automatik** | Scharf um / unscharf um, Wochentage, Zeitplan, Personen („alle weg“), Wartezeit, unscharf bei Rückkehr, Türbeleg-Fenster – siehe [Automatik](profile.md#automatik). **„Zeitplan anlegen ↗“** öffnet die Helfer in einem neuen Fenster („Helfer erstellen“ → „Zeitplan“); danach **„Liste aktualisieren“** – deine Eingaben im Profil bleiben dabei erhalten |
+| **Automatik** | Scharf um / unscharf um, Wochentage, Zeitplan, Personen („alle weg“), Wartezeit – siehe [Automatik](profile.md#automatik). **„Zeitplan anlegen ↗“** öffnet die Helfer in einem neuen Fenster („Helfer erstellen“ → „Zeitplan“); danach **„Liste aktualisieren“** – deine Eingaben im Profil bleiben dabei erhalten |
+| **Bei Rückkehr** *(neu in 0.61, nur hier)* | Was passiert, wenn jemand heimkommt: Stufe (Nichts, Unscharf nur wenn automatisch scharf, Unscharf mit Türbeleg, Unscharf auch nach Scharfschalten von Hand, Reinlassen), eigene Personenliste, unter **„Mehr Einstellungen“** das Zeitfenster Handy und Tür sowie die [Eingangsverzögerung nach Annäherung](profile.md#annäherung-verlängert-die-eingangsverzögerung) mit Gültigkeit und Empfehlungen zum Übernehmen. Mit **ⓘ** je Feld, dem Satz **„So verhält sich das:“** und einer Warnung bei „auch nach Scharfschalten von Hand“ – siehe [Bei Rückkehr](profile.md#bei-rückkehr) |
 | **Scharf durch Schließen der Tür** | An/aus, Ausgangstüren (die Melder vom Typ Tür in den gewählten Gruppen), Beruhigungszeit |
+| **Durchgang** | Durchgang erlauben, Zeiten, welche Tür, Melder auf dem Weg – siehe [Durchgang](durchgang.md). Das Handy-Reinlassen ist zu „Bei Rückkehr“ umgezogen |
 
 Es gelten dieselben Regeln wie im Dialog: Name nötig und eindeutig, jeder Knopf nur einmal je
-Bereich, „Unscharf bei Rückkehr“ nur mit Personen. **Löschen** fragt einmal nach.
+Bereich, „Bei Rückkehr“ (außer „Nichts“) nur mit mindestens einer Person. **Löschen** fragt einmal nach.
 
 ## Auslöseregeln bearbeiten
 
@@ -208,9 +220,9 @@ Darunter je Thema eine Karte mit **„Bearbeiten“**:
 | **Verhalten nach Neustart** | Vorherigen Zustand wiederherstellen · immer scharf (mit Profil je Bereich) · immer unscharf; „Laufenden Alarm fortsetzen“ – siehe [Verhalten nach einem Neustart](installation.md#verhalten-nach-einem-neustart) |
 | **Funkstille von Sensoren** | Allgemeiner Wert (Stunden bis „ausgefallen“, 0 = aus) und eine Tabelle **je Melder**: längste Pause, Empfehlung, eigener Wert – Melder anklicken, um ihm einen eigenen Wert zu geben. Seit wann gemessen wird, steht unten; **Messung zurücksetzen** löscht die Messung aller Melder und beginnt neu. Siehe [Funkstille](melder.md#funkstille-von-sensoren) |
 | **Funknetz und Gateways** | Statussensoren, z. B. die Zigbee2MQTT-Bridge – siehe [Funknetz](melder.md#funknetz-und-gateways-überwachen) |
-| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
+| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter **„Wann gilt jemand als weg?“** (ab 0.61, nur hier): Ortung außerhalb **genau prüfen** oder **einfach**, unter „Mehr Einstellungen“ das **Zeitfenster für den Beleg** (Standard 15 Minuten) mit Empfehlung aus der Messung „Weggehen“ und Knopf **übernehmen**; je Person **„Beleg für ‚weg‘“**: nur Ortung (sicher) oder auch Tür + Signal (unsicher, mit Warnung und eigenem Zeitfenster); Warnung für Personen ohne Ortung – siehe [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
 | **Bereiche** | anlegen, umbenennen, Symbol, löschen (nur ohne Profile) – siehe [Bereiche](profile.md#bereiche) |
-| **Einstellungsseite** | diese Seite ausblenden. Danach verschwindet sie; wieder einblenden im Dialog unter Systemeinstellungen → Einstellungsseite |
+| **Einstellungsseite** | **In der Seitenleiste zeigen** an/aus. Ausgeblendet verschwindet nur der Eintrag in der Seitenleiste – die Seite bleibt über die Geräteseite, den Link im Dialog und `/hauswacht-settings` erreichbar |
 
 ## Alarmgeber bearbeiten
 

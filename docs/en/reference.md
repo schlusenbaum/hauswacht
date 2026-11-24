@@ -60,8 +60,8 @@ automations.
 | `number.hauswacht_dauer_der_alarmreaktion` | `number.hauswacht_alarm_reaction_time` | Duration of the alarm reaction (s) |
 | `number.hauswacht_alarmzyklen` | `number.hauswacht_alarm_cycles` | Maximum number of alarm cycles |
 | `number.hauswacht_wartezeit_bei_abwesenheit` | `number.hauswacht_away_delay` | Automation: waiting time when everyone has left |
-| `number.hauswacht_turbeleg_ortung_vor_der_tur` | `number.hauswacht_door_proof_location_before_door` | Automation: door proof window |
-| `select.hauswacht_unscharf_bei_ruckkehr` | `select.hauswacht_disarm_on_arrival` | Automation: off, as before, with door proof |
+| `number.hauswacht_turbeleg_ortung_vor_der_tur` | `number.hauswacht_door_proof_location_before_door` | [On return](profiles.md#on-return): time window phone and door (since 0.61 the entity is called "On return: time window phone and door"; existing installations keep the ID) |
+| `select.hauswacht_unscharf_bei_ruckkehr` | `select.hauswacht_disarm_on_arrival` | [On return](profiles.md#on-return): Nothing, Disarm only if armed automatically, Disarm with door proof, Disarm also after arming by hand, Let in (since 0.61 the entity is called "On return"; existing installations keep the ID) |
 | `select.hauswacht_offene_sensoren_beim_scharfschalten` | `select.hauswacht_open_sensors_when_arming` | Behaviour with open sensors |
 | `select.hauswacht_ausgefallene_sensoren_beim_scharfschalten` | `select.hauswacht_unavailable_sensors_when_arming` | Behaviour with failed sensors |
 | `select.hauswacht_sirenenton` | `select.hauswacht_siren_tone` | Siren tone |
@@ -236,8 +236,9 @@ proof), `Neustart` (restart).
 | `AutoDisarmed` | Disarmed automatically | `profile_id`, `reason` |
 | `AutoDisarmSkipped` | Not disarmed (e.g. alarm running, another profile armed) | `profile_id`, `reason` |
 | `ArrivalNoted` | "Disarm with door proof": arrival detected, profile armed | `profile_id`, `persons` |
-| `PhoneArrivalNoted` | [Let in by phone](passage.md#let-in-by-phone): arrival detected (away for at least 5 minutes before), profile armed | `profile_id`, `persons` |
+| `PhoneArrivalNoted` | [On return: let in](passage.md#let-in-by-phone): arrival detected (away for at least 5 minutes before), profile armed | `profile_id`, `persons` |
 | `DoorNoted` | "Disarm with door proof": entry door detected | `profile_id`, `door` |
+| `EntryDelayExtended` | [Approach](profiles.md#approach-extends-the-entry-delay): entry delay extended because a person from "On return" approached | `profile_id`, `seconds`, `normal`, `persons` |
 
 ### Operation
 

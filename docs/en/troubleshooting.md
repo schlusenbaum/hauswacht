@@ -43,8 +43,16 @@ A person only counts as away when the person itself **and all** their additional
 "away". A signal that is "unavailable" or "unknown" holds the automation back. Check under System
 settings → Presence and homecoming observation which signals are selected, and their state under
 Developer tools → States.
+Since 0.61 "away" also needs **proof**: door and then a location outside, or a fresh, precise
+location outside (["away" only with proof](profiles.md#away-only-with-proof)). If the person shows
+"⚠ no location", a location with coordinates is missing – set the location in the Companion app
+to "Always". If the GPS in the house often reports "outside" but inaccurately, "check precisely"
+stays the right choice; if "away" is never detected although the location is right, lengthen the
+time window for the proof.
 
-**"Disarm on arrival – with door proof" does not disarm.**
+**"On return – Disarm with door proof" does not disarm.**
+Is the person ticked under "On return" → "For these persons"? Since 0.61 that list is independent
+of "Arm when all away".
 Both are needed: the person was reliably **away** before and now reports **home**, and an **entry
 door** (role "entry") opens – while the profile is armed or the entry delay is running. The
 location may be at most the time window (default 5 minutes) **before** the door; **after** the

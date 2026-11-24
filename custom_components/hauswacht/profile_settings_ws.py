@@ -7,6 +7,7 @@ Liefert je Profil alle Werte im Format des Einstellungsdialogs und die Auswahlm�
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -16,17 +17,14 @@ from homeassistant.helpers import entity_registry as er
 from .core.always_active import DEFAULT_SETTLE, MAX_SETTLE, parse_arm_on_close
 from .core.areas import MAIN_AREA, parse_areas, profile_area
 from .core.automation import (
-    ARRIVAL_MODES,
-    DEFAULT_ARRIVAL_WINDOW,
     DEFAULT_AWAY_DELAY,
-    MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
     WEEKDAYS,
     parse_automation,
 )
+from .core.away_proof import parse_proof_settings
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
-from .core.passage import MAX_WINDOW as PASSAGE_MAX_WINDOW
 from .core.passage import parse_passage, passage_from_input
 from .core.profiles import (
     DEFAULT_ALARM_CYCLES,
@@ -43,6 +41,15 @@ from .core.profiles import (
     profile_settings,
 )
 from .core.reactions import DEFAULT_TONE, DEFAULT_VOLUME, parse_reaction
+from .core.returning import (
+    MAX_APPROACH_DELAY,
+    MAX_APPROACH_VALID,
+    RETURN_MODES,
+    ReturnConfig,
+    parse_return,
+    return_to_storage,
+)
+from .core.returning import MAX_WINDOW as RETURN_MAX_WINDOW
 from .core.rules import parse_rules, profile_rule_ids
 from .core.sensor_types import excluded_sensors
 from .core.siren_guard import BURGLAR_TONE_ORDER, VOLUME_LEVELS
@@ -51,6 +58,7 @@ from .core.state_machine import OpenSensorPolicy, UnavailableSensorPolicy
 from .core.tilt import parse_tilt_sources
 from .names import display_name
 from .notify_targets import notify_choices
+from .presence_proof import locatable
 
 
 def _time(value: Any) -> str | None:
@@ -95,9 +103,9 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
             "auto_schedule": auto.schedule,
             "auto_away_persons": list(auto.away_persons),
             "auto_away_delay": auto.away_delay,
-            "auto_arrival_mode": auto.arrival_mode,
-            "auto_arrival_window": auto.arrival_window,
         },
+        # „Bei Rückkehr“ (ADR 0015)
+        "return": return_to_storage(parse_return(options, pid)),
         "arm_on_close": {
             "enabled": close.enabled,
             "doors": sorted(close.doors),
@@ -111,8 +119,6 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
                 "out_end": passage.out_end.value,
                 "path": sorted(passage.path),
                 "path_after": passage.path_after,
-                "persons": list(passage.persons),
-                "window": passage.window,
             }
         ),
     }
@@ -137,13 +143,27 @@ def _speaker_choices(hass: HomeAssistant) -> list[dict[str, str]]:
     return [{"id": k, "name": v} for k, v in sorted(found.items(), key=lambda i: i[1].casefold())]
 
 
+def _signals(options: Mapping[str, Any], person: str) -> tuple[str, ...]:
+    raw = options.get("homecoming_signals", {})
+    entities = raw.get(person, []) if isinstance(raw, Mapping) else []
+    return tuple(e for e in entities if isinstance(e, str))
+
+
+def _return_advice(main: Any) -> dict[str, Any]:
+    observer = getattr(main, "homecoming", None)
+    return observer.approach_advice() if observer is not None else {}
+
+
 def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     rules = parse_rules(options)
     areas = parse_areas(options)
+    weak = parse_proof_settings(options).weak
     registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
     return {
         "profiles": [_profile(options, pid) for pid in options.get("profiles", {})],
+        # Empfehlungen aus der Heimkehr-Beobachtung je Person (Annäherung, ADR 0015)
+        "return_advice": _return_advice(main),
         "choices": {
             "panel_modes": ["none", *PANEL_MODES],
             "areas": [{"id": a.area_id, "name": a.name} for a in areas.values()],
@@ -155,14 +175,21 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "volumes": list(VOLUME_LEVELS),
             "notify": _notify_choices(hass),
             "speakers": _speaker_choices(hass),
+            # locatable: kann als weg erkannt werden (Ortung oder „Tür + Signal“) – sonst nie
             "persons": [
-                {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("person")
+                {
+                    "id": s.entity_id,
+                    "name": s.name,
+                    "locatable": s.entity_id in weak
+                    or locatable(hass, s.entity_id, _signals(options, s.entity_id)),
+                }
+                for s in hass.states.async_all("person")
             ],
             "schedules": [
                 {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("schedule")
             ],
             "weekdays": list(WEEKDAYS),
-            "arrival_modes": list(ARRIVAL_MODES),
+            "return_modes": list(RETURN_MODES),
             "tilt": bool(parse_tilt_sources(options)),
         },
         "defaults": {
@@ -194,9 +221,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 "auto_schedule": None,
                 "auto_away_persons": [],
                 "auto_away_delay": DEFAULT_AWAY_DELAY,
-                "auto_arrival_mode": "off",
-                "auto_arrival_window": DEFAULT_ARRIVAL_WINDOW,
             },
+            "return": return_to_storage(ReturnConfig()),
             "arm_on_close": {"enabled": False, "doors": [], "settle": DEFAULT_SETTLE},
             "passage": passage_from_input({}),
         },
@@ -205,10 +231,11 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "reaction": MAX_REACTION_TIME,
             "cycles": MAX_ALARM_CYCLES,
             "away_delay": MAX_AWAY_DELAY,
-            "arrival_window": MAX_ARRIVAL_WINDOW,
+            "return_window": RETURN_MAX_WINDOW,
+            "approach_delay": MAX_APPROACH_DELAY,
+            "approach_valid": MAX_APPROACH_VALID,
             "settle": MAX_SETTLE,
             "passage_duration": PASSAGE_MAX_DURATION,
             "passage_after": PASSAGE_MAX_AFTER,
-            "passage_window": PASSAGE_MAX_WINDOW,
         },
     }

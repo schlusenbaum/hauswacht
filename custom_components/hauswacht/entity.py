@@ -10,7 +10,9 @@ from .const import DOMAIN, NAME
 from .core.areas import MAIN_AREA
 from .runtime import HauswachtConfigEntry, HauswachtRuntime
 
-DOCS_URL = "https://github.com/schlusenbaum/hauswacht/blob/main/docs/installation.md"
+# Link auf der Geräteseite: die Einstellungsseite (ADR 0011, Nachtrag 0.61) – auch wenn sie in
+# der Seitenleiste ausgeblendet ist. Die Anleitung steht dort im Reiter „Dokumentation“.
+PAGE_URL = "homeassistant://hauswacht-settings"
 
 
 def main_device_info(entry: HauswachtConfigEntry) -> DeviceInfo:
@@ -21,8 +23,8 @@ def main_device_info(entry: HauswachtConfigEntry) -> DeviceInfo:
         manufacturer="Hauswacht",
         model="Einbruchmeldeanlage",
         entry_type=DeviceEntryType.SERVICE,
-        # Auf der Geräteseite: Link zur Anleitung (erklärt alle Entitäten)
-        configuration_url=DOCS_URL,
+        # Auf der Geräteseite: Link zur Einstellungsseite
+        configuration_url=PAGE_URL,
     )
 
 
@@ -54,7 +56,7 @@ class HauswachtEntity(Entity):
                 entry_type=DeviceEntryType.SERVICE,
                 # Registriert in async_setup_entry, bevor die Plattformen laden
                 via_device_id=entry.runtime_data.device_id,
-                configuration_url=DOCS_URL,
+                configuration_url=PAGE_URL,
             )
 
     def _keep_object_id(self, german: str, english: str) -> None:

@@ -151,3 +151,28 @@ einem Ort. **Entscheidung:** Die Karte „Sirenentest“ im Reiter Alarmgeber be
 - „Die Seite schaltet keine Geräte“ gilt weiter – mit dieser einen Ausnahme. Ein Test
   (`tests/core/test_panel_safety.py`) hält fest, dass die Seite keine anderen Dienste aufruft.
 
+## Nachtrag 0.61: Seite ausblenden statt abschalten, Dialog wird zum Wegweiser
+
+- Datum: 2026-11-23
+- Zusammen mit [ADR 0015](0015-rueckkehr.md)
+
+Die Einstellungen werden umfangreicher. Der Dialog kann nur Beschreibungstexte zeigen – kein ⓘ,
+keinen Klartext-Satz „So verhält sich das“, keine Warnung am Feld – und jede Einstellung doppelt
+zu bauen kostet viel und lässt beide Wege auseinanderlaufen. **Entscheidung:** Die Seite ist der
+Hauptweg; der Dialog wird nach und nach zum Wegweiser.
+
+- **Neue Einstellungen nur auf der Seite** (ab „Bei Rückkehr“ in 0.61). Der Dialog zeigt an der
+  Stelle einen Hinweis mit Link zur Seite. Was es im Dialog heute gibt, funktioniert vorerst
+  weiter.
+- **Ausblenden statt abschalten:** „In der Seitenleiste zeigen: ja/nein“ ersetzt das Abschalten
+  der Seite. Die Seite gibt es immer (nur Administratoren). Jeder Benutzer kann sie außerdem über
+  „Seitenleiste bearbeiten“ in Home Assistant selbst ausblenden.
+- **Aufruf ohne Seitenleiste:** über einen Knopf auf der **Geräteseite** von Hauswacht (Link zur
+  Gerätekonfiguration – bisher führte er zur Doku auf GitHub, die Doku ist auf der Seite im Reiter
+  Dokumentation) und als Erstes im Dialog „Konfigurieren“.
+- **Ziel:** Über kurz oder lang bleibt im Dialog nur das Hinzufügen der Integration und der Link
+  zur Seite; auch der Einrichtungsassistent zieht auf die Seite. Notfall-Schalter im Dialog
+  (z. B. Sirenen-Freigabe aus) nur, wenn sie sich als nötig erweisen – lädt die Seite nicht, ist
+  ohnehin etwas grundsätzlich kaputt.
+- Ändert Abschnitt 1 („zusätzlich, nicht statt“) und die Abwägung („der Dialog bleibt der sichere
+  Weg“): Die Seite wird der Hauptweg, der Dialog schrumpft schrittweise.

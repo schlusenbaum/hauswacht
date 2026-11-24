@@ -14,7 +14,16 @@ which profile they are armed, who gets which message.
 - Visible to **administrators** only.
 - **In addition** to the dialog and the [setup wizard](setup-wizard.md) – all ways use the same
   settings. What is changed in the dialog appears on the page right after "Reload".
-- To hide it: Configure → System → **Settings page in the sidebar** → untick.
+- **Open it:** from the sidebar, from the link in the device info on the Hauswacht device page,
+  from the link at the very top of the "Configure" dialog or directly at `/hauswacht-settings`
+  (e.g. `http://homeassistant.local:8123/hauswacht-settings`).
+- **Hide instead of switch off** (from 0.61): the page always exists. Under System → **Settings
+  page** (or in the dialog: Configure → System → **Settings page: show in the sidebar**) you only
+  choose whether it is shown in the sidebar. When hidden, you reach it the ways above. Every user
+  can also hide it for themselves via "Edit sidebar" in Home Assistant.
+- **New settings are only here** (from 0.61, e.g. ["On return"](profiles.md#on-return) and
+  ["away" only with proof](profiles.md#away-only-with-proof)). The dialog shows a hint with a link
+  at that place.
 
 ## The tabs
 
@@ -115,11 +124,13 @@ sections match the dialog:
 | **Times** | Exit and entry delay, duration of the alarm reaction, maximum alarm cycles |
 | **When arming** | Open sensors, failed sensors, tampering triggers an alarm |
 | **Reaction on alarm** | Sirens (those registered under alarm devices), tone, volume, silent alarm, recipients, additional speakers |
-| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time, disarm on arrival, door-proof window – see [automation](profiles.md#automation). **"Create schedule ↗"** opens the helpers in a new window ("Create helper" → "Schedule"); then **"Refresh list"** – your entries in the profile are kept |
+| **Automation** | Arm at / disarm at, weekdays, schedule, persons ("everyone away"), waiting time – see [automation](profiles.md#automation). **"Create schedule ↗"** opens the helpers in a new window ("Create helper" → "Schedule"); then **"Refresh list"** – your entries in the profile are kept |
+| **On return** *(new in 0.61, only here)* | What happens when someone comes home: level (Nothing, Disarm only if armed automatically, Disarm with door proof, Disarm also after arming by hand, Let in), its own list of persons, under **"More settings"** the time window phone and door plus the [entry delay after approach](profiles.md#approach-extends-the-entry-delay) with its validity and recommendations to apply. With an **ⓘ** per field, the sentence **"This is how it behaves:"** and a warning for "also after arming by hand" – see [On return](profiles.md#on-return) |
 | **Arm by closing the door** | On/off, exit doors (the sensors of type door in the chosen groups), settle time |
+| **Passage** | Allow passage, times, which door, sensors on the way – see [passage](passage.md). Letting in by phone has moved to "On return" |
 
 The same rules as in the dialog apply: a name is needed and must be unique, every button only
-once per area, "disarm on arrival" only with persons. **Delete** asks once.
+once per area, "On return" (except "Nothing") only with at least one person. **Delete** asks once.
 
 ## Editing trigger rules
 
@@ -206,9 +217,9 @@ Below it one card per topic with **"Edit"**:
 | **Behaviour after restart** | Restore the previous state · always armed (with a profile per area) · always disarmed; "continue a running alarm" – see [behaviour after a restart](installation.md#behaviour-after-a-restart) |
 | **Sensor radio silence** | General value (hours until "failed", 0 = off) and a table **per sensor**: longest gap, recommendation, own value – click a sensor to give it an own value. See [radio silence](sensors.md#sensor-radio-silence) Below it: since when it measures; **Reset measurement** deletes the measurement of all sensors and starts again |
 | **Radio networks and gateways** | Status sensors, e.g. the Zigbee2MQTT bridge – see [radio networks](sensors.md#monitor-radio-networks-and-gateways) |
-| **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation). Below it the block **Measurements**: view, save, reset – see [Measurements on the settings page](observations.md#measurements-on-the-settings-page) |
+| **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation). Below that **"When does someone count as away?"** (from 0.61, only here): location outside **check precisely** or **simple**, under "More settings" the **time window for the proof** (default 15 minutes) with a recommendation from the "leaving" measurement and an **apply** button; per person **"Proof for 'away'"**: location only (safe) or also door + signal (uncertain, with a warning and its own time window); warning for persons without a location – see ["away" only with proof](profiles.md#away-only-with-proof). Below it the block **Measurements**: view, save, reset – see [Measurements on the settings page](observations.md#measurements-on-the-settings-page) |
 | **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |
-| **Settings page** | hide this page. It then disappears; to show it again: in the dialog under system settings → settings page |
+| **Settings page** | **Show in the sidebar** on/off. When hidden, only the sidebar entry disappears – the page stays reachable from the device page, the link in the dialog and `/hauswacht-settings` |
 
 ## Editing alarm devices
 

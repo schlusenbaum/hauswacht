@@ -172,3 +172,13 @@ def test_checks_show_advice_and_warnings() -> None:
     assert codes("pauses") == [("leaving_pauses", "warning")]
     text = next(f["text"] for f in run_checks(_overview("pauses"), "en") if f["key"] == "Niklas")
     assert "silent 2× for longer than 3 min" in text
+
+
+def test_departure_right_after_reset_is_not_a_pause() -> None:
+    """Weggehen kurz nach dem Zurücksetzen: Die Tür davor ist nicht bekannt – nicht zählen."""
+    verdicts = judge_departures(
+        [dep(1050), dep(1000 + 40 * 60), dep(1200)], [], [door(1150)], now=5000, doors_since=1000
+    )
+    assert [v.departure.at for v in verdicts] == [1200, 3400]
+    assert verdicts[0].door is not None  # mit Tür: zählt weiter
+    assert verdicts[1].door is None  # später ohne Tür: echte Schweigepause

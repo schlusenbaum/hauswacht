@@ -255,9 +255,11 @@ Kleinigkeiten lassen sich ohne den Einstellungsdialog ändern. Die Entitäten st
 1. **Profil bearbeiten** (`select.hauswacht_profil_bearbeiten`): welches Profil die folgenden
    Einstellungen zeigen und ändern.
 2. Zahlen: Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Alarmzyklen, Wartezeit
-   bei Abwesenheit, Türbeleg (Ortung vor der Tür).
+   bei Abwesenheit, Bei Rückkehr: Zeitfenster Handy und Tür.
 3. Auswahl: offene bzw. ausgefallene Sensoren beim Scharfschalten, Sirenenton, Lautstärke,
-   Unscharf bei Rückkehr (Aus / Wie bisher / Mit Türbeleg).
+   [Bei Rückkehr](profile.md#bei-rückkehr) (Nichts / Unscharf nur wenn automatisch scharf /
+   Unscharf mit Türbeleg / Unscharf auch nach Scharfschalten von Hand / Reinlassen). Die
+   Personen dazu stellst du auf der Einstellungsseite ein.
 4. Schalter: Stiller Alarm, Sabotage löst Alarm aus.
 5. Uhrzeiten: Automatisch scharf um / unscharf um.
 

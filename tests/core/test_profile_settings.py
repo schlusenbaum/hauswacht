@@ -70,16 +70,27 @@ def test_write_unknown_profile() -> None:
         write(OPTIONS, "vacation", "entry_delay", 10)
 
 
-def test_arrival_mode_select_reads_old_switch_and_writes_both() -> None:
+def test_arrival_mode_select_reads_old_switch_and_writes_return() -> None:
     from custom_components.hauswacht.core.profile_settings import (  # noqa: PLC0415
+        read_number,
         read_select,
         write,
     )
 
-    options = {"profiles": {"away": {"auto_disarm_on_arrival": True}}}
+    options = {
+        "profiles": {"away": {"auto_disarm_on_arrival": True, "auto_away_persons": ["person.a"]}}
+    }
     assert read_select(options, "away", "auto_arrival_mode") == "auto_only"
-    new = write(options, "away", "auto_arrival_mode", "door")
-    assert new["profiles"]["away"]["auto_arrival_mode"] == "door"
-    assert new["profiles"]["away"]["auto_disarm_on_arrival"] is False
-    assert read_select(new, "away", "auto_arrival_mode") == "door"
-    assert options["profiles"]["away"] == {"auto_disarm_on_arrival": True}  # Original unverändert
+    new = write(options, "away", "auto_arrival_mode", "passage")
+    assert new["profiles"]["away"]["return"] == {
+        "mode": "passage",
+        "persons": ["person.a"],  # aus der alten Liste übernommen
+        "window": 5,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
+    assert read_select(new, "away", "auto_arrival_mode") == "passage"
+    new = write(new, "away", "auto_arrival_window", 9)
+    assert read_number(new, "away", "auto_arrival_window") == 9
+    assert new["profiles"]["away"]["return"]["mode"] == "passage"
+    assert "return" not in options["profiles"]["away"]  # Original unverändert

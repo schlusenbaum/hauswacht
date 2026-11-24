@@ -173,9 +173,11 @@ async def test_diagnostics_are_redacted(hass: HomeAssistant) -> None:
     hass.states.async_set("person.anna", "home", {"friendly_name": "Zed"})
     options = {
         **OPTIONS,
+        "away_proof_weak": ["person.anna"],
         "profiles": {
             "night": {
                 "passage": {"enabled": True, "persons": ["person.anna"]},
+                "return": {"mode": "door", "persons": ["person.anna"]},
             }
         },
         "rules": {

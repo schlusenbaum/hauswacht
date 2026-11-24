@@ -70,9 +70,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     from .const import OPT_SETTINGS_PAGE  # noqa: PLC0415
     from .frontend import async_register_panel, async_remove_panel  # noqa: PLC0415
 
-    if entry.options.get(OPT_SETTINGS_PAGE, True):
-        await async_register_panel(hass, str(integration.version or "0"))
-        entry.async_on_unload(lambda: async_remove_panel(hass))
+    # Die Seite gibt es immer; die Einstellung blendet sie nur in der Seitenleiste aus (0.61)
+    await async_register_panel(
+        hass,
+        str(integration.version or "0"),
+        sidebar=bool(entry.options.get(OPT_SETTINGS_PAGE, True)),
+    )
+    entry.async_on_unload(lambda: async_remove_panel(hass))
     from homeassistant.core import callback  # noqa: PLC0415
     from homeassistant.helpers.start import async_at_started  # noqa: PLC0415
 
@@ -136,8 +140,11 @@ async def async_remove_config_entry_device(
 
 async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
     """Version 1 (feste Profile) -> 2 (frei definierbare Profile) -> 3 (PIN als Benutzer)
-    -> 4 (Bestätigung durch zweiten Melder als Regel) -> 5 (Melder-Typen statt Rollen)."""
+    -> 4 (Bestätigung durch zweiten Melder als Regel) -> 5 (Melder-Typen statt Rollen)
+    -> 5.2 („Bei Rückkehr“ je Profil, ADR 0015; die alten Schlüssel bleiben für ältere
+    Versionen stehen, deshalb nur eine Unterversion)."""
     from .core.profiles import migrate_v1_options  # noqa: PLC0415
+    from .core.returning import migrate_return  # noqa: PLC0415
     from .core.rules import migrate_zone_confirmation  # noqa: PLC0415
     from .core.sensor_types import migrate_roles_to_types  # noqa: PLC0415
     from .core.users import migrate_legacy_pin  # noqa: PLC0415
@@ -158,7 +165,40 @@ async def async_migrate_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) 
         hass.config_entries.async_update_entry(
             entry, options=migrate_roles_to_types(entry.options), version=5
         )
+    if entry.version == 5 and entry.minor_version < 2:
+        options, both = migrate_return(entry.options)
+        hass.config_entries.async_update_entry(entry, options=options, minor_version=2)
+        if both:
+            _notify_return_migrated(hass, entry, both)
     return entry.version == 5
+
+
+def _notify_return_migrated(
+    hass: HomeAssistant, entry: HauswachtConfigEntry, profile_ids: list[str]
+) -> None:
+    """Hinweis nach dem Update: „Unscharf bei Rückkehr“ und Handy-Reinlassen waren beide an."""
+    from homeassistant.components import persistent_notification  # noqa: PLC0415
+
+    profiles = entry.options.get("profiles", {})
+    names = ", ".join(str(profiles.get(pid, {}).get("name") or pid) for pid in profile_ids)
+    german = (hass.config.language or "en").startswith("de")
+    persistent_notification.async_create(
+        hass,
+        (
+            f"In {names} waren „Unscharf bei Rückkehr“ und Handy-Reinlassen beide eingeschaltet. "
+            "Seit 0.61 gibt es dafür eine Einstellung „Bei Rückkehr“ – eingestellt ist jetzt "
+            "„reinlassen“ (das Profil bleibt scharf). Ändern: Einstellungsseite → Profil → "
+            "Bei Rückkehr."
+        )
+        if german
+        else (
+            f"In {names}, “disarm on return” and letting in by phone were both switched on. "
+            "Since 0.61 there is one setting “On return” – it is now set to “let in” (the "
+            "profile stays armed). Change it: settings page → profile → On return."
+        ),
+        title="Hauswacht",
+        notification_id=f"hauswacht_return_{entry.entry_id}",
+    )
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:

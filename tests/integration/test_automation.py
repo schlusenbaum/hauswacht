@@ -59,8 +59,12 @@ async def _later(hass: HomeAssistant, minutes: int) -> None:
     await hass.async_block_till_done()
 
 
+# Ortung weit weg vom Zuhause – „weg“ braucht seit 0.61 einen Beleg (ADR 0015)
+FAR = {"latitude": 0.0, "longitude": 0.0, "gps_accuracy": 10}
+
+
 async def _person(hass: HomeAssistant, entity_id: str, state: str) -> None:
-    hass.states.async_set(entity_id, state)
+    hass.states.async_set(entity_id, state, FAR if state not in ("home", "unknown") else {})
     await hass.async_block_till_done()
 
 
@@ -154,6 +158,77 @@ async def test_return_within_delay_cancels(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 
+# --- 0.61: „weg“ nur mit Beleg (ADR 0015) -------------------------------------
+
+
+async def test_away_without_location_never_arms(hass: HomeAssistant) -> None:
+    """Nur „nicht zuhause“ ohne Koordinaten (Router, WLAN): kein Beleg, nie weg."""
+    await _setup(hass, auto_away_persons=[A], auto_away_delay=1)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    hass.states.async_set(A, "not_home")
+    await hass.async_block_till_done()
+    await _later(hass, 5)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    assert not [e for e in events if e.data["type"] == "AutoArmScheduled"]
+
+
+async def test_gps_jump_in_house_needs_door(hass: HomeAssistant) -> None:
+    """Ungenaue Ortung kurz neben dem Haus zählt nur nach einer Türöffnung."""
+    near = {
+        "latitude": hass.config.latitude + 0.002,  # gut 200 m daneben
+        "longitude": hass.config.longitude,
+        "gps_accuracy": 300,
+    }
+    await _setup(hass, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home", near)
+    await hass.async_block_till_done()
+    await _later(hass, 5)
+    assert _state(hass) == AlarmControlPanelState.DISARMED  # GPS-Sprung im Haus
+    hass.states.async_set(A, "home")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(A, "not_home", near)  # nach der Tür geortet
+    await hass.async_block_till_done()
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_weak_proof_door_then_wifi_gone(hass: HomeAssistant) -> None:
+    """„Tür + Signal“ (unsicher): ohne Ortung weg, wenn das WLAN nach der Tür wegfällt."""
+    hass.states.async_set(SIGNAL, "on")
+    weak = {"homecoming_signals": {A: [SIGNAL]}, "away_proof_weak": [A]}
+    await _setup(hass, weak, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home")  # Person ohne Koordinaten (z. B. Router)
+    hass.states.async_set(SIGNAL, "off")  # WLAN fällt ohne Tür weg: schlafendes Handy
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    hass.states.async_set(SIGNAL, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(SIGNAL, "off")  # nach der Tür
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_simple_accuracy_counts_gps_jump(hass: HomeAssistant) -> None:
+    near = {
+        "latitude": hass.config.latitude + 0.002,
+        "longitude": hass.config.longitude,
+        "gps_accuracy": 300,
+    }
+    await _setup(hass, {"away_proof_accuracy": "simple"}, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home", near)
+    await hass.async_block_till_done()
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
 async def test_unknown_person_is_not_away(hass: HomeAssistant) -> None:
     await _setup(hass, auto_away_persons=[A, B], auto_away_delay=1)
     await _person(hass, A, "not_home")
@@ -203,7 +278,6 @@ async def test_options_flow_saves_automation(hass: HomeAssistant) -> None:
                 "auto_arm_time": "22:45:00",
                 "auto_weekdays": ["fri", "sat"],
                 "auto_away_delay": 20,
-                "auto_arrival_mode": "off",
             },
         },
     )
@@ -247,6 +321,47 @@ async def test_door_proof_disarms_during_entry_delay(hass: HomeAssistant) -> Non
     assert _state(hass) == AlarmControlPanelState.DISARMED
     disarmed = [e for e in events if e.data["type"] == "AutoDisarmed"]
     assert disarmed[0].data["reason"] == "Rückkehr mit Türbeleg"
+
+
+DIRECTION = "sensor.nahe_a_direction_of_travel"
+
+
+async def _seconds(hass: HomeAssistant, seconds: int) -> None:
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=seconds))
+    await hass.async_block_till_done()
+
+
+async def _approach_setup(hass: HomeAssistant) -> list[Any]:
+    hass.states.async_set(DIRECTION, "stationary")
+    back = {"mode": "door", "persons": [A], "window": 5, "approach_delay": 90}
+    await _setup(hass, {"homecoming_signals": {A: [DIRECTION]}}, entry_delay=30, **{"return": back})
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=PANEL)
+    return events
+
+
+async def test_approach_extends_entry_delay(hass: HomeAssistant) -> None:
+    """ADR 0015: „nähert sich“ vorher → 90 s statt 30 s Eingangsverzögerung."""
+    events = await _approach_setup(hass)
+    hass.states.async_set(DIRECTION, "towards")
+    await hass.async_block_till_done()
+    await _door(hass)
+    assert _state(hass) == AlarmControlPanelState.PENDING
+    extended = [e for e in events if e.data["type"] == "EntryDelayExtended"]
+    assert extended[0].data["seconds"] == 90
+    assert extended[0].data["persons"] == [A]
+    await _seconds(hass, 45)
+    assert _state(hass) == AlarmControlPanelState.PENDING  # normal wäre schon Alarm
+    await _seconds(hass, 95)
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_no_approach_keeps_normal_entry_delay(hass: HomeAssistant) -> None:
+    events = await _approach_setup(hass)
+    await _door(hass)
+    await _seconds(hass, 35)
+    assert _state(hass) == AlarmControlPanelState.TRIGGERED
+    assert not [e for e in events if e.data["type"] == "EntryDelayExtended"]
 
 
 async def test_door_proof_arrival_first_then_door(hass: HomeAssistant) -> None:
@@ -348,9 +463,11 @@ async def test_earliest_signal_counts_as_arrival(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 
-async def test_options_flow_saves_arrival_mode(hass: HomeAssistant) -> None:
+async def test_options_flow_keeps_return_settings(hass: HomeAssistant) -> None:
+    """„Bei Rückkehr“ gibt es nur auf der Einstellungsseite – der Dialog lässt es stehen."""
     hass.states.async_set(A, "home")
-    entry = make_entry()
+    back = {"mode": "door", "persons": [A], "window": 3, "approach_delay": 0, "approach_valid": 15}
+    entry = make_entry({"profiles": {"away": {"return": back}}})
     await setup_entry(hass, entry)
 
     async def _edit(automation: dict[str, Any]) -> Any:
@@ -368,18 +485,44 @@ async def test_options_flow_saves_arrival_mode(hass: HomeAssistant) -> None:
             flow["flow_id"], {"name": "Abwesend", "automation": automation}
         )
 
-    flow = await _edit({"auto_arrival_mode": "door"})
-    assert flow["type"] is FlowResultType.FORM
-    assert flow["errors"] == {"base": "arrival_needs_persons"}
-
-    flow = await _edit(
-        {"auto_away_persons": [A], "auto_arrival_mode": "door", "auto_arrival_window": 3}
-    )
+    flow = await _edit({"auto_away_persons": [B]})
     assert flow["type"] is FlowResultType.MENU
     away = entry.options["profiles"]["away"]
-    assert away["auto_arrival_mode"] == "door"
-    assert away["auto_arrival_window"] == 3
-    assert away["auto_disarm_on_arrival"] is False
+    assert away["return"] == back
+    assert away["auto_away_persons"] == [B]
+    assert "auto_arrival_mode" not in away
+
+
+async def test_old_settings_are_migrated_to_return(hass: HomeAssistant) -> None:
+    """Update auf 0.61: „Unscharf bei Rückkehr“ wird zu „Bei Rückkehr“ (Version 5.2)."""
+    entry = make_entry(
+        {
+            "profiles": {
+                "away": {
+                    "auto_away_persons": [A],
+                    "auto_arrival_mode": "door",
+                    "auto_arrival_window": 4,
+                }
+            }
+        }
+    )
+    await setup_entry(hass, entry)
+    assert entry.minor_version == 2
+    away = entry.options["profiles"]["away"]
+    assert away["return"] == {
+        "mode": "door",
+        "persons": [A],
+        "window": 4,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
+    assert away["auto_arrival_mode"] == "door"  # bleibt für ältere Versionen stehen
+    from homeassistant.components.persistent_notification import (  # noqa: PLC0415
+        _async_get_or_create_notifications,
+    )
+
+    notes = _async_get_or_create_notifications(hass)
+    assert not any(key.startswith("hauswacht_return_") for key in notes)
 
 
 # --- Gastmodus ----------------------------------------------------------------

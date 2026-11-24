@@ -101,8 +101,13 @@ def judge_departures(
     arrivals: Sequence[Arrival],
     doors: Sequence[DoorOpening],
     now: float,
+    doors_since: float | None = None,
 ) -> list[DepartureVerdict]:
     """Jedes "Weg" einordnen: mit Tür (und wie schnell) oder Schweigepause (und wie lange).
+
+    ``doors_since``: seit wann Türöffnungen bekannt sind (Beginn der Beobachtung oder
+    Zurücksetzen). Ein "Weg" ohne Tür in den ersten 15 Minuten danach ist **unklar** – die Tür
+    kann kurz vorher aufgegangen sein – und wird weggelassen statt als Schweigepause gezählt.
 
     Sortiert und per Nachschlagen statt "jede mit jeder" – sonst dauert das bei Wochen voller
     Daten Sekunden, und das bei jeder Signaländerung.
@@ -117,6 +122,9 @@ def judge_departures(
     verdicts: list[DepartureVerdict] = []
     for departure in items:
         door = index.latest_between(departure.at - DEPARTURE_WINDOW, departure.at + DEPARTURE_EARLY)
+        unknown = doors_since is not None and departure.at < doors_since + DEPARTURE_WINDOW
+        if door is None and unknown:
+            continue  # unklar: Türöffnungen davor sind nicht bekannt
         back = departure.back
         if back is None:
             times = returns.get((departure.person, departure.source), [])

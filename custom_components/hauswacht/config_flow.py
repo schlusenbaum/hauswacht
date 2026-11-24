@@ -106,8 +106,6 @@ from .core.always_active import (
 from .core.areas import DEFAULT_ICON as DEFAULT_AREA_ICON
 from .core.areas import MAIN_AREA, multi_area, parse_areas, profile_area
 from .core.automation import (
-    ARRIVAL_MODES,
-    MAX_ARRIVAL_WINDOW,
     MAX_AWAY_DELAY,
     WEEKDAYS,
     AutoConfig,
@@ -170,7 +168,6 @@ from .core.mqtt_keypad import DEFAULT_MQTT_BUTTONS, state_words_text
 from .core.notify_events import NotifyEvent, enabled, event_targets
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
-from .core.passage import MAX_WINDOW as PASSAGE_MAX_WINDOW
 from .core.passage import PASSAGE_TARGET, OutDoors, OutEnd, PassageConfig, parse_passage
 from .core.pin import hash_pin, is_valid_pin_format
 from .core.profiles import (
@@ -201,6 +198,7 @@ from .core.restart import (
     continue_alarm,
     restart_behavior,
 )
+from .core.returning import parse_return
 from .core.rules import DEFAULT_WITHIN as RULE_DEFAULT_WITHIN
 from .core.rules import MAX_STEPS as RULE_MAX_STEPS
 from .core.rules import MAX_UNLESS as RULE_MAX_UNLESS
@@ -346,6 +344,7 @@ class HauswachtConfigFlow(ConfigFlow, WizardSteps, domain=DOMAIN):
     """Erstinstallation: wahlweise gleich mit dem Einrichtungsassistenten (ADR 0009)."""
 
     VERSION = 5
+    MINOR_VERSION = 2  # 5.2: „Bei Rückkehr“ je Profil (ADR 0015)
 
     _wiz_options: dict[str, Any] | None = None
 
@@ -4333,10 +4332,11 @@ class HauswachtOptionsFlow(OptionsFlow, WizardSteps):
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
-    """Personen der Heimkehr-Beobachtung und der Profil-Automatik (ohne Doppelte)."""
+    """Personen der Heimkehr-Beobachtung, der Automatik und „Bei Rückkehr“ (ohne Doppelte)."""
     persons = [p for p in options.get(OPT_HOMECOMING_PERSONS, []) if isinstance(p, str)]
     for pid in profile_ids(options):
         persons.extend(parse_automation(options, pid).away_persons)
+        persons.extend(parse_return(options, pid).persons)  # „Bei Rückkehr“ (0.61)
     return list(dict.fromkeys(persons))
 
 
@@ -4381,18 +4381,6 @@ def _automation_schema(auto: AutoConfig) -> vol.Schema:
                     mode=NumberSelectorMode.BOX,
                 )
             ),
-            vol.Optional("auto_arrival_mode", default=auto.arrival_mode): _select(
-                list(ARRIVAL_MODES), "arrival_mode"
-            ),
-            vol.Optional("auto_arrival_window", default=auto.arrival_window): NumberSelector(
-                NumberSelectorConfig(
-                    min=1,
-                    max=MAX_ARRIVAL_WINDOW,
-                    step=1,
-                    unit_of_measurement="min",
-                    mode=NumberSelectorMode.BOX,
-                )
-            ),
         }
     )
 
@@ -4422,14 +4410,6 @@ def _passage_schema(current: PassageConfig) -> vol.Schema:
                 EntitySelectorConfig(domain=list(MONITORED_DOMAINS), multiple=True)
             ),
             vol.Optional("path_after", default=current.path_after): _seconds(PASSAGE_MAX_AFTER),
-            vol.Optional("persons", default=list(current.persons)): EntitySelector(
-                EntitySelectorConfig(domain="person", multiple=True)
-            ),
-            vol.Optional("window", default=current.window): NumberSelector(
-                NumberSelectorConfig(
-                    min=1, max=PASSAGE_MAX_WINDOW, step=1, mode=NumberSelectorMode.BOX
-                )
-            ),
         }
     )
 

@@ -68,8 +68,13 @@ const LANG = {
     daily: "täglich",
     awayPersons: "scharf, wenn weg",
     after: "nach",
-    disarmOnArrival: "unscharf bei Heimkehr",
-    disarmOnArrivalDoor: "unscharf bei Heimkehr mit Türbeleg",
+    onReturn: "Bei Rückkehr",
+    returnModes: {
+      auto_only: "unscharf, nur wenn automatisch scharf",
+      door: "unscharf mit Türbeleg",
+      always: "unscharf, auch nach Scharfschalten von Hand",
+      passage: "reinlassen (Durchgang)",
+    },
     armOnClose: "Scharf durch Schließen",
     sensorsArmed: "Melder einzeln scharf",
     group: "Gruppe",
@@ -214,8 +219,13 @@ const LANG = {
     daily: "daily",
     awayPersons: "arm when away",
     after: "after",
-    disarmOnArrival: "disarm on arrival",
-    disarmOnArrivalDoor: "disarm on arrival with door proof",
+    onReturn: "On return",
+    returnModes: {
+      auto_only: "disarm, only if armed automatically",
+      door: "disarm with door proof",
+      always: "disarm, also after arming by hand",
+      passage: "let in (passage)",
+    },
     armOnClose: "Arm by closing",
     sensorsArmed: "Sensors armed individually",
     group: "Group",
@@ -526,9 +536,12 @@ class HauswachtUebersichtCard extends HTMLElement {
     if (auto.schedule) autoParts.push(`${this._t("schedule")}: ${esc(auto.schedule)}`);
     if (auto.away_persons?.length)
       autoParts.push(`${this._t("awayPersons")}: ${auto.away_persons.join(", ")} (${this._t("after")} ${auto.away_delay} min)`);
-    if (auto.arrival_mode === "door")
-      autoParts.push(`${this._t("disarmOnArrivalDoor")} (${auto.arrival_window} min)`);
-    else if (auto.disarm_on_arrival) autoParts.push(this._t("disarmOnArrival"));
+    // „Bei Rückkehr“ (ADR 0015)
+    const back = p.return || {};
+    if (back.mode && back.mode !== "off") {
+      const window = back.mode === "door" || back.mode === "passage" ? `, ${back.window} min` : "";
+      autoParts.push(`${this._t("onReturn")}: ${this._t("returnModes")[back.mode] || back.mode} (${(back.persons || []).join(", ")}${window})`);
+    }
     const close = p.arm_on_close || {};
     const sirens = p.silent ? `${this._t("silent")}` : this._list(p.sirens);
     return [

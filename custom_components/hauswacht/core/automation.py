@@ -9,13 +9,8 @@ Gespeichert im jeweiligen Profil:
   dafür nicht (der Zeitplan hat seine eigenen).
 - ``auto_away_persons``: Personen; sind alle weg, wird nach ``auto_away_delay`` Minuten
   scharf geschaltet
-- ``auto_arrival_mode``: "Unscharf bei Rückkehr" einer dieser Personen
-  - ``off``: aus
-  - ``auto_only``: wie bisher – nur wenn das Profil zuvor automatisch scharf geschaltet wurde,
-    nie in der Eingangsverzögerung (früher ``auto_disarm_on_arrival: true``)
-  - ``door``: mit Türbeleg – Rückkehr UND Öffnen einer Eingangstür innerhalb von
-    ``auto_arrival_window`` Minuten, egal in welcher Reihenfolge; auch während der
-    Eingangsverzögerung, egal wie scharf geschaltet wurde
+
+Was bei Rückkehr passiert, steht seit 0.61 in core/returning.py („Bei Rückkehr“, ADR 0015).
 
 Anwesenheit je Person: die Person selbst plus die zusätzlichen Signale aus
 "Anwesenheit & Heimkehr" (WLAN, Bluetooth, Nähe, Binärsensoren).
@@ -41,13 +36,6 @@ UNKNOWN_STATES = frozenset({"unavailable", "unknown"})
 DEFAULT_AWAY_DELAY = 15  # Minuten
 MAX_AWAY_DELAY = 240
 
-ARRIVAL_OFF = "off"
-ARRIVAL_AUTO_ONLY = "auto_only"
-ARRIVAL_DOOR = "door"
-ARRIVAL_MODES: tuple[str, ...] = (ARRIVAL_OFF, ARRIVAL_AUTO_ONLY, ARRIVAL_DOOR)
-DEFAULT_ARRIVAL_WINDOW = 5  # Minuten zwischen Rückkehr und Türöffnung
-MAX_ARRIVAL_WINDOW = 30
-
 
 @dataclass(frozen=True)
 class AutoConfig:
@@ -56,18 +44,7 @@ class AutoConfig:
     weekdays: frozenset[str] = frozenset()
     away_persons: tuple[str, ...] = ()
     away_delay: int = DEFAULT_AWAY_DELAY
-    arrival_mode: str = ARRIVAL_OFF
-    arrival_window: int = DEFAULT_ARRIVAL_WINDOW
     schedule: str | None = None
-
-    @property
-    def disarm_on_arrival(self) -> bool:
-        """Irgendeine Form von "Unscharf bei Rückkehr" an (und Personen gewählt)."""
-        return self.arrival_mode != ARRIVAL_OFF and bool(self.away_persons)
-
-    @property
-    def door_proof(self) -> bool:
-        return self.arrival_mode == ARRIVAL_DOOR and bool(self.away_persons)
 
     @property
     def enabled(self) -> bool:
@@ -110,10 +87,6 @@ def parse_automation(options: Mapping[str, Any], profile_id: str) -> AutoConfig:
         if isinstance(persons, list)
         else (),
         away_delay=delay_int,
-        arrival_mode=arrival_mode(stored),
-        arrival_window=_int_in(
-            stored.get("auto_arrival_window"), 1, MAX_ARRIVAL_WINDOW, DEFAULT_ARRIVAL_WINDOW
-        ),
         schedule=_schedule(stored.get("auto_schedule")),
     )
 
@@ -145,22 +118,6 @@ def schedule_action(
             return None
         return "disarm"
     return None
-
-
-def arrival_mode(stored: Mapping[str, Any]) -> str:
-    """Stufe von "Unscharf bei Rückkehr"; ältere Einstellungen (Schalter) werden übernommen."""
-    mode = stored.get("auto_arrival_mode")
-    if mode in ARRIVAL_MODES:
-        return str(mode)
-    return ARRIVAL_AUTO_ONLY if stored.get("auto_disarm_on_arrival") else ARRIVAL_OFF
-
-
-def _int_in(value: Any, minimum: int, maximum: int, default: int) -> int:
-    try:
-        number = int(value)
-    except (TypeError, ValueError):
-        return default
-    return number if minimum <= number <= maximum else default
 
 
 def is_active_day(config: AutoConfig, weekday_index: int) -> bool:

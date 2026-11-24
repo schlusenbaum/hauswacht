@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.60.1:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.61.0:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -136,8 +136,9 @@ Danach nach Bedarf: [Benutzer und PINs](benutzer.md), [Bedienteile](bedienteile.
 
 Ein Gerät **„Hauswacht“** mit Bedienfeld, Profilauswahl, Knöpfen, Testmodus, Systemstatus und
 Profil-Einstellungen; je weiterem Bereich ein Gerät „Hauswacht <Bereich>“. Die vollständige
-Liste steht in der [Referenz](referenz.md#entitäten). Auf der Geräteseite führt ein Link zu
-dieser Anleitung.
+Liste steht in der [Referenz](referenz.md#entitäten). Auf der Geräteseite führt der Link in der
+Geräteinfo zur [Einstellungsseite](einstellungsseite.md) (ab 0.61; dort steht diese Anleitung
+im Reiter **Dokumentation**).
 
 ## Verhalten nach einem Neustart
 
@@ -196,8 +197,8 @@ Minuten** (ab dem Moment, in dem Home Assistant fertig hochgefahren ist):
 Sicherung neu. Um 3:02 ist Hauswacht wieder scharf, Profil „Nacht“, und schickt „nach Neustart
 wieder scharf (Nacht)“. Das gekippte Badfenster war schon vorher überbrückt und bleibt es.
 
-Auch die Profil-Automatik merkt sich, ob sie scharf geschaltet hatte – „Unscharf bei Rückkehr –
-wie bisher“ funktioniert nach einem Neustart also weiter.
+Auch die Profil-Automatik merkt sich, ob sie scharf geschaltet hatte – „Bei Rückkehr – Unscharf,
+nur wenn automatisch scharf“ funktioniert nach einem Neustart also weiter.
 
 ### Immer scharf
 

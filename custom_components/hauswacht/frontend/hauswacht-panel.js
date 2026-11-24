@@ -89,6 +89,13 @@ const TEXTS = {
     measLeft: "Rausgegangen mit Tür",
     measLongest: "längste Zeit bis „weg“",
     measPauses: "Schweigepausen (längste)",
+    measExplain: "Was bedeuten die Spalten?",
+    measInfo: {
+      measHome: "Wie oft die Person heimgekommen ist; in Klammern, wie oft dabei eine Eingangstür aufging.",
+      measLeft: "Wie oft alle Signale der Person „weg“ meldeten und bis zu 15 Minuten vorher eine Eingangstür aufging – echtes Rausgehen.",
+      measLongest: "Längste Zeit von „Tür auf“ bis alle Signale „weg“ melden. Daraus kommt die Empfehlung, wie lange Hauswacht später nach dem Rausgehen warten müsste.",
+      measPauses: "Schweigepause: Alle Signale meldeten „weg“, aber in den 15 Minuten davor ging keine Eingangstür auf. Meist schläft das Handy oder das WLAN hakt – die Person ist zuhause. Es kann auch ein echtes Weggehen sein, dessen Signal erst nach mehr als 15 Minuten kam, oder ein Weggehen durch eine Tür ohne Kontakt. In Klammern die längste Pause in Minuten.",
+    },
     measEntryDoor: "Eingang",
     measEntries: "Eingänge",
     measEntryLongest: "längste Zeit bis unscharf",
@@ -123,6 +130,7 @@ const TEXTS = {
     addArea: "Bereich anlegen",
     page: "Einstellungsseite",
     pageOn: "in der Seitenleiste sichtbar",
+    pageOff: "in der Seitenleiste ausgeblendet – erreichbar über die Geräteseite oder /hauswacht-settings",
     noRules: "Noch keine Auslöseregel. Eine Regel löst erst bei einer Abfolge aus, z. B. „Haustür, dann innerhalb von 60 s Keller“.",
     yamlOnly: "nur YAML",
     inProfiles: "Profile",
@@ -251,6 +259,13 @@ const TEXTS = {
     measLeft: "Left through a door",
     measLongest: "longest time until “away”",
     measPauses: "Silent pauses (longest)",
+    measExplain: "What do the columns mean?",
+    measInfo: {
+      measHome: "How often the person came home; in brackets, how often an entry door opened.",
+      measLeft: "How often all signals of the person reported “away” and an entry door opened up to 15 minutes before – real leaving.",
+      measLongest: "Longest time from “door open” until all signals report “away”. The recommendation for how long Hauswacht would later have to wait after leaving comes from this.",
+      measPauses: "Silent pause: all signals reported “away”, but no entry door opened in the 15 minutes before. Usually the phone sleeps or the Wi-Fi hiccups – the person is home. It can also be a real departure whose signal only came after more than 15 minutes, or leaving through a door without a contact. In brackets the longest pause in minutes.",
+    },
     measEntryDoor: "Entry",
     measEntries: "Entries",
     measEntryLongest: "longest time until disarmed",
@@ -285,6 +300,7 @@ const TEXTS = {
     addArea: "Add area",
     page: "Settings page",
     pageOn: "visible in the sidebar",
+    pageOff: "hidden in the sidebar – reachable from the device page or /hauswacht-settings",
     noRules: "No trigger rule yet. A rule only triggers on a sequence, e.g. “front door, then basement within 60 s”.",
     yamlOnly: "YAML only",
     inProfiles: "Profiles",
@@ -394,6 +410,10 @@ const PANEL_STYLE = `
   .ok { color: var(--success-color, #43a047); margin: 0 0 10px; }
   tr.grp td { background: var(--secondary-background-color); font-weight: 500; }
   tr.grp .muted { font-weight: 400; }
+  th .info { color: var(--primary-color); cursor: help; font-weight: 400; }
+  details.explain { margin: 6px 0; font-size: .85rem; }
+  details.explain summary { cursor: pointer; color: var(--primary-color); }
+  details.explain div { margin: 4px 0; }
   h3 { margin: 12px 0 4px; font-size: 1rem; font-weight: 500; }
 `;
 
@@ -873,8 +893,14 @@ class HauswachtPanel extends HTMLElement {
     const rows = m.persons
       .map((p) => `<tr><td>${escHtml(p.name)}</td><td class="nw">${p.arrivals} (${p.arrivals_with_door})</td><td class="nw">${p.left}</td><td class="nw">${escHtml(dash(p.longest_left, " s"))}</td><td class="nw">${p.pauses}${p.longest_pause !== null ? ` (${p.longest_pause} min)` : ""}</td></tr>`)
       .join("");
+    // Spaltenüberschriften mit ⓘ: Mauszeiger zeigt die Erklärung, darunter zum Aufklappen
+    const head = (key) => `<th title="${escHtml(this._t("measInfo")[key])}">${escHtml(this._t(key))} <span class="info">ⓘ</span></th>`;
+    const explain = ["measHome", "measLeft", "measLongest", "measPauses"]
+      .map((key) => `<div><b>${escHtml(this._t(key))}:</b> ${escHtml(this._t("measInfo")[key])}</div>`)
+      .join("");
     const persons = rows
-      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th><th>${escHtml(this._t("measHome"))}</th><th>${escHtml(this._t("measLeft"))}</th><th>${escHtml(this._t("measLongest"))}</th><th>${escHtml(this._t("measPauses"))}</th></tr>${rows}</table></div>`
+      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${head("measHome")}${head("measLeft")}${head("measLongest")}${head("measPauses")}</tr>${rows}</table></div>
+        <details class="explain"><summary>${escHtml(this._t("measExplain"))}</summary>${explain}</details>`
       : "";
     const advice = m.persons
       .map((p) => {
@@ -963,7 +989,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
       this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
-      this._card(this._t("page"), `<div>${escHtml(this._t("pageOn"))}</div>${edit("page")}`, "settingsPage")
+      this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage")
     );
   }
 

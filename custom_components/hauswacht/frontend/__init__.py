@@ -71,8 +71,12 @@ async def async_register_card(hass: HomeAssistant, version: str) -> None:
     _LOGGER.debug("Karten %s bereitgestellt", ", ".join(CARD_FILES))
 
 
-async def async_register_panel(hass: HomeAssistant, version: str) -> None:
-    """Einstellungsseite in der Seitenleiste anmelden (nur Administratoren)."""
+async def async_register_panel(hass: HomeAssistant, version: str, *, sidebar: bool = True) -> None:
+    """Einstellungsseite anmelden (nur Administratoren) – es gibt sie immer (ADR 0011, 0.61).
+
+    ``sidebar=False``: ohne Titel und Symbol – dann steht sie nicht in der Seitenleiste, ist aber
+    weiter unter ``/hauswacht`` erreichbar (Geräteseite, Link im Dialog).
+    """
     if getattr(hass, "http", None) is None or "frontend" not in hass.config.components:
         return
     from homeassistant.components import frontend, panel_custom  # noqa: PLC0415
@@ -83,8 +87,8 @@ async def async_register_panel(hass: HomeAssistant, version: str) -> None:
         hass,
         frontend_url_path=PANEL_URL_PATH,
         webcomponent_name=PANEL_ELEMENT,
-        sidebar_title="Hauswacht",
-        sidebar_icon="mdi:shield-home",
+        sidebar_title="Hauswacht" if sidebar else None,
+        sidebar_icon="mdi:shield-home" if sidebar else None,
         module_url=f"{URL_BASE}/{PANEL_FILE}?v={version}",
         require_admin=True,
         config={"version": version},
@@ -92,7 +96,7 @@ async def async_register_panel(hass: HomeAssistant, version: str) -> None:
 
 
 def async_remove_panel(hass: HomeAssistant) -> None:
-    """Einstellungsseite wieder entfernen (Entladen oder ausgeschaltet)."""
+    """Einstellungsseite wieder entfernen (beim Entladen)."""
     if "frontend" not in hass.config.components:
         return
     from homeassistant.components import frontend  # noqa: PLC0415

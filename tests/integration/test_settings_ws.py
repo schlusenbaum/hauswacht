@@ -206,6 +206,50 @@ async def test_apply_profile_save_new_and_delete(hass: HomeAssistant, hass_ws_cl
     assert "garten" not in _options(hass)["profiles"]
 
 
+async def test_apply_profile_save_return(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """„Bei Rückkehr“ (0.61): eigene Personenliste, ohne Person wird abgelehnt."""
+    hass.states.async_set("person.anna", "not_home", {"friendly_name": "Anna"})
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    edit = data["profile_edit"]
+    assert edit["choices"]["return_modes"] == ["off", "auto_only", "door", "always", "passage"]
+    night = next(p for p in edit["profiles"] if p["id"] == "night")
+    assert night["return"] == {
+        "mode": "off",
+        "persons": [],
+        "window": 5,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
+    refused = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data={**night, "return": {"mode": "door", "persons": [], "window": 5}},
+    )
+    assert refused["errors"] == {"return": "return_needs_persons"}
+    back = {
+        "mode": "door",
+        "persons": ["person.anna"],
+        "window": 7,
+        "approach_delay": 0,
+        "approach_valid": 15,
+    }
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data={**night, "return": back},
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    assert _options(hass)["profiles"]["night"]["return"] == back
+
+
 async def test_profile_persons_show_in_overview_after_reload(
     hass: HomeAssistant, hass_ws_client: Any
 ) -> None:

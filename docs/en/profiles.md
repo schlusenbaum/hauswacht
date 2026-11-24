@@ -57,8 +57,6 @@ In the profile, expandable under **Automation**. All fields are optional – emp
 | On these days | Days on which the times apply; empty = every day. Overnight see [below](#times-overnight-and-manual-arming) |
 | Arm when all of these persons are away | If all selected persons are away, the profile is armed after the delay |
 | Delay before arming | Default 15 minutes. If someone comes back during this time, nothing is switched |
-| Disarm when one of these persons arrives home | **Off** (default), **As before** or **With door proof**, see [below](#disarm-on-arrival) |
-| Door proof: how long before the door the phone may report "home" | Only for "With door proof". Default 5 minutes, 1–30. Does **not** delay the alarm, see [What the time window means](#what-the-time-window-means) |
 
 Safety rules:
 
@@ -66,7 +64,8 @@ Safety rules:
 - Open or failed sensors are **never** confirmed automatically (unless the profile bypasses them
   automatically anyway). If arming fails because of this,
   you get a system message.
-- A **running alarm** is never ended automatically. A running entry delay only with door proof.
+- A **running alarm** is never ended automatically. A running entry delay only via
+  [On return](#on-return) ("Disarm with door proof", "Disarm, also after arming by hand" or "Let in").
 - A person whose location is unknown or unavailable does **not** count as away.
 - After a restart, the [behaviour after restart](installation.md#behaviour-after-a-restart)
   applies (default: previous state); the presence automation only acts on the next change of a
@@ -159,13 +158,13 @@ HomeKit variable "Martin home".
 | The person counts as … | when … |
 |---|---|
 | **home** | any signal reports home (the person itself or one of the signals) |
-| **away** | **all** signals reliably report "away" |
-| unknown | otherwise, e.g. a signal is "unavailable" – this **never** counts as away |
+| **away** | **all** signals reliably report "away" **and** there is proof (from 0.61, see [below](#away-only-with-proof)) |
+| unknown | otherwise, e.g. a signal is "unavailable" or the proof is missing – this **never** counts as away |
 
 **Direction (Proximity, Places)** counts with two values only: **"arrived"** = home and
 **"away from"** = away. **"Towards"** and **"stationary"** are skipped (from 0.60): someone
 approaching is not there yet – otherwise a drive in the area that briefly heads towards home
-would already count as a return and e.g. trigger "disarm on return". And "stationary" (e.g. at
+would already count as a return and e.g. trigger "On return". And "stationary" (e.g. at
 the office) does not hold up "all away".
 
 **Example:** Anna is "away" according to her person entity, but her Wi-Fi sensor still reports
@@ -175,17 +174,121 @@ the Wi-Fi is gone too does the delay start.
 This way a signal that drops out briefly does not arm right away, and the fastest signal
 detects the arrival.
 
-### Disarm on arrival
+#### "Away" only with proof
 
-Three levels, default is **Off**:
+*From 0.61.* A sleeping phone must not make anybody away. If a phone in the house loses its Wi-Fi
+at night, all signals may report "away" – yet the person is there. So someone only counts as
+**away** when there is also **proof** that the person is outside:
 
-| Level | When disarmed | What protects against a wrong location |
+1. **Door and location:** an entry door opened, and afterwards – at most the time window later
+   (default 15 minutes) – the phone was located **outside** the zone "Home". How precise the
+   location is does not matter here: the door is the second proof.
+2. **Fresh location alone:** the phone is located **outside** right now, the location is
+   **fresh** (reported in the last 15 minutes) and **precise enough**. This helps when the door
+   opening is missing – e.g. Home Assistant was restarting or it was the patio door without a
+   contact.
+
+Anything with coordinates counts as a **location**: the Companion app (GPS), iCloud3, a GPS
+tracker, the person itself while located by GPS. **Wi-Fi, ping, router and Bluetooth** have no
+coordinates – they only confirm, they are never proof.
+
+**Precise enough** – set under System settings → Presence and homecoming observation:
+
+| Setting | "outside" means | Example |
 |---|---|---|
-| **Off** | never | – |
-| **As before** | One of the persons arrives home – only if Hauswacht armed the profile **itself** and no door has opened yet (not during the entry delay) | coupling to "Arm when all of these persons are away" |
-| **With door proof** | One of the persons arrives home **and** an entry door is opened – both within the time window, in any order. Also during the entry delay, no matter how the system was armed | two proofs: location **and** door |
+| **check precisely** (default, recommended) | further away than the radius of the zone "Home" **plus** the reported inaccuracy | phone in the basement, GPS reports 250 m off with ±300 m inaccuracy → does **not** count |
+| **simple** | outside the zone, no matter how inaccurate | the same phone → counts as outside |
 
-**"With door proof" in everyday life**
+**Examples:**
+
+- *Christian drives to work:* front door opens, a minute later the Companion app reports the
+  location at the street corner, shortly after the Wi-Fi is gone → **away** (door and location).
+- *Niklas's phone sleeps in bed:* at 2 am the Wi-Fi drops, the app has not reported a new
+  location for hours → **not away** (no proof). "Arm when all away" does not arm. And since he
+  was never "away", there can be no false "homecoming" in the morning either.
+- *Home Assistant restarts while Petra is out:* no door opening known, but her phone reports a
+  fresh, precise location in town → **away** (fresh location).
+
+Once someone is proven away, that stays so until the person is home again – even if the location
+falls asleep afterwards. Doors and locations from before the last homecoming do not count.
+
+**Persons without a location – "also door + signal (uncertain)":** if a person has no location
+(e.g. only a Wi-Fi sensor or ping), you can choose **"Proof for 'away': also door + signal
+(uncertain)"** for them under System settings → Presence and homecoming observation, in the
+person's box. Then this also counts as proof: an entry door opened, and **afterwards** – at most
+the **time window door + signal** later (default 5 minutes, under "More settings", with a
+recommendation from the measurement) – a signal of the person changed from "there" to "away".
+
+| What happens (time window 5 minutes) | Result for Niklas (Wi-Fi only, "uncertain") |
+|---|---|
+| Front door opens, 2 minutes later his Wi-Fi is gone | **away** |
+| At night his Wi-Fi drops, no door | not away – sleeping phone |
+| Petra goes out at 7 am, exactly in the 5 minutes after that Niklas's phone falls asleep | **wrongly away** – this is the residual risk |
+
+> **Why "uncertain"?** Hauswacht does not know **who** opened the door. If the phone happens to
+> fall asleep shortly after someone else opened the door, the person counts as away. If everyone
+> is away then, "arm when all away" arms although the person is home – when they get up, there is
+> a false alarm. It does not make a burglary easier. Hence: a warning at the setting, a check hint
+> and a short time window. A location stays better (location in the Companion app on "Always").
+
+**Persons without a location and without "door + signal"** (e.g. location switched off in the
+Companion app, only a router tracker) **never** count as away. "Arm when all away" waits forever with such a person in the
+list – that is the safe side. Hauswacht shows this at the person selection in the profile
+("⚠ no location – never counts as away"), in the system settings and as a
+[check hint](overview.md#check-hints). Fix: set the location in the Companion app to
+**"Always"** or add a GPS tracker as a signal.
+
+The same applies to the [homecoming observation](observations.md): it counts "away" the same
+way, so that measurement and automation match.
+
+### On return
+
+*New in 0.61. Set only on the [settings page](settings-page.md) → Profiles → profile → section
+**"On return"**.*
+
+Here you decide what happens when a certain person comes home. It is based on the person state in
+Home Assistant (usually the phone) plus the person's [signals](#how-hauswacht-knows-who-is-home).
+"Coming home" always means: the person was reliably away before and is home now.
+
+| Setting | Effect | Default |
+|---|---|---|
+| When someone comes home | One of the five levels below | **Nothing** |
+| For these persons | Who triggers "On return". Its own list – independent of "Arm when all of these persons are away". Without a person, any level other than "Nothing" cannot be saved | none |
+| Time window phone and door (under "More settings") | Only for "Disarm with door proof" and "Let in": how far apart the phone report and the door opening may be. 1–30 minutes. Does **not** delay the alarm, see [What the time window means](#what-the-time-window-means) | 5 minutes |
+| Entry delay after approach, approach is valid for (under "More settings") | Only for "Disarm with door proof" and "Let in": more time for the phone if the person approached before – see [approach](#approach-extends-the-entry-delay) | off, 15 minutes |
+
+Next to each field there is an **ⓘ**: hovering shows the explanation, tapping (phone, tablet)
+expands it. Below the selection, one sentence says **"This is how it behaves:"** – it changes
+right away with the level and the time window.
+
+| Level | What happens | What protects against a wrong location | Good for |
+|---|---|---|---|
+| **Nothing** | Hauswacht does nothing. Disarm only by PIN, card, keypad or app | – | Vacation |
+| **Disarm, only if armed automatically** | One of the persons comes home → disarmed. Only if Hauswacht armed the profile **itself** (e.g. "everyone away") and no door has opened yet | coupling to the automation: armed by hand stays armed | like "As before" up to 0.60 |
+| **Disarm with door proof** | One of the persons comes home **and** an entry door opens – both within the time window, in any order. Also during the entry delay, no matter how it was armed | two proofs: location **and** door | "Away" – the **recommendation** for most homes |
+| **Disarm, also after arming by hand** | One of the persons comes home (away for at least 5 minutes before) → disarmed at once, no matter how it was armed. No door needed | only the location – hence the warning in the form | if you want convenience and know the risk |
+| **Let in (passage)** | An entry door opens and a person's phone reports "home" up to the time window before or while the entry delay is running (away for at least 5 minutes before) → Hauswacht lets them in **without PIN, the profile stays armed** | location **and** door; the rest of the house stays armed | "Night": the others sleep, the system stays on. Details at [let in by phone](passage.md#let-in-by-phone) |
+
+**Example "Night" with let in:** Christian and Petra are asleep, the system is on "Night". Niklas
+comes home at 1 am. His phone reports "home" in the driveway, a minute later he unlocks the front
+door → no alarm, no PIN, "Night" stays armed. A stranger at the same door gets the normal entry
+delay and then the alarm.
+
+**Example "Away" with door proof:** everyone is away, Hauswacht armed automatically. Petra comes
+back from shopping, her phone reports "home", she opens the front door → disarmed at once.
+
+> **Why is "Disarm, also after arming by hand" not the recommendation?** Here the phone alone is
+> enough. Whoever has a person's phone – or a found phone – comes home and the system is off.
+> With "Disarm with door proof" a door has to open as well, and only then does the homecoming
+> count.
+
+**After the update to 0.61** Hauswacht takes over your previous settings: "Disarm on arrival"
+(As before / With door proof) with the persons from "Arm when all away", and letting in by phone
+from the passage. If **both** were on in a profile, **let in** wins – the profile then stays
+armed, the safe side – and you get a notification in Home Assistant. The old fields in the
+options dialog are gone; there is a hint pointing to the settings page instead.
+
+**"Disarm with door proof" in everyday life**
 
 - *The location comes too late:* Christian opens the front door, the entry delay runs. 20
   seconds later his phone reports "home" → Hauswacht disarms before the alarm comes.
@@ -194,6 +297,44 @@ Three levels, default is **Off**:
 - *Phantom homecoming:* Niklas's phone reports "home" at night although he is out. Without an
   opened door, **nothing** happens.
 - *Burglary:* someone opens the door, but nobody has come home → normal entry delay and alarm.
+
+#### Approach extends the entry delay
+
+*From 0.61, only for "Disarm with door proof" and "Let in" – under "More settings".*
+
+Some phones only report "home" once the door is already open – sometimes after 60 or 70 seconds.
+With a 30 s entry delay that would mean an alarm. Extending the entry delay for **everyone**
+would also give a burglar more time. So Hauswacht uses the **direction** (Proximity integration
+or Places, added as a signal of the person under System settings → Presence):
+
+> If a person from the "On return" list approached in the last **15 minutes** (direction
+> "towards") and an entry door then opens, Hauswacht waits **longer** for their phone – e.g. 90 s
+> instead of 30 s. Whoever did not approach still only has the normal time.
+
+| Setting | Effect | Default |
+|---|---|---|
+| Entry delay after approach | seconds in total; 0 = off. Only has an effect when longer than the profile's normal entry delay – it never shortens | 0 (off) |
+| Approach is valid for | minutes after "towards" | 15 |
+
+Both fields show a **recommendation from the homecoming observation** with an **"apply"**
+button (the persons need to be in the observation for this):
+
+- Extension: longest measured time from "door open" to "home" plus buffer – the same value as the
+  [recommendation for "Disarm with door proof"](observations.md#recommendation-for-disarm-with-door-proof).
+- Validity: longest time from "towards" to the door plus 5 minutes.
+
+**Example:** entry delay 30 s, after approach 90 s. Christian drives home, Proximity reports
+"towards" at 18:02. At 18:06 he opens the front door, his iPhone only reports "home" after 70 s →
+disarmed, no alarm. A burglar at 3 am, before whom nobody approached → alarm after 30 s as always.
+
+- The direction **never disarms by itself** and never lets anyone in – it only gives the phone
+  more time.
+- A door with an instant alarm stays an instant alarm.
+- The push message for the entry delay states the extended time; the event `EntryDelayExtended`
+  names who approached.
+
+> **Residual risk:** if someone breaks in exactly while a person from the list approaches, they
+> have the longer time. That is a narrow, rare window.
 
 #### What the time window means
 
@@ -232,8 +373,6 @@ calculates this per person and suggests a value.
 > **Remaining risk:** whoever has the phone of one of the persons **and** access to the door
 > (e.g. phone and key stolen) disarms with it. For "Vacation" better choose **Off**.
 
-The level "As before" corresponds to the former switch "Disarm on arrival"; existing settings
-are taken over.
 
 ### Guest mode
 
@@ -242,7 +381,7 @@ looks empty. So that the automation does not arm then, there is the **guest mode
 
 **While it is on,** Hauswacht does **not arm** the area **automatically**: neither by time nor
 "when everyone is away" nor "always armed after restart". The reminder "nobody home, not armed"
-is not sent. Arming **by hand** (keypad, card, tablet, Alexa) still works; "Disarm on arrival"
+is not sent. Arming **by hand** (keypad, card, tablet, Alexa) still works; "On return"
 works normally. If the automation wants to arm, you get the message "Guest mode on – “Night” was
 not armed automatically".
 

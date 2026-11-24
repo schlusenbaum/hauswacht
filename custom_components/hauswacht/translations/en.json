@@ -167,7 +167,7 @@
           "system": "System settings",
           "done": "Done – close"
         },
-        "description": "{saved}Every change is saved as soon as you submit the form; you then return to the menu."
+        "description": "**Settings page:** [open Hauswacht](/hauswacht-settings) – everything at a glance, with explanations. New settings (e.g. “On return”) are only there.\n\n{saved}Every change is saved as soon as you submit the form; you then return to the menu."
       },
       "code": {
         "title": "PIN rules",
@@ -214,21 +214,17 @@
         "sections": {
           "automation": {
             "name": "Automation",
-            "description": "Optional: when this profile arms or disarms by itself. Automatic arming only happens from \"disarmed\"; open sensors are never bypassed automatically. A running alarm is never ended automatically.",
+            "description": "Optional: when this profile arms or disarms by itself. Automatic arming only happens from \"disarmed\"; open sensors are never bypassed automatically. A running alarm is never ended automatically. **On return** (disarm or let in when someone comes home) is set on the settings page since 0.61: [settings page](/hauswacht-settings) → Profiles.",
             "data": {
               "auto_arm_time": "Arm at",
               "auto_disarm_time": "Disarm at",
               "auto_schedule": "Or by schedule (helper)",
               "auto_weekdays": "On these days (empty = every day)",
               "auto_away_persons": "Arm when all of these persons are away",
-              "auto_away_delay": "Delay before arming",
-              "auto_arrival_mode": "Disarm when one of these persons arrives home",
-              "auto_arrival_window": "Door proof: how long before the door the phone may report “home”"
+              "auto_away_delay": "Delay before arming"
             },
             "data_description": {
               "auto_away_delay": "Phones detected only via Wi-Fi sometimes briefly report \"away\" in standby. The delay prevents accidental arming.",
-              "auto_arrival_mode": "**As before:** only if Hauswacht armed the profile itself and no door has opened yet. **With door proof:** arrival AND opening of an entry door within the time window, in any order – also during the entry delay. A running alarm is never ended. Note: whoever has the phone of one of these persons can disarm with it.",
-              "auto_arrival_window": "Only for “with door proof”, default 5 minutes. Does **not** delay the alarm: it comes after the entry delay as always. Example: the phone reports “home” at the street corner, 2 minutes later the front door opens → disarmed at once. If the phone reports only after the door, this must happen within the entry delay.",
               "auto_schedule": "For **different times per weekday**: choose a schedule helper (Settings → Devices & services → Helpers → Schedule). When a time block starts, the profile is armed; when it ends, disarmed. Example: Mon–Thu 22:30–6:00, Fri–Sat 0:30–8:00. The weekdays above do not apply to it. After a restart the schedule does not catch up on anything."
             }
           },
@@ -243,16 +239,14 @@
           },
           "passage": {
             "name": "Passage – in or out, stays armed",
-            "description": "The profile stays armed, only one door (and the sensors on the way) is briefly free. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad – the door is free until it is closed. Going out: while armed, PIN or card and any profile key (never switches profile) or the passage key. Meant for profiles that only watch the outer shell; sensors inside stay armed.",
+            "description": "The profile stays armed, only one door (and the sensors on the way) is briefly free. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad – the door is free until it is closed. Going out: while armed, PIN or card and any profile key (never switches profile) or the passage key. Meant for profiles that only watch the outer shell; sensors inside stay armed. Letting in by phone belongs to **On return** on the settings page since 0.61.",
             "data": {
               "enabled": "Allow passage",
               "duration": "Passage time (minutes)",
               "out_doors": "Going out: which door",
               "out_end": "Going out: end",
               "path": "Sensors on the way (e.g. motion sensor in the driveway)",
-              "path_after": "Coming in: way still free after the door is closed",
-              "persons": "Let in by phone: these persons (empty = off)",
-              "window": "Let in by phone: the phone may report \"home\" this long before the door"
+              "path_after": "Coming in: way still free after the door is closed"
             }
           }
         },
@@ -350,7 +344,7 @@
       },
       "homecoming": {
         "title": "Presence and homecoming observation",
-        "description": "Choose how Hauswacht detects whether someone is home. This applies to the **profile automation** (“arm when everyone is away”, “disarm on arrival”) and to the **homecoming observation**.\n\n**Observe homecoming:** Hauswacht records when entry doors open and persons are detected as home – per location source – and calculates whether an automatic homecoming would be reliable. The observation switches NOTHING. The button “Homecoming report” creates the report.\n\n**Home Wi-Fi network(s):** names of your Wi-Fi networks, separated by commas (e.g. for the Wi-Fi sensor of the Companion app). In the next step you choose additional signals per person – also for the persons from the profile automation.\n\nThe observation also measures how long it takes from “door open” to “disarmed” – which gives a recommendation for the entry delay.",
+        "description": "Choose how Hauswacht detects whether someone is home. This applies to the **profile automation** (“arm when everyone is away”, “on return”) and to the **homecoming observation**.\n\n**Observe homecoming:** Hauswacht records when entry doors open and persons are detected as home – per location source – and calculates whether an automatic homecoming would be reliable. The observation switches NOTHING. The button “Homecoming report” creates the report.\n\n**Home Wi-Fi network(s):** names of your Wi-Fi networks, separated by commas (e.g. for the Wi-Fi sensor of the Companion app). In the next step you choose additional signals per person – also for the persons from the profile automation.\n\nThe observation also measures how long it takes from “door open” to “disarmed” – which gives a recommendation for the entry delay.",
         "data": {
           "homecoming_observe": "Observe homecoming",
           "homecoming_persons": "Persons to observe",
@@ -474,7 +468,7 @@
           "infrastructure": "Monitor radio networks and gateways (Zigbee, MQTT …)",
           "homecoming": "Presence and homecoming observation",
           "restart": "Behaviour after restart",
-          "settings_page": "Settings page in the sidebar",
+          "settings_page": "Settings page: show in the sidebar",
           "init": "← Back"
         },
         "description": "{saved}"
@@ -1386,10 +1380,10 @@
         }
       },
       "settings_page": {
-        "title": "Settings page",
-        "description": "The page **Hauswacht** in the sidebar shows the whole setup at a glance (administrators only): sensors with groups and profiles as a table, profiles, rules, sirens, notifications, people. The settings dialog always stays complete – the page is an additional way.",
+        "title": "Settings page in the sidebar",
+        "description": "The settings page **Hauswacht** always exists (administrators only). Here you only choose whether it is shown in the **sidebar**. When hidden, you still reach it from the Hauswacht device page (link in the device info), from the link at the top of the “Configure” menu or directly: [/hauswacht-settings](/hauswacht-settings). Every user can also hide it for themselves via “Edit sidebar” in Home Assistant.",
         "data": {
-          "enabled": "Show the page “Hauswacht” in the sidebar"
+          "enabled": "Show in the sidebar"
         }
       },
       "stale_sensor": {
@@ -1496,7 +1490,6 @@
       "siren_tone_fire": "A fire tone is locked for burglar alarms – only with the expert release below.",
       "siren_tone_fire_detector": "This siren has its own fire sensors (smoke detector) – a fire tone for burglar alarms is never allowed here.",
       "siren_tone_fire_confirm": "Please explicitly confirm the expert release.",
-      "arrival_needs_persons": "“Disarm on arrival” needs at least one person under “Arm when all of these persons are away”.",
       "control_entity": "Please choose an entity.",
       "control_who": "For the generic source, choose a sensor or event with the ID.",
       "button_no_press": "Assign at least one press type to an alarm profile.",
@@ -1523,7 +1516,7 @@
       "mqtt_topic_invalid": "The topic must not contain `+` or `#` and must not start with `/`.",
       "mqtt_topic_z2m": "The Zigbee2MQTT keypads listen below `zigbee2mqtt` – please use another topic.",
       "mqtt_topic_taken": "This topic (or an overlapping one) is already used by another MQTT interface.",
-      "passage_door_proof": "\"Disarm with door proof\" and \"let in by phone\" (passage) do not go together in the same profile – please choose one."
+      "return_needs_persons": "“On return” needs at least one person."
     },
     "abort": {
       "disarm_first": "Please disarm Hauswacht before changing options.",
@@ -1695,13 +1688,6 @@
         "end_alarm": "End alarm"
       }
     },
-    "arrival_mode": {
-      "options": {
-        "off": "Off",
-        "auto_only": "As before (only after automatic arming)",
-        "door": "With door proof (arrival and entry door)"
-      }
-    },
     "lock_source": {
       "options": {
         "nuki_mqtt": "Nuki via MQTT (lockActionEvent)",
@@ -1864,11 +1850,13 @@
         }
       },
       "setting_auto_arrival_mode": {
-        "name": "Disarm on arrival",
+        "name": "On return",
         "state": {
-          "off": "Off",
-          "auto_only": "As before (only after automatic arming)",
-          "door": "With door proof (arrival and entry door)"
+          "off": "Nothing",
+          "auto_only": "Disarm, only if armed automatically",
+          "door": "Disarm with door proof",
+          "always": "Disarm, also after arming by hand",
+          "passage": "Let in (passage)"
         }
       }
     },
@@ -1906,7 +1894,7 @@
         "name": "Away delay"
       },
       "setting_auto_arrival_window": {
-        "name": "Door proof: location before door"
+        "name": "On return: time window phone and door"
       }
     },
     "time": {

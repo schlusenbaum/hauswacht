@@ -231,6 +231,35 @@ TEXTS: Mapping[str, Mapping[str, tuple[str, str]]] = {
             "Notifications",
         ),
     },
+    "away_no_fix": {
+        "de": (
+            "{name} kann nicht als weg erkannt werden – keine Ortung mit Koordinaten. "
+            "„Scharf, wenn alle weg“ wartet dann für immer, „Bei Rückkehr“ löst nie aus. Tipp: "
+            "in der Companion App den Standort auf „Immer“ stellen oder einen GPS-Tracker als "
+            "Signal eintragen.",
+            "Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung",
+        ),
+        "en": (
+            "{name} cannot be detected as away – no location with coordinates. “Arm when all "
+            "away” then waits forever, “On return” never triggers. Tip: set the location in the "
+            "Companion app to “Always” or add a GPS tracker as a signal.",
+            "System settings → presence and homecoming observation",
+        ),
+    },
+    "away_weak": {
+        "de": (
+            "{name}: „weg“ gilt auch mit Tür + Signal (unsicher). Öffnet jemand anderes die Tür, "
+            "während {name}s Handy zufällig einschläft, gilt {name} fälschlich als weg – "
+            "„Scharf, wenn alle weg“ kann dann scharf schalten, obwohl {name} zuhause ist.",
+            "Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung",
+        ),
+        "en": (
+            "{name}: “away” also counts with door + signal (uncertain). If someone else opens the "
+            "door while {name}'s phone happens to fall asleep, {name} wrongly counts as away – "
+            "“arm when all away” may then arm although {name} is home.",
+            "System settings → presence and homecoming observation",
+        ),
+    },
     "leaving_ok": {
         "de": (
             "Heimkehr-Beobachtung: {name} – Rausgehen wird zuverlässig erkannt, empfohlene "
@@ -457,6 +486,10 @@ def _monitoring(overview: Mapping[str, Any], lang: str) -> list[dict[str, Any]]:
                     advice=own_advice,
                 )
             )
+    for name in monitoring.get("homecoming", {}).get("weak_proof", []):
+        found.append(_finding("away_weak", lang, key=name, name=name))
+    for name in monitoring.get("homecoming", {}).get("no_fix", []):
+        found.append(_finding("away_no_fix", lang, severity="warning", key=name, name=name))
     for person in monitoring.get("homecoming", {}).get("leaving", []):
         status = person.get("status")
         if status not in ("ok", "slow", "pauses"):

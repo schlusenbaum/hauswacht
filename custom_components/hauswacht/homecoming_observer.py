@@ -8,7 +8,7 @@ Die Auswertung selbst steckt in core/homecoming.py.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from homeassistant.components import persistent_notification
@@ -24,6 +24,7 @@ from .const import (
     OPT_HOMECOMING_SIGNALS,
     OPT_HOMECOMING_SSIDS,
 )
+from .core.away_proof import AwayTracker, parse_proof_settings
 from .core.departure import (
     Departure,
     DepartureVerdict,
@@ -62,6 +63,7 @@ from .core.homecoming import (
 )
 from .core.texts import DE, lang_of, tr
 from .names import display_name, plain_name
+from .presence_proof import person_fixes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -106,10 +108,13 @@ class HomecomingObserver:
         self._cache: dict[str, tuple[Any, Any]] = {}
         self.since: float | None = None
         self.departure_since: float | None = None  # Beginn der Messung "Weggehen"
+        self.doors_since: float | None = None  # seit wann Türöffnungen bekannt sind
         self.entries: list[dict[str, Any]] = []
         self._entry_open: dict[str, Any] | None = None
         # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
         self._present: dict[str, bool | None] = {}
+        # „weg“ nur mit Beleg – wie die Automatik (ADR 0015)
+        self.proof = AwayTracker(parse_proof_settings(options))
         self._absent_since: dict[str, float] = {}  # Person: seit wann "alle Signale" weg
         self._direction_state: dict[str, str | None] = {}  # Richtung: aktueller Wert
         self._directions: set[str] = set()
@@ -128,11 +133,14 @@ class HomecomingObserver:
         self.entries = list(stored.get("entries", []))
         self.since = stored.get("since")
         self.departure_since = stored.get("departure_since")
+        self.doors_since = stored.get("doors_since", self.since)
         if not self.enabled:
             return
         now = dt_util.utcnow().timestamp()
         if self.since is None:
             self.since = now
+        if self.doors_since is None:
+            self.doors_since = self.since
         if self.departure_since is None:
             # Weggehen wird erst seit 0.60 gemessen – ältere Beobachtungstage zählen nicht
             self.departure_since = now
@@ -215,23 +223,33 @@ class HomecomingObserver:
         "nähert sich" und "steht" werden übergangen (``direction_hint``), genau wie in der
         Automatik. Zuhause, sobald ein Signal zuhause meldet; weg, sobald mindestens eines "weg"
         meldet und keines "zuhause" (schweigende Signale zählen als weg).
+        „Weg“ zählt nur mit Beleg (Tür und Ortung außerhalb oder frische, genaue Ortung außerhalb,
+        ADR 0015) – sonst unbekannt, wie in der Automatik.
 
         Daraus entstehen Weggehen, Rückkehr und das "frühestes Signal" der Heimkehr – so misst
         die Beobachtung genau das, worauf "Unscharf mit Türbeleg" und der Durchgang reagieren.
         """
         values: list[bool | None] = []
-        for source in self._person_sources(person):
+        sources = self._person_sources(person)
+        for source in sources:
             if source in self._directions:
                 raw = self._direction_state.get(source)
                 if not direction_hint(raw):
                     values.append(presence(raw, self.ssids))
             else:
                 values.append(self._presence.get(source, PresenceState()).home)
+        raw: bool | None = None
         if any(v is True for v in values):
-            return True
-        if any(v is False for v in values):
-            return False
-        return None
+            raw = True
+        elif any(v is False for v in values):
+            raw = False
+        signals = tuple(s for s in sources if s != person)
+        fixes = (
+            person_fixes(self.hass, person, signals, self.proof.settings.accuracy)
+            if raw is False
+            else []
+        )
+        return self.proof.judge(person, raw, fixes, dt_util.utcnow().timestamp())
 
     def _track_leaving(self, person: str, now: float) -> bool:
         """Weggehen und Rückkehr der Kombination "alle Signale" mitschreiben."""
@@ -278,6 +296,7 @@ class HomecomingObserver:
         opened = new is not None and new.state == "on" and (old is None or old.state == "off")
         if entity_id in self._door_entities and opened:
             self.doors.append({"at": now, "sensor": entity_id})
+            self.proof.note_door(now)
             changed = True
         if entity_id in self._owners and new is not None:
             trackers_changed = (
@@ -302,6 +321,7 @@ class HomecomingObserver:
             if prev.home is True and state.home is False:
                 for person in self._owners[entity_id]:
                     self.departures.append({"at": now, "person": person, "source": entity_id})
+                    self.proof.note_signal_left(person, now)  # „Tür + Signal“ (unsicher)
                 changed = True
             for person in self._owners[entity_id]:
                 changed = self._track_leaving(person, now) or changed
@@ -329,6 +349,7 @@ class HomecomingObserver:
             self.departures = []
             self.departure_since = now
         if part == "all":
+            self.doors_since = now
             self.doors = []
             self.arrivals = []
             self.entries = []
@@ -345,6 +366,7 @@ class HomecomingObserver:
             "departures": self.departures,
             "since": self.since,
             "departure_since": self.departure_since,
+            "doors_since": self.doors_since,
             "entries": self.entries,
         }
 
@@ -442,7 +464,7 @@ class HomecomingObserver:
     def departure_verdicts(self) -> list[DepartureVerdict]:
         # Offene Pausen zählen bis "jetzt" – deshalb höchstens eine Minute alt
         now = int(dt_util.utcnow().timestamp() // 60)
-        key = (self._rev, self.since, self.departure_since, now)
+        key = (self._rev, self.since, self.departure_since, self.doors_since, now)
         return self._cached("departures", key, self._departure_verdicts)  # type: ignore[no-any-return]
 
     def _departure_verdicts(self) -> list[DepartureVerdict]:
@@ -456,7 +478,9 @@ class HomecomingObserver:
             )
             for d in self.departures
         ]
-        return judge_departures(departures, arrivals, doors, dt_util.utcnow().timestamp())
+        return judge_departures(
+            departures, arrivals, doors, dt_util.utcnow().timestamp(), self.doors_since
+        )
 
     def departure_advice(self) -> dict[str, dict[str, Any]]:
         """Je Person: Empfehlung für "Rausgehen ohne PIN erkennen" (ADR 0014)."""
@@ -556,6 +580,42 @@ class HomecomingObserver:
             },
         }
 
+    def approach_advice(self) -> dict[str, dict[str, int | None]]:
+        """Je Person: Empfehlungen für „Annäherung verlängert die Eingangsverzögerung“.
+
+        ``entry_delay``: nötige Eingangsverzögerung (längste Zeit Tür auf → zuhause, plus Puffer)
+        ``approach_minutes``: längste Zeit „nähert sich“ → Tür, plus 5 Minuten (Gültigkeit)
+        """
+        if not self.enabled:
+            return {}
+        stats = self.stats()
+        proof = door_proof_advice(stats)
+        result: dict[str, dict[str, int | None]] = {}
+        for person in self.persons:
+            leads = [
+                -d
+                for source in self._person_sources(person)
+                if source in self._directions and (entry := stats.get(source)) is not None
+                for d in entry.delays
+                if d < 0
+            ]
+            result[person] = {
+                "entry_delay": proof.get(person, {}).get("recommended_entry_delay"),
+                "approach_minutes": int(-(-max(leads) // 60)) + 5 if leads else None,
+            }
+        return result
+
+    def _longest_signal_left(self, person: str, left: Mapping[str, Any]) -> int | None:
+        """Längste Zeit „Tür auf“ → ein einzelnes Signal „weg“ (Sekunden), ohne Richtung."""
+        delays = [
+            max(stats.delays)
+            for source in self._person_sources(person)
+            if source not in self._directions
+            and (stats := left.get(source)) is not None
+            and stats.delays
+        ]
+        return round(max(delays)) if delays else None
+
     def measurements(self) -> dict[str, Any]:
         """Kurzfassung aller Messungen für die Einstellungsseite."""
         stats = self.stats()
@@ -570,11 +630,14 @@ class HomecomingObserver:
             name = plain_name(self.hass, person)
             persons.append(
                 {
+                    "id": person,
                     "name": name,
                     "arrivals": home.arrivals if home else 0,
                     "arrivals_with_door": home.with_door if home else 0,
                     "left": out.with_door if out else 0,
                     "longest_left": round(max(out.delays)) if out and out.delays else None,
+                    # Einzelne Signale (ohne Richtung): für „Tür + Signal“ (Nachtrag 0.61)
+                    "longest_signal_left": self._longest_signal_left(person, left),
                     "pauses": len(out.pauses) if out else 0,
                     "longest_pause": (round(max(out.pauses) / 60) if out and out.pauses else None),
                     "status": values["status"] if values else "few",

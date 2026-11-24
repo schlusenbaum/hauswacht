@@ -45,6 +45,7 @@
 | 0.58 | [Keypads allgemein anbinden](entwicklung/adr/0012-keypads-allgemein.md): ein Eingang für jedes Keypad (Z-Wave, ESPHome, Node-RED …) mit Antwort und Anzeige-Entität, Blueprint Ring Keypad v2 und ESPHome-Beispiel, [MQTT-Schnittstelle](bedienteile.md#mqtt-schnittstelle); Warnungen zu falschen PINs räumen sich auf |
 | 0.59 | [Durchgang](durchgang.md) – rein oder raus, ohne unscharf zu schalten ([ADR 0013](entwicklung/adr/0013-durchgang.md)): am Keypad mit jeder Profil-Taste, per Push-Knopf „Reinlassen“, automatisch per Handy, Türschloss, NFC-Aufkleber, Kartenleser |
 | 0.60 | Beobachtung [Weggehen](beobachtung.md#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen) mit Empfehlung je Person ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)); [Messungen](beobachtung.md#messungen-auf-der-einstellungsseite) auf der Einstellungsseite ansehen, speichern, zurücksetzen; [Sirenentest](einstellungsseite.md#sirenentest-auf-der-seite-echte-sirene) auch auf der Einstellungsseite; Sicherheitskorrektur: Richtung „nähert sich“ zählt nicht mehr als „zuhause“ |
+| 0.61 | „[Bei Rückkehr](profile.md#bei-rückkehr)“ je Profil (nichts, unscharf, mit Türbeleg, reinlassen) mit eigener Personenliste ([ADR 0015](entwicklung/adr/0015-rueckkehr.md)); [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg) – keine falschen Heimkehrten durch schlafende Handys, für Personen ohne Ortung „Tür + Signal“; [Annäherung](profile.md#annäherung-verlängert-die-eingangsverzögerung) verlängert die Eingangsverzögerung; Erklärungen direkt an der Einstellung (ⓘ, „So verhält sich das“); Einstellungsseite ausblenden statt abschalten, Aufruf über die Geräteseite; [Schweigepausen](beobachtung.md#was-ist-eine-schweigepause) erklärt |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -52,8 +53,9 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| nach 0.60 | „Bei Rückkehr“ als eine Einstellung: nichts, unscharf, unscharf mit Türbeleg oder reinlassen (Durchgang) – mit eigener Personenliste; Annäherung („nähert sich“) verlängert die Eingangsverzögerung, statt unscharf zu schalten – wird besprochen |
-| 0.61 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
+| 0.62 | Erklärungen (ⓘ, „So verhält sich das“, „Mehr Einstellungen“) für alle übrigen Einstellungen |
+| 0.63 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
+| vorgemerkt | Testkarte: An- und Abwesenheit je Person simulieren und prüfen, ob „Scharf, wenn alle weg“ und „Bei Rückkehr“ richtig reagieren – erst besprechen, dann ADR |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |

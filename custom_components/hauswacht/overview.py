@@ -28,6 +28,7 @@ from .core.action_codes import ALL_KEYPADS, CodeAction, parse_action_codes
 from .core.always_active import parse_always_active, parse_arm_on_close
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
+from .core.away_proof import parse_proof_settings
 from .core.checks import run_checks
 from .core.controls import learn_minutes, parse_controls
 from .core.notify_events import NotifyEvent, enabled, route
@@ -41,6 +42,7 @@ from .core.profiles import (
 )
 from .core.reactions import parse_reaction
 from .core.restart import OPT_RESTART_PROFILES, continue_alarm, restart_behavior
+from .core.returning import parse_return
 from .core.rules import build_engine, describe_rule, profile_rule_ids
 from .core.sensor_types import excluded_sensors
 from .core.sensors import resolve_zone
@@ -123,6 +125,7 @@ def _profiles(main: HauswachtRuntime) -> list[dict[str, Any]]:
             behaviour = profile_behaviour(options, profile_id)
             reaction = parse_reaction(options, profile_id)
             auto = parse_automation(options, profile_id)
+            back = parse_return(options, profile_id)
             close = parse_arm_on_close(options, profile_id)
             alarm_targets = route(
                 options,
@@ -165,9 +168,12 @@ def _profiles(main: HauswachtRuntime) -> list[dict[str, Any]]:
                         "schedule": _name(hass, auto.schedule) if auto.schedule else None,
                         "away_persons": [plain_name(hass, p) for p in auto.away_persons],
                         "away_delay": auto.away_delay,
-                        "disarm_on_arrival": auto.disarm_on_arrival,
-                        "arrival_mode": auto.arrival_mode if auto.away_persons else "off",
-                        "arrival_window": auto.arrival_window,
+                    },
+                    # „Bei Rückkehr“ (ADR 0015)
+                    "return": {
+                        "mode": back.mode if back.active else "off",
+                        "persons": [plain_name(hass, p) for p in back.persons],
+                        "window": back.window,
                     },
                     "arm_on_close": {
                         "enabled": close.enabled,
@@ -488,6 +494,18 @@ def _monitoring(main: HauswachtRuntime) -> dict[str, Any]:
                     main.homecoming.departure_advice() if main.homecoming.enabled else {}
                 ).items()
             ],
+            # Personen mit dem unsicheren Beleg „Tür + Signal“ (Nachtrag 0.61, ADR 0015)
+            "weak_proof": sorted(
+                _name(hass, p) for p in parse_proof_settings(main.entry.options).weak
+            ),
+            # Personen der Automatik ohne Ortung – gelten nie als weg (ADR 0015)
+            "no_fix": sorted(
+                {
+                    _name(hass, p)
+                    for area in main.areas.values()
+                    for p in area.automation.unlocatable()
+                }
+            ),
         },
     }
 
