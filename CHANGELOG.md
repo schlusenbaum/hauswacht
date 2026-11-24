@@ -6,6 +6,30 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.0] - 2026-11-24
+
+Zusammenfassung von 0.63.0b1 bis 0.63.0b3 – **Anwesenheit testen** ([ADR 0016](docs/entwicklung/adr/0016-anwesenheit-testen.md)).
+
+### Hinzugefügt
+
+- **Block „Anwesenheit“ in der Testkarte**: je Person zuhause, weg oder unbekannt und warum
+  (welches Signal, welcher Beleg, „kein Beleg“) – auch ohne Testmodus.
+- **Zeile je Profil**: was Automatik und „Bei Rückkehr“ gerade machen – „wird scharf, wenn
+  alle weg sind. Noch nicht weg: …“, „alle weg, wird scharf in 4:12“, „ist scharf
+  (automatisch)“, „Heimkehr erkannt, wartet auf die Tür (noch 4:30)“, „nicht nötig, ‚Nacht‘
+  ist scharf“.
+- **Anwesenheit simulieren** im Testmodus: Zuhause, Weg, Weg ohne Beleg, Nähert sich, Echt –
+  nur für Hauswacht; Testmodus aus oder Neustart setzt alles zurück.
+- **„Wartezeit überspringen“** für eine laufende „alle weg“-Wartezeit.
+- Einstellungsseite, System → Anwesenheit: **„Wer gilt gerade als zuhause?“**.
+- Aktionen `hauswacht.simulate_presence`, `hauswacht.skip_wait`, Ereignis `PresenceSimulated`.
+- Doku: [Anwesenheit testen](docs/testmodus.md#anwesenheit-testen) mit Beispielen.
+
+### Geändert
+
+- **Simulierte Eingangstüren zählen wie echte**: für „Bei Rückkehr“ (Türbeleg, Durchgang)
+  und als Beleg für „weg“ (Tür + Signal).
+
 ## [0.63.0b3] - 2026-11-24
 
 ### Behoben
