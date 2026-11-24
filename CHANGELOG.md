@@ -6,6 +6,71 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-11-24
+
+**Erklärungen direkt an jeder Einstellung** (getestet über die Vorabversionen 0.62.0b1 bis b3).
+
+### Hinzugefügt
+- Einstellungsseite: **ⓘ an den Feldern** in allen Seitenblättern – Profile, System, Melder,
+  Auslöseregeln, Alarmgeber und Benachrichtigungen, Personen, Bedienteile. Mauszeiger drauf
+  zeigt die Erklärung, Antippen klappt sie auf.
+- **„So verhält sich das:“** – ein Satz, der sich beim Einstellen sofort ändert: im Profil
+  (Zeiten, Scharfschalten, Reaktion, Automatik, Bei Rückkehr, Scharf durch Schließen, Durchgang)
+  und im System (Neustart, Funkstille, PIN-Regeln, Aktions-Codes, Melder aus Messwert,
+  Anlernzeit).
+- Roadmap: ADR 0016 „Anwesenheit in der Testkarte“ für 0.63; die Ausgangserkennung rückt auf
+  0.64.
+
+### Geändert
+- Profil: Selten geänderte Felder stehen unter **„Mehr Einstellungen“**; Ausgangstüren und
+  Durchgangszeiten erscheinen erst, wenn der Schalter dazu an ist.
+
+### Behoben
+- Sirenentest: falsche Beschriftung am Feld „Erinnerung, wenn eine Sirene so lange nicht
+  getestet wurde“.
+
+## [0.62.0b3] - 2026-11-24
+
+**Vorabversion: Erklärungen überall** (Roadmap 0.62, Schritt 3).
+
+### Hinzugefügt
+- Einstellungsseite: **ⓘ an den Feldern** auch bei Meldergruppen und Meldern (Kippstellung,
+  Erschütterung, Immer aktiv), Auslöseregeln, Alarmgebern und Benachrichtigungen (Sirenen,
+  Empfänger, Ansagen, Erinnerung), Personen und Bedienteilen (Keypad, Aufkleber, Leser, Taster,
+  Türschloss, Karten).
+
+### Behoben
+- Alarmgeber → Sirenentest: Das Feld „Erinnerung, wenn eine Sirene so lange nicht getestet
+  wurde“ trug die falsche Beschriftung („Erinnerung „Alle weg, aber nicht scharf““).
+
+## [0.62.0b2] - 2026-11-24
+
+**Vorabversion: Erklärungen in den Systemeinstellungen** (Roadmap 0.62, Schritt 2).
+
+### Hinzugefügt
+- Einstellungsseite → System: **ⓘ an jedem Feld** in allen Seitenblättern (Neustart,
+  Funkstille, Funknetz, Anwesenheit, Bereiche, PIN-Regeln, Aktions-Codes, Melder aus Messwert,
+  Anlernzeit).
+- **„So verhält sich das:“** bei Neustart, Funkstille, PIN-Regeln, Aktions-Codes, Melder aus
+  Messwert und Anlernzeit – ändert sich mit den Einstellungen.
+- Roadmap: ADR 0016 „Anwesenheit in der Testkarte“ für 0.63; die Ausgangserkennung rückt auf 0.64.
+
+## [0.62.0b1] - 2026-11-24
+
+**Vorabversion: Erklärungen im Profil** (Roadmap 0.62, Schritt 1).
+
+### Hinzugefügt
+- Einstellungsseite → Profil: **ⓘ an jedem Feld** (Mauszeiger oder antippen) mit einer
+  Erklärung in einfacher Sprache.
+- Je Abschnitt der Satz **„So verhält sich das:“**, der sich beim Einstellen sofort ändert
+  (Zeiten, Scharfschalten, Reaktion, Automatik, Bei Rückkehr, Scharf durch Schließen, Durchgang).
+
+### Geändert
+- Selten geänderte Felder stehen unter **„Mehr Einstellungen“** zum Aufklappen (Symbol, Dauer
+  der Alarmreaktion, Alarmzyklen, ausgefallene Melder, Manipulation, Ton, Lautstärke,
+  Lautsprecher, Zeitplan, Beruhigungszeit, Durchgang „welche Tür“ und „Ende“).
+- Ausgangstüren und Durchgangszeiten erscheinen erst, wenn der Schalter dazu an ist.
+
 ## [0.61.0] - 2026-11-24
 
 **„Bei Rückkehr“ je Profil, „weg“ nur mit Beleg, Annäherung verlängert die

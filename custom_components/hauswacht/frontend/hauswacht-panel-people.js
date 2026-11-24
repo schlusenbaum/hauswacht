@@ -7,6 +7,18 @@
 
 const PT = {
   de: {
+    info: {
+      name: "Name der Person, wie er im Logbuch und in Nachrichten steht.",
+      rights: "Was die Person darf: scharf schalten, unscharf schalten, Alarm beenden. Bei mehreren Bereichen auf Wunsch je Bereich verschieden.",
+      active: "Aus = die Person kann nichts mehr bedienen, bleibt aber gespeichert (z. B. Babysitter für später).",
+      forceArm: "Darf am Keypad scharf schalten, obwohl noch etwas offen ist – das Offene wird überbrückt (eine Lücke, bis es zu ist).",
+      cardPin: "Auch wenn dieses Konto der Person zugeordnet ist, fragt die Alarmkarte nach dem PIN – z. B. für ein Wandtablet, das immer angemeldet ist.",
+      validFrom: "Ab wann der PIN gilt – z. B. für Gäste oder Handwerker. Leer = sofort.",
+      validUntil: "Bis wann der PIN gilt. Danach funktioniert er nicht mehr. Leer = unbegrenzt.",
+      haUser: "Das Home-Assistant-Konto dieser Person. Damit steht im Logbuch, wer am Dashboard geschaltet hat, und in der Karte „Hauswacht Alarm“ geht es ohne PIN.",
+      newPin: "4–8 Ziffern zum Bedienen an Bedienfeld, Keypad und per Sprache. Wird nur verschlüsselt gespeichert und nie angezeigt.",
+      newDuress: "Ein zweiter PIN für den Notfall: Er schaltet wie der normale – aber die Empfänger für „Bedrohung“ bekommen still eine Warnung.",
+    },
     titleNew: "Person anlegen",
     titleEdit: "Person bearbeiten",
     name: "Name",
@@ -55,6 +67,18 @@ const PT = {
     },
   },
   en: {
+    info: {
+      name: "Name of the person as shown in the logbook and in messages.",
+      rights: "What the person may do: arm, disarm, end an alarm. With several areas optionally different per area.",
+      active: "Off = the person can no longer operate anything but stays saved (e.g. a babysitter for later).",
+      forceArm: "May arm at the keypad although something is still open – the open sensor is bypassed (a gap until it is closed).",
+      cardPin: "Even though this account is linked to the person, the alarm card asks for the PIN – e.g. for a wall tablet that is always logged in.",
+      validFrom: "From when the PIN applies – e.g. for guests or tradespeople. Empty = at once.",
+      validUntil: "Until when the PIN applies. Afterwards it no longer works. Empty = unlimited.",
+      haUser: "The Home Assistant account of this person. Then the logbook shows who switched on the dashboard, and the card “Hauswacht Alarm” works without a PIN.",
+      newPin: "4–8 digits for the panel, keypad and voice. Stored only as a hash and never shown.",
+      newDuress: "A second PIN for emergencies: it switches like the normal one – but the recipients for “duress” silently get a warning.",
+    },
     titleNew: "Add person",
     titleEdit: "Edit person",
     name: "Name",
@@ -240,6 +264,8 @@ class HauswachtPersonEditor extends HTMLElement {
       ${this.person ? `<button class="b d" data-act="delete">${pe2(this._sure ? this._t("delSure") : this._t("del"))}</button>` : ""}</div></div>`;
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
     window.HauswachtDocs?.decorate(this.shadowRoot, "users", this._lang);
+    // ⓘ an den Beschriftungen (0.62)
+    window.HauswachtDocs?.explain?.(this.shadowRoot, Object.entries(this._t("info") || {}).map(([key, text]) => [this._t(key), text]), this._lang);
     const root = this.shadowRoot;
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();

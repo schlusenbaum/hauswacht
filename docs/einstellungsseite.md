@@ -25,6 +25,11 @@ Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
 - **Neue Einstellungen gibt es nur hier** (ab 0.61, z. B. [„Bei Rückkehr“](profile.md#bei-rückkehr)
   und [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). Der Dialog zeigt an der Stelle einen
   Hinweis mit Link.
+- **Erklärungen direkt am Feld** (ab 0.62): In allen Seitenblättern – Profile, Melder,
+  Auslöseregeln, Alarmgeber und Benachrichtigungen, Personen, Bedienteile, System – steht hinter
+  den Feldern ein **ⓘ**. Mauszeiger drauf zeigt die Erklärung, Antippen (Handy, Tablet) klappt
+  sie auf. Wo es hilft, beschreibt ein Satz **„So verhält sich das:“**, was die Einstellung
+  gerade bewirkt.
 
 ## Die Reiter
 
@@ -116,11 +121,24 @@ So sicher wie der Dialog:
 
 Im Reiter **Profile** steht jedes Profil mit seinen Werten; **„Bearbeiten“** öffnet das
 Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgaben (30 s Verzögerung,
-180 s Alarm …). Die Abschnitte entsprechen dem Dialog:
+180 s Alarm …). Die Abschnitte entsprechen dem Dialog.
+
+**Erklärungen direkt am Feld** (ab 0.62):
+
+- Hinter jedem Feld steht ein **ⓘ**: Mauszeiger drauf zeigt die Erklärung, Antippen (Handy,
+  Tablet) klappt sie auf.
+- Unter den wichtigsten Feldern eines Abschnitts steht der Satz **„So verhält sich das:“**. Er
+  ändert sich sofort, wenn du etwas einstellst – z. B. „Nach dem Scharfschalten hast du 30 s zum
+  Verlassen. Öffnest du danach eine Eingangstür, hast du 30 s zum Unscharfschalten …“.
+- Selten geänderte Felder stehen unter **„Mehr Einstellungen“** zum Aufklappen: Symbol; Dauer
+  der Alarmreaktion und Alarmzyklen; ausgefallene Melder und Manipulation; Ton, Lautstärke und
+  Lautsprecher; Zeitplan; Beruhigungszeit; beim Durchgang „welche Tür“ und „Ende“.
+- Felder, die nur mit einem Schalter Sinn ergeben (Ausgangstüren, Durchgangszeiten), erscheinen
+  erst, wenn der Schalter an ist.
 
 | Abschnitt | Inhalt |
 |---|---|
-| **Allgemein** | Name, Symbol (z. B. `mdi:weather-night`), Knopf am Bedienfeld, Bereich (nur bei mehreren Bereichen) |
+| **Allgemein** | Name, Knopf am Bedienfeld, Bereich (nur bei mehreren Bereichen); unter „Mehr Einstellungen“ das Symbol (z. B. `mdi:weather-night`) |
 | **Was wird überwacht** | Meldergruppen (jeder Melder löst allein aus), **Ausgenommene** – die Liste zeigt genau die Melder der angehakten Gruppen –, Auslöseregeln, „Gekippte Fenster erlaubt“ (nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt)) |
 | **Zeiten** | Ausgangs- und Eingangsverzögerung, Dauer der Alarmreaktion, Höchstzahl Alarmzyklen |
 | **Beim Scharfschalten** | Offene Melder, ausgefallene Melder, Manipulation löst Alarm aus |
@@ -213,7 +231,11 @@ Im selben Reiter darunter:
 
 Im Reiter **System** steht oben der Zustand der Überwachung – mit den Knöpfen **Heimkehr-Bericht**
 und **Tabelle** zum Herunterladen der [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung).
-Darunter je Thema eine Karte mit **„Bearbeiten“**:
+Darunter je Thema eine Karte mit **„Bearbeiten“**. In jedem Seitenblatt steht ab 0.62 hinter
+jedem Feld ein **ⓘ** mit Erklärung, und wo es hilft, ein Satz **„So verhält sich das:“** – z. B.
+bei den PIN-Regeln („Unscharf schalten am Bedienfeld, Keypad und per Sprache nur mit PIN.
+Scharfschalten geht ohne PIN …“), bei der Funkstille, bei Aktions-Codes, beim Melder aus
+Messwert („Unter 5 meldet der Melder „Problem“, wieder normal über 6.“) und bei der Anlernzeit.
 
 | Karte | Inhalt |
 |---|---|

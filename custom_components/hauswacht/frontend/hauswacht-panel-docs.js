@@ -160,6 +160,41 @@ window.HauswachtDocs = window.HauswachtDocs || {
     style.textContent = this.style;
     root.appendChild(style);
   },
+  // ⓘ an Beschriftungen hängen (0.62): entries = [[Beschriftung, Erklärung], …]. Gesucht wird in
+  // <label> und in Ankreuzfeldern (.chk span) nach genau diesem Text. Mauszeiger zeigt die
+  // Erklärung (title), Antippen klappt sie auf. Nach jedem Zeichnen aufrufen.
+  explain(root, entries, lang) {
+    if (!root || !entries?.length) return;
+    const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const label = lang === "de" ? "Erklärung" : "Explanation";
+    const wanted = new Map(entries.filter(([l, t]) => l && t).map(([l, t]) => [String(l).trim(), t]));
+    root.querySelectorAll("label, .chk > span, h3").forEach((el) => {
+      if (el.querySelector(".hw-info")) return;
+      const text = wanted.get(el.textContent.trim());
+      if (!text) return;
+      el.insertAdjacentHTML(
+        "beforeend",
+        ` <button type="button" class="hw-info" title="${esc(text)}" aria-label="${label}">ⓘ</button><span class="hw-tip" hidden>${esc(text)}</span>`
+      );
+      const button = el.querySelector(".hw-info");
+      button.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const tip = el.querySelector(".hw-tip");
+        tip.hidden = !tip.hidden;
+      });
+    });
+    if (!root.querySelector("style[data-hw-info]")) {
+      const style = document.createElement("style");
+      style.dataset.hwInfo = "1";
+      style.textContent = `
+        .hw-info { border: none; background: none; color: var(--primary-color); cursor: help; font-size: 1rem; padding: 0 2px; }
+        .hw-tip[hidden] { display: none; }
+        .hw-tip { display: block; font-weight: normal; font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px;
+          border-radius: 6px; background: var(--secondary-background-color); color: var(--primary-text-color); }`;
+      root.appendChild(style);
+    }
+  },
   style: `
     a.hw-help { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex: none;
       border-radius: 50%; border: 1px solid var(--divider-color); color: var(--primary-color); font-size: .85rem;

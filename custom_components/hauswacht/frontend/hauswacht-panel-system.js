@@ -64,6 +64,53 @@ const ST = {
       weakWindow: "So lange nach der Türöffnung darf das Signal auf „weg“ wechseln. Kurz halten: Je länger, desto eher fällt zufällig ein schlafendes Handy in das Fenster, nachdem jemand anderes die Tür geöffnet hat.",
       window: "Wie lange nach einer Türöffnung die Ortung außerhalb kommen darf – und wie alt eine Ortung höchstens sein darf, um allein zu zählen. Zu kurz: Wer weggeht, wird erst spät oder gar nicht als weg erkannt. Zu lang: eine alte Ortung kann zu lange zählen.",
     },
+    fieldInfo: {
+      behavior: "Was nach einem Neustart von Home Assistant (Update, Stromausfall) passiert. „Vorherigen Zustand“ passt für die meisten.",
+      continue_alarm: "Lief beim Neustart ein Alarm: An = er läuft weiter, die Sirenen gehen wieder an. Aus = keine Sirenen, aber eine wichtige Nachricht an die Alarm-Empfänger.",
+      restart_profile: "Dieses Profil wird nach jedem Neustart scharf geschaltet – mit Prüfung offener Melder.",
+      hours: "Ein Melder, der sich so lange nicht gemeldet hat, gilt beim Scharfschalten als ausgefallen (Lücke). 0 schaltet die Prüfung aus.",
+      network: "Fällt Zigbee, Z-Wave oder ein Gateway aus, melden die Melder nichts mehr – ohne dass man es merkt. Mit diesen Sensoren erkennt Hauswacht den Ausfall und meldet eine Störung.",
+      observe: "Misst nur, schaltet nichts: wann eure Handys beim Heimkommen und Weggehen reagieren. Daraus kommen die Empfehlungen (Eingangsverzögerung, Zeitfenster, Wartezeit).",
+      persons: "Diese Personen werden beobachtet. Personen aus den Profil-Automatiken kommen automatisch dazu.",
+      ssids: "Name eures WLANs (wie im Handy angezeigt). Ein WLAN-Sensor der Companion App gilt als „zuhause“, wenn das Handy in einem dieser Netze ist.",
+      signals: "Weitere Hinweise, ob eine Person zuhause ist: WLAN-Sensor der App, Ping, Bluetooth, Richtung („Nähe“, Places), weitere Tracker. Ein einziges „zuhause“ reicht für zuhause; für „weg“ müssen alle weg sein.",
+      area_name: "Name des Bereichs, z. B. „Garage“. Jeder Bereich hat sein eigenes Bedienfeld und eigene Profile.",
+      area_icon: "Symbol des Bereichs, z. B. mdi:garage.",
+      code_arm_required: "An: Auch zum Scharfschalten braucht es einen PIN (Bedienfeld, Keypad, Sprachassistent). Aus: Scharfschalten geht ohne PIN, unscharf immer nur mit.",
+      end_alarm_without_pin: "An: Der Knopf „Alarm beenden“ (Sirenen aus, die Anlage bleibt scharf) geht ohne PIN.",
+      buttons_without_pin: "An: Die Dashboard-Knöpfe (Unscharf, Alarm beenden, Scharf) gehen ohne PIN. Der PIN schützt dann nur Bedienfeld, Keypads und Sprachassistenten – an die Knöpfe kommen ohnehin nur angemeldete Benutzer.",
+      card_pin_unlinked: "Gilt nur für die Karte „Hauswacht Alarm“: Konten, die einer Hauswacht-Person zugeordnet sind, schalten dort ohne PIN. An = alle anderen Konten brauchen einen PIN.",
+      master_pin: "Ein PIN ohne eigene Person, mit allen Rechten – z. B. für Alexa oder als Familien-Code am Keypad. Im Logbuch steht dann nur „Master-PIN“.",
+      ac_name: "Name des Codes, z. B. „Garagentor auf“ – erscheint im Ereignis und im Logbuch.",
+      ac_code: "Die Ziffern, die man am Keypad tippt. Darf keinem PIN gleichen.",
+      ac_key: "Mit dieser Taste wird der Code am Keypad abgeschickt.",
+      ac_keypad: "An welchem Keypad der Code gilt.",
+      ac_action: "Was der Code auslöst: ein Ereignis für eine eigene Automation, Scharfschalten mit einem Profil oder einen stillen Notruf. Unscharf schalten kann ein Aktions-Code nie.",
+      source: "Der Messwert, der überwacht werden soll – z. B. Temperatur im Heizungskeller oder Leistung der Gefriertruhe.",
+      upper: "Liegt der Messwert darüber, meldet der neue Melder „Problem“. Leer = keine obere Grenze.",
+      lower: "Liegt der Messwert darunter, meldet der neue Melder „Problem“. Leer = keine untere Grenze.",
+      hysteresis: "Abstand, ab dem wieder „normal“ gilt – verhindert ständiges Hin und Her um die Grenze.",
+      type: "Welche Art Melder daraus wird (z. B. technischer Alarm, Frost, Wasser) – bestimmt Symbol und Text der Meldung.",
+      target: "In welche Meldergruppe der neue Melder kommt. „Immer aktiv“ meldet auch unscharf.",
+      minutes: "So lange merkt sich Hauswacht eine unbekannte Karte zum Anlernen.",
+    },
+    how: {
+      silence: "Meldet sich ein Melder {h} Stunden nicht, gilt er beim Scharfschalten als ausgefallen.",
+      silenceOff: "Aus: Hauswacht prüft nicht, ob sich Melder lange nicht gemeldet haben.",
+      pinOff: "Es gibt noch keinen PIN: Unscharfschalten geht ohne PIN.",
+      pinOn: "Unscharf schalten am Bedienfeld, Keypad und per Sprache nur mit PIN.",
+      armPin: "Auch zum Scharfschalten wird ein PIN verlangt.",
+      armNoPin: "Scharfschalten geht ohne PIN.",
+      buttonsFree: "Die Dashboard-Knöpfe gehen ohne PIN.",
+      endFree: "„Alarm beenden“ geht ohne PIN, die anderen Dashboard-Knöpfe brauchen einen.",
+      buttonsPin: "Auch die Dashboard-Knöpfe brauchen einen PIN.",
+      action: { event: "Hauswacht feuert ein Ereignis – deine eigene Automation entscheidet, was passiert.", arm: "Hauswacht schaltet das gewählte Profil scharf, als hätte jemand die Profil-Taste gedrückt.", silent_emergency: "Stiller Notruf: keine Sirene, aber eine wichtige Nachricht an die Alarm-Empfänger – z. B. wenn jemand dich zwingt, die Anlage zu bedienen." },
+      upper: "Über {v} meldet der Melder „Problem“, wieder normal unter {b}.",
+      lower: "Unter {v} meldet der Melder „Problem“, wieder normal über {b}.",
+      helperEmpty: "Bitte mindestens eine Grenze eintragen.",
+      learn: "Eine unbekannte Karte bleibt {m} Minuten zum Anlernen gemerkt.",
+      learnOff: "Anlernen ist aus.",
+    },
     infoLabel: "Erklärung",
     howLabel: "So verhält sich das:",
     moreSettings: "Mehr Einstellungen",
@@ -197,6 +244,53 @@ const ST = {
       weak: "“Location only”: away only with a location outside (safe). “Also door + signal”: additionally away when a door opens and afterwards a signal of the person (Wi-Fi, ping, Bluetooth) changes to “away” – for persons without a location, e.g. when location is switched off in the app. A phone falling asleep without a door makes nobody away here either.",
       weakWindow: "How long after the door opening the signal may change to “away”. Keep it short: the longer it is, the more likely a sleeping phone falls into the window by chance after someone else opened the door.",
       window: "How long after a door opening the location outside may come – and how old a location may be at most to count on its own. Too short: someone leaving is detected late or not at all. Too long: an old location may count for too long.",
+    },
+    fieldInfo: {
+      behavior: "What happens after a restart of Home Assistant (update, power cut). “Restore previous state” suits most.",
+      continue_alarm: "If an alarm was running at the restart: on = it continues, the sirens go on again. Off = no sirens, but an important message to the alarm recipients.",
+      restart_profile: "This profile is armed after every restart – with a check for open sensors.",
+      hours: "A sensor that has not reported for this long counts as failed when arming (a gap). 0 switches the check off.",
+      network: "If Zigbee, Z-Wave or a gateway fails, sensors stop reporting – without anyone noticing. With these sensors Hauswacht detects the failure and reports a fault.",
+      observe: "Only measures, switches nothing: when your phones react when coming home and leaving. The recommendations (entry delay, time window, waiting time) come from this.",
+      persons: "These persons are observed. Persons from the profile automations are added automatically.",
+      ssids: "Name of your Wi-Fi (as shown on the phone). A Wi-Fi sensor of the Companion app counts as “home” when the phone is in one of these networks.",
+      signals: "More hints whether a person is home: Wi-Fi sensor of the app, ping, Bluetooth, direction (Proximity, Places), further trackers. A single “home” is enough for home; for “away” all must be away.",
+      area_name: "Name of the area, e.g. “Garage”. Every area has its own panel and its own profiles.",
+      area_icon: "Icon of the area, e.g. mdi:garage.",
+      code_arm_required: "On: arming also needs a PIN (panel, keypad, voice assistant). Off: arming works without a PIN, disarming always needs one.",
+      end_alarm_without_pin: "On: the button “End alarm” (sirens off, the system stays armed) works without a PIN.",
+      buttons_without_pin: "On: the dashboard buttons (Disarm, End alarm, Arm) work without a PIN. The PIN then only protects the panel, keypads and voice assistants – only logged-in users can reach the buttons anyway.",
+      card_pin_unlinked: "Only for the card “Hauswacht Alarm”: accounts linked to a Hauswacht person switch there without a PIN. On = all other accounts need a PIN.",
+      master_pin: "A PIN without its own person, with all rights – e.g. for Alexa or as a family code on the keypad. The logbook then only says “Master PIN”.",
+      ac_name: "Name of the code, e.g. “Open garage door” – shown in the event and the logbook.",
+      ac_code: "The digits typed on the keypad. Must not equal any PIN.",
+      ac_key: "The code is sent with this key on the keypad.",
+      ac_keypad: "On which keypad the code applies.",
+      ac_action: "What the code triggers: an event for your own automation, arming with a profile or a silent emergency call. An action code can never disarm.",
+      source: "The value to watch – e.g. the temperature in the boiler room or the power of the freezer.",
+      upper: "If the value is above, the new sensor reports “problem”. Empty = no upper limit.",
+      lower: "If the value is below, the new sensor reports “problem”. Empty = no lower limit.",
+      hysteresis: "Distance from which “normal” applies again – prevents constant back and forth around the limit.",
+      type: "Which kind of sensor it becomes (e.g. technical alarm, frost, water) – decides icon and message text.",
+      target: "Which sensor group the new sensor goes into. “Always active” also reports when disarmed.",
+      minutes: "This long Hauswacht remembers an unknown card for learning.",
+    },
+    how: {
+      silence: "If a sensor does not report for {h} hours, it counts as failed when arming.",
+      silenceOff: "Off: Hauswacht does not check whether sensors have been silent for long.",
+      pinOff: "There is no PIN yet: disarming works without a PIN.",
+      pinOn: "Disarming on the panel, keypad and by voice only with a PIN.",
+      armPin: "Arming also requires a PIN.",
+      armNoPin: "Arming works without a PIN.",
+      buttonsFree: "The dashboard buttons work without a PIN.",
+      endFree: "“End alarm” works without a PIN, the other dashboard buttons need one.",
+      buttonsPin: "The dashboard buttons need a PIN too.",
+      action: { event: "Hauswacht fires an event – your own automation decides what happens.", arm: "Hauswacht arms the chosen profile as if someone had pressed the profile key.", silent_emergency: "Silent emergency call: no siren, but an important message to the alarm recipients – e.g. when someone forces you to operate the system." },
+      upper: "Above {v} the sensor reports “problem”, normal again below {b}.",
+      lower: "Below {v} the sensor reports “problem”, normal again above {b}.",
+      helperEmpty: "Please enter at least one limit.",
+      learn: "An unknown card is remembered for {m} minutes for learning.",
+      learnOff: "Learning is off.",
     },
     infoLabel: "Explanation",
     howLabel: "This is how it behaves:",
@@ -339,11 +433,40 @@ class HauswachtSystemEditor extends HTMLElement {
 
   // --- „weg“ nur mit Beleg (ADR 0015) ---------------------------------------------
 
-  _info(key, suffix = "") {
+  // Beschriftung mit ⓘ (0.62)
+  _lab(key, label) {
+    return `<label>${se(label)}${this._info(key, "", true)}</label>`;
+  }
+
+  // „So verhält sich das:“
+  _howLine(text) {
+    return text ? `<div class="how"><b>${se(this._t("howLabel"))}</b> ${se(text)}</div>` : "";
+  }
+
+  _info(key, suffix = "", optional = false) {
     // ⓘ: Mauszeiger drauf zeigt den Text, Tippen klappt ihn auf
-    const text = this._t("proofInfo")[key] || "";
+    const text = this._t("proofInfo")[key] || this._t("fieldInfo")[key] || "";
+    if (optional && !text) return "";
     const id = suffix ? `${key}:${suffix}` : key;
-    return `<button type="button" class="info" data-info="${se(id)}" title="${se(text)}" aria-label="${se(this._t("infoLabel"))}">ⓘ</button><div class="tip" data-tip="${se(id)}" hidden>${se(text)}</div>`;
+    return ` <button type="button" class="info" data-info="${se(id)}" title="${se(text)}" aria-label="${se(this._t("infoLabel"))}">ⓘ</button><span class="tip" data-tip="${se(id)}" hidden>${se(text)}</span>`;
+  }
+
+  _pinHow(d) {
+    const h = this._t("how");
+    const parts = [d.pin_users.length || d.master ? h.pinOn : h.pinOff];
+    if (d.pin_users.length || d.master) {
+      parts.push(d.code_arm_required ? h.armPin : h.armNoPin);
+      parts.push(d.buttons_without_pin ? h.buttonsFree : d.end_alarm_without_pin ? h.endFree : h.buttonsPin);
+    }
+    return parts.join(" ");
+  }
+
+  _helperHow(d) {
+    const h = this._t("how");
+    const parts = [];
+    if (d.upper !== "" && d.upper !== null) parts.push(h.upper.replace("{v}", d.upper).replace("{b}", Number(d.upper) - Number(d.hysteresis || 0)));
+    if (d.lower !== "" && d.lower !== null) parts.push(h.lower.replace("{v}", d.lower).replace("{b}", Number(d.lower) + Number(d.hysteresis || 0)));
+    return parts.length ? parts.join(" ") : h.helperEmpty;
   }
 
   _proofRecommend(d) {
@@ -401,7 +524,7 @@ class HauswachtSystemEditor extends HTMLElement {
   }
 
   _chk(field, checked, label) {
-    return `<div class="chk"><input type="checkbox" data-b="${se(field)}" ${checked ? "checked" : ""}><span>${se(label)}</span></div>`;
+    return `<div class="chk"><input type="checkbox" data-b="${se(field)}" ${checked ? "checked" : ""}><span>${se(label)}${this._info(field, "", true)}</span></div>`;
   }
 
   _select(field, value, entries) {
@@ -435,22 +558,23 @@ class HauswachtSystemEditor extends HTMLElement {
       const perArea = d.behavior === "armed"
         ? areas.map((a) => {
             const entries = [["", this._t("none")], ...sys.profiles.filter((p) => p.area === a.id).map((p) => [p.id, p.name])];
-            return `<label>${se(this._t("restartProfile"))}${areas.length > 1 ? ` – ${se(a.name)}` : ""}</label><select data-rp="${se(a.id)}">${entries.map(([v, l]) => `<option value="${se(v)}" ${v === (d.profiles[a.id] || "") ? "selected" : ""}>${se(l)}</option>`).join("")}</select>`;
+            return `<label>${se(this._t("restartProfile"))}${areas.length > 1 ? ` – ${se(a.name)}` : ""}${this._info("restart_profile", a.id, true)}</label><select data-rp="${se(a.id)}">${entries.map(([v, l]) => `<option value="${se(v)}" ${v === (d.profiles[a.id] || "") ? "selected" : ""}>${se(l)}</option>`).join("")}</select>`;
           }).join("")
         : "";
       return `<h2>${se(this._t("restart"))}</h2>
-        <label>${se(this._t("behavior"))}</label>${this._select("behavior", d.behavior, d.behaviors.map((b) => [b, this._t("behaviors")[b]]))}
-        <div class="muted">${se(this._t("behaviorHint")[d.behavior] || "")}</div>${perArea}${this._err("base")}
+        ${this._lab("behavior", this._t("behavior"))}${this._select("behavior", d.behavior, d.behaviors.map((b) => [b, this._t("behaviors")[b]]))}
+        ${this._howLine(this._t("behaviorHint")[d.behavior] || "")}${perArea}${this._err("base")}
         ${d.behavior === "restore" ? `${this._chk("continue_alarm", d.continue_alarm, this._t("continueAlarm"))}<div class="muted">${se(this._t("continueHint"))}</div>` : ""}`;
     }
     if (k === "silence") {
       return `<h2>${se(this._t("silence"))}</h2>
-        <label>${se(this._t("hours"))}</label><input class="small" type="number" min="0" max="${d.max}" data-f="hours" value="${se(d.hours)}">
+        ${this._lab("hours", this._t("hours"))}<input class="small" type="number" min="0" max="${d.max}" data-f="hours" value="${se(d.hours)}">
+        ${this._howLine(Number(d.hours) > 0 ? this._t("how").silence.replace("{h}", d.hours) : this._t("how").silenceOff)}
         <div class="muted">${se(this._t("silenceHint"))}</div>
         ${d.observation ? `<label>${se(this._t("observation"))}</label><div class="muted">${se(d.observation)}</div>` : ""}`;
     }
     if (k === "network") {
-      return `<h2>${se(this._t("network"))}</h2><div class="muted">${se(this._t("networkHint"))}</div>
+      return `<h2>${se(this._t("network"))}${this._info("network", "", true)}</h2><div class="muted">${se(this._t("networkHint"))}</div>
         ${this._entityList("net", d.entities, d.choices)}${this._datalist("net", d.choices)}`;
     }
     if (k === "homecoming") {
@@ -460,15 +584,15 @@ class HauswachtSystemEditor extends HTMLElement {
         .join("");
       return `<h2>${se(this._t("homecoming"))}</h2>
         ${this._chk("observe", d.observe, this._t("observe"))}
-        <label>${se(this._t("persons"))}</label>${this._entityList("per", d.persons, d.person_choices)}${this._datalist("per", d.person_choices)}
-        <label>${se(this._t("ssids"))}</label><input data-f="ssids" value="${se(d.ssids.join(", "))}">
-        <label>${se(this._t("signals"))}</label><div class="muted">${se(this._t("signalsHint"))}</div>${signals}${this._datalist("sig", d.signal_choices)}
+        ${this._lab("persons", this._t("persons"))}${this._entityList("per", d.persons, d.person_choices)}${this._datalist("per", d.person_choices)}
+        ${this._lab("ssids", this._t("ssids"))}<input data-f="ssids" value="${se(d.ssids.join(", "))}">
+        ${this._lab("signals", this._t("signals"))}<div class="muted">${se(this._t("signalsHint"))}</div>${signals}${this._datalist("sig", d.signal_choices)}
         ${this._proofForm(d)}`;
     }
     if (k === "area") {
       return `<h2>${se(this.item ? this._t("area") : this._t("areaNew"))}</h2>
-        <label>${se(this._t("name"))}</label><input data-f="name" value="${se(d.name)}">${this._err("name")}
-        <label>${se(this._t("icon"))}</label><input data-f="icon" value="${se(d.icon)}">
+        ${this._lab("area_name", this._t("name"))}<input data-f="name" value="${se(d.name)}">${this._err("name")}
+        ${this._lab("area_icon", this._t("icon"))}<input data-f="icon" value="${se(d.icon)}">
         ${this.item ? `<label>${se(this._t("areaProfiles"))}</label><div class="muted">${se(d.profiles.join(", ") || this._t("none"))}</div>` : ""}${this._err("base")}`;
     }
     if (k === "page") {
@@ -483,9 +607,10 @@ class HauswachtSystemEditor extends HTMLElement {
         ${this._chk("end_alarm_without_pin", d.end_alarm_without_pin, this._t("endNoPin"))}
         ${this._chk("buttons_without_pin", d.buttons_without_pin, this._t("buttonsNoPin"))}
         ${this._chk("card_pin_unlinked", d.card_pin_unlinked, this._t("cardPinUnlinked"))}
+        ${this._howLine(this._pinHow(d))}
         <div class="box"><b>${se(this._t("master"))}</b> <span class="muted">${se(d.master ? this._t("masterSet") : this._t("masterNone"))}</span>
           <div class="muted">${se(this._t("masterHint"))}</div>
-          <label>${se(this._t("masterNew"))}</label><input type="password" inputmode="numeric" autocomplete="new-password" data-f="master_pin" value="${se(d.master_pin)}">${this._err("master_pin")}
+          ${this._lab("master_pin", this._t("masterNew"))}<input type="password" inputmode="numeric" autocomplete="new-password" data-f="master_pin" value="${se(d.master_pin)}">${this._err("master_pin")}
           ${d.master ? this._chk("remove_master_pin", d.remove_master_pin, this._t("masterRemove")) : ""}</div>`;
     }
     if (k === "actioncode") {
@@ -493,11 +618,12 @@ class HauswachtSystemEditor extends HTMLElement {
       const keypads = [[ac.all_keypads, this._t("allKeypads")], ...ac.keypads.map((x) => [x.id, x.name])];
       return `<h2>${se(this.item ? this._t("actioncode") : this._t("actioncodeNew"))}</h2>
         <div class="muted">${se(this._t("codeHint"))}</div>
-        <label>${se(this._t("name"))}</label><input data-f="name" value="${se(d.name)}">${this._err("name")}
-        <label>${se(this._t("code"))}</label><input class="small" inputmode="numeric" data-f="code" value="${se(d.code)}">${this._err("code")}
-        <label>${se(this._t("key"))}</label>${this._select("key", d.key, ac.keys.map((x) => [x, this._t("keys")[x] || x]))}
-        <label>${se(this._t("keypad"))}</label>${this._select("keypad", d.keypad, keypads)}
-        <label>${se(this._t("action"))}</label>${this._select("action", d.action, ac.actions.map((x) => [x, this._t("actions")[x] || x]))}
+        ${this._lab("ac_name", this._t("name"))}<input data-f="name" value="${se(d.name)}">${this._err("name")}
+        ${this._lab("ac_code", this._t("code"))}<input class="small" inputmode="numeric" data-f="code" value="${se(d.code)}">${this._err("code")}
+        ${this._lab("ac_key", this._t("key"))}${this._select("key", d.key, ac.keys.map((x) => [x, this._t("keys")[x] || x]))}
+        ${this._lab("ac_keypad", this._t("keypad"))}${this._select("keypad", d.keypad, keypads)}
+        ${this._lab("ac_action", this._t("action"))}${this._select("action", d.action, ac.actions.map((x) => [x, this._t("actions")[x] || x]))}
+        ${this._howLine((this._t("how").action || {})[d.action] || "")}
         ${d.action === "arm" ? `<label>${se(this._t("profile"))}</label>${this._select("profile", d.profile || "", [["", this._t("none")], ...sys.profiles.map((p) => [p.id, p.name])])}${this._err("profile")}` : ""}`;
     }
     if (k === "helper") {
@@ -505,16 +631,18 @@ class HauswachtSystemEditor extends HTMLElement {
       const types = this.settings.types.map((t) => [t, this.typeLabel ? this.typeLabel(t) : t]);
       const targets = [["__always__", this._t("targetAlways")], ...this.settings.groups.map((g) => [g.id, g.name])];
       return `<h2>${se(this._t("helper"))}</h2><div class="muted">${se(this._t("helperInfo"))}</div>
-        <label>${se(this._t("source"))}</label>${this._entityPick("source", d.source, sensors)}${this._err("source")}
+        ${this._lab("source", this._t("source"))}${this._entityPick("source", d.source, sensors)}${this._err("source")}
         <label>${se(this._t("helperName"))}</label><input data-f="name" value="${se(d.name)}">${this._err("name")}
-        <div class="inline"><div><label>${se(this._t("upper"))}</label><input class="small" type="number" step="any" data-f="upper" value="${se(d.upper)}"></div>
-        <div><label>${se(this._t("lower"))}</label><input class="small" type="number" step="any" data-f="lower" value="${se(d.lower)}"></div></div>
-        <label>${se(this._t("hysteresis"))}</label><input class="small" type="number" step="any" min="0" data-f="hysteresis" value="${se(d.hysteresis)}">
-        <label>${se(this._t("type"))}</label>${this._select("type", d.type, types)}
-        <label>${se(this._t("target"))}</label>${this._select("target", d.target, targets)}`;
+        <div class="inline"><div>${this._lab("upper", this._t("upper"))}<input class="small" type="number" step="any" data-f="upper" value="${se(d.upper)}"></div>
+        <div>${this._lab("lower", this._t("lower"))}<input class="small" type="number" step="any" data-f="lower" value="${se(d.lower)}"></div></div>
+        ${this._lab("hysteresis", this._t("hysteresis"))}<input class="small" type="number" step="any" min="0" data-f="hysteresis" value="${se(d.hysteresis)}">
+        ${this._howLine(this._helperHow(d))}
+        ${this._lab("type", this._t("type"))}${this._select("type", d.type, types)}
+        ${this._lab("target", this._t("target"))}${this._select("target", d.target, targets)}`;
     }
     return `<h2>${se(this._t("learn"))}</h2>
-      <label>${se(this._t("minutes"))}</label><input class="small" type="number" min="0" max="${this.settings.system.controls.learn_max}" data-f="minutes" value="${se(d.minutes)}">
+      ${this._lab("minutes", this._t("minutes"))}<input class="small" type="number" min="0" max="${this.settings.system.controls.learn_max}" data-f="minutes" value="${se(d.minutes)}">
+      ${this._howLine(Number(d.minutes) > 0 ? this._t("how").learn.replace("{m}", d.minutes) : this._t("how").learnOff)}
       <div class="muted">${se(this._t("learnHint"))}</div>`;
   }
 
@@ -626,7 +754,8 @@ class HauswachtSystemEditor extends HTMLElement {
       .chip .x { font-size: 1rem; padding: 0 4px; }
       .warn { border: 1px solid var(--warning-color, #ffa600); border-radius: 8px; padding: 8px 10px; margin: 8px 0; font-size: .9rem; }
       .info { border: none; background: none; color: var(--primary-color); cursor: help; font-size: 1rem; padding: 0 2px; }
-      .tip { font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); font-weight: normal; }
+      .tip[hidden] { display: none; }
+      .tip { display: block; font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); font-weight: normal; }
       .how { margin: 8px 0 4px; font-size: .9rem; }
       details.more { margin-top: 10px; }
       details.more summary { cursor: pointer; color: var(--primary-color); }`;
@@ -717,6 +846,10 @@ class HauswachtSystemEditor extends HTMLElement {
     root.querySelector('[data-f="proof_accuracy"]')?.addEventListener("change", redraw);
     // Auswahl, die andere Felder ein- oder ausblendet
     root.querySelectorAll('[data-f="behavior"], [data-f="action"], [data-b="enabled"]').forEach((el) => el.addEventListener("change", redraw));
+    // „So verhält sich das:“ nach jeder Änderung neu (0.62)
+    if (["pinrules", "silence", "learn", "helper"].includes(this.kind)) {
+      root.querySelectorAll("[data-b], [data-f]").forEach((el) => el.addEventListener("change", redraw));
+    }
   }
 
   _close() {
