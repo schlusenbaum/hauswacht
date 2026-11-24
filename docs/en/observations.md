@@ -58,6 +58,9 @@ block **Measurements**:
   |---|---|---|---|---|
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
+  Each column heading has an **ⓘ** (hover over it); below, **"What do the columns mean?"**
+  expands all explanations – on the phone too. A **silent pause** is an "away" without a door
+  before it, see [What is a silent pause?](#what-is-a-silent-pause).
   Homecoming counts the **earliest signal** per person, leaving counts **all signals** together
   – both as the profile automation counts (see [Leaving](#leaving-preparation-for-detect-leaving-without-pin)).
 - **Recommendation per person** for "detect leaving without PIN": ✅ reliable with waiting time,
@@ -153,7 +156,7 @@ One simple principle applies: **Nobody can leave without a door opening.**
 |---|---|
 | left through a door | a source reports "away", and an entry door opened up to 15 minutes before |
 | typical / longest until "away" | time from "door open" to "away" |
-| silent pause | "away" without a door opening before: the phone is asleep, the Wi-Fi hiccups – the person is actually at home |
+| silent pause | "away" without a door opening before: usually a sleeping phone – see [What is a silent pause?](#what-is-a-silent-pause) |
 | longest pause | how long the longest silent pause lasted |
 
 The most important line is **"all signals"** per person: it reports "away" only when no signal of
@@ -168,6 +171,36 @@ you see how often a signal alone reports "away".
 with **"arrived"** (home) and **"away from"** (away). "Towards" and "stationary" are skipped – so
 someone on the way back outside does not count as "back", and a walk does not count as leaving
 twice. They also appear as a line of their own in the table.
+
+### What is a silent pause?
+
+A **silent pause** is an "away" **without a door before it**: all signals of a person report
+"away", but **no entry door** opened in the 15 minutes before (or at most 1 minute after). The
+number in brackets on the settings page is the longest such pause in minutes – that is how long
+the person counted as "away" until a signal reported "home" again.
+
+Since nobody can leave without a door, a silent pause is usually a **sleeping phone**. But there
+are three typical causes – the table (CSV) or the person's history in Home Assistant helps to
+look it up:
+
+| Cause | How to recognise it | What helps |
+|---|---|---|
+| **Phone asleep** – Wi-Fi off, ping gets no answer, the person is home | The person was home during that time, often at night | a signal that does not sleep (Wi-Fi sensor of the Companion app), or location "Always" |
+| **Signal too slow** – the person really left, but their last signal only reported "away" after more than 15 minutes | A door opened shortly before the pause, just more than 15 minutes before | a faster signal; with iCloud3, add the Companion app as "Mobile App" (otherwise iCloud3 only notices leaving the zone at its next poll) |
+| **Door without a contact** – out through the garage, basement or patio | No door in the history, but the person was out | add the door with a contact as an entry door |
+
+**Example:** Finja goes through the front door at 17:07. Her iPhone only reports the location
+"Town" at 17:22:52 – 15½ minutes later. Hauswacht finds no door in the 15 minutes before and
+counts a silent pause, although she really left (cause "signal too slow").
+
+Why it matters: for the later [exit detection](#leaving-preparation-for-detect-leaving-without-pin)
+Hauswacht waits silently after a door opening for the phone to report "away". If a phone happens
+to fall asleep exactly then, a burglary would look like "leaving". That is why Hauswacht warns
+when silent pauses are longer than the waiting time.
+
+**After a reset** (from 0.61): an "away" without a door in the first 15 minutes after resetting
+all measurements (or starting the observation) does **not** count as a silent pause. The door may
+have opened shortly before the reset – Hauswacht does not know, so it leaves this "away" out.
 
 ### Recommendation per person
 

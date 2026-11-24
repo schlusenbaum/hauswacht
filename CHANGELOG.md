@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.61.0b5] - 2026-11-24
+
+**Vorabversion: Messungen besser erklärt.**
+
+### Behoben
+- Weggehen: Ein „weg“ ohne Tür in den ersten 15 Minuten nach dem Zurücksetzen aller Messungen
+  (oder dem Start der Beobachtung) zählt nicht mehr als Schweigepause. Die Tür kann kurz vor dem
+  Zurücksetzen aufgegangen sein – bisher wurde ein ganz normales Weggehen so zur langen Pause.
+
+### Hinzugefügt
+- Einstellungsseite → Messungen: ⓘ an jeder Spalte (Mauszeiger) und „Was bedeuten die
+  Spalten?“ zum Aufklappen.
+- Doku: neuer Abschnitt „Was ist eine Schweigepause?“ mit den drei typischen Ursachen (Handy
+  schläft, Signal zu langsam, Tür ohne Kontakt), Beispiel und Tipp für iCloud3.
+
 ## [0.61.0b4] - 2026-11-23
 
 **Vorabversion: Einstellungsseite ausblenden statt abschalten** (ADR 0011 Nachtrag 0.61, Schritt 4

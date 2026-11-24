@@ -108,6 +108,7 @@ class HomecomingObserver:
         self._cache: dict[str, tuple[Any, Any]] = {}
         self.since: float | None = None
         self.departure_since: float | None = None  # Beginn der Messung "Weggehen"
+        self.doors_since: float | None = None  # seit wann Türöffnungen bekannt sind
         self.entries: list[dict[str, Any]] = []
         self._entry_open: dict[str, Any] | None = None
         # Kombination fürs Weggehen: nur echte Anwesenheits-Signale, ohne Richtung (ADR 0014)
@@ -132,11 +133,14 @@ class HomecomingObserver:
         self.entries = list(stored.get("entries", []))
         self.since = stored.get("since")
         self.departure_since = stored.get("departure_since")
+        self.doors_since = stored.get("doors_since", self.since)
         if not self.enabled:
             return
         now = dt_util.utcnow().timestamp()
         if self.since is None:
             self.since = now
+        if self.doors_since is None:
+            self.doors_since = self.since
         if self.departure_since is None:
             # Weggehen wird erst seit 0.60 gemessen – ältere Beobachtungstage zählen nicht
             self.departure_since = now
@@ -345,6 +349,7 @@ class HomecomingObserver:
             self.departures = []
             self.departure_since = now
         if part == "all":
+            self.doors_since = now
             self.doors = []
             self.arrivals = []
             self.entries = []
@@ -361,6 +366,7 @@ class HomecomingObserver:
             "departures": self.departures,
             "since": self.since,
             "departure_since": self.departure_since,
+            "doors_since": self.doors_since,
             "entries": self.entries,
         }
 
@@ -458,7 +464,7 @@ class HomecomingObserver:
     def departure_verdicts(self) -> list[DepartureVerdict]:
         # Offene Pausen zählen bis "jetzt" – deshalb höchstens eine Minute alt
         now = int(dt_util.utcnow().timestamp() // 60)
-        key = (self._rev, self.since, self.departure_since, now)
+        key = (self._rev, self.since, self.departure_since, self.doors_since, now)
         return self._cached("departures", key, self._departure_verdicts)  # type: ignore[no-any-return]
 
     def _departure_verdicts(self) -> list[DepartureVerdict]:
@@ -472,7 +478,9 @@ class HomecomingObserver:
             )
             for d in self.departures
         ]
-        return judge_departures(departures, arrivals, doors, dt_util.utcnow().timestamp())
+        return judge_departures(
+            departures, arrivals, doors, dt_util.utcnow().timestamp(), self.doors_since
+        )
 
     def departure_advice(self) -> dict[str, dict[str, Any]]:
         """Je Person: Empfehlung für "Rausgehen ohne PIN erkennen" (ADR 0014)."""

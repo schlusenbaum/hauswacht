@@ -58,6 +58,9 @@ Heimkehr-Beobachtung** → Block **Messungen**:
   |---|---|---|---|---|
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
+  Hinter jeder Spaltenüberschrift steht ein **ⓘ** (Mauszeiger drauf), darunter klappt
+  **„Was bedeuten die Spalten?“** alle Erklärungen auf – auch auf dem Handy. Eine
+  **Schweigepause** ist ein „weg“ ohne Tür davor, siehe [Was ist eine Schweigepause?](#was-ist-eine-schweigepause).
   Gezählt wird beim Heimkommen das **frühestes Signal** je Person, beim Rausgehen **alle
   Signale** zusammen – beides so, wie die Profil-Automatik zählt (siehe [Weggehen](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)).
 - **Empfehlung je Person** für „Rausgehen ohne PIN erkennen“: ✅ zuverlässig mit Wartezeit,
@@ -156,7 +159,7 @@ Es gilt ein einfacher Grundsatz: **Ohne geöffnete Tür kann niemand weggehen.**
 |---|---|
 | Rausgehen mit Tür | Eine Quelle meldet „weg“, und bis zu 15 Minuten vorher ging eine Eingangstür auf |
 | typisch / längste bis „weg“ | Zeit von „Tür auf“ bis „weg“ |
-| Schweigepause | „weg“, ohne dass vorher eine Tür aufging: Das Handy schläft, das WLAN hakt – die Person ist in Wahrheit zuhause |
+| Schweigepause | „weg“, ohne dass vorher eine Tür aufging: meist schläft das Handy – siehe [Was ist eine Schweigepause?](#was-ist-eine-schweigepause) |
 | längste Pause | wie lange die längste Schweigepause gedauert hat |
 
 Wichtig ist vor allem die Zeile **„alle Signale“** je Person: Sie meldet erst „weg“, wenn kein
@@ -171,6 +174,37 @@ weiter ohne Beleg – dort siehst du, wie oft ein Signal allein „weg“ meldet
 mit **„angekommen“** (zuhause) und **„entfernt sich“** (weg). „Nähert sich“ und „steht“ werden
 übergangen – wer draußen auf dem Rückweg ist, gilt also nicht als „zurück“, und ein Spaziergang
 zählt nicht als zweimal Rausgehen. In der Tabelle stehen sie zusätzlich als eigene Zeile.
+
+### Was ist eine Schweigepause?
+
+Eine **Schweigepause** ist ein „weg“ **ohne Tür davor**: Alle Signale einer Person melden „weg“,
+aber in den 15 Minuten davor (oder höchstens 1 Minute danach) ging **keine Eingangstür** auf.
+Die Zahl in Klammern auf der Einstellungsseite ist die längste solche Pause in Minuten – so
+lange galt die Person als „weg“, bis ein Signal wieder „zuhause“ meldete.
+
+Weil ohne Tür niemand weggehen kann, ist eine Schweigepause meistens ein **schlafendes Handy**.
+Es gibt aber drei typische Ursachen – beim Nachschauen hilft die Tabelle (CSV) oder der Verlauf
+der Person in Home Assistant:
+
+| Ursache | Woran man es erkennt | Was hilft |
+|---|---|---|
+| **Handy schläft** – WLAN aus, Ping kommt nicht durch, die Person ist zuhause | Die Person war in der Zeit zuhause, oft nachts | ein Signal, das nicht schläft (WLAN-Sensor der Companion App), oder Ortung „Immer“ |
+| **Signal zu langsam** – die Person ist wirklich gegangen, aber ihr letztes Signal meldete erst nach mehr als 15 Minuten „weg“ | Kurz vor der Pause ging eine Tür auf, nur länger als 15 Minuten davor | schnelleres Signal; bei iCloud3 die Companion App als „Mobile App“ eintragen (sonst merkt iCloud3 das Verlassen der Zone erst bei der nächsten Abfrage) |
+| **Tür ohne Kontakt** – raus durch Garage, Keller oder Terrasse | Keine Tür im Verlauf, die Person war aber unterwegs | Tür mit Kontakt als Eingangstür eintragen |
+
+**Beispiel:** Finja geht um 17:07 durch die Haustür. Ihr iPhone meldet den Ort „Stadt“ erst um
+17:22:52 – 15½ Minuten später. Hauswacht findet in den 15 Minuten davor keine Tür und zählt eine
+Schweigepause, obwohl sie wirklich weg war (Ursache „Signal zu langsam“).
+
+Warum das zählt: Für die spätere [Ausgangserkennung](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)
+wartet Hauswacht nach einer Türöffnung still, ob das Handy „weg“ meldet. Schläft ein Handy
+zufällig genau dann ein, sähe ein Einbruch wie „Rausgehen“ aus. Deshalb warnt Hauswacht, wenn
+Schweigepausen länger sind als die Wartezeit.
+
+**Nach dem Zurücksetzen** (ab 0.61): Ein „weg“ ohne Tür in den ersten 15 Minuten nach dem
+Zurücksetzen aller Messungen (oder dem Start der Beobachtung) zählt **nicht** als Schweigepause.
+Die Tür kann kurz vor dem Zurücksetzen aufgegangen sein – Hauswacht weiß es nicht und lässt
+dieses „weg“ deshalb weg.
 
 ### Empfehlung je Person
 
