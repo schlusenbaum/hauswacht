@@ -103,11 +103,17 @@ Pro Person eine Zeile: **zuhause**, **weg** oder **unbekannt** – und warum. Be
 | Niklas: **zuhause** – alle Signale „weg“, aber kein Beleg | Alles sagt „weg“, aber es gibt keinen Beleg. Für Hauswacht zählt er weiter als **nicht weg**. |
 | Finja: **unbekannt** – unklar: Finja iPhone | Ein Signal liefert gerade nichts Brauchbares. |
 
-Darüber steht **pro Profil mit Automatik**, was „alle weg“ gerade macht:
+Darüber steht **pro Profil mit Automatik oder „Bei Rückkehr“** eine Zeile, was gerade los ist:
 
-- **„alle weg – scharf in 4:12“** – alle sind weg, die Wartezeit läuft. Danach wird das
-  Profil eingeschaltet.
-- **„wartet auf: Niklas, Finja“** – diese Personen gelten noch nicht als weg.
+| Anzeige | Bedeutung |
+|---|---|
+| **Abwesend** – wird scharf, wenn alle weg sind. Noch nicht weg: Niklas, Finja | Die Automatik wartet. Diese Personen gelten noch nicht als weg. |
+| **Abwesend** – alle weg, wird scharf in 4:12 | Alle sind weg, die Wartezeit läuft. Danach wird das Profil eingeschaltet. |
+| **Abwesend** – ist scharf (automatisch). Bei Rückkehr: unscharf mit Türbeleg | Das Profil ist scharf. „(automatisch)“ heißt: die Automatik hat es eingeschaltet. |
+| **Abwesend** – ist scharf. Bei Rückkehr: unscharf mit Türbeleg – Heimkehr erkannt, wartet auf die Tür (noch 4:30) | Jemand ist heimgekommen. Geht innerhalb der Zeit eine Eingangstür auf, wird unscharf geschaltet. |
+| **Abwesend** – Eingangsverzögerung läuft. Bei Rückkehr: … – Tür gesehen, wartet auf eine Heimkehr (noch 4:50) | Die Tür ging auf. Kommt innerhalb der Zeit jemand aus der Liste heim, wird unscharf geschaltet. |
+| **Abwesend** – ist scharf. Bei Rückkehr: unscharf, nur wenn automatisch scharf – greift jetzt nicht, weil von Hand scharf geschaltet | Bei dieser Einstellung schaltet eine Heimkehr nur ab, wenn die Automatik scharf geschaltet hat. |
+| **Abwesend** – nicht nötig, „Nacht“ ist scharf | Ein anderes Profil ist scharf. Die Automatik schaltet nie über ein anderes Profil hinweg. |
 
 Denselben Stand findest du auf der Einstellungsseite unter **System → Anwesenheit**
 („Wer gilt gerade als zuhause?“). Dort ist es der Stand beim Öffnen der Seite.
@@ -128,6 +134,10 @@ Der aktive Knopf ist hervorgehoben. Wie bei den Meldern gilt: **Die Simulation w
 Hauswacht.** Die Personen in Home Assistant und alle anderen Automationen bleiben unverändert.
 **Testmodus aus** oder ein **Neustart** setzt alles auf „Echt“ zurück.
 
+**Simulierte Türen zählen wie echte:** Stellst du im Testmodus eine Eingangstür in der Karte
+auf **Auf** (oder löst sie kurz aus), gilt das auch für „Bei Rückkehr“ (Türbeleg, Durchgang)
+und als Beleg für „weg“ (Tür + Signal). So lässt sich die ganze Heimkehr durchspielen.
+
 Die Wartezeit von „alle weg“ wird **nicht** verkürzt – die Anlage verhält sich genau wie im
 echten Betrieb. Damit du nicht warten musst, gibt es während der Wartezeit den Knopf
 **„Wartezeit überspringen“**: Er beendet die Wartezeit sofort, als wäre sie abgelaufen.
@@ -135,13 +145,16 @@ echten Betrieb. Damit du nicht warten musst, gibt es während der Wartezeit den 
 **Beispiel – scharf schalten, wenn alle weg sind:**
 
 1. Testmodus an.
-2. Bei allen Personen **Weg** drücken → oben steht „alle weg – scharf in …“.
+2. Bei allen Personen **Weg** drücken → beim Profil steht „alle weg, wird scharf in …“.
 3. **Wartezeit überspringen** → das Profil wird scharf geschaltet (Testmodus: keine Sirene).
-4. Bei einer Person **Nähert sich** drücken, dann die Haustür in der Karte **Auf** →
-   je nach „Bei Rückkehr“ wird unscharf geschaltet oder die Eingangsverzögerung läuft.
-5. Testmodus aus → alles wieder echt.
+4. Heimkehr mit „Bei Rückkehr: unscharf mit Türbeleg“: Haustür in der Karte **Auf** →
+   Eingangsverzögerung läuft, beim Profil steht „Tür gesehen, wartet auf eine Heimkehr“.
+   Dann bei dir **Zuhause** drücken → unscharf. Die Reihenfolge ist egal: erst **Zuhause**,
+   dann die Tür geht genauso.
+5. Mit **Nähert sich** vor der Tür testest du die längere Eingangsverzögerung beim Annähern.
+6. Testmodus aus → alles wieder echt.
 
-**Beispiel – kein Beleg:** Alle auf **Weg ohne Beleg** → oben steht weiter „wartet auf: …“.
+**Beispiel – kein Beleg:** Alle auf **Weg ohne Beleg** → beim Profil steht weiter „Noch nicht weg: …“.
 Genau so soll es sein: Ohne Beleg wird nicht automatisch scharf geschaltet.
 
 Noch nicht simulierbar sind zeitgesteuerte Automatiken (Uhrzeit).

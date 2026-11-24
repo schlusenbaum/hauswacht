@@ -16,6 +16,30 @@
 
 const DOMAIN = "hauswacht";
 
+// Profilzeile „Anwesenheit“: was die Automatik und „Bei Rückkehr“ gerade machen (ADR 0016)
+function hauswachtProfileLine(p, t, now) {
+  const mmss = (until) => {
+    const left = Math.max(0, Math.round(until - now));
+    return `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  };
+  const parts = [];
+  if (p.other_armed) parts.push(t.otherArmed.replace("{other}", p.other_armed));
+  else if (p.armed) {
+    parts.push((t.armedStates[p.state] || t.armedStates.armed) + (p.state === "armed" && p.auto ? ` ${t.auto}` : ""));
+  } else if (p.due) parts.push(t.due.replace("{time}", mmss(p.due)));
+  else if (p.away_persons) parts.push(t.whenAway.replace("{names}", (p.waiting || []).join(", ") || "–"));
+  else parts.push(t.notArmed);
+  const r = p["return"];
+  if (r && !p.other_armed) {
+    let text = t.ret.replace("{mode}", t.modes[r.mode] || r.mode);
+    if (r.active && r.mode === "auto_only" && !p.auto) text += ` – ${t.notNow}`;
+    else if (r.arrival_until && !r.door_until) text += ` – ${t.waitDoor.replace("{time}", mmss(r.arrival_until))}`;
+    else if (r.door_until && !r.arrival_until) text += ` – ${t.waitHome.replace("{time}", mmss(r.door_until))}`;
+    parts.push(text);
+  }
+  return parts.join(". ");
+}
+
 const TEXT = {
   de: {
     presence: {
@@ -28,9 +52,19 @@ const TEXT = {
       reasonNoProof: "alle Signale „weg“, aber kein Beleg – zählt nicht als weg",
       reasonUnclear: "unklar: {by}",
       proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
-      planDue: "alle weg – scharf in {m}:{s}",
-      planWaiting: "wartet auf: {names}",
-      planIdle: "–",
+      line: {
+        otherArmed: "nicht nötig, „{other}“ ist scharf",
+        armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
+        auto: "(automatisch)",
+        due: "alle weg, wird scharf in {time}",
+        whenAway: "wird scharf, wenn alle weg sind. Noch nicht weg: {names}",
+        notArmed: "nicht scharf",
+        ret: "Bei Rückkehr: {mode}",
+        modes: { auto_only: "unscharf, nur wenn automatisch scharf", door: "unscharf mit Türbeleg", always: "unscharf, auch nach Scharfschalten von Hand", passage: "reinlassen (Durchgang)" },
+        notNow: "greift jetzt nicht, weil von Hand scharf geschaltet",
+        waitDoor: "Heimkehr erkannt, wartet auf die Tür (noch {time})",
+        waitHome: "Tür gesehen, wartet auf eine Heimkehr (noch {time})",
+      },
       skip: "Wartezeit überspringen",
     },
     title: "Test",
@@ -116,9 +150,19 @@ const TEXT = {
       reasonNoProof: "all signals “away”, but no proof – does not count as away",
       reasonUnclear: "unclear: {by}",
       proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", simulated: "Proof: simulated", other: "Proof available" },
-      planDue: "all away – armed in {m}:{s}",
-      planWaiting: "waiting for: {names}",
-      planIdle: "–",
+      line: {
+        otherArmed: "not needed, \"{other}\" is armed",
+        armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },
+        auto: "(automatically)",
+        due: "all away, armed in {time}",
+        whenAway: "arms when everyone is away. Not away yet: {names}",
+        notArmed: "not armed",
+        ret: "On return: {mode}",
+        modes: { auto_only: "disarm, only if armed automatically", door: "disarm with door proof", always: "disarm, also after arming by hand", passage: "let in (passage)" },
+        notNow: "does not apply now, because armed by hand",
+        waitDoor: "homecoming seen, waiting for the door ({time} left)",
+        waitHome: "door seen, waiting for a homecoming ({time} left)",
+      },
       skip: "Skip waiting time",
     },
     title: "Test",
@@ -725,13 +769,15 @@ class HauswachtTestCard extends HTMLElement {
     const data = sim && sim.attributes.presence;
     const persons = data && data.persons ? Object.entries(data.persons) : [];
     const profiles = (data && data.profiles) || [];
-    const signature = JSON.stringify([testMode, persons, profiles, Math.floor(Date.now() / 30000)]);
-    if (signature === this._presenceSig) return;
+    // Sekundentakt nur, wenn ein Countdown läuft – sonst nicht ständig neu zeichnen
+    const ticking = profiles.some((p) => p.due || (p["return"] && (p["return"].arrival_until || p["return"].door_until)));
+    const signature = JSON.stringify([testMode, persons, profiles, ticking ? Math.floor(Date.now() / 1000) : 0]);
+    if (signature === this._presenceSig) return ticking;
     this._presenceSig = signature;
     const t = this._t("presence");
-    if (!persons.length) {
+    if (!persons.length && !profiles.length) {
       box.innerHTML = "";
-      return;
+      return false;
     }
     const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
     const buttons = ["home", "away", "away_no_proof", "approaching", "real"];
@@ -750,15 +796,7 @@ class HauswachtTestCard extends HTMLElement {
       .join("");
     const now = Date.now() / 1000;
     const plan = profiles
-      .map((p) => {
-        let text;
-        if (p.due) {
-          const left = Math.max(0, Math.round(p.due - now));
-          text = t.planDue.replace("{m}", String(Math.floor(left / 60))).replace("{s}", String(left % 60).padStart(2, "0"));
-        } else if (p.waiting && p.waiting.length) text = t.planWaiting.replace("{names}", p.waiting.join(", "));
-        else text = t.planIdle;
-        return `<div class="rule"><span>${esc(p.name)}</span><span>${esc(text)}</span></div>`;
-      })
+      .map((p) => `<div class="rule"><span><b>${esc(p.name)}</b> – ${esc(hauswachtProfileLine(p, t.line, now))}</span></div>`)
       .join("");
     const anyDue = profiles.some((p) => p.due);
     box.innerHTML = `<div class="rules"><div class="head">${esc(t.title)}</div>${plan}
@@ -769,6 +807,7 @@ class HauswachtTestCard extends HTMLElement {
       )
     );
     box.querySelector("button.skip")?.addEventListener("click", () => this._call(DOMAIN, "skip_wait", { entity_id: this._ids.panel }));
+    return ticking;
   }
 
   _call(domain, service, data, onError) {
@@ -796,7 +835,7 @@ class HauswachtTestCard extends HTMLElement {
     this._toggle.disabled = !this._ids.testMode;
     this._reset.disabled = !testMode;
     this._updateCodeReset();
-    this._updatePresence(testMode);
+    const presenceTicking = this._updatePresence(testMode);
 
     let waiting = this._updateRules();
     const byId = {};
@@ -826,7 +865,7 @@ class HauswachtTestCard extends HTMLElement {
         button.classList.toggle("active", testMode && (isSim ? value === simulated : value === "real"));
       }
     }
-    this._setTick(this._delayRunning || waiting);
+    this._setTick(this._delayRunning || waiting || presenceTicking);
   }
 }
 

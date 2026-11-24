@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.0b3] - 2026-11-24
+
+### Behoben
+
+- **Simulierte Türen zählen jetzt wie echte**: Eine im Testmodus auf „Auf“ gestellte (oder
+  kurz ausgelöste) Eingangstür gilt auch für „Bei Rückkehr“ (Türbeleg, Durchgang) und als
+  Beleg für „weg“ (Tür + Signal). Vorher kam sie nur in der Alarmlogik an – „Unscharf mit
+  Türbeleg“ ließ sich im Testmodus nicht ausprobieren.
+
+### Geändert
+
+- Testkarte und Einstellungsseite: klarere **Zeile je Profil**. Statt „wartet auf: Christian“
+  steht dort jetzt zum Beispiel „Abwesend – wird scharf, wenn alle weg sind. Noch nicht weg:
+  Christian“, „ist scharf (automatisch)“ oder „nicht nötig, ‚Nacht‘ ist scharf“.
+- Die Zeile zeigt auch, worauf **„Bei Rückkehr“** gerade wartet: „Heimkehr erkannt, wartet
+  auf die Tür (noch 4:30)“ oder „Tür gesehen, wartet auf eine Heimkehr (noch 4:50)“.
+
 ## [0.63.0b2] - 2026-11-24
 
 ### Behoben

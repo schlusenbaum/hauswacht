@@ -2425,6 +2425,11 @@ class HauswachtRuntime:
                 area._handle_sensor_change(entity_id, old, new, device_class)
             else:
                 area._notify()
+        if old == "off" and new == "on":
+            # Simulierte Eingangstür zählt wie die echte: „Bei Rückkehr“, Beleg für „weg“,
+            # Durchgang (ADR 0016) – sonst ließe sich das im Testmodus nicht ausprobieren
+            for area in self.areas.values():
+                area.automation.door_seen(entity_id)
 
     @callback
     def simulate_reset(self) -> None:
@@ -2516,6 +2521,9 @@ class HauswachtRuntime:
                     {
                         **row,
                         "name": area.profile_name(row["profile"]),
+                        "other_armed": (
+                            area.profile_name(row["other_armed"]) if row["other_armed"] else None
+                        ),
                         "waiting": [display_name(self.hass, p) for p in row["waiting"]],
                     }
                 )
@@ -2600,6 +2608,8 @@ class HauswachtRuntime:
         self._require_simulation(entity_id)
         for area in self.areas.values():
             area._simulate_trigger(entity_id)
+        for area in self.areas.values():
+            area.automation.door_seen(entity_id)  # kurz auslösen = Tür ging auf
 
     @callback
     def _simulate_trigger(self, entity_id: str) -> None:

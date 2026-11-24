@@ -795,3 +795,54 @@ async def test_simulated_home_after_approaching_ends_approach(hass: HomeAssistan
     await _sim_presence(hass, A, "approaching")
     await _sim_presence(hass, A, "away")
     assert _presence(hass)["persons"][A]["approach_at"] is None
+
+
+# --- 0.63.0b3: simulierte Tür zählt, Anzeige „Bei Rückkehr“ -------------------
+
+
+async def _sim_door(hass: HomeAssistant, state: str) -> None:
+    await _service(hass, "hauswacht", "simulate_state", entity_id=PANEL, sensor=DOOR, state=state)
+    await hass.async_block_till_done()
+
+
+async def _sim_armed(hass: HomeAssistant, mode: str = "door") -> None:
+    back = {"mode": mode, "persons": [A], "window": 5}
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15, **{"return": back})
+    await _test_mode(hass)
+    await _sim_presence(hass, A, "away")
+    await _sim_presence(hass, B, "away")
+    await _service(hass, "hauswacht", "skip_wait", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_simulated_door_counts_for_return(hass: HomeAssistant) -> None:
+    """Testmodus: simulierte Haustür + simuliertes „Zuhause“ = Türbeleg, unscharf."""
+    await _sim_armed(hass)
+    await _sim_door(hass, "on")
+    assert _state(hass) == AlarmControlPanelState.PENDING
+    line = _presence(hass)["profiles"][0]
+    assert line["armed"] is True
+    assert line["return"]["door_until"]
+    assert not line["return"]["arrival_until"]
+    await _sim_presence(hass, A, "home")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_simulated_home_then_door_disarms(hass: HomeAssistant) -> None:
+    await _sim_armed(hass)
+    await _sim_presence(hass, A, "home")
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    line = _presence(hass)["profiles"][0]
+    assert line["auto"] is True
+    assert line["return"]["arrival_until"]
+    await _sim_door(hass, "on")
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_profile_line_without_armed_profile(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    line = _presence(hass)["profiles"][0]
+    assert line["armed"] is False
+    assert line["away_persons"] is True
+    assert line["other_armed"] is None
+    assert len(line["waiting"]) == 2

@@ -100,11 +100,17 @@ One line per person: **home**, **away** or **unknown** – and why. Examples:
 | Niklas: **home** – all signals "away", but no proof | Everything says "away", but there is no proof. For Hauswacht he still counts as **not away**. |
 | Finja: **unknown** – unclear: Finja iPhone | A signal currently delivers nothing usable. |
 
-Above that, **for each profile with automation**, what "everyone away" is doing right now:
+Above that, **for each profile with automation or "On return"**, one line about what is going on:
 
-- **"all away – armed in 4:12"** – everyone is away, the waiting time is running. Afterwards
-  the profile is switched on.
-- **"waiting for: Niklas, Finja"** – these people do not count as away yet.
+| Display | Meaning |
+|---|---|
+| **Away** – arms when everyone is away. Not away yet: Niklas, Finja | The automation is waiting. These people do not count as away yet. |
+| **Away** – all away, armed in 4:12 | Everyone is away, the waiting time is running. Afterwards the profile is switched on. |
+| **Away** – is armed (automatically). On return: disarm with door proof | The profile is armed. "(automatically)" means the automation switched it on. |
+| **Away** – is armed. On return: disarm with door proof – homecoming seen, waiting for the door (4:30 left) | Someone came home. If an entry door opens within that time, the system disarms. |
+| **Away** – entry delay running. On return: … – door seen, waiting for a homecoming (4:50 left) | The door opened. If someone from the list comes home within that time, the system disarms. |
+| **Away** – is armed. On return: disarm, only if armed automatically – does not apply now, because armed by hand | With this setting a homecoming only disarms if the automation armed the system. |
+| **Away** – not needed, "Night" is armed | Another profile is armed. The automation never switches over another profile. |
 
 You find the same state on the settings page under **System → Presence** ("Who counts as home
 right now?"). There it is the state when the page was opened.
@@ -125,6 +131,10 @@ The active button is highlighted. As with sensors: **the simulation only affects
 The persons in Home Assistant and all other automations stay unchanged. **Test mode off** or a
 **restart** resets everything to "Real".
 
+**Simulated doors count like real ones:** if you set an entry door to **Open** in the card in
+test mode (or trigger it briefly), this also counts for "On return" (door proof, passage) and as
+proof for "away" (door + signal). This way you can play through the whole homecoming.
+
 The waiting time of "everyone away" is **not** shortened – the system behaves exactly as in
 real operation. So you do not have to wait, the button **"Skip waiting time"** appears while
 it runs: it ends the waiting time at once, as if it had expired.
@@ -132,14 +142,17 @@ it runs: it ends the waiting time at once, as if it had expired.
 **Example – arm when everyone is away:**
 
 1. Test mode on.
-2. Press **Away** for every person → the top says "all away – armed in …".
+2. Press **Away** for every person → the profile line says "all away, armed in …".
 3. **Skip waiting time** → the profile is armed (test mode: no siren).
-4. Press **Approaching** for one person, then **Open** the front door in the card →
-   depending on "On return" the system disarms or the entry delay runs.
-5. Test mode off → everything real again.
+4. Homecoming with "On return: disarm with door proof": **Open** the front door in the card →
+   the entry delay runs, the profile line says "door seen, waiting for a homecoming".
+   Then press **Home** for yourself → disarmed. The order does not matter: first **Home**,
+   then the door works just as well.
+5. Use **Approaching** before the door to test the longer entry delay when approaching.
+6. Test mode off → everything real again.
 
-**Example – no proof:** Set everyone to **Away without proof** → the top still says
-"waiting for: …". That is how it should be: without proof there is no automatic arming.
+**Example – no proof:** Set everyone to **Away without proof** → the profile line still says
+"Not away yet: …". That is how it should be: without proof there is no automatic arming.
 
 Time-based automations (time of day) cannot be simulated yet.
 

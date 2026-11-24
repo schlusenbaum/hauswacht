@@ -7,6 +7,30 @@
 // hauswacht-panel-edit.js (Melder), -profile.js (Profile), -rules.js (Auslöseregeln),
 // -alarm.js (Alarmgeber, Benachrichtigungen).
 
+// Profilzeile „Anwesenheit“: was die Automatik und „Bei Rückkehr“ gerade machen (ADR 0016)
+function hauswachtProfileLine(p, t, now) {
+  const mmss = (until) => {
+    const left = Math.max(0, Math.round(until - now));
+    return `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  };
+  const parts = [];
+  if (p.other_armed) parts.push(t.otherArmed.replace("{other}", p.other_armed));
+  else if (p.armed) {
+    parts.push((t.armedStates[p.state] || t.armedStates.armed) + (p.state === "armed" && p.auto ? ` ${t.auto}` : ""));
+  } else if (p.due) parts.push(t.due.replace("{time}", mmss(p.due)));
+  else if (p.away_persons) parts.push(t.whenAway.replace("{names}", (p.waiting || []).join(", ") || "–"));
+  else parts.push(t.notArmed);
+  const r = p["return"];
+  if (r && !p.other_armed) {
+    let text = t.ret.replace("{mode}", t.modes[r.mode] || r.mode);
+    if (r.active && r.mode === "auto_only" && !p.auto) text += ` – ${t.notNow}`;
+    else if (r.arrival_until && !r.door_until) text += ` – ${t.waitDoor.replace("{time}", mmss(r.arrival_until))}`;
+    else if (r.door_until && !r.arrival_until) text += ` – ${t.waitHome.replace("{time}", mmss(r.door_until))}`;
+    parts.push(text);
+  }
+  return parts.join(". ");
+}
+
 const TEXTS = {
   de: {
     title: "Hauswacht",
@@ -116,8 +140,19 @@ const TEXTS = {
       noProof: "kein Beleg – zählt nicht als weg",
       unclear: "unklar: {by}",
       proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", simulated: "simuliert", other: "Beleg vorhanden" },
-      due: "alle weg – Profil wird bald eingeschaltet",
-      waiting: "wartet auf: {names}",
+      line: {
+        otherArmed: "nicht nötig, „{other}“ ist scharf",
+        armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
+        auto: "(automatisch)",
+        due: "alle weg, wird scharf in {time}",
+        whenAway: "wird scharf, wenn alle weg sind. Noch nicht weg: {names}",
+        notArmed: "nicht scharf",
+        ret: "Bei Rückkehr: {mode}",
+        modes: { auto_only: "unscharf, nur wenn automatisch scharf", door: "unscharf mit Türbeleg", always: "unscharf, auch nach Scharfschalten von Hand", passage: "reinlassen (Durchgang)" },
+        notNow: "greift jetzt nicht, weil von Hand scharf geschaltet",
+        waitDoor: "Heimkehr erkannt, wartet auf die Tür (noch {time})",
+        waitHome: "Tür gesehen, wartet auf eine Heimkehr (noch {time})",
+      },
     },
     measResetAll: "Alle Messungen zurücksetzen",
     measResetSilence: "Messung zurücksetzen",
@@ -298,8 +333,19 @@ const TEXTS = {
       noProof: "no proof – does not count as away",
       unclear: "unclear: {by}",
       proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", simulated: "simulated", other: "proof available" },
-      due: "all away – profile will be switched on soon",
-      waiting: "waiting for: {names}",
+      line: {
+        otherArmed: "not needed, \"{other}\" is armed",
+        armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },
+        auto: "(automatically)",
+        due: "all away, armed in {time}",
+        whenAway: "arms when everyone is away. Not away yet: {names}",
+        notArmed: "not armed",
+        ret: "On return: {mode}",
+        modes: { auto_only: "disarm, only if armed automatically", door: "disarm with door proof", always: "disarm, also after arming by hand", passage: "let in (passage)" },
+        notNow: "does not apply now, because armed by hand",
+        waitDoor: "homecoming seen, waiting for the door ({time} left)",
+        waitHome: "door seen, waiting for a homecoming ({time} left)",
+      },
     },
     measResetAll: "Reset all measurements",
     measResetSilence: "Reset measurement",
@@ -924,9 +970,9 @@ class HauswachtPanel extends HTMLElement {
     const persons = Object.values(st.persons)
       .map((row) => `<div>${escHtml(row.name)}: <b>${escHtml(t.states[row.state] || row.state)}</b> <span class="muted">(${escHtml(why(row))})</span></div>`)
       .join("");
+    const now = Date.now() / 1000;
     const profiles = (st.profiles || [])
-      .filter((p) => p.due || (p.waiting && p.waiting.length))
-      .map((p) => `<div class="muted">${escHtml(p.name)}: ${escHtml(p.due ? t.due : t.waiting.replace("{names}", p.waiting.join(", ")))}</div>`)
+      .map((p) => `<div class="muted">${escHtml(p.name)} – ${escHtml(hauswachtProfileLine(p, t.line, now))}</div>`)
       .join("");
     return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div></div>`;
   }
