@@ -54,8 +54,8 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 | Wann | Inhalt |
 |---|---|
 | 0.62 | Erklärungen (ⓘ, „So verhält sich das“, „Mehr Einstellungen“) für alle übrigen Einstellungen |
-| 0.63 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
-| vorgemerkt | Testkarte: An- und Abwesenheit je Person simulieren und prüfen, ob „Scharf, wenn alle weg“ und „Bei Rückkehr“ richtig reagieren – erst besprechen, dann ADR |
+| 0.63 | Anwesenheit in der Testkarte ([ADR 0016](entwicklung/adr/0016-anwesenheit-testen.md)): je Person sehen, warum sie für Hauswacht zuhause, weg oder unbekannt ist (auch ohne Testmodus, auch auf der Einstellungsseite); im Testmodus Zuhause, Weg, Weg ohne Beleg, Nähert sich simulieren und „Wartezeit überspringen“ – nur für Hauswacht, nicht in den Messungen |
+| 0.64 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |

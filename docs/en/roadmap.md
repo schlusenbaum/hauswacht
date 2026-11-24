@@ -54,8 +54,8 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | When | Content |
 |---|---|
 | 0.62 | Explanations (ⓘ, "this is how it behaves", "more settings") for all other settings |
-| 0.63 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
-| noted | Test card: simulate presence and absence per person and check that "arm when all away" and "On return" react correctly – discuss first, then ADR |
+| 0.63 | Presence in the test card ([ADR 0016](../entwicklung/adr/0016-anwesenheit-testen.md), German): see per person why they are home, away or unknown for Hauswacht (also without test mode, also on the settings page); in test mode simulate home, away, away without proof, approaching and "skip waiting time" – for Hauswacht only, not in the measurements |
+| 0.64 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
