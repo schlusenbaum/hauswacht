@@ -7,6 +7,30 @@
 // hauswacht-panel-edit.js (Melder), -profile.js (Profile), -rules.js (Auslöseregeln),
 // -alarm.js (Alarmgeber, Benachrichtigungen).
 
+// Profilzeile „Anwesenheit“: was die Automatik und „Bei Rückkehr“ gerade machen (ADR 0016)
+function hauswachtProfileLine(p, t, now) {
+  const mmss = (until) => {
+    const left = Math.max(0, Math.round(until - now));
+    return `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  };
+  const parts = [];
+  if (p.other_armed) parts.push(t.otherArmed.replace("{other}", p.other_armed));
+  else if (p.armed) {
+    parts.push((t.armedStates[p.state] || t.armedStates.armed) + (p.state === "armed" && p.auto ? ` ${t.auto}` : ""));
+  } else if (p.due) parts.push(t.due.replace("{time}", mmss(p.due)));
+  else if (p.away_persons) parts.push(t.whenAway.replace("{names}", (p.waiting || []).join(", ") || "–"));
+  else parts.push(t.notArmed);
+  const r = p["return"];
+  if (r && !p.other_armed) {
+    let text = t.ret.replace("{mode}", t.modes[r.mode] || r.mode);
+    if (r.active && r.mode === "auto_only" && !p.auto) text += ` – ${t.notNow}`;
+    else if (r.arrival_until && !r.door_until) text += ` – ${t.waitDoor.replace("{time}", mmss(r.arrival_until))}`;
+    else if (r.door_until && !r.arrival_until) text += ` – ${t.waitHome.replace("{time}", mmss(r.door_until))}`;
+    parts.push(text);
+  }
+  return parts.join(". ");
+}
+
 const TEXTS = {
   de: {
     title: "Hauswacht",
@@ -107,6 +131,29 @@ const TEXTS = {
     measResetArrival: "Heimkommen zurücksetzen",
     measAskArrival: "Messung „Heimkommen“ löschen und neu beginnen? Weggehen und Eingänge bleiben erhalten.",
     measResetLeaving: "Weggehen zurücksetzen",
+    presenceNow: {
+      title: "Wer gilt gerade als zuhause?",
+      hint: "Stand beim Öffnen der Seite. Im Testmodus kannst du die Anwesenheit in der Testkarte simulieren.",
+      states: { home: "zuhause", away: "weg", unknown: "unbekannt" },
+      sim: "simuliert",
+      home: "laut {by}",
+      noProof: "kein Beleg – zählt nicht als weg",
+      unclear: "unklar: {by}",
+      proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", simulated: "simuliert", other: "Beleg vorhanden" },
+      line: {
+        otherArmed: "nicht nötig, „{other}“ ist scharf",
+        armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
+        auto: "(automatisch)",
+        due: "alle weg, wird scharf in {time}",
+        whenAway: "wird scharf, wenn alle weg sind. Noch nicht weg: {names}",
+        notArmed: "nicht scharf",
+        ret: "Bei Rückkehr: {mode}",
+        modes: { auto_only: "unscharf, nur wenn automatisch scharf", door: "unscharf mit Türbeleg", always: "unscharf, auch nach Scharfschalten von Hand", passage: "reinlassen (Durchgang)" },
+        notNow: "greift jetzt nicht, weil von Hand scharf geschaltet",
+        waitDoor: "Heimkehr erkannt, wartet auf die Tür (noch {time})",
+        waitHome: "Tür gesehen, wartet auf eine Heimkehr (noch {time})",
+      },
+    },
     measResetAll: "Alle Messungen zurücksetzen",
     measResetSilence: "Messung zurücksetzen",
     measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkommen und Eingänge bleiben erhalten.",
@@ -277,6 +324,29 @@ const TEXTS = {
     measResetArrival: "Reset homecoming",
     measAskArrival: "Delete the “homecoming” measurement and start again? Leaving and entries are kept.",
     measResetLeaving: "Reset leaving",
+    presenceNow: {
+      title: "Who counts as home right now?",
+      hint: "State when the page was opened. In test mode you can simulate presence in the test card.",
+      states: { home: "home", away: "away", unknown: "unknown" },
+      sim: "simulated",
+      home: "according to {by}",
+      noProof: "no proof – does not count as away",
+      unclear: "unclear: {by}",
+      proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", simulated: "simulated", other: "proof available" },
+      line: {
+        otherArmed: "not needed, \"{other}\" is armed",
+        armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },
+        auto: "(automatically)",
+        due: "all away, armed in {time}",
+        whenAway: "arms when everyone is away. Not away yet: {names}",
+        notArmed: "not armed",
+        ret: "On return: {mode}",
+        modes: { auto_only: "disarm, only if armed automatically", door: "disarm with door proof", always: "disarm, also after arming by hand", passage: "let in (passage)" },
+        notNow: "does not apply now, because armed by hand",
+        waitDoor: "homecoming seen, waiting for the door ({time} left)",
+        waitHome: "door seen, waiting for a homecoming ({time} left)",
+      },
+    },
     measResetAll: "Reset all measurements",
     measResetSilence: "Reset measurement",
     measAskLeaving: "Delete the “leaving” measurement and start again? Homecoming and entries are kept.",
@@ -885,6 +955,28 @@ class HauswachtPanel extends HTMLElement {
     return general + table + reset;
   }
 
+  _presenceNowHtml(st) {
+    if (!st || !st.persons || !Object.keys(st.persons).length) return "";
+    const t = this._t("presenceNow");
+    const why = (row) => {
+      const r = row.reason || {};
+      if (r.kind === "simulated") return t.sim;
+      if (r.kind === "home") return t.home.replace("{by}", (r.by || []).join(", ") || "–");
+      if (r.kind === "away") return t.proofs[r.proof] || t.proofs.other;
+      if (r.kind === "no_proof") return t.noProof;
+      if (r.kind === "unclear") return t.unclear.replace("{by}", (r.by || []).join(", ") || "–");
+      return "";
+    };
+    const persons = Object.values(st.persons)
+      .map((row) => `<div>${escHtml(row.name)}: <b>${escHtml(t.states[row.state] || row.state)}</b> <span class="muted">(${escHtml(why(row))})</span></div>`)
+      .join("");
+    const now = Date.now() / 1000;
+    const profiles = (st.profiles || [])
+      .map((p) => `<div class="muted">${escHtml(p.name)} – ${escHtml(hauswachtProfileLine(p, t.line, now))}</div>`)
+      .join("");
+    return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div></div>`;
+  }
+
   _measurementsHtml(m) {
     // Messungen der Heimkehr-Beobachtung: einsehen, speichern, zurücksetzen
     if (!m) return `<div class="muted">${escHtml(this._t("measOff"))}</div>`;
@@ -987,7 +1079,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
       this._card(this._t("silence"), this._silenceHtml(sys.silence) + edit("silence"), "silence") +
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
-      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}${leaving}`, "homecoming") +
+      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${this._presenceNowHtml(h.status)}${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
       this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage")
     );

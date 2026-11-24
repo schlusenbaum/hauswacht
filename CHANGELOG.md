@@ -6,6 +6,73 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.0] - 2026-11-24
+
+Zusammenfassung von 0.63.0b1 bis 0.63.0b3 – **Anwesenheit testen** ([ADR 0016](docs/entwicklung/adr/0016-anwesenheit-testen.md)).
+
+### Hinzugefügt
+
+- **Block „Anwesenheit“ in der Testkarte**: je Person zuhause, weg oder unbekannt und warum
+  (welches Signal, welcher Beleg, „kein Beleg“) – auch ohne Testmodus.
+- **Zeile je Profil**: was Automatik und „Bei Rückkehr“ gerade machen – „wird scharf, wenn
+  alle weg sind. Noch nicht weg: …“, „alle weg, wird scharf in 4:12“, „ist scharf
+  (automatisch)“, „Heimkehr erkannt, wartet auf die Tür (noch 4:30)“, „nicht nötig, ‚Nacht‘
+  ist scharf“.
+- **Anwesenheit simulieren** im Testmodus: Zuhause, Weg, Weg ohne Beleg, Nähert sich, Echt –
+  nur für Hauswacht; Testmodus aus oder Neustart setzt alles zurück.
+- **„Wartezeit überspringen“** für eine laufende „alle weg“-Wartezeit.
+- Einstellungsseite, System → Anwesenheit: **„Wer gilt gerade als zuhause?“**.
+- Aktionen `hauswacht.simulate_presence`, `hauswacht.skip_wait`, Ereignis `PresenceSimulated`.
+- Doku: [Anwesenheit testen](docs/testmodus.md#anwesenheit-testen) mit Beispielen.
+
+### Geändert
+
+- **Simulierte Eingangstüren zählen wie echte**: für „Bei Rückkehr“ (Türbeleg, Durchgang)
+  und als Beleg für „weg“ (Tür + Signal).
+
+## [0.63.0b3] - 2026-11-24
+
+### Behoben
+
+- **Simulierte Türen zählen jetzt wie echte**: Eine im Testmodus auf „Auf“ gestellte (oder
+  kurz ausgelöste) Eingangstür gilt auch für „Bei Rückkehr“ (Türbeleg, Durchgang) und als
+  Beleg für „weg“ (Tür + Signal). Vorher kam sie nur in der Alarmlogik an – „Unscharf mit
+  Türbeleg“ ließ sich im Testmodus nicht ausprobieren.
+
+### Geändert
+
+- Testkarte und Einstellungsseite: klarere **Zeile je Profil**. Statt „wartet auf: Christian“
+  steht dort jetzt zum Beispiel „Abwesend – wird scharf, wenn alle weg sind. Noch nicht weg:
+  Christian“, „ist scharf (automatisch)“ oder „nicht nötig, ‚Nacht‘ ist scharf“.
+- Die Zeile zeigt auch, worauf **„Bei Rückkehr“** gerade wartet: „Heimkehr erkannt, wartet
+  auf die Tür (noch 4:30)“ oder „Tür gesehen, wartet auf eine Heimkehr (noch 4:50)“.
+
+## [0.63.0b2] - 2026-11-24
+
+### Behoben
+
+- Testkarte: Nach „Nähert sich“ und dann „Zuhause“ stand weiter „nähert sich“ hinter der
+  Person. Wer zuhause ist, nähert sich nicht mehr – der Hinweis verschwindet jetzt. Nach
+  „Weg“, „Weg ohne Beleg“ oder „Echt“ wird eine simulierte Annäherung ganz verworfen.
+
+## [0.63.0b1] - 2026-11-24
+
+### Hinzugefügt
+
+- **Anwesenheit in der Testkarte** (ADR 0016): Block „Anwesenheit“ mit jeder Person – zuhause,
+  weg oder unbekannt und **warum** (welches Signal, welcher Beleg, „kein Beleg“). Darüber je
+  Profil mit Automatik, was „alle weg“ gerade macht („scharf in 4:12“ oder „wartet auf …“).
+  Sichtbar auch ohne Testmodus.
+- **Anwesenheit simulieren** im Testmodus: Zuhause, Weg, Weg ohne Beleg, Nähert sich, Echt –
+  nur für Hauswacht, Personen in Home Assistant bleiben unverändert. Testmodus aus oder
+  Neustart setzt alles zurück.
+- Knopf **„Wartezeit überspringen“** beendet eine laufende „alle weg“-Wartezeit sofort.
+- Aktionen `hauswacht.simulate_presence` und `hauswacht.skip_wait`, Ereignis
+  `PresenceSimulated`.
+- Einstellungsseite, System → Anwesenheit: **„Wer gilt gerade als zuhause?“** mit demselben
+  Stand.
+- Doku: [Anwesenheit testen](docs/testmodus.md#anwesenheit-testen).
+
 ## [0.62.0] - 2026-11-24
 
 **Erklärungen direkt an jeder Einstellung** (getestet über die Vorabversionen 0.62.0b1 bis b3).

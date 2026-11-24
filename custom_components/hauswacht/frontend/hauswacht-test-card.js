@@ -16,8 +16,57 @@
 
 const DOMAIN = "hauswacht";
 
+// Profilzeile „Anwesenheit“: was die Automatik und „Bei Rückkehr“ gerade machen (ADR 0016)
+function hauswachtProfileLine(p, t, now) {
+  const mmss = (until) => {
+    const left = Math.max(0, Math.round(until - now));
+    return `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  };
+  const parts = [];
+  if (p.other_armed) parts.push(t.otherArmed.replace("{other}", p.other_armed));
+  else if (p.armed) {
+    parts.push((t.armedStates[p.state] || t.armedStates.armed) + (p.state === "armed" && p.auto ? ` ${t.auto}` : ""));
+  } else if (p.due) parts.push(t.due.replace("{time}", mmss(p.due)));
+  else if (p.away_persons) parts.push(t.whenAway.replace("{names}", (p.waiting || []).join(", ") || "–"));
+  else parts.push(t.notArmed);
+  const r = p["return"];
+  if (r && !p.other_armed) {
+    let text = t.ret.replace("{mode}", t.modes[r.mode] || r.mode);
+    if (r.active && r.mode === "auto_only" && !p.auto) text += ` – ${t.notNow}`;
+    else if (r.arrival_until && !r.door_until) text += ` – ${t.waitDoor.replace("{time}", mmss(r.arrival_until))}`;
+    else if (r.door_until && !r.arrival_until) text += ` – ${t.waitHome.replace("{time}", mmss(r.door_until))}`;
+    parts.push(text);
+  }
+  return parts.join(". ");
+}
+
 const TEXT = {
   de: {
+    presence: {
+      title: "Anwesenheit",
+      states: { home: "zuhause", away: "weg", unknown: "unbekannt" },
+      approaching: "nähert sich",
+      buttons: { home: "Zuhause", away: "Weg", away_no_proof: "Weg ohne Beleg", approaching: "Nähert sich", real: "Echt" },
+      reasonSim: "simuliert (nur für Hauswacht)",
+      reasonHome: "zuhause laut: {by}",
+      reasonNoProof: "alle Signale „weg“, aber kein Beleg – zählt nicht als weg",
+      reasonUnclear: "unklar: {by}",
+      proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
+      line: {
+        otherArmed: "nicht nötig, „{other}“ ist scharf",
+        armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
+        auto: "(automatisch)",
+        due: "alle weg, wird scharf in {time}",
+        whenAway: "wird scharf, wenn alle weg sind. Noch nicht weg: {names}",
+        notArmed: "nicht scharf",
+        ret: "Bei Rückkehr: {mode}",
+        modes: { auto_only: "unscharf, nur wenn automatisch scharf", door: "unscharf mit Türbeleg", always: "unscharf, auch nach Scharfschalten von Hand", passage: "reinlassen (Durchgang)" },
+        notNow: "greift jetzt nicht, weil von Hand scharf geschaltet",
+        waitDoor: "Heimkehr erkannt, wartet auf die Tür (noch {time})",
+        waitHome: "Tür gesehen, wartet auf eine Heimkehr (noch {time})",
+      },
+      skip: "Wartezeit überspringen",
+    },
     title: "Test",
     testOff: "Simulieren geht nur im Testmodus. Im Testmodus lösen keine Sirenen aus, und Benachrichtigungen tragen „[TEST]“.",
     testOn: "Testmodus an – keine Sirenen. Simuliert wird nur für Hauswacht; Geräte und andere Automationen merken nichts.",
@@ -91,6 +140,31 @@ const TEXT = {
     ruleBlocked: "gesperrt durch Ausnahme",
   },
   en: {
+    presence: {
+      title: "Presence",
+      states: { home: "home", away: "away", unknown: "unknown" },
+      approaching: "approaching",
+      buttons: { home: "Home", away: "Away", away_no_proof: "Away without proof", approaching: "Approaching", real: "Real" },
+      reasonSim: "simulated (for Hauswacht only)",
+      reasonHome: "home according to: {by}",
+      reasonNoProof: "all signals “away”, but no proof – does not count as away",
+      reasonUnclear: "unclear: {by}",
+      proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", simulated: "Proof: simulated", other: "Proof available" },
+      line: {
+        otherArmed: "not needed, \"{other}\" is armed",
+        armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },
+        auto: "(automatically)",
+        due: "all away, armed in {time}",
+        whenAway: "arms when everyone is away. Not away yet: {names}",
+        notArmed: "not armed",
+        ret: "On return: {mode}",
+        modes: { auto_only: "disarm, only if armed automatically", door: "disarm with door proof", always: "disarm, also after arming by hand", passage: "let in (passage)" },
+        notNow: "does not apply now, because armed by hand",
+        waitDoor: "homecoming seen, waiting for the door ({time} left)",
+        waitHome: "door seen, waiting for a homecoming ({time} left)",
+      },
+      skip: "Skip waiting time",
+    },
     title: "Test",
     testOff: "Simulation only works in test mode. In test mode no siren sounds and notifications carry \"[TEST]\".",
     testOn: "Test mode on – no sirens. Simulated for Hauswacht only; devices and other automations notice nothing.",
@@ -211,6 +285,9 @@ const STYLE = `
   .rules .head { color: var(--secondary-text-color); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
   .rules .rule { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
   .rules .rule.active { color: var(--warning-color); }
+  .presence .btns { display: flex; gap: 4px; flex-wrap: wrap; }
+  .presence button.active { border-color: var(--primary-color); color: var(--primary-color); }
+  .presence button.skip { margin-top: 4px; }
   .rules .rule-text { color: var(--secondary-text-color); font-size: 0.85em; margin: 0 0 4px; }
   .phase.alarm { background: var(--error-color); color: var(--text-primary-color, #fff); }
   .phase.delay { background: var(--warning-color); color: var(--text-primary-color, #fff); }
@@ -382,6 +459,11 @@ class HauswachtTestCard extends HTMLElement {
     );
     actions.append(this._toggle, this._reset, this._codeReset);
     card.appendChild(actions);
+    // Anwesenheit (ADR 0016): Status je Person, im Testmodus simulieren
+    this._presenceBox = document.createElement("div");
+    this._presenceBox.className = "presence";
+    this._presenceSig = null;
+    card.appendChild(this._presenceBox);
 
     if (!sensors.length) {
       const empty = document.createElement("div");
@@ -666,6 +748,68 @@ class HauswachtTestCard extends HTMLElement {
     return Boolean(sim && sim.attributes.test_mode);
   }
 
+  // --- Anwesenheit (ADR 0016) ---------------------------------------------------
+
+  _presenceReason(row) {
+    const r = row.reason || {};
+    const t = this._t("presence");
+    const time = (ts) => (ts ? new Date(ts * 1000).toLocaleTimeString(this._hass.language || "de", { hour: "2-digit", minute: "2-digit" }) : "");
+    if (r.kind === "simulated") return t.reasonSim;
+    if (r.kind === "home") return t.reasonHome.replace("{by}", (r.by || []).join(", ") || "–");
+    if (r.kind === "away") return (t.proofs[r.proof] || t.proofs.other) + (r.at ? ` (${time(r.at)})` : "");
+    if (r.kind === "no_proof") return t.reasonNoProof;
+    if (r.kind === "unclear") return t.reasonUnclear.replace("{by}", (r.by || []).join(", ") || "–");
+    return "";
+  }
+
+  _updatePresence(testMode) {
+    const box = this._presenceBox;
+    if (!box) return;
+    const sim = this._ids.simulation && this._hass.states[this._ids.simulation];
+    const data = sim && sim.attributes.presence;
+    const persons = data && data.persons ? Object.entries(data.persons) : [];
+    const profiles = (data && data.profiles) || [];
+    // Sekundentakt nur, wenn ein Countdown läuft – sonst nicht ständig neu zeichnen
+    const ticking = profiles.some((p) => p.due || (p["return"] && (p["return"].arrival_until || p["return"].door_until)));
+    const signature = JSON.stringify([testMode, persons, profiles, ticking ? Math.floor(Date.now() / 1000) : 0]);
+    if (signature === this._presenceSig) return ticking;
+    this._presenceSig = signature;
+    const t = this._t("presence");
+    if (!persons.length && !profiles.length) {
+      box.innerHTML = "";
+      return false;
+    }
+    const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const buttons = ["home", "away", "away_no_proof", "approaching", "real"];
+    const rows = persons
+      .map(([id, row]) => {
+        const approach = row.approach_at ? ` · ${t.approaching}` : "";
+        const current = row.simulated || "real";
+        const btns = buttons
+          .map((b) => `<button data-person="${esc(id)}" data-state="${b}" class="${testMode && current === b ? "active" : ""}" ${testMode ? "" : "disabled"}>${esc(t.buttons[b])}</button>`)
+          .join("");
+        return `<div class="row ${row.simulated ? "sim" : ""}"><ha-icon icon="${row.state === "home" ? "mdi:home-account" : row.state === "away" ? "mdi:account-arrow-right" : "mdi:account-question"}"></ha-icon>
+          <div class="info"><div class="name">${esc(row.name)}: <b>${esc(t.states[row.state])}</b>${esc(approach)}</div>
+          <div class="state">${esc(this._presenceReason(row))}</div></div>
+          <div class="btns">${btns}</div></div>`;
+      })
+      .join("");
+    const now = Date.now() / 1000;
+    const plan = profiles
+      .map((p) => `<div class="rule"><span><b>${esc(p.name)}</b> – ${esc(hauswachtProfileLine(p, t.line, now))}</span></div>`)
+      .join("");
+    const anyDue = profiles.some((p) => p.due);
+    box.innerHTML = `<div class="rules"><div class="head">${esc(t.title)}</div>${plan}
+      ${anyDue ? `<button class="skip" ${testMode ? "" : "disabled"}>${esc(t.skip)}</button>` : ""}</div>${rows}`;
+    box.querySelectorAll("button[data-person]").forEach((btn) =>
+      btn.addEventListener("click", () =>
+        this._call(DOMAIN, "simulate_presence", { entity_id: this._ids.panel, person: btn.dataset.person, state: btn.dataset.state })
+      )
+    );
+    box.querySelector("button.skip")?.addEventListener("click", () => this._call(DOMAIN, "skip_wait", { entity_id: this._ids.panel }));
+    return ticking;
+  }
+
   _call(domain, service, data, onError) {
     this._hass.callService(domain, service, data).catch((err) => {
       if (onError) onError();
@@ -691,6 +835,7 @@ class HauswachtTestCard extends HTMLElement {
     this._toggle.disabled = !this._ids.testMode;
     this._reset.disabled = !testMode;
     this._updateCodeReset();
+    const presenceTicking = this._updatePresence(testMode);
 
     let waiting = this._updateRules();
     const byId = {};
@@ -720,7 +865,7 @@ class HauswachtTestCard extends HTMLElement {
         button.classList.toggle("active", testMode && (isSim ? value === simulated : value === "real"));
       }
     }
-    this._setTick(this._delayRunning || waiting);
+    this._setTick(this._delayRunning || waiting || presenceTicking);
   }
 }
 

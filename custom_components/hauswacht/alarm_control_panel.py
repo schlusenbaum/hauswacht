@@ -23,6 +23,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .core.areas import ALL_PANEL_KEY
+from .core.away_proof import SIM_VALUES
 from .core.profiles import (
     find_profile,
     panel_state,
@@ -91,6 +92,15 @@ async def async_setup_entry(
     async_get_current_platform().async_register_entity_service(
         "simulate_reset", {}, "async_simulate_reset"
     )
+    async_get_current_platform().async_register_entity_service(
+        "simulate_presence",
+        {
+            vol.Required("person"): cv.entity_id,
+            vol.Required("state"): vol.In(list(SIM_VALUES)),
+        },
+        "async_simulate_presence",
+    )
+    async_get_current_platform().async_register_entity_service("skip_wait", {}, "async_skip_wait")
     async_get_current_platform().async_register_entity_service(
         "guest_mode",
         {vol.Optional("on", default=True): cv.boolean, vol.Optional("until"): cv.datetime},
@@ -319,6 +329,14 @@ class HauswachtAlarmPanel(_PassageMixin, _SirenTestMixin, AlarmControlPanelEntit
         """Dienst hauswacht.simulate_reset: alle Sensoren wieder mit echtem Zustand."""
         self.runtime.simulate_reset()
 
+    async def async_simulate_presence(self, person: str, state: str) -> None:
+        """Dienst hauswacht.simulate_presence: Anwesenheit für Hauswacht vortäuschen (Testmodus)."""
+        self.runtime.simulate_presence(person, state)
+
+    async def async_skip_wait(self) -> None:
+        """Dienst hauswacht.skip_wait: „alle weg“-Wartezeit sofort beenden (Testmodus)."""
+        self.runtime.skip_wait()
+
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         await self.runtime.async_disarm(code, self._user_id)
 
@@ -501,6 +519,12 @@ class HauswachtAllPanel(_PassageMixin, _SirenTestMixin, AlarmControlPanelEntity)
 
     async def async_simulate_reset(self) -> None:
         self.runtime.simulate_reset()
+
+    async def async_simulate_presence(self, person: str, state: str) -> None:
+        self.runtime.simulate_presence(person, state)
+
+    async def async_skip_wait(self) -> None:
+        self.runtime.skip_wait()
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         failed: dict[str, str] = {}

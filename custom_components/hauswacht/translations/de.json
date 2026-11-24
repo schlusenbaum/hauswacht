@@ -1740,6 +1740,15 @@
         "disarm": "Unscharf schalten",
         "passage": "Durchgang, wenn das Profil ihn erlaubt – sonst unscharf"
       }
+    },
+    "simulate_presence": {
+      "options": {
+        "home": "Zuhause",
+        "away": "Weg (mit Beleg)",
+        "away_no_proof": "Weg ohne Beleg (schlafendes Handy)",
+        "approaching": "Weg und nähert sich",
+        "real": "Echt (zurücksetzen)"
+      }
     }
   },
   "entity": {
@@ -2003,6 +2012,9 @@
     },
     "passage_no_doors": {
       "message": "Durchgang nicht möglich: Im scharfen Profil gibt es keine Eingangstür und keine Melder auf dem Weg, die frei werden könnten."
+    },
+    "unknown_presence_person": {
+      "message": "{person} kommt in keiner Profil-Automatik vor („Scharf, wenn alle weg“, „Bei Rückkehr“)."
     }
   },
   "services": {
@@ -2141,6 +2153,24 @@
           "description": "PIN oder Karte (nötig, wenn PINs eingerichtet sind)."
         }
       }
+    },
+    "simulate_presence": {
+      "name": "Anwesenheit simulieren",
+      "description": "Täuscht Hauswacht die Anwesenheit einer Person vor (zuhause, weg mit oder ohne Beleg, nähert sich) oder setzt sie auf die echten Signale zurück. Nur im Testmodus; die Person in Home Assistant und die Heimkehr-Beobachtung bleiben unverändert.",
+      "fields": {
+        "person": {
+          "name": "Person",
+          "description": "Eine Person aus „Scharf, wenn alle weg“ oder „Bei Rückkehr“."
+        },
+        "state": {
+          "name": "Zustand",
+          "description": "„Echt“ setzt auf die echten Signale zurück."
+        }
+      }
+    },
+    "skip_wait": {
+      "name": "Wartezeit überspringen",
+      "description": "Beendet eine laufende „Scharf, wenn alle weg“-Wartezeit sofort (nur im Testmodus)."
     }
   },
   "issues": {

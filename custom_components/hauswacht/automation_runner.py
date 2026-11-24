@@ -40,7 +40,15 @@ from .core.automation import (
     person_value,
     schedule_action,
 )
-from .core.away_proof import AwayTracker, parse_proof_settings
+from .core.away_proof import (
+    SIM_APPROACHING,
+    SIM_AWAY,
+    SIM_AWAY_NO_PROOF,
+    SIM_HOME,
+    SIM_REAL,
+    AwayTracker,
+    parse_proof_settings,
+)
 from .core.homecoming import DIRECTION_HINT as DIRECTION_APPROACH
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
@@ -80,6 +88,8 @@ class AutomationRunner:
         self.auto_armed_by: str | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
         self._away_timers: dict[str, CALLBACK_TYPE] = {}
+        self._away_due: dict[str, float] = {}  # Profil -> wann „alle weg“ scharf schaltet
+        self._shown: tuple[Any, ...] = ()  # zuletzt angezeigter Stand (Anwesenheit)
         self.signals: dict[str, tuple[str, ...]] = {}
         self.ssids: frozenset[str] = frozenset()
         self._home: dict[str, bool | None] = {}  # Person -> zuletzt bekannte Anwesenheit
@@ -199,6 +209,7 @@ class AutomationRunner:
             self._unsub_doors()
             self._unsub_doors = None
         self._doors = frozenset()
+        self._away_due.clear()
         for cancel in self._away_timers.values():
             cancel()
         self._away_timers.clear()
@@ -259,22 +270,48 @@ class AutomationRunner:
 
         Richtung "nähert sich"/"steht" zählt nicht (siehe ``direction_hint``). „Weg“ gilt nur mit
         Beleg – Tür und Ortung außerhalb oder eine frische, genaue Ortung außerhalb (ADR 0015);
-        sonst ist die Person unbekannt.
+        sonst ist die Person unbekannt. Im Testmodus kann die Anwesenheit simuliert sein
+        (ADR 0016).
         """
+        return self._assess(person)[0]
+
+    def _assess(self, person: str) -> tuple[bool | None, dict[str, Any]]:
+        """Bewertung einer Person mit Grund (für die Anzeige in Testkarte und Einstellungen)."""
+        now = dt_util.utcnow().timestamp()
+        simulated = self.runtime.presence_simulated(person)
+        if simulated is not None:
+            if simulated == SIM_HOME:
+                return self.proof.judge(person, True, [], now), {"kind": "simulated"}
+            if simulated == SIM_AWAY_NO_PROOF:
+                return self.proof.judge(person, None, [], now), {"kind": "simulated"}
+            if not self.proof.proven(person):
+                self.proof.mark_proven(person, "simulated", now)
+            return False, {"kind": "simulated"}
         signals = self.signals.get(person, ())
-        states = [self._state(s) for s in signals]
-        combined = combine(
-            [
-                person_value(self._state(person)),
-                *(presence(state, self.ssids) for state in states if not direction_hint(state)),
-            ]
-        )
+        values = {person: person_value(self._state(person))}
+        for signal in signals:
+            state = self._state(signal)
+            if not direction_hint(state):
+                values[signal] = presence(state, self.ssids)
+        combined = combine(list(values.values()))
         fixes = (
             person_fixes(self.hass, person, signals, self.proof.settings.accuracy)
             if combined is False
             else []
         )
-        return self.proof.judge(person, combined, fixes, dt_util.utcnow().timestamp())
+        result = self.proof.judge(person, combined, fixes, now)
+        if result is True:
+            return True, {"kind": "home", "by": [e for e, v in values.items() if v is True]}
+        if result is False:
+            kind = self.proof.kind(person)
+            return False, {
+                "kind": "away",
+                "proof": kind[0] if kind else None,
+                "at": kind[1] if kind else None,
+            }
+        if combined is False:
+            return None, {"kind": "no_proof"}
+        return None, {"kind": "unclear", "by": [e for e, v in values.items() if v is None]}
 
     def unlocatable(self) -> list[str]:
         """Personen der Automatik ohne Ortung und ohne „Tür + Signal“ – nie weg (Hinweis)."""
@@ -284,6 +321,106 @@ class AutomationRunner:
             if p not in self.proof.settings.weak
             and not locatable(self.hass, p, self.signals.get(p, ()))
         ]
+
+    # --- Anwesenheit testen und anzeigen (ADR 0016) ---------------------------
+
+    @property
+    def presence_persons(self) -> list[str]:
+        """Personen aus den Profil-Automatiken dieses Bereichs."""
+        return list(self._home)
+
+    @callback
+    def presence_simulated_changed(self, person: str, value: str) -> None:
+        """Simulation hat sich geändert (nur Testmodus): neu bewerten."""
+        if person not in self._home:
+            return
+        now = dt_util.utcnow().timestamp()
+        if value in (SIM_REAL, SIM_HOME):
+            self.proof.forget(person)  # simulierter Beleg zählt nicht weiter
+        if value == SIM_APPROACHING:
+            self._approach_at[person] = now
+        elif value != SIM_HOME:
+            # Weg/Echt: eine (simulierte) Annäherung von vorhin gilt nicht mehr.
+            # Bei „Zuhause“ bleibt sie, damit „Bei Rückkehr“ sie wie im Echtbetrieb sieht.
+            self._approach_at.pop(person, None)
+        self._evaluate(now)
+        if value in (SIM_AWAY, SIM_APPROACHING):
+            # Im Test gilt eine simulierte Abwesenheit sofort als lang genug (5 Minuten)
+            self._away_since[person] = now - MIN_AWAY_FOR_PASSAGE
+
+    @callback
+    def skip_wait(self) -> list[str]:
+        """„Wartezeit überspringen“ (Testmodus): laufende „alle weg“-Wartezeiten jetzt beenden."""
+        done = list(self._away_timers)
+        for pid in done:
+            cancel = self._away_timers.get(pid)
+            if cancel is not None:
+                cancel()
+            self._away_elapsed(pid, dt_util.utcnow())
+        return done
+
+    def presence_report(self) -> dict[str, Any]:
+        """Je Person Zustand und Grund, je Profil was „alle weg“ gerade macht."""
+        now = dt_util.utcnow().timestamp()
+        persons: dict[str, dict[str, Any]] = {}
+        for person in self._home:
+            value, reason = self._assess(person)
+            approach = self._approach_at.get(person)
+            if value is True:
+                approach = None  # zuhause angekommen: „nähert sich“ ist vorbei
+            persons[person] = {
+                "state": "home" if value is True else "away" if value is False else "unknown",
+                "reason": reason,
+                "simulated": self.runtime.presence_simulated(person),
+                "approach_at": approach if approach and now - approach <= 3600 else None,
+            }
+        ctx = self.runtime.ctx
+        armed = (
+            ctx.profile.profile_id if ctx.profile and ctx.state is not AlarmState.DISARMED else None
+        )
+        profiles = []
+        for pid in dict.fromkeys([*self.configs, *self.returns]):
+            cfg = self.configs.get(pid)
+            back = self.returns.get(pid)
+            away = list(cfg.away_persons) if cfg else []
+            if not away and back is None:
+                continue
+            waiting = [p for p in away if persons.get(p, {}).get("state") != "away"]
+            profiles.append(
+                {
+                    "profile": pid,
+                    "away_persons": bool(away),
+                    "waiting": waiting,
+                    "due": self._away_due.get(pid),
+                    "armed": armed == pid,
+                    "auto": armed == pid and self.auto_armed_by == pid,
+                    "other_armed": armed if armed not in (None, pid) else None,
+                    "state": ctx.state.value if armed == pid else None,
+                    "return": self._return_report(pid, back, now) if back else None,
+                }
+            )
+        return {"persons": persons, "profiles": profiles}
+
+    def _return_report(self, pid: str, back: ReturnConfig, now: float) -> dict[str, Any]:
+        """„Bei Rückkehr“: was ist schon da, worauf wird gewartet (nur solange scharf)."""
+        window = back.window * 60
+
+        def until(at: float | None) -> float | None:
+            return at + window if at is not None and now - at <= window else None
+
+        arrival = self._arrival_at.get(pid)
+        door = self._door_at.get(pid)
+        if back.lets_in:
+            phone = self._phone_arrival.get(pid)
+            arrival = phone[0] if phone else None
+            door = self._phone_door_at.get(pid)
+        active = self._proof_active(pid)
+        return {
+            "mode": back.mode,
+            "active": active,
+            "arrival_until": until(arrival) if active else None,
+            "door_until": until(door) if active else None,
+        }
 
     def _signal_value(self, entity_id: str, state: str | None) -> bool | None:
         if entity_id.startswith("person."):
@@ -308,10 +445,17 @@ class AutomationRunner:
         if new_state is not None and new_state.state in DIRECTION_APPROACH:
             for owner in self._owners.get(entity_id, ()):
                 self._approach_at[owner] = now
+        self._evaluate(now)
+
+    @callback
+    def _evaluate(self, now: float) -> None:
+        """Anwesenheit neu bewerten: Rückkehr erkennen, „alle weg“ planen oder abbrechen."""
         arrived: list[str] = []
         long_away: list[str] = []  # Heimkehr nach mindestens 5 Minuten sicher weg
+        current: dict[str, bool | None] = {}
         for person in list(self._home):
             new = self.person_home(person)
+            current[person] = new
             if self._home[person] is False and new is True:
                 arrived.append(person)
                 if now - self._away_since.get(person, now) >= MIN_AWAY_FOR_PASSAGE:
@@ -330,12 +474,27 @@ class AutomationRunner:
                     self._away_timers[pid] = async_call_later(
                         self.hass, cfg.away_delay * 60, partial(self._away_elapsed, pid)
                     )
+                    self._away_due[pid] = now + cfg.away_delay * 60
                     self._event("AutoArmScheduled", pid, minutes=cfg.away_delay)
                 continue
+            self._away_due.pop(pid, None)
             cancel = self._away_timers.pop(pid, None)
             if cancel is not None:
                 cancel()
                 self._event("AutoArmCancelled", pid)
+        # Anzeige (Testkarte, Einstellungsseite) nur bei einer Änderung auffrischen
+        signature = (tuple(sorted(current.items())), tuple(sorted(self._away_due)))
+        if signature != self._shown:
+            self._shown = signature
+            self._refresh_display()
+
+    def _refresh_display(self) -> None:
+        """Testkarte und Einstellungsseite neu zeichnen lassen."""
+        self.runtime._notify()
+        # Die Testkarte liest den Stand am Hauptbereich – auch ihn auffrischen
+        main = getattr(self.runtime, "main", self.runtime)
+        if main is not self.runtime:
+            main._notify()
 
     @callback
     def _returned(self, now: float, arrived: list[str], long_away: list[str]) -> None:
@@ -354,16 +513,19 @@ class AutomationRunner:
                 self._arrival_at[pid] = now
                 self._event("ArrivalNoted", pid, persons=coming)
                 self._check_door_proof(pid, back)
+                self._refresh_display()
             elif back.lets_in and self._proof_active(pid):
                 far = [p for p in coming if p in long_away]
                 if far:
                     self._phone_arrival[pid] = (now, far[0])
                     self._event("PhoneArrivalNoted", pid, persons=far)
                     self._check_phone(pid, back)
+                    self._refresh_display()
 
     @callback
     def _away_elapsed(self, profile_id: str, _now: datetime) -> None:
         self._away_timers.pop(profile_id, None)
+        self._away_due.pop(profile_id, None)
         cfg = self.configs.get(profile_id)
         if cfg is not None and all_away_values(self.person_home(p) for p in cfg.away_persons):
             self.auto_arm(profile_id, REASON_AWAY)
@@ -403,10 +565,17 @@ class AutomationRunner:
         new = event.data["new_state"]
         if new is None or new.state != "on" or (old is not None and old.state != "off"):
             return
+        self.door_seen(event.data["entity_id"])
+
+    @callback
+    def door_seen(self, entity_id: str) -> None:
+        """Eine Eingangstür ging auf – echt oder im Testmodus simuliert (ADR 0016)."""
+        if entity_id not in self._doors:
+            return
         self.proof.note_door(dt_util.utcnow().timestamp())  # Beleg für „weg“
         # Erst die Alarmanlage reagieren lassen (Eingangsverzögerung oder Sofortalarm),
         # dann prüfen – so zählt eine Tür, die sofort Alarm auslöst, nie als Beleg.
-        self.hass.loop.call_soon(self._door_opened, event.data["entity_id"])
+        self.hass.loop.call_soon(self._door_opened, entity_id)
 
     @callback
     def _door_opened(self, entity_id: str) -> None:
@@ -421,6 +590,7 @@ class AutomationRunner:
                 self._door_at[pid] = now
                 self._event("DoorNoted", pid, door=entity_id)
                 self._check_door_proof(pid, back)
+        self._refresh_display()
 
     @callback
     def _check_phone(self, profile_id: str, back: ReturnConfig) -> None:
