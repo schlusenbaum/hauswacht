@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.0b2] - 2026-11-24
+
+### Behoben
+
+- Testkarte: Nach „Nähert sich“ und dann „Zuhause“ stand weiter „nähert sich“ hinter der
+  Person. Wer zuhause ist, nähert sich nicht mehr – der Hinweis verschwindet jetzt. Nach
+  „Weg“, „Weg ohne Beleg“ oder „Echt“ wird eine simulierte Annäherung ganz verworfen.
+
 ## [0.63.0b1] - 2026-11-24
 
 ### Hinzugefügt

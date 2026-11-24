@@ -339,6 +339,10 @@ class AutomationRunner:
             self.proof.forget(person)  # simulierter Beleg zählt nicht weiter
         if value == SIM_APPROACHING:
             self._approach_at[person] = now
+        elif value != SIM_HOME:
+            # Weg/Echt: eine (simulierte) Annäherung von vorhin gilt nicht mehr.
+            # Bei „Zuhause“ bleibt sie, damit „Bei Rückkehr“ sie wie im Echtbetrieb sieht.
+            self._approach_at.pop(person, None)
         self._evaluate(now)
         if value in (SIM_AWAY, SIM_APPROACHING):
             # Im Test gilt eine simulierte Abwesenheit sofort als lang genug (5 Minuten)
@@ -362,6 +366,8 @@ class AutomationRunner:
         for person in self._home:
             value, reason = self._assess(person)
             approach = self._approach_at.get(person)
+            if value is True:
+                approach = None  # zuhause angekommen: „nähert sich“ ist vorbei
             persons[person] = {
                 "state": "home" if value is True else "away" if value is False else "unknown",
                 "reason": reason,

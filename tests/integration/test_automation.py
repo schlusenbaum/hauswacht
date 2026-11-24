@@ -777,3 +777,21 @@ async def test_simulated_return_disarms(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
     await _sim_presence(hass, A, "home")
     assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_simulated_home_after_approaching_ends_approach(hass: HomeAssistant) -> None:
+    """0.63.0b2: erst „Nähert sich“, dann „Zuhause“ – Anzeige zeigt zuhause ohne „nähert sich“."""
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    await _test_mode(hass)
+    await _sim_presence(hass, A, "approaching")
+    row = _presence(hass)["persons"][A]
+    assert row["state"] == "away"
+    assert row["approach_at"]
+    await _sim_presence(hass, A, "home")
+    row = _presence(hass)["persons"][A]
+    assert row["state"] == "home"
+    assert row["simulated"] == "home"
+    assert row["approach_at"] is None
+    await _sim_presence(hass, A, "approaching")
+    await _sim_presence(hass, A, "away")
+    assert _presence(hass)["persons"][A]["approach_at"] is None
