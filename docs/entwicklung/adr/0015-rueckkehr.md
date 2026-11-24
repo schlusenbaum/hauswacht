@@ -1,6 +1,6 @@
 # ADR 0015: Rückkehr neu geregelt – „Bei Rückkehr“, „weg“ nur mit Beleg, Annäherung
 
-- Status: angenommen (Umsetzung in 0.61; Nachtrag 0.61.0b2)
+- Status: umgesetzt in 0.61.0 (Vorabversionen 0.61.0b1–b5; Nachtrag 0.61.0b2)
 - Datum: 2026-11-23
 - Baut auf: [ADR 0013 Durchgang](0013-durchgang.md), [ADR 0014 Ausgangserkennung](0014-ausgangserkennung.md)
 - Ändert: [ADR 0011 Einstellungsseite](0011-einstellungsseite.md) (Nachtrag 0.61)

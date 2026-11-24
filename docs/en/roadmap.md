@@ -45,6 +45,7 @@
 | 0.58 | [Generic keypads](../entwicklung/adr/0012-keypads-allgemein.md): one input for every keypad (Z-Wave, ESPHome, Node-RED …) with response and display entity, blueprint Ring Keypad v2 and ESPHome example, [MQTT interface](control-devices.md#mqtt-interface); wrong-PIN warnings tidy themselves up |
 | 0.59 | [Passage](passage.md) – in or out without disarming ([ADR 0013](../entwicklung/adr/0013-durchgang.md)): at the keypad with any profile key, push button "Let in", automatically by phone, door lock, NFC tags, card readers |
 | 0.60 | Observation [leaving](observations.md#leaving-preparation-for-detect-leaving-without-pin) with a recommendation per person ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md)); [measurements](observations.md#measurements-on-the-settings-page) on the settings page to view, save and reset; [siren test](settings-page.md#siren-test-on-the-page-real-siren) also on the settings page; safety fix: direction "towards" no longer counts as "home" |
+| 0.61 | "[On return](profiles.md#on-return)" per profile (nothing, disarm, with door proof, let in) with its own person list ([ADR 0015](../entwicklung/adr/0015-rueckkehr.md), German); ["away" only with proof](profiles.md#away-only-with-proof) – no false homecomings from sleeping phones, "door + signal" for persons without a location; [approach](profiles.md#approach-extends-the-entry-delay) lengthens the entry delay; explanations right at the setting (ⓘ, "this is how it behaves"); hide the settings page instead of switching it off, open it from the device page; [silent pauses](observations.md#what-is-a-silent-pause) explained |
 
 Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
@@ -52,9 +53,9 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| 0.61 | Return reworked ([ADR 0015](../entwicklung/adr/0015-rueckkehr.md), German): "On return" per profile (nothing, disarm, with door proof, let in) with its own person list; "away" only with proof (door and location outside) – no false homecomings from sleeping phones; approach lengthens the entry delay instead of disarming; explanations right at the setting (ⓘ, "this is how it behaves"); hide the page instead of switching it off, open it from the device page |
 | 0.62 | Explanations (ⓘ, "this is how it behaves", "more settings") for all other settings |
 | 0.63 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
+| noted | Test card: simulate presence and absence per person and check that "arm when all away" and "On return" react correctly – discuss first, then ADR |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |

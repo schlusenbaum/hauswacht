@@ -18,4 +18,4 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0012](0012-keypads-allgemein.md) | Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT |
 | [0013](0013-durchgang.md) | Durchgang – rein oder raus, ohne unscharf zu schalten |
 | [0014](0014-ausgangserkennung.md) | Ausgangserkennung – Rausgehen ohne PIN erkennen (vorgeschlagen) |
-| [0015](0015-rueckkehr.md) | Rückkehr neu geregelt – „Bei Rückkehr“, „weg“ nur mit Beleg, Annäherung (angenommen, Nachtrag 0.61.0b2: „Tür + Signal“) |
+| [0015](0015-rueckkehr.md) | Rückkehr neu geregelt – „Bei Rückkehr“, „weg“ nur mit Beleg, Annäherung (umgesetzt in 0.61.0, Nachtrag „Tür + Signal“) |

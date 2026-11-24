@@ -6,6 +6,49 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.61.0] - 2026-11-24
+
+**„Bei Rückkehr“ je Profil, „weg“ nur mit Beleg, Annäherung verlängert die
+Eingangsverzögerung, Einstellungsseite ausblenden statt abschalten** (ADR 0015 und ADR 0011
+Nachtrag, getestet über die Vorabversionen 0.61.0b1 bis b5).
+
+### Sicherheit
+- **„weg“ nur mit Beleg:** Ein schlafendes Handy macht niemanden mehr abwesend. Eine Person gilt
+  für „Scharf, wenn alle weg“, „Bei Rückkehr“ und das Reinlassen erst als weg, wenn alle Signale
+  „weg“ melden **und** es einen Beleg gibt: Eingangstür auf und danach (bis 15 Minuten) Ortung
+  außerhalb, oder eine frische (letzte 15 Minuten), genaue Ortung außerhalb. WLAN, Ping, Router
+  und Bluetooth bestätigen nur. Damit gibt es auch keine falsche „Heimkehr“ mehr, wenn nachts das
+  WLAN eines Handys im Haus wegfällt. Die Heimkehr-Beobachtung zählt genauso.
+- Korrekturen aus 0.60.1 (HACS-Review): Attribute maskieren, Personen-IDs in der Diagnose
+  schwärzen.
+
+### Hinzugefügt
+- **„Bei Rückkehr“** je Profil – eine Einstellung statt zwei: Nichts · Unscharf, nur wenn
+  automatisch scharf · Unscharf mit Türbeleg · Unscharf, auch nach Scharfschalten von Hand (nur
+  Handy, mit Warnung) · Reinlassen (Durchgang, das Profil bleibt scharf). Eigene Personenliste;
+  ⓘ-Erklärungen, der Satz „So verhält sich das:“ und „Mehr Einstellungen“ auf der
+  Einstellungsseite.
+- **Annäherung verlängert die Eingangsverzögerung** (bei „Unscharf mit Türbeleg“ und
+  „Reinlassen“): Hat sich eine Person aus der Liste vorher genähert (Richtung „nähert sich“),
+  wartet Hauswacht nach dem Öffnen länger auf ihr Handy; Empfehlungen aus der Messung zum
+  Übernehmen; Ereignis `EntryDelayExtended`.
+- **„Wann gilt jemand als weg?“** unter System → Anwesenheit: Ortung genau prüfen oder einfach,
+  Zeitfenster für den Beleg; je Person **„auch Tür + Signal (unsicher)“** für Personen ohne
+  Ortung, mit Warnhinweis und Prüfhinweis; Hinweis „⚠ keine Ortung – gilt nie als weg“.
+- Messungen: ⓘ an jeder Spalte und „Was bedeuten die Spalten?“; Doku „Was ist eine
+  Schweigepause?“.
+
+### Geändert
+- Die Einstellungsseite gibt es immer; die Einstellung heißt „In der Seitenleiste zeigen“. Der
+  Link auf der Geräteseite und ganz oben im Dialog „Konfigurieren“ führt zur Einstellungsseite.
+- „Unscharf bei Rückkehr“ und das Handy-Reinlassen sind nach „Bei Rückkehr“ umgezogen (nur auf
+  der Einstellungsseite). Bestehende Einstellungen werden übernommen; waren beide an, gewinnt
+  „Reinlassen“, mit Benachrichtigung.
+
+### Behoben
+- Weggehen: Ein „weg“ ohne Tür in den ersten 15 Minuten nach dem Zurücksetzen zählt nicht mehr
+  als Schweigepause.
+
 ## [0.61.0b5] - 2026-11-24
 
 **Vorabversion: Messungen besser erklärt.**
