@@ -7,6 +7,33 @@
 
 const AT = {
   de: {
+    info: {
+      registered: "Diese Sirenen kennt Hauswacht. In welchem Profil welche ertönt, stellst du im Profil ein.",
+      add: "Eine Sirene (siren.…) hinzufügen. Schalter nur mit der Experten-Freigabe unten.",
+      allowSwitch: "Manche Sirenen gibt es nur als Schalter. Nur einschalten, wenn der Schalter wirklich eine reine Alarmsirene ist – nie für Rauchmelder.",
+      allowFire: "Manche Sirenen haben nur einen Brandton. Ihn für Einbruch zu nutzen, verwechselt man leicht mit Feuer – nur, wenn alle im Haus den Ton kennen.",
+      confirm: "Ohne diese Freigabe sendet Hauswacht keinen echten Sirenenbefehl – Alarme laufen dann still ab. So kann beim Einrichten nichts versehentlich losgehen.",
+      toneKnown: "Diese Töne meldet die Sirene selbst. Gibt es keinen Einbruchton, kommt der Hinweis zum Brandton.",
+      sirenReminder: "Hauswacht erinnert dich, wenn eine Sirene so lange nicht getestet wurde – damit du merkst, wenn eine nicht mehr funktioniert.",
+      prewarn: "Vor einem Sirenentest bekommen die allgemeinen Empfänger 10 Sekunden vorher eine Nachricht – damit niemand erschrickt.",
+      general: "Diese Empfänger bekommen alle Nachrichten, für die kein eigener Empfänger gewählt ist. Alarm-Empfänger stellst du im Profil ein.",
+      testMode: "An: Auch im Testmodus kommen Nachrichten (mit „TEST“ im Titel). Aus: Im Testmodus bleibt es still.",
+      pushDisarm: "Die Alarm-Nachricht bekommt einen Knopf „Unscharf schalten“. Er fragt nach PIN, wenn die PIN-Regeln das verlangen.",
+      critical: "Alarm-Nachrichten kommen auch bei „Nicht stören“ und lautlosem Handy durch (iPhone: kritische Hinweise, Android: Alarmkanal).",
+      duress: "Wer die Bedrohungs-PIN eingibt, schaltet scharf/unscharf wie gewohnt – aber diese Empfänger bekommen still eine Warnung. Für den Fall, dass dich jemand zwingt.",
+      events: "Für jedes Ereignis eigener Titel, Text und eigene Empfänger. Leer = Standard.",
+      reminder: "Sind alle gewählten Personen weg und die Anlage nicht scharf, erinnert Hauswacht – mit Knopf „Jetzt scharf“.",
+      reminderProfile: "Dieses Profil schaltet der Knopf „Jetzt scharf“ in der Erinnerung.",
+      reminderDelay: "So lange müssen alle weg sein, bevor die Erinnerung kommt.",
+      speechOn: "Ansagen über Lautsprecher (z. B. „Achtung, Alarm im Wohnzimmer“).",
+      speakers: "Auf diesen Lautsprechern laufen die Ansagen, wenn ein Ereignis keine eigenen hat.",
+      quiet: "In dieser Zeit wird nur angesagt, was beim Ereignis „auch in der Nachtruhe“ erlaubt (z. B. Alarm).",
+      repeat: "Während eines Alarms wird die Ansage so oft wiederholt. 0 = nur einmal.",
+      inQuiet: "Dieses Ereignis wird auch in der Nachtruhe angesagt.",
+      ownSpeakers: "Eigene Lautsprecher nur für dieses Ereignis. Keiner angehakt = die Standard-Lautsprecher.",
+      placeholders: "Diese Platzhalter in geschweiften Klammern werden beim Senden ersetzt, z. B. {melder} durch den Namen des Melders.",
+      preview: "So sieht die Nachricht mit Beispielwerten aus.",
+    },
     save: "Speichern",
     saving: "Speichere …",
     cancel: "Abbrechen",
@@ -33,7 +60,7 @@ const AT = {
     confirmFire: "Ich bestätige: Diese Sirene ist kein Rauchmelder, und alle im Haus kennen den Ton als Einbruchalarm",
     toneAfter: "Danach am besten einen kurzen, leisen Sirenentest machen (Karte „Sirenentest“ oder Testkarte).",
     testTitle: "Sirenentest – Erinnerung und Vorwarnung",
-    reminder: "Erinnerung, wenn eine Sirene so lange nicht getestet wurde",
+    sirenReminder: "Erinnerung, wenn eine Sirene so lange nicht getestet wurde",
     months: { 0: "Aus", 3: "Alle 3 Monate", 6: "Alle 6 Monate", 12: "Jährlich" },
     prewarn: "Vorwarnung „Sirenentest in 10 Sekunden“ an die allgemeinen Empfänger",
     switchTitle: "Sirene aus Schalter erstellen",
@@ -97,6 +124,33 @@ const AT = {
     },
   },
   en: {
+    info: {
+      registered: "Hauswacht knows these sirens. Which one sounds in which profile is set in the profile.",
+      add: "Add a siren (siren.…). Switches only with the expert release below.",
+      allowSwitch: "Some sirens only exist as a switch. Only turn this on if the switch really is a pure alarm siren – never for smoke detectors.",
+      allowFire: "Some sirens only have a fire tone. Using it for burglary is easily confused with fire – only if everyone in the house knows the tone.",
+      confirm: "Without this release Hauswacht sends no real siren command – alarms then run silently. So nothing can go off by accident during setup.",
+      toneKnown: "These tones are reported by the siren itself. If there is no burglary tone, the hint about the fire tone appears.",
+      sirenReminder: "Hauswacht reminds you when a siren has not been tested for this long – so you notice if one stops working.",
+      prewarn: "Before a siren test the general recipients get a message 10 seconds earlier – so nobody is startled.",
+      general: "These recipients get all messages for which no own recipient is chosen. Alarm recipients are set in the profile.",
+      testMode: "On: messages also come in test mode (with “TEST” in the title). Off: test mode stays silent.",
+      pushDisarm: "The alarm message gets a button “Disarm”. It asks for a PIN if the PIN rules require it.",
+      critical: "Alarm messages also get through “Do not disturb” and a silenced phone (iPhone: critical alerts, Android: alarm channel).",
+      duress: "Whoever enters the duress PIN arms/disarms as usual – but these recipients silently get a warning. For the case that someone forces you.",
+      events: "Own title, text and recipients for each event. Empty = default.",
+      reminder: "When all chosen persons are away and the system is not armed, Hauswacht reminds you – with a button “Arm now”.",
+      reminderProfile: "This profile is armed by the “Arm now” button in the reminder.",
+      reminderDelay: "This long everyone has to be away before the reminder comes.",
+      speechOn: "Announcements on speakers (e.g. “Attention, alarm in the living room”).",
+      speakers: "Announcements play on these speakers when an event has none of its own.",
+      quiet: "During this time only what the event allows “also during quiet hours” (e.g. alarm) is announced.",
+      repeat: "During an alarm the announcement is repeated this often. 0 = only once.",
+      inQuiet: "This event is also announced during quiet hours.",
+      ownSpeakers: "Own speakers only for this event. None ticked = the default speakers.",
+      placeholders: "These placeholders in curly brackets are replaced when sending, e.g. {melder} by the name of the sensor.",
+      preview: "This is how the message looks with example values.",
+    },
     save: "Save",
     saving: "Saving …",
     cancel: "Cancel",
@@ -123,7 +177,7 @@ const AT = {
     confirmFire: "I confirm: this siren is not a smoke detector, and everyone in the house knows the tone as the intrusion alarm",
     toneAfter: "Afterwards, best do a short, quiet siren test (card “Siren test” or test card).",
     testTitle: "Siren test – reminder and pre-warning",
-    reminder: "Reminder if a siren has not been tested for this long",
+    sirenReminder: "Reminder if a siren has not been tested for this long",
     months: { 0: "Off", 3: "Every 3 months", 6: "Every 6 months", 12: "Yearly" },
     prewarn: "Pre-warning “siren test in 10 seconds” to the general recipients",
     switchTitle: "Create siren from switch",
@@ -407,7 +461,7 @@ class HauswachtAlarmEditor extends HTMLElement {
       .map((m) => `<option value="${m}" ${Number(m) === Number(d.reminder_months) ? "selected" : ""}>${ae(this._t("months")[m] || m)}</option>`)
       .join("");
     return `<h2>${ae(this._t("testTitle"))}</h2>
-      <label>${ae(this._t("reminder"))}</label><select data-tf="reminder_months">${choices}</select>
+      <label>${ae(this._t("sirenReminder"))}</label><select data-tf="reminder_months">${choices}</select>
       <div class="chk" style="margin-top:10px"><input type="checkbox" data-b="prewarn" ${d.prewarn ? "checked" : ""}><span>${ae(this._t("prewarn"))}</span></div>`;
   }
 
@@ -528,6 +582,8 @@ class HauswachtAlarmEditor extends HTMLElement {
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
     const help = { sirens: "sirens", notify: "notifications", text: "texts", tone: "sirenTone", sirentest: "sirenTest", fromswitch: "sirenSwitch", speech: "speech", speechevent: "speech" }[this.kind];
     window.HauswachtDocs?.decorate(this.shadowRoot, help, this._lang);
+    // ⓘ an den Beschriftungen (0.62)
+    window.HauswachtDocs?.explain?.(this.shadowRoot, Object.entries(this._t("info") || {}).map(([key, text]) => [this._t(key), text]), this._lang);
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();
     };

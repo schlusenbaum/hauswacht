@@ -25,6 +25,11 @@ Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
 - **Neue Einstellungen gibt es nur hier** (ab 0.61, z. B. [„Bei Rückkehr“](profile.md#bei-rückkehr)
   und [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). Der Dialog zeigt an der Stelle einen
   Hinweis mit Link.
+- **Erklärungen direkt am Feld** (ab 0.62): In allen Seitenblättern – Profile, Melder,
+  Auslöseregeln, Alarmgeber und Benachrichtigungen, Personen, Bedienteile, System – steht hinter
+  den Feldern ein **ⓘ**. Mauszeiger drauf zeigt die Erklärung, Antippen (Handy, Tablet) klappt
+  sie auf. Wo es hilft, beschreibt ein Satz **„So verhält sich das:“**, was die Einstellung
+  gerade bewirkt.
 
 ## Die Reiter
 

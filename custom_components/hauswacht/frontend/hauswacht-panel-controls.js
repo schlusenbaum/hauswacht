@@ -10,6 +10,36 @@
 
 const CT = {
   de: {
+    info: {
+      kind: "Was für ein Bedienteil: Keypad, NFC-Aufkleber, Kartenleser, Taster oder Türschloss. Davon hängen die Felder darunter ab.",
+      name: "Name des Bedienteils, wie er im Logbuch steht (z. B. „Keypad Flur“).",
+      area: "Für welchen Bereich das Bedienteil schaltet. „Alle Bereiche“ schaltet alle gemeinsam.",
+      keypadDevice: "Das Keypad, wie es in Zigbee2MQTT heißt.",
+      topic: "Nur ändern, wenn das Keypad ein eigenes MQTT-Topic hat. Leer = aus dem Gerät.",
+      keys: "Welche Taste welches Profil scharf schaltet.",
+      emergency: "Was die Notruf-Taste (SOS) tut: nichts, still eine Nachricht an die Alarm-Empfänger oder einen echten Alarm.",
+      login: "Wie man sich am Keypad ausweist: PIN oder Karte, nur Karte, oder Karte und PIN zusammen (am sichersten).",
+      tag: "Die ID des NFC-Aufklebers aus Home Assistant. Handy dranhalten löst das Tag-Ereignis aus.",
+      device: "Der Leser, der die Kartennummer meldet.",
+      action: "Was beim Auslösen passiert: unscharf, scharf, umschalten oder Durchgang.",
+      profile: "Welches Profil „scharf“ oder „umschalten“ schaltet.",
+      entity: "Der Taster – ein Ereignis (event.…) oder ein Sensor mit der Druckart.",
+      presses: "Welche Druckart (einfach, doppelt, lang) welches Profil schaltet.",
+      pressValue: "Der Wert, den der Taster für diese Druckart meldet, z. B. single, double, hold.",
+      lockEntity: "Das Türschloss. Abschließen kann scharf schalten, Aufschließen unscharf oder Durchgang.",
+      lockProfile: "Beim Abschließen von außen wird dieses Profil scharf geschaltet. Leer = Abschließen tut nichts.",
+      lockUnlock: "Was beim Aufschließen passiert, während die Anlage scharf ist: unscharf schalten – oder Durchgang, wenn das Profil ihn erlaubt.",
+      source: "Woran Hauswacht erkennt, wer aufgeschlossen hat (Fingerabdruck, Code, App) – für das Logbuch und die Rechte.",
+      lockTopic: "Nur für Nuki über MQTT: das Topic des Schlosses, um zu erkennen, wer aufgeschlossen hat.",
+      mqttTopic: "Unter diesem Topic schickt das Gerät Befehle und bekommt den Zustand.",
+      mqttButtons: "Welches Befehlswort welches Profil scharf schaltet.",
+      disarmWord: "Mit diesem Wort schaltet das Gerät unscharf (mit PIN).",
+      panicWord: "Mit diesem Wort löst das Gerät einen Notruf aus.",
+      words: "Nur für Experten: welche Wörter das Gerät für die Zustände bekommt.",
+      active: "Aus = die Karte funktioniert nicht mehr, bleibt aber gespeichert.",
+      owner: "Welcher Person die Karte gehört – ihre Rechte gelten.",
+      cardName: "Ein Name, an dem du die Karte erkennst.",
+    },
     save: "Speichern",
     saving: "Speichere …",
     cancel: "Abbrechen",
@@ -113,6 +143,36 @@ const CT = {
     },
   },
   en: {
+    info: {
+      kind: "What kind of control: keypad, NFC sticker, card reader, button or door lock. The fields below depend on it.",
+      name: "Name of the control as shown in the logbook (e.g. “Hallway keypad”).",
+      area: "Which area the control switches. “All areas” switches all together.",
+      keypadDevice: "The keypad as it is named in Zigbee2MQTT.",
+      topic: "Only change if the keypad has its own MQTT topic. Empty = from the device.",
+      keys: "Which key arms which profile.",
+      emergency: "What the emergency key (SOS) does: nothing, silently a message to the alarm recipients, or a real alarm.",
+      login: "How to identify at the keypad: PIN or card, card only, or card and PIN together (safest).",
+      tag: "The ID of the NFC sticker in Home Assistant. Holding the phone to it fires the tag event.",
+      device: "The reader that reports the card number.",
+      action: "What happens when triggered: disarm, arm, toggle or passage.",
+      profile: "Which profile “arm” or “toggle” switches.",
+      entity: "The button – an event (event.…) or a sensor with the press type.",
+      presses: "Which press type (single, double, long) switches which profile.",
+      pressValue: "The value the button reports for this press type, e.g. single, double, hold.",
+      lockEntity: "The door lock. Locking can arm, unlocking can disarm or start a passage.",
+      lockProfile: "Locking from outside arms this profile. Empty = locking does nothing.",
+      lockUnlock: "What happens when unlocking while the system is armed: disarm – or a passage if the profile allows it.",
+      source: "How Hauswacht recognises who unlocked (fingerprint, code, app) – for the logbook and the rights.",
+      lockTopic: "Only for Nuki via MQTT: the topic of the lock, to recognise who unlocked.",
+      mqttTopic: "Under this topic the device sends commands and receives the state.",
+      mqttButtons: "Which command word arms which profile.",
+      disarmWord: "With this word the device disarms (with PIN).",
+      panicWord: "With this word the device triggers an emergency call.",
+      words: "Experts only: which words the device receives for the states.",
+      active: "Off = the card no longer works but stays saved.",
+      owner: "Which person the card belongs to – their rights apply.",
+      cardName: "A name by which you recognise the card.",
+    },
     save: "Save",
     saving: "Saving …",
     cancel: "Cancel",
@@ -518,6 +578,8 @@ class HauswachtControlEditor extends HTMLElement {
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
     const help = this.kind === "control" ? this._draft.kind : this.kind === "card" ? "card" : "cardNew";
     window.HauswachtDocs?.decorate(this.shadowRoot, help, this._lang);
+    // ⓘ an den Beschriftungen (0.62)
+    window.HauswachtDocs?.explain?.(this.shadowRoot, Object.entries(this._t("info") || {}).map(([key, text]) => [this._t(key), text]), this._lang);
     const root = this.shadowRoot;
     this.onclick = (ev) => {
       if (ev.composedPath()[0] === this) this._close();

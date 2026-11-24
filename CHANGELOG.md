@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.62.0b3] - 2026-11-24
+
+**Vorabversion: Erklärungen überall** (Roadmap 0.62, Schritt 3).
+
+### Hinzugefügt
+- Einstellungsseite: **ⓘ an den Feldern** auch bei Meldergruppen und Meldern (Kippstellung,
+  Erschütterung, Immer aktiv), Auslöseregeln, Alarmgebern und Benachrichtigungen (Sirenen,
+  Empfänger, Ansagen, Erinnerung), Personen und Bedienteilen (Keypad, Aufkleber, Leser, Taster,
+  Türschloss, Karten).
+
+### Behoben
+- Alarmgeber → Sirenentest: Das Feld „Erinnerung, wenn eine Sirene so lange nicht getestet
+  wurde“ trug die falsche Beschriftung („Erinnerung „Alle weg, aber nicht scharf““).
+
 ## [0.62.0b2] - 2026-11-24
 
 **Vorabversion: Erklärungen in den Systemeinstellungen** (Roadmap 0.62, Schritt 2).

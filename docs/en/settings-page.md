@@ -24,6 +24,10 @@ which profile they are armed, who gets which message.
 - **New settings are only here** (from 0.61, e.g. ["On return"](profiles.md#on-return) and
   ["away" only with proof](profiles.md#away-only-with-proof)). The dialog shows a hint with a link
   at that place.
+- **Explanations right at the field** (from 0.62): in all side sheets – profiles, sensors,
+  trigger rules, sirens and notifications, persons, controls, system – the fields have an **ⓘ**.
+  Hovering shows the explanation, tapping (phone, tablet) expands it. Where it helps, a sentence
+  **"This is how it behaves:"** describes what the setting currently does.
 
 ## The tabs
 

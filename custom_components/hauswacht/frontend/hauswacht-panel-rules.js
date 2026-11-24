@@ -7,6 +7,17 @@
 
 const RT = {
   de: {
+    info: {
+      name: "Name der Regel, z. B. „Garten, dann Terrasse“ – steht in der Alarm-Nachricht.",
+      mode: "Was in diesem Schritt passieren muss: einer der Melder, alle (in beliebiger Reihenfolge) oder mindestens eine bestimmte Anzahl. Mehrere Schritte nacheinander ergeben eine Abfolge.",
+      sensors: "Einzelne Melder, die in der Regel zählen – auch Melder, die im Profil ausgenommen sind.",
+      groups: "Ganze Meldergruppen, die in der Regel zählen.",
+      within: "So viel Zeit darf zwischen zwei Schritten der Abfolge liegen. Kommt der nächste Schritt später, beginnt alles von vorn.",
+      before: "So weit zurück wird geschaut, ob der vorige Schritt schon passiert ist.",
+      result: "Was die Regel auslöst: sofort Alarm, erst die Eingangsverzögerung und dann Alarm, oder nur eine Benachrichtigung.",
+      profiles: "In welchen Profilen die Regel gilt. Unscharf gilt keine Regel.",
+      sentence: "Die Regel in einem Satz – so prüfst du, ob sie das tut, was du willst.",
+    },
     titleNew: "Auslöseregel anlegen",
     titleEdit: "Auslöseregel bearbeiten",
     form: "Formular",
@@ -51,6 +62,17 @@ const RT = {
     },
   },
   en: {
+    info: {
+      name: "Name of the rule, e.g. “Garden, then patio” – shown in the alarm message.",
+      mode: "What has to happen in this step: one of the sensors, all of them (in any order) or at least a certain number. Several steps one after the other make a sequence.",
+      sensors: "Single sensors that count in the rule – also sensors excluded in the profile.",
+      groups: "Whole sensor groups that count in the rule.",
+      within: "This much time may pass between two steps of the sequence. If the next step comes later, everything starts over.",
+      before: "This far back Hauswacht looks whether the previous step has already happened.",
+      result: "What the rule triggers: alarm at once, first the entry delay and then alarm, or only a notification.",
+      profiles: "In which profiles the rule applies. No rule applies when disarmed.",
+      sentence: "The rule in one sentence – this is how you check that it does what you want.",
+    },
     titleNew: "Add trigger rule",
     titleEdit: "Edit trigger rule",
     form: "Form",
@@ -441,6 +463,8 @@ class HauswachtRuleEditor extends HTMLElement {
     </div>`;
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
     window.HauswachtDocs?.decorate(this.shadowRoot, this._mode === "yaml" ? "rulesYaml" : "rules", this._lang);
+    // ⓘ an den Beschriftungen (0.62)
+    window.HauswachtDocs?.explain?.(this.shadowRoot, Object.entries(this._t("info") || {}).map(([key, text]) => [this._t(key), text]), this._lang);
     this._wire();
     if (!this._checkedOnce) {
       this._checkedOnce = true;

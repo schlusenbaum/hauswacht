@@ -8,6 +8,30 @@
 
 const ET = {
   de: {
+    info: {
+      name: "Name der Meldergruppe, z. B. „Außenhaut“ oder „Innenraum“. Profile wählen Gruppen – nicht einzelne Melder.",
+      members: "Die Melder dieser Gruppe mit ihrem Typ. Der Typ entscheidet, wie ein Melder reagiert: Tür mit Eingangsverzögerung, Fenster und Bewegung sofort, Technik (Wasser, Rauch) nie als Einbruch.",
+      add: "Melder suchen und hinzufügen. Ein Melder gehört höchstens einer Gruppe.",
+      label: "Alle Entitäten mit diesem Label gehören automatisch dazu – praktisch, wenn neue Melder per Label einsortiert werden.",
+      type: "Wie der Melder reagiert: Tür = Eingangsverzögerung, Fenster/Bewegung/Glasbruch = sofort, Erschütterung mit Fehlalarmschutz, Technik (Wasser, Rauch, Frost) meldet nur.",
+      vibCount: "So viele Meldungen desselben Melders braucht es für einen Alarm. Ein einzelner Stoß (Tür knallt, Lkw) löst dann nicht aus.",
+      vibWindow: "In dieser Zeit müssen die Meldungen kommen. Die Haltezeit des Sensors muss kürzer sein.",
+      tiltEntity: "Der Sensor, der „offen“, „gekippt“ oder „zu“ meldet – z. B. ein Fenstergriff. Auch ein Auswahl-Helfer oder ein Attribut einer Entität geht.",
+      attribute: "Steht der Wert nicht im Zustand, sondern in einem Attribut (z. B. „position“), hier den Namen eintragen.",
+      values: "Welcher Wert was bedeutet. Unbekannte Werte zählen als offen – das ist die sichere Seite.",
+      group: "In welche Meldergruppe der neue Melder kommt.",
+      strengthEntity: "Ein Sensor, der die Stärke einer Erschütterung als Zahl meldet.",
+      threshold: "Ab diesem Wert zählt es als Erschütterung. Mit „gerade“ siehst du den aktuellen Wert zum Vergleich.",
+      sensorGroup: "Zu welcher Gruppe der Melder gehört – damit gilt er in allen Profilen, die diese Gruppe überwachen.",
+      always: "Meldet auch unscharf – z. B. Wasser, Tresor, Waffenschrank. Unscharf gibt es eine Nachricht, scharf den normalen Alarm.",
+      profilesTitle: "In welchen Profilen dieser Melder allein auslöst. Haken weg = in diesem Profil ausgenommen; in Auslöseregeln zählt er weiter.",
+      alwaysGroups: "Ganze Gruppen, die auch unscharf melden.",
+      alwaysSensors: "Einzelne Melder, die auch unscharf melden.",
+      alwaysSirensOn: "An: Löst ein immer aktiver Melder unscharf aus, gehen die Sirenen an. Aus: nur eine Nachricht.",
+      alwaysTone: "Ton für einen Alarm im unscharfen Zustand.",
+      alwaysVolume: "Lautstärke für einen Alarm im unscharfen Zustand.",
+      alwaysReaction: "So lange laufen die Sirenen bei einem Alarm im unscharfen Zustand.",
+    },
     save: "Speichern",
     cancel: "Abbrechen",
     delete: "Löschen",
@@ -99,6 +123,30 @@ const ET = {
     },
   },
   en: {
+    info: {
+      name: "Name of the sensor group, e.g. “Perimeter” or “Interior”. Profiles choose groups – not single sensors.",
+      members: "The sensors of this group with their type. The type decides how a sensor reacts: door with entry delay, window and motion at once, technical (water, smoke) never as burglary.",
+      add: "Search and add sensors. A sensor belongs to at most one group.",
+      label: "All entities with this label belong to it automatically – handy when new sensors are sorted by label.",
+      type: "How the sensor reacts: door = entry delay, window/motion/glass break = at once, vibration with false-alarm protection, technical (water, smoke, frost) only reports.",
+      vibCount: "This many reports of the same sensor are needed for an alarm. A single knock (door slams, lorry) then does not trigger.",
+      vibWindow: "The reports have to come within this time. The sensor's hold time must be shorter.",
+      tiltEntity: "The sensor that reports “open”, “tilted” or “closed” – e.g. a window handle. A select helper or an attribute of an entity works too.",
+      attribute: "If the value is not in the state but in an attribute (e.g. “position”), enter its name here.",
+      values: "Which value means what. Unknown values count as open – that is the safe side.",
+      group: "Which sensor group the new sensor goes into.",
+      strengthEntity: "A sensor that reports the strength of a vibration as a number.",
+      threshold: "From this value it counts as a vibration. “current” shows the present value for comparison.",
+      sensorGroup: "Which group the sensor belongs to – so it applies in all profiles that watch this group.",
+      always: "Also reports when disarmed – e.g. water, safe, gun cabinet. Disarmed there is a message, armed the normal alarm.",
+      profilesTitle: "In which profiles this sensor triggers on its own. Untick = excluded in this profile; it still counts in trigger rules.",
+      alwaysGroups: "Whole groups that also report when disarmed.",
+      alwaysSensors: "Single sensors that also report when disarmed.",
+      alwaysSirensOn: "On: if an always-active sensor triggers while disarmed, the sirens go on. Off: only a message.",
+      alwaysTone: "Tone for an alarm while disarmed.",
+      alwaysVolume: "Volume for an alarm while disarmed.",
+      alwaysReaction: "This long the sirens run for an alarm while disarmed.",
+    },
     save: "Save",
     cancel: "Cancel",
     delete: "Delete",
@@ -692,6 +740,8 @@ class HauswachtSensorEditor extends HTMLElement {
       <button class="b" data-a="cancel">${e(this._t("cancel"))}</button>
       ${del ? `<button class="b d" data-a="delete">${e(this._t("delete"))}</button>` : ""}</div></div>`;
     window.HauswachtDocs?.decorate(this.shadowRoot, this.helpKey, this._lang);
+    // ⓘ an den Beschriftungen (0.62)
+    window.HauswachtDocs?.explain?.(this.shadowRoot, Object.entries(this._t("info") || {}).map(([key, text]) => [this._t(key), text]), this._lang);
     this._wire();
   }
 
