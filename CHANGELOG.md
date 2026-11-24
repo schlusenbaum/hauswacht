@@ -6,6 +6,29 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-11-24
+
+**Erklärungen direkt an jeder Einstellung** (getestet über die Vorabversionen 0.62.0b1 bis b3).
+
+### Hinzugefügt
+- Einstellungsseite: **ⓘ an den Feldern** in allen Seitenblättern – Profile, System, Melder,
+  Auslöseregeln, Alarmgeber und Benachrichtigungen, Personen, Bedienteile. Mauszeiger drauf
+  zeigt die Erklärung, Antippen klappt sie auf.
+- **„So verhält sich das:“** – ein Satz, der sich beim Einstellen sofort ändert: im Profil
+  (Zeiten, Scharfschalten, Reaktion, Automatik, Bei Rückkehr, Scharf durch Schließen, Durchgang)
+  und im System (Neustart, Funkstille, PIN-Regeln, Aktions-Codes, Melder aus Messwert,
+  Anlernzeit).
+- Roadmap: ADR 0016 „Anwesenheit in der Testkarte“ für 0.63; die Ausgangserkennung rückt auf
+  0.64.
+
+### Geändert
+- Profil: Selten geänderte Felder stehen unter **„Mehr Einstellungen“**; Ausgangstüren und
+  Durchgangszeiten erscheinen erst, wenn der Schalter dazu an ist.
+
+### Behoben
+- Sirenentest: falsche Beschriftung am Feld „Erinnerung, wenn eine Sirene so lange nicht
+  getestet wurde“.
+
 ## [0.62.0b3] - 2026-11-24
 
 **Vorabversion: Erklärungen überall** (Roadmap 0.62, Schritt 3).
