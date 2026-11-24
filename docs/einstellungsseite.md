@@ -226,7 +226,11 @@ Im selben Reiter darunter:
 
 Im Reiter **System** steht oben der Zustand der Überwachung – mit den Knöpfen **Heimkehr-Bericht**
 und **Tabelle** zum Herunterladen der [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung).
-Darunter je Thema eine Karte mit **„Bearbeiten“**:
+Darunter je Thema eine Karte mit **„Bearbeiten“**. In jedem Seitenblatt steht ab 0.62 hinter
+jedem Feld ein **ⓘ** mit Erklärung, und wo es hilft, ein Satz **„So verhält sich das:“** – z. B.
+bei den PIN-Regeln („Unscharf schalten am Bedienfeld, Keypad und per Sprache nur mit PIN.
+Scharfschalten geht ohne PIN …“), bei der Funkstille, bei Aktions-Codes, beim Melder aus
+Messwert („Unter 5 meldet der Melder „Problem“, wieder normal über 6.“) und bei der Anlernzeit.
 
 | Karte | Inhalt |
 |---|---|

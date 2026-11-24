@@ -222,7 +222,11 @@ Further down in the same tab:
 
 The tab **System** shows the monitoring state at the top – with the buttons **homecoming
 report** and **table** to download the [homecoming observation](observations.md#homecoming-observation).
-Below it one card per topic with **"Edit"**:
+Below it one card per topic with **"Edit"**. From 0.62, every side sheet has an **ⓘ** with an
+explanation behind every field and, where it helps, a sentence **"This is how it behaves:"** –
+e.g. for the PIN rules ("Disarming on the panel, keypad and by voice only with a PIN. Arming works
+without a PIN …"), the radio silence, action codes, the sensor from a value ("Below 5 the sensor
+reports "problem", normal again above 6.") and the learning time.
 
 | Card | Content |
 |---|---|

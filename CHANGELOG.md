@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.62.0b2] - 2026-11-24
+
+**Vorabversion: Erklärungen in den Systemeinstellungen** (Roadmap 0.62, Schritt 2).
+
+### Hinzugefügt
+- Einstellungsseite → System: **ⓘ an jedem Feld** in allen Seitenblättern (Neustart,
+  Funkstille, Funknetz, Anwesenheit, Bereiche, PIN-Regeln, Aktions-Codes, Melder aus Messwert,
+  Anlernzeit).
+- **„So verhält sich das:“** bei Neustart, Funkstille, PIN-Regeln, Aktions-Codes, Melder aus
+  Messwert und Anlernzeit – ändert sich mit den Einstellungen.
+- Roadmap: ADR 0016 „Anwesenheit in der Testkarte“ für 0.63; die Ausgangserkennung rückt auf 0.64.
+
 ## [0.62.0b1] - 2026-11-24
 
 **Vorabversion: Erklärungen im Profil** (Roadmap 0.62, Schritt 1).
