@@ -63,6 +63,17 @@ def _presence_persons(options: Mapping[str, Any]) -> list[str]:
     return list(dict.fromkeys(persons))
 
 
+def _presence_status(main: Any) -> dict[str, Any] | None:
+    """Anwesenheit je Person mit Grund – derselbe Stand wie in der Testkarte."""
+    overview = getattr(main, "presence_overview", None)
+    if overview is None:
+        return None
+    try:
+        return overview()
+    except (AttributeError, KeyError):
+        return None
+
+
 def _entities(hass: HomeAssistant, domains: list[str]) -> list[dict[str, str]]:
     found = [
         {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
@@ -247,6 +258,8 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "signal_persons": _presence_persons(options),
             "person_choices": _entities(hass, ["person"]),
             "signal_choices": _entities(hass, ["device_tracker", "binary_sensor", "sensor"]),
+            # Wer gilt gerade als zuhause/weg und warum (ADR 0016)
+            "status": _presence_status(main),
             # Messungen der Beobachtung (Heimkehr, Eingänge, Weggehen) – nur wenn sie läuft
             "measurements": _measurements(main),
             # „weg“ nur mit Beleg (ADR 0015)

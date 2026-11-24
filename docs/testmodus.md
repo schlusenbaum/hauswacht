@@ -84,6 +84,85 @@ data:
 `hauswacht.simulate_trigger` (Melder kurz auslösen) und `hauswacht.simulate_reset` (alle
 zurück) gibt es ebenfalls.
 
+## Anwesenheit testen
+
+Die Profil-Automatik schaltet scharf, wenn **alle weg** sind, und unscharf, wenn jemand
+**zurückkommt** (siehe [Profile → Automatik](profile.md#automatik)). Damit du das ausprobieren
+kannst, ohne wirklich das Haus zu verlassen, zeigt die Testkarte unter den Meldern den Block
+**„Anwesenheit“**.
+
+### Was du siehst (immer, auch ohne Testmodus)
+
+Pro Person eine Zeile: **zuhause**, **weg** oder **unbekannt** – und warum. Beispiele:
+
+| Anzeige | Bedeutung |
+|---|---|
+| Niklas: **zuhause** – zuhause laut: Niklas iPhone WLAN | Mindestens ein Signal sagt „zuhause“. |
+| Finja: **weg** – Beleg: frische Ortung außerhalb (14:32) | Eine frische, genaue Ortung liegt außerhalb der Heimzone. |
+| Martin: **weg** – Beleg: Tür + Signal (unsicher) | Tür ging auf, danach meldete das Signal „weg“ (nur, wenn für ihn erlaubt). |
+| Niklas: **zuhause** – alle Signale „weg“, aber kein Beleg | Alles sagt „weg“, aber es gibt keinen Beleg. Für Hauswacht zählt er weiter als **nicht weg**. |
+| Finja: **unbekannt** – unklar: Finja iPhone | Ein Signal liefert gerade nichts Brauchbares. |
+
+Darüber steht **pro Profil mit Automatik**, was „alle weg“ gerade macht:
+
+- **„alle weg – scharf in 4:12“** – alle sind weg, die Wartezeit läuft. Danach wird das
+  Profil eingeschaltet.
+- **„wartet auf: Niklas, Finja“** – diese Personen gelten noch nicht als weg.
+
+Denselben Stand findest du auf der Einstellungsseite unter **System → Anwesenheit**
+(„Wer gilt gerade als zuhause?“). Dort ist es der Stand beim Öffnen der Seite.
+
+### Anwesenheit simulieren (nur im Testmodus)
+
+Im Testmodus hat jede Person diese Knöpfe:
+
+| Knopf | Was Hauswacht dann annimmt |
+|---|---|
+| **Zuhause** | Die Person ist zuhause. |
+| **Weg** | Die Person ist weg **und** es gibt einen Beleg. Zählt für „alle weg“. |
+| **Weg ohne Beleg** | Alle Signale sagen „weg“, aber ohne Beleg. Zählt **nicht** als weg – so prüfst du, dass Hauswacht nicht vorschnell scharf schaltet. |
+| **Nähert sich** | Die Person ist weg und kommt gerade zurück. Damit testest du „Bei Rückkehr“ und die längere Eingangsverzögerung beim Annähern. |
+| **Echt** | Simulation für diese Person aus – es gilt wieder der echte Stand. |
+
+Der aktive Knopf ist hervorgehoben. Wie bei den Meldern gilt: **Die Simulation wirkt nur in
+Hauswacht.** Die Personen in Home Assistant und alle anderen Automationen bleiben unverändert.
+**Testmodus aus** oder ein **Neustart** setzt alles auf „Echt“ zurück.
+
+Die Wartezeit von „alle weg“ wird **nicht** verkürzt – die Anlage verhält sich genau wie im
+echten Betrieb. Damit du nicht warten musst, gibt es während der Wartezeit den Knopf
+**„Wartezeit überspringen“**: Er beendet die Wartezeit sofort, als wäre sie abgelaufen.
+
+**Beispiel – scharf schalten, wenn alle weg sind:**
+
+1. Testmodus an.
+2. Bei allen Personen **Weg** drücken → oben steht „alle weg – scharf in …“.
+3. **Wartezeit überspringen** → das Profil wird scharf geschaltet (Testmodus: keine Sirene).
+4. Bei einer Person **Nähert sich** drücken, dann die Haustür in der Karte **Auf** →
+   je nach „Bei Rückkehr“ wird unscharf geschaltet oder die Eingangsverzögerung läuft.
+5. Testmodus aus → alles wieder echt.
+
+**Beispiel – kein Beleg:** Alle auf **Weg ohne Beleg** → oben steht weiter „wartet auf: …“.
+Genau so soll es sein: Ohne Beleg wird nicht automatisch scharf geschaltet.
+
+Noch nicht simulierbar sind zeitgesteuerte Automatiken (Uhrzeit).
+
+Dasselbe als Aktionen:
+
+```yaml
+action: hauswacht.simulate_presence
+target:
+  entity_id: alarm_control_panel.hauswacht
+data:
+  person: person.niklas
+  state: away        # home · away · away_no_proof · approaching · real
+```
+
+```yaml
+action: hauswacht.skip_wait
+target:
+  entity_id: alarm_control_panel.hauswacht
+```
+
 ## Sirenentest in der Karte
 
 Ganz unten, **eingeklappt**: „🔊 Sirenentest (echte Sirene!)“. Aufgeklappt zeigt er jede Sirene

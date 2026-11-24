@@ -1740,6 +1740,15 @@
         "disarm": "Disarm",
         "passage": "Passage if the profile allows it – otherwise disarm"
       }
+    },
+    "simulate_presence": {
+      "options": {
+        "home": "Home",
+        "away": "Away (with proof)",
+        "away_no_proof": "Away without proof (sleeping phone)",
+        "approaching": "Away and approaching",
+        "real": "Real (reset)"
+      }
     }
   },
   "entity": {
@@ -2003,6 +2012,9 @@
     },
     "passage_no_doors": {
       "message": "Passage not possible: the armed profile has no entry door and no sensors on the way that could be freed."
+    },
+    "unknown_presence_person": {
+      "message": "{person} is not part of any profile automation (“arm when all away”, “On return”)."
     }
   },
   "services": {
@@ -2141,6 +2153,24 @@
           "description": "PIN or card (needed if PINs are set up)."
         }
       }
+    },
+    "simulate_presence": {
+      "name": "Simulate presence",
+      "description": "Makes Hauswacht believe a person's presence (home, away with or without proof, approaching) or resets it to the real signals. Test mode only; the person in Home Assistant and the homecoming observation stay unchanged.",
+      "fields": {
+        "person": {
+          "name": "Person",
+          "description": "A person from “arm when all away” or “On return”."
+        },
+        "state": {
+          "name": "State",
+          "description": "“Real” resets to the real signals."
+        }
+      }
+    },
+    "skip_wait": {
+      "name": "Skip waiting time",
+      "description": "Ends a running “arm when all away” waiting time at once (test mode only)."
     }
   },
   "issues": {

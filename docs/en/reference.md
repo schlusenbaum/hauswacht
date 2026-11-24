@@ -299,6 +299,7 @@ These events show internal processes. They rarely make good triggers for automat
 | `type` | When | Fields |
 |---|---|---|
 | `SensorSimulated` | Test mode: sensor simulated | `sensor_key`, `state` |
+| `PresenceSimulated` | Test mode: presence of a person simulated | `person`, `state` |
 | `NotificationSuppressed` | Notification suppressed (e.g. test mode) | `targets`, `title` |
 | `SpeechSuppressed` | Announcement suppressed (e.g. test mode) | `event`, `entities` |
 | `StartTimer` | Delay started | `kind` (`exit_delay`, `entry_delay`, `reaction`), `token`, `seconds` |
@@ -317,6 +318,8 @@ All actions are aimed at an alarm panel (`target: entity_id: alarm_control_panel
 | `hauswacht.simulate_trigger` | `sensor` | Test mode: trigger a sensor briefly |
 | `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `tilted` – only sensors with tilt position, `unavailable`, `real`) | Test mode: simulate a sensor state |
 | `hauswacht.simulate_reset` | – | Test mode: reset all simulations |
+| `hauswacht.simulate_presence` | `person`, `state` (`home`, `away`, `away_no_proof`, `approaching`, `real`) | Test mode: simulate a person's presence for Hauswacht, see [testing presence](test-mode.md#testing-presence) |
+| `hauswacht.skip_wait` | – | Test mode: end the "arm when all away" waiting time at once |
 | `hauswacht.siren_test` | `siren`, `duration`, `volume`, `tone` | Briefly test a real siren (administrators only) |
 | `hauswacht.siren_test_result` | `siren`, `heard` | Save the result of a siren test (administrators only) |
 | `hauswacht.siren_test_stop` | – | Cancel a running siren test (administrators only) |

@@ -82,6 +82,84 @@ data:
 `hauswacht.simulate_trigger` (trigger a sensor briefly) and `hauswacht.simulate_reset` (all back)
 exist as well.
 
+## Testing presence
+
+The profile automation arms when **everyone is away** and disarms when someone **comes back**
+(see [Profiles → Automation](profiles.md#automation)). So you can try this without actually
+leaving the house, the test card shows a **"Presence"** block below the sensors.
+
+### What you see (always, even without test mode)
+
+One line per person: **home**, **away** or **unknown** – and why. Examples:
+
+| Display | Meaning |
+|---|---|
+| Niklas: **home** – home according to: Niklas iPhone Wi-Fi | At least one signal says "home". |
+| Finja: **away** – Proof: fresh location outside (14:32) | A fresh, accurate location is outside the home zone. |
+| Martin: **away** – Proof: door + signal (uncertain) | The door opened, then the signal reported "away" (only if allowed for him). |
+| Niklas: **home** – all signals "away", but no proof | Everything says "away", but there is no proof. For Hauswacht he still counts as **not away**. |
+| Finja: **unknown** – unclear: Finja iPhone | A signal currently delivers nothing usable. |
+
+Above that, **for each profile with automation**, what "everyone away" is doing right now:
+
+- **"all away – armed in 4:12"** – everyone is away, the waiting time is running. Afterwards
+  the profile is switched on.
+- **"waiting for: Niklas, Finja"** – these people do not count as away yet.
+
+You find the same state on the settings page under **System → Presence** ("Who counts as home
+right now?"). There it is the state when the page was opened.
+
+### Simulating presence (test mode only)
+
+In test mode each person has these buttons:
+
+| Button | What Hauswacht then assumes |
+|---|---|
+| **Home** | The person is home. |
+| **Away** | The person is away **and** there is proof. Counts for "everyone away". |
+| **Away without proof** | All signals say "away", but without proof. Does **not** count as away – this is how you check that Hauswacht does not arm too early. |
+| **Approaching** | The person is away and is coming back right now. Use it to test "On return" and the longer entry delay when approaching. |
+| **Real** | Simulation for this person off – the real state applies again. |
+
+The active button is highlighted. As with sensors: **the simulation only affects Hauswacht.**
+The persons in Home Assistant and all other automations stay unchanged. **Test mode off** or a
+**restart** resets everything to "Real".
+
+The waiting time of "everyone away" is **not** shortened – the system behaves exactly as in
+real operation. So you do not have to wait, the button **"Skip waiting time"** appears while
+it runs: it ends the waiting time at once, as if it had expired.
+
+**Example – arm when everyone is away:**
+
+1. Test mode on.
+2. Press **Away** for every person → the top says "all away – armed in …".
+3. **Skip waiting time** → the profile is armed (test mode: no siren).
+4. Press **Approaching** for one person, then **Open** the front door in the card →
+   depending on "On return" the system disarms or the entry delay runs.
+5. Test mode off → everything real again.
+
+**Example – no proof:** Set everyone to **Away without proof** → the top still says
+"waiting for: …". That is how it should be: without proof there is no automatic arming.
+
+Time-based automations (time of day) cannot be simulated yet.
+
+The same as actions:
+
+```yaml
+action: hauswacht.simulate_presence
+target:
+  entity_id: alarm_control_panel.hauswacht
+data:
+  person: person.niklas
+  state: away        # home · away · away_no_proof · approaching · real
+```
+
+```yaml
+action: hauswacht.skip_wait
+target:
+  entity_id: alarm_control_panel.hauswacht
+```
+
 ## Siren test in the card
 
 At the very bottom, **collapsed**: "🔊 Siren test (real siren!)". Expanded, it shows every siren

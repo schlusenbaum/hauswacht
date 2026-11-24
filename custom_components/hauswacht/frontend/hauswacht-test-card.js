@@ -18,6 +18,21 @@ const DOMAIN = "hauswacht";
 
 const TEXT = {
   de: {
+    presence: {
+      title: "Anwesenheit",
+      states: { home: "zuhause", away: "weg", unknown: "unbekannt" },
+      approaching: "nähert sich",
+      buttons: { home: "Zuhause", away: "Weg", away_no_proof: "Weg ohne Beleg", approaching: "Nähert sich", real: "Echt" },
+      reasonSim: "simuliert (nur für Hauswacht)",
+      reasonHome: "zuhause laut: {by}",
+      reasonNoProof: "alle Signale „weg“, aber kein Beleg – zählt nicht als weg",
+      reasonUnclear: "unklar: {by}",
+      proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
+      planDue: "alle weg – scharf in {m}:{s}",
+      planWaiting: "wartet auf: {names}",
+      planIdle: "–",
+      skip: "Wartezeit überspringen",
+    },
     title: "Test",
     testOff: "Simulieren geht nur im Testmodus. Im Testmodus lösen keine Sirenen aus, und Benachrichtigungen tragen „[TEST]“.",
     testOn: "Testmodus an – keine Sirenen. Simuliert wird nur für Hauswacht; Geräte und andere Automationen merken nichts.",
@@ -91,6 +106,21 @@ const TEXT = {
     ruleBlocked: "gesperrt durch Ausnahme",
   },
   en: {
+    presence: {
+      title: "Presence",
+      states: { home: "home", away: "away", unknown: "unknown" },
+      approaching: "approaching",
+      buttons: { home: "Home", away: "Away", away_no_proof: "Away without proof", approaching: "Approaching", real: "Real" },
+      reasonSim: "simulated (for Hauswacht only)",
+      reasonHome: "home according to: {by}",
+      reasonNoProof: "all signals “away”, but no proof – does not count as away",
+      reasonUnclear: "unclear: {by}",
+      proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", simulated: "Proof: simulated", other: "Proof available" },
+      planDue: "all away – armed in {m}:{s}",
+      planWaiting: "waiting for: {names}",
+      planIdle: "–",
+      skip: "Skip waiting time",
+    },
     title: "Test",
     testOff: "Simulation only works in test mode. In test mode no siren sounds and notifications carry \"[TEST]\".",
     testOn: "Test mode on – no sirens. Simulated for Hauswacht only; devices and other automations notice nothing.",
@@ -211,6 +241,9 @@ const STYLE = `
   .rules .head { color: var(--secondary-text-color); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
   .rules .rule { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
   .rules .rule.active { color: var(--warning-color); }
+  .presence .btns { display: flex; gap: 4px; flex-wrap: wrap; }
+  .presence button.active { border-color: var(--primary-color); color: var(--primary-color); }
+  .presence button.skip { margin-top: 4px; }
   .rules .rule-text { color: var(--secondary-text-color); font-size: 0.85em; margin: 0 0 4px; }
   .phase.alarm { background: var(--error-color); color: var(--text-primary-color, #fff); }
   .phase.delay { background: var(--warning-color); color: var(--text-primary-color, #fff); }
@@ -382,6 +415,11 @@ class HauswachtTestCard extends HTMLElement {
     );
     actions.append(this._toggle, this._reset, this._codeReset);
     card.appendChild(actions);
+    // Anwesenheit (ADR 0016): Status je Person, im Testmodus simulieren
+    this._presenceBox = document.createElement("div");
+    this._presenceBox.className = "presence";
+    this._presenceSig = null;
+    card.appendChild(this._presenceBox);
 
     if (!sensors.length) {
       const empty = document.createElement("div");
@@ -666,6 +704,73 @@ class HauswachtTestCard extends HTMLElement {
     return Boolean(sim && sim.attributes.test_mode);
   }
 
+  // --- Anwesenheit (ADR 0016) ---------------------------------------------------
+
+  _presenceReason(row) {
+    const r = row.reason || {};
+    const t = this._t("presence");
+    const time = (ts) => (ts ? new Date(ts * 1000).toLocaleTimeString(this._hass.language || "de", { hour: "2-digit", minute: "2-digit" }) : "");
+    if (r.kind === "simulated") return t.reasonSim;
+    if (r.kind === "home") return t.reasonHome.replace("{by}", (r.by || []).join(", ") || "–");
+    if (r.kind === "away") return (t.proofs[r.proof] || t.proofs.other) + (r.at ? ` (${time(r.at)})` : "");
+    if (r.kind === "no_proof") return t.reasonNoProof;
+    if (r.kind === "unclear") return t.reasonUnclear.replace("{by}", (r.by || []).join(", ") || "–");
+    return "";
+  }
+
+  _updatePresence(testMode) {
+    const box = this._presenceBox;
+    if (!box) return;
+    const sim = this._ids.simulation && this._hass.states[this._ids.simulation];
+    const data = sim && sim.attributes.presence;
+    const persons = data && data.persons ? Object.entries(data.persons) : [];
+    const profiles = (data && data.profiles) || [];
+    const signature = JSON.stringify([testMode, persons, profiles, Math.floor(Date.now() / 30000)]);
+    if (signature === this._presenceSig) return;
+    this._presenceSig = signature;
+    const t = this._t("presence");
+    if (!persons.length) {
+      box.innerHTML = "";
+      return;
+    }
+    const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const buttons = ["home", "away", "away_no_proof", "approaching", "real"];
+    const rows = persons
+      .map(([id, row]) => {
+        const approach = row.approach_at ? ` · ${t.approaching}` : "";
+        const current = row.simulated || "real";
+        const btns = buttons
+          .map((b) => `<button data-person="${esc(id)}" data-state="${b}" class="${testMode && current === b ? "active" : ""}" ${testMode ? "" : "disabled"}>${esc(t.buttons[b])}</button>`)
+          .join("");
+        return `<div class="row ${row.simulated ? "sim" : ""}"><ha-icon icon="${row.state === "home" ? "mdi:home-account" : row.state === "away" ? "mdi:account-arrow-right" : "mdi:account-question"}"></ha-icon>
+          <div class="info"><div class="name">${esc(row.name)}: <b>${esc(t.states[row.state])}</b>${esc(approach)}</div>
+          <div class="state">${esc(this._presenceReason(row))}</div></div>
+          <div class="btns">${btns}</div></div>`;
+      })
+      .join("");
+    const now = Date.now() / 1000;
+    const plan = profiles
+      .map((p) => {
+        let text;
+        if (p.due) {
+          const left = Math.max(0, Math.round(p.due - now));
+          text = t.planDue.replace("{m}", String(Math.floor(left / 60))).replace("{s}", String(left % 60).padStart(2, "0"));
+        } else if (p.waiting && p.waiting.length) text = t.planWaiting.replace("{names}", p.waiting.join(", "));
+        else text = t.planIdle;
+        return `<div class="rule"><span>${esc(p.name)}</span><span>${esc(text)}</span></div>`;
+      })
+      .join("");
+    const anyDue = profiles.some((p) => p.due);
+    box.innerHTML = `<div class="rules"><div class="head">${esc(t.title)}</div>${plan}
+      ${anyDue ? `<button class="skip" ${testMode ? "" : "disabled"}>${esc(t.skip)}</button>` : ""}</div>${rows}`;
+    box.querySelectorAll("button[data-person]").forEach((btn) =>
+      btn.addEventListener("click", () =>
+        this._call(DOMAIN, "simulate_presence", { entity_id: this._ids.panel, person: btn.dataset.person, state: btn.dataset.state })
+      )
+    );
+    box.querySelector("button.skip")?.addEventListener("click", () => this._call(DOMAIN, "skip_wait", { entity_id: this._ids.panel }));
+  }
+
   _call(domain, service, data, onError) {
     this._hass.callService(domain, service, data).catch((err) => {
       if (onError) onError();
@@ -691,6 +796,7 @@ class HauswachtTestCard extends HTMLElement {
     this._toggle.disabled = !this._ids.testMode;
     this._reset.disabled = !testMode;
     this._updateCodeReset();
+    this._updatePresence(testMode);
 
     let waiting = this._updateRules();
     const byId = {};

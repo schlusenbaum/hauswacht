@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.0b1] - 2026-11-24
+
+### Hinzugefügt
+
+- **Anwesenheit in der Testkarte** (ADR 0016): Block „Anwesenheit“ mit jeder Person – zuhause,
+  weg oder unbekannt und **warum** (welches Signal, welcher Beleg, „kein Beleg“). Darüber je
+  Profil mit Automatik, was „alle weg“ gerade macht („scharf in 4:12“ oder „wartet auf …“).
+  Sichtbar auch ohne Testmodus.
+- **Anwesenheit simulieren** im Testmodus: Zuhause, Weg, Weg ohne Beleg, Nähert sich, Echt –
+  nur für Hauswacht, Personen in Home Assistant bleiben unverändert. Testmodus aus oder
+  Neustart setzt alles zurück.
+- Knopf **„Wartezeit überspringen“** beendet eine laufende „alle weg“-Wartezeit sofort.
+- Aktionen `hauswacht.simulate_presence` und `hauswacht.skip_wait`, Ereignis
+  `PresenceSimulated`.
+- Einstellungsseite, System → Anwesenheit: **„Wer gilt gerade als zuhause?“** mit demselben
+  Stand.
+- Doku: [Anwesenheit testen](docs/testmodus.md#anwesenheit-testen).
+
 ## [0.62.0] - 2026-11-24
 
 **Erklärungen direkt an jeder Einstellung** (getestet über die Vorabversionen 0.62.0b1 bis b3).

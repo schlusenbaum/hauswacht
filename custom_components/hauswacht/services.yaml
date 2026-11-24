@@ -67,6 +67,35 @@ simulate_reset:
       integration: hauswacht
       domain: alarm_control_panel
 
+simulate_presence:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+  fields:
+    person:
+      required: true
+      selector:
+        entity:
+          domain: person
+    state:
+      required: true
+      selector:
+        select:
+          translation_key: simulate_presence
+          options:
+            - "home"
+            - "away"
+            - "away_no_proof"
+            - "approaching"
+            - "real"
+
+skip_wait:
+  target:
+    entity:
+      integration: hauswacht
+      domain: alarm_control_panel
+
 siren_test:
   target:
     entity:

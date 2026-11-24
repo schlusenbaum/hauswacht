@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
+import pytest
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
@@ -17,7 +19,7 @@ from pytest_homeassistant_custom_component.common import (
 
 from custom_components.hauswacht.const import EVENT_HAUSWACHT
 
-from .conftest import DOOR, PANEL, WINDOW, make_entry, set_sensor, setup_entry
+from .conftest import DOOR, PANEL, TEST_MODE, WINDOW, make_entry, set_sensor, setup_entry
 
 A = "person.a"
 B = "person.b"
@@ -683,3 +685,95 @@ async def test_direction_stationary_does_not_block_all_away(hass: HomeAssistant)
     await _person(hass, B, "not_home")
     await _later(hass, 3)
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+# --- 0.63: Anwesenheit in der Testkarte (ADR 0016) ----------------------------
+
+
+async def _sim_presence(hass: HomeAssistant, person: str, state: str) -> None:
+    await _service(
+        hass, "hauswacht", "simulate_presence", entity_id=PANEL, person=person, state=state
+    )
+
+
+def _presence(hass: HomeAssistant) -> dict[str, Any]:
+    sim = next(s for s in hass.states.async_all("sensor") if "presence" in s.attributes)
+    return sim.attributes["presence"]
+
+
+async def _test_mode(hass: HomeAssistant, on: bool = True) -> None:
+    await _service(hass, "switch", "turn_on" if on else "turn_off", entity_id=TEST_MODE)
+
+
+async def test_presence_status_shows_reason(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    hass.states.async_set(A, "not_home")  # ohne Ortung: kein Beleg
+    await hass.async_block_till_done()
+    status = _presence(hass)
+    assert status["persons"][A]["reason"]["kind"] == "no_proof"
+    assert status["persons"][B]["state"] == "home"
+    assert status["test_mode"] is False
+
+
+async def test_simulate_presence_requires_test_mode(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    with pytest.raises(ServiceValidationError):
+        await _sim_presence(hass, A, "away")
+
+
+async def test_simulate_unknown_person_rejected(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    await _test_mode(hass)
+    with pytest.raises(ServiceValidationError):
+        await _sim_presence(hass, "person.fremd", "away")
+
+
+async def test_simulated_away_arms_after_skip_wait(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    await _test_mode(hass)
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _sim_presence(hass, A, "away")
+    await _sim_presence(hass, B, "away")
+    assert hass.states.get(A).state == "home"  # Person in Home Assistant unverändert
+    status = _presence(hass)
+    assert status["persons"][A]["reason"]["kind"] == "simulated"
+    assert status["profiles"][0]["due"]
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    await _service(hass, "hauswacht", "skip_wait", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    assert [e for e in events if e.data["type"] == "PresenceSimulated"]
+
+
+async def test_simulated_away_without_proof_never_arms(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=1)
+    await _test_mode(hass)
+    await _sim_presence(hass, A, "away_no_proof")
+    await _sim_presence(hass, B, "away_no_proof")
+    await _later(hass, 5)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    assert len(_presence(hass)["profiles"][0]["waiting"]) == 2
+
+
+async def test_test_mode_off_resets_presence(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15)
+    await _test_mode(hass)
+    await _sim_presence(hass, A, "away")
+    await _sim_presence(hass, B, "away")
+    assert _presence(hass)["profiles"][0]["due"]
+    await _test_mode(hass, on=False)
+    status = _presence(hass)
+    assert status["persons"][A]["state"] == "home"
+    assert not status["profiles"][0]["due"]
+    await _later(hass, 20)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
+async def test_simulated_return_disarms(hass: HomeAssistant) -> None:
+    await _setup(hass, auto_away_persons=[A, B], auto_away_delay=15, auto_disarm_on_arrival=True)
+    await _test_mode(hass)
+    await _sim_presence(hass, A, "away")
+    await _sim_presence(hass, B, "away")
+    await _service(hass, "hauswacht", "skip_wait", entity_id=PANEL)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    await _sim_presence(hass, A, "home")
+    assert _state(hass) == AlarmControlPanelState.DISARMED

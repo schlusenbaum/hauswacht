@@ -83,6 +83,7 @@ from .core.always_active import (
     parse_arm_on_close,
 )
 from .core.areas import MAIN_AREA, area_options, parse_areas
+from .core.away_proof import SIM_REAL, SIM_VALUES
 from .core.changes import options_revision
 from .core.code_guard import (
     CodeGuardState,
@@ -413,6 +414,8 @@ class HauswachtRuntime:
         self._infra_faulty: frozenset[str] = frozenset()
         # Simulierte Sensorzustände (nur Testmodus, nur für Hauswacht, nie in Home Assistant)
         self._simulated: dict[str, str] = self.main._simulated if main else {}
+        # Simulierte Anwesenheit je Person (nur Testmodus, nur für Hauswacht – ADR 0016)
+        self._presence_sim: dict[str, str] = self.main._presence_sim if main else {}
         # Regeln ("Tür, dann Keller"): Sammlung, Auswertung für das scharfe Profil
         self.rules: dict[str, Rule] = parse_rules(self.options)
         self._engine = RuleEngine()
@@ -1860,6 +1863,13 @@ class HauswachtRuntime:
             self._simulated.clear()  # ohne Testmodus gelten wieder nur echte Zustände
             for area in self.areas.values():
                 area._notify()
+        if not self.ctx.test_mode and self._presence_sim:
+            people = list(self._presence_sim)
+            self._presence_sim.clear()  # Anwesenheit wieder echt
+            for area in self.areas.values():
+                for person in people:
+                    area.automation.presence_simulated_changed(person, SIM_REAL)
+                area._notify()
 
     # --- Interna -----------------------------------------------------------
 
@@ -2429,6 +2439,92 @@ class HauswachtRuntime:
             return
         for entity_id in list(self._simulated):
             self.simulate_state(entity_id, SIMULATION_REAL)
+
+    # --- Anwesenheit simulieren und anzeigen (ADR 0016) ---------------------
+
+    def presence_simulated(self, person: str) -> str | None:
+        """Simulierte Anwesenheit – nur im Testmodus wirksam."""
+        if not self.main.ctx.test_mode:
+            return None
+        return self._presence_sim.get(person)
+
+    def presence_persons(self) -> list[str]:
+        """Personen aus den Profil-Automatiken aller Bereiche."""
+        return list(
+            dict.fromkeys(
+                p for a in self.main.areas.values() for p in a.automation.presence_persons
+            )
+        )
+
+    @callback
+    def simulate_presence(self, person: str, value: str) -> None:
+        """Anwesenheit einer Person für Hauswacht simulieren (Testmodus) oder mit "real"
+        zurücksetzen. Die Person in Home Assistant bleibt unverändert; andere Automationen und
+        die Heimkehr-Beobachtung merken nichts davon."""
+        if self.main is not self:
+            self.main.simulate_presence(person, value)
+            return
+        if value not in SIM_VALUES:
+            raise ServiceValidationError(f"Unbekannter Zustand: {value}")
+        if not self.ctx.test_mode:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="simulation_requires_test_mode"
+            )
+        if person not in self.presence_persons():
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unknown_presence_person",
+                translation_placeholders={"person": person},
+            )
+        if value == SIM_REAL:
+            self._presence_sim.pop(person, None)
+        else:
+            self._presence_sim[person] = value
+        self.fire_event({"type": "PresenceSimulated", "person": person, "state": value})
+        for area in self.areas.values():
+            area.automation.presence_simulated_changed(person, value)
+            area._notify()
+        if self not in self.areas.values():
+            self._notify()
+
+    @callback
+    def skip_wait(self) -> None:
+        """Testmodus: laufende „alle weg“-Wartezeiten sofort beenden."""
+        if self.main is not self:
+            self.main.skip_wait()
+            return
+        if not self.ctx.test_mode:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="simulation_requires_test_mode"
+            )
+        for area in self.areas.values():
+            area.automation.skip_wait()
+            area._notify()
+        if self not in self.areas.values():
+            self._notify()
+
+    def presence_overview(self) -> dict[str, Any]:
+        """Anwesenheit aller Personen mit Grund und je Profil, was „alle weg“ macht."""
+        persons: dict[str, dict[str, Any]] = {}
+        profiles: list[dict[str, Any]] = []
+        for area in self.main.areas.values():
+            report = area.automation.presence_report()
+            for person, row in report["persons"].items():
+                persons.setdefault(person, row)
+            for row in report["profiles"]:
+                profiles.append(
+                    {
+                        **row,
+                        "name": area.profile_name(row["profile"]),
+                        "waiting": [display_name(self.hass, p) for p in row["waiting"]],
+                    }
+                )
+        for person, row in persons.items():
+            row["name"] = display_name(self.hass, person)
+            by = row["reason"].get("by")
+            if by:
+                row["reason"] = {**row["reason"], "by": [display_name(self.hass, e) for e in by]}
+        return {"persons": persons, "profiles": profiles, "test_mode": self.main.ctx.test_mode}
 
     def simulation_overview(self) -> list[dict[str, Any]]:
         """Alle Hauswacht-Sensoren mit echtem und simuliertem Zustand (für die Testkarte)."""

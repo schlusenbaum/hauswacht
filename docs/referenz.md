@@ -300,6 +300,7 @@ Diese Ereignisse zeigen Abläufe im Inneren. Als Auslöser für Automationen tau
 | `type` | Wann | Felder |
 |---|---|---|
 | `SensorSimulated` | Testmodus: Melder simuliert | `sensor_key`, `state` |
+| `PresenceSimulated` | Testmodus: Anwesenheit einer Person simuliert | `person`, `state` |
 | `NotificationSuppressed` | Benachrichtigung unterdrückt (z. B. Testmodus) | `targets`, `title` |
 | `SpeechSuppressed` | Ansage unterdrückt (z. B. Testmodus) | `event`, `entities` |
 | `StartTimer` | Verzögerung gestartet | `kind` (`exit_delay`, `entry_delay`, `reaction`), `token`, `seconds` |
@@ -318,6 +319,8 @@ Alle Aktionen richten sich an ein Bedienfeld (`target: entity_id: alarm_control_
 | `hauswacht.simulate_trigger` | `sensor` | Testmodus: Melder kurz auslösen |
 | `hauswacht.simulate_state` | `sensor`, `state` (`on`, `off`, `tilted` – nur Melder mit Kippstellung, `unavailable`, `real`) | Testmodus: Melderzustand simulieren |
 | `hauswacht.simulate_reset` | – | Testmodus: alle Simulationen zurück |
+| `hauswacht.simulate_presence` | `person`, `state` (`home`, `away`, `away_no_proof`, `approaching`, `real`) | Testmodus: Anwesenheit einer Person für Hauswacht simulieren, siehe [Anwesenheit testen](testmodus.md#anwesenheit-testen) |
+| `hauswacht.skip_wait` | – | Testmodus: „Scharf, wenn alle weg“-Wartezeit sofort beenden |
 | `hauswacht.siren_test` | `siren`, `duration`, `volume`, `tone` | Echte Sirene kurz testen (nur Administratoren) |
 | `hauswacht.siren_test_result` | `siren`, `heard` | Ergebnis eines Sirenentests speichern (nur Administratoren) |
 | `hauswacht.siren_test_stop` | – | Laufenden Sirenentest abbrechen (nur Administratoren) |

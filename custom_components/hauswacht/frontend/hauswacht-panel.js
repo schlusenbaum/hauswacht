@@ -107,6 +107,18 @@ const TEXTS = {
     measResetArrival: "Heimkommen zurücksetzen",
     measAskArrival: "Messung „Heimkommen“ löschen und neu beginnen? Weggehen und Eingänge bleiben erhalten.",
     measResetLeaving: "Weggehen zurücksetzen",
+    presenceNow: {
+      title: "Wer gilt gerade als zuhause?",
+      hint: "Stand beim Öffnen der Seite. Im Testmodus kannst du die Anwesenheit in der Testkarte simulieren.",
+      states: { home: "zuhause", away: "weg", unknown: "unbekannt" },
+      sim: "simuliert",
+      home: "laut {by}",
+      noProof: "kein Beleg – zählt nicht als weg",
+      unclear: "unklar: {by}",
+      proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", simulated: "simuliert", other: "Beleg vorhanden" },
+      due: "alle weg – Profil wird bald eingeschaltet",
+      waiting: "wartet auf: {names}",
+    },
     measResetAll: "Alle Messungen zurücksetzen",
     measResetSilence: "Messung zurücksetzen",
     measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkommen und Eingänge bleiben erhalten.",
@@ -277,6 +289,18 @@ const TEXTS = {
     measResetArrival: "Reset homecoming",
     measAskArrival: "Delete the “homecoming” measurement and start again? Leaving and entries are kept.",
     measResetLeaving: "Reset leaving",
+    presenceNow: {
+      title: "Who counts as home right now?",
+      hint: "State when the page was opened. In test mode you can simulate presence in the test card.",
+      states: { home: "home", away: "away", unknown: "unknown" },
+      sim: "simulated",
+      home: "according to {by}",
+      noProof: "no proof – does not count as away",
+      unclear: "unclear: {by}",
+      proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", simulated: "simulated", other: "proof available" },
+      due: "all away – profile will be switched on soon",
+      waiting: "waiting for: {names}",
+    },
     measResetAll: "Reset all measurements",
     measResetSilence: "Reset measurement",
     measAskLeaving: "Delete the “leaving” measurement and start again? Homecoming and entries are kept.",
@@ -885,6 +909,28 @@ class HauswachtPanel extends HTMLElement {
     return general + table + reset;
   }
 
+  _presenceNowHtml(st) {
+    if (!st || !st.persons || !Object.keys(st.persons).length) return "";
+    const t = this._t("presenceNow");
+    const why = (row) => {
+      const r = row.reason || {};
+      if (r.kind === "simulated") return t.sim;
+      if (r.kind === "home") return t.home.replace("{by}", (r.by || []).join(", ") || "–");
+      if (r.kind === "away") return t.proofs[r.proof] || t.proofs.other;
+      if (r.kind === "no_proof") return t.noProof;
+      if (r.kind === "unclear") return t.unclear.replace("{by}", (r.by || []).join(", ") || "–");
+      return "";
+    };
+    const persons = Object.values(st.persons)
+      .map((row) => `<div>${escHtml(row.name)}: <b>${escHtml(t.states[row.state] || row.state)}</b> <span class="muted">(${escHtml(why(row))})</span></div>`)
+      .join("");
+    const profiles = (st.profiles || [])
+      .filter((p) => p.due || (p.waiting && p.waiting.length))
+      .map((p) => `<div class="muted">${escHtml(p.name)}: ${escHtml(p.due ? t.due : t.waiting.replace("{names}", p.waiting.join(", ")))}</div>`)
+      .join("");
+    return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div></div>`;
+  }
+
   _measurementsHtml(m) {
     // Messungen der Heimkehr-Beobachtung: einsehen, speichern, zurücksetzen
     if (!m) return `<div class="muted">${escHtml(this._t("measOff"))}</div>`;
@@ -987,7 +1033,7 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("restart"), `<div>${escHtml(restartText)}</div>${edit("restart")}`, "restart") +
       this._card(this._t("silence"), this._silenceHtml(sys.silence) + edit("silence"), "silence") +
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
-      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${edit("homecoming")}${leaving}`, "homecoming") +
+      this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${this._presenceNowHtml(h.status)}${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
       this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage")
     );

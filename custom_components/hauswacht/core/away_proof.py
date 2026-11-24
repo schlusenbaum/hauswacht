@@ -147,6 +147,19 @@ def locate(
     return Fix(outside_zone, outside_zone and sure, at)
 
 
+# Anwesenheit simulieren – nur Testmodus, nur für Hauswacht (ADR 0016)
+SIM_HOME = "home"
+SIM_AWAY = "away"  # weg mit Beleg
+SIM_AWAY_NO_PROOF = "away_no_proof"  # alle Signale weg, aber kein Beleg (schlafendes Handy)
+SIM_APPROACHING = "approaching"  # weg und nähert sich (Richtung)
+SIM_REAL = "real"  # zurück auf die echten Signale
+SIM_VALUES = (SIM_HOME, SIM_AWAY, SIM_AWAY_NO_PROOF, SIM_APPROACHING, SIM_REAL)
+
+PROOF_FRESH = "fresh"  # frische, genaue Ortung allein
+PROOF_DOOR = "door"  # Tür und danach Ortung außerhalb
+PROOF_WEAK = "weak"  # Tür und danach Signal weg (unsicher)
+
+
 def proven_away(
     fixes: Iterable[Fix],
     doors: Iterable[float],
@@ -154,7 +167,18 @@ def proven_away(
     settings: ProofSettings,
     since: float | None = None,
 ) -> bool:
-    """Gibt es einen Beleg, dass die Person draußen ist?
+    """Gibt es einen Beleg, dass die Person draußen ist? (siehe ``proof_kind``)"""
+    return proof_kind(fixes, doors, now, settings, since) is not None
+
+
+def proof_kind(
+    fixes: Iterable[Fix],
+    doors: Iterable[float],
+    now: float,
+    settings: ProofSettings,
+    since: float | None = None,
+) -> str | None:
+    """Welcher Beleg, dass die Person draußen ist – ``PROOF_FRESH``, ``PROOF_DOOR`` oder ``None``.
 
     ``doors``: Zeitpunkte, zu denen eine Eingangstür aufging. ``since``: seit wann die Person
     zuletzt heimgekommen ist – ältere Türen und Ortungen gehören zu einem früheren Weggehen und
@@ -167,10 +191,10 @@ def proven_away(
         if fix.at < start:
             continue
         if fix.outside_sure and now - fix.at <= window:
-            return True  # frische, genaue Ortung allein
+            return PROOF_FRESH  # frische, genaue Ortung allein
         if fix.outside_zone and any(d <= fix.at <= d + window for d in opened):
-            return True  # Tür und danach Ortung außerhalb
-    return False
+            return PROOF_DOOR  # Tür und danach Ortung außerhalb
+    return None
 
 
 DOOR_MEMORY = 24 * 3600  # Türöffnungen so lange merken (Sekunden)
@@ -212,6 +236,7 @@ class AwayTracker:
         self._home_since: dict[str, float] = {}
         self._home: set[str] = set()
         self._left: dict[str, list[float]] = {}  # Person -> wann ein Signal „weg“ wurde
+        self._kind: dict[str, tuple[str, float]] = {}  # Person -> (Beleg, Zeitpunkt) – Anzeige
 
     def note_door(self, now: float) -> None:
         self.doors = prune_doors([*self.doors, now], now)
@@ -235,13 +260,30 @@ class AwayTracker:
         if person in self._proven:
             return False
         since = self._home_since.get(person)
-        if proven_away(fixes, self.doors, now, self.settings, since) or (
-            person in self.settings.weak
-            and weak_proof(self.doors, self._left.get(person, []), self.settings, since)
-        ):
+        kind = proof_kind(fixes, self.doors, now, self.settings, since)
+        if kind is None and person in self.settings.weak:
+            left = self._left.get(person, [])
+            kind = PROOF_WEAK if weak_proof(self.doors, left, self.settings, since) else None
+        if kind is not None:
             self._proven.add(person)
+            self._kind[person] = (kind, now)
             return False
         return None
+
+    def mark_proven(self, person: str, kind: str, now: float) -> None:
+        """Beleg von außen setzen (Simulation im Testmodus)."""
+        self._home.discard(person)
+        self._proven.add(person)
+        self._kind[person] = (kind, now)
+
+    def forget(self, person: str) -> None:
+        """Beleg vergessen (Simulation beendet) – danach zählen wieder nur echte Signale."""
+        self._proven.discard(person)
+        self._kind.pop(person, None)
+
+    def kind(self, person: str) -> tuple[str, float] | None:
+        """Welcher Beleg für „weg“ gilt (für die Anzeige)."""
+        return self._kind.get(person) if person in self._proven else None
 
     def proven(self, person: str) -> bool:
         return person in self._proven
