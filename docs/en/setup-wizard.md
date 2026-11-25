@@ -172,7 +172,9 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
    Display only – set up locations and "door + signal" under System → Presence.
 2. **Doors and windows** (*since 0.65.0b2*), sorted by floor and room:
    - **Not in any sensor group yet:** doors, windows and motion sensors that Home Assistant knows
-     but that are not monitored yet – pre-selected. Doors and windows go into an outside group
+     but that are not monitored yet. **Nothing is pre-selected** – such sensors are often there
+     for lights or heating (motion sensors for lights, fridge door); only what you explicitly
+     choose is monitored. Doors and windows go into an outside group
      (the existing one with the most doors and windows, or a new "Outside"), motion sensors into
      an inside group (existing or a new "Inside").
    - **Entry doors:** which doors have an **entry delay** (you come in and disarm during that

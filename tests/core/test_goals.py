@@ -262,12 +262,13 @@ def test_sensor_suggestions_put_free_sensors_into_existing_groups() -> None:
     hh = _sensors_hh()
     answers = suggestions(options, hh)
     assert answers["sensors"] == {
-        "add": [KUECHE, FLUR_BWM, GARAGE_TOR],
+        "add": [],
         "outside": "aussen",
         "inside": "innen",
         "entry_doors": [TUER, TERRASSE, GARAGE_TOR],
     }
     answers["goals"] = [AWAY]
+    answers["sensors"]["add"] = [KUECHE, FLUR_BWM, GARAGE_TOR]
     plan, after = build(options, hh, answers)
     assert after is not None, plan
     assert sorted(after["zones"]["aussen"]["entities"]) == sorted(
@@ -290,6 +291,7 @@ def test_new_groups_without_existing_ones() -> None:
     assert "@outside" in answers[NIGHT]["zones"]
     assert "@inside" in answers[AWAY]["zones"]
     answers["goals"] = [NIGHT, AWAY]
+    answers["sensors"]["add"] = [s.entity_id for s in hh.sensors]
     plan, after = build(options, hh, answers)
     assert after is not None, plan
     zones = after["zones"]

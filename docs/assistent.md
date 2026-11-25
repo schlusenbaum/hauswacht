@@ -176,7 +176,9 @@ Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dic
    werden). Nur Anzeige – Ortung und „Tür + Signal“ stellst du unter System → Anwesenheit ein.
 2. **Türen und Fenster** (*seit 0.65.0b2*), sortiert nach Etage und Raum:
    - **Noch in keiner Meldergruppe:** Türen, Fenster und Bewegungsmelder, die Home Assistant kennt,
-     aber noch nicht überwacht werden – vorausgewählt. Türen und Fenster kommen in eine Gruppe
+     aber noch nicht überwacht werden. **Nichts ist vorausgewählt** – solche Melder sind oft für
+     Licht oder Heizung da (Bewegungsmelder fürs Licht, Kühlschranktür); überwacht wird nur, was
+     du ausdrücklich wählst. Türen und Fenster kommen in eine Gruppe
      für außen (die vorhandene mit den meisten Türen und Fenstern oder eine neue „Außen“),
      Bewegungsmelder in eine Gruppe für innen (vorhanden oder neu „Innen“).
    - **Eingangstüren:** Welche Türen haben eine **Eingangsverzögerung** (du kommst rein und

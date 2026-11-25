@@ -324,12 +324,14 @@ def _best_group(hh: Household, kinds: set[str]) -> str:
 
 
 def sensor_suggestions(options: Mapping[str, Any], hh: Household) -> dict[str, Any]:
-    """Türen, Fenster, Bewegung: freie Melder aufnehmen, Eingangstüren wie bisher."""
+    """Türen, Fenster, Bewegung: Ziel-Gruppen für freie Melder, Eingangstüren wie bisher."""
     zones = parse_zones(options)
     outside = _best_group(hh, {KIND_DOOR, KIND_WINDOW})
     inside = _best_group(hh, {KIND_MOTION})
     return {
-        "add": [s.entity_id for s in hh.sensors if s.group is None],
+        # Nichts vorausgewählt: freie Melder sind oft für Licht oder Heizung da (Kühlschranktür,
+        # Bewegungsmelder fürs Licht) – überwacht wird nur, was du ausdrücklich wählst
+        "add": [],
         "outside": outside if outside in zones else NEW_GROUP,
         "inside": inside if inside in zones else NEW_GROUP,
         "entry_doors": [s.entity_id for s in hh.sensors if s.kind == KIND_DOOR],

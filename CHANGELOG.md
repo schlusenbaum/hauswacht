@@ -13,7 +13,7 @@ Einrichten nach Zielen: Türen und Fenster, Garage getrennt, Rauchmelder als Sir
 ### Neu
 
 - **Schritt „Türen und Fenster“** (nach Etage und Raum): Melder, die noch in keiner Meldergruppe
-  stehen, aufnehmen – Türen und Fenster in die Gruppe für außen, Bewegungsmelder in die für innen
+  stehen, aufnehmen (nichts vorausgewählt – überwacht wird nur, was du wählst) – Türen und Fenster in die Gruppe für außen, Bewegungsmelder in die für innen
   (vorhanden oder neu „Außen“/„Innen“). Dazu festlegen, welche Türen **Eingangstüren** mit
   Eingangsverzögerung sind; alle anderen lösen sofort aus (z. B. Terrassentür).
 - **Ziel „Garage oder Werkstatt getrennt“:** eigene Meldergruppe und eigenes Profil „Garage“ mit
