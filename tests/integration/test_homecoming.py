@@ -596,7 +596,6 @@ async def test_exit_check_measures_life_signs_and_switches_nothing(
     _person(hass, "home", "home")
     options = _night(homecoming_observe=True, homecoming_persons=[PERSON], push_disarm=True)
     await setup_entry(hass, make_entry(options))
-    client = await hass_ws_client(hass)
 
     freezer.tick(timedelta(seconds=30))
     hass.states.async_set(ROUTER, "home", {"friendly_name": "Router"})  # Lebenszeichen
@@ -613,6 +612,7 @@ async def test_exit_check_measures_life_signs_and_switches_nothing(
 
     assert _panel(hass) == AlarmControlPanelState.DISARMED
     assert push == []
+    client = await hass_ws_client(hass)  # erst jetzt: nach 20 min wäre die Anmeldung abgelaufen
     await client.send_json_auto_id({"type": "hauswacht/settings/get"})
     reply = await client.receive_json()
     assert reply["success"], reply
