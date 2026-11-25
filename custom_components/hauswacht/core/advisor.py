@@ -246,6 +246,7 @@ def _fix(  # noqa: PLR0913
     op: str,
     value: Any,
     weakens: bool = False,
+    current: Any = None,
     **values: Any,
 ) -> dict[str, Any]:
     return {
@@ -254,6 +255,7 @@ def _fix(  # noqa: PLR0913
         "path": path,
         "op": op,
         "value": value,
+        "current": current,  # bisheriger Wert (nur bei "set") – für die Vorschau „vorher → nachher“
         "weakens": weakens,
     }
 
@@ -411,6 +413,7 @@ def _return(
                         path="return.approach_delay",
                         op=OP_SET,
                         value=0,
+                        current=back.approach_delay,
                     )
                 ],
             )
@@ -453,6 +456,7 @@ def _delays(
                             op=OP_SET,
                             value=measured.seconds,
                             weakens=True,
+                            current=delay,
                         )
                     ],
                 )
@@ -492,6 +496,7 @@ def _delays(
                         op=OP_SET,
                         value=measured.seconds,
                         weakens=True,
+                        current=delay,
                     )
                 ],
             )
@@ -544,3 +549,42 @@ def advise(options: Mapping[str, Any], facts: Facts, language: str = "de") -> li
 def errors(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Nur die Fehler – die stehen auch in den Prüfhinweisen."""
     return [f for f in findings if f["level"] == ERROR]
+
+
+# --- Vorschlag übernehmen (Check-up) -----------------------------------------------------------
+
+FIX_KEYS = ("profile", "path", "op", "value")
+
+
+def find_fix(
+    findings: list[dict[str, Any]], wanted: Mapping[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Den Vorschlag unter den **aktuellen** Befunden suchen.
+
+    Übernommen wird nur, was der Assistent gerade selbst vorschlägt – so lässt sich über diesen
+    Weg nichts anderes ändern, und ein veralteter Vorschlag (inzwischen behoben) greift nicht.
+    """
+    for finding in findings:
+        for fix in finding["fixes"]:
+            if all(fix.get(k) == wanted.get(k) for k in FIX_KEYS):
+                return finding, fix
+    return None
+
+
+def patch(target: dict[str, Any], path: str, op: str, value: Any) -> None:
+    """Einen Vorschlag in ein Formular (Profil oder Anwesenheit) eintragen: ``a.b`` = Pfad."""
+    *parents, last = path.split(".")
+    node = target
+    for key in parents:
+        child = node.get(key)
+        if not isinstance(child, dict):
+            child = {}
+            node[key] = child
+        node = child
+    if op == OP_SET:
+        node[last] = value
+        return
+    items = [v for v in node.get(last) or [] if v != value]
+    if op == OP_ADD:
+        items.append(value)
+    node[last] = items

@@ -6,6 +6,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0b3] - 2026-11-25
+
+Neuer Reiter **Assistent** mit dem Check-up ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Check-up:** Der Reiter „Assistent“ auf der Einstellungsseite zeigt alle Befunde des
+  Assistenten auf einen Blick – für alle Profile und die allgemeinen Einstellungen, nach Profil
+  sortiert, mit Zusammenfassung („1 Fehler · 2 Warnungen · 0 Tipps“ oder „Alles passt zusammen“)
+  und Knopf „Neu prüfen“.
+- **Vorschläge einzeln übernehmen, mit Vorschau:** Ein Klick zeigt, wo und was sich ändert
+  („bisher 30 → neu 50“, „kommt dazu“, „fällt weg“). Erst „Übernehmen“ speichert genau diese eine
+  Änderung. Vorschläge mit ⚠ (machen die Anlage nachgiebiger) brauchen zusätzlich ein Häkchen.
+- **Sicherungen beim Übernehmen:** nur, wenn alle Bereiche unscharf sind; nur ein Vorschlag, den
+  der Assistent gerade jetzt selbst macht; hat sich inzwischen etwas geändert, wird nichts
+  gespeichert und der Check-up lädt neu. Gespeichert wird über denselben Weg wie im Seitenblatt.
+- Doku: [Check-up im Reiter „Assistent“](docs/assistent.md#check-up-im-reiter-assistent-seit-0640b3).
+
 ## [0.64.0b2] - 2026-11-25
 
 Der Assistent schaut beim Bearbeiten mit ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).

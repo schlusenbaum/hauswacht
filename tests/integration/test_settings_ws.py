@@ -764,3 +764,72 @@ async def test_advisor_checks_draft_without_saving(
         },
     )
     assert fixed["findings"] == []
+
+
+async def test_advisor_apply_fix_with_safeguards(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Check-up (ADR 0017): nur aktuelle Vorschläge, abschwächende nur mit Bestätigung."""
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    entry = make_entry({"profiles": {"night": {"auto_away_persons": ["person.anna"]}}})
+    await setup_entry(hass, entry)
+    before = dict(_options(hass)["profiles"]["night"])
+    check = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    (finding,) = check["findings"]
+    assert finding["code"] == "away_never"
+    remove, weak = finding["fixes"]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+
+    async def apply(fix: dict[str, Any], **extra: Any) -> dict[str, Any]:
+        return await _ws(
+            hass_ws_client,
+            hass,
+            type="hauswacht/advisor/apply",
+            revision=extra.pop("revision", data["revision"]),
+            fix=fix,
+            **extra,
+        )
+
+    assert (await apply(remove, revision="alt"))["errors"] == {"base": "changed_elsewhere"}
+    # Nur, was der Assistent gerade selbst vorschlägt
+    other = {**remove, "path": "entry_delay", "op": "set", "value": 1}
+    assert (await apply(other))["errors"] == {"base": "fix_not_offered"}
+    # Abschwächend („Tür + Signal“): nur mit Bestätigung
+    assert weak["weakens"] is True
+    assert (await apply(weak))["errors"] == {"base": "confirm_needed"}
+    assert "away_proof_weak" not in _options(hass) or not _options(hass)["away_proof_weak"]
+    # Person aus „alle weg“ nehmen: genau diese eine Änderung
+    result = await apply(remove)
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    after = _options(hass)["profiles"]["night"]
+    assert after["auto_away_persons"] == []
+    assert after["entry_delay"] == before.get("entry_delay", after["entry_delay"])
+    assert after["zones"] == before["zones"]
+    again = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check")
+    assert again["findings"] == []
+    # Der alte Vorschlag gilt nicht mehr
+    assert (await apply(remove, revision=result["revision"]))["errors"] == {
+        "base": "fix_not_offered"
+    }
+
+
+async def test_advisor_apply_refused_while_armed(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    await setup_entry(
+        hass, make_entry({"profiles": {"night": {"auto_away_persons": ["person.anna"]}}})
+    )
+    check = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check")
+    fix = check["findings"][0]["fixes"][0]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    await hass.services.async_call(
+        "hauswacht", "arm", {"entity_id": PANEL, "profile": "home"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/advisor/apply",
+        revision=data["revision"],
+        fix=fix,
+    )
+    assert result == {"ok": False, "errors": {"base": "disarm_first"}}
+    assert _options(hass)["profiles"]["night"]["auto_away_persons"] == ["person.anna"]

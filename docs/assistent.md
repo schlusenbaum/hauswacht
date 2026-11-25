@@ -70,11 +70,55 @@ nicht. Der Assistent zeigt:
 > ⚠️ **Warnung:** Profil Abwesend: Eingangsverzögerung 30 s ist kürzer als gemessen nötig (45 s).
 > [⚠ Eingangsverzögerung auf 45 s setzen]
 
+## Check-up im Reiter „Assistent“ (seit 0.64.0b3)
+
+Auf der [Einstellungsseite](einstellungsseite.md) gibt es den Reiter **Assistent**. Dort steht der
+**Check-up**: alle Befunde des Assistenten auf einen Blick – dieselbe Prüfung wie in den
+Seitenblättern (siehe oben), aber für **alle** Profile und die allgemeinen Einstellungen auf
+einmal, ohne dass du ein Seitenblatt öffnen musst.
+
+- Oben steht die Zusammenfassung, z. B. „1 Fehler · 2 Warnungen · 0 Tipps“ – oder „Alles passt
+  zusammen“.
+- Darunter die Befunde, **nach Profil** sortiert; allgemeine Befunde (z. B. „Tür + Signal“)
+  stehen unter **Allgemein**.
+- **Neu prüfen** holt den aktuellen Stand, z. B. nachdem neue Messwerte dazugekommen sind.
+
+### Einen Vorschlag übernehmen
+
+1. Klick auf den Vorschlag (z. B. „Eingangsverzögerung auf 50 s setzen“). Es öffnet sich eine
+   **Vorschau**: wo sich etwas ändert (Profil oder System → Anwesenheit) und was – bei Zahlen
+   „bisher → neu“, bei Listen „kommt dazu“ oder „fällt weg“.
+2. **Übernehmen** speichert genau diese eine Änderung. Hauswacht lädt danach neu, und der
+   Check-up ist aktualisiert.
+3. **Abbrechen** schließt die Vorschau, es ändert sich nichts.
+
+Vorschläge mit **⚠** machen die Anlage an einer Stelle nachgiebiger (z. B. längere
+Eingangsverzögerung = späterer Alarm, oder „Tür + Signal“ = unsicherer Beleg für „weg“). Bei
+ihnen ist **Übernehmen** erst möglich, wenn du das Häkchen „Ich habe das verstanden …“ setzt.
+
+**Beispiel:** Profil Nacht, Eingangsverzögerung 30 s. An der Haustür hat das Unscharfschalten in 4
+Messungen bis zu 36 s gedauert. Der Check-up zeigt:
+
+> ⚠️ **Warnung:** Profil Nacht: Eingangsverzögerung 30 s ist kürzer als gemessen nötig (50 s).
+> [⚠ Eingangsverzögerung auf 50 s setzen]
+
+Klick darauf zeigt „bisher: **30** → neu: **50**“, den Warnhinweis und das Häkchen. Erst mit
+Häkchen und **Übernehmen** wird gespeichert.
+
+### Was der Assistent dabei garantiert
+
+- Er ändert **nichts von selbst** – nur, was du einzeln übernimmst.
+- Er schaltet nichts, löst keine Sirene aus und fasst Rauchmelder und Brandalarm nicht an.
+- Übernehmen geht nur, wenn **alle Bereiche unscharf** sind.
+- Hauswacht prüft beim Übernehmen noch einmal, ob der Vorschlag **jetzt noch** gilt. Hat sich
+  inzwischen etwas geändert (auch an anderer Stelle), wird nichts gespeichert, und der Check-up
+  lädt neu.
+- Gespeichert wird über denselben Weg wie im Seitenblatt – mit allen Prüfungen, die dort gelten.
+
 ## Was kommt
 
-Als Nächstes bekommt die Einstellungsseite einen eigenen Reiter **Assistent**: zuerst ein
-**Check-up** aller Einstellungen auf einen Blick (dieselbe Prüfung wie oben), dann eine
-**Vorschau**, was in typischen Situationen passieren würde (Einbruch, Heimkommen, Handy schläft …).
+Als Nächstes bekommt der Reiter **Assistent** eine **Vorschau**, was in typischen Situationen
+passieren würde (Einbruch, Heimkommen, Handy schläft …) – mit derselben Logik wie im Echtbetrieb.
 Danach folgt die **Einrichtung nach Zielen**. Sie soll
 
 - nach **Zielen** fragen statt nach Einstellungen („nachts absichern“, „automatisch scharf, wenn

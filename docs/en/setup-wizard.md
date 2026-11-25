@@ -70,11 +70,53 @@ location. The assistant shows:
 > ⚠️ **Warning:** Profile Away: entry delay 30 s is shorter than measured (45 s).
 > [⚠ Set entry delay to 45 s]
 
+## Check-up in the Assistant tab (since 0.64.0b3)
+
+The [settings page](settings-page.md) has the tab **Assistant**. It shows the **check-up**: all of
+the assistant's findings at a glance – the same check as in the side sheets (see above), but for
+**all** profiles and the general settings at once, without opening a side sheet.
+
+- At the top there is a summary, e.g. "1 error · 2 warnings · 0 tips" – or "Everything fits
+  together".
+- Below are the findings, sorted **by profile**; general findings (e.g. "door + signal") are under
+  **General**.
+- **Check again** fetches the current state, e.g. after new measurements came in.
+
+### Applying a suggestion
+
+1. Click the suggestion (e.g. "Set entry delay to 50 s"). A **preview** opens: where something
+   changes (profile or System → Presence) and what – for numbers "before → new", for lists "is
+   added" or "is removed".
+2. **Apply** saves exactly this one change. Hauswacht then reloads, and the check-up is updated.
+3. **Cancel** closes the preview; nothing changes.
+
+Suggestions marked **⚠** make the system more lenient in one place (e.g. a longer entry delay = a
+later alarm, or "door + signal" = an uncertain proof of "away"). For them, **Apply** only works
+after you tick "I understand …".
+
+**Example:** profile Night, entry delay 30 s. At the front door, disarming took up to 36 s in 4
+measurements. The check-up shows:
+
+> ⚠️ **Warning:** Profile Night: entry delay 30 s is shorter than measured (50 s).
+> [⚠ Set entry delay to 50 s]
+
+Clicking it shows "before: **30** → new: **50**", the warning and the tick box. Only with the tick
+and **Apply** is it saved.
+
+### What the assistant guarantees
+
+- It changes **nothing on its own** – only what you apply one by one.
+- It switches nothing, triggers no siren and never touches smoke detectors or the fire alarm.
+- Applying only works while **all areas are disarmed**.
+- When you apply, Hauswacht checks again whether the suggestion **still** holds. If something
+  changed in the meantime (even elsewhere), nothing is saved and the check-up reloads.
+- Saving uses the same path as the side sheet – with all the checks that apply there.
+
 ## What comes next
 
-Next, the settings page gets its own tab **Assistant**: first a **check-up** of all settings at
-a glance (the same check as above), then a **preview** of what would happen in typical situations
-(burglary, coming home, phone asleep …). After that comes **setup by goals**. It is meant to
+Next, the tab **Assistant** gets a **preview** of what would happen in typical situations
+(burglary, coming home, phone asleep …) – with the same logic as in real operation. After that
+comes **setup by goals**. It is meant to
 
 - ask for **goals** instead of settings ("secure the night", "arm automatically when everyone is
   away", "disarm when coming home"),

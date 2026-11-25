@@ -7,12 +7,17 @@ from typing import Any
 from custom_components.hauswacht.core.advisor import (
     ERROR,
     MIN_SAMPLES,
+    OP_ADD,
+    OP_REMOVE,
+    OP_SET,
     TIP,
     WARNING,
     Facts,
     Measured,
     advise,
     errors,
+    find_fix,
+    patch,
 )
 
 ANNA = "person.anna"
@@ -57,6 +62,7 @@ def test_all_away_with_unlocatable_person_never_arms() -> None:
         "path": "automation.auto_away_persons",
         "op": "remove",
         "value": ANNA,
+        "current": None,
         "weakens": False,
     }
     # Unsicherer Beleg: allgemeine Einstellung, muss ausdrücklich bestätigt werden
@@ -139,6 +145,7 @@ def test_entry_delay_shorter_than_measured() -> None:
     fix = finding["fixes"][0]
     # Längere Eingangsverzögerung = später Alarm: muss bestätigt werden
     assert (fix["path"], fix["value"], fix["weakens"]) == ("entry_delay", 45, True)
+    assert fix["current"] == 30  # für die Vorschau „vorher → nachher“
     assert advise(_options(entry_delay=45), _facts(entry_needed=measured)) == []
 
 
@@ -177,3 +184,36 @@ def test_english_texts() -> None:
     found = advise(options, _facts(), "en")
     assert found[0]["text"].startswith("Profile Abwesend: Anna can never")
     assert found[0]["fixes"][0]["label"] == "Remove Anna from “arm when all away”"
+
+
+def test_find_fix_only_current_suggestions() -> None:
+    options = _options(auto_away_persons=[ANNA])
+    found = advise(options, _facts())
+    wanted = {
+        "profile": "away",
+        "path": "automation.auto_away_persons",
+        "op": "remove",
+        "value": ANNA,
+        "label": "egal",
+    }
+    finding, fix = find_fix(found, wanted) or ({}, {})
+    assert finding["code"] == "away_never"
+    assert fix["weakens"] is False
+    # Etwas anderes als vorgeschlagen: nicht gefunden
+    assert find_fix(found, {**wanted, "value": BEN}) is None
+    assert find_fix(found, {**wanted, "path": "entry_delay", "op": "set"}) is None
+    # Behoben: der alte Vorschlag greift nicht mehr
+    assert find_fix(advise(options, _facts(located=frozenset({ANNA}))), wanted) is None
+
+
+def test_patch_set_add_remove() -> None:
+    form: dict[str, Any] = {"entry_delay": 30, "automation": {"auto_away_persons": [ANNA, BEN]}}
+    patch(form, "entry_delay", OP_SET, 45)
+    patch(form, "automation.auto_away_persons", OP_REMOVE, ANNA)
+    patch(form, "return.persons", OP_ADD, BEN)
+    patch(form, "return.persons", OP_ADD, BEN)  # nicht doppelt
+    assert form == {
+        "entry_delay": 45,
+        "automation": {"auto_away_persons": [BEN]},
+        "return": {"persons": [BEN]},
+    }
