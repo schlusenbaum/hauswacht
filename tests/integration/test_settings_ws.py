@@ -903,7 +903,8 @@ async def test_goals_plan_and_apply(hass: HomeAssistant, hass_ws_client: Any) ->
     plan = planned["plan"]
     assert plan["errors"] == []
     assert plan["profiles"] == ["away"]
-    labels = [c["label"] for c in plan["steps"][0]["changes"]]
+    away = next(step for step in plan["steps"] if step["profile"] == "away")
+    labels = [c["label"] for c in away["changes"]]
     assert "Scharf, wenn alle weg" in labels
     assert any(s["key"].startswith("all_leave:away") for s in planned["scenarios"])
     # Nur gerechnet – nichts gespeichert
