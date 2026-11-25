@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b1] - 2026-11-25
+
+**Einrichten nach Zielen** im Reiter Assistent ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Einrichten nach Zielen:** Statt Einstellung für Einstellung fragt der Assistent, was Hauswacht
+  tun soll – in fünf Schritten: Haushalt (wer kann als weg erkannt werden), Ziele, Rückfragen,
+  Sirenen und Empfänger, Plan.
+- **Ziele:** nachts absichern (Profil „Nacht“, auf Wunsch mit Uhrzeiten); automatisch scharf, wenn
+  alle weg sind (Profil „Abwesend“); beim Heimkommen unscharf („Bei Rückkehr“, empfohlen mit
+  Türbeleg, Eingangsverzögerung nach euren Messungen); nachts heimkommen, ohne dass „Nacht“ aus
+  ist (Reinlassen). Fehlt das Profil, legt der Assistent es an.
+- **Plan vor dem Speichern:** je Profil „bisher → neu“, Hinweise, die Prüfung und die
+  Szenario-Vorschau für die Einstellungen, wie sie danach wären. Vorhandenes wird nur ergänzt;
+  was überschrieben würde oder die Anlage nachgiebiger macht, ist mit ⚠ markiert und braucht ein
+  Häkchen.
+- **Sicherungen:** Übernehmen nur unscharf; Hauswacht rechnet den Plan aus den Antworten neu
+  (dieselben Regeln wie im Seitenblatt). Sirenen werden nur eingetragen, nie freigegeben;
+  Rauchmelder-Sirenen werden nie angeboten.
+- Doku: [Einrichten nach Zielen](docs/assistent.md#einrichten-nach-zielen-seit-0650b1) mit Beispiel.
+
 ## [0.64.0] - 2026-11-25
 
 Zusammenfassung von 0.64.0b1 bis 0.64.0b5 – **der Assistent**

@@ -58,6 +58,7 @@ const DOC_LINKS = {
   status: ["dashboard.md#scharf-und-unscharf-schalten", "dashboard.md#arming-and-disarming"],
   findings: ["uebersicht.md#prüfhinweise", "overview.md#check-hints"],
   assistant: ["assistent.md#check-up-im-reiter-assistent-seit-0640b3", "setup-wizard.md#check-up-in-the-assistant-tab-since-0640b3"],
+  goals: ["assistent.md#einrichten-nach-zielen-seit-0650b1", "setup-wizard.md#set-up-by-goals-since-0650b1"],
   scenarios: ["assistent.md#was-passiert-wenn--seit-0640b4", "setup-wizard.md#what-happens-if--since-0640b4"],
   testMode: ["testmodus.md", "test-mode.md"],
   troubleshooting: ["fehlersuche.md", "troubleshooting.md"],

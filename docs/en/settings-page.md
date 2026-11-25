@@ -30,7 +30,7 @@ right there.
 | Tab | Content |
 |---|---|
 | **Overview** | Check hints (e.g. "profile without recipients") and the state per area; buttons **Print** and **Emergency sheet** as in the card [Hauswacht overview](overview.md) |
-| **Assistant** | [Check-up](setup-wizard.md#check-up-in-the-assistant-tab-since-0640b3): what does not fit together in the settings, with reasons and suggestions to apply one by one |
+| **Assistant** | [Set up by goals](setup-wizard.md#set-up-by-goals-since-0650b1), [check-up](setup-wizard.md#check-up-in-the-assistant-tab-since-0640b3) (what does not fit together, with suggestions to apply one by one) and [“What happens if …?”](setup-wizard.md#what-happens-if--since-0640b4) |
 | **Sensors** | All sensors **by sensor group**, with type, state and battery – and one column per profile (matrix, see below). Below that [special sensors](sensors.md#sensors-with-tilt-position-tilted) and [always active](sensors.md#always-active-sensors) |
 | **Profiles** | Every profile with groups, rules, times, reaction, recipients and automation |
 | **Trigger rules** | Every rule as a sentence and where it applies |

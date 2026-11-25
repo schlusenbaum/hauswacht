@@ -238,6 +238,9 @@ const TEXTS = {
         confirm_needed: "Bitte erst bestätigen.",
         failed: "Übernehmen hat nicht geklappt.",
       },
+      goalsTitle: "Einrichten nach Zielen",
+      goalsIntro: "Sag, was Hauswacht für dich tun soll – nachts absichern, automatisch scharf, wenn alle weg sind, beim Heimkommen unscharf. Der Assistent schlägt die Einstellungen vor und zeigt vor dem Übernehmen genau, was sich ändert.",
+      goalsOpen: "Einrichten nach Zielen",
       scTitle: "Was passiert, wenn …?",
       scIntro: "Typische Situationen, durchgespielt mit deinen Einstellungen und Messwerten – mit denselben Regeln wie im Echtbetrieb, aber mit ausgedachter Uhr. Es wird nichts geschaltet.",
       scLoading: "Wird durchgespielt …",
@@ -482,6 +485,9 @@ const TEXTS = {
         confirm_needed: "Please confirm first.",
         failed: "Applying did not work.",
       },
+      goalsTitle: "Set up by goals",
+      goalsIntro: "Tell Hauswacht what it should do for you – secure the night, arm automatically when everyone is away, disarm when coming home. The assistant suggests the settings and shows exactly what changes before you apply.",
+      goalsOpen: "Set up by goals",
       scTitle: "What happens if …?",
       scIntro: "Typical situations, played through with your settings and measurements – with the same rules as in real operation, but with a made-up clock. Nothing is switched.",
       scLoading: "Playing it through …",
@@ -777,6 +783,7 @@ class HauswachtPanel extends HTMLElement {
       await import(`/hauswacht/hauswacht-panel-people.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-system.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-controls.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-goals.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -1266,7 +1273,13 @@ class HauswachtPanel extends HTMLElement {
         return `<h3>${escHtml(pid ? a("inProfile").replace("{p}", name) : name)}</h3>${items.map(([f, i]) => this._findingHtml(f, i)).join("")}`;
       })
       .join("");
-    return this._card(a("title"), intro + msg + blocks + tools, help) + this._scenariosCard();
+    return this._goalsCard() + this._card(a("title"), intro + msg + blocks + tools, help) + this._scenariosCard();
+  }
+
+  _goalsCard() {
+    const a = (k) => this._asst(k);
+    const button = `<div class="tool">${this._btn("goals:", a("goalsOpen"))}</div>`;
+    return this._card(a("goalsTitle"), `<div class="muted">${escHtml(a("goalsIntro"))}</div>${button}`, "goals");
   }
 
   // --- Szenario-Vorschau „Was passiert, wenn …?“ ------------------------------------------
@@ -1542,6 +1555,22 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "fromswitch") this._openAlarmEditor("fromswitch");
     else if (kind === "notify") this._openAlarmEditor("notify");
     else if (kind === "text") this._openAlarmEditor("text", id);
+    else if (kind === "goals") this._openGoals();
+  }
+
+  _openGoals() {
+    // Einrichten nach Zielen (ADR 0017, 0.65)
+    if (!customElements.get("hauswacht-goals-sheet")) return;
+    const sheet = document.createElement("hauswacht-goals-sheet");
+    sheet.addEventListener("hw-close", () => this._closeEditor());
+    sheet.addEventListener("hw-saved", (ev) => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave(ev.detail?.revision);
+    });
+    this._editor = sheet;
+    this.shadowRoot.appendChild(sheet);
+    sheet.open({ hass: this._hass });
   }
 
   get _canEdit() {

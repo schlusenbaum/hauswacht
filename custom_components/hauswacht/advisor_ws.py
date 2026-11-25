@@ -115,8 +115,14 @@ def _measured(main: Any) -> tuple[dict[str, Measured], dict[str, Measured]]:
     return entry, proof
 
 
-def build_facts(hass: HomeAssistant, main: Any, options: Mapping[str, Any]) -> Facts:
-    persons = _persons(options)
+def build_facts(
+    hass: HomeAssistant,
+    main: Any,
+    options: Mapping[str, Any],
+    extra_persons: tuple[str, ...] = (),
+) -> Facts:
+    """Fakten für die Prüfung; ``extra_persons``: zusätzlich (alle Personen fürs Einrichten)."""
+    persons = list(dict.fromkeys([*_persons(options), *extra_persons]))
     entry, proof = _measured(main)
     doors, windows = _members(hass, options)
     frozen = {p: f for p in persons if (f := frozen_locations(hass, p, _signals(options, p)))}

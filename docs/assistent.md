@@ -166,13 +166,67 @@ Nach dem Übernehmen des Vorschlags (50 s) zeigt dieselbe Vorschau:
 - Gastmodus, Durchgang von Hand, offene Melder beim Scharfschalten und Bedienteile kommen in den
   Szenarien nicht vor.
 
+## Einrichten nach Zielen (seit 0.65.0b1)
+
+Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dich tun soll**. Im Reiter
+**Assistent** → **Einrichten nach Zielen** öffnet sich ein Seitenblatt mit fünf Schritten:
+
+1. **Haushalt:** Welche Personen Home Assistant kennt und ob sie als „weg“ erkannt werden können
+   (✓ Ortung, „Tür + Signal“, ✓ Richtung, ⚠ Ortung eingefroren, ⚠ kann nicht als weg erkannt
+   werden). Nur Anzeige – Ortung und „Tür + Signal“ stellst du unter System → Anwesenheit ein.
+2. **Ziele** (mehrere möglich), jeweils mit dem Hinweis, welches Profil es betrifft („ergänzt das
+   Profil Nacht“ oder „legt das Profil Nacht neu an“):
+
+   | Ziel | Was eingestellt wird |
+   |---|---|
+   | **Nachts absichern** | Profil mit dem Knopf „Nacht“: Meldergruppen (vorgeschlagen: alle ohne Bewegungsmelder), auf Wunsch „Scharf um“ und „Unscharf um“ |
+   | **Automatisch scharf, wenn alle weg sind** | Profil mit dem Knopf „Abwesend“: Meldergruppen, „Scharf, wenn alle weg“ mit Personen und Wartezeit |
+   | **Beim Heimkommen unscharf** | „Bei Rückkehr“ im Abwesend-Profil: Personen und wie sicher (empfohlen: Türbeleg); die Eingangsverzögerung nach euren Messungen |
+   | **Nachts heimkommen, ohne dass „Nacht“ aus ist** | „Bei Rückkehr: Reinlassen“ im Nacht-Profil – wer heimkommt, wird reingelassen, das Profil bleibt scharf |
+
+3. **Rückfragen** je Ziel – vorausgefüllt mit dem, was schon eingestellt ist, sonst mit
+   Vorschlägen. Personen, die nicht als weg erkannt werden können, sind mit ⚠ markiert.
+4. **Sirenen und Empfänger** für die betroffenen Profile. Sirenen werden **nur eingetragen, nie
+   freigegeben** – die Freigabe bleibt ein eigener Schritt unter Alarmgeber. Sirenen von
+   Rauchmeldern bietet der Assistent nie an.
+5. **Plan:** je Profil „bisher → neu“, Hinweise, was der Assistent danach prüft, und die
+   [Szenario-Vorschau](#was-passiert-wenn--seit-0640b4) für die Einstellungen, wie sie danach
+   wären. Erst **Übernehmen** speichert.
+
+### Was der Assistent beim Einrichten garantiert
+
+- Vorhandenes wird **nur ergänzt**: Listen (Meldergruppen, Personen, Sirenen, Empfänger) werden
+  erweitert, andere Einstellungen des Profils bleiben, wie sie sind.
+- Was **überschrieben** würde (z. B. „Bei Rückkehr“ von „Unscharf, nur wenn automatisch scharf“
+  auf „Unscharf mit Türbeleg“) oder die Anlage **nachgiebiger** macht (z. B. längere
+  Eingangsverzögerung), ist im Plan mit ⚠ markiert. Übernehmen geht dann erst mit dem Häkchen
+  „Ich habe die markierten Änderungen gesehen …“.
+- Übernehmen geht nur, wenn **alle Bereiche unscharf** sind. Hauswacht rechnet den Plan dabei aus
+  deinen Antworten **neu** – mit denselben Regeln wie im Seitenblatt. Hat sich inzwischen etwas
+  geändert, wird nichts gespeichert.
+- Es wird nichts geschaltet, keine Sirene freigegeben, kein Rauchmelder angefasst und keine
+  Automation angelegt.
+
+**Beispiel:** Es gibt schon die Profile „Zuhause“ und „Abwesend“, aber keins für die Nacht. Du
+wählst „Nachts absichern“ (Scharf um 22:30) und „Beim Heimkommen unscharf“ für Anna mit Türbeleg.
+Der Plan zeigt:
+
+> **Neues Profil Nacht** – Meldergruppen: → Außen · Ausgangsverzögerung → 0 s ·
+> Eingangsverzögerung → 30 s · Scharf um → 22:30
+>
+> **Profil Abwesend** – Bei Rückkehr: Nichts → Unscharf mit Türbeleg · Bei Rückkehr – Personen:
+> – → Anna · Eingangsverzögerung: 30 s → 50 s ⚠ nachgiebiger
+>
+> Gut zu wissen: Eingangsverzögerung 50 s aus euren Messungen (längste gemessene Zeit plus Puffer).
+
+Wegen des ⚠ setzt du das Häkchen, dann **Übernehmen**.
+
 ## Was kommt
 
-Als Nächstes folgt die **Einrichtung nach Zielen**. Sie soll
-
-- nach **Zielen** fragen statt nach Einstellungen („nachts absichern“, „automatisch scharf, wenn
-  alle weg sind“, „beim Heimkommen unscharf“),
-- euren Haushalt kennen (Personen, Handys, Signale, Messwerte) und daraus Empfehlungen geben,
-- mit Beispielen aus dem eigenen Haus erklären, was die Einstellungen bewirken.
+- **0.65:** beim Einrichten auch Türen und Fenster (Vorschläge nach Etage und Raum) und
+  „Garage oder Werkstatt getrennt“.
+- **0.66:** Ausgangserkennung – wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn
+  sein Handy kurz danach „weg“ ist. Die Szenarien oben werden dafür die Sicherheitstabelle: Rein
+  darf dadurch nicht unsicherer werden.
 
 Den Stand siehst du in der [Roadmap](roadmap.md).

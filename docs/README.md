@@ -14,7 +14,7 @@ Gegenstück in der anderen Sprache.
 |---|---|
 | [So entscheidet Hauswacht](so-entscheidet-hauswacht.md) | **Überblick zuerst:** Was passiert, wenn eine Tür aufgeht, wann die Automatik schaltet, was beim Heimkommen passiert, wann jemand als zuhause oder weg gilt – als Bilder mit Beispielen |
 | [Installation und erste Schritte](installation.md) | Voraussetzungen, Installation über Marketplace oder HACS, die Einstellungsseite, der kürzeste Weg zur ersten Scharfschaltung, Updates |
-| [Assistent und Einrichtung](assistent.md) | Hinweise des Assistenten beim Bearbeiten (was nicht zusammenpasst, mit Vorschlag), so richtest du ein, und was als Nächstes kommt |
+| [Assistent und Einrichtung](assistent.md) | Hinweise beim Bearbeiten, Check-up, „Was passiert, wenn …?“ und Einrichten nach Zielen (nachts absichern, automatisch scharf, beim Heimkommen unscharf) |
 | [Melder und Meldergruppen](melder.md) | Welche Sensoren gehen, Meldergruppen, Typen (Tür, Fenster, Bewegung …), immer aktive Melder, Funkstille, Funknetz und Gateways |
 | [Alarmprofile und Bereiche](profile.md) | Profile anlegen, Verzögerungen, Reaktion, Automatik, Scharf durch Schließen der Tür, mehrere Bereiche (z. B. Haus und Garage) |
 | [Durchgang](durchgang.md) | Rein oder raus, ohne unscharf zu schalten: nachts heimkommen, kurz den Müll rausbringen – das Profil bleibt scharf |

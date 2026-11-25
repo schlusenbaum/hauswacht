@@ -162,13 +162,66 @@ After applying the suggestion (50 s), the same preview shows:
 - Guest mode, manual passage, open sensors when arming and control devices are not part of the
   scenarios.
 
+## Set up by goals (since 0.65.0b1)
+
+Instead of setting by setting, the assistant asks **what Hauswacht should do for you**. In the tab
+**Assistant** → **Set up by goals**, a side sheet with five steps opens:
+
+1. **Household:** which people Home Assistant knows and whether they can be detected as "away"
+   (✓ location, "door + signal", ✓ direction, ⚠ location frozen, ⚠ cannot be detected as away).
+   Display only – set up locations and "door + signal" under System → Presence.
+2. **Goals** (several possible), each with a note on which profile it affects ("extends the
+   profile Night" or "creates the profile Night"):
+
+   | Goal | What is set up |
+   |---|---|
+   | **Secure the night** | Profile with the button "Night": sensor groups (suggested: all without motion sensors), optionally "Arm at" and "Disarm at" |
+   | **Arm automatically when everyone is away** | Profile with the button "Away": sensor groups, "arm when all away" with persons and waiting time |
+   | **Disarm when coming home** | "On return" in the Away profile: persons and how safe (recommended: door proof); the entry delay from your measurements |
+   | **Come home at night without turning "Night" off** | "On return: let in" in the Night profile – whoever comes home is let in, the profile stays armed |
+
+3. **Questions** per goal – pre-filled with what is already set up, otherwise with suggestions.
+   Persons who cannot be detected as away are marked with ⚠.
+4. **Sirens and recipients** for the affected profiles. Sirens are **only registered, never
+   enabled** – enabling stays a separate step under Alarm devices. The assistant never offers
+   smoke detector sirens.
+5. **Plan:** per profile "before → new", hints, what the assistant checks afterwards, and the
+   [scenario preview](#what-happens-if--since-0640b4) for the settings as they would be afterwards.
+   Only **Apply** saves.
+
+### What the assistant guarantees when setting up
+
+- Existing settings are **only extended**: lists (sensor groups, persons, sirens, recipients) are
+  extended, the profile's other settings stay as they are.
+- Whatever would be **overwritten** (e.g. "On return" from "disarm only if armed automatically" to
+  "disarm with door proof") or makes the system **more lenient** (e.g. a longer entry delay) is
+  marked with ⚠ in the plan. Then Apply only works after ticking "I have seen the marked
+  changes …".
+- Applying only works while **all areas are disarmed**. Hauswacht **recomputes** the plan from
+  your answers – with the same rules as in the side sheet. If something changed in the meantime,
+  nothing is saved.
+- Nothing is switched, no siren is enabled, no smoke detector is touched and no automation is
+  created.
+
+**Example:** the profiles "Home" and "Away" exist, but none for the night. You choose "Secure the
+night" (arm at 22:30) and "Disarm when coming home" for Anna with door proof. The plan shows:
+
+> **New profile Night** – Sensor groups: → Outside · Exit delay → 0 s · Entry delay → 30 s ·
+> Arm at → 22:30
+>
+> **Profile Away** – On return: Nothing → Disarm with door proof · On return – persons: – → Anna ·
+> Entry delay: 30 s → 50 s ⚠ more lenient
+>
+> Good to know: entry delay 50 s from your measurements (longest measured time plus a buffer).
+
+Because of the ⚠ you tick the box, then **Apply**.
+
 ## What comes next
 
-Next comes **setup by goals**. It is meant to
-
-- ask for **goals** instead of settings ("secure the night", "arm automatically when everyone is
-  away", "disarm when coming home"),
-- know your household (people, phones, signals, measurements) and give recommendations from that,
-- explain with examples from your own home what the settings do.
+- **0.65:** setting up doors and windows too (suggestions by floor and room) and "garage or
+  workshop separately".
+- **0.66:** exit detection – whoever forgets the PIN when leaving does not trigger an alarm if
+  their phone is "away" shortly afterwards. The scenarios above become the safety table for it:
+  coming in must not become less safe.
 
 You can follow the status in the [roadmap](roadmap.md).
