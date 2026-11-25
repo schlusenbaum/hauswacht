@@ -6,6 +6,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.1] - 2026-11-25
+
+Zusammenfassung von 0.63.1b1.
+
+### Hinzugefügt
+
+- **Doku-Seite [So entscheidet Hauswacht](docs/so-entscheidet-hauswacht.md)**: der Überblick in
+  Bildern – Tür auf, Automatik, Heimkommen, zuhause oder weg, was Hauswacht nie von selbst tut,
+  wo man was einstellt.
+- **Messung „Lebenszeichen rund um die Tür“** (Vorbereitung der Ausgangserkennung): Lebenszeichen
+  vor dem Rausgehen, „noch da“ nach der Tür, „zuhause“ nach dem Rausgehen – schaltet nichts.
+  Doku: [Lebenszeichen rund um die Tür](docs/beobachtung.md#lebenszeichen-rund-um-die-tür).
+
 ## [0.63.1b1] - 2026-11-25
 
 ### Hinzugefügt
