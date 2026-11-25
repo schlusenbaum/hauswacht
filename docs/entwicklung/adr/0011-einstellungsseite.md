@@ -176,3 +176,20 @@ Hauptweg; der Dialog wird nach und nach zum Wegweiser.
   ohnehin etwas grundsätzlich kaputt.
 - Ändert Abschnitt 1 („zusätzlich, nicht statt“) und die Abwägung („der Dialog bleibt der sichere
   Weg“): Die Seite wird der Hauptweg, der Dialog schrumpft schrittweise.
+
+## Nachtrag 0.63.2: Der Dialog ist nur noch Wegweiser
+
+Das Ziel aus dem Nachtrag 0.61 ist erreicht: Der Einstellungsdialog und der Einrichtungsassistent
+darin sind entfallen.
+
+- **Installation:** ein einziger Schritt mit Hinweis und Link zur Einstellungsseite; die
+  Integration wird ohne Einstellungen angelegt.
+- **„Konfigurieren“:** zeigt nur noch einen Hinweis mit Link zur Seite und ändert nichts.
+- **Begründung:** Die Seite kann alles, was der Dialog konnte (vor dem Entfernen Punkt für Punkt
+  geprüft). Zwei Wege bedeuteten doppelte Formulare und doppelte Tests – und die Gefahr, dass beide
+  auseinanderlaufen. Die Einstellungsregeln in `core/changes/` waren schon die gemeinsame Logik;
+  die Tests dazu bleiben.
+- **Kein Notfall-Schalter im Dialog:** Bisher hat sich keiner als nötig erwiesen. Lädt die Seite
+  nicht, ist ohnehin etwas grundsätzlich kaputt (siehe oben).
+- **Assistent:** Ein neuer Assistent auf der Seite ist geplant (eigenes ADR). Die reinen
+  Vorschläge in `core/wizard.py` bleiben dafür erhalten.

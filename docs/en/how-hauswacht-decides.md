@@ -119,30 +119,30 @@ proof** and now counts as home again.
 ```mermaid
 flowchart TD
     H["Someone from the list<br/>comes home"] --> M{"On return"}
-    M -- off --> N["nothing"]
-    M -- "only after automation" --> AU{"Did the automation<br/>arm this profile?"}
+    M -- Nothing --> N["nothing"]
+    M -- "Disarm, only if<br/>armed automatically" --> AU{"Did the automation<br/>arm this profile?"}
     AU -- yes --> U["disarmed"]
     AU -- no --> N
-    M -- "with door proof" --> TB{"Did an entry door open<br/>within the time window?<br/>(before or after)"}
+    M -- "Disarm with door proof" --> TB{"Did an entry door open<br/>within the time window?<br/>(before or after)"}
     TB -- yes --> U
     TB -- no --> N
-    M -- always --> LW{"Was the person away<br/>for sure for 5+ min?"}
+    M -- "Disarm, also after<br/>arming by hand" --> LW{"Was the person away<br/>for sure for 5+ min?"}
     LW -- yes --> U
     LW -- no --> N
-    M -- "let in" --> RL{"Away 5+ min<br/>and door in the window?"}
+    M -- "Let in" --> RL{"Away 5+ min<br/>and door in the window?"}
     RL -- yes --> S["door free<br/>profile stays armed"]
     RL -- no --> N
 ```
 
 | Setting | When it makes sense | What to keep in mind |
 |---|---|---|
-| **off** | The profile should never disarm on its own | – |
-| **only after automation** | "Away" was armed by "everyone away" – whoever comes home first disarms | Only works while the profile is armed – no longer during the entry delay. The phone has to report "home" before the door opens |
-| **with door proof** | The safe way: phone **and** door have to match | The [time window](profiles.md#what-the-time-window-means) (default 5 min) works in both directions. Also works during the entry delay |
-| **always** | Also after arming by hand, without a door | With a warning: a phone that reports "home" after a pause disarms – even if nobody is at the door |
-| **let in** | Coming home at night, "Night" should stay armed | Does not disarm, only opens the door ([passage](passage.md)) |
+| **Nothing** | The profile should never disarm on its own | – |
+| **Disarm, only if armed automatically** | "Away" was armed by "everyone away" – whoever comes home first disarms | Only works while the profile is armed – no longer during the entry delay. The phone has to report "home" before the door opens |
+| **Disarm with door proof** | The safe way: phone **and** door have to match | The [time window](profiles.md#what-the-time-window-means) (default 5 min) works in both directions. Also works during the entry delay |
+| **Disarm, also after arming by hand** | Also after arming by hand, without a door | With a warning: a phone that reports "home" after a pause disarms – even if nobody is at the door |
+| **Let in (passage)** | Coming home at night, "Night" should stay armed | Does not disarm, only opens the door ([passage](passage.md)) |
 
-**Example:** "Night" is set to "with door proof". Niklas comes home at 1 am. His iPhone joins the
+**Example:** "Night" is set to "Disarm with door proof". Niklas comes home at 1 am. His iPhone joins the
 Wi-Fi at 1:02, the front door opens at 1:03 → both within the time window → disarmed. If his
 iPhone only reports once he is inside (door at 1:03, Wi-Fi at 1:03:40), it works just the same –
 as long as it happens within the entry delay. How long this takes for you is measured by the

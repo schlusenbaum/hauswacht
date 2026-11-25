@@ -152,83 +152,6 @@ async def test_linked_user_rights_for_push(hass: HomeAssistant, hass_admin_user:
     assert any("permission" in c.data["message"] for c in push[1:])
 
 
-async def test_user_management_in_options(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-
-    async def flow_to_user_settings(step: str) -> dict:
-        flow = await hass.config_entries.options.async_init(entry.entry_id)
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": "system"}
-        )
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": "users"}
-        )
-        return await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-
-    async def add_user(name: str) -> None:
-        flow = await flow_to_user_settings("user_add")
-        assert "new_pin" not in flow["data_schema"].schema  # PINs: eigene Liste
-        result = await hass.config_entries.options.async_configure(flow["flow_id"], {"name": name})
-        await hass.async_block_till_done()
-        assert result["type"] == "menu"
-
-    async def pin_form(user_id: str) -> dict:
-        flow = await flow_to_user_settings("pins")
-        assert flow["step_id"] == "pins"
-        return await hass.config_entries.options.async_configure(flow["flow_id"], {"user": user_id})
-
-    await add_user("Petra")
-    await add_user("Niklas")
-    assert "pin_digest" not in entry.options["users"]["petra"]
-
-    flow = await pin_form("petra")
-    assert flow["step_id"] == "pin_edit"
-    result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"new_pin": "1357", "new_duress_pin": "7531"}
-    )
-    await hass.async_block_till_done()
-    assert result["step_id"] == "pins"  # zurück in die PIN-Liste
-    stored = entry.options["users"]["petra"]
-    assert stored["name"] == "Petra"
-    assert stored["pin_digest"]
-    assert stored["duress_digest"]
-    assert "1357" not in stored.values()  # nie im Klartext
-    assert "new_pin" not in stored
-    labels = {
-        o["value"]: o["label"]
-        for o in result["data_schema"]
-        .schema[next(iter(result["data_schema"].schema))]
-        .config["options"]
-    }
-    assert labels["petra"].startswith("Petra – PIN · duress PIN")
-    assert labels["niklas"] == "Niklas – no PIN"
-
-    # Bedrohungs-PIN gleich einem normalen PIN: Fehler
-    flow = await pin_form("niklas")
-    result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"new_pin": "2222", "new_duress_pin": "1357"}
-    )
-    assert result["errors"] == {"new_duress_pin": "duress_conflict"}
-
-    # gleicher normaler PIN wie Petra: erlaubt
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"new_pin": "1357"}
-    )
-    await hass.async_block_till_done()
-    assert result["step_id"] == "pins"
-    assert entry.options["users"]["niklas"]["pin_digest"]
-
-    # PIN entfernen
-    flow = await pin_form("petra")
-    await hass.config_entries.options.async_configure(flow["flow_id"], {"remove_pin": True})
-    await hass.async_block_till_done()
-    assert "pin_digest" not in entry.options["users"]["petra"]
-    assert entry.options["users"]["petra"]["duress_digest"]
-
-
 async def test_automation_shows_automatik(hass: HomeAssistant) -> None:
     entry = make_entry()
     await setup_entry(hass, entry)
@@ -237,47 +160,47 @@ async def test_automation_shows_automatik(hass: HomeAssistant) -> None:
     assert _panel(hass).attributes["changed_by"] == "Automatik"
 
 
-async def test_name_suggests_ha_users_and_links(
-    hass: HomeAssistant, hass_admin_user: MockUser
-) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "system"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "users"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "user_add"}
-    )
-    name_selector = flow["data_schema"].schema["name"]
-    assert hass_admin_user.name in name_selector.config["options"]
-    assert name_selector.config["custom_value"] is True
-    result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": hass_admin_user.name}
-    )
-    await hass.async_block_till_done()
-    assert result["type"] == "menu"
-    stored = next(iter(entry.options["users"].values()))
-    assert stored["ha_user"] == hass_admin_user.id
+async def test_repair_issue_when_not_everyone_has_pin(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    users = {"c": user("Christian", "1357"), "p": user("Petra")}
+    await setup_entry(hass, make_entry({"users": users}))
+    issue = ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin")
+    assert issue is not None
+    assert "Petra" in issue.translation_placeholders["people"]
 
 
-async def _pin_rules(hass: HomeAssistant, entry: Any, data: dict) -> None:
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "system"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "users"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "code"}
-    )
-    result = await hass.config_entries.options.async_configure(flow["flow_id"], data)
+async def test_repair_issue_names_master_pin(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    users = {"master": {**user("Master-PIN", "8642")}, "p": user("Petra")}
+    await setup_entry(hass, make_entry({"users": users}))
+    issue = ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin")
+    assert issue is not None
+    assert issue.translation_key == "users_master_pin_only"
+    assert issue.translation_placeholders["people"] == "Petra"
+
+
+async def test_no_repair_issue_when_all_have_pin(hass: HomeAssistant) -> None:
+    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
+
+    # Konten ohne Hauswacht-Benutzer (Dienste, Wandtablet) sind keine Personen ohne PIN
+    for name in ("Grafana", "mqtt-user", "Tablett"):
+        await hass.auth.async_create_user(name)
+    users = {"c": user("Christian", "1357"), "p": user("Petra", "1357")}
+    await setup_entry(hass, make_entry({"users": users}))
+    assert ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin") is None
+
+
+async def _pin_rules(hass: HomeAssistant, entry: Any, data: dict[str, Any]) -> None:
+    """PIN-Regeln speichern wie die Einstellungsseite (dieselben Einstellungsregeln)."""
+    from custom_components.hauswacht.core.changes.system import save_pin_rules  # noqa: PLC0415
+
+    change = await hass.async_add_executor_job(save_pin_rules, entry.options, data)
+    assert not change.errors, change.errors
+    assert change.options is not None
+    hass.config_entries.async_update_entry(entry, options=change.options)
     await hass.async_block_till_done()
-    assert result["type"] == "menu"
 
 
 async def test_master_pin(hass: HomeAssistant) -> None:
@@ -311,35 +234,3 @@ async def test_buttons_allowed_despite_pin(hass: HomeAssistant) -> None:
     assert _panel(hass).state == AlarmControlPanelState.ARMED_NIGHT
     await _service(hass, "button", "press", entity_id="button.hauswacht_disarm_now")
     assert _panel(hass).state == AlarmControlPanelState.DISARMED
-
-
-async def test_repair_issue_when_not_everyone_has_pin(hass: HomeAssistant) -> None:
-    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
-
-    users = {"c": user("Christian", "1357"), "p": user("Petra")}
-    await setup_entry(hass, make_entry({"users": users}))
-    issue = ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin")
-    assert issue is not None
-    assert "Petra" in issue.translation_placeholders["people"]
-
-
-async def test_repair_issue_names_master_pin(hass: HomeAssistant) -> None:
-    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
-
-    users = {"master": {**user("Master-PIN", "8642")}, "p": user("Petra")}
-    await setup_entry(hass, make_entry({"users": users}))
-    issue = ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin")
-    assert issue is not None
-    assert issue.translation_key == "users_master_pin_only"
-    assert issue.translation_placeholders["people"] == "Petra"
-
-
-async def test_no_repair_issue_when_all_have_pin(hass: HomeAssistant) -> None:
-    from homeassistant.helpers import issue_registry as ir  # noqa: PLC0415
-
-    # Konten ohne Hauswacht-Benutzer (Dienste, Wandtablet) sind keine Personen ohne PIN
-    for name in ("Grafana", "mqtt-user", "Tablett"):
-        await hass.auth.async_create_user(name)
-    users = {"c": user("Christian", "1357"), "p": user("Petra", "1357")}
-    await setup_entry(hass, make_entry({"users": users}))
-    assert ir.async_get(hass).async_get_issue("hauswacht", "users_without_pin") is None

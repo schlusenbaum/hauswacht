@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/control-devices.md)
 
-**Systemeinstellungen → Bedienteile.** Beliebig viele Bedienteile, jedes für einen **Bereich**
+**Einstellungsseite → Personen und Bedienteile → Bedienteile.** Beliebig viele Bedienteile, jedes für einen **Bereich**
 oder für **alle Bereiche**. Ausgewiesen wird immer mit den **Ausweisen der Benutzer** (PIN,
 RFID-Karte, Schloss-Kennung): Rechte, Gültigkeit, Sperre nach falschen Eingaben und Bedrohungs-PIN gelten wie am
 Bedienfeld. „Geändert von“ zeigt z. B. „Anna (Keypad Flur)“.
@@ -49,7 +49,7 @@ MQTT-Integration in Home Assistant. Andere Keypads (ZHA, Z-Wave, ESPHome …): s
 
 1. Keypad in Zigbee2MQTT anlernen und sinnvoll benennen, z. B. „Keypad“. Der Name ist Teil des
    MQTT-Topics.
-2. **Systemeinstellungen → Bedienteile → Keypad hinzufügen:**
+2. **Einstellungsseite → Personen und Bedienteile → Bedienteil anlegen → Keypad (Zigbee2MQTT):**
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -104,7 +104,7 @@ Bedingungen:
   zweiten Druck bei „nicht bereit“; bei **automatisch überbrücken** braucht es keinen zweiten
   Druck.
 - Kam der erste Druck mit PIN oder Karte, braucht die Person das Recht **„Darf am Keypad trotzdem
-  scharf schalten“** (Standard an; im Benutzer-Dialog abschaltbar, z. B. für Kinder). Der zweite
+  scharf schalten“** (Standard an; je Person abschaltbar, z. B. für Kinder). Der zweite
   Druck darf dann ohne PIN kommen – er gilt im Namen dieser Person.
 - Kommt der zweite Druck mit einem **anderen** PIN, muss es dieselbe Person sein. Ein falscher
   PIN wird wie immer abgelehnt.
@@ -162,8 +162,8 @@ Notruf, Anlernen unbekannter Karten.
 
 ### Einrichten
 
-**Systemeinstellungen → Bedienteile → Keypad hinzufügen (allgemein)** – oder auf der
-[Einstellungsseite](einstellungsseite.md) im Reiter Personen und Bedienteile:
+**[Einstellungsseite](einstellungsseite.md) → Personen und Bedienteile → Bedienteil anlegen →
+Keypad (allgemein):**
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -173,13 +173,14 @@ Notruf, Anlernen unbekannter Karten.
 | Anmeldung | **PIN oder Karte** oder **Karte und PIN** |
 | Notruf-Taste | aus, still oder Alarm – wie beim [Zigbee2MQTT-Keypad](#keypad-zigbee2mqtt) |
 
-Nach dem Speichern zeigt das Formular die **Kennung** des Keypads, z. B. `keypad_flur`. Mit ihr
-meldet der Übersetzer Eingaben. Statt der Kennung gehen auch der Name oder die Anzeige-Entität.
+Die **Kennung** des Keypads (z. B. `keypad_flur`) wird beim Speichern aus dem Namen gebildet und
+steht danach im Seitenblatt unter „Kennung für Automationen“. Mit ihr meldet der Übersetzer
+Eingaben. Statt der Kennung gehen auch der Name oder die Anzeige-Entität.
 
 **Unbekanntes Keypad hat sich gemeldet:** Ruft ein Übersetzer mit einer Kennung auf, die es in
-Hauswacht nicht gibt, lehnt Hauswacht ab (Ergebnis `unknown_keypad`). Beim nächsten
-„Keypad hinzufügen (allgemein)“ steht die gemeldete Kennung schon im Formular – nur noch Tasten
-und Bereich wählen. So kann kein unbekanntes Gerät etwas schalten.
+Hauswacht nicht gibt, lehnt Hauswacht ab (Ergebnis `unknown_keypad`). Auf der Einstellungsseite
+steht dann unter Bedienteile „Unbekanntes Keypad … hat sich gemeldet“ mit einem Knopf zum Anlegen
+– die Kennung ist schon eingetragen, nur noch Tasten und Bereich wählen. So kann kein unbekanntes Gerät etwas schalten.
 
 ### Die Aktion `hauswacht.keypad_input`
 
@@ -355,8 +356,8 @@ Zigbee2MQTT-Keypad** aus (Rechte, Sperre, Bedrohungs-PIN, Karte und PIN, Aktions
 
 ### Einrichten
 
-**Systemeinstellungen → Bedienteile → MQTT-Schnittstelle hinzufügen** – oder auf der
-[Einstellungsseite](einstellungsseite.md) im Reiter Personen und Bedienteile:
+**[Einstellungsseite](einstellungsseite.md) → Personen und Bedienteile → Bedienteil anlegen →
+MQTT-Schnittstelle:**
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -451,7 +452,7 @@ schon heute. Deshalb:
 
 ## Aktions-Codes
 
-**Systemeinstellungen → Bedienteile → Aktions-Codes.** Ein Aktions-Code ist ein **Code plus eine
+**Einstellungsseite → Personen und Bedienteile → Aktions-Codes.** Ein Aktions-Code ist ein **Code plus eine
 Funktionstaste** am Keypad, z. B. **7777 + 🏠 Haus**. Er löst eine festgelegte Aktion aus – so
 lassen sich die Tasten des Keypads mehrfach belegen:
 
@@ -654,7 +655,7 @@ conditions:
 
 RFID-Karten, Anhänger, Finger am [Fingerabdruck-Leser](#fingerabdruck-leser-esphome) und
 Kennungen von [Türschlössern](#türschloss-z-b-nuki) verwaltest du an einer Stelle:
-**Systemeinstellungen → Benutzer und PINs → Karten und Anhänger.** Im Folgenden heißt all das
+**Einstellungsseite → Personen und Bedienteile → Karten, Anhänger und Schloss-Kennungen.** Im Folgenden heißt all das
 einfach „Karte“.
 
 ### Die Kartenliste
@@ -675,16 +676,16 @@ Die Liste zeigt jede Karte mit Name, Nummer, Besitzer und wann sie zuletzt gesch
 ### Neue Karte anlernen
 
 1. Alle Bereiche unscharf.
-2. **Karten und Anhänger → ➕ Neue Karte anlernen (hinhalten).** Der Dialog zeigt: *„Halte die
-   neue Karte jetzt an ein Keypad (und drücke Unscharf) oder an einen Leser“*. Bei einem
+2. **Karten, Anhänger und Schloss-Kennungen → + Neue Karte anlernen.** Die Seite zeigt: *„Halte
+   die Karte jetzt an ein Keypad oder einen Leser – sie erscheint hier von selbst.“* Bei einem
    Türschloss: einmal mit der neuen Kennung aufschließen.
 3. **Sobald die Karte gelesen ist, geht es sofort weiter:** „✅ Karte erkannt“. Gib einen
    **Namen** ein (z. B. „Schlüsselbund“), wähle den **Benutzer**, speichern.
 
 Am frient-Keypad reicht Hinhalten allein nicht – erst mit **Unscharf** schickt es die Nummer.
-Kommt 2 Minuten lang keine Karte, geht der Dialog ohne Karte weiter.
+Statt hinzuhalten kannst du die Nummer auch eintippen.
 
-Es zählt nur eine Karte, die **während** des Dialogs gelesen wird. Eine Karte aus einem früheren,
+Es zählt nur eine Karte, die **während** des Anlernens gelesen wird. Eine Karte aus einem früheren,
 abgebrochenen Versuch wird nicht vorausgewählt.
 
 **⌨️ Kartennummer eintippen:** ohne Warten. Hier stehen die zuletzt gelesenen unbekannten Karten
@@ -724,9 +725,9 @@ benutzt wurde – „Christian · Schlüsselbund (Keypad Flur)“ – und die
 
 ### Regeln beim Anlernen
 
-- Die Anlernzeit ist einstellbar unter **Bedienteile → Anlernen neuer Karten** (1–60 Minuten,
-  0 = Anlernen aus). Danach wird die Karte vergessen; wer zu spät speichert, bekommt einen
-  Hinweis und hält die Karte noch einmal hin.
+- Die Anlernzeit ist einstellbar unter **Personen und Bedienteile → Bedienteile → Anlernzeit für
+  neue Karten** (1–60 Minuten, 0 = Anlernen aus). Danach wird die Karte vergessen und muss noch
+  einmal hingehalten werden.
 - Unbekannte Karten zählen nicht als Fehlversuch für die [Sperre](benutzer.md#sperre-nach-falschen-eingaben).
 - Kartennummern lassen sich auch eintippen (z. B. `041B4932E82880`; Groß-/Kleinschreibung und
   Trennzeichen egal). Codes mit 4–8 Ziffern könnten PINs sein und werden nie zum Anlernen
@@ -740,7 +741,7 @@ Classic, MIFARE DESFire, NTAG-Anhänger, viele Firmenausweise) und meldet deren 
 **Nicht geeignet sind Zufallsnummern:** Handys und manche Ausweise im Datenschutz-Modus melden
 bei jedem Lesen eine **andere** Nummer – erkennbar an 4 Byte, die mit `08` beginnen
 (z. B. `+08837CF0`). Hauswacht bietet sie nicht zum Anlernen an, lehnt sie beim Speichern ab und
-zeigt im Benutzer-Dialog einen Hinweis.
+zeigt beim Anlernen einen Hinweis.
 
 ## NFC-Aufkleber (Companion App)
 
@@ -853,7 +854,7 @@ sensor:
    `esphome.fingerabdruck_flur_finger_anlernen` mit `finger_id: 1` → zweimal denselben Finger
    auflegen. Für jeden Finger eine eigene Nummer (Platz 1, 2, 3 …). Am besten eine kleine Liste
    führen: 1 = Anna, rechter Zeigefinger; 2 = Anna, linker Zeigefinger; 3 = Ben …
-2. **In Hauswacht:** Systemeinstellungen → Bedienteile → **RFID-/NFC-Leser hinzufügen** →
+2. **In Hauswacht:** Einstellungsseite → Personen und Bedienteile → **Bedienteil anlegen → RFID-/NFC-Leser** →
    Lesegerät „fingerabdruck-flur“ → Aktion z. B. „unscharf schalten“.
 3. **Finger dem Benutzer zuordnen** wie eine [Karte](#neue-karte-anlernen): alles unscharf,
    Benutzer und PINs → Karten und Anhänger → Neue Karte anlernen (hinhalten) → Finger auflegen → „✅ Karte
@@ -894,7 +895,7 @@ Ausgangsverzögerung des Profils. Drücken, rausgehen, fertig.
 > Ein Taster weist **niemanden** aus: Wer davorsteht, ist unbekannt. Deshalb schaltet er **nur
 > scharf** – nie unscharf, und er beendet nie einen Alarm.
 
-**Einrichten:** Systemeinstellungen → Bedienteile → **Taster hinzufügen**.
+**Einrichten:** Einstellungsseite → Personen und Bedienteile → **Bedienteil anlegen → Taster**.
 
 1. Name, Bereich und den **Taster** wählen:
    - eine **Ereignis-Entität** (`event.…`) – so liefern Zigbee2MQTT (neuere Versionen), Hue,
@@ -972,7 +973,7 @@ Voraussetzung: Nuki Smart Lock (3.0 Pro, 4. oder 5. Generation) mit eingeschalte
 in der Nuki-App und die MQTT-Integration in Home Assistant. Das Schloss selbst ist meist schon
 über MQTT oder die Nuki-Integration als `lock.…` in Home Assistant.
 
-1. **Systemeinstellungen → Bedienteile → Türschloss hinzufügen.**
+1. **Einstellungsseite → Personen und Bedienteile → Bedienteil anlegen → Türschloss.**
 2. Ausfüllen:
 
 | Einstellung | Beispiel | Bedeutung |
@@ -1008,9 +1009,9 @@ angelernt – das ist der einfachste Weg zu einem Fingerabdruck an der Haustür.
 Wie bei [Karten](#karten-anlernen):
 
 1. Alle Bereiche unscharf.
-2. Benutzer und PINs → Karten und Anhänger → **Neue Karte anlernen (hinhalten)**.
-3. Mit der App, dem Keypad-Code oder dem Fingerabdruck **einmal aufschließen** – der Dialog
-   erkennt die Kennung sofort → Name z. B. „Nuki-App“, Benutzer wählen → speichern.
+2. Personen und Bedienteile → Karten, Anhänger und Schloss-Kennungen → **Neue Karte anlernen**.
+3. Mit der App, dem Keypad-Code oder dem Fingerabdruck **einmal aufschließen** – die Seite
+   zeigt die Kennung sofort → Name z. B. „Nuki-App“, Benutzer wählen → speichern.
 
 Schon vorher aufgeschlossen? Dann „Kartennummer eintippen“: Dort steht die Kennung als
 „Nuki-Benutzer 52653 (neu, gelesen an Haustür-Schloss um 18:04)“ zur Auswahl.

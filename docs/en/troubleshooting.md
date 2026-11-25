@@ -15,7 +15,7 @@ Only profiles with an assigned alarm panel button appear there. All others via t
 "Profile" + "Arm".
 
 **After a restart the system is disarmed (or armed), I wanted it differently.**
-This is set under System settings → [Behaviour after restart](installation.md#behaviour-after-a-restart).
+This is set under settings page → System → [Behaviour after restart](installation.md#behaviour-after-a-restart).
 The default is "restore the previous state". Disarmed despite restoring means: the system was
 disarmed before, or the profile has been deleted in the meantime (then you get a message).
 
@@ -40,8 +40,8 @@ Only possible while **all areas are disarmed**.
 
 **"Arm when all of these persons are away" does not arm although everyone is away.**
 A person only counts as away when the person itself **and all** their additional signals report
-"away". A signal that is "unavailable" or "unknown" holds the automation back. Check under System
-settings → Presence and homecoming observation which signals are selected, and their state under
+"away". A signal that is "unavailable" or "unknown" holds the automation back. Check under settings page →
+System → Presence and homecoming observation which signals are selected, and their state under
 Developer tools → States.
 Since 0.61 "away" also needs **proof**: door and then a location outside, or a fresh, precise
 location outside (["away" only with proof](profiles.md#away-only-with-proof)). If the person shows
@@ -111,7 +111,7 @@ keypad does not send the code.
 
 - Were all areas disarmed? Has the learning time (default 5 minutes) run out?
 - Is it a **random ID** (4 bytes, starts with `08`, e.g. a phone)? It changes on every read and is
-  unsuitable – the user dialog then shows a hint.
+  unsuitable – a hint appears while learning.
 - Does the card have only 4–8 digits? Then it could be a PIN and is never shown – type the ID in.
 - Does the card already belong to a user?
 
@@ -154,7 +154,7 @@ Not with a Zigbee keypad – it only sends the card number with a key press. For
 The attribute `last_siren_decision` of the alarm panel names the reason – all reasons in plain
 language under [Why didn't a siren sound?](sirens.md#why-didnt-a-siren-sound). Common:
 
-- Real siren control not enabled yet (Alarm devices – sirens).
+- Real siren control not enabled yet (settings page → Alarm devices → Edit sirens).
 - Test mode on.
 - Profile set to "Silent alarm" or without sirens.
 - Fire lock: a smoke detector reports fire or is unavailable.
@@ -170,7 +170,7 @@ the detector stayed silent. Since 0.57.2 the test waits longer with such sirens,
 detector is reachable (last seen, link quality).
 
 **My siren only exists as a switch in Home Assistant.**
-The wizard [Create siren from switch](sirens.md#create-siren-from-switch) turns it into a siren.
+[Create siren from switch](sirens.md#create-siren-from-switch) turns it into a siren.
 Alternatively the [expert feature](sirens.md#experts-switch-directly-as-siren).
 
 **Tone per siren: "A fire tone is locked for burglar alarms".**
@@ -181,7 +181,7 @@ detectors, a fire tone for burglary is never possible.
 
 **The log says "Hauswacht ignores entities without open/closed".**
 A measurement sensor (e.g. temperature) is in a sensor group or trigger rule. Hauswacht only
-monitors sensors with open/closed – remove it, or turn it into a threshold sensor with the wizard
+monitors sensors with open/closed – remove it, or turn it into a threshold sensor with
 [Create a sensor from another sensor](sensors.md#create-a-sensor-from-another-sensor).
 
 **A sensor constantly counts as failed.**

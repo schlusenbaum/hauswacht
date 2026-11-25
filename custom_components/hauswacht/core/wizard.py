@@ -1,7 +1,8 @@
 """Einrichtungsassistent: Vorschläge und Zusammenfassung (ADR 0009).
 
-Rein und ohne Home Assistant. Der Assistent selbst (Formulare) steht in ``wizard.py`` und
-speichert nur über die Einstellungsregeln in ``core/changes``.
+Rein und ohne Home Assistant. Der alte Assistent im Einstellungsdialog ist mit 0.63.2 entfallen;
+diese Vorschläge (Melder nach Etage und Raum, Zusammenfassung) bleiben für den neuen Assistenten
+auf der Einstellungsseite. Gespeichert wird nur über die Einstellungsregeln in ``core/changes``.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@
 
 ## Alarmprofile
 
-**Alarmprofile → Alarmprofil anlegen.** Es gibt keine vorgegebenen Profile – du legst so viele
+**Einstellungsseite → Profile → Alarmprofil anlegen.** Es gibt keine vorgegebenen Profile – du legst so viele
 an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub“.
 
 > **Jedes Profil ist eine Art, scharf zu schalten.** „Unscharf“ ist kein Profil, sondern der
@@ -26,7 +26,7 @@ an, wie du brauchst, z. B. „Zuhause“, „Nacht“, „Abwesend“, „Urlaub
 | Ausgefallene Sensoren beim Scharfschalten | verweigern · nach Bestätigung erlauben · automatisch überbrücken (**Experten**). Ein ausgefallener Melder (z. B. leere Batterie) wird **wieder überwacht, sobald er sich meldet** – bis dahin ist er eine Lücke. „Automatisch überbrücken“ schaltet ohne Rückfrage scharf; der [Hinweis beim Scharfschalten](benachrichtigungen.md#hinweis-beim-scharfschalten) nennt ihn |
 | Maximale Alarmzyklen | Wie oft nach einem Alarm erneut ausgelöst werden darf |
 | Manipulation löst Alarm aus | Sonst wird Manipulation nur gemeldet |
-| Gekippte Fenster erlaubt | Nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) (sonst ausgeblendet): Ein gekipptes Fenster zählt als zu, erst ganz öffnen löst aus. **Aus** (Standard): gekippt zählt wie offen. Typisch: an bei „Nacht“, aus bei „Abwesend“. Der [Einrichtungsassistent](assistent.md#6-alarmprofile) fragt beim Nachtprofil danach |
+| Gekippte Fenster erlaubt | Nur mit [Meldern mit Kippstellung](melder.md#melder-mit-kippstellung-gekippt) (sonst ausgeblendet): Ein gekipptes Fenster zählt als zu, erst ganz öffnen löst aus. **Aus** (Standard): gekippt zählt wie offen. Typisch: an bei „Nacht“, aus bei „Abwesend“ |
 | Sirenen, Ton, Lautstärke, stiller Alarm | Reaktion bei Alarm, siehe [Sirenen](sirenen.md) |
 | Benachrichtigen (Alarm) | Wer bei einem Alarm eine Push-Nachricht bekommt |
 | Zusätzliche Lautsprecher | Ansagen dieses Profils, siehe [Sprachausgabe](benachrichtigungen.md#sprachausgabe-lautsprecher) |
@@ -117,8 +117,7 @@ verschiedenen Tagen verschiedene Zeiten**, nimm statt eines zweiten Profils eine
 1. Einstellungen → Geräte & Dienste → **Helfer** → Helfer erstellen → **Zeitplan**, Name z. B.
    „Nacht“.
 2. Im Zeitplan je Wochentag die Zeitblöcke ziehen, in denen das Profil scharf sein soll.
-3. Im Profil unter **Automatik → Oder nach Zeitplan (Helfer)** den Zeitplan wählen – oder im
-   [Einrichtungsassistenten](assistent.md) im Schritt Alarmprofile.
+3. Im Profil unter **Automatik → Oder nach Zeitplan (Helfer)** den Zeitplan wählen.
 
 Den Zeitplan legst du selbst an: Home Assistant bietet Integrationen keinen offiziellen Weg,
 Zeitpläne anzulegen, und Hauswacht greift nicht in interne Teile ein, die sich mit Updates ändern
@@ -152,8 +151,8 @@ Es gelten dieselben Regeln wie für die Uhrzeiten:
 ### Woran Hauswacht erkennt, wer zuhause ist
 
 Grundlage ist die **Person** in Home Assistant (`person.…`). Zusätzlich kannst du je Person
-weitere **Signale** wählen – unter **Systemeinstellungen → Anwesenheit und
-Heimkehr-Beobachtung**, im zweiten Schritt. Dieselben Signale nutzt auch die
+weitere **Signale** wählen – unter **Einstellungsseite → System → Anwesenheit und
+Heimkehr-Beobachtung**, im Kasten der Person. Dieselben Signale nutzt auch die
 [Heimkehr-Beobachtung](beobachtung.md#zusätzliche-signale-je-person); du stellst sie nur an
 einer Stelle ein.
 
@@ -198,7 +197,7 @@ Als **Ortung** zählt alles mit Koordinaten: die Companion App (GPS), iCloud3, e
 die Person selbst, wenn sie gerade per GPS geortet wird. **WLAN, Ping, Router und Bluetooth**
 haben keine Koordinaten – sie bestätigen nur, ein Beleg sind sie nie.
 
-**Genau genug** – einstellbar unter Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung:
+**Genau genug** – einstellbar unter Einstellungsseite → System → Anwesenheit und Heimkehr-Beobachtung:
 
 | Einstellung | „außerhalb“ heißt | Beispiel |
 |---|---|---|
@@ -219,7 +218,7 @@ Ist jemand einmal belegt weg, bleibt das so, bis die Person wieder zuhause ist �
 Ortung danach einschläft. Türen und Ortungen von vor der letzten Heimkehr zählen nicht.
 
 **Personen ohne Ortung – „auch Tür + Signal (unsicher)“:** Hat eine Person keine Ortung (z. B.
-nur WLAN-Sensor oder Ping), kannst du für sie unter Systemeinstellungen → Anwesenheit und
+nur WLAN-Sensor oder Ping), kannst du für sie unter Einstellungsseite → System → Anwesenheit und
 Heimkehr-Beobachtung, im Kasten der Person, **„Beleg für ‚weg‘: auch Tür + Signal (unsicher)“**
 wählen. Dann gilt zusätzlich als Beleg: Eine Eingangstür ging auf, und **danach** – höchstens das
 **Zeitfenster Tür + Signal** später (Standard 5 Minuten, unter „Mehr Einstellungen“, mit
@@ -241,7 +240,7 @@ Empfehlung aus der Messung) – wechselte ein Signal der Person von „da“ auf
 **Personen ohne Ortung und ohne „Tür + Signal“** (z. B. Standort in der Companion App
 abgeschaltet, nur ein Router-Tracker) gelten **nie** als weg. „Scharf, wenn alle weg“ wartet mit so einer Person in
 der Liste für immer – das ist die sichere Seite. Hauswacht zeigt das an der Personenauswahl im
-Profil („⚠ keine Ortung – gilt nie als weg“), in den Systemeinstellungen und als
+Profil („⚠ keine Ortung – gilt nie als weg“), unter System → Anwesenheit und als
 [Prüfhinweis](uebersicht.md#prüfhinweise). Abhilfe: in der Companion App den Standort auf
 **„Immer“** stellen oder einen GPS-Tracker als Signal eintragen.
 
@@ -294,8 +293,7 @@ sofort unscharf.
 „Unscharf bei Rückkehr“ (Wie bisher / Mit Türbeleg) mit den Personen aus „Scharf, wenn alle weg“
 und das Handy-Reinlassen aus dem Durchgang. Waren in einem Profil **beide** an, gewinnt
 **Reinlassen** – das Profil bleibt dann scharf, also die sichere Seite –, und du bekommst eine
-Benachrichtigung in Home Assistant. Die alten Felder im Optionen-Dialog sind weg; dort steht
-ein Hinweis auf die Einstellungsseite.
+Benachrichtigung in Home Assistant.
 
 **„Unscharf mit Türbeleg“ im Alltag**
 
@@ -316,7 +314,7 @@ ein Hinweis auf die Einstellungsseite.
 Manche Handys melden „zuhause“ erst, wenn die Tür schon offen ist – manchmal nach 60 oder 70
 Sekunden. Mit 30 s Eingangsverzögerung gäbe es dann Alarm. Die Eingangsverzögerung für **alle**
 zu verlängern, gäbe aber auch einem Einbrecher mehr Zeit. Deshalb nutzt Hauswacht die
-**Richtung** (Integration „Nähe“ oder Places, als Signal der Person unter Systemeinstellungen →
+**Richtung** (Integration „Nähe“ oder Places, als Signal der Person unter System →
 Anwesenheit eingetragen):
 
 > Hat sich eine Person aus der Liste „Bei Rückkehr“ in den letzten **15 Minuten** genähert
@@ -452,7 +450,7 @@ Tür in der Beruhigungszeit wieder auf, beginnt sie neu.
 
 ## Bereiche
 
-**Systemeinstellungen → Bereiche.** Für Anlagen, deren Teile **unabhängig** scharf geschaltet
+**Einstellungsseite → System → Bereiche.** Für Anlagen, deren Teile **unabhängig** scharf geschaltet
 werden – z. B. Garage scharf, während im Haus jemand ist. Ohne weitere Bereiche ändert sich
 nichts.
 

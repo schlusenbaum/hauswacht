@@ -171,23 +171,6 @@ async def test_simulation_while_disarmed_does_nothing(hass: HomeAssistant) -> No
 # --- Optionen ---------------------------------------------------------------
 
 
-async def test_options_flow_infrastructure(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "system"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "infrastructure"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"infrastructure": [Z2M]}
-    )
-    await hass.async_block_till_done()
-    assert entry.options["infrastructure"] == [Z2M]
-
-
 async def test_problem_indicator_off_means_ok(hass: HomeAssistant) -> None:
     problem = "binary_sensor.z2m_stoerung"
     hass.states.async_set(problem, "off", {"device_class": "problem"})

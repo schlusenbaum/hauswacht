@@ -54,14 +54,27 @@ def _pin_options(pin: str = "4711", *, arm_required: bool = False) -> dict[str, 
 
 
 async def test_config_flow_creates_entry(hass: HomeAssistant) -> None:
+    """Installation: ein Schritt mit Verweis auf die Einstellungsseite (ab 0.63.2)."""
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
-    assert result["type"] is FlowResultType.MENU
-    assert result["menu_options"] == ["wizard", "plain"]
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"next_step_id": "plain"}
-    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    assert result["description_placeholders"] == {"url": "/hauswacht-settings"}
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Hauswacht"
+    assert result["options"] == {}
+
+
+async def test_configure_points_to_settings_page(hass: HomeAssistant) -> None:
+    """„Konfigurieren“ ist nur noch ein Wegweiser – es ändert nichts (ab 0.63.2)."""
+    entry = make_entry({"profiles": {"night": {"entry_delay": 30}}})
+    await setup_entry(hass, entry)
+    before = dict(entry.options)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "use_settings_page"
+    assert result["description_placeholders"] == {"url": "/hauswacht-settings"}
+    assert dict(entry.options) == before
 
 
 async def test_only_one_instance(hass: HomeAssistant) -> None:
@@ -229,29 +242,6 @@ async def test_reload_while_armed_disarms(hass: HomeAssistant) -> None:
 # --- Optionen ---------------------------------------------------------------
 
 
-async def test_options_flow_pin_rules(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["type"] is FlowResultType.MENU
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "system"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "users"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "code"}
-    )
-    assert "new_pin" not in result["data_schema"].schema  # PINs gehören zu den Benutzern
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"code_arm_required": True}
-    )
-    assert result["type"] is FlowResultType.MENU
-    await hass.async_block_till_done()
-    assert entry.options["code_arm_required"] is True
-
-
 async def test_migration_turns_old_pin_into_user(hass: HomeAssistant) -> None:
     from custom_components.hauswacht.core.pin import hash_pin  # noqa: PLC0415
 
@@ -267,38 +257,6 @@ async def test_migration_turns_old_pin_into_user(hass: HomeAssistant) -> None:
     state = hass.states.get(PANEL)
     assert state is not None
     assert state.attributes["code_format"] == "number"
-
-
-async def test_options_flow_profile_timings(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "profiles"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "profile_edit"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"profile": "away"}
-    )
-    assert result["step_id"] == "profile_settings"
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"exit_delay": 5, "entry_delay": 20, "reaction_time": 120}
-    )
-    assert result["type"] is FlowResultType.MENU
-    away = entry.options["profiles"]["away"]
-    assert (away["exit_delay"], away["entry_delay"], away["reaction_time"]) == (5, 20, 120)
-    assert away["zones"] == ["aussen", "keller"]  # bisherige Zonen bleiben erhalten
-
-
-async def test_options_flow_blocked_while_armed(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "disarm_first"
 
 
 # --- Profil "Individuell" ---------------------------------------------------

@@ -148,8 +148,12 @@ def test_switch_services_only_from_guarded_executor() -> None:
 
 
 def test_only_threshold_and_switch_as_x_helpers_are_created() -> None:
-    """Die Assistenten legen ausschließlich Schwellenwert-Helfer bzw. "Schalter als Sirene" an."""
-    text = (SOURCE_ROOT / "config_flow.py").read_text(encoding="utf-8")
+    """Die Einstellungsseite legt ausschließlich Schwellenwert-Helfer bzw. "Schalter als Sirene" an.
+
+    Seit 0.63.2 gibt es keinen Einstellungsdialog mehr – die Installation startet keine Abläufe.
+    """
+    assert "async_init" not in (SOURCE_ROOT / "config_flow.py").read_text(encoding="utf-8")
+    text = (SOURCE_ROOT / "settings_ws.py").read_text(encoding="utf-8")
     tree = ast.parse(text)
     inits = [
         node
@@ -158,11 +162,16 @@ def test_only_threshold_and_switch_as_x_helpers_are_created() -> None:
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "async_init"
     ]
-    domains = sorted(i.args[0].id for i in inits if isinstance(i.args[0], ast.Name))
+    domains = sorted(
+        i.args[0].value
+        for i in inits
+        if isinstance(i.args[0], ast.Constant) and isinstance(i.args[0].value, str)
+    )
     assert len(inits) == len(domains) == 2
-    assert domains == ["SWITCH_AS_X_DOMAIN", "THRESHOLD_DOMAIN"]
-    assert 'THRESHOLD_DOMAIN = "threshold"' in text
-    assert 'SWITCH_AS_X_DOMAIN = "switch_as_x"' in text
+    assert domains == ["switch_as_x", "threshold"]
+    for path in SOURCES:
+        if path.name not in ("settings_ws.py", "config_flow.py"):
+            assert ".flow.async_init" not in path.read_text(encoding="utf-8"), path.name
 
 
 def test_controls_only_send_keypad_state() -> None:

@@ -249,7 +249,7 @@ Die ganze Konfiguration mit Prüfhinweisen, zum Drucken und als Notfallblatt –
 
 ## Profil-Einstellungen im Dashboard
 
-Kleinigkeiten lassen sich ohne den Einstellungsdialog ändern. Die Entitäten stehen am Gerät
+Kleinigkeiten lassen sich auch direkt im Dashboard ändern, ohne die Einstellungsseite. Die Entitäten stehen am Gerät
 „Hauswacht“ unter **Konfiguration**:
 
 1. **Profil bearbeiten** (`select.hauswacht_profil_bearbeiten`): welches Profil die folgenden
@@ -266,7 +266,7 @@ Kleinigkeiten lassen sich ohne den Einstellungsdialog ändern. Die Entitäten st
 - Änderungen nur im unscharfen Zustand; scharf sind die Einstellungen „nicht verfügbar“.
 - Jede Änderung wird sofort gespeichert und im Logbuch mit Benutzer festgehalten.
 - Name, Symbol, Knopf, Meldergruppen, Sirenen, Empfänger, Personen und Wochentage sowie das
-  **Entfernen** einer Uhrzeit gehen nur im Einstellungsdialog.
+  **Entfernen** einer Uhrzeit gehen nur auf der [Einstellungsseite](einstellungsseite.md).
 - Tipp: Eine Dashboard-Seite dafür nur für Administratoren sichtbar machen.
 
 ## Eigene Karten

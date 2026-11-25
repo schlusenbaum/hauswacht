@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/trigger-rules.md)
 
-**Alarmauslösung → Auslöseregeln.** Eine Auslöseregel löst erst bei einer **Abfolge** von
+**Einstellungsseite → Auslöseregeln.** Eine Auslöseregel löst erst bei einer **Abfolge** von
 Meldern aus – z. B. „Tür, dann Keller“. Auslöseregeln stehen für sich; im Alarmprofil wählst du
 unter **Auslöseregeln**, welche gelten. Dieselbe Regel kann in mehreren Profilen stecken.
 
@@ -41,16 +41,13 @@ Schritt 1 erfüllt ──(Zeit von Schritt 1)──▶ Schritt 2 erfüllt ──
 | Tür und Keller, Reihenfolge egal | Schritt 1: Tür + Keller, „alle davon“ |
 | eine der Türen, dann Keller **und** Büro (egal welches zuerst) | Schritt 1: beide Türen, „einer davon“ · Schritt 2: Keller + Büro, „alle davon“ |
 
-## Anlegen mit dem Assistenten
+## Anlegen
 
-> Einfacher geht es auf der [Einstellungsseite](einstellungsseite.md#auslöseregeln-bearbeiten):
-> alles auf einem Blatt, mit Umschalter Formular / YAML.
-
-Name und Ergebnis → Schritt 1 → Übersicht mit „Weiteren
-Schritt hinzufügen“, „Schritt bearbeiten“, „Letzten Schritt entfernen“, „Fertig – speichern“
-(bis zu 10 Schritte). Über jedem Schritt und in der Übersicht steht die Auslöseregel als Satz, z. B.
-„eine(r) von Tür vorne / Tür hinten, dann innerhalb von 120 s Meldergruppe Keller → Eingangsverzögerung,
-dann Alarm“. Gespeichert wird erst mit „Fertig – speichern“; Probleme stehen in der Übersicht.
+Auf der [Einstellungsseite](einstellungsseite.md#auslöseregeln-bearbeiten) → Reiter
+**Auslöseregeln** → **Auslöseregel anlegen**: alles auf einem Blatt, mit Umschalter Formular /
+YAML, bis zu 10 Schritte. Im Blatt steht die Auslöseregel als Satz, z. B. „eine(r) von Tür vorne /
+Tür hinten, dann innerhalb von 120 s Meldergruppe Keller → Eingangsverzögerung, dann Alarm“, und
+darunter, was nicht passt.
 
 Ergebnis einer erfüllten Auslöseregel: **sofort Alarm**, **Eingangsverzögerung, dann Alarm**
 oder (im YAML-Modus) **nur Benachrichtigung**
@@ -104,7 +101,7 @@ Profil „Nacht“ – keine Meldergruppe löst allein aus, nur diese Regeln:
 
 ## Ausnahme „Nicht, wenn vorher …“
 
-In der Übersicht des Assistenten: **„Nicht, wenn vorher … (Ausnahme)“**. Die Auslöseregel gilt
+Im Seitenblatt der Auslöseregel: **„Nicht, wenn vorher …“**. Die Auslöseregel gilt
 nicht, wenn einer der gewählten Melder in der angegebenen Zeit **vor Schritt 1** ausgelöst hat.
 Beispiel: „Fenster, dann Keller“ mit Ausnahme „Flur-Bewegungsmelder, 300 s“ – wer schon drinnen
 unterwegs war und dann ein Fenster öffnet, löst nichts aus. Die Ausnahme wirkt **nur auf diese
@@ -112,8 +109,8 @@ Auslöseregel**. Die Testkarte zeigt „gesperrt durch Ausnahme · 4:10“.
 
 ## Expertenmodus (YAML)
 
-**Auslöseregeln → „Neue Auslöseregel als YAML“** oder in der Übersicht **„Als YAML
-bearbeiten“**. Auslöseregeln mit Verschachtelung oder Bedingungen öffnen beim Bearbeiten direkt
+**Einstellungsseite → Auslöseregeln → Auslöseregel anlegen** (oder **Bearbeiten**) → oben im
+Seitenblatt auf **YAML** umschalten. Auslöseregeln mit Verschachtelung oder Bedingungen öffnen beim Bearbeiten direkt
 den YAML-Editor. Beim Speichern prüft Hauswacht die Regel und nennt Fehler mit Fundstelle.
 
 ```yaml

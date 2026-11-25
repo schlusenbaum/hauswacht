@@ -14,23 +14,23 @@ Ist der Testmodus aus? Meldet kein Rauchmelder Brand? Hat die Sirene einen Einbr
 geht ein Befehl raus. **Ausschalten** darf Hauswacht seine eigenen Sirenen auch ohne Freigabe –
 das ist immer die sichere Richtung; nur Testmodus und Brand verhindern es.
 
-## Das Menü „Alarmgeber – Sirenen“
+## Der Reiter „Alarmgeber“
 
-Einstellungen → Geräte & Dienste → Hauswacht → **Konfigurieren → Alarmgeber – Sirenen**:
+Alles zu Sirenen steht auf der [Einstellungsseite](einstellungsseite.md#alarmgeber-bearbeiten) im
+Reiter **Alarmgeber**:
 
-| Menüpunkt | Wofür | Abschnitt |
+| Stelle | Wofür | Abschnitt |
 |---|---|---|
-| **Sirenen und Freigabe** | Welche Sirenen Hauswacht verwenden darf; echte Ansteuerung freigeben; Experten: Schalter zulassen | [Einrichten](#einrichten) |
-| **Sirene aus Schalter erstellen** | Assistent für Sirenen, die nur als Schalter (`switch.…`) erscheinen | [Sirene aus Schalter erstellen](#sirene-aus-schalter-erstellen) |
+| **Sirenen bearbeiten** | Welche Sirenen Hauswacht verwenden darf; echte Ansteuerung freigeben; Experten: Schalter zulassen | [Einrichten](#einrichten) |
+| **Sirene aus Schalter erstellen** | Für Sirenen, die nur als Schalter (`switch.…`) erscheinen | [Sirene aus Schalter erstellen](#sirene-aus-schalter-erstellen) |
 | **Ton je Sirene** | Ton für Sirenen mit eigenen Tonnamen festlegen (z. B. Homematic IP) | [Ton je Sirene](#ton-je-sirene) |
-| **Sirenentest (echte Sirene!)** | Jede Sirene einzeln, kurz und leise prüfen | [Sirenentest](#sirenentest) |
-| **Sirenentest – Erinnerung und Vorwarnung** | Regelmäßig an den Test erinnern; Vorwarnung vor dem Ton | [Sirenentest](#sirenentest) |
+| **Sirenentest** | Jede Sirene einzeln, kurz und leise prüfen; Erinnerung und Vorwarnung | [Sirenentest](#sirenentest) |
 
 ## Welche Sirenen gehen?
 
 Jede Home-Assistant-Entität der Domain `siren` – Innen- und Außensirenen genauso wie
 Rauchwarnmelder mit Sirene. Sirenen, die nur als Schalter erscheinen, lassen sich mit einem
-[Assistenten](#sirene-aus-schalter-erstellen) einbinden.
+[Helfer](#sirene-aus-schalter-erstellen) einbinden.
 
 Hauswacht liest vor jedem Alarm, was eine Sirene kann (`supported_features`,
 `available_tones`), und sendet nur das:
@@ -46,7 +46,7 @@ Hauswacht liest vor jedem Alarm, was eine Sirene kann (`supported_features`,
 | Weder Dauer noch Ausschalten | nicht verwendet – Hauswacht könnte sie nicht beenden |
 | Höchstdauer (`number.<sirene>_max_duration`, Zigbee2MQTT) | Dauer wird darauf begrenzt; fehlt sie, gelten 240 Sekunden |
 | Brandsensor am selben Gerät (Rauchmelder) | gerätebezogene Brandsperre; ein aktiver Brand an einem beliebigen Melder sperrt immer |
-| Nur als Schalter (`switch.…`) vorhanden | über den [Assistenten](#sirene-aus-schalter-erstellen) oder als [Experten-Funktion](#experten-schalter-direkt-als-sirene) |
+| Nur als Schalter (`switch.…`) vorhanden | über einen [Helfer](#sirene-aus-schalter-erstellen) oder als [Experten-Funktion](#experten-schalter-direkt-als-sirene) |
 
 **Erprobt** ist der Rauchwarnmelder **Develco/frient SMSZB-120** („Smoke detector with siren“)
 über Zigbee2MQTT – auch mit echtem [Sirenentest](#sirenentest). Andere Modelle erst mit Testmodus
@@ -55,15 +55,15 @@ und Sirenentest prüfen. Rückmeldungen zu weiteren Modellen sind willkommen
 
 ## Einrichten
 
-1. **Sirenen und Freigabe:** Sirenen auswählen, die Hauswacht für Einbruchalarme verwenden darf.
-   „Echte Sirenenansteuerung erlauben“ noch **aus** lassen.
+1. **Sirenen bearbeiten:** Sirenen auswählen, die Hauswacht für Einbruchalarme verwenden darf.
+   „Echte Sirenenansteuerung freigegeben“ noch **aus** lassen.
 2. **Ton prüfen:** Kennt eine Sirene keinen der üblichen Einbruchtöne, unter
    [Ton je Sirene](#ton-je-sirene) den Ton festlegen. Die [Übersicht](uebersicht.md) weist darauf
    hin („bliebe bei Alarm stumm“).
 3. **Profile:** In jedem Alarmprofil festlegen, welche dieser Sirenen ertönen, mit welchem Ton und
    welcher Lautstärke – oder „Stiller Alarm“ für nur Benachrichtigungen. Die Laufzeit ist die
    „Dauer der Alarmreaktion“ des Profils.
-4. **Freigeben:** Erst wenn alles passt, **„Echte Sirenenansteuerung erlauben“** einschalten und
+4. **Freigeben:** Erst wenn alles passt, unter **Sirenen bearbeiten** **„Echte Sirenenansteuerung freigegeben“** einschalten und
    die Bestätigung anhaken. Ohne diese Freigabe sendet Hauswacht nie einen Sirenenbefehl.
 5. **Testen:** Jede Sirene einmal mit dem [Sirenentest](#sirenentest) prüfen.
 
@@ -80,10 +80,10 @@ Sirene aus Sicherheitsgründen aus (Grund `no_burglar_tone`), und die
 [Übersicht](uebersicht.md#prüfhinweise) meldet das als wichtigen Prüfhinweis – auch unter
 Einstellungen → Reparaturen.
 
-**So geht's:** Alarmgeber – Sirenen → **Ton je Sirene** → Sirene wählen → Ton wählen.
+**So geht's:** Reiter Alarmgeber → **Ton je Sirene** → bei der Sirene **Bearbeiten** → Ton wählen.
 
-- Die Liste zeigt genau die Töne, die die Sirene selbst meldet; der Dialog nennt sie zusätzlich
-  im Text. „Automatisch (Standard-Einbruchton)“ hebt die Einstellung wieder auf.
+- Die Liste zeigt genau die Töne, die die Sirene selbst meldet. „Automatisch (Standard-Einbruchton)“
+  hebt die Einstellung wieder auf.
 - Der Ton gilt **bei jedem Alarm** dieser Sirene (unabhängig vom Ton im Profil) und **beim
   Sirenentest**.
 - Brandtöne – erkennbar an „fire“, „smoke“ oder „Brand“ im Namen – sind gesperrt, außer mit der
@@ -96,8 +96,8 @@ Einstellungen → Reparaturen.
 stumm, wenn sie nicht gleichzeitig **Ton und Dauer** bekommt, und ihre Töne heißen z. B.
 `FREQUENCY_RISING`, `FREQUENCY_RISING_AND_FALLING` oder `DISARMED`.
 
-1. Alarmgeber – Sirenen → Sirenen und Freigabe → die Alarmsirene auswählen.
-2. Ton je Sirene → Alarmsirene → **`FREQUENCY_RISING_AND_FALLING`** (oder einen anderen
+1. Reiter Alarmgeber → **Sirenen bearbeiten** → die Alarmsirene antippen.
+2. **Ton je Sirene** → Alarmsirene → **`FREQUENCY_RISING_AND_FALLING`** (oder einen anderen
    Alarmton der Sirene).
 3. Im Profil die Alarmsirene bei den Sirenen eintragen.
 4. Sirenentest mit 3 Sekunden. Die Dauer schickt Hauswacht automatisch mit.
@@ -127,7 +127,7 @@ Was dabei gilt:
 - Die Freigabe gilt nur für **diesen einen Ton an dieser einen Sirene**. Hauswacht weicht nie von
   sich aus auf einen Brandton aus.
 - **Nie für Rauchmelder mit Sirene** (Geräte mit eigenen Rauch-, Hitze- oder
-  Testknopf-Sensoren): Dort bietet der Dialog die Freigabe gar nicht an, und der Sirenen-Guard
+  Testknopf-Sensoren): Dort bietet die Seite die Freigabe gar nicht an, und der Sirenen-Guard
   lehnt sie zusätzlich ab.
 - Die **Brandsperre bleibt:** Meldet irgendwo ein Rauchmelder Brand, schaltet Hauswacht keine
   Sirene – egal mit welchem Ton.
@@ -138,15 +138,15 @@ Was dabei gilt:
 
 Manche Sirenen erscheinen in Home Assistant nur als Schalter (`switch.…`), z. B. eine Sirene an
 einem Homematic-Schaltaktor. Home Assistant kann daraus selbst eine Sirene machen: mit dem Helfer
-**„Gerätetyp eines Schalters ändern“**. Hauswacht hat dafür einen Assistenten.
+**„Gerätetyp eines Schalters ändern“**. Hauswacht legt diesen Helfer auf Wunsch an.
 
 **Beispiel:** Die Außensirene hängt an `switch.schaltaktor_garage`.
 
-1. Alarmgeber – Sirenen → **Sirene aus Schalter erstellen**.
+1. Reiter Alarmgeber → **Sirene aus Schalter erstellen**.
 2. Schalter `switch.schaltaktor_garage` wählen.
 3. Bestätigen: „Das ist eine reine Alarmsirene, kein Rauchmelder“.
-4. Fertig: Der Dialog zeigt z. B. „Angelegt: siren.schaltaktor_garage“, und die neue Sirene steht schon
-   in der Liste unter „Sirenen und Freigabe“.
+4. Fertig: Die neue Sirene (z. B. `siren.schaltaktor_garage`) steht schon bei den eingetragenen
+   Sirenen.
 5. Die Sirene im Profil eintragen und mit dem Sirenentest prüfen.
 
 Gut zu wissen:
@@ -166,9 +166,9 @@ Gut zu wissen:
 
 Wer keinen Helfer anlegen möchte, kann Schalter auch direkt eintragen:
 
-1. Alarmgeber – Sirenen → **Sirenen und Freigabe** → **„Experten: Schalter direkt als Sirene
-   zulassen“** einschalten und speichern.
-2. Der Dialog öffnet sich erneut; jetzt bietet die Sirenenliste auch Schalter an.
+1. Reiter Alarmgeber → **Sirenen bearbeiten** → **„Experten: auch Schalter als Sirene
+   erlauben“** einschalten und speichern.
+2. **Sirenen bearbeiten** erneut öffnen; jetzt bietet die Liste auch Schalter an.
 3. Schalter auswählen, speichern, im Profil eintragen, Sirenentest machen.
 
 Hauswacht schaltet einen solchen Schalter genauso wie eine einfache Sirene: `switch.turn_on` bei
@@ -176,17 +176,16 @@ Alarm, `switch.turn_off` nach der Alarmdauer und beim Unscharfschalten – mit d
 (Freigabe, Testmodus, Brandsperre). Wird die Experten-Funktion wieder ausgeschaltet, fallen die
 Schalter aus der Liste.
 
-Der Assistent ist meist die bessere Wahl: Die Sirene sieht dann überall in Home Assistant wie
+„Sirene aus Schalter erstellen“ ist meist die bessere Wahl: Die Sirene sieht dann überall in Home Assistant wie
 eine Sirene aus.
 
 ## Sirenentest
 
-**Alarmgeber – Sirenen → Sirenentest (echte Sirene!).** Prüft jede Sirene einzeln, kurz und
-leise – über denselben sicheren Weg wie ein echter Alarm.
-
-> Ab 0.60 geht der Test auch auf der [Einstellungsseite](einstellungsseite.md#sirenentest-auf-der-seite-echte-sirene):
-> Reiter **Alarmgeber** → Karte **Sirenentest** – mit Häkchen „Ich bin vor Ort“, Rückfrage je
-> Sirene und nur für Administratoren. Die Sperren unten gelten dort genauso.
+**Reiter Alarmgeber → Karte Sirenentest (echte Sirene!).** Prüft jede Sirene einzeln, kurz und
+leise – über denselben sicheren Weg wie ein echter Alarm. Mit Häkchen „Ich bin vor Ort“, Rückfrage
+je Sirene und nur für Administratoren – siehe
+[Sirenentest auf der Seite](einstellungsseite.md#sirenentest-auf-der-seite-echte-sirene). Ebenso
+geht er in der Karte [„Hauswacht Test“](testmodus.md#karte-hauswacht-test).
 
 1. Sirenen wählen (mehrere werden **nacheinander** getestet), Ton (nur Einbruchtöne),
    Lautstärke (Standard **leise**) und Dauer (Standard **3 s**, höchstens **10 s**); anhaken
@@ -223,7 +222,7 @@ Sirene aus demselben Grund einige Sekunden später anfangen. Während des Tests 
 **Scharfschalten gesperrt**; **Unscharf schalten** bricht den Test ab. Bei Brand greift Hauswacht
 nicht ein – dann gilt die Brandsperre.
 
-**Alarmgeber – Sirenen → Sirenentest – Erinnerung und Vorwarnung:**
+**Reiter Alarmgeber → Karte Sirenentest → Bearbeiten (Erinnerung und Vorwarnung):**
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -255,13 +254,13 @@ Die Gründe im Klartext:
 
 | Grund | Bedeutung | Was tun? |
 |---|---|---|
-| `hardware_disabled` | Echte Sirenenansteuerung ist nicht freigegeben | Sirenen und Freigabe → freigeben |
+| `hardware_disabled` | Echte Sirenenansteuerung ist nicht freigegeben | Alarmgeber → Sirenen bearbeiten → freigeben |
 | `test_mode` | Testmodus ist an | Testmodus aus |
 | `fire_lock` | Ein Rauchmelder meldet Brand, oder der Brandzustand einer registrierten Sirene ist unklar (Sensor nicht verfügbar) | Rauchmelder prüfen; bei Brand ist das gewollt |
 | `no_burglar_tone` | Die Sirene kennt keinen Einbruchton (oder nur Brandtöne) | [Ton je Sirene](#ton-je-sirene) |
 | `cannot_limit` | Die Sirene kann weder eine Dauer noch Ausschalten | Andere Sirene verwenden |
 | `invalid_duration` | Höchstdauer des Geräts ist 0 | Höchstdauer am Gerät prüfen |
-| `unknown_device` | Sirene steht im Profil, ist aber nicht (mehr) eingetragen | Sirenen und Freigabe prüfen |
+| `unknown_device` | Sirene steht im Profil, ist aber nicht (mehr) eingetragen | Alarmgeber → Sirenen bearbeiten prüfen |
 | `invalid_tone`, `invalid_volume` | Ton bzw. Lautstärke im Profil ungültig | Profil neu speichern |
 | `not_activated_by_hauswacht` | Ausschalten einer Sirene, die Hauswacht nicht eingeschaltet hat | nichts – Hauswacht schaltet nur eigene Sirenen aus |
 

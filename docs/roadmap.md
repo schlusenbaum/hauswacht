@@ -47,7 +47,7 @@
 | 0.60 | Beobachtung [Weggehen](beobachtung.md#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen) mit Empfehlung je Person ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)); [Messungen](beobachtung.md#messungen-auf-der-einstellungsseite) auf der Einstellungsseite ansehen, speichern, zurücksetzen; [Sirenentest](einstellungsseite.md#sirenentest-auf-der-seite-echte-sirene) auch auf der Einstellungsseite; Sicherheitskorrektur: Richtung „nähert sich“ zählt nicht mehr als „zuhause“ |
 | 0.61 | „[Bei Rückkehr](profile.md#bei-rückkehr)“ je Profil (nichts, unscharf, mit Türbeleg, reinlassen) mit eigener Personenliste ([ADR 0015](entwicklung/adr/0015-rueckkehr.md)); [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg) – keine falschen Heimkehrten durch schlafende Handys, für Personen ohne Ortung „Tür + Signal“; [Annäherung](profile.md#annäherung-verlängert-die-eingangsverzögerung) verlängert die Eingangsverzögerung; Erklärungen direkt an der Einstellung (ⓘ, „So verhält sich das“); Einstellungsseite ausblenden statt abschalten, Aufruf über die Geräteseite; [Schweigepausen](beobachtung.md#was-ist-eine-schweigepause) erklärt |
 | 0.62 | Erklärungen direkt an jeder Einstellung: ⓘ an den Feldern in allen Seitenblättern, der Satz „So verhält sich das:“ und „Mehr Einstellungen“ ([Einstellungsseite](einstellungsseite.md)) |
-| 0.63 | [Anwesenheit testen](testmodus.md#anwesenheit-testen) ([ADR 0016](entwicklung/adr/0016-anwesenheit-testen.md)): je Person sehen, warum sie für Hauswacht zuhause, weg oder unbekannt ist, und je Profil, was Automatik und „Bei Rückkehr“ gerade machen (Testkarte und Einstellungsseite); im Testmodus Zuhause, Weg, Weg ohne Beleg, Nähert sich simulieren und „Wartezeit überspringen“; simulierte Türen zählen wie echte |
+| 0.63 | [Anwesenheit testen](testmodus.md#anwesenheit-testen) ([ADR 0016](entwicklung/adr/0016-anwesenheit-testen.md)): je Person sehen, warum sie für Hauswacht zuhause, weg oder unbekannt ist, und je Profil, was Automatik und „Bei Rückkehr“ gerade machen (Testkarte und Einstellungsseite); im Testmodus Zuhause, Weg, Weg ohne Beleg, Nähert sich simulieren und „Wartezeit überspringen“; simulierte Türen zählen wie echte. 0.63.1: Doku-Seite [So entscheidet Hauswacht](so-entscheidet-hauswacht.md), Messung „Lebenszeichen rund um die Tür“. 0.63.2: Einstellungsseite ist der einzige Weg – der alte Einstellungsdialog und sein Assistent sind entfallen |
 
 Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
@@ -55,6 +55,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
+| demnächst | Neuer [Einrichtungsassistent](assistent.md) auf der Einstellungsseite: fragt nach Zielen statt Einstellungen, kennt den Haushalt und die Messwerte, zeigt Widersprüche sofort (ADR folgt) |
 | 0.64 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |

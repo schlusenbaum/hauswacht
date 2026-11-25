@@ -211,71 +211,6 @@ async def test_reader_card(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> 
     assert _panel(hass) == AlarmControlPanelState.DISARMED
 
 
-async def test_options_add_keypad(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_keypad"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "control_keypad"
-    base = {"name": "Keypad Flur", "area": "__all__", "login": "pin_or_card", "emergency": "off"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "topic": " "}
-    )
-    assert flow["errors"] == {"keypad_device": "control_keypad_topic"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "topic": TOPIC + "/", "arm_night_zones": "night"}
-    )
-    assert flow["type"] == "menu"
-    stored = entry.options["controls"]["keypad_flur"]
-    assert stored["topic"] == TOPIC
-    assert stored["buttons"] == {"arm_night_zones": "night"}
-
-
-async def test_keypad_topic_from_device(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
-    from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
-
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    mqtt_entry = next(iter(hass.config_entries.async_entries("mqtt")))
-    device = dr.async_get(hass).async_get_or_create(
-        config_entry_id=mqtt_entry.entry_id,
-        identifiers={("mqtt", "zigbee2mqtt_0x00bb")},
-        name="Alarm-Tastatur",
-    )
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_keypad"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    base = {"name": "Keypad Flur", "area": "__all__", "login": "pin_or_card", "emergency": "off"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "keypad_device": device.id}
-    )
-    assert flow["type"] == "menu"
-    stored = entry.options["controls"]["keypad_flur"]
-    assert stored["topic"] == "zigbee2mqtt/Alarm-Tastatur"
-    assert stored["keypad_device"] == device.id
-    # beim Bearbeiten bleibt das Topic-Feld leer (kommt aus dem Gerät)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_edit"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"control": "keypad_flur"}
-    )
-    topic_key = next(k for k in flow["data_schema"].schema if str(k) == "topic")
-    assert topic_key.description["suggested_value"] == ""
-    # Experte: eigenes Topic hat Vorrang
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "keypad_device": device.id, "topic": "z2m/Alarm-Tastatur"}
-    )
-    assert entry.options["controls"]["keypad_flur"]["topic"] == "z2m/Alarm-Tastatur"
-
-
 async def _setup_without_pin(hass: HomeAssistant) -> Any:
     options = {
         "users": {"niklas": {"name": "Niklas", "tags": [CARD, "0011223344"]}},
@@ -304,75 +239,6 @@ async def test_card_works_without_any_pin(hass: HomeAssistant, mqtt_mock: MqttMo
     state = hass.states.get(PANEL)
     assert state is not None
     assert state.attributes["changed_by"] == "Niklas (Keypad Flur)"
-
-
-async def test_learn_name_disable_and_delete_card(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
-) -> None:
-    entry = await _setup_without_pin(hass)
-    await _press(hass, "disarm", "a1b2c3d4e5", 1)  # neue Karte
-    await _press(hass, "disarm", "1234", 2)  # falscher PIN: wird nie angezeigt
-    assert list(entry.runtime_data.controls.unknown_cards) == ["A1B2C3D4E5"]
-    state = hass.states.get(PANEL)
-    assert state is not None
-    assert state.attributes["code_failures"] == 1  # nur der PIN zählt, die Karte nicht
-    flow = await _new_card_form(hass, entry)
-    assert flow["step_id"] == "card_new"  # eintippen: zuletzt gelesene stehen zur Auswahl
-    assert _offered(flow) == ["A1B2C3D4E5"]
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"card": "A1B2C3D4E5", "name": " Schlüsselbund ", "user": "niklas"}
-    )
-    assert flow["step_id"] == "cards"
-    niklas = entry.options["users"]["niklas"]
-    assert niklas["tags"] == [CARD, "0011223344", "A1B2C3D4E5"]
-    assert niklas["tag_names"] == {"A1B2C3D4E5": "Schlüsselbund"}
-    assert "pin_digest" not in niklas
-    labels = _card_labels(flow)
-    assert labels["A1B2C3D4E5"].startswith("🟢 Schlüsselbund (A1B2C3D4E5) – Niklas")
-    # deaktivieren
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"card": "A1B2C3D4E5"}
-    )
-    assert flow["step_id"] == "card_edit"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Schlüsselbund", "user": "niklas", "active": False}
-    )
-    niklas = entry.options["users"]["niklas"]
-    assert niklas["tags"] == [CARD, "0011223344"]
-    assert niklas["tags_disabled"] == ["A1B2C3D4E5"]
-    assert _card_labels(flow)["A1B2C3D4E5"].startswith("⏸️ Schlüsselbund")
-    # löschen: Name verschwindet mit
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"card": "A1B2C3D4E5"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"delete": True})
-    niklas = entry.options["users"]["niklas"]
-    assert "A1B2C3D4E5" not in niklas["tags"] + niklas["tags_disabled"]
-    assert niklas["tag_names"] == {}
-    assert "A1B2C3D4E5" not in _card_labels(flow)
-
-
-async def test_learn_card_by_holding_it_up(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
-) -> None:
-    entry = await _setup_without_pin(hass)
-    # früher gelesene Karte (z. B. abgebrochener Versuch) wird NICHT vorausgewählt
-    await _press(hass, "disarm", "ffeeddccbb", 1)
-    flow = await _new_card_form(hass, entry, "__new__")
-    assert flow["type"] == "progress"  # "Halte die Karte jetzt ans Keypad …"
-    await _press(hass, "disarm", "a1b2c3d4e5", 2)
-    flow_id = flow["flow_id"]
-    for _ in range(3):
-        if flow["type"] == "form":
-            break
-        flow = await hass.config_entries.options.async_configure(flow_id)
-    assert flow["step_id"] == "card_new"
-    assert "A1B2C3D4E5" in flow["description_placeholders"]["found"]
-    assert _offered(flow) == ["A1B2C3D4E5"]  # nur die gerade erkannte
-    flow = await hass.config_entries.options.async_configure(
-        flow_id, {"card": "A1B2C3D4E5", "name": "Uhr", "user": "niklas"}
-    )
-    assert entry.options["users"]["niklas"]["tag_names"] == {"A1B2C3D4E5": "Uhr"}
 
 
 async def test_disabled_card_reports_and_counts(
@@ -464,16 +330,6 @@ async def test_reset_failed_attempts_admin_only(
     assert events[0].data["failures"] == 3
 
 
-async def _new_card_form(hass: HomeAssistant, entry: Any, choice: str = "__type__") -> Any:
-    """Benutzer und PINs → Karten und Anhänger → Kartennummer eintippen bzw. anlernen."""
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "users", "cards"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    return await hass.config_entries.options.async_configure(flow["flow_id"], {"card": choice})
-
-
 def _offered(flow: Any) -> list[str]:
     key = next(k for k in flow["data_schema"].schema if str(k) == "card")
     return [o["value"] for o in flow["data_schema"].schema[key].config["options"]]
@@ -496,57 +352,23 @@ async def test_learning_only_while_disarmed(
     assert entry.runtime_data.controls.unknown_cards == {}
 
 
-async def test_learned_card_expires(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
-    entry = await _setup_without_pin(hass)
-    await _press(hass, "disarm", "a1b2c3d4e5", 1)
-    flow = await _new_card_form(hass, entry)
-    assert "A1B2C3D4E5" in _offered(flow)
-    # Formular zu lange offen: Karte ist inzwischen abgelaufen
-    controls = entry.runtime_data.controls
-    source, when = controls.unknown_cards["A1B2C3D4E5"]
-    controls.unknown_cards["A1B2C3D4E5"] = (source, when - 6 * 60)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"card": "A1B2C3D4E5", "user": "niklas"}
-    )
-    assert flow["errors"] == {"card": "card_expired"}
-    assert "A1B2C3D4E5" not in _offered(flow)
-    assert "A1B2C3D4E5" not in entry.options["users"]["niklas"]["tags"]
-
-
 async def test_learning_time_setting(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
-    entry = await _setup_without_pin(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_learn"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"card_learn_minutes": 0}
-    )
-    assert flow["step_id"] == "controls"
-    assert entry.options["card_learn_minutes"] == 0
-    await hass.async_block_till_done()
+    """Anlernzeit 0: unbekannte Karten werden gar nicht erst gemerkt."""
+    options = {
+        "users": {"niklas": {"name": "Niklas", "tags": [CARD, "0011223344"]}},
+        "controls": _controls(),
+        "card_learn_minutes": 0,
+    }
+    entry = make_entry(options)
+    await setup_entry(hass, entry)
     await _press(hass, "disarm", "a1b2c3d4e5", 1)
-    assert (
-        hass.config_entries.async_get_entry(entry.entry_id).runtime_data.controls.unknown_cards
-        == {}
-    )
+    assert entry.runtime_data.controls.unknown_cards == {}
 
 
 async def test_random_uid_not_learnable(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
     entry = await _setup_without_pin(hass)
     await _press(hass, "disarm", "+08837CF0", 1)  # Handy: Zufallsnummer
     assert entry.runtime_data.controls.unknown_cards == {}
-    await _press(hass, "disarm", "a1b2c3d4e5", 2)  # damit das Formular ohne Warten kommt
-    flow = await _new_card_form(hass, entry)
-    assert "08837CF0" not in _offered(flow)
-    assert "Zufallsnummer" in flow["description_placeholders"]["random"] or (
-        "random ID" in flow["description_placeholders"]["random"]
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"card": "08ECA2B8", "user": "niklas"}
-    )
-    assert flow["errors"] == {"card": "tag_random"}
 
 
 def _z2m_entity(hass: HomeAssistant, device_name: str, key: str) -> str:
@@ -722,43 +544,6 @@ async def test_action_code_locked_during_pin_lockout(
     assert state is not None
     assert state.attributes.get("event_type") is None
     assert {"mode": "invalid_code", "transaction": 20} in _sent(mqtt_mock)
-
-
-async def test_action_code_flow_rejects_pin(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
-) -> None:
-    entry = await _setup_codes(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "action_codes"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "action_codes"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"action_code": "__new__"}
-    )
-    base = {"name": "Garage", "key": "arm_day_zones", "keypad": "all", "action": "event"}
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {**base, "code": PIN})
-    assert flow["errors"] == {"code": "action_code_is_pin"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "code": "7777"}
-    )
-    assert flow["errors"] == {"code": "action_code_taken"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "code": "4242"}
-    )
-    assert flow["step_id"] == "action_codes"
-    stored = entry.options["action_codes"]
-    assert any(c["name"] == "Garage" and c["code"] == "4242" for c in stored.values())
-    # umgekehrt: ein PIN darf kein Aktions-Code sein
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "users", "pins"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"new_pin": "4242"})
-    assert flow["errors"] == {"new_pin": "pin_is_action_code"}
 
 
 async def _setup_force(hass: HomeAssistant, *, policy: str, may: bool = True) -> None:

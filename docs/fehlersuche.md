@@ -15,7 +15,7 @@ Nur Profile mit zugeordnetem Bedienfeld-Knopf erscheinen dort. Alle anderen übe
 „Profil“ + „Scharf schalten“.
 
 **Nach einem Neustart ist die Anlage unscharf (oder scharf), ich wollte es anders.**
-Das regelt Systemeinstellungen → [Verhalten nach Neustart](installation.md#verhalten-nach-einem-neustart).
+Das regelt Einstellungsseite → System → [Verhalten nach Neustart](installation.md#verhalten-nach-einem-neustart).
 Standard ist „vorherigen Zustand wiederherstellen“. Unscharf trotz Wiederherstellen heißt: Die
 Anlage war vorher unscharf, oder das Profil wurde inzwischen gelöscht (dann kommt eine
 Nachricht).
@@ -45,7 +45,7 @@ Nur möglich, wenn **alle Bereiche unscharf** sind.
 **„Scharf, wenn alle weg“ schaltet nicht scharf, obwohl alle weg sind.**
 Eine Person gilt erst als weg, wenn die Person selbst **und alle** ihre zusätzlichen Signale
 „weg“ melden. Ein Signal auf „nicht verfügbar“ oder „unbekannt“ hält die Automatik an. Prüfe
-unter Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung, welche Signale gewählt
+unter Einstellungsseite → System → Anwesenheit und Heimkehr-Beobachtung, welche Signale gewählt
 sind, und deren Zustand unter Entwicklerwerkzeuge → Zustände.
 Seit 0.61 braucht „weg“ außerdem einen **Beleg**: Tür und danach Ortung außerhalb oder eine
 frische, genaue Ortung außerhalb ([„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). Steht an
@@ -119,7 +119,7 @@ schickt das Keypad den Code nicht mit.
 
 - Waren alle Bereiche unscharf? Ist die Anlernzeit (Standard 5 Minuten) abgelaufen?
 - Ist es eine **Zufallsnummer** (4 Byte, beginnt mit `08`, z. B. ein Handy)? Die ändert sich bei
-  jedem Lesen und ist ungeeignet – der Benutzer-Dialog zeigt dann einen Hinweis.
+  jedem Lesen und ist ungeeignet – beim Anlernen erscheint dann ein Hinweis.
 - Hat die Karte nur 4–8 Ziffern? Dann könnte sie ein PIN sein und wird nie angezeigt – ID
   eintippen.
 - Gehört die Karte schon einem Benutzer?
@@ -164,7 +164,7 @@ Das Attribut `last_siren_decision` am Bedienfeld nennt den Grund – alle Gründ
 [Warum hat eine Sirene nicht geklingelt?](sirenen.md#warum-hat-eine-sirene-nicht-geklingelt).
 Häufig:
 
-- Echte Sirenenansteuerung noch nicht freigegeben (Alarmgeber – Sirenen).
+- Echte Sirenenansteuerung noch nicht freigegeben (Einstellungsseite → Alarmgeber → Sirenen bearbeiten).
 - Testmodus an.
 - Profil auf „Stiller Alarm“ oder ohne Sirenen.
 - Brandsperre: ein Rauchmelder meldet Brand oder ist nicht verfügbar.
@@ -181,7 +181,7 @@ an, blieb der Melder still. Seit 0.57.2 wartet der Test bei solchen Sirenen län
 Melder erreichbar ist (Last seen, Linkquality).
 
 **Meine Sirene gibt es in Home Assistant nur als Schalter.**
-Mit dem Assistenten [Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)
+Mit [Sirene aus Schalter erstellen](sirenen.md#sirene-aus-schalter-erstellen)
 wird daraus eine Sirene. Alternativ die
 [Experten-Funktion](sirenen.md#experten-schalter-direkt-als-sirene).
 
@@ -193,7 +193,7 @@ Rauchmeldern ist ein Brandton für Einbruch nie möglich.
 
 **Im Log steht „Hauswacht ignoriert Entitäten ohne offen/zu“.**
 Ein Messwert-Sensor (z. B. Temperatur) steht in einer Meldergruppe oder Auslöseregel. Hauswacht
-überwacht nur Melder mit offen/zu – entfernen oder mit dem Assistenten
+überwacht nur Melder mit offen/zu – entfernen oder mit
 [Melder aus anderem Sensor erstellen](melder.md#melder-aus-anderem-sensor-erstellen) einen
 Schwellenwert-Melder daraus machen.
 

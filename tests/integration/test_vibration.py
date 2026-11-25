@@ -9,7 +9,6 @@ from typing import Any
 
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import async_capture_events
 
 from custom_components.hauswacht.const import EVENT_HAUSWACHT
@@ -114,24 +113,3 @@ async def test_strength_not_a_number_is_unavailable(hass: HomeAssistant) -> None
     await _setup(hass)
     await _strength(hass, "kaputt")
     assert STRENGTH in _panel(hass).attributes["unavailable_sensors"]
-
-
-async def test_options_flow_strength_and_group_rule(hass: HomeAssistant) -> None:
-    hass.states.async_set("input_number.test_erschuetterung", "0")
-    await _setup(hass)
-    entry = hass.config_entries.async_entries("hauswacht")[0]
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("triggering", "special_sensors", "vibration_add"):
-        result = await hass.config_entries.options.async_configure(
-            result["flow_id"], {"next_step_id": step}
-        )
-    assert result["step_id"] == "vibration_add"
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {"entity": "input_number.test_erschuetterung", "threshold": 20, "target": "fenster"},
-    )
-    assert result["type"] is FlowResultType.MENU
-    await hass.async_block_till_done()
-    options = hass.config_entries.async_entries("hauswacht")[0].options
-    assert options["vibration_sources"]["input_number.test_erschuetterung"]["threshold"] == 20
-    assert "input_number.test_erschuetterung" in options["zones"]["fenster"]["entities"]

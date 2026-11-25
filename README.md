@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.63.1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.63.2b1 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 
@@ -32,9 +32,10 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
 ## Was Hauswacht kann
 
-- **Einrichtungsassistent** – führt ohne Vorwissen durch die Einrichtung: kurze Einführung,
-  Melder-Vorschläge nach Raum, Meldergruppen, Profile, Empfänger, Sirenen, Benutzer und ein
-  Probelauf im Testmodus; jeder Schritt überspringbar.
+- **Einstellungsseite** in der Seitenleiste – die ganze Einrichtung auf einen Blick und alles
+  direkt bearbeiten: Matrix „Melder × Profile“, ⓘ-Erklärung an jedem Feld, „?“ zur passenden
+  Stelle der Anleitung, Sirenentest (mit Rückfrage) und alle Messungen. Den Überblick gibt
+  [So entscheidet Hauswacht](docs/so-entscheidet-hauswacht.md) in Bildern.
 - **Alarmprofile statt fester Modi** – „Zuhause“, „Nacht“, „Urlaub“ … beliebig viele, jedes mit
   eigenen Meldergruppen, Verzögerungen, Sirenen und Empfängern. Automatisch scharf nach Uhrzeit
   oder wenn alle weg sind – mit Anwesenheit aus mehreren Signalen je Person (WLAN, Bluetooth,
@@ -48,7 +49,7 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   gekippt, offen): nachts gekippt erlaubt, ganz öffnen löst aus; bei Abwesenheit zählt gekippt wie
   offen. Erschütterungsmelder mit Fehlalarmschutz („2 Stöße in 60 Sekunden“), auch als Zahl.
 - **Auslöseregeln** – Alarm erst bei einer Abfolge („Tür, dann Keller innerhalb von 2 Minuten“),
-  mit Ausnahmen und Bedingungen; im Assistenten oder als YAML.
+  mit Ausnahmen und Bedingungen; als Formular oder YAML.
 - **Alarmkarte ohne PIN-Zwang** – große Karte fürs Tablet: Zustand mit Countdown, ein Knopf je
   Profil, offene Melder mit „Trotzdem scharf“. Wer angemeldet ist, schaltet mit seinen Rechten;
   einen PIN verlangt sie nur, wo es eingestellt ist – z. B. am Wandtablet im Flur.
@@ -67,15 +68,11 @@ Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
   Push-Nachricht, Ansagen über Lautsprecher (z. B. Echo).
 - **Sirenen mit Verstand** – angesteuert nur nach ihren Fähigkeiten, nie während eines Brandes,
   ein Brandton nur als Experten-Freigabe und nie an Rauchmeldern; Ton je Sirene (z. B. Homematic
-  IP Alarmsirene), Sirenen am Schalter per Assistent; Sirenentest einzeln, kurz und leise.
+  IP Alarmsirene), Sirenen am Schalter per Helfer; Sirenentest einzeln, kurz und leise.
 - **Ehrlich bei Störungen** – ausgefallene Melder, Funkstille und Ausfälle von Zigbee2MQTT oder
   MQTT werden sichtbar statt verschwiegen.
 - **Testmodus und Testkarte** – alles gefahrlos durchspielen, ohne Sirene, ohne dass andere
   Automationen etwas merken.
-- **Einstellungsseite** in der Seitenleiste – alles auf einen Blick, mit Matrix „Melder ×
-  Profile“, alles direkt bearbeiten, mit „?“ zur passenden Stelle der Anleitung; zusätzlich zum
-  Dialog. Auch der Sirenentest (mit Rückfrage) und alle Messungen zum Ansehen, Speichern und
-  Zurücksetzen.
 - **Anlagenübersicht** – die ganze Konfiguration auf einen Blick, zum Drucken, mit Notfallblatt
   für die Familie und Prüfhinweisen, die Lücken und Vergessenes finden.
 - **Beobachten statt raten** – Heimkehr-, Weggehen- und Funkstille-Beobachtung liefern Zahlen,
@@ -115,9 +112,8 @@ das dank des Attributs `test_mode` still.
 
    [![Hauswacht einrichten](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)
 
-3. **Mit dem Einrichtungsassistenten** (wird beim Einrichten angeboten): Melder auswählen,
-   Meldergruppen und Profile übernehmen, das Handy als Empfänger eintragen. Alternativ alles von
-   Hand unter Konfigurieren.
+3. Auf der **Einstellungsseite** (Seitenleiste „Hauswacht“): Meldergruppe und Profil anlegen,
+   das Handy als Empfänger eintragen – [in fünf Schritten](docs/installation.md#in-fünf-schritten-zur-ersten-scharfschaltung).
 4. Karte **„Hauswacht Test“** aufs Dashboard, Testmodus an, durchspielen.
 5. Testmodus aus – fertig. Sirenen erst freigeben, wenn alles passt.
 
@@ -127,8 +123,8 @@ Ausführlich: [Installation und erste Schritte](docs/installation.md).
 
 | | |
 |---|---|
-| [Installation und erste Schritte](docs/installation.md) | Installation, Menü, die ersten fünf Schritte |
-| [Einrichtungsassistent](docs/assistent.md) | Geführte Einrichtung, jeder Schritt überspringbar, Probelauf |
+| [So entscheidet Hauswacht](docs/so-entscheidet-hauswacht.md) | Der Überblick in Bildern: Tür auf, Automatik, Heimkommen, zuhause oder weg |
+| [Installation und erste Schritte](docs/installation.md) | Installation, Einstellungsseite, die ersten fünf Schritte |
 | [Melder und Meldergruppen](docs/melder.md) | Welche Sensoren, Typen, immer aktiv, Funkstille |
 | [Alarmprofile und Bereiche](docs/profile.md) | Profile, Automatik, Scharf durch Türschließen, Bereiche |
 | [Auslöseregeln](docs/ausloeseregeln.md) | Abfolgen, Ausnahmen, Bedingungen, YAML |
@@ -149,7 +145,7 @@ Alles auf einen Blick: [docs/](docs/README.md). Die Anleitung gibt es auch
 
 - Home Assistant **2026.10** oder neuer
 - Melder mit offen/zu (Tür-, Fenster-, Bewegungsmelder …) – herstellerunabhängig
-- Optional: Sirenen (`siren`, oder Schalter über einen Assistenten), Home-Assistant-App, Zigbee2MQTT für Keypads
+- Optional: Sirenen (`siren`, oder Schalter über einen Helfer), Home-Assistant-App, Zigbee2MQTT für Keypads
 - Keine Cloud, keine weiteren Integrationen nötig
 
 ## Sicherheit

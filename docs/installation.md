@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.63.1:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.63.2b1:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -65,64 +65,47 @@ Oder von Hand: Einstellungen → Geräte & Dienste → **Integration hinzufügen
 Hauswacht lässt sich nur einmal einrichten; mehrere Anlagenteile werden über
 [Bereiche](profile.md#bereiche) abgebildet.
 
-Beim Einrichten fragt Hauswacht, ob der **[Einrichtungsassistent](assistent.md)** helfen soll
-(empfohlen für den Einstieg): kurze Einführung, dann Melder, Meldergruppen oder Auslöseregeln und
-Alarmprofile – jeder Schritt überspringbar. Später startest du ihn erneut unter Konfigurieren →
-Einrichtungsassistent.
+Beim Einrichten legt Hauswacht nur den Eintrag an. **Eingerichtet wird alles auf der
+Einstellungsseite** – der Dialog zeigt dafür einen Link.
 
-## Das Einstellungsmenü
+## Die Einstellungsseite
 
-Alle Einstellungen liegen unter **Einstellungen → Geräte & Dienste → Hauswacht →
-Konfigurieren**. Sie lassen sich nur ändern, wenn **alle Bereiche unscharf** sind.
+Alle Einstellungen liegen auf der Seite **Hauswacht** in der Seitenleiste (nur Administratoren) –
+siehe [Einstellungsseite](einstellungsseite.md). Sie zeigt die ganze Einrichtung auf einen Blick,
+und du bearbeitest alles direkt dort. Gespeichert wird nur, wenn **alle Bereiche unscharf** sind.
 
-Zum **Überblick** gibt es zusätzlich die Seite **Hauswacht** in der Seitenleiste (nur
-Administratoren): alles auf einen Blick, z. B. welcher Melder in welchem Profil scharf ist – siehe
-[Einstellungsseite](einstellungsseite.md).
+> **Seit 0.63.2** gibt es den früheren Einstellungsdialog (Einstellungen → Geräte & Dienste →
+> Hauswacht → **Konfigurieren**) nicht mehr. „Konfigurieren“ zeigt nur noch einen Link zur
+> Einstellungsseite. Die Seite kann alles, was der Dialog konnte; deine Einstellungen bleiben
+> unverändert.
 
-| Menü | Inhalt | Seite |
+| Reiter | Inhalt | Mehr dazu |
 |---|---|---|
-| **Einrichtungsassistent** | Geführt: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile | [Assistent](assistent.md) |
-| **Alarmauslösung** → Meldergruppen | Melder zusammenfassen und ihren Typ festlegen | [Melder](melder.md) |
-| **Alarmauslösung** → Auslöseregeln | Abfolgen von Meldern („Tür, dann Keller“) | [Auslöseregeln](ausloeseregeln.md) |
-| **Alarmauslösung** → Immer aktiv | Melder, die auch unscharf melden | [Melder](melder.md#immer-aktive-melder) |
-| **Alarmauslösung** → Melder aus anderem Sensor erstellen | Assistent: Messwert → Schwellenwert-Helfer → Melder | [Melder](melder.md#melder-aus-anderem-sensor-erstellen) |
-| **Alarmprofile** | Profile anlegen und bearbeiten | [Profile](profile.md) |
-| **Alarmgeber – Sirenen** | Sirenen und Freigabe, Sirene aus Schalter erstellen, Ton je Sirene, Sirenentest | [Sirenen](sirenen.md) |
+| **Übersicht** | Prüfhinweise und Zustand je Bereich | [Anlagenübersicht](uebersicht.md) |
+| **Melder** | Meldergruppen und Typen, Melder mit Kippstellung, Erschütterung, Melder aus Messwert, Immer aktiv | [Melder](melder.md) |
+| **Profile** | Alarmprofile mit Verzögerungen, Reaktion, Automatik, Bei Rückkehr, Durchgang | [Profile](profile.md) |
+| **Auslöseregeln** | Abfolgen von Meldern („Tür, dann Keller“) | [Auslöseregeln](ausloeseregeln.md) |
+| **Alarmgeber** | Sirenen und Freigabe, Sirene aus Schalter, Ton je Sirene, Sirenentest | [Sirenen](sirenen.md) |
 | **Benachrichtigungen** | Empfänger, Ereignisse, eigene Texte, Sprachausgabe | [Benachrichtigungen](benachrichtigungen.md) |
-| **Systemeinstellungen** → Bereiche | Haus, Garage … | [Bereiche](profile.md#bereiche) |
-| **Systemeinstellungen** → Benutzer und PINs | Personen, Ausweise, Rechte, PIN-Regeln | [Benutzer](benutzer.md) |
-| **Systemeinstellungen** → Bedienteile | Keypads, NFC-Aufkleber, RFID-Leser, Taster, Türschlösser | [Bedienteile](bedienteile.md) |
-| **Systemeinstellungen** → Funkstille von Sensoren | Wann ein Sensor als ausgefallen gilt | [Melder](melder.md#funkstille-von-sensoren) |
-| **Systemeinstellungen** → Funknetz und Gateways überwachen | Zigbee2MQTT, MQTT … | [Melder](melder.md#funknetz-und-gateways-überwachen) |
-| **Systemeinstellungen** → Verhalten nach Neustart | Wiederherstellen (Standard), immer scharf, immer unscharf | [unten](#verhalten-nach-einem-neustart) |
-| **Systemeinstellungen** → Anwesenheit und Heimkehr-Beobachtung | Signale je Person (für Automatik und Beobachtung); Heimkehr messen | [Profile](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist), [Beobachtungen](beobachtung.md) |
+| **Personen und Bedienteile** | Personen, PINs, Rechte, PIN-Regeln, Karten, Keypads, NFC-Aufkleber, RFID-Leser, Taster, Türschlösser, Aktions-Codes | [Benutzer](benutzer.md), [Bedienteile](bedienteile.md) |
+| **System** | Verhalten nach Neustart, Funkstille, Funknetz und Gateways, Anwesenheit und Heimkehr-Beobachtung, Bereiche, Seite in der Seitenleiste | [unten](#verhalten-nach-einem-neustart), [Beobachtungen](beobachtung.md), [Bereiche](profile.md#bereiche) |
+| **Dokumentation** | Diese Anleitung | – |
 
-So funktioniert der Dialog:
-
-- Jede Änderung wird beim Bestätigen eines Formulars **sofort gespeichert** („✅ Gespeichert“).
-- Untermenüs haben **„← Zurück“**, das Hauptmenü **„Fertig – schließen“**.
-- Menüs zum Anlegen, Bearbeiten und Löschen zeigen oben, **was es schon gibt** – z. B.
-  Meldergruppen mit der Zahl ihrer Melder, Alarmprofile mit dem, was sie überwachen, Benutzer mit
-  „PIN ✓“ und Karten (dazu, ob ein Master-PIN eingerichtet ist), Sirenen mit dem Stand der
-  Freigabe. Der Einrichtungsassistent zeigt das in
-  seinen Schritten ebenso.
-- Formulare haben in Home Assistant keinen Zurück-Knopf: unverändert bestätigen oder den Dialog
-  schließen – bereits Gespeichertes bleibt.
-- Wird die Anlage scharf geschaltet, während der Dialog offen ist, speichert Hauswacht nichts
-  mehr.
+Wer zum ersten Mal einrichtet, liest am besten zuerst
+[So entscheidet Hauswacht](so-entscheidet-hauswacht.md) – dort stehen die Abläufe als Bilder.
 
 ## In fünf Schritten zur ersten Scharfschaltung
 
-Schritt 1 und 2 erledigt auch der [Einrichtungsassistent](assistent.md). Von Hand geht es so:
+Alles auf der [Einstellungsseite](einstellungsseite.md):
 
-1. **Meldergruppe anlegen:** Alarmauslösung → Meldergruppen → Meldergruppe anlegen, z. B.
-   „Außen“ mit allen Tür- und Fensterkontakten. Danach die vorgeschlagenen
-   [Typen](melder.md#typen) prüfen – meist passen sie.
-2. **Alarmprofil anlegen:** Alarmprofile → Alarmprofil anlegen, z. B. „Nacht“ mit Knopf
+1. **Meldergruppe anlegen:** Reiter **Melder** → **Meldergruppe anlegen**, z. B. „Außen“ mit
+   allen Tür- und Fensterkontakten. Danach die vorgeschlagenen [Typen](melder.md#typen) prüfen –
+   meist passen sie.
+2. **Alarmprofil anlegen:** Reiter **Profile** → **Alarmprofil anlegen**, z. B. „Nacht“ mit Knopf
    „Nacht“, Meldergruppe „Außen“. Verzögerungen erst einmal lassen. Sirenen: noch keine oder
    „Stiller Alarm“.
-3. **Benachrichtigung:** Benachrichtigungen → Empfänger und Ereignisse → das eigene Handy
-   (`mobile_app_…`) als allgemeinen Empfänger wählen.
+3. **Benachrichtigung:** Reiter **Benachrichtigungen** → **Empfänger und Ereignisse bearbeiten** →
+   das eigene Handy (`mobile_app_…`) als allgemeinen Empfänger wählen.
 4. **Ausprobieren im Testmodus:** Karte [„Hauswacht Test“](testmodus.md#karte-hauswacht-test)
    aufs Dashboard, Testmodus an, „Nacht“ scharf schalten, eine Tür simulieren. Es ertönt keine
    Sirene, andere Automationen merken nichts.
@@ -142,7 +125,7 @@ im Reiter **Dokumentation**).
 
 ## Verhalten nach einem Neustart
 
-**Systemeinstellungen → Verhalten nach Neustart.** Was passiert, wenn Home Assistant neu startet
+**Einstellungsseite → System → Verhalten nach Neustart.** Was passiert, wenn Home Assistant neu startet
 – etwa nach einem Update, einer nächtlichen Sicherung oder einem Stromausfall. Drei
 Möglichkeiten:
 
@@ -218,7 +201,7 @@ Ereignis „Scharfschaltung abgelehnt“ (Standard: an).
 
 ### Laufenden Alarm fortsetzen
 
-**Systemeinstellungen → Verhalten nach Neustart → „Laufenden Alarm fortsetzen“** (Standard aus,
+**Einstellungsseite → System → Verhalten nach Neustart → „Laufenden Alarm fortsetzen“** (Standard aus,
 nur zusammen mit „Vorherigen Zustand wiederherstellen“).
 
 | | Aus (Standard) | An |

@@ -11,7 +11,6 @@ import pytest
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_mock_service
 
 from custom_components.hauswacht.const import DOMAIN
@@ -109,80 +108,6 @@ async def test_excluded_sensor_does_not_trigger(hass: HomeAssistant) -> None:
     hass.states.async_set(WINDOW, "on", {"device_class": "window"})
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
-
-
-async def test_zone_types_step_stores_only_deviations(hass: HomeAssistant) -> None:
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("triggering", "zones", "zone_edit"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"zone": "aussen"})
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Außen", "entities": [DOOR, WINDOW, TAMPER, LOCK, COVER]}
-    )
-    assert flow["step_id"] == "zone_types"
-    keys = {str(k): k for k in flow["data_schema"].schema}
-    answers = {key: marker.default() for key, marker in keys.items()}
-    window_key = next(k for k in keys if "kuechenfenster" in k.casefold() or "küchen" in k)
-    assert answers[window_key] == "window"
-    answers[window_key] = "door"
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], answers)
-    assert flow["type"] == "menu"
-    assert entry.options["sensor_types"] == {WINDOW: "door"}
-
-
-async def test_profile_exclusion_must_be_from_groups(hass: HomeAssistant) -> None:
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("profiles", "profile_edit"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": "home"})
-    assert flow["step_id"] == "profile_settings"
-    assert "haustuer" in flow["description_placeholders"]["armed"].casefold()
-    defaults = {str(k): k.default() for k in flow["data_schema"].schema if callable(k.default)}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**defaults, "excluded": [MOTION]}
-    )
-    assert flow["errors"] == {"excluded": "excluded_not_in_groups"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**defaults, "excluded": [WINDOW]}
-    )
-    assert flow["type"] == "menu"
-    assert entry.options["profiles"]["home"]["excluded"] == [WINDOW]
-
-
-async def test_helper_wizard_creates_threshold_sensor(hass: HomeAssistant) -> None:
-    hass.states.async_set(TEMP, "12.5", {"unit_of_measurement": "°C"})
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("triggering", "helper_create"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    base = {
-        "source": TEMP,
-        "name": "Frost Heizungskeller",
-        "hysteresis": 1,
-        "type": "technical",
-        "target": "__always__",
-    }
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], base)
-    assert flow["errors"] == {"base": "helper_no_limit"}
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {**base, "lower": 5})
-    assert flow["type"] == "menu"
-    await hass.async_block_till_done()
-    helpers = hass.config_entries.async_entries("threshold")
-    assert len(helpers) == 1
-    entity_id = er.async_get(hass).async_get_entity_id(
-        "binary_sensor", "threshold", helpers[0].entry_id
-    )
-    assert entity_id == "binary_sensor.frost_heizungskeller"
-    assert entity_id in entry.options["always_active"]["sensors"]
-    assert entry.options["sensor_types"][entity_id] == "technical"
 
 
 async def test_migration_v4_roles_to_types(hass: HomeAssistant) -> None:

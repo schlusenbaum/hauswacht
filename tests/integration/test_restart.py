@@ -281,24 +281,3 @@ async def test_restart_saves_details(hass: HomeAssistant, hass_storage: dict[str
     saved = hass_storage[f"{DOMAIN}.{entry.entry_id}"]["data"]["restore"]
     assert saved["profile"] == "night"
     assert saved["state"] == "armed"
-
-
-async def test_options_restart_step(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "restart"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "restart"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"restart_behavior": "armed"}
-    )
-    assert flow["errors"] == {"base": "restart_needs_profile"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"restart_behavior": "armed", "restart_profile": "away"}
-    )
-    assert flow["type"] == "menu"
-    assert entry.options["restart_behavior"] == "armed"
-    assert entry.options["restart_profiles"] == {"main": "away"}

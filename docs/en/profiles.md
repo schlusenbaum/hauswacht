@@ -4,7 +4,7 @@
 
 ## Alarm profiles
 
-**Alarm profiles → Add alarm profile.** There are no predefined profiles – you add as many as
+**Settings page → Profiles → Add alarm profile.** There are no predefined profiles – you add as many as
 you need, e.g. "Home", "Night", "Away", "Vacation".
 
 > **Every profile is a way of arming.** "Disarmed" is not a profile but the basic state –
@@ -26,7 +26,7 @@ you need, e.g. "Home", "Night", "Away", "Vacation".
 | Unavailable sensors when arming | refuse · allow after confirmation · bypass automatically (**experts**). An unavailable sensor (e.g. empty battery) is **monitored again as soon as it reports** – until then it is a gap. "Bypass automatically" arms without asking; the [note on arming](notifications.md#note-on-arming) names it |
 | Maximum alarm cycles | How often the alarm may trigger again after an alarm |
 | Tamper triggers alarm | Otherwise tampering is only reported |
-| Tilted windows allowed | Only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) (hidden otherwise): a tilted window counts as closed, only opening it fully triggers. **Off** (default): tilted counts as open. Typical: on for "Night", off for "Away". The [setup wizard](setup-wizard.md#6-alarm-profiles) asks about it for the night profile |
+| Tilted windows allowed | Only with [sensors with tilt position](sensors.md#sensors-with-tilt-position-tilted) (hidden otherwise): a tilted window counts as closed, only opening it fully triggers. **Off** (default): tilted counts as open. Typical: on for "Night", off for "Away" |
 | Sirens, tone, volume, silent alarm | Reaction on alarm, see [Sirens](sirens.md) |
 | Notify (alarm) | Who gets a push message on an alarm |
 | Additional speakers | Announcements of this profile, see [Speech](notifications.md#speech-speakers) |
@@ -113,8 +113,7 @@ different days**, use a Home Assistant **schedule helper** instead of a second p
 
 1. Settings → Devices & services → **Helpers** → Create helper → **Schedule**, name e.g. "Night".
 2. In the schedule, drag the time blocks per weekday during which the profile should be armed.
-3. In the profile under **Automation → Or by schedule (helper)** choose the schedule – or in the
-   [setup wizard](setup-wizard.md) in the step alarm profiles.
+3. In the profile under **Automation → Or by schedule (helper)** choose the schedule.
 
 You create the schedule yourself: Home Assistant offers integrations no official way to create
 schedules, and Hauswacht does not reach into internal parts that may change with updates. Later
@@ -147,8 +146,8 @@ The same rules apply as for the times:
 ### How Hauswacht knows who is home
 
 The basis is the **person** in Home Assistant (`person.…`). In addition you can choose more
-**signals** per person – under **System settings → Presence and homecoming observation**, in the
-second step. The [homecoming observation](observations.md#additional-signals-per-person) uses
+**signals** per person – under **Settings page → System → Presence and homecoming observation**,
+in the person's box. The [homecoming observation](observations.md#additional-signals-per-person) uses
 the same signals; you set them in one place only.
 
 Suitable are e.g. the Wi-Fi sensor of the companion app, Bluetooth (Bermuda), a router tracker,
@@ -192,7 +191,7 @@ Anything with coordinates counts as a **location**: the Companion app (GPS), iCl
 tracker, the person itself while located by GPS. **Wi-Fi, ping, router and Bluetooth** have no
 coordinates – they only confirm, they are never proof.
 
-**Precise enough** – set under System settings → Presence and homecoming observation:
+**Precise enough** – set under settings page → System → Presence and homecoming observation:
 
 | Setting | "outside" means | Example |
 |---|---|---|
@@ -214,8 +213,8 @@ falls asleep afterwards. Doors and locations from before the last homecoming do 
 
 **Persons without a location – "also door + signal (uncertain)":** if a person has no location
 (e.g. only a Wi-Fi sensor or ping), you can choose **"Proof for 'away': also door + signal
-(uncertain)"** for them under System settings → Presence and homecoming observation, in the
-person's box. Then this also counts as proof: an entry door opened, and **afterwards** – at most
+(uncertain)"** for them under settings page → System → Presence and homecoming observation, in
+the person's box. Then this also counts as proof: an entry door opened, and **afterwards** – at most
 the **time window door + signal** later (default 5 minutes, under "More settings", with a
 recommendation from the measurement) – a signal of the person changed from "there" to "away".
 
@@ -234,7 +233,7 @@ recommendation from the measurement) – a signal of the person changed from "th
 **Persons without a location and without "door + signal"** (e.g. location switched off in the
 Companion app, only a router tracker) **never** count as away. "Arm when all away" waits forever with such a person in the
 list – that is the safe side. Hauswacht shows this at the person selection in the profile
-("⚠ no location – never counts as away"), in the system settings and as a
+("⚠ no location – never counts as away"), under System → Presence and as a
 [check hint](overview.md#check-hints). Fix: set the location in the Companion app to
 **"Always"** or add a GPS tracker as a signal.
 
@@ -285,8 +284,7 @@ back from shopping, her phone reports "home", she opens the front door → disar
 **After the update to 0.61** Hauswacht takes over your previous settings: "Disarm on arrival"
 (As before / With door proof) with the persons from "Arm when all away", and letting in by phone
 from the passage. If **both** were on in a profile, **let in** wins – the profile then stays
-armed, the safe side – and you get a notification in Home Assistant. The old fields in the
-options dialog are gone; there is a hint pointing to the settings page instead.
+armed, the safe side – and you get a notification in Home Assistant.
 
 **"Disarm with door proof" in everyday life**
 
@@ -305,7 +303,7 @@ options dialog are gone; there is a hint pointing to the settings page instead.
 Some phones only report "home" once the door is already open – sometimes after 60 or 70 seconds.
 With a 30 s entry delay that would mean an alarm. Extending the entry delay for **everyone**
 would also give a burglar more time. So Hauswacht uses the **direction** (Proximity integration
-or Places, added as a signal of the person under System settings → Presence):
+or Places, added as a signal of the person under System → Presence):
 
 > If a person from the "On return" list approached in the last **15 minutes** (direction
 > "towards") and an entry door then opens, Hauswacht waits **longer** for their phone – e.g. 90 s
@@ -439,7 +437,7 @@ time, it starts over.
 
 ## Areas
 
-**System settings → Areas.** For systems whose parts are armed **independently** – e.g. garage
+**Settings page → System → Areas.** For systems whose parts are armed **independently** – e.g. garage
 armed while someone is in the house. Without further areas nothing changes.
 
 - The **first area** (default name "House") is the main system. It can be renamed but not

@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.63.1:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.63.2b1:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
@@ -62,62 +62,45 @@ time, [My Home Assistant](https://my.home-assistant.io) asks once for its addres
 Or by hand: Settings → Devices & services → **Add integration → Hauswacht**. Hauswacht can be
 set up only once; several parts of a property are handled with [areas](profiles.md#areas).
 
-During setup Hauswacht asks whether the **[setup wizard](setup-wizard.md)** should help
-(recommended for getting started): a short introduction, then sensors, sensor groups or trigger
-rules and alarm profiles – every step can be skipped. Later you start it again under Configure →
-Setup wizard.
+During setup Hauswacht only creates the entry. **Everything is set up on the settings page** – the
+dialog shows a link to it.
 
-## The settings menu
+## The settings page
 
-All settings are under **Settings → Devices & services → Hauswacht → Configure**. They can only
-be changed while **all areas are disarmed**.
+All settings are on the page **Hauswacht** in the sidebar (administrators only) – see
+[settings page](settings-page.md). It shows the whole setup at a glance, and you edit everything
+right there. Saving only works while **all areas are disarmed**.
 
-For an **overview** there is also the page **Hauswacht** in the sidebar (administrators only):
-everything at a glance, e.g. which sensor is armed in which profile – see
-[settings page](settings-page.md).
+> **Since 0.63.2** the former settings dialog (Settings → Devices & services → Hauswacht →
+> **Configure**) is gone. "Configure" only shows a link to the settings page. The page can do
+> everything the dialog could; your settings stay unchanged.
 
-| Menu | Content | Page |
+| Tab | Content | More |
 |---|---|---|
-| **Setup wizard** | Guided: sensors, sensor groups or trigger rules, alarm profiles | [Wizard](setup-wizard.md) |
-| **Alarm triggering** → Sensor groups | Group sensors and set their type | [Sensors](sensors.md) |
-| **Alarm triggering** → Trigger rules | Sequences of sensors ("door, then basement") | [Trigger rules](trigger-rules.md) |
-| **Alarm triggering** → Always active | Sensors that report even when disarmed | [Sensors](sensors.md#always-active-sensors) |
-| **Alarm triggering** → Create a sensor from another sensor | Wizard: measured value → threshold helper → sensor | [Sensors](sensors.md#create-a-sensor-from-another-sensor) |
-| **Alarm profiles** | Add and edit profiles | [Profiles](profiles.md) |
-| **Alarm devices – sirens** | Sirens and enabling, create siren from switch, tone per siren, siren test | [Sirens](sirens.md) |
-| **Notifications** | Recipients, events, custom texts, speech | [Notifications](notifications.md) |
-| **System settings** → Areas | House, garage … | [Areas](profiles.md#areas) |
-| **System settings** → Users and PINs | People, credentials, rights, PIN rules | [Users](users.md) |
-| **System settings** → Control devices | Keypads, NFC stickers, RFID readers, buttons, door locks | [Control devices](control-devices.md) |
-| **System settings** → Sensor radio silence | When a sensor counts as failed | [Sensors](sensors.md#sensor-radio-silence) |
-| **System settings** → Monitor radio networks and gateways | Zigbee2MQTT, MQTT … | [Sensors](sensors.md#monitor-radio-networks-and-gateways) |
-| **System settings** → Behaviour after restart | restore (default), always armed, always disarmed | [below](#behaviour-after-a-restart) |
-| **System settings** → Presence and homecoming observation | Signals per person (for automation and observation); measure homecomings | [Profiles](profiles.md#how-hauswacht-knows-who-is-home), [Observations](observations.md) |
+| **Overview** | Check hints and state per area | [System overview](overview.md) |
+| **Sensors** | Sensor groups and types, sensors with tilt position, vibration, sensor from a measurement, always active | [Sensors](sensors.md) |
+| **Profiles** | Alarm profiles with delays, reaction, automation, on return, passage | [Profiles](profiles.md) |
+| **Trigger rules** | Sequences of sensors ("door, then basement") | [Trigger rules](trigger-rules.md) |
+| **Alarm devices** | Sirens and release, siren from switch, tone per siren, siren test | [Sirens](sirens.md) |
+| **Notifications** | Recipients, events, own texts, speech | [Notifications](notifications.md) |
+| **People and control devices** | People, PINs, rights, PIN rules, cards, keypads, NFC stickers, RFID readers, buttons, door locks, action codes | [Users](users.md), [Control devices](control-devices.md) |
+| **System** | Behaviour after restart, radio silence, radio networks and gateways, presence and homecoming observation, areas, page in the sidebar | [below](#behaviour-after-a-restart), [Observations](observations.md), [Areas](profiles.md#areas) |
+| **Documentation** | This documentation | – |
 
-How the dialog works:
-
-- Every change is **saved immediately** when you submit a form ("✅ Saved").
-- Submenus have **"← Back"**, the main menu has **"Done – close"**.
-- Menus for adding, editing and deleting show at the top **what already exists** – e.g. sensor
-  groups with the number of their sensors, alarm profiles with what they watch, users with
-  "PIN ✓" and cards (plus whether a master PIN is set up), sirens with the release status. The setup wizard shows this in its steps
-  too.
-- Forms in Home Assistant have no back button: submit unchanged or close the dialog – what was
-  already saved stays.
-- If the system is armed while the dialog is open, Hauswacht no longer saves anything.
+If you set up Hauswacht for the first time, best read
+[How Hauswacht decides](how-hauswacht-decides.md) first – it shows the flows as pictures.
 
 ## Five steps to the first arming
 
-Steps 1 and 2 are also done by the [setup wizard](setup-wizard.md). By hand it works like this:
+Everything on the [settings page](settings-page.md):
 
-1. **Add a sensor group:** Alarm triggering → Sensor groups → Add sensor group, e.g. "Outside"
-   with all door and window contacts. Then check the suggested [types](sensors.md#types) –
-   usually they fit.
-2. **Add an alarm profile:** Alarm profiles → Add alarm profile, e.g. "Night" with the button
-   "Night", sensor group "Outside". Leave the delays as they are for now. Sirens: none yet, or
-   "Silent alarm".
-3. **Notification:** Notifications → Recipients and events → choose your own phone
-   (`mobile_app_…`) as general recipient.
+1. **Add a sensor group:** tab **Sensors** → **Add sensor group**, e.g. "Outside" with all door
+   and window contacts. Then check the suggested [types](sensors.md#types) – usually they fit.
+2. **Add an alarm profile:** tab **Profiles** → **Add alarm profile**, e.g. "Night" with the
+   button "Night", sensor group "Outside". Leave the delays as they are for now. Sirens: none
+   yet, or "Silent alarm".
+3. **Notification:** tab **Notifications** → **Edit recipients and events** → choose your own
+   phone (`mobile_app_…`) as general recipient.
 4. **Try it in test mode:** put the card ["Hauswacht Test"](test-mode.md#card-hauswacht-test)
    on a dashboard, switch test mode on, arm "Night", simulate a door. No siren sounds, other
    automations notice nothing.
@@ -137,7 +120,7 @@ there in the **Documentation** tab).
 
 ## Behaviour after a restart
 
-**System settings → Behaviour after restart.** What happens when Home Assistant restarts – e.g.
+**Settings page → System → Behaviour after restart.** What happens when Home Assistant restarts – e.g.
 after an update, a nightly backup or a power cut. Three options:
 
 | Setting | What happens after the restart | Meant for |
@@ -209,7 +192,7 @@ event "Arming rejected" (default: on).
 
 ### Resume a running alarm
 
-**System settings → Behaviour after restart → "Resume a running alarm"** (default off, only
+**Settings page → System → Behaviour after restart → "Resume a running alarm"** (default off, only
 together with "Restore the previous state").
 
 | | Off (default) | On |

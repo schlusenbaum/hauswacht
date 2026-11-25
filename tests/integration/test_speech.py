@@ -196,46 +196,6 @@ async def test_custom_push_text(hass: HomeAssistant) -> None:
     assert push[0].data["message"].endswith("(Nacht)")
 
 
-async def test_options_speech_and_invalid_template(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "notifications"}
-    )
-    assert "speech" in flow["menu_options"]
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "speech_events"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"event": "armed"})
-    assert flow["step_id"] == "speech_event_edit"
-    data = {"enabled": True, "mode": "speak", "speakers": [], "in_quiet": False}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**data, "text": "Scharf {gibtsnicht}"}
-    )
-    assert flow["errors"] == {"text": "invalid_template"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**data, "text": "Scharf: {profil}"}
-    )
-    assert flow["step_id"] == "notifications"
-    assert entry.options["speech"]["events"]["armed"]["text"] == "Scharf: {profil}"
-    # Eigener Push-Text: leer speichern löscht ihn wieder
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "notify_texts"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"event": "alarm"})
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"message": "Alarm: {melder}"}
-    )
-    assert entry.options["events"]["alarm"]["message"] == "Alarm: {melder}"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "notify_texts"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"event": "alarm"})
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {})
-    assert "message" not in entry.options["events"]["alarm"]
-
-
 # --- Benachrichtigungs-Entitäten als Empfänger (z. B. WhatsApp) -------------------------
 
 
@@ -249,23 +209,6 @@ async def test_notify_entity_as_recipient(hass: HomeAssistant) -> None:
     assert texts[0].data["title"]
     assert texts[0].data["message"]
     assert "data" not in texts[0].data  # Entitäten bekommen nur Titel und Text
-
-
-async def test_recipient_list_offers_entities_but_no_speakers(hass: HomeAssistant) -> None:
-    _speaker(hass)
-    hass.states.async_set(ANNOUNCE, "unknown")
-    hass.states.async_set("notify.whatsapp_familie", "unknown", {"friendly_name": "WhatsApp"})
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("notifications", "notify_settings"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    selector = next(v for k, v in flow["data_schema"].schema.items() if str(k) == "notify_system")
-    values = [o["value"] for o in selector.config["options"]]
-    assert "notify.whatsapp_familie" in values
-    assert ANNOUNCE not in values
 
 
 async def test_duress_never_goes_to_speakers(hass: HomeAssistant) -> None:
