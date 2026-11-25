@@ -165,12 +165,20 @@ After applying the suggestion (50 s), the same preview shows:
 ## Set up by goals (since 0.65.0b1)
 
 Instead of setting by setting, the assistant asks **what Hauswacht should do for you**. In the tab
-**Assistant** → **Set up by goals**, a side sheet with five steps opens:
+**Assistant** → **Set up by goals**, a side sheet with six steps opens:
 
 1. **Household:** which people Home Assistant knows and whether they can be detected as "away"
    (✓ location, "door + signal", ✓ direction, ⚠ location frozen, ⚠ cannot be detected as away).
    Display only – set up locations and "door + signal" under System → Presence.
-2. **Goals** (several possible), each with a note on which profile it affects ("extends the
+2. **Doors and windows** (*since 0.65.0b2*), sorted by floor and room:
+   - **Not in any sensor group yet:** doors, windows and motion sensors that Home Assistant knows
+     but that are not monitored yet – pre-selected. Doors and windows go into an outside group
+     (the existing one with the most doors and windows, or a new "Outside"), motion sensors into
+     an inside group (existing or a new "Inside").
+   - **Entry doors:** which doors have an **entry delay** (you come in and disarm during that
+     time)? All other doors and windows trigger **immediately** – e.g. a patio door that is only
+     opened from inside. Pre-selected is what is set up today.
+3. **Goals** (several possible), each with a note on which profile it affects ("extends the
    profile Night" or "creates the profile Night"):
 
    | Goal | What is set up |
@@ -179,13 +187,16 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
    | **Arm automatically when everyone is away** | Profile with the button "Away": sensor groups, "arm when all away" with persons and waiting time |
    | **Disarm when coming home** | "On return" in the Away profile: persons and how safe (recommended: door proof); the entry delay from your measurements |
    | **Come home at night without turning "Night" off** | "On return: let in" in the Night profile – whoever comes home is let in, the profile stays armed |
+   | **Garage or workshop separately** (*since 0.65.0b2*) | Own sensor group and own profile "Garage" (button "Custom" if free) with the chosen sensors – so it can be armed on its own. Sensors from another group move to the garage (shown in the plan). Optionally the garage is also added to the Away profile |
 
-3. **Questions** per goal – pre-filled with what is already set up, otherwise with suggestions.
+4. **Questions** per goal – pre-filled with what is already set up, otherwise with suggestions.
    Persons who cannot be detected as away are marked with ⚠.
-4. **Sirens and recipients** for the affected profiles. Sirens are **only registered, never
-   enabled** – enabling stays a separate step under Alarm devices. The assistant never offers
-   smoke detector sirens.
-5. **Plan:** per profile "before → new", hints, what the assistant checks afterwards, and the
+5. **Sirens and recipients** for the affected profiles. Sirens are **only registered, never
+   enabled** – enabling stays a separate step under Alarm devices. Sirens of **smoke detectors**
+   are shown with 🔥 and the note: as a burglar siren they only get the burglar tone, never the
+   fire tone, and Hauswacht does not switch them off during a fire. The smoke detector's fire
+   function stays unchanged.
+6. **Plan:** per profile "before → new", hints, what the assistant checks afterwards, and the
    [scenario preview](#what-happens-if--since-0640b4) for the settings as they would be afterwards.
    Only **Apply** saves.
 
@@ -200,8 +211,10 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
 - Applying only works while **all areas are disarmed**. Hauswacht **recomputes** the plan from
   your answers – with the same rules as in the side sheet. If something changed in the meantime,
   nothing is saved.
-- Nothing is switched, no siren is enabled, no smoke detector is touched and no automation is
-  created.
+- A sensor group is never emptied, and sensors that are in a group via a label are not moved.
+- Without an answer about entry doors, the sensor types stay as they are.
+- Nothing is switched, no siren is enabled, nothing about the smoke detectors' fire function is
+  changed and no automation is created.
 
 **Example:** the profiles "Home" and "Away" exist, but none for the night. You choose "Secure the
 night" (arm at 22:30) and "Disarm when coming home" for Anna with door proof. The plan shows:
@@ -218,8 +231,6 @@ Because of the ⚠ you tick the box, then **Apply**.
 
 ## What comes next
 
-- **0.65:** setting up doors and windows too (suggestions by floor and room) and "garage or
-  workshop separately".
 - **0.66:** exit detection – whoever forgets the PIN when leaving does not trigger an alarm if
   their phone is "away" shortly afterwards. The scenarios above become the safety table for it:
   coming in must not become less safe.

@@ -14,6 +14,9 @@ from custom_components.hauswacht.core.goals import (
     build,
     suggestions,
 )
+from custom_components.hauswacht.core.goals import (
+    GARAGE as GARAGE_GOAL,
+)
 
 ANNA = "person.anna"
 BEN = "person.ben"
@@ -207,3 +210,193 @@ def test_english() -> None:
     assert after is not None
     assert plan["steps"][0]["title"] == "New profile Away"
     assert "away" in after["profiles"]
+
+
+# --- Türen, Fenster, Garage, Rauchmelder (0.65.0b2) ------------------------------------------
+
+TUER = "binary_sensor.tuer"
+BWM = "binary_sensor.bwm"
+TERRASSE = "binary_sensor.terrasse"
+KUECHE = "binary_sensor.fenster_kueche"
+GARAGE_TOR = "binary_sensor.garagentor"
+FLUR_BWM = "binary_sensor.bwm_flur"
+SMOKE = "siren.rauchmelder_diele"
+
+
+def _sensors_hh(**extra: Any) -> Household:
+    from custom_components.hauswacht.core.goals import SensorInfo  # noqa: PLC0415
+
+    sensors = (
+        SensorInfo(TUER, "Haustür", "door", "door", "EG › Flur", "aussen"),
+        SensorInfo(TERRASSE, "Terrassentür", "door", "door", "EG › Wohnen", "aussen"),
+        SensorInfo(BWM, "Bewegung Flur", "motion", "motion", "EG › Flur", "innen"),
+        SensorInfo(KUECHE, "Fenster Küche", "window", "window", "EG › Küche", None),
+        SensorInfo(FLUR_BWM, "Bewegung OG", "motion", "motion", "OG › Flur", None),
+        SensorInfo(GARAGE_TOR, "Garagentor", "door", "door", "", None),
+    )
+    names = {s.entity_id: s.name for s in sensors}
+    return Household(
+        persons=(ANNA,),
+        facts=Facts(located=frozenset({ANNA}), names={ANNA: "Anna", **names}),
+        motion_groups=frozenset({"innen"}),
+        sirens=(SIREN, SMOKE),
+        smoke=frozenset({SMOKE}),
+        notify=(APP,),
+        names={SIREN: "Sirene Flur", SMOKE: "Rauchmelder Diele", APP: "Handy Anna", **names},
+        sensors=sensors,
+        **extra,
+    )
+
+
+def _sensor_options() -> dict[str, Any]:
+    return _options(
+        zones={
+            "aussen": {"name": "Außen", "entities": [TUER, TERRASSE]},
+            "innen": {"name": "Innen", "entities": [BWM]},
+        }
+    )
+
+
+def test_sensor_suggestions_put_free_sensors_into_existing_groups() -> None:
+    options = _sensor_options()
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    assert answers["sensors"] == {
+        "add": [KUECHE, FLUR_BWM, GARAGE_TOR],
+        "outside": "aussen",
+        "inside": "innen",
+        "entry_doors": [TUER, TERRASSE, GARAGE_TOR],
+    }
+    answers["goals"] = [AWAY]
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert sorted(after["zones"]["aussen"]["entities"]) == sorted(
+        [TUER, TERRASSE, KUECHE, GARAGE_TOR]
+    )
+    assert sorted(after["zones"]["innen"]["entities"]) == sorted([BWM, FLUR_BWM])
+    # Nur ergänzt: keine Bestätigung nötig
+    assert plan["needs_confirm"] is False
+    assert plan["steps"][0]["title"] == "Türen, Fenster und Bewegungsmelder"
+
+
+def test_new_groups_without_existing_ones() -> None:
+    options = _options(zones={})
+    hh = _sensors_hh()
+    from dataclasses import replace  # noqa: PLC0415
+
+    hh = replace(hh, sensors=tuple(replace(s, group=None) for s in hh.sensors))
+    answers = suggestions(options, hh)
+    assert answers["sensors"]["outside"] == "new"
+    assert "@outside" in answers[NIGHT]["zones"]
+    assert "@inside" in answers[AWAY]["zones"]
+    answers["goals"] = [NIGHT, AWAY]
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    zones = after["zones"]
+    assert zones["aussen"]["name"] == "Außen"
+    assert zones["innen"]["name"] == "Innen"
+    # Nachts nur Außen, abwesend beides – mit den echten IDs statt der Platzhalter
+    assert after["profiles"]["nacht"]["zones"] == ["aussen"]
+    assert after["profiles"]["abwesend"]["zones"] == ["aussen", "innen"]
+
+
+def test_entry_doors_patio_triggers_immediately() -> None:
+    options = _sensor_options()
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    answers["goals"] = [AWAY]
+    answers["sensors"]["add"] = []
+    answers["sensors"]["entry_doors"] = [TUER]  # Terrassentür keine Eingangstür
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert after["sensor_types"] == {TERRASSE: "other"}
+    row = next(c for c in plan["steps"][0]["changes"] if c["label"].startswith("Eingangstüren"))
+    assert row["overwrite"] is True  # Terrassentür fällt weg
+    assert row["weakens"] is False  # sofort auslösend ist strenger
+
+
+def test_making_a_watched_window_an_entry_door_weakens() -> None:
+    options = _sensor_options()
+    options["zones"]["aussen"]["entities"].append(KUECHE)
+    hh = _sensors_hh()
+    from dataclasses import replace  # noqa: PLC0415
+
+    hh = replace(
+        hh,
+        sensors=tuple(
+            replace(s, group="aussen") if s.entity_id == KUECHE else s for s in hh.sensors
+        ),
+    )
+    answers = suggestions(options, hh)
+    answers["goals"] = [AWAY]
+    answers["sensors"]["add"] = []
+    answers["sensors"]["entry_doors"] = [TUER, TERRASSE, KUECHE]
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert after["sensor_types"] == {KUECHE: "door"}
+    assert plan["needs_confirm"] is True
+
+
+def test_missing_entry_answer_changes_no_types() -> None:
+    options = _sensor_options()
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    answers["goals"] = [AWAY]
+    del answers["sensors"]["entry_doors"]
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert after.get("sensor_types", {}) == {}
+
+
+def test_garage_separately() -> None:
+    options = _sensor_options()
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    answers["goals"] = [GARAGE_GOAL]
+    answers["garage"] = {"sensors": [GARAGE_TOR], "away": True}
+    options["profiles"]["away"] = {"name": "Abwesend", "panel_mode": "away", "zones": ["aussen"]}
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert after["zones"]["garage"]["entities"] == [GARAGE_TOR]
+    # Das Garagentor ist nicht zusätzlich in „Außen“
+    assert GARAGE_TOR not in after["zones"]["aussen"]["entities"]
+    garage = after["profiles"]["garage"]
+    assert garage["zones"] == ["garage"]
+    assert garage["panel_mode"] == "custom"
+    # Auch scharf, wenn alle weg: das vorhandene Abwesend-Profil bekommt die Gruppe
+    assert after["profiles"]["away"]["zones"] == ["aussen", "garage"]
+    assert set(plan["profiles"]) == {"garage", "away"}
+
+
+def test_garage_moves_sensor_out_of_its_group() -> None:
+    options = _sensor_options()
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    answers["goals"] = [GARAGE_GOAL]
+    answers["sensors"]["add"] = []
+    answers["garage"] = {"sensors": [TERRASSE], "away": False}
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert after["zones"]["aussen"]["entities"] == [TUER]
+    assert after["zones"]["garage"]["entities"] == [TERRASSE]
+    assert plan["needs_confirm"] is True  # Gruppe Außen verliert einen Melder
+    assert any("wechselt aus der Gruppe Außen" in n for n in plan["notes"])
+    # Nie eine Gruppe leer räumen
+    answers["garage"] = {"sensors": [BWM], "away": False}
+    plan, after = build(options, hh, answers)
+    assert after is None
+    assert any("keinen Melder mehr" in e for e in plan["errors"])
+
+
+def test_smoke_detector_siren_only_registered_with_note() -> None:
+    options = _sensor_options()
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    answers["goals"] = [NIGHT]
+    answers["sirens"] = [SMOKE]
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert after["sirens"] == [SMOKE]
+    assert not after.get("sirens_hardware_enabled")
+    assert after["profiles"]["nacht"]["sirens"] == [SMOKE]
+    assert any(n.startswith("Rauchmelder als Einbruchsirene") for n in plan["notes"])

@@ -10,7 +10,8 @@
   Überschreiben oder Abschwächen nur mit ``confirm``.
 
 Die Regeln stehen in ``core/goals.py``. Hier wird nichts geschaltet, keine Sirene freigegeben und
-kein Rauchmelder angeboten.
+kein Rauchmelder verändert. Sirenen von Rauchmeldern werden angeboten (seit 0.65.0b2), aber nur
+eingetragen – als Einbruchsirene bekommen sie nur den Einbruchton und sind bei Brand gesperrt.
 """
 
 from __future__ import annotations
@@ -21,13 +22,25 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import floor_registry as fr
 
 from .advisor_ws import build_facts
 from .const import DOMAIN
 from .core.advisor import advise
 from .core.away_proof import parse_proof_settings
-from .core.goals import GOALS, RETURN_CHOICES, Household, build, detectable, suggestions, targets
+from .core.goals import (
+    GOALS,
+    RETURN_CHOICES,
+    Household,
+    SensorInfo,
+    build,
+    detectable,
+    suggestions,
+    targets,
+)
 from .core.profiles import profile_info
 from .core.reactions import is_fire_indicator
 from .core.scenarios import scenarios
@@ -63,10 +76,69 @@ def _smoke_detector(hass: HomeAssistant, entity_id: str) -> bool:
 
 
 def _sirens(hass: HomeAssistant, options: Mapping[str, Any]) -> list[str]:
+    """Eingetragene und weitere Sirenen – auch die von Rauchmeldern (deutlich gekennzeichnet)."""
     registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
     domains = ["siren", "switch"] if options.get("sirens_allow_switch") else ["siren"]
     found = [*registered, *(s.entity_id for s in hass.states.async_all(domains))]
-    return [s for s in dict.fromkeys(found) if not _smoke_detector(hass, s)]
+    return list(dict.fromkeys(found))
+
+
+_WATCHED = (SensorType.DOOR, SensorType.WINDOW, SensorType.MOTION)
+
+
+def _place(hass: HomeAssistant, entity_id: str) -> str:
+    """„Etage › Raum“ aus Entität bzw. Gerät (leer, wenn nichts zugeordnet ist)."""
+    entry = er.async_get(hass).async_get(entity_id)
+    area_id = entry.area_id if entry else None
+    if area_id is None and entry is not None and entry.device_id is not None:
+        device = dr.async_get(hass).async_get(entry.device_id)
+        area_id = device.area_id if device else None
+    area = ar.async_get(hass).async_get_area(area_id) if area_id else None
+    if area is None:
+        return ""
+    floor = fr.async_get(hass).async_get_floor(area.floor_id) if area.floor_id else None
+    return f"{floor.name} › {area.name}" if floor else area.name
+
+
+def _sensors(hass: HomeAssistant, options: Mapping[str, Any]) -> tuple[SensorInfo, ...]:
+    """Türen, Fenster, Bewegung: in Gruppen und frei (frei nur Binärsensoren mit passender Art)."""
+    from .runtime import device_class_of, entities_by_label  # noqa: PLC0415 – Import-Kreis
+
+    labels = entities_by_label(hass)
+    types = effective_types(options)
+    member_of: dict[str, str] = {}
+    via_label: set[str] = set()
+    for zone_id, zone in parse_zones(options).items():
+        for entity_id in zone.entities:
+            member_of[entity_id] = zone_id
+        for entity_id in labels.get(zone.label, frozenset()) if zone.label else ():
+            if entity_id not in zone.entities:
+                member_of.setdefault(entity_id, zone_id)
+                via_label.add(entity_id)
+    candidates = [*member_of, *(s.entity_id for s in hass.states.async_all("binary_sensor"))]
+    found: list[SensorInfo] = []
+    for entity_id in dict.fromkeys(candidates):
+        default = default_type(entity_id, device_class_of(hass, entity_id))
+        kind = types.get(entity_id, default)
+        grouped = entity_id in member_of
+        if kind not in _WATCHED and not (kind == SensorType.OTHER and default in _WATCHED):
+            continue
+        if not grouped and default not in _WATCHED:
+            continue
+        found.append(
+            SensorInfo(
+                entity_id=entity_id,
+                name=display_name(hass, entity_id),
+                kind=kind.value,
+                default=default.value,
+                place=_place(hass, entity_id),
+                group=member_of.get(entity_id),
+                via_label=entity_id in via_label,
+            )
+        )
+    return tuple(
+        sorted(found, key=lambda s: (s.place == "", s.place.casefold(), s.name.casefold()))
+    )
 
 
 def _motion_groups(hass: HomeAssistant, options: Mapping[str, Any]) -> frozenset[str]:
@@ -89,13 +161,17 @@ def household(hass: HomeAssistant, main: Any, options: Mapping[str, Any]) -> Hou
     facts = build_facts(hass, main, options, persons)
     sirens = _sirens(hass, options)
     notify = notify_choices(hass)
+    sensors = _sensors(hass, options)
     names = {s: display_name(hass, s) for s in sirens}
     names.update({n["id"]: n["name"] for n in notify})
+    names.update({s.entity_id: s.name for s in sensors})
     return Household(
         persons=persons,
         facts=facts,
         motion_groups=_motion_groups(hass, options),
         sirens=tuple(sirens),
+        smoke=frozenset(s for s in sirens if _smoke_detector(hass, s)),
+        sensors=sensors,
         notify=tuple(n["id"] for n in notify),
         names=names,
     )

@@ -1,6 +1,7 @@
 // Hauswacht – Einstellungsseite: „Einrichten nach Zielen“ (ADR 0017, 0.65).
 //
-// Ein Seitenblatt mit Schritten: Haushalt → Ziele → Rückfragen → Sirenen und Empfänger → Plan.
+// Ein Seitenblatt mit Schritten: Haushalt → Türen und Fenster → Ziele → Rückfragen → Sirenen und
+// Empfänger → Plan.
 // Die Seite schickt nur die Antworten. Hauswacht rechnet daraus den Plan („bisher → neu“), die
 // Szenario-Vorschau und die Prüfung – und beim Übernehmen alles noch einmal neu (unscharf,
 // Revision, Bestätigung bei Überschreiben oder Abschwächen). Es wird nichts geschaltet und keine
@@ -9,7 +10,7 @@
 const GOALS_TEXT = {
   de: {
     title: "Einrichten nach Zielen",
-    steps: ["Haushalt", "Ziele", "Rückfragen", "Sirenen und Empfänger", "Plan"],
+    steps: ["Haushalt", "Türen und Fenster", "Ziele", "Rückfragen", "Sirenen und Empfänger", "Plan"],
     back: "Zurück",
     next: "Weiter",
     cancel: "Abbrechen",
@@ -30,7 +31,26 @@ const GOALS_TEXT = {
       away: ["Automatisch scharf, wenn alle weg sind", "Sobald alle gewählten Personen sicher weg sind, wird das Abwesend-Profil nach einer Wartezeit scharf."],
       return: ["Beim Heimkommen unscharf", "Kommt jemand heim, wird das Abwesend-Profil unscharf – ohne PIN, wenn Handy und Tür zusammenpassen."],
       night_return: ["Nachts heimkommen, ohne dass „Nacht“ aus ist", "Wer nachts heimkommt, wird reingelassen – das Nacht-Profil bleibt scharf."],
+      garage: ["Garage oder Werkstatt getrennt", "Eigene Meldergruppe und eigenes Profil „Garage“ – so lässt sie sich für sich scharf schalten, z. B. nachts, während im Haus noch jemand wach ist."],
     },
+    targetGarage: "legt Gruppe und Profil „Garage“ an (oder ergänzt sie)",
+    sensorsIntro: "Türen, Fenster und Bewegungsmelder, die Home Assistant kennt – sortiert nach Etage und Raum.",
+    free: "Noch in keiner Meldergruppe",
+    freeNone: "Alle Türen, Fenster und Bewegungsmelder sind schon in Meldergruppen.",
+    kinds: { door: "Tür", window: "Fenster", motion: "Bewegung", other: "sofort auslösend" },
+    outsideGroup: "Türen und Fenster in die Gruppe",
+    insideGroup: "Bewegungsmelder in die Gruppe",
+    newGroup: "Neue Gruppe „{n}“",
+    newOutside: "Außen",
+    newInside: "Innen",
+    entry: "Eingangstüren",
+    entryHint: "Eingangstür = mit Eingangsverzögerung: Du kommst rein und schaltest in dieser Zeit unscharf. Alle anderen Türen und Fenster lösen sofort aus (z. B. Terrassentür, die nur von innen geöffnet wird).",
+    entryNone: "Keine Türen oder Fenster in Meldergruppen.",
+    garageSensors: "Melder der Garage oder Werkstatt",
+    garageLabel: "über ein Label in einer Gruppe – hier nicht verschiebbar",
+    garageMove: "wechselt aus der Gruppe „{g}“",
+    garageAway: "Garage auch scharf, wenn alle weg sind (Abwesend-Profil)",
+    smoke: "Rauchmelder – als Einbruchsirene nur mit Einbruchton, bei Brand gesperrt",
     targetNew: "legt das Profil „{p}“ neu an",
     targetChange: "ergänzt das Profil „{p}“",
     groups: "Meldergruppen",
@@ -51,7 +71,7 @@ const GOALS_TEXT = {
     released: "Freigabe: an",
     notReleased: "Freigabe: aus – im Ernstfall bleibt es still, bis du sie unter Alarmgeber freigibst",
     registered: "schon eingetragen",
-    noSirens: "Keine Sirene gefunden (Rauchmelder werden nie angeboten).",
+    noSirens: "Keine Sirene gefunden.",
     notify: "Empfänger",
     noNotify: "Kein Empfänger gefunden.",
     planIntro: "Das würde sich ändern. Gespeichert wird erst mit „Übernehmen“.",
@@ -77,7 +97,7 @@ const GOALS_TEXT = {
   },
   en: {
     title: "Set up by goals",
-    steps: ["Household", "Goals", "Questions", "Sirens and recipients", "Plan"],
+    steps: ["Household", "Doors and windows", "Goals", "Questions", "Sirens and recipients", "Plan"],
     back: "Back",
     next: "Next",
     cancel: "Cancel",
@@ -98,7 +118,26 @@ const GOALS_TEXT = {
       away: ["Arm automatically when everyone is away", "As soon as all chosen persons are surely away, the Away profile arms after a waiting time."],
       return: ["Disarm when coming home", "When someone comes home, the Away profile is disarmed – without PIN if phone and door match."],
       night_return: ["Come home at night without turning “Night” off", "Whoever comes home at night is let in – the Night profile stays armed."],
+      garage: ["Garage or workshop separately", "Own sensor group and own profile “Garage” – so it can be armed on its own, e.g. at night while someone in the house is still awake."],
     },
+    targetGarage: "creates group and profile “Garage” (or extends them)",
+    sensorsIntro: "Doors, windows and motion sensors that Home Assistant knows – sorted by floor and room.",
+    free: "Not in any sensor group yet",
+    freeNone: "All doors, windows and motion sensors are already in sensor groups.",
+    kinds: { door: "door", window: "window", motion: "motion", other: "triggers immediately" },
+    outsideGroup: "Doors and windows into the group",
+    insideGroup: "Motion sensors into the group",
+    newGroup: "New group “{n}”",
+    newOutside: "Outside",
+    newInside: "Inside",
+    entry: "Entry doors",
+    entryHint: "Entry door = with entry delay: you come in and disarm during that time. All other doors and windows trigger immediately (e.g. a patio door that is only opened from inside).",
+    entryNone: "No doors or windows in sensor groups.",
+    garageSensors: "Sensors of the garage or workshop",
+    garageLabel: "in a group via a label – cannot be moved here",
+    garageMove: "moves from the group “{g}”",
+    garageAway: "Also arm the garage when everyone is away (Away profile)",
+    smoke: "smoke detector – as a burglar siren only with the burglar tone, locked during a fire",
     targetNew: "creates the profile “{p}”",
     targetChange: "extends the profile “{p}”",
     groups: "Sensor groups",
@@ -119,7 +158,7 @@ const GOALS_TEXT = {
     released: "Enabled: on",
     notReleased: "Enabled: off – in an emergency it stays silent until you enable it under Alarm devices",
     registered: "already registered",
-    noSirens: "No siren found (smoke detectors are never offered).",
+    noSirens: "No siren found.",
     notify: "Recipients",
     noNotify: "No recipient found.",
     planIntro: "This would change. Nothing is saved until you press “Apply”.",
@@ -220,10 +259,59 @@ class HauswachtGoalsSheet extends HTMLElement {
   }
 
   _target(goal) {
+    if (goal === "garage") return this._t("targetGarage");
     const key = ["night", "night_return"].includes(goal) ? "night" : "away";
     const target = this._info.targets[key];
     const fallback = { night: this._lang === "de" ? "Nacht" : "Night", away: this._lang === "de" ? "Abwesend" : "Away" }[key];
     return target ? this._t("targetChange").replace("{p}", target.name) : this._t("targetNew").replace("{p}", fallback);
+  }
+
+  _kind(k) {
+    return this._t("kinds")[k] || k;
+  }
+
+  _byPlace(items, attr, selected, extra = () => "", disabled = () => false) {
+    let last = null;
+    return items
+      .map((x) => {
+        const head = x.place !== last ? `<div class="muted" style="margin-top:6px">${ge(x.place || "–")}</div>` : "";
+        last = x.place;
+        const off = disabled(x);
+        return `${head}<div class="chk"><input type="checkbox" ${attr}="${ge(x.id)}" ${selected.includes(x.id) && !off ? "checked" : ""} ${off ? "disabled" : ""}><span>${ge(x.name)} <span class="muted">(${ge(this._kind(x.kind))})</span>${extra(x)}</span></div>`;
+      })
+      .join("");
+  }
+
+  _groupSelect(attr, value) {
+    const opts = this._info.groups.map((g) => `<option value="${ge(g.id)}" ${g.id === value ? "selected" : ""}>${ge(g.name)}</option>`).join("");
+    const name = attr === "outside" ? this._t("newOutside") : this._t("newInside");
+    return `<select data-grp="${attr}">${opts}<option value="new" ${value === "new" ? "selected" : ""}>${ge(this._t("newGroup").replace("{n}", name))}</option></select>`;
+  }
+
+  _sensorsStep() {
+    const info = this._info;
+    const s = this._answers.sensors;
+    const free = info.sensors.filter((x) => !x.group);
+    const freeHtml = free.length ? this._byPlace(free, "data-add", s.add) : `<div class="muted">${ge(this._t("freeNone"))}</div>`;
+    const anyOutside = free.some((x) => x.kind !== "motion");
+    const anyInside = free.some((x) => x.kind === "motion");
+    const targets = `${anyOutside ? `<label>${ge(this._t("outsideGroup"))}</label>${this._groupSelect("outside", s.outside)}` : ""}
+      ${anyInside ? `<label>${ge(this._t("insideGroup"))}</label>${this._groupSelect("inside", s.inside)}` : ""}`;
+    const doors = info.sensors.filter((x) => x.kind !== "motion" && (x.group || s.add.includes(x.id)));
+    const entry = doors.length ? this._byPlace(doors, "data-entry", s.entry_doors) : `<div class="muted">${ge(this._t("entryNone"))}</div>`;
+    return `<div class="muted">${ge(this._t("sensorsIntro"))}</div>
+      <div class="sec">${ge(this._t("free"))}</div>${freeHtml}${targets}
+      <div class="sec">${ge(this._t("entry"))}</div><div class="muted">${ge(this._t("entryHint"))}</div>${entry}`;
+  }
+
+  // Gruppen für die Rückfragen – mit den neuen Gruppen, die der Plan erst anlegt
+  _zoneChoices() {
+    const s = this._answers.sensors;
+    const free = this._info.sensors.filter((x) => !x.group && s.add.includes(x.id));
+    const extra = [];
+    if (s.outside === "new" && free.some((x) => x.kind !== "motion")) extra.push({ id: "@outside", name: this._t("newGroup").replace("{n}", this._t("newOutside")), motion: false });
+    if (s.inside === "new" && free.some((x) => x.kind === "motion")) extra.push({ id: "@inside", name: this._t("newGroup").replace("{n}", this._t("newInside")), motion: true });
+    return [...this._info.groups, ...extra];
   }
 
   _goals() {
@@ -259,7 +347,7 @@ class HauswachtGoalsSheet extends HTMLElement {
     const needsAway = g.includes("away") || (g.includes("return") && !info.targets.away);
     if (needsNight) {
       parts.push(`<div class="sec">${ge(this._t("goal").night[0])}</div>
-        <label>${ge(this._t("groups"))}</label>${this._checks('data-q="night.zones"', info.groups, a.night.zones, motion)}
+        <label>${ge(this._t("groups"))}</label>${this._checks('data-q="night.zones"', this._zoneChoices(), a.night.zones, motion)}
         ${g.includes("night") ? `<div class="two"><div><label>${ge(this._t("armTime"))}</label><input type="time" data-v="night.arm_time" value="${ge(a.night.arm_time || "")}"></div>
         <div><label>${ge(this._t("disarmTime"))}</label><input type="time" data-v="night.disarm_time" value="${ge(a.night.disarm_time || "")}"></div></div>` : ""}`);
     }
@@ -269,7 +357,7 @@ class HauswachtGoalsSheet extends HTMLElement {
     }
     if (needsAway) {
       parts.push(`<div class="sec">${ge(this._t("goal").away[0])}</div>
-        <label>${ge(this._t("groups"))}</label>${this._checks('data-q="away.zones"', info.groups, a.away.zones)}
+        <label>${ge(this._t("groups"))}</label>${this._checks('data-q="away.zones"', this._zoneChoices(), a.away.zones)}
         ${g.includes("away") ? `<label>${ge(this._t("persons"))}</label>${this._checks('data-q="away.persons"', info.persons, a.away.persons, (p) => this._personExtra(p))}
         <label>${ge(this._t("delay"))}</label><input class="small" type="number" min="1" max="240" data-v="away.delay" value="${ge(a.away.delay)}">` : ""}`);
     }
@@ -279,6 +367,13 @@ class HauswachtGoalsSheet extends HTMLElement {
         <label>${ge(this._t("persons"))}</label>${this._checks('data-q="return.persons"', info.persons, a.return.persons, (p) => this._personExtra(p))}
         <label>${ge(this._t("mode"))}</label><select data-v="return.mode">${modes}</select>`);
     }
+    if (g.includes("garage")) {
+      const groupName = (id) => (info.groups.find((x) => x.id === id) || { name: id }).name;
+      const extra = (x) => (x.via_label ? ` <span class="muted">– ${ge(this._t("garageLabel"))}</span>` : x.group ? ` <span class="muted">– ${ge(this._t("garageMove").replace("{g}", groupName(x.group)))}</span>` : "");
+      parts.push(`<div class="sec">${ge(this._t("goal").garage[0])}</div>
+        <label>${ge(this._t("garageSensors"))}</label>${this._byPlace(info.sensors, "data-garage", a.garage.sensors, extra, (x) => x.via_label)}
+        <label class="chk"><input type="checkbox" data-garage-away ${a.garage.away ? "checked" : ""}> ${ge(this._t("garageAway"))}</label>`);
+    }
     return parts.join("");
   }
 
@@ -286,7 +381,7 @@ class HauswachtGoalsSheet extends HTMLElement {
     const info = this._info;
     const a = this._answers;
     const sirens = info.sirens.length
-      ? this._checks("data-s", info.sirens, a.sirens, (s) => (s.registered ? ` <span class="muted">(${ge(this._t("registered"))})</span>` : ""))
+      ? this._checks("data-s", info.sirens, a.sirens, (s) => `${s.registered ? ` <span class="muted">(${ge(this._t("registered"))})</span>` : ""}${s.smoke ? `<br><span class="muted">🔥 ${ge(this._t("smoke"))}</span>` : ""}`)
       : `<div class="muted">${ge(this._t("noSirens"))}</div>`;
     const notify = info.notify.length ? this._checks("data-n", info.notify, a.notify) : `<div class="muted">${ge(this._t("noNotify"))}</div>`;
     const release = info.hardware_enabled ? this._t("released") : this._t("notReleased");
@@ -323,8 +418,17 @@ class HauswachtGoalsSheet extends HTMLElement {
     const root = this.shadowRoot;
     const a = this._answers;
     if (!a) return;
-    if (this._step === 1) a.goals = [...root.querySelectorAll("[data-goal]")].filter((el) => el.checked).map((el) => el.dataset.goal);
-    if (this._step === 2) {
+    if (this._step === 1) {
+      const add = root.querySelectorAll("[data-add]");
+      if (add.length) a.sensors.add = [...add].filter((el) => el.checked).map((el) => el.dataset.add);
+      root.querySelectorAll("[data-grp]").forEach((el) => (a.sensors[el.dataset.grp] = el.value));
+      // Eingangstüren: angezeigte neu bewerten, nicht angezeigte (z. B. abgewählte freie) bleiben
+      const shown = [...root.querySelectorAll("[data-entry]")];
+      const ids = new Set(shown.map((el) => el.dataset.entry));
+      a.sensors.entry_doors = [...a.sensors.entry_doors.filter((id) => !ids.has(id)), ...shown.filter((el) => el.checked).map((el) => el.dataset.entry)];
+    }
+    if (this._step === 2) a.goals = [...root.querySelectorAll("[data-goal]")].filter((el) => el.checked).map((el) => el.dataset.goal);
+    if (this._step === 3) {
       root.querySelectorAll("[data-q]").forEach((el) => {
         const [sec, key] = el.dataset.q.split(".");
         a[sec][key] = [...root.querySelectorAll(`[data-q="${CSS.escape(el.dataset.q)}"]`)].filter((x) => x.checked).map((x) => x.dataset.id);
@@ -333,8 +437,12 @@ class HauswachtGoalsSheet extends HTMLElement {
         const [sec, key] = el.dataset.v.split(".");
         a[sec][key] = el.type === "number" ? Number(el.value) : el.value || null;
       });
+      if (root.querySelector("[data-garage]")) {
+        a.garage.sensors = [...root.querySelectorAll("[data-garage]")].filter((el) => el.checked).map((el) => el.dataset.garage);
+        a.garage.away = Boolean(root.querySelector("[data-garage-away]")?.checked);
+      }
     }
-    if (this._step === 3) {
+    if (this._step === 4) {
       a.sirens = [...root.querySelectorAll("[data-s]")].filter((el) => el.checked).map((el) => el.dataset.s);
       a.notify = [...root.querySelectorAll("[data-n]")].filter((el) => el.checked).map((el) => el.dataset.n);
     }
@@ -383,12 +491,12 @@ class HauswachtGoalsSheet extends HTMLElement {
     const top = this.shadowRoot.querySelector(".sheet")?.scrollTop || 0;
     let body;
     if (!this._info) body = `<div class="muted">${ge(this._message || this._t("loading"))}</div>`;
-    else body = [() => this._household(), () => this._goals(), () => this._questions(), () => this._reaction(), () => this._planHtml()][this._step]();
+    else body = [() => this._household(), () => this._sensorsStep(), () => this._goals(), () => this._questions(), () => this._reaction(), () => this._planHtml()][this._step]();
     const steps = this._t("steps").map((s, i) => `<span class="${i === this._step ? "on" : ""}">${i + 1}. ${ge(s)}</span>`).join("");
-    const last = this._step === 4;
+    const last = this._step === 5;
     const armed = this._info && !this._info.editable ? `<div class="muted">${ge(this._t("armedNote"))}</div>` : "";
     const canApply = last && this._plan && !this._plan.plan.errors.length && this._info.editable && !this._busy;
-    const needsGoal = this._step === 1 && this._answers && !this._answers.goals.length;
+    const needsGoal = this._step === 2 && this._answers && !this._answers.goals.length;
     this.shadowRoot.innerHTML = `<style>${style}</style><div class="sheet">
       <h2>${ge(this._t("title"))}</h2><div class="stepper">${steps}</div>
       ${body}${armed}
@@ -423,15 +531,15 @@ class HauswachtGoalsSheet extends HTMLElement {
         if (act === "next") {
           this._step += 1;
           root.querySelector(".sheet").scrollTop = 0;
-          if (this._step === 4) return this._computePlan();
+          if (this._step === 5) return this._computePlan();
           return this._render();
         }
         if (act === "apply") return this._apply();
         return undefined;
       })
     );
-    // Ziele an/aus: „Weiter“ gleich freigeben bzw. sperren
-    root.querySelectorAll("[data-goal]").forEach((el) =>
+    // Ziele an/aus: „Weiter“ gleich freigeben bzw. sperren; freie Melder ändern die Eingangstüren
+    root.querySelectorAll("[data-goal], [data-add], [data-grp]").forEach((el) =>
       el.addEventListener("change", () => {
         this._collect();
         this._render();

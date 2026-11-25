@@ -6,8 +6,12 @@ Statt Einstellungen fragt der Assistent nach **Zielen**:
 - ``away`` – automatisch scharf, wenn alle weg sind (Profil mit dem Knopf „Abwesend“)
 - ``return`` – beim Heimkommen unscharf („Bei Rückkehr“ im Abwesend-Profil)
 - ``night_return`` – nachts heimkommen, ohne dass „Nacht“ aus ist („Reinlassen“ im Nacht-Profil)
+- ``garage`` – Garage oder Werkstatt getrennt (eigene Meldergruppe und eigenes Profil)
 
-Dazu Sirenen (nur **eintragen**, nie freigeben) und Empfänger für die betroffenen Profile.
+Dazu (seit 0.65.0b2) **Türen und Fenster**: noch nicht eingeordnete Melder in Meldergruppen
+aufnehmen und festlegen, welche Türen Eingangstüren sind (mit Eingangsverzögerung) – und Sirenen
+(nur **eintragen**, nie freigeben; auch Sirenen von Rauchmeldern, die als Einbruchsirene nur den
+Einbruchton bekommen und bei Brand gesperrt sind) und Empfänger für die betroffenen Profile.
 
 Aus den Antworten entsteht ein **Plan**: je betroffenem Profil die Änderungen „bisher → neu“.
 Vorhandenes wird nur ergänzt; was überschrieben würde (oder die Anlage nachgiebiger macht, z. B.
@@ -28,13 +32,16 @@ from .away_proof import parse_proof_settings
 from .changes import Change
 from .changes.profiles import save_profile
 from .changes.sirens import save_sirens
+from .changes.zones import save_zone
 from .profiles import (
     DEFAULT_ENTRY_DELAY,
     MAX_DELAY,
     profile_behaviour,
     profile_for_mode,
     profile_info,
+    profile_infos,
     profile_settings,
+    used_panel_modes,
 )
 from .reactions import parse_reaction
 from .returning import (
@@ -53,7 +60,17 @@ NIGHT = "night"
 AWAY = "away"
 RETURN = "return"
 NIGHT_RETURN = "night_return"
-GOALS = (NIGHT, AWAY, RETURN, NIGHT_RETURN)
+GARAGE = "garage"
+GOALS = (NIGHT, AWAY, RETURN, NIGHT_RETURN, GARAGE)
+# Platzhalter für Meldergruppen, die erst der Plan anlegt (in den Antworten bei „zones“)
+NEW_GROUP = "new"
+OUTSIDE = "@outside"
+INSIDE = "@inside"
+GARAGE_ZONE = "@garage"
+KIND_DOOR = "door"
+KIND_WINDOW = "window"
+KIND_MOTION = "motion"
+GARAGE_DELAY = 30  # Sekunden, Aus- und Eingangsverzögerung eines neuen Garagen-Profils
 RETURN_CHOICES = (RETURN_DOOR, RETURN_PASSAGE, RETURN_AUTO_ONLY, RETURN_ALWAYS)
 AWAY_EXIT_DELAY = 60  # Sekunden, neues Abwesend-Profil
 NIGHT_EXIT_DELAY = 0  # nachts ist man drinnen
@@ -78,6 +95,22 @@ LABELS: Mapping[str, Mapping[str, str]] = {
         "sirens": "Sirenen",
         "notify": "Empfänger",
         "registered": "Eingetragene Sirenen (nicht freigegeben)",
+        "group": "Gruppe {name}",
+        "entry_doors": "Eingangstüren (mit Eingangsverzögerung)",
+        "outside": "Außen",
+        "inside": "Innen",
+        "garage": "Garage",
+        "t_sensors": "Türen, Fenster und Bewegungsmelder",
+        "t_garage": "Garage oder Werkstatt",
+        "n_smoke": "Rauchmelder als Einbruchsirene: Sie bekommen nur den Einbruchton, nie den "
+        "Brandton, und bei einem Brand schaltet Hauswacht sie nicht ab. Die Brandfunktion des "
+        "Rauchmelders bleibt unverändert.",
+        "n_moved": "{sensor} wechselt aus der Gruppe {group} in die Garage.",
+        "e_group_empty": "Gruppe {name} hätte danach keinen Melder mehr – bitte nicht alle Melder "
+        "in die Garage verschieben oder die Gruppe erst löschen.",
+        "e_garage_sensors": "Garage oder Werkstatt: bitte mindestens einen Melder wählen.",
+        "e_label_member": "{sensor} steckt über ein Label in einer Gruppe und lässt sich hier "
+        "nicht verschieben.",
         "seconds": "{v} s",
         "minutes": "{v} min",
         "none": "–",
@@ -120,6 +153,21 @@ LABELS: Mapping[str, Mapping[str, str]] = {
         "sirens": "Sirens",
         "notify": "Recipients",
         "registered": "Registered sirens (not enabled)",
+        "group": "Group {name}",
+        "entry_doors": "Entry doors (with entry delay)",
+        "outside": "Outside",
+        "inside": "Inside",
+        "garage": "Garage",
+        "t_sensors": "Doors, windows and motion sensors",
+        "t_garage": "Garage or workshop",
+        "n_smoke": "Smoke detectors as burglar sirens: they only get the burglar tone, never the "
+        "fire tone, and Hauswacht does not switch them off during a fire. The smoke detector's "
+        "fire function stays unchanged.",
+        "n_moved": "{sensor} moves from the group {group} to the garage.",
+        "e_group_empty": "Group {name} would have no sensor left – please do not move all of its "
+        "sensors to the garage, or delete the group first.",
+        "e_garage_sensors": "Garage or workshop: please choose at least one sensor.",
+        "e_label_member": "{sensor} is in a group via a label and cannot be moved here.",
         "seconds": "{v} s",
         "minutes": "{v} min",
         "none": "–",
@@ -152,6 +200,19 @@ LABELS: Mapping[str, Mapping[str, str]] = {
 
 
 @dataclass(frozen=True)
+class SensorInfo:
+    """Ein Melder (Tür, Fenster, Bewegung) aus Home Assistant."""
+
+    entity_id: str
+    name: str
+    kind: str  # aktueller Typ: door, window, motion …
+    default: str  # Typ nach Geräteklasse (gespeichert wird nur eine Abweichung davon)
+    place: str = ""  # „Erdgeschoss › Küche“
+    group: str | None = None  # Meldergruppe (oder keine)
+    via_label: bool = False  # über ein Label in der Gruppe (dann nicht verschiebbar)
+
+
+@dataclass(frozen=True)
 class Household:
     """Was nur Home Assistant weiß – vorab eingesammelt."""
 
@@ -159,8 +220,12 @@ class Household:
     facts: Facts = field(default_factory=Facts)
     # Meldergruppen mit Bewegungsmeldern (nachts meist nicht scharf – man bewegt sich im Haus)
     motion_groups: frozenset[str] = frozenset()
-    # Sirenen, die angeboten werden (eingetragene und weitere, nie Rauchmelder)
+    # Sirenen, die angeboten werden (eingetragene und weitere)
     sirens: tuple[str, ...] = ()
+    # Davon Sirenen von Rauchmeldern (nur Einbruchton, bei Brand gesperrt)
+    smoke: frozenset[str] = frozenset()
+    # Türen, Fenster und Bewegungsmelder
+    sensors: tuple[SensorInfo, ...] = ()
     # Empfänger (IDs wie auf der Einstellungsseite)
     notify: tuple[str, ...] = ()
     # Anzeigenamen für Sirenen und Empfänger (Personen und Melder stehen in facts.names)
@@ -195,11 +260,11 @@ def suggestions(options: Mapping[str, Any], hh: Household) -> dict[str, Any]:
     night, away = found[NIGHT], found[AWAY]
     can = detectable(options, hh)
     people = [p for p in hh.persons if p in can]
-    night_zones = [z for z in zones if z not in hh.motion_groups] or zones
+    night_zones = [z for z in zones if z not in hh.motion_groups] or list(zones)
     result: dict[str, Any] = {
         "goals": [],
         NIGHT: {"zones": night_zones, "arm_time": None, "disarm_time": None},
-        AWAY: {"zones": zones, "persons": people, "delay": DEFAULT_AWAY_DELAY},
+        AWAY: {"zones": list(zones), "persons": people, "delay": DEFAULT_AWAY_DELAY},
         RETURN: {"persons": people, "mode": RETURN_DOOR},
         NIGHT_RETURN: {"persons": people},
         "sirens": [],
@@ -225,6 +290,16 @@ def suggestions(options: Mapping[str, Any], hh: Household) -> dict[str, Any]:
         back = parse_return(options, away)
         if back.active and back.mode in RETURN_CHOICES:
             result[RETURN] = {"persons": list(back.persons), "mode": back.mode}
+    sensors = sensor_suggestions(options, hh)
+    result["sensors"] = sensors
+    result[GARAGE] = {"sensors": [], "away": True}
+    free = [s for s in hh.sensors if s.group is None]
+    # Neue Gruppen gleich in die Profile: Türen/Fenster nachts und abwesend, Bewegung nur abwesend
+    if any(s.kind != KIND_MOTION for s in free) and sensors["outside"] == NEW_GROUP:
+        result[NIGHT]["zones"].append(OUTSIDE)
+        result[AWAY]["zones"].append(OUTSIDE)
+    if any(s.kind == KIND_MOTION for s in free) and sensors["inside"] == NEW_GROUP:
+        result[AWAY]["zones"].append(INSIDE)
     existing = [pid for pid in (night, away) if pid is not None]
     registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
     sirens = [s for pid in existing for s in parse_reaction(options, pid).sirens]
@@ -239,6 +314,28 @@ def _hhmm(value: Any) -> str | None:
     return value.strftime("%H:%M") if value is not None else None
 
 
+def _best_group(hh: Household, kinds: set[str]) -> str:
+    """Die Gruppe mit den meisten Meldern dieser Art – sonst eine neue."""
+    counts: dict[str, int] = {}
+    for sensor in hh.sensors:
+        if sensor.group is not None and sensor.kind in kinds:
+            counts[sensor.group] = counts.get(sensor.group, 0) + 1
+    return max(counts, key=lambda g: counts[g]) if counts else NEW_GROUP
+
+
+def sensor_suggestions(options: Mapping[str, Any], hh: Household) -> dict[str, Any]:
+    """Türen, Fenster, Bewegung: freie Melder aufnehmen, Eingangstüren wie bisher."""
+    zones = parse_zones(options)
+    outside = _best_group(hh, {KIND_DOOR, KIND_WINDOW})
+    inside = _best_group(hh, {KIND_MOTION})
+    return {
+        "add": [s.entity_id for s in hh.sensors if s.group is None],
+        "outside": outside if outside in zones else NEW_GROUP,
+        "inside": inside if inside in zones else NEW_GROUP,
+        "entry_doors": [s.entity_id for s in hh.sensors if s.kind == KIND_DOOR],
+    }
+
+
 # --- Plan ----------------------------------------------------------------------------------
 
 
@@ -251,6 +348,10 @@ class _Builder:
     steps: list[dict[str, Any]] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    touched: list[str] = field(default_factory=list)
+    # Platzhalter neuer Gruppen -> echte ID
+    mapping: dict[str, str] = field(default_factory=dict)
+    garage_to_away: bool = False
 
     def t(self, key: str, **values: Any) -> str:
         return LABELS[self.lang][key].format(**values)
@@ -315,6 +416,8 @@ def _payload(b: _Builder, goal: str, pid: str | None, answers: Mapping[str, Any]
     own = answers.get(goal) or {}
     if goal in goals or pid is None:
         data["zones"] = _strings(own.get("zones"), zones)
+        if not data["zones"]:
+            b.errors.append(b.t("e_night_zones" if goal == NIGHT else "e_away_zones"))
     automation = _automation(options, pid)
     back = (
         return_to_storage(parse_return(options, pid))
@@ -402,6 +505,8 @@ def _check(b: _Builder, answers: Mapping[str, Any]) -> None:
     for goal, section, key, error in required:
         if goal in goals and not _strings((answers.get(section) or {}).get(key)):
             b.errors.append(b.t(error))
+    if GARAGE in goals and not _strings((answers.get(GARAGE) or {}).get("sensors")):
+        b.errors.append(b.t("e_garage_sensors"))
     can = detectable(b.options, b.hh)
     chosen: list[str] = []
     for goal in (AWAY, RETURN):
@@ -433,39 +538,256 @@ def build(
         {"steps": [{"title": "...", "profile": id | None, "new": bool,
                     "changes": [{"label", "before", "after", "overwrite", "weakens"}]}],
          "notes": ["..."], "errors": ["..."], "needs_confirm": bool, "profiles": [id, ...]}
+
+    Reihenfolge: Sirenen eintragen, Melder (Gruppen, Eingangstüren, Garage), Garagen-Profil,
+    Profile der Ziele. Jeder Schritt rechnet über die Logikschicht weiter.
     """
     answers = normalize(answers)
     b = _Builder(options, hh, _lang(language), labels or {})
     _check(b, answers)
     if b.errors:
-        return _plan(b, []), None
-    current: Mapping[str, Any] = options
-    goals = set(answers["goals"])
-    # 1. Sirenen eintragen (nie freigeben)
-    registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
-    new_sirens = [s for s in _strings(answers.get("sirens"), hh.sirens) if s not in registered]
-    if new_sirens:
-        change = save_sirens(current, {"sirens": [*registered, *new_sirens]})
+        return _plan(b), None
+    current: Mapping[str, Any] | None = options
+    for stage in (_stage_sirens, _stage_sensors, _stage_garage, _stage_profiles):
+        current = stage(b, current, answers)  # type: ignore[arg-type]
+        if current is None or b.errors:
+            return _plan(b), None
+    b.options = options
+    return _plan(b), current
+
+
+def _stage_sirens(
+    b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
+) -> Mapping[str, Any] | None:
+    """Sirenen eintragen (nie freigeben)."""
+    registered = [s for s in current.get("sirens", []) if isinstance(s, str)]
+    chosen = _strings(answers.get("sirens"), b.hh.sirens)
+    if any(s in b.hh.smoke for s in chosen):
+        b.notes.append(b.t("n_smoke"))
+    new_sirens = [s for s in chosen if s not in registered]
+    if not new_sirens:
+        return current
+    change = save_sirens(current, {"sirens": [*registered, *new_sirens]})
+    if not _ok(b, change):
+        return None
+    after = [s for s in change.options.get("sirens", []) if isinstance(s, str)]  # type: ignore[union-attr]
+    b.steps.append(
+        {
+            "title": b.t("t_sirens"),
+            "profile": None,
+            "new": False,
+            "changes": [_diff(b, "registered", registered, after, kind="list")],
+        }
+    )
+    b.notes.append(b.t("n_hardware"))
+    return change.options
+
+
+def _entry_types(
+    b: _Builder, current: Mapping[str, Any], relevant: list[SensorInfo], entry: set[str]
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Eingangstüren: Tür (mit Eingangsverzögerung) oder sofort auslösend."""
+    types = dict(current.get("sensor_types", {}) or {})
+    before = [s.entity_id for s in relevant if s.kind == KIND_DOOR]
+    after: list[str] = []
+    for sensor in relevant:
+        if sensor.entity_id in entry:
+            want = KIND_DOOR
+        elif sensor.kind == KIND_DOOR:
+            want = "other"  # keine Eingangstür mehr: löst sofort aus
+        else:
+            want = sensor.kind
+        if want == KIND_DOOR:
+            after.append(sensor.entity_id)
+        if want == sensor.default:
+            types.pop(sensor.entity_id, None)
+        else:
+            types[sensor.entity_id] = want
+    new = dict(current)
+    new["sensor_types"] = types
+    if sorted(before) == sorted(after):
+        return new, None
+    row = _diff(b, "entry_doors", before, after, kind="list")
+    grouped = {s.entity_id for s in relevant if s.group is not None}
+    # Eine schon überwachte Tür bekommt eine Eingangsverzögerung = späterer Alarm
+    row["weakens"] = any(e not in before and e in grouped for e in after)
+    return new, row
+
+
+def _group_add(
+    b: _Builder, current: Mapping[str, Any], target: str, name: str, items: list[str]
+) -> tuple[Mapping[str, Any] | None, str, dict[str, Any] | None]:
+    """Melder in eine Gruppe aufnehmen (vorhanden oder neu, gleichnamige wird ergänzt)."""
+    zones = parse_zones(current)
+    if target not in zones:
+        target = next((z for z, v in zones.items() if v.name.casefold() == name.casefold()), "")
+    zone = zones.get(target)
+    before = sorted(zone.entities) if zone else []
+    data = {
+        "name": zone.name if zone else name,
+        "entities": [*before, *items],
+        "label": zone.label if zone else None,
+    }
+    change = save_zone(current, target or None, data, entities_by_label=b.labels)
+    if not _ok(b, change):
+        return None, target, None
+    gid = str(change.item_id)
+    label = b.t("group", name=data["name"])
+    row = _diff(b, "group", before or None, [*before, *items], kind="list", label=label)
+    return change.options, gid, row
+
+
+def _stage_sensors(
+    b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
+) -> Mapping[str, Any] | None:
+    """Freie Melder in Gruppen, Eingangstüren, Melder für die Garage."""
+    known = {s.entity_id: s for s in b.hh.sensors}
+    sens = answers.get("sensors") or {}
+    garage = _strings((answers.get(GARAGE) or {}).get("sensors"), known)
+    if GARAGE not in answers["goals"]:
+        garage = []
+    add = [e for e in _strings(sens.get("add"), known) if known[e].group is None]
+    add = [e for e in add if e not in garage]
+    rows: list[dict[str, Any]] = []
+    # 1. Eingangstüren – für alle Türen/Fenster, die danach überwacht sind
+    watched = {e for e, s in known.items() if s.group is not None} | set(add) | set(garage)
+    relevant = [
+        known[e]
+        for e in watched
+        if KIND_DOOR in (known[e].kind, known[e].default)
+        or KIND_WINDOW in (known[e].kind, known[e].default)
+        or known[e].kind == "other"
+    ]
+    # Ohne Antwort zu den Eingangstüren bleibt alles, wie es ist (nie stillschweigend ändern)
+    if isinstance(sens.get("entry_doors"), list):
+        entry = set(_strings(sens.get("entry_doors"), known))
+        current, row = _entry_types(b, current, sorted(relevant, key=lambda s: s.name), entry)
+        if row:
+            rows.append(row)
+    # 2. Garage: aus den bisherigen Gruppen nehmen
+    moved = _garage_out(b, current, [known[e] for e in garage], rows)
+    if moved is None:
+        return None
+    current = moved
+    # 3. Freie Melder: Türen/Fenster nach „Außen“, Bewegung nach „Innen“
+    groups = (
+        (OUTSIDE, sens.get("outside"), "outside", [e for e in add if known[e].kind != KIND_MOTION]),
+        (INSIDE, sens.get("inside"), "inside", [e for e in add if known[e].kind == KIND_MOTION]),
+        (GARAGE_ZONE, None, "garage", garage),
+    )
+    for placeholder, target, name_key, items in groups:
+        if not items:
+            continue
+        new, gid, row = _group_add(b, current, str(target or ""), b.t(name_key), items)
+        if new is None:
+            return None
+        current = new
+        b.mapping[placeholder] = gid
+        if row:
+            rows.append(row)
+    if rows:
+        b.steps.append({"title": b.t("t_sensors"), "profile": None, "new": False, "changes": rows})
+    _map_zones(b, answers)
+    return current
+
+
+def _garage_out(
+    b: _Builder, current: Mapping[str, Any], sensors: list[SensorInfo], rows: list[dict[str, Any]]
+) -> Mapping[str, Any] | None:
+    by_group: dict[str, list[str]] = {}
+    for sensor in sensors:
+        if sensor.group is None:
+            continue
+        if sensor.via_label:
+            b.errors.append(b.t("e_label_member", sensor=sensor.name))
+            return None
+        by_group.setdefault(sensor.group, []).append(sensor.entity_id)
+    zones = parse_zones(current)
+    for gid, removed in by_group.items():
+        zone = zones.get(gid)
+        if zone is None:
+            continue
+        rest = sorted(zone.entities - set(removed))
+        if not rest and not zone.label:
+            b.errors.append(b.t("e_group_empty", name=zone.name))
+            return None
+        data = {"name": zone.name, "entities": rest, "label": zone.label}
+        change = save_zone(current, gid, data, entities_by_label=b.labels)
         if not _ok(b, change):
-            return _plan(b, []), None
+            return None
         current = change.options  # type: ignore[assignment]
-        b.steps.append(
-            {
-                "title": b.t("t_sirens"),
-                "profile": None,
-                "new": False,
-                "changes": [
-                    _diff(b, "registered", registered, [*registered, *new_sirens], kind="list")
-                ],
-            }
-        )
-        b.notes.append(b.t("n_hardware"))
-    # 2. Profile für die Ziele
-    touched: list[str] = []
-    found = targets(options)
+        label = b.t("group", name=zone.name)
+        row = _diff(b, "group", sorted(zone.entities), rest, kind="list", label=label)
+        rows.append(row)
+        for entity_id in removed:
+            b.notes.append(b.t("n_moved", sensor=b.hh.name(entity_id), group=zone.name))
+    return current
+
+
+def _map_zones(b: _Builder, answers: dict[str, Any]) -> None:
+    """Platzhalter neuer Gruppen in den Antworten durch die echten IDs ersetzen."""
+    for goal in (NIGHT, AWAY):
+        own = dict(answers.get(goal) or {})
+        zones = _strings(own.get("zones"))
+        mapped = [b.mapping.get(z, z) for z in zones]
+        own["zones"] = [z for z in mapped if not z.startswith("@")]
+        answers[goal] = own
+    if (answers.get(GARAGE) or {}).get("away") and GARAGE_ZONE in b.mapping:
+        away = answers[AWAY]
+        if b.mapping[GARAGE_ZONE] not in away["zones"]:
+            away["zones"] = [*away["zones"], b.mapping[GARAGE_ZONE]]
+        b.garage_to_away = True
+
+
+def _stage_garage(
+    b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
+) -> Mapping[str, Any] | None:
+    """Eigenes Profil „Garage“ (vorhandenes gleichen Namens wird ergänzt)."""
+    gid = b.mapping.get(GARAGE_ZONE)
+    if GARAGE not in answers["goals"] or gid is None:
+        return current
+    name = b.t("garage")
+    pid = next(
+        (i.profile_id for i in profile_infos(current) if i.name.casefold() == name.casefold()),
+        None,
+    )
+    data: dict[str, Any] = {"name": name}
+    if pid is None:
+        data |= {"icon": "mdi:garage", "exit_delay": GARAGE_DELAY, "entry_delay": GARAGE_DELAY}
+        if "custom" not in used_panel_modes(current):
+            data["panel_mode"] = "custom"
+        data["zones"] = [gid]
+    else:
+        zones = list(profile_behaviour(current, pid).zones)
+        data["zones"] = zones if gid in zones else [*zones, gid]
+    b.options = current
+    _reaction(b, pid, answers, data)
+    return _save_profile_step(b, current, pid, data)
+
+
+def _save_profile_step(
+    b: _Builder, current: Mapping[str, Any], pid: str | None, data: dict[str, Any]
+) -> Mapping[str, Any] | None:
+    before = _snapshot(current, pid)
+    change = save_profile(current, pid, data, entities_by_label=b.labels, partial=True)
+    if not _ok(b, change):
+        return None
+    new_id = change.item_id or pid or ""
+    b.touched.append(new_id)
+    b.steps.append(_profile_step(b, pid, new_id, before, _snapshot(change.options or {}, new_id)))
+    return change.options
+
+
+def _stage_profiles(
+    b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
+) -> Mapping[str, Any] | None:
+    """Profile für die Ziele (Nacht, Abwesend)."""
+    goals = set(answers["goals"])
+    found = targets(b.options)
     wanted = {
         NIGHT: bool(goals & {NIGHT, NIGHT_RETURN}),
-        AWAY: bool(goals & {AWAY, RETURN}),
+        # Garage „auch bei Abwesend“: ein vorhandenes Abwesend-Profil bekommt die Gruppe
+        AWAY: bool(goals & {AWAY, RETURN}) or (b.garage_to_away and found[AWAY] is not None),
     }
     for goal in (NIGHT, AWAY):
         if not wanted[goal]:
@@ -473,19 +795,15 @@ def build(
         pid = found[goal]
         b.options = current
         data = _payload(b, goal, pid, answers)
+        if goal == AWAY and b.garage_to_away and "zones" not in data and pid is not None:
+            zones = list(profile_behaviour(current, pid).zones)
+            data["zones"] = [*zones, b.mapping[GARAGE_ZONE]]
         if b.errors:
-            return _plan(b, []), None
-        before = _snapshot(current, pid)
-        change = save_profile(current, pid, data, entities_by_label=labels, partial=True)
-        if not _ok(b, change):
-            return _plan(b, []), None
-        current = change.options  # type: ignore[assignment]
-        new_id = change.item_id or pid or ""
-        touched.append(new_id)
-        after = _snapshot(current, new_id)
-        b.steps.append(_profile_step(b, pid, new_id, before, after))
-    b.options = options
-    return _plan(b, touched), current
+            return None
+        current = _save_profile_step(b, current, pid, data)  # type: ignore[assignment]
+        if current is None:
+            return None
+    return current
 
 
 def _ok(b: _Builder, change: Change) -> bool:
@@ -496,14 +814,14 @@ def _ok(b: _Builder, change: Change) -> bool:
     return False
 
 
-def _plan(b: _Builder, touched: list[str]) -> dict[str, Any]:
+def _plan(b: _Builder) -> dict[str, Any]:
     needs = any(c["overwrite"] or c["weakens"] for s in b.steps for c in s["changes"])
     return {
         "steps": b.steps,
         "notes": list(dict.fromkeys(b.notes)),
         "errors": list(dict.fromkeys(b.errors)),
         "needs_confirm": needs,
-        "profiles": touched,
+        "profiles": list(dict.fromkeys(b.touched)),
     }
 
 
@@ -562,7 +880,9 @@ def _show(b: _Builder, kind: str, value: Any) -> str:
     return str(value)
 
 
-def _diff(b: _Builder, key: str, before: Any, after: Any, *, kind: str) -> dict[str, Any]:
+def _diff(  # noqa: PLR0913
+    b: _Builder, key: str, before: Any, after: Any, *, kind: str, label: str | None = None
+) -> dict[str, Any]:
     empty = before in (None, "", [], RETURN_OFF)
     if kind == "list":
         overwrite = not empty and not set(before) <= set(after)
@@ -572,7 +892,7 @@ def _diff(b: _Builder, key: str, before: Any, after: Any, *, kind: str) -> dict[
         key == "return_mode" and after == RETURN_ALWAYS and before != RETURN_ALWAYS
     )
     return {
-        "label": b.t(key),
+        "label": label or b.t(key),
         "before": _show(b, kind, before),
         "after": _show(b, kind, after),
         "overwrite": overwrite,

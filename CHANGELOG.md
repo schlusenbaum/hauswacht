@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b2] - 2026-11-25
+
+Einrichten nach Zielen: Türen und Fenster, Garage getrennt, Rauchmelder als Sirenen.
+
+### Neu
+
+- **Schritt „Türen und Fenster“** (nach Etage und Raum): Melder, die noch in keiner Meldergruppe
+  stehen, aufnehmen – Türen und Fenster in die Gruppe für außen, Bewegungsmelder in die für innen
+  (vorhanden oder neu „Außen“/„Innen“). Dazu festlegen, welche Türen **Eingangstüren** mit
+  Eingangsverzögerung sind; alle anderen lösen sofort aus (z. B. Terrassentür).
+- **Ziel „Garage oder Werkstatt getrennt“:** eigene Meldergruppe und eigenes Profil „Garage“ mit
+  den gewählten Meldern, auf Wunsch auch im Abwesend-Profil. Melder aus anderen Gruppen wechseln
+  in die Garage (im Plan markiert); eine Gruppe wird nie leer geräumt.
+
+### Geändert
+
+- **Sirenen von Rauchmeldern werden beim Einrichten angeboten** – mit 🔥 und dem Hinweis, dass sie
+  als Einbruchsirene nur den Einbruchton bekommen und bei Brand gesperrt sind. Sie werden nur
+  eingetragen, nie freigegeben; die Brandfunktion bleibt unverändert. In 0.65.0b1 wurden sie gar
+  nicht angeboten – in Häusern, deren einzige Sirenen Rauchmelder sind, stand dort dann „Keine
+  Sirene gefunden“.
+
 ## [0.65.0b1] - 2026-11-25
 
 **Einrichten nach Zielen** im Reiter Assistent ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).

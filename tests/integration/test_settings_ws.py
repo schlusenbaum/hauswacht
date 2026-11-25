@@ -890,6 +890,9 @@ async def test_goals_plan_and_apply(hass: HomeAssistant, hass_ws_client: Any) ->
     assert start["targets"]["away"]["id"] == "away"
     anna = next(p for p in start["persons"] if p["id"] == "person.anna")
     assert anna["detectable"] is True
+    door = next(x for x in start["sensors"] if x["id"] == DOOR)
+    assert (door["kind"], door["group"]) == ("door", "aussen")
+    assert DOOR in start["answers"]["sensors"]["entry_doors"]
     answers = start["answers"]
     answers["goals"] = ["away"]
     answers["away"]["persons"] = ["person.anna"]
