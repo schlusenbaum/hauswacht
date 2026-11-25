@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0b4] - 2026-11-25
+
+Szenario-Vorschau „Was passiert, wenn …?“ im Reiter Assistent ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Was passiert, wenn …?** Unter dem Check-up spielt Hauswacht typische Situationen mit deinen
+  Einstellungen und Messwerten durch – mit denselben Regeln wie im Echtbetrieb (Zustandsmaschine,
+  Automatik, Beleg für „weg“), aber mit ausgedachter Uhr. Es wird nichts geschaltet.
+- Szenarien je Profil: Einbruch durch jede Eingangstür und durch ein Fenster; jede Person aus
+  „Bei Rückkehr“ kommt heim (mit ihrer gemessenen Zeit nach der Tür, ab 3 Messungen); alle gehen
+  weg; alle sind zuhause und die Handys schlafen ein (auch: WLAN fällt aus); bei „Tür + Signal“:
+  jemand geht kurz raus, und dabei schläft ein Handy ein.
+- Jedes Szenario mit Ergebnis ✅ / ⚠️ / ❌, einem Satz dazu und dem Ablauf Schritt für Schritt.
+- Doku: [Was passiert, wenn …?](docs/assistent.md#was-passiert-wenn--seit-0640b4) mit allen
+  Szenarien, Beispiel und dem, was vereinfacht ist.
+
 ## [0.64.0b3] - 2026-11-25
 
 Neuer Reiter **Assistent** mit dem Check-up ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).

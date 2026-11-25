@@ -833,3 +833,18 @@ async def test_advisor_apply_refused_while_armed(hass: HomeAssistant, hass_ws_cl
     )
     assert result == {"ok": False, "errors": {"base": "disarm_first"}}
     assert _options(hass)["profiles"]["night"]["auto_away_persons"] == ["person.anna"]
+
+
+async def test_advisor_scenarios_only_calculated(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Szenario-Vorschau: gerechnet mit den echten Einstellungen – nichts wird geschaltet."""
+    await setup_entry(hass, make_entry())
+    before = hass.states.get(PANEL)
+    assert before is not None
+    result = await _ws(hass_ws_client, hass, type="hauswacht/advisor/scenarios", language="de")
+    found = {s["key"]: s for s in result["scenarios"]}
+    door = next(s for key, s in found.items() if key == f"burglary_door:away:{DOOR}")
+    assert door["result"] == "ok"
+    assert door["summary"].startswith("Alarm nach")
+    after = hass.states.get(PANEL)
+    assert after is not None
+    assert after.state == before.state  # nichts geschaltet

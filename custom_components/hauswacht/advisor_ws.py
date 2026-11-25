@@ -9,6 +9,9 @@ Profil und die Messwerte der Heimkehr-Beobachtung.
 Logik wie beim Speichern (``apply_change``), gespeichert wird nichts. So zeigen die Seitenblätter
 Hinweise schon vor dem Speichern. Der Befehl schaltet nichts und ändert nichts.
 
+``hauswacht/advisor/scenarios`` rechnet die Szenario-Vorschau (``core/scenarios.py``) mit den
+gespeicherten Einstellungen – nur gerechnet, nichts geschaltet.
+
 ``hauswacht/advisor/apply`` übernimmt **einen** Vorschlag aus dem Check-up (Reiter „Assistent“).
 Sicherungen:
 
@@ -39,6 +42,7 @@ from .core.homecoming import DIRECTION_AWAY, DIRECTION_HOME, DIRECTION_NEUTRAL, 
 from .core.homecoming import entry_stats as entry_stats_of
 from .core.profiles import profile_behaviour, profile_ids
 from .core.returning import parse_return
+from .core.scenarios import scenarios
 from .core.sensor_types import SensorType, default_type, excluded_sensors
 from .core.sensors import parse_zones, resolve_zones
 from .core.tilt import effective_types
@@ -47,6 +51,7 @@ from .presence_proof import locatable
 
 WS_CHECK = f"{DOMAIN}/advisor/check"
 WS_APPLY_FIX = f"{DOMAIN}/advisor/apply"
+WS_SCENARIOS = f"{DOMAIN}/advisor/scenarios"
 # Nur diese Änderungen lassen sich vorab prüfen (Seitenblätter Profil und Anwesenheit)
 CHECK_ACTIONS = ("profile_save", "homecoming_save")
 _DIRECTIONS = DIRECTION_HOME | DIRECTION_AWAY | DIRECTION_NEUTRAL
@@ -74,24 +79,24 @@ def _has_direction(hass: HomeAssistant, signals: tuple[str, ...]) -> bool:
     )
 
 
-def _entry_doors(hass: HomeAssistant, options: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
+def _members(
+    hass: HomeAssistant, options: Mapping[str, Any]
+) -> tuple[dict[str, tuple[str, ...]], dict[str, tuple[str, ...]]]:
+    """Eingangstüren und Fenster je Profil (Melder der Meldergruppen, ohne Ausgenommene)."""
     from .runtime import device_class_of, entities_by_label  # noqa: PLC0415 – Import-Kreis
 
     zones = parse_zones(options)
     labels = entities_by_label(hass)
     types = effective_types(options)
-    result: dict[str, tuple[str, ...]] = {}
+    doors: dict[str, tuple[str, ...]] = {}
+    windows: dict[str, tuple[str, ...]] = {}
     for pid in profile_ids(options):
         members = resolve_zones(profile_behaviour(options, pid).zones, zones, labels)
         members -= excluded_sensors(options, pid)
-        result[pid] = tuple(
-            sorted(
-                e
-                for e in members
-                if types.get(e, default_type(e, device_class_of(hass, e))) == SensorType.DOOR
-            )
-        )
-    return result
+        kinds = {e: types.get(e, default_type(e, device_class_of(hass, e))) for e in members}
+        doors[pid] = tuple(sorted(e for e, t in kinds.items() if t == SensorType.DOOR))
+        windows[pid] = tuple(sorted(e for e, t in kinds.items() if t == SensorType.WINDOW))
+    return doors, windows
 
 
 def _measured(main: Any) -> tuple[dict[str, Measured], dict[str, Measured]]:
@@ -113,13 +118,15 @@ def _measured(main: Any) -> tuple[dict[str, Measured], dict[str, Measured]]:
 def build_facts(hass: HomeAssistant, main: Any, options: Mapping[str, Any]) -> Facts:
     persons = _persons(options)
     entry, proof = _measured(main)
-    doors = _entry_doors(hass, options)
+    doors, windows = _members(hass, options)
     names = {p: plain_name(hass, p) for p in persons}
-    names.update({d: plain_name(hass, d) for ids in doors.values() for d in ids})
+    for group in (doors, windows):
+        names.update({e: plain_name(hass, e) for ids in group.values() for e in ids})
     return Facts(
         located=frozenset(p for p in persons if locatable(hass, p, _signals(options, p))),
         direction=frozenset(p for p in persons if _has_direction(hass, _signals(options, p))),
         entry_doors=doors,
+        windows=windows,
         entry_needed=entry,
         proof_needed=proof,
         names=names,
@@ -254,7 +261,29 @@ def ws_advisor_apply(
     connection.send_result(msg["id"], {"ok": True, "revision": revision(entry.options)})
 
 
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {vol.Required("type"): WS_SCENARIOS, vol.Optional("language"): str}
+)
+@callback
+def ws_advisor_scenarios(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Szenario-Vorschau „Was passiert, wenn …?“ – nur gerechnet, nichts geschaltet."""
+    from .settings_ws import _main  # noqa: PLC0415
+
+    main = _main(hass)
+    if main is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
+        return
+    options = main.entry.options
+    facts = build_facts(hass, main, options)
+    language = _language(hass, msg.get("language"))
+    connection.send_result(msg["id"], {"scenarios": scenarios(options, facts, language)})
+
+
 @callback
 def async_register_advisor_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_advisor_check)
     websocket_api.async_register_command(hass, ws_advisor_apply)
+    websocket_api.async_register_command(hass, ws_advisor_scenarios)

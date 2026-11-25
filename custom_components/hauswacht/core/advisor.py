@@ -71,6 +71,8 @@ class Facts:
     direction: frozenset[str] = frozenset()
     # Eingangstüren (Typ Tür) je Profil
     entry_doors: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    # Fenster (Typ Fenster) je Profil – für die Szenario-Vorschau
+    windows: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
     # Gemessen: nötige Eingangsverzögerung je Tür (Tür auf → unscharf, mit Puffer)
     entry_needed: Mapping[str, Measured] = field(default_factory=dict)
     # Gemessen: nötige Eingangsverzögerung je Person für „Unscharf mit Türbeleg“

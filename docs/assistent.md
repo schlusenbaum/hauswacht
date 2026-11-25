@@ -115,11 +115,59 @@ Häkchen und **Übernehmen** wird gespeichert.
   lädt neu.
 - Gespeichert wird über denselben Weg wie im Seitenblatt – mit allen Prüfungen, die dort gelten.
 
+## Was passiert, wenn …? (seit 0.64.0b4)
+
+Unter dem Check-up steht im Reiter **Assistent** die **Szenario-Vorschau**. Hauswacht spielt typische
+Situationen mit **deinen** Einstellungen und Messwerten durch – mit **denselben Regeln wie im
+Echtbetrieb** (Zustandsmaschine, Automatik, Beleg für „weg“), aber mit einer ausgedachten Uhr. Es
+wird nichts geschaltet, keine Sirene, keine Benachrichtigung.
+
+Jedes Szenario hat ein Ergebnis:
+
+| Zeichen | Bedeutung |
+|---|---|
+| ✅ | So soll es sein (z. B. „Alarm nach 30 s“, „Unscharf, sobald die Tür aufgeht“) |
+| ⚠️ | Funktioniert, aber mit Haken (z. B. nur mit unsicherem Beleg, oder PIN nötig) |
+| ❌ | Unerwünscht (z. B. Fehlalarm beim Heimkommen, Einbruch ohne Alarm, wird nie scharf) |
+
+Unter **„Ablauf“** steht Schritt für Schritt, was passiert – mit der Zeit seit Beginn (Minuten:
+Sekunden).
+
+### Die Szenarien
+
+Je Profil, soweit es passt:
+
+| Szenario | Wann | Was durchgespielt wird |
+|---|---|---|
+| **Einbruch durch die Tür …** | je Eingangstür des Profils | Profil scharf, die Tür geht auf, niemand schaltet unscharf |
+| **Einbruch durch ein Fenster** | Profil hat Fenster | Profil scharf, ein Fenster geht auf |
+| **… kommt heim** | je Person aus „Bei Rückkehr“ | Alle gehen weg (schaltet „alle weg“, ist das Profil automatisch scharf, sonst von Hand), zwei Stunden später kommt die Person heim. Das Handy meldet sich 30 s **vor** der Tür – oder, wenn gemessen, so spät **nach** der Tür wie bei euch beobachtet |
+| **Alle gehen weg** | Profil hat „Scharf, wenn alle weg“ | Alle gehen nacheinander durch die Tür, danach meldet das Handy „weg“ |
+| **Alle sind zuhause, die Handys schlafen ein** | Profil hat „Scharf, wenn alle weg“ | Alle Handys melden „weg“, ohne dass eine Tür aufgeht (auch: WLAN fällt aus) |
+| **Jemand geht kurz raus – dabei schläft das Handy von … ein** | je Person mit „Tür + Signal“ | Die anderen sind unterwegs. Jemand öffnet kurz die Tür (Paket, Müll), kurz danach schläft das Handy der Person ein |
+
+**Beispiel:** Profil Nacht mit „Unscharf mit Türbeleg“ für Anna, Eingangsverzögerung 30 s. Annas
+Handy hat sich in drei Heimkehrten bis zu 38 s nach der Tür gemeldet. Die Vorschau zeigt:
+
+> ❌ **Anna kommt heim** – Fehlalarm nach 30 s: das Handy meldet sich zu spät. Abhilfe: längere
+> Eingangsverzögerung (Vorschlag im Check-up).
+
+Nach dem Übernehmen des Vorschlags (50 s) zeigt dieselbe Vorschau:
+
+> ✅ **Anna kommt heim** – Unscharf nach 38 s – ohne PIN, ohne Alarm.
+
+### Was vereinfacht ist
+
+- Jede Person hat **ein** Handy, das „zuhause“ oder „weg“ meldet (WLAN, Ping …), und – wenn Hauswacht
+  eine kennt – **eine Ortung**, die drinnen oder draußen ist. Wie eure Signale im Einzelnen
+  heißen, spielt keine Rolle.
+- Gemessene Zeiten zählen erst ab **3 Messungen**.
+- Gastmodus, Durchgang von Hand, offene Melder beim Scharfschalten und Bedienteile kommen in den
+  Szenarien nicht vor.
+
 ## Was kommt
 
-Als Nächstes bekommt der Reiter **Assistent** eine **Vorschau**, was in typischen Situationen
-passieren würde (Einbruch, Heimkommen, Handy schläft …) – mit derselben Logik wie im Echtbetrieb.
-Danach folgt die **Einrichtung nach Zielen**. Sie soll
+Als Nächstes folgt die **Einrichtung nach Zielen**. Sie soll
 
 - nach **Zielen** fragen statt nach Einstellungen („nachts absichern“, „automatisch scharf, wenn
   alle weg sind“, „beim Heimkommen unscharf“),

@@ -112,11 +112,58 @@ and **Apply** is it saved.
   changed in the meantime (even elsewhere), nothing is saved and the check-up reloads.
 - Saving uses the same path as the side sheet – with all the checks that apply there.
 
+## What happens if …? (since 0.64.0b4)
+
+Below the check-up, the tab **Assistant** shows the **scenario preview**. Hauswacht plays typical
+situations through with **your** settings and measurements – with **the same rules as in real
+operation** (state machine, automation, proof of "away"), but with a made-up clock. Nothing is
+switched, no siren, no notification.
+
+Every scenario has a result:
+
+| Sign | Meaning |
+|---|---|
+| ✅ | As it should be (e.g. "alarm after 30 s", "disarmed as soon as the door opens") |
+| ⚠️ | Works, but with a catch (e.g. only with an uncertain proof, or a PIN is needed) |
+| ❌ | Unwanted (e.g. false alarm when coming home, burglary without alarm, never arms) |
+
+**"Sequence"** shows step by step what happens – with the time since the start (minutes:seconds).
+
+### The scenarios
+
+Per profile, where it fits:
+
+| Scenario | When | What is played through |
+|---|---|---|
+| **Burglary through the door …** | per entry door of the profile | Profile armed, the door opens, nobody disarms |
+| **Burglary through a window** | profile has windows | Profile armed, a window opens |
+| **… comes home** | per person in "On return" | Everyone leaves (if "all away" arms the profile, it is armed automatically, otherwise by hand); two hours later the person comes home. The phone reports 30 s **before** the door – or, if measured, as late **after** the door as observed in your home |
+| **Everyone leaves** | profile has "arm when all away" | Everyone leaves through the door one after another, then the phone reports "away" |
+| **Everyone is home, the phones go to sleep** | profile has "arm when all away" | All phones report "away" without any door opening (also: Wi-Fi outage) |
+| **Someone steps out briefly – meanwhile the phone of … goes to sleep** | per person with "door + signal" | The others are out. Someone opens the door briefly (parcel, rubbish), shortly after that the person's phone goes to sleep |
+
+**Example:** profile Night with "disarm with door proof" for Anna, entry delay 30 s. Anna's phone
+reported up to 38 s after the door in three homecomings. The preview shows:
+
+> ❌ **Anna comes home** – False alarm after 30 s: the phone reports too late. Fix: a longer entry
+> delay (suggestion in the check-up).
+
+After applying the suggestion (50 s), the same preview shows:
+
+> ✅ **Anna comes home** – Disarmed after 38 s – without PIN, without alarm.
+
+### What is simplified
+
+- Every person has **one** phone that reports "home" or "away" (Wi-Fi, ping …) and – if Hauswacht
+  knows one – **one location** that is inside or outside. What your signals are called does not
+  matter.
+- Measured times count only from **3 measurements** on.
+- Guest mode, manual passage, open sensors when arming and control devices are not part of the
+  scenarios.
+
 ## What comes next
 
-Next, the tab **Assistant** gets a **preview** of what would happen in typical situations
-(burglary, coming home, phone asleep …) – with the same logic as in real operation. After that
-comes **setup by goals**. It is meant to
+Next comes **setup by goals**. It is meant to
 
 - ask for **goals** instead of settings ("secure the night", "arm automatically when everyone is
   away", "disarm when coming home"),

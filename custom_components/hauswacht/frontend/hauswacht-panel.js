@@ -238,7 +238,13 @@ const TEXTS = {
         confirm_needed: "Bitte erst bestätigen.",
         failed: "Übernehmen hat nicht geklappt.",
       },
-      next: "Demnächst hier: eine Vorschau „Was passiert, wenn …?“ – Einbruch, Heimkommen, Handy schläft – mit derselben Logik wie im Echtbetrieb.",
+      scTitle: "Was passiert, wenn …?",
+      scIntro: "Typische Situationen, durchgespielt mit deinen Einstellungen und Messwerten – mit denselben Regeln wie im Echtbetrieb, aber mit ausgedachter Uhr. Es wird nichts geschaltet.",
+      scLoading: "Wird durchgespielt …",
+      scNone: "Noch nichts durchzuspielen – die Profile haben keine Türen, Fenster oder Automatik.",
+      scCount: "{b} unerwünscht · {w} mit Haken · {o} in Ordnung",
+      scSteps: "Ablauf",
+      scSimple: "Vereinfacht: Jede Person hat ein Handy, das „zuhause“ oder „weg“ meldet, und – wenn Hauswacht eine kennt – eine Ortung. Gemessene Zeiten zählen ab 3 Messungen.",
     },
     adminOnly: "Diese Seite ist nur für Administratoren.",
     error: "Fehler",
@@ -476,7 +482,13 @@ const TEXTS = {
         confirm_needed: "Please confirm first.",
         failed: "Applying did not work.",
       },
-      next: "Coming here soon: a preview “What happens if …?” – burglary, coming home, phone asleep – with the same logic as in real operation.",
+      scTitle: "What happens if …?",
+      scIntro: "Typical situations, played through with your settings and measurements – with the same rules as in real operation, but with a made-up clock. Nothing is switched.",
+      scLoading: "Playing it through …",
+      scNone: "Nothing to play through yet – the profiles have no doors, windows or automation.",
+      scCount: "{b} unwanted · {w} with a catch · {o} fine",
+      scSteps: "Sequence",
+      scSimple: "Simplified: every person has a phone that reports “home” or “away” and – if Hauswacht knows one – a location. Measured times count from 3 measurements on.",
     },
     adminOnly: "This page is for administrators only.",
     error: "Error",
@@ -579,6 +591,7 @@ const PANEL_STYLE = `
   .asst.error { border-left-color: var(--error-color, #db4437); }
   .asst.warning { border-left-color: var(--warning-color, #ffa600); }
   .asst.tip { border-left-color: var(--info-color, #039be5); }
+  .asst.ok { border-left-color: var(--success-color, #43a047); }
   .asst .fixes { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
   .asst .preview { border: 1px solid var(--divider-color); border-radius: 8px; padding: 8px 10px; background: var(--card-background-color); width: 100%; }
   .asst .preview div { margin: 3px 0; }
@@ -773,6 +786,7 @@ class HauswachtPanel extends HTMLElement {
 
   async _load() {
     this._error = null;
+    this._scenarios = undefined;
     try {
       [this._data, this._settings, this._advice] = await Promise.all([
         this._hass.callWS({ type: "hauswacht/overview" }),
@@ -797,6 +811,7 @@ class HauswachtPanel extends HTMLElement {
         this._settings = settings;
         this._data = await this._hass.callWS({ type: "hauswacht/overview" });
         this._advice = await this._fetchAdvice();
+        this._scenarios = undefined;
         this._error = null;
         break;
       } catch (_err) {
@@ -1251,8 +1266,64 @@ class HauswachtPanel extends HTMLElement {
         return `<h3>${escHtml(pid ? a("inProfile").replace("{p}", name) : name)}</h3>${items.map(([f, i]) => this._findingHtml(f, i)).join("")}`;
       })
       .join("");
-    const next = `<div class="muted" style="margin-top:12px">${escHtml(a("next"))}</div>`;
-    return this._card(a("title"), intro + msg + blocks + tools + next, help);
+    return this._card(a("title"), intro + msg + blocks + tools, help) + this._scenariosCard();
+  }
+
+  // --- Szenario-Vorschau „Was passiert, wenn …?“ ------------------------------------------
+
+  async _loadScenarios() {
+    this._scLoading = true;
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/advisor/scenarios", language: this._lang });
+      this._scenarios = r.scenarios || [];
+    } catch (_err) {
+      this._scenarios = null;
+    }
+    this._scLoading = false;
+    if (this._tab === "assistant") this._render();
+  }
+
+  _scenariosCard() {
+    const a = (k) => this._asst(k);
+    const help = "scenarios";
+    if (this._scenarios === undefined) {
+      if (!this._scLoading) this._loadScenarios();
+      return this._card(a("scTitle"), `<div class="muted">${escHtml(a("scLoading"))}</div>`, help);
+    }
+    if (this._scenarios === null) return this._card(a("scTitle"), `<div class="muted">${escHtml(a("unavailable"))}</div>`, help);
+    const list = this._scenarios;
+    const intro = `<div class="muted">${escHtml(a("scIntro"))}</div>`;
+    if (!list.length) return this._card(a("scTitle"), intro + `<div>${escHtml(a("scNone"))}</div>`, help);
+    const count = (r) => list.filter((x) => x.result === r).length;
+    const summary = `<div><b>${escHtml(a("scCount").replace("{b}", count("bad")).replace("{w}", count("warn")).replace("{o}", count("ok")))}</b></div>`;
+    const icon = { bad: "❌", warn: "⚠️", ok: "✅" };
+    const level = { bad: "error", warn: "warning", ok: "ok" };
+    const profiles = this._settings?.profiles || [];
+    const blocks = profiles
+      .map((p) => {
+        const items = list.filter((x) => x.profile === p.id);
+        if (!items.length) return "";
+        const rows = items
+          .map((x) => {
+            const steps = x.steps.map((st) => `<div><span class="muted">${escHtml(this._clock(st.t))}</span> ${escHtml(st.text)}</div>`).join("");
+            return `<div class="asst ${level[x.result]}"><div>${icon[x.result] || ""} <b>${escHtml(x.title)}</b></div><div>${escHtml(x.summary)}</div>
+              <details class="explain"><summary>${escHtml(a("scSteps"))}</summary>${steps}</details></div>`;
+          })
+          .join("");
+        return `<h3>${escHtml(a("inProfile").replace("{p}", p.name))}</h3>${rows}`;
+      })
+      .join("");
+    const simple = `<div class="muted" style="margin-top:10px">${escHtml(a("scSimple"))}</div>`;
+    return this._card(a("scTitle"), intro + summary + blocks + simple, help);
+  }
+
+  _clock(seconds) {
+    // Ausgedachte Uhr: Minuten und Sekunden seit Beginn des Szenarios (h:mm:ss)
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const sec = seconds % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
   }
 
   _findingHtml(f, i) {
@@ -1320,6 +1391,7 @@ class HauswachtPanel extends HTMLElement {
 
   async _recheckAdvice() {
     this._asstOpen = null;
+    this._scenarios = undefined; // Vorschau neu durchspielen
     [this._advice, this._settings] = await Promise.all([
       this._fetchAdvice(),
       this._hass.callWS({ type: "hauswacht/settings/get" }).catch(() => this._settings),
