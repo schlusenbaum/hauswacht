@@ -194,7 +194,7 @@ Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dic
    | **Automatisch scharf, wenn alle weg sind** | Profil mit dem Knopf „Abwesend“: Meldergruppen, „Scharf, wenn alle weg“ mit Personen und Wartezeit |
    | **Beim Heimkommen unscharf** | „Bei Rückkehr“ im Abwesend-Profil: Personen und wie sicher (empfohlen: Türbeleg); die Eingangsverzögerung nach euren Messungen |
    | **Nachts heimkommen, ohne dass „Nacht“ aus ist** | „Bei Rückkehr: Reinlassen“ im Nacht-Profil – wer heimkommt, wird reingelassen, das Profil bleibt scharf |
-   | **Garage oder Werkstatt getrennt** (*seit 0.65.0b2*) | Eigene Meldergruppe und eigenes Profil „Garage“ (Knopf „Individuell“, wenn frei) mit den gewählten Meldern – so lässt sie sich für sich scharf schalten. Melder aus einer anderen Gruppe wechseln in die Garage (steht im Plan). Auf Wunsch kommt die Garage auch ins Abwesend-Profil |
+   | **Garage oder Werkstatt getrennt** (*seit 0.65.0b3*) | Eigener [Bereich](profile.md#bereiche) „Garage“ mit eigenem Bedienfeld (`alarm_control_panel.hauswacht_garage`) – unabhängig vom Haus scharf, z. B. nachts, während im Haus noch jemand wach ist. Dazu eine Meldergruppe „Garage“ und im Bereich ein Profil mit dem Knopf „Abwesend“, sodass „Alle Bereiche → Abwesend“ die Garage mitschaltet. Auf Wunsch „Scharf, wenn alle weg“ (dieselben Personen wie im Haus) und Uhrzeiten. Gibt es den Bereich schon, wird er ergänzt |
 
 4. **Rückfragen** je Ziel – vorausgefüllt mit dem, was schon eingestellt ist, sonst mit
    Vorschlägen. Personen, die nicht als weg erkannt werden können, sind mit ⚠ markiert.
@@ -218,8 +218,10 @@ Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dic
 - Übernehmen geht nur, wenn **alle Bereiche unscharf** sind. Hauswacht rechnet den Plan dabei aus
   deinen Antworten **neu** – mit denselben Regeln wie im Seitenblatt. Hat sich inzwischen etwas
   geändert, wird nichts gespeichert.
-- Eine Meldergruppe wird nie leer geräumt, und Melder, die über ein Label in einer Gruppe stecken,
-  werden nicht verschoben.
+- **Garage:** Melder aus einer Gruppe des Hauses kommen in die Gruppe „Garage“, und jedes Profil des
+  Hauses, das die bisherige Gruppe überwacht, bekommt die Gruppe „Garage“ dazu – im Haus ändert
+  sich also nichts, die Melder sind in beiden Bereichen. Eine Meldergruppe wird nie leer geräumt,
+  und Melder, die über ein Label in einer Gruppe stecken, werden nicht verschoben.
 - Ohne Antwort zu den Eingangstüren bleiben die Typen der Melder, wie sie sind.
 - Es wird nichts geschaltet, keine Sirene freigegeben, an der Brandfunktion der Rauchmelder nichts
   geändert und keine Automation angelegt.

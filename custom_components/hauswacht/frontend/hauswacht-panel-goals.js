@@ -31,9 +31,9 @@ const GOALS_TEXT = {
       away: ["Automatisch scharf, wenn alle weg sind", "Sobald alle gewählten Personen sicher weg sind, wird das Abwesend-Profil nach einer Wartezeit scharf."],
       return: ["Beim Heimkommen unscharf", "Kommt jemand heim, wird das Abwesend-Profil unscharf – ohne PIN, wenn Handy und Tür zusammenpassen."],
       night_return: ["Nachts heimkommen, ohne dass „Nacht“ aus ist", "Wer nachts heimkommt, wird reingelassen – das Nacht-Profil bleibt scharf."],
-      garage: ["Garage oder Werkstatt getrennt", "Eigene Meldergruppe und eigenes Profil „Garage“ – so lässt sie sich für sich scharf schalten, z. B. nachts, während im Haus noch jemand wach ist."],
+      garage: ["Garage oder Werkstatt getrennt", "Eigener Bereich „Garage“ mit eigenem Bedienfeld – unabhängig vom Haus scharf, z. B. nachts, während im Haus noch jemand wach ist. „Alle Bereiche → Abwesend“ schaltet sie mit."],
     },
-    targetGarage: "legt Gruppe und Profil „Garage“ an (oder ergänzt sie)",
+    targetGarage: "legt den Bereich „Garage“ mit Gruppe und Profil an (oder ergänzt sie)",
     sensorsIntro: "Türen, Fenster und Bewegungsmelder, die Home Assistant kennt – sortiert nach Etage und Raum.",
     free: "Noch in keiner Meldergruppe",
     freeNone: "Alle Türen, Fenster und Bewegungsmelder sind schon in Meldergruppen.",
@@ -48,8 +48,8 @@ const GOALS_TEXT = {
     entryNone: "Keine Türen oder Fenster in Meldergruppen.",
     garageSensors: "Melder der Garage oder Werkstatt",
     garageLabel: "über ein Label in einer Gruppe – hier nicht verschiebbar",
-    garageMove: "wechselt aus der Gruppe „{g}“",
-    garageAway: "Garage auch scharf, wenn alle weg sind (Abwesend-Profil)",
+    garageMove: "kommt aus der Gruppe „{g}“ – das Haus überwacht ihn weiter",
+    garageAway: "Garage automatisch scharf, wenn alle weg sind (dieselben Personen wie im Haus)",
     smoke: "Rauchmelder – als Einbruchsirene nur mit Einbruchton, bei Brand gesperrt",
     targetNew: "legt das Profil „{p}“ neu an",
     targetChange: "ergänzt das Profil „{p}“",
@@ -118,9 +118,9 @@ const GOALS_TEXT = {
       away: ["Arm automatically when everyone is away", "As soon as all chosen persons are surely away, the Away profile arms after a waiting time."],
       return: ["Disarm when coming home", "When someone comes home, the Away profile is disarmed – without PIN if phone and door match."],
       night_return: ["Come home at night without turning “Night” off", "Whoever comes home at night is let in – the Night profile stays armed."],
-      garage: ["Garage or workshop separately", "Own sensor group and own profile “Garage” – so it can be armed on its own, e.g. at night while someone in the house is still awake."],
+      garage: ["Garage or workshop separately", "Own area “Garage” with its own alarm panel – armed independently of the house, e.g. at night while someone in the house is still awake. “All areas → Away” arms it too."],
     },
-    targetGarage: "creates group and profile “Garage” (or extends them)",
+    targetGarage: "creates the area “Garage” with group and profile (or extends them)",
     sensorsIntro: "Doors, windows and motion sensors that Home Assistant knows – sorted by floor and room.",
     free: "Not in any sensor group yet",
     freeNone: "All doors, windows and motion sensors are already in sensor groups.",
@@ -135,8 +135,8 @@ const GOALS_TEXT = {
     entryNone: "No doors or windows in sensor groups.",
     garageSensors: "Sensors of the garage or workshop",
     garageLabel: "in a group via a label – cannot be moved here",
-    garageMove: "moves from the group “{g}”",
-    garageAway: "Also arm the garage when everyone is away (Away profile)",
+    garageMove: "moves from the group “{g}” – the house keeps monitoring it",
+    garageAway: "Arm the garage automatically when everyone is away (same persons as the house)",
     smoke: "smoke detector – as a burglar siren only with the burglar tone, locked during a fire",
     targetNew: "creates the profile “{p}”",
     targetChange: "extends the profile “{p}”",
@@ -372,7 +372,9 @@ class HauswachtGoalsSheet extends HTMLElement {
       const extra = (x) => (x.via_label ? ` <span class="muted">– ${ge(this._t("garageLabel"))}</span>` : x.group ? ` <span class="muted">– ${ge(this._t("garageMove").replace("{g}", groupName(x.group)))}</span>` : "");
       parts.push(`<div class="sec">${ge(this._t("goal").garage[0])}</div>
         <label>${ge(this._t("garageSensors"))}</label>${this._byPlace(info.sensors, "data-garage", a.garage.sensors, extra, (x) => x.via_label)}
-        <label class="chk"><input type="checkbox" data-garage-away ${a.garage.away ? "checked" : ""}> ${ge(this._t("garageAway"))}</label>`);
+        <label class="chk"><input type="checkbox" data-garage-away ${a.garage.away ? "checked" : ""}> ${ge(this._t("garageAway"))}</label>
+        <div class="two"><div><label>${ge(this._t("armTime"))}</label><input type="time" data-v="garage.arm_time" value="${ge(a.garage.arm_time || "")}"></div>
+        <div><label>${ge(this._t("disarmTime"))}</label><input type="time" data-v="garage.disarm_time" value="${ge(a.garage.disarm_time || "")}"></div></div>`);
     }
     return parts.join("");
   }

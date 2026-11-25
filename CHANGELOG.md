@@ -6,6 +6,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b3] - 2026-11-25
+
+Garage als eigener **Bereich** statt als Profil.
+
+### Geändert
+
+- **„Garage oder Werkstatt getrennt“ legt einen eigenen Bereich an** (mit eigenem Bedienfeld
+  `alarm_control_panel.hauswacht_garage`) – unabhängig vom Haus scharf, z. B. nachts, während im
+  Haus jemand wach ist. In 0.65.0b2 war die Garage ein Profil im Haus; da in einem Bereich immer
+  nur ein Profil aktiv ist, schlossen sich „Garage“ und „Nacht“ gegenseitig aus.
+- Im Bereich Garage: Meldergruppe „Garage“ und ein Profil mit dem Knopf „Abwesend“ („Alle Bereiche
+  → Abwesend“ schaltet die Garage mit); auf Wunsch „Scharf, wenn alle weg“ mit denselben Personen
+  wie im Haus und Uhrzeiten. Ein vorhandener Bereich „Garage“ wird ergänzt.
+- **Melder in beiden Bereichen:** Melder aus einer Haus-Gruppe kommen in die Gruppe „Garage“; jedes
+  Haus-Profil, das die bisherige Gruppe überwacht, bekommt „Garage“ dazu – im Haus ändert sich
+  nichts.
+- Die Ziele „Nachts absichern“ und „Abwesend“ meinen immer die Profile des Hauses (Hauptbereich),
+  nie die eines anderen Bereichs. Ein Profil hat im Plan genau einen Schritt.
+
 ## [0.65.0b2] - 2026-11-25
 
 Einrichten nach Zielen: Türen und Fenster, Garage getrennt, Rauchmelder als Sirenen.

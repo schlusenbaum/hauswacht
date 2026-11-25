@@ -979,3 +979,34 @@ async def test_goals_apply_refused_while_armed(hass: HomeAssistant, hass_ws_clie
         answers=answers,
     )
     assert result == {"ok": False, "errors": {"base": "disarm_first"}}
+
+
+async def test_goals_garage_creates_area(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """0.65.0b3: Ziel Garage legt einen eigenen Bereich mit Bedienfeld an – nichts geschaltet."""
+    await setup_entry(hass, make_entry())
+    start = await _ws(hass_ws_client, hass, type="hauswacht/goals/start")
+    answers = start["answers"]
+    answers["goals"] = ["garage"]
+    answers["garage"] = {"sensors": [WINDOW], "away": False}
+    planned = await _ws(hass_ws_client, hass, type="hauswacht/goals/plan", answers=answers)
+    assert planned["plan"]["errors"] == []
+    assert planned["plan"]["needs_confirm"] is True  # Fenster verlässt die Gruppe Außen
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/goals/apply",
+        revision=start["revision"],
+        answers=answers,
+        confirm=True,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    options = _options(hass)
+    assert options["areas"]["garage"]["name"] == "Garage"
+    assert options["zones"]["garage"]["entities"] == [WINDOW]
+    assert options["profiles"]["garage"]["area"] == "garage"
+    # Das Haus überwacht das Fenster weiter (Profile mit „Außen“ haben jetzt auch „Garage“)
+    assert "garage" in options["profiles"]["home"]["zones"]
+    state = hass.states.get("alarm_control_panel.hauswacht_garage")
+    assert state is not None
+    assert state.state == "disarmed"

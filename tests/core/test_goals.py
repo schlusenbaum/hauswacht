@@ -350,44 +350,88 @@ def test_missing_entry_answer_changes_no_types() -> None:
     assert after.get("sensor_types", {}) == {}
 
 
-def test_garage_separately() -> None:
+def test_garage_is_its_own_area() -> None:
+    """0.65.0b3: Garage als eigener Bereich – unabhängig vom Haus schaltbar."""
     options = _sensor_options()
+    options["profiles"]["away"] = {"name": "Abwesend", "panel_mode": "away", "zones": ["aussen"]}
     hh = _sensors_hh()
     answers = suggestions(options, hh)
     answers["goals"] = [GARAGE_GOAL]
-    answers["garage"] = {"sensors": [GARAGE_TOR], "away": True}
-    options["profiles"]["away"] = {"name": "Abwesend", "panel_mode": "away", "zones": ["aussen"]}
+    answers["garage"] = {
+        "sensors": [GARAGE_TOR],
+        "away": True,
+        "arm_time": "22:00",
+        "disarm_time": None,
+    }
     plan, after = build(options, hh, answers)
     assert after is not None, plan
+    assert after["areas"]["garage"]["name"] == "Garage"
     assert after["zones"]["garage"]["entities"] == [GARAGE_TOR]
-    # Das Garagentor ist nicht zusätzlich in „Außen“
-    assert GARAGE_TOR not in after["zones"]["aussen"]["entities"]
     garage = after["profiles"]["garage"]
+    assert garage["area"] == "garage"
+    assert garage["panel_mode"] == "away"  # „Alle Bereiche → Abwesend“ schaltet sie mit
     assert garage["zones"] == ["garage"]
-    assert garage["panel_mode"] == "custom"
-    # Auch scharf, wenn alle weg: das vorhandene Abwesend-Profil bekommt die Gruppe
-    assert after["profiles"]["away"]["zones"] == ["aussen", "garage"]
-    assert set(plan["profiles"]) == {"garage", "away"}
+    assert garage["auto_arm_time"] == "22:00"
+    assert garage["auto_away_persons"] == [ANNA]  # wie das Haus: wer erkannt werden kann
+    # Das Haus bleibt, wie es ist (das Garagentor war in keiner Gruppe)
+    assert after["profiles"]["away"]["zones"] == ["aussen"]
+    assert plan["profiles"] == ["garage"]
+    titles = [step["title"] for step in plan["steps"]]
+    assert "Neuer Bereich Garage" in titles
+    assert "Neues Profil Garage" in titles
 
 
-def test_garage_moves_sensor_out_of_its_group() -> None:
+def test_garage_keeps_house_unchanged_in_both() -> None:
+    """Melder aus einer Haus-Gruppe: in die Gruppe Garage, die Haus-Profile bekommen sie dazu."""
     options = _sensor_options()
+    options["profiles"]["away"] = {"name": "Abwesend", "panel_mode": "away", "zones": ["aussen"]}
+    options["profiles"]["night"] = {"name": "Nacht", "panel_mode": "night", "zones": ["aussen"]}
     hh = _sensors_hh()
     answers = suggestions(options, hh)
-    answers["goals"] = [GARAGE_GOAL]
+    answers["goals"] = [GARAGE_GOAL, AWAY]
     answers["sensors"]["add"] = []
     answers["garage"] = {"sensors": [TERRASSE], "away": False}
     plan, after = build(options, hh, answers)
     assert after is not None, plan
     assert after["zones"]["aussen"]["entities"] == [TUER]
     assert after["zones"]["garage"]["entities"] == [TERRASSE]
+    # Im Haus ändert sich nichts: die Profile mit „Außen“ überwachen jetzt auch „Garage“
+    assert after["profiles"]["night"]["zones"] == ["aussen", "garage"]
+    assert "garage" in after["profiles"]["away"]["zones"]
+    # Ein Profil hat im Plan genau einen Schritt (Abwesend: Ziel und Garage zusammen)
+    titles = [step["title"] for step in plan["steps"]]
+    assert titles.count("Profil Abwesend") == 1
     assert plan["needs_confirm"] is True  # Gruppe Außen verliert einen Melder
-    assert any("wechselt aus der Gruppe Außen" in n for n in plan["notes"])
+    assert any("kommt aus der Gruppe Außen in die Gruppe Garage" in n for n in plan["notes"])
     # Nie eine Gruppe leer räumen
     answers["garage"] = {"sensors": [BWM], "away": False}
     plan, after = build(options, hh, answers)
     assert after is None
     assert any("keinen Melder mehr" in e for e in plan["errors"])
+
+
+def test_existing_garage_area_is_extended() -> None:
+    options = _sensor_options()
+    options["areas"] = {"g": {"name": "Garage", "icon": "mdi:garage"}}
+    options["zones"]["werkstatt"] = {"name": "Werkstatt", "entities": [FLUR_BWM]}
+    options["profiles"]["g_away"] = {
+        "name": "Garage scharf",
+        "area": "g",
+        "panel_mode": "away",
+        "zones": ["werkstatt"],
+    }
+    hh = _sensors_hh()
+    answers = suggestions(options, hh)
+    answers["goals"] = [GARAGE_GOAL]
+    answers["garage"] = {"sensors": [GARAGE_TOR], "away": False}
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert set(after["areas"]) == {"g"}  # kein zweiter Bereich
+    assert after["profiles"]["g_away"]["zones"] == ["werkstatt", "garage"]
+    # Das Haus-Ziel „Abwesend“ meint nie das Profil der Garage
+    from custom_components.hauswacht.core.goals import targets  # noqa: PLC0415
+
+    assert targets(after)[AWAY] is None
 
 
 def test_smoke_detector_siren_only_registered_with_note() -> None:

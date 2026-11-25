@@ -6,7 +6,11 @@ Statt Einstellungen fragt der Assistent nach **Zielen**:
 - ``away`` – automatisch scharf, wenn alle weg sind (Profil mit dem Knopf „Abwesend“)
 - ``return`` – beim Heimkommen unscharf („Bei Rückkehr“ im Abwesend-Profil)
 - ``night_return`` – nachts heimkommen, ohne dass „Nacht“ aus ist („Reinlassen“ im Nacht-Profil)
-- ``garage`` – Garage oder Werkstatt getrennt (eigene Meldergruppe und eigenes Profil)
+- ``garage`` – Garage oder Werkstatt getrennt: eigener **Bereich** „Garage“ (eigenes Bedienfeld,
+  unabhängig vom Haus schaltbar) mit eigener Meldergruppe und einem Profil mit dem Knopf
+  „Abwesend“. Melder aus Gruppen des Hauses wechseln in die Gruppe „Garage“; die Profile des
+  Hauses, die sie bisher überwacht haben, bekommen die Gruppe „Garage“ dazu (im Haus ändert sich
+  also nichts) – seit 0.65.0b3
 
 Dazu (seit 0.65.0b2) **Türen und Fenster**: noch nicht eingeordnete Melder in Meldergruppen
 aufnehmen und festlegen, welche Türen Eingangstüren sind (mit Eingangsverzögerung) – und Sirenen
@@ -27,9 +31,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .advisor import MIN_SAMPLES, Facts
+from .areas import MAIN_AREA, parse_areas, profile_area
 from .automation import DEFAULT_AWAY_DELAY, MAX_AWAY_DELAY, parse_automation, parse_time
 from .away_proof import parse_proof_settings
 from .changes import Change
+from .changes.areas import save_area
 from .changes.profiles import save_profile
 from .changes.sirens import save_sirens
 from .changes.zones import save_zone
@@ -37,11 +43,9 @@ from .profiles import (
     DEFAULT_ENTRY_DELAY,
     MAX_DELAY,
     profile_behaviour,
-    profile_for_mode,
     profile_info,
     profile_infos,
     profile_settings,
-    used_panel_modes,
 )
 from .reactions import parse_reaction
 from .returning import (
@@ -71,6 +75,7 @@ KIND_DOOR = "door"
 KIND_WINDOW = "window"
 KIND_MOTION = "motion"
 GARAGE_DELAY = 30  # Sekunden, Aus- und Eingangsverzögerung eines neuen Garagen-Profils
+GARAGE_ICON = "mdi:garage"
 RETURN_CHOICES = (RETURN_DOOR, RETURN_PASSAGE, RETURN_AUTO_ONLY, RETURN_ALWAYS)
 AWAY_EXIT_DELAY = 60  # Sekunden, neues Abwesend-Profil
 NIGHT_EXIT_DELAY = 0  # nachts ist man drinnen
@@ -105,7 +110,12 @@ LABELS: Mapping[str, Mapping[str, str]] = {
         "n_smoke": "Rauchmelder als Einbruchsirene: Sie bekommen nur den Einbruchton, nie den "
         "Brandton, und bei einem Brand schaltet Hauswacht sie nicht ab. Die Brandfunktion des "
         "Rauchmelders bleibt unverändert.",
-        "n_moved": "{sensor} wechselt aus der Gruppe {group} in die Garage.",
+        "n_moved": "{sensor} kommt aus der Gruppe {group} in die Gruppe Garage. Die Profile des "
+        "Hauses, die {group} überwachen, bekommen die Gruppe Garage dazu – im Haus ändert sich "
+        "nichts.",
+        "t_area": "Neuer Bereich {name}",
+        "area_device": "Eigenes Gerät",
+        "area_device_v": "Hauswacht {name} – mit Bedienfeld, Profilauswahl und Knöpfen",
         "e_group_empty": "Gruppe {name} hätte danach keinen Melder mehr – bitte nicht alle Melder "
         "in die Garage verschieben oder die Gruppe erst löschen.",
         "e_garage_sensors": "Garage oder Werkstatt: bitte mindestens einen Melder wählen.",
@@ -163,7 +173,11 @@ LABELS: Mapping[str, Mapping[str, str]] = {
         "n_smoke": "Smoke detectors as burglar sirens: they only get the burglar tone, never the "
         "fire tone, and Hauswacht does not switch them off during a fire. The smoke detector's "
         "fire function stays unchanged.",
-        "n_moved": "{sensor} moves from the group {group} to the garage.",
+        "n_moved": "{sensor} moves from the group {group} to the group Garage. The house profiles "
+        "that monitor {group} get the group Garage too – nothing changes for the house.",
+        "t_area": "New area {name}",
+        "area_device": "Own device",
+        "area_device_v": "Hauswacht {name} – with alarm panel, profile selection and buttons",
         "e_group_empty": "Group {name} would have no sensor left – please do not move all of its "
         "sensors to the garage, or delete the group first.",
         "e_garage_sensors": "Garage or workshop: please choose at least one sensor.",
@@ -245,9 +259,19 @@ def detectable(options: Mapping[str, Any], hh: Household) -> frozenset[str]:
     return frozenset(p for p in hh.persons if p in hh.facts.located or p in weak)
 
 
+def _mode_in_area(options: Mapping[str, Any], mode: str, area: str) -> str | None:
+    for info in profile_infos(options):
+        if info.panel_mode == mode and profile_area(options, info.profile_id) == area:
+            return info.profile_id
+    return None
+
+
 def targets(options: Mapping[str, Any]) -> dict[str, str | None]:
-    """Welche vorhandenen Profile die Ziele betreffen (über den Knopf des Bedienfelds)."""
-    return {NIGHT: profile_for_mode(options, NIGHT), AWAY: profile_for_mode(options, AWAY)}
+    """Welche vorhandenen Profile die Ziele betreffen (Knopf des Bedienfelds im Haus)."""
+    return {
+        NIGHT: _mode_in_area(options, NIGHT, MAIN_AREA),
+        AWAY: _mode_in_area(options, AWAY, MAIN_AREA),
+    }
 
 
 # --- Vorschläge (vorausgefüllte Antworten) ---------------------------------------------------
@@ -292,7 +316,7 @@ def suggestions(options: Mapping[str, Any], hh: Household) -> dict[str, Any]:
             result[RETURN] = {"persons": list(back.persons), "mode": back.mode}
     sensors = sensor_suggestions(options, hh)
     result["sensors"] = sensors
-    result[GARAGE] = {"sensors": [], "away": True}
+    result[GARAGE] = {"sensors": [], "away": True, "arm_time": None, "disarm_time": None}
     free = [s for s in hh.sensors if s.group is None]
     # Neue Gruppen gleich in die Profile: Türen/Fenster nachts und abwesend, Bewegung nur abwesend
     if any(s.kind != KIND_MOTION for s in free) and sensors["outside"] == NEW_GROUP:
@@ -353,7 +377,12 @@ class _Builder:
     touched: list[str] = field(default_factory=list)
     # Platzhalter neuer Gruppen -> echte ID
     mapping: dict[str, str] = field(default_factory=dict)
-    garage_to_away: bool = False
+    # Gruppen, aus denen Melder in die Garage wechseln (deren Haus-Profile bekommen „Garage“ dazu)
+    garage_from: set[str] = field(default_factory=set)
+    start: Mapping[str, Any] = field(default_factory=dict)  # Einstellungen vor dem Plan
+    # Profil -> Index seines Schritts im Plan und Stand vor dem ersten Ändern
+    profile_index: dict[str, int] = field(default_factory=dict)
+    profile_before: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def t(self, key: str, **values: Any) -> str:
         return LABELS[self.lang][key].format(**values)
@@ -545,12 +574,13 @@ def build(
     Profile der Ziele. Jeder Schritt rechnet über die Logikschicht weiter.
     """
     answers = normalize(answers)
-    b = _Builder(options, hh, _lang(language), labels or {})
+    b = _Builder(options, hh, _lang(language), labels or {}, start=options)
     _check(b, answers)
     if b.errors:
         return _plan(b), None
     current: Mapping[str, Any] | None = options
-    for stage in (_stage_sirens, _stage_sensors, _stage_garage, _stage_profiles):
+    stages = (_stage_sirens, _stage_sensors, _stage_garage, _stage_profiles, _stage_house_keep)
+    for stage in stages:
         current = stage(b, current, answers)  # type: ignore[arg-type]
         if current is None or b.errors:
             return _plan(b), None
@@ -721,6 +751,7 @@ def _garage_out(
         label = b.t("group", name=zone.name)
         row = _diff(b, "group", sorted(zone.entities), rest, kind="list", label=label)
         rows.append(row)
+        b.garage_from.add(gid)
         for entity_id in removed:
             b.notes.append(b.t("n_moved", sensor=b.hh.name(entity_id), group=zone.name))
     return current
@@ -734,77 +765,145 @@ def _map_zones(b: _Builder, answers: dict[str, Any]) -> None:
         mapped = [b.mapping.get(z, z) for z in zones]
         own["zones"] = [z for z in mapped if not z.startswith("@")]
         answers[goal] = own
-    if (answers.get(GARAGE) or {}).get("away") and GARAGE_ZONE in b.mapping:
-        away = answers[AWAY]
-        if b.mapping[GARAGE_ZONE] not in away["zones"]:
-            away["zones"] = [*away["zones"], b.mapping[GARAGE_ZONE]]
-        b.garage_to_away = True
+
+
+def _garage_area(b: _Builder, current: Mapping[str, Any]) -> tuple[Mapping[str, Any] | None, str]:
+    """Bereich „Garage“ – vorhandener gleichen Namens oder neu."""
+    name = b.t("garage")
+    found = next(
+        (a.area_id for a in parse_areas(current).values() if a.name.casefold() == name.casefold()),
+        None,
+    )
+    if found is not None:
+        return current, found
+    change = save_area(current, None, {"name": name, "icon": GARAGE_ICON})
+    if not _ok(b, change):
+        return None, ""
+    area_id = str(change.item_id)
+    b.steps.append(
+        {
+            "title": b.t("t_area", name=name),
+            "profile": None,
+            "new": True,
+            "changes": [
+                _diff(b, "area_device", None, b.t("area_device_v", name=name), kind="text")
+            ],
+        }
+    )
+    return change.options, area_id
 
 
 def _stage_garage(
     b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
 ) -> Mapping[str, Any] | None:
-    """Eigenes Profil „Garage“ (vorhandenes gleichen Namens wird ergänzt)."""
+    """Bereich „Garage“ mit Profil (Knopf „Abwesend“) – vorhandene werden ergänzt."""
     gid = b.mapping.get(GARAGE_ZONE)
     if GARAGE not in answers["goals"] or gid is None:
         return current
-    name = b.t("garage")
-    pid = next(
-        (i.profile_id for i in profile_infos(current) if i.name.casefold() == name.casefold()),
-        None,
-    )
-    data: dict[str, Any] = {"name": name}
+    with_area, area_id = _garage_area(b, current)
+    if with_area is None:
+        return None
+    current = with_area
+    own = answers.get(GARAGE) or {}
+    pid = _mode_in_area(current, AWAY, area_id)
+    data: dict[str, Any] = {"name": profile_info(current, pid).name if pid else b.t("garage")}
     if pid is None:
-        data |= {"icon": "mdi:garage", "exit_delay": GARAGE_DELAY, "entry_delay": GARAGE_DELAY}
-        if "custom" not in used_panel_modes(current):
-            data["panel_mode"] = "custom"
-        data["zones"] = [gid]
+        taken = {i.name.casefold() for i in profile_infos(current)}
+        if data["name"].casefold() in taken:
+            data["name"] = f"{data['name']} 2"
+        data |= {
+            "icon": GARAGE_ICON,
+            "area": area_id,
+            "panel_mode": AWAY,
+            "exit_delay": GARAGE_DELAY,
+            "entry_delay": GARAGE_DELAY,
+            "zones": [gid],
+        }
     else:
         zones = list(profile_behaviour(current, pid).zones)
         data["zones"] = zones if gid in zones else [*zones, gid]
+    automation = _automation(current, pid)
+    for key in ("arm_time", "disarm_time"):
+        value = own.get(key) or None
+        if value is not None and parse_time(value) is None:
+            b.errors.append(b.t("e_time"))
+        automation[f"auto_{key}"] = value
+    if own.get("away"):
+        # Wie das Haus: dieselben Personen (aus dem Ziel „alle weg“ oder die erkennbaren)
+        away = answers.get(AWAY) or {}
+        persons = _strings(away.get("persons"), b.hh.persons) or sorted(detectable(b.options, b.hh))
+        automation["auto_away_persons"] = persons
+        automation["auto_away_delay"] = int(away.get("delay") or DEFAULT_AWAY_DELAY)
+    data["automation"] = automation
+    if b.errors:
+        return None
     b.options = current
     _reaction(b, pid, answers, data)
     return _save_profile_step(b, current, pid, data)
 
 
+def _stage_house_keep(
+    b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
+) -> Mapping[str, Any] | None:
+    """Profile des Hauses, die die bisherige Gruppe überwacht haben, bekommen „Garage“ dazu."""
+    gid = b.mapping.get(GARAGE_ZONE)
+    if gid is None or not b.garage_from:
+        return current
+    for info in profile_infos(current):
+        pid = info.profile_id
+        if profile_area(current, pid) != MAIN_AREA:
+            continue
+        zones = list(profile_behaviour(current, pid).zones)
+        if gid in zones or not b.garage_from & set(zones):
+            continue
+        new = _save_profile_step(b, current, pid, {"name": info.name, "zones": [*zones, gid]})
+        if new is None:
+            return None
+        current = new
+    return current
+
+
 def _save_profile_step(
     b: _Builder, current: Mapping[str, Any], pid: str | None, data: dict[str, Any]
 ) -> Mapping[str, Any] | None:
-    before = _snapshot(current, pid)
+    """Profil speichern (Assistenten-Modus) – ein Profil hat im Plan genau einen Schritt."""
+    snapshot = _snapshot(current, pid)
     change = save_profile(current, pid, data, entities_by_label=b.labels, partial=True)
     if not _ok(b, change):
         return None
     new_id = change.item_id or pid or ""
     b.touched.append(new_id)
-    b.steps.append(_profile_step(b, pid, new_id, before, _snapshot(change.options or {}, new_id)))
+    before = b.profile_before.setdefault(new_id, snapshot)
+    is_new = new_id not in b.start.get("profiles", {})
+    after = _snapshot(change.options or {}, new_id)
+    step = _profile_step(b, None if is_new else new_id, new_id, before, after)
+    if new_id in b.profile_index:
+        b.steps[b.profile_index[new_id]] = step
+    else:
+        b.profile_index[new_id] = len(b.steps)
+        b.steps.append(step)
     return change.options
 
 
 def _stage_profiles(
     b: _Builder, current: Mapping[str, Any], answers: dict[str, Any]
 ) -> Mapping[str, Any] | None:
-    """Profile für die Ziele (Nacht, Abwesend)."""
+    """Profile für die Ziele (Nacht, Abwesend) im Haus."""
     goals = set(answers["goals"])
     found = targets(b.options)
-    wanted = {
-        NIGHT: bool(goals & {NIGHT, NIGHT_RETURN}),
-        # Garage „auch bei Abwesend“: ein vorhandenes Abwesend-Profil bekommt die Gruppe
-        AWAY: bool(goals & {AWAY, RETURN}) or (b.garage_to_away and found[AWAY] is not None),
-    }
+    wanted = {NIGHT: bool(goals & {NIGHT, NIGHT_RETURN}), AWAY: bool(goals & {AWAY, RETURN})}
     for goal in (NIGHT, AWAY):
         if not wanted[goal]:
             continue
         pid = found[goal]
         b.options = current
         data = _payload(b, goal, pid, answers)
-        if goal == AWAY and b.garage_to_away and "zones" not in data and pid is not None:
-            zones = list(profile_behaviour(current, pid).zones)
-            data["zones"] = [*zones, b.mapping[GARAGE_ZONE]]
         if b.errors:
             return None
-        current = _save_profile_step(b, current, pid, data)  # type: ignore[assignment]
-        if current is None:
+        new = _save_profile_step(b, current, pid, data)
+        if new is None:
             return None
+        current = new
     return current
 
 

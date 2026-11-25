@@ -189,7 +189,7 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
    | **Arm automatically when everyone is away** | Profile with the button "Away": sensor groups, "arm when all away" with persons and waiting time |
    | **Disarm when coming home** | "On return" in the Away profile: persons and how safe (recommended: door proof); the entry delay from your measurements |
    | **Come home at night without turning "Night" off** | "On return: let in" in the Night profile – whoever comes home is let in, the profile stays armed |
-   | **Garage or workshop separately** (*since 0.65.0b2*) | Own sensor group and own profile "Garage" (button "Custom" if free) with the chosen sensors – so it can be armed on its own. Sensors from another group move to the garage (shown in the plan). Optionally the garage is also added to the Away profile |
+   | **Garage or workshop separately** (*since 0.65.0b3*) | Own [area](profiles.md#areas) "Garage" with its own alarm panel (`alarm_control_panel.hauswacht_garage`) – armed independently of the house, e.g. at night while someone in the house is still awake. Plus a sensor group "Garage" and, in the area, a profile with the button "Away", so "All areas → Away" arms the garage too. Optionally "arm when all away" (same persons as the house) and times. If the area exists already, it is extended |
 
 4. **Questions** per goal – pre-filled with what is already set up, otherwise with suggestions.
    Persons who cannot be detected as away are marked with ⚠.
@@ -213,7 +213,10 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
 - Applying only works while **all areas are disarmed**. Hauswacht **recomputes** the plan from
   your answers – with the same rules as in the side sheet. If something changed in the meantime,
   nothing is saved.
-- A sensor group is never emptied, and sensors that are in a group via a label are not moved.
+- **Garage:** sensors from a house group move to the group "Garage", and every house profile that
+  monitors the previous group gets the group "Garage" too – so nothing changes for the house, the
+  sensors are in both areas. A sensor group is never emptied, and sensors that are in a group via
+  a label are not moved.
 - Without an answer about entry doors, the sensor types stay as they are.
 - Nothing is switched, no siren is enabled, nothing about the smoke detectors' fire function is
   changed and no automation is created.
