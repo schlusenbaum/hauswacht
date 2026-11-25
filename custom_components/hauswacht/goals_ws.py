@@ -205,7 +205,21 @@ def _start(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             {"id": zone_id, "name": zone.name, "motion": zone_id in hh.motion_groups}
             for zone_id, zone in parse_zones(options).items()
         ],
-        "sirens": [{"id": s, "name": hh.name(s), "registered": s in registered} for s in hh.sirens],
+        "sirens": [
+            {"id": s, "name": hh.name(s), "registered": s in registered, "smoke": s in hh.smoke}
+            for s in hh.sirens
+        ],
+        "sensors": [
+            {
+                "id": s.entity_id,
+                "name": s.name,
+                "kind": s.kind,
+                "place": s.place,
+                "group": s.group,
+                "via_label": s.via_label,
+            }
+            for s in hh.sensors
+        ],
         "hardware_enabled": bool(options.get("sirens_hardware_enabled", False)),
         "notify": [{"id": n, "name": hh.name(n)} for n in hh.notify],
         "targets": {
