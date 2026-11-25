@@ -2,7 +2,7 @@
 
 [Deutsch](../bedienteile.md) | **English**
 
-**System settings → Control devices.** Any number of control devices, each for one **area** or
+**Settings page → People and control devices → Control devices.** Any number of control devices, each for one **area** or
 for **all areas**. Identification always uses the **users' credentials** (PIN, RFID card, lock
 ID): rights, validity, lockout after wrong entries and duress PIN apply as on the alarm panel.
 "Changed by" shows e.g. "Anna (Keypad hallway)".
@@ -47,7 +47,7 @@ MQTT integration in Home Assistant. Other keypads (ZHA, Z-Wave, ESPHome …): se
 
 1. Pair the keypad in Zigbee2MQTT and give it a sensible name, e.g. "Keypad". The name is part of
    the MQTT topic.
-2. **System settings → Control devices → Add keypad:**
+2. **Settings page → People and control devices → Add control device → Keypad (Zigbee2MQTT):**
 
 | Setting | Meaning |
 |---|---|
@@ -97,7 +97,7 @@ Conditions:
   after confirmation**. With **refuse** it stays "not ready" also on the second press; with
   **bypass automatically** no second press is needed.
 - If the first press came with a PIN or card, the person needs the right **"May arm anyway at
-  the keypad"** (default on; can be switched off in the user dialog, e.g. for children). The
+  the keypad"** (default on; can be switched off per person, e.g. for children). The
   second press may then come without a PIN – it counts in this person's name.
 - If the second press comes with a **different** PIN, it must be the same person. A wrong PIN is
   rejected as always.
@@ -153,8 +153,8 @@ learning unknown cards.
 
 ### Setting up
 
-**System settings → Control devices → Add keypad (generic)** – or on the
-[settings page](settings-page.md) in the tab People and control devices:
+**[Settings page](settings-page.md) → People and control devices → Add control device → Keypad
+(generic):**
 
 | Setting | Meaning |
 |---|---|
@@ -164,12 +164,13 @@ learning unknown cards.
 | Login | **PIN or card** or **card and PIN** |
 | Emergency button | off, silent or alarm – like at the [Zigbee2MQTT keypad](#keypad-zigbee2mqtt) |
 
-After saving, the form shows the keypad's **ID**, e.g. `keypad_hallway`. The translator reports
-inputs with it. Instead of the ID, the name or the display entity work too.
+The keypad's **ID** (e.g. `keypad_hallway`) is made from the name when saving and is then shown in
+the side sheet under "ID for automations". The translator reports inputs with it. Instead of the ID, the name or the display entity work too.
 
 **Unknown keypad reported:** If a translator calls with an ID that does not exist in Hauswacht,
-Hauswacht refuses (result `unknown_keypad`). The next "Add keypad (generic)" already has the
-reported ID in the form – just pick buttons and area. So no unknown device can switch anything.
+Hauswacht refuses (result `unknown_keypad`). The settings page then shows "Unknown keypad … reported"
+under control devices with a button to set it up – the ID is already filled in, just pick buttons
+and area. So no unknown device can switch anything.
 
 ### The action `hauswacht.keypad_input`
 
@@ -342,8 +343,8 @@ keypad** (rights, lockout, duress PIN, card and PIN, action codes, "arm anyway",
 
 ### Setting up
 
-**System settings → Control devices → Add MQTT interface** – or on the
-[settings page](settings-page.md) in the tab People and control devices:
+**[Settings page](settings-page.md) → People and control devices → Add control device → MQTT
+interface:**
 
 | Setting | Meaning |
 |---|---|
@@ -438,7 +439,7 @@ today. Therefore:
 
 ## Action codes
 
-**System settings → Control devices → Action codes.** An action code is a **code plus a function
+**Settings page → People and control devices → Action codes.** An action code is a **code plus a function
 key** at the keypad, e.g. **7777 + 🏠 house**. It triggers a fixed action – this way the keys of
 the keypad can be assigned several times:
 
@@ -636,8 +637,8 @@ conditions:
 ## Learning cards
 
 RFID cards, tags, fingers at the [fingerprint reader](#fingerprint-reader-esphome) and IDs of
-[door locks](#door-lock-eg-nuki) are managed in one place: **System settings → Users and PINs →
-Cards and tags.** Below, all of this is simply called "card".
+[door locks](#door-lock-eg-nuki) are managed in one place: **Settings page → People and control devices →
+Cards, tags and lock IDs.** Below, all of this is simply called "card".
 
 ### The card list
 
@@ -657,16 +658,16 @@ The list shows every card with name, number, owner and when it last switched:
 ### Learn a new card
 
 1. All areas disarmed.
-2. **Cards and tags → ➕ Learn new card (hold it up).** The dialog shows: *"Hold the new card to
-   a keypad now (and press Disarm) or to a reader"*. For a door lock: unlock once with the new
+2. **Cards, tags and lock IDs → + Learn a new card.** The page shows: *"Hold the card to a keypad
+   or reader now – it appears here by itself."* For a door lock: unlock once with the new
    ID.
 3. **As soon as the card has been read, it continues at once:** "✅ Card recognised". Enter a
    **name** (e.g. "key ring"), choose the **user**, save.
 
 At the frient keypad, holding up the card alone is not enough – it only sends the number with
-**Disarm**. If no card comes for 2 minutes, the dialog continues without a card.
+**Disarm**. Instead of holding it up, you can also type in the number.
 
-Only a card read **during** the dialog counts. A card from an earlier, cancelled attempt is not
+Only a card read **during** learning counts. A card from an earlier, cancelled attempt is not
 preselected.
 
 **⌨️ Type in card number:** without waiting. The recently read unknown cards (within the learning
@@ -703,9 +704,9 @@ shows "key ring …B2C3" (disabled ones with ⏸).
 
 ### Rules for learning
 
-- The learning time can be set under **Control devices → Learning new cards** (1–60 minutes,
-  0 = learning off). After that the card is forgotten; whoever saves too late gets a hint and
-  holds up the card again.
+- The learning time can be set under **People and control devices → Control devices → Learning
+  time for new cards** (1–60 minutes, 0 = learning off). After that the card is forgotten and has
+  to be held up again.
 - Unknown cards do not count as a failed attempt for the [lockout](users.md#lockout-after-wrong-entries).
 - Card numbers can also be typed in (e.g. `041B4932E82880`; upper/lower case and separators do
   not matter). Codes with 4–8 digits could be PINs and are never offered for learning – type
@@ -718,7 +719,7 @@ MIFARE Classic, MIFARE DESFire, NTAG tags, many company badges) and reports thei
 
 **Random IDs are not suitable:** phones and some badges in privacy mode report a **different**
 number on every read – recognisable by 4 bytes starting with `08` (e.g. `+08837CF0`). Hauswacht
-does not offer them for learning, rejects them when saving and shows a hint in the user dialog.
+does not offer them for learning, rejects them when saving and shows a hint while learning.
 
 ## NFC sticker (companion app)
 
@@ -829,7 +830,7 @@ sensor:
    `esphome.fingerprint_hallway_enroll_finger` with `finger_id: 1` → place the same finger twice.
    Use a separate number for each finger (slot 1, 2, 3 …). Best keep a small list: 1 = Anna,
    right index finger; 2 = Anna, left index finger; 3 = Ben …
-2. **In Hauswacht:** System settings → Control devices → **Add RFID/NFC reader** → reader device
+2. **In Hauswacht:** Settings page → People and control devices → **Add control device → RFID/NFC reader** → reader device
    "fingerprint-hallway" → action e.g. "disarm".
 3. **Assign the finger to the user** like a [card](#learn-a-new-card): everything disarmed,
    Users and PINs → Cards and tags → Learn new card → place the finger → "✅ Card recognised:
@@ -868,7 +869,7 @@ exit delay. Press, leave, done.
 > A button identifies **nobody**: whoever stands in front of it is unknown. That is why it
 > **only arms** – never disarms, and it never ends an alarm.
 
-**Setting up:** System settings → Control devices → **Add button**.
+**Setting up:** Settings page → People and control devices → **Add control device → Button**.
 
 1. Choose name, area and the **button**:
    - an **event entity** (`event.…`) – this is how Zigbee2MQTT (newer versions), Hue, Shelly and
@@ -943,7 +944,7 @@ Requires a Nuki Smart Lock (3.0 Pro, 4th or 5th generation) with **MQTT** switch
 app, and the MQTT integration in Home Assistant. The lock itself is usually already in Home
 Assistant as `lock.…`, via MQTT or the Nuki integration.
 
-1. **System settings → Control devices → Add door lock.**
+1. **Settings page → People and control devices → Add control device → Door lock.**
 2. Fill in:
 
 | Setting | Example | Meaning |
@@ -978,9 +979,9 @@ code …" – the simplest way to a fingerprint at the front door.
 Like [cards](#learning-cards):
 
 1. All areas disarmed.
-2. Users and PINs → Cards and tags → **Learn new card (hold it up)**.
-3. **Unlock once** with the app, the keypad code or the fingerprint – the dialog recognises the ID
-   at once → name e.g. "Nuki app", choose the user → save.
+2. People and control devices → Cards, tags and lock IDs → **Learn a new card**.
+3. **Unlock once** with the app, the keypad code or the fingerprint – the page shows the ID at
+   once → name e.g. "Nuki app", choose the user → save.
 
 Already unlocked before? Then "Type in card number": the ID is offered there as "Nuki user 52653
 (new, read at Front door lock at 18:04)".

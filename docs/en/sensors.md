@@ -16,7 +16,7 @@ Hauswacht only monitors entities that know **open/closed**:
 
 Everything else becomes a binary sensor via a **helper** in Home Assistant:
 
-- **Measured values** (temperature, humidity, power …): with the wizard
+- **Measured values** (temperature, humidity, power …): with
   [Create a sensor from another sensor](#create-a-sensor-from-another-sensor).
 - **Cameras:** most camera integrations already provide motion, person or vehicle as binary
   sensors – use those directly.
@@ -36,7 +36,7 @@ template:
 
 ## Sensor groups
 
-**Alarm triggering → Sensor groups → Add sensor group.**
+**Settings page → Sensors → Add sensor group.**
 
 A **sensor group** combines sensors that are always armed together. Profiles arm whole sensor
 groups, not single sensors. Typical:
@@ -67,8 +67,8 @@ monitored until disarming.
 ## Types
 
 The **type** decides *how* a sensor reacts; *when* it is armed is decided by the sensor group and
-the alarm profile. After saving a sensor group, Hauswacht shows all its sensors with the
-suggested type – usually it fits, otherwise change it right there.
+the alarm profile. In the side sheet of a sensor group every sensor is shown with the suggested
+type – usually it fits, otherwise change it right there.
 
 | Type | Suggested for | Behaviour |
 |---|---|---|
@@ -97,7 +97,7 @@ every alarm profile you decide whether a **tilted window is allowed**.
 
 ### Setting up
 
-**Alarm triggering → Special sensors → Add sensor with tilt position.**
+**Settings page → Sensors → Special sensors → + Add tilt position.**
 
 1. **Choose the source.** Where the position comes from differs per device:
 
@@ -151,7 +151,7 @@ every alarm profile you decide whether a **tilted window is allowed**.
 - **Test card:** shows "tilted" and has its own button **Tilted** for simulating in test mode.
 - **System overview:** state "tilted".
 
-**Edit and remove** under Alarm triggering → Special sensors. Removing also takes the sensor out
+**Edit and remove** under settings page → Sensors → Special sensors. Removing also takes the sensor out
 of all sensor groups; nothing changes on the device.
 
 > **Vibration at the window:** many of these sensors also report vibration (prying, glass
@@ -176,8 +176,8 @@ windows and doors – i.e. prying or a smashed pane. Hauswacht gives them their 
 ### False alarm protection: how many vibrations until the alarm?
 
 Vibration sensors are sensitive: a slammed door, a passing truck, a thunderstorm or a ball
-against the pane can trigger them. That is why Hauswacht asks when saving a sensor group with
-vibration sensors:
+against the pane can trigger them. That is why the side sheet of a sensor group with vibration
+sensors shows the section **False alarm protection for vibration**:
 
 **"Alarm at N reports of one sensor within S seconds"**
 
@@ -195,14 +195,15 @@ vibration sensors:
   60–90 seconds) and report no second one during that time. For "2 in 60 seconds" the hold time
   must be clearly shorter – with Zigbee2MQTT it is often adjustable as a device option (e.g. 5–10
   seconds).
-- To change: edit the sensor group → save → the question comes again after the types.
+- To change: settings page → Sensors → edit the sensor group → **False alarm protection for
+  vibration**.
 
 ### Vibration strength as a number
 
 Some sensors don't report an "on/off" vibration but a **strength as a number** (e.g.
 `sensor.bathroom_window_vibration` of a window sensor). This becomes a sensor without helpers:
 
-**Alarm triggering → Special sensors → Add vibration strength.**
+**Settings page → Sensors → Special sensors → + Add vibration strength.**
 
 1. Choose the sensor (to try it without hardware: **Number** helper, `input_number`).
 2. Enter the **threshold**: from this value on it counts as a vibration. Best watch the value
@@ -220,7 +221,8 @@ combination should.
 
 ## Create a sensor from another sensor
 
-**Alarm triggering → Create a sensor from another sensor.** Example frost guard:
+**Settings page → Sensors → Special sensors → + Create sensor from a measurement.** Example frost
+guard:
 
 | Field | Example |
 |---|---|
@@ -239,7 +241,7 @@ unchanged.
 
 ## Always-active sensors
 
-**Alarm triggering → Always active.** Sensors that report **even while disarmed** – e.g. a safe,
+**Settings page → Sensors → Always active → Edit.** Sensors that report **even while disarmed** – e.g. a safe,
 gun cabinet, garden shed, panic button. Sensor groups and/or single sensors.
 
 | State | Reaction |
@@ -257,7 +259,7 @@ marked "always active".
 
 ## Sensor radio silence
 
-**System settings → Sensor radio silence.**
+**Settings page → System → Sensor radio silence.**
 
 - A sensor is **unavailable** if it is missing or reports `unavailable` or `unknown`.
 - Optionally it also counts as **failed** if it has not reported for this many hours (default:
@@ -274,8 +276,8 @@ marked "always active".
 ### Radio silence observation: the right value from your data
 
 Hauswacht remembers for each sensor the **longest gap between two signs of life** (checked every
-minute, stored across restarts; gaps across a restart do not count). The form then shows, for
-example:
+minute, stored across restarts; gaps across a restart do not count). The settings page (System →
+Sensor radio silence) then shows, for example:
 
 > Observed for 14 days. Longest gap: front door contact 1 h 52 min. **Recommendation: 3 h.**
 
@@ -306,8 +308,6 @@ sensor would then only be noticed after many hours. Better: give this sensor an 
   "sensor radio silence" shows all sensors with longest gap, recommendation and own value (⚠️ if
   the own value is below the recommendation). In the sensor table an own value appears as
   "⏱ 24 h" or "⏱ never check" after the name.
-- **Dialog:** system settings → sensor radio silence → below, choose "set an own value for a
-  sensor".
 - Sensors with an own value no longer count for the **general recommendation**. Example: the back
   door stays silent for up to 16 hours, all others at most 2 hours. With an own value for the back
   door (24 h), the observation recommends 3 h in general instead of 24 h.
@@ -316,7 +316,7 @@ sensor would then only be noticed after many hours. Better: give this sensor an 
 
 ## Monitor radio networks and gateways
 
-**System settings → Monitor radio networks and gateways.** Binary sensors that report whether a
+**Settings page → System → Radio networks and gateways.** Binary sensors that report whether a
 radio network or gateway is running. If such a system fails, none of the sensors behind it can
 report anything.
 

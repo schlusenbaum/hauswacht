@@ -251,7 +251,7 @@ The whole configuration with check hints, for printing and as an emergency sheet
 
 ## Profile settings on the dashboard
 
-Small things can be changed without the settings dialog. The entities are on the device
+Small things can also be changed right on the dashboard, without the settings page. The entities are on the device
 "Hauswacht" under **Configuration**:
 
 1. **Edit profile** (`select.hauswacht_edit_profile`): which profile the following settings show
@@ -267,7 +267,7 @@ Small things can be changed without the settings dialog. The entities are on the
 - Changes only while disarmed; while armed, the settings are "unavailable".
 - Every change is saved immediately and recorded in the logbook with the user.
 - Name, icon, button, sensor groups, sirens, recipients, persons and weekdays as well as
-  **removing** a time are only possible in the settings dialog.
+  **removing** a time are only possible on the [settings page](settings-page.md).
 - Tip: make a dashboard page for this visible to administrators only.
 
 ## Your own cards

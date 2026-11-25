@@ -8,7 +8,7 @@ is described with the sensors.
 
 ## Homecoming observation
 
-**System settings → Presence and homecoming observation.** Choose persons and switch on "Observe
+**Settings page → System → Presence and homecoming observation → Edit.** Choose persons and switch on "Observe
 homecoming".
 
 Hauswacht then records when an **entry door** (sensors with the role "entry") is opened and when
@@ -85,7 +85,7 @@ the table** first if you want to keep the old values. Only administrators see th
 
 ## Additional signals per person
 
-In the second step of the form you choose additional signals per person. The earlier and more
+In the side sheet "Presence and homecoming observation" you choose additional signals per person. The earlier and more
 reliable a signal, the better.
 
 The signals **also apply to the profile automation** ("Arm when all of these persons are away",

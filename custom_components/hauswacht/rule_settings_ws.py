@@ -43,9 +43,41 @@ from .runtime import entities_by_label
 WS_RULE_CHECK = f"{DOMAIN}/settings/rule_check"
 
 
-def _finding_texts(lang: str) -> dict[str, str]:
-    from .config_flow import FINDING_TEXTS_DE, FINDING_TEXTS_EN  # noqa: PLC0415
+# Hinweise zu Auslöseregeln (Prüfung im Formular der Einstellungsseite)
+FINDING_TEXTS_DE = {
+    "rule_no_steps": "Auslöseregel „{rule}“ hat keinen Schritt mit Meldern.",
+    "rule_step_empty": "Schritt {step} hat keine Melder (Meldergruppe leer?).",
+    "rule_count_too_high": "Schritt {step} verlangt mehr Melder, als er hat ({detail}).",
+    "rule_same_sensor_next_step": "Ein Melder steht in Schritt {step} und im Schritt davor.",
+    "rule_redundant_single": "Auslöseregel „{rule}“ bewirkt nichts – ihr erster Schritt löst "
+    "hier schon allein aus.",
+    "rule_single_step_any": "Auslöseregel „{rule}“ hat nur einen Schritt „einer davon“ – das ist "
+    "dasselbe wie „allein auslösend“.",
+    "rule_contained": "Auslöseregel „{rule}“ bewirkt nichts – „{detail}“ löst immer vorher aus.",
+    "rule_unless_empty": "„Nicht, wenn vorher …“ hat keine Melder.",
+    "rule_unless_overlaps": "Auslöseregel „{rule}“: „Nicht, wenn vorher …“ enthält Melder aus "
+    "Schritt 1 – ein zweites Auslösen kann die Regel selbst sperren.",
+    "rule_unless_long": "Auslöseregel „{rule}“: „Nicht, wenn vorher …“ wirkt sehr lange "
+    "({detail} s).",
+}
+FINDING_TEXTS_EN = {
+    "rule_no_steps": "Trigger rule “{rule}” has no step with sensors.",
+    "rule_step_empty": "Step {step} has no sensors (empty sensor group?).",
+    "rule_count_too_high": "Step {step} needs more sensors than it has ({detail}).",
+    "rule_same_sensor_next_step": "A sensor is in step {step} and in the step before.",
+    "rule_redundant_single": "Trigger rule “{rule}” has no effect – its first step already "
+    "triggers alone here.",
+    "rule_single_step_any": "Trigger rule “{rule}” has only one “any of” step – same as "
+    "“triggers alone”.",
+    "rule_contained": "Trigger rule “{rule}” has no effect – “{detail}” always triggers first.",
+    "rule_unless_empty": "“Not if before …” has no sensors.",
+    "rule_unless_overlaps": "Trigger rule “{rule}”: “not if before …” contains sensors of step 1 – "
+    "a second trigger can block the rule itself.",
+    "rule_unless_long": "Trigger rule “{rule}”: “not if before …” lasts very long ({detail} s).",
+}
 
+
+def _finding_texts(lang: str) -> dict[str, str]:
     return FINDING_TEXTS_DE if lang == "de" else FINDING_TEXTS_EN
 
 

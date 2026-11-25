@@ -2,7 +2,7 @@
 
 [Deutsch](../ausloeseregeln.md) | **English**
 
-**Alarm triggering → Trigger rules.** A trigger rule only triggers on a **sequence** of sensors –
+**Settings page → Trigger rules.** A trigger rule only triggers on a **sequence** of sensors –
 e.g. "door, then basement". Trigger rules stand on their own; in the alarm profile you choose
 under **Trigger rules** which ones apply. The same rule can be part of several profiles.
 
@@ -41,16 +41,12 @@ Step 1 fulfilled ──(time of step 1)──▶ Step 2 fulfilled ──(time of
 | door and basement, any order | Step 1: door + basement, "all of them" |
 | one of the doors, then basement **and** office (no matter which first) | Step 1: both doors, "one of them" · Step 2: basement + office, "all of them" |
 
-## Creating with the wizard
+## Creating
 
-> It is easier on the [settings page](settings-page.md#editing-trigger-rules): everything on one
-> sheet, with a switch form / YAML.
-
-Name and result → step 1 → overview with "Add another step", "Edit a step", "Remove last step",
-"Done – save" (up to 10 steps). Above each step and in the overview, the trigger rule is shown
-as a sentence, e.g. "one of front door / back door, then within 120 s sensor group Basement →
-entry delay, then alarm". It is only saved with "Done – save"; problems are shown in the
-overview.
+On the [settings page](settings-page.md#editing-trigger-rules) → tab **Trigger rules** → **Add
+trigger rule**: everything on one sheet, with a switch form / YAML, up to 10 steps. The sheet shows
+the trigger rule as a sentence, e.g. "one of front door / back door, then within 120 s sensor group
+Basement → entry delay, then alarm", and below it what does not fit.
 
 Result of a fulfilled trigger rule: **alarm immediately**, **entry delay, then alarm** or (in
 YAML mode) **notification only** (time from the alarm profile – e.g. so that someone who comes
@@ -102,7 +98,7 @@ Profile "Night" – no sensor group triggers alone, only these rules:
 
 ## Exception "Not if before …"
 
-In the overview of the wizard: **"Not if before … (exception)"**. The trigger rule does not
+In the side sheet of the trigger rule: **"Not if before …"**. The trigger rule does not
 apply if one of the selected sensors triggered within the given time **before step 1**.
 Example: "Window, then basement" with the exception "hallway motion sensor, 300 s" – whoever was
 already moving around inside and then opens a window triggers nothing. The exception applies
@@ -110,7 +106,8 @@ already moving around inside and then opens a window triggers nothing. The excep
 
 ## Expert mode (YAML)
 
-**Trigger rules → "New trigger rule as YAML"**, or **"Edit as YAML"** in the overview. Trigger
+**Settings page → Trigger rules → Add trigger rule** (or **Edit**) → switch to **YAML** at the
+top of the side sheet. Trigger
 rules with nesting or conditions open the YAML editor directly when edited. When saving,
 Hauswacht checks the rule and names errors with their location.
 

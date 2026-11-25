@@ -23,11 +23,3 @@ async def test_silence_sensor_and_form(hass: HomeAssistant) -> None:
     state = hass.states.get(sensor)
     assert state is not None
     assert "sensors" in state.attributes
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "sensor_behaviour"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert "Beobachtet seit" in flow["description_placeholders"]["observation"] or (
-        "Observed" in flow["description_placeholders"]["observation"]
-    )

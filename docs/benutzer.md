@@ -31,14 +31,14 @@ ohne PINs schalten also alle im Dashboard ohne PIN, und mit Karte trotzdem am Ke
 
 ## Benutzer
 
-**Systemeinstellungen → Benutzer und PINs.** Das Menü hat:
+**[Einstellungsseite](einstellungsseite.md#personen-bearbeiten) → Personen und Bedienteile.** Dort
+stehen:
 
-| Menüpunkt | Wofür |
+| Karte | Wofür |
 |---|---|
-| Benutzer anlegen / bearbeiten / löschen | Name, Rechte, Gültigkeit, Home-Assistant-Konto |
-| **Karten und Anhänger** | alle Karten, Finger und Schloss-Kennungen: anlernen, benennen, einem Benutzer zuweisen, deaktivieren, löschen – siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen) |
-| **PINs** | PIN und Bedrohungs-PIN je Benutzer setzen, ändern, entfernen – siehe [PINs](#pins) |
-| PIN-Regeln | Master-PIN, PIN beim Scharfschalten … – siehe [PIN-Regeln](#pin-regeln) |
+| **Benutzer** | jede Person mit Rechten und Ausweisen („alle Rechte · PIN · 2 Karten“); **Person anlegen**, **Bearbeiten** (Name, Rechte, Gültigkeit, Home-Assistant-Konto, PIN und Bedrohungs-PIN), löschen |
+| **PIN-Regeln und Master-PIN** | Master-PIN, PIN beim Scharfschalten … – siehe [PIN-Regeln](#pin-regeln) |
+| **Karten, Anhänger und Schloss-Kennungen** | alle Karten, Finger und Schloss-Kennungen: anlernen, benennen, einem Benutzer zuweisen, deaktivieren, löschen – siehe [Bedienteile → Karten anlernen](bedienteile.md#karten-anlernen) |
 
 Jede Person bekommt einen Benutzer:
 
@@ -53,8 +53,9 @@ Jede Person bekommt einen Benutzer:
 | In der Alarmkarte PIN verlangen | für das Home-Assistant-Konto dieses Benutzers in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang), z. B. bei einem Tablet-Konto. Standard aus |
 | Gültig von / bis | für Gäste: außerhalb dieser Zeit sind die Ausweise gesperrt |
 
-Oben im Benutzer-Dialog steht der Stand, z. B. „2 Karten · PIN gesetzt“. Karten und PINs selbst
-änderst du in den eigenen Listen. Wird ein Benutzer gelöscht, werden seine Karten mit gelöscht.
+In der Liste steht bei jeder Person der Stand, z. B. „alle Rechte · PIN · 2 Karten“. PINs setzt du
+im Seitenblatt der Person, Karten in der Karte „Karten, Anhänger und Schloss-Kennungen“. Wird ein
+Benutzer gelöscht, werden seine Karten mit gelöscht.
 
 - **Gemeinsamer PIN:** Mehrere Benutzer dürfen denselben PIN haben („gemeinsamer PIN (Christian,
   Petra)“, bei englischer Sprache „shared PIN (…)“). Eine Aktion ist erlaubt, wenn **mindestens einer** dieser Benutzer sie darf.
@@ -67,23 +68,15 @@ Oben im Benutzer-Dialog steht der Stand, z. B. „2 Karten · PIN gesetzt“. Ka
 
 ## PINs
 
-**Benutzer und PINs → PINs.** Die Liste zeigt, wer einen PIN bzw. Bedrohungs-PIN hat und wann
-der PIN zuletzt geschaltet hat:
-
-```
-Christian – PIN · Bedrohungs-PIN · zuletzt 07:10
-Anna – PIN · zuletzt 15.11.2026
-Gast – kein PIN
-```
-
-Einen Benutzer antippen: **Neuer PIN** (4–8 Ziffern), **PIN entfernen**, **Neuer
-Bedrohungs-PIN**, **Bedrohungs-PIN entfernen**. Leere Felder ändern nichts.
+**Personen und Bedienteile → Benutzer → Bearbeiten → PIN.** Die Benutzerliste zeigt, wer einen PIN
+hat („PIN“ bzw. „Kein PIN“). Im Seitenblatt der Person: **Neuer PIN** und **neue Bedrohungs-PIN**
+(je 4–8 Ziffern); gesetzte PINs lassen sich dort entfernen. Leere Felder ändern nichts.
 
 PINs werden nur als Hash gespeichert – Hauswacht kann sie nie anzeigen, auch nicht hier. Wer
 seinen PIN vergessen hat, bekommt einen neuen.
 
-**Beispiel:** Petra soll einen PIN bekommen. Benutzer und PINs → PINs → „Petra – kein PIN“ →
-Neuer PIN `2580` → Absenden. In der Liste steht jetzt „Petra – PIN · noch nie benutzt“.
+**Beispiel:** Petra soll einen PIN bekommen. Personen und Bedienteile → bei Petra **Bearbeiten** →
+Neuer PIN `2580` → Speichern. In der Liste steht jetzt bei Petra „PIN“.
 
 ## Rechte
 
@@ -91,16 +84,15 @@ Ohne weitere Bereiche gelten die drei Häkchen. Mit mehreren Bereichen wählst d
 **„Rechte gelten für“**:
 
 - **Alle Bereiche gleich:** die Häkchen gelten überall.
-- **Je Bereich einzeln:** Nach dem Speichern folgt eine Seite, auf der du für jeden Bereich
-  wählst: scharf, unscharf, Alarm beenden. Ein Bereich ohne Auswahl ist für den Benutzer
-  gesperrt.
+- **Je Bereich einzeln:** Im Seitenblatt der Person erscheint je Bereich ein Kasten: scharf,
+  unscharf, Alarm beenden. Ein Bereich ohne Auswahl ist für den Benutzer gesperrt.
 
 Ein Keypad für alle Bereiche schaltet beim Unscharfschalten nur die Bereiche, in denen der
 Benutzer das darf.
 
 ## PIN-Regeln
 
-**Systemeinstellungen → Benutzer und PINs → PIN-Regeln:**
+**Einstellungsseite → Personen und Bedienteile → PIN-Regeln und Master-PIN → Bearbeiten:**
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -110,8 +102,8 @@ Benutzer das darf.
 | **Alarmkarte: PIN für Konten ohne Hauswacht-Benutzer verlangen** | Standard an. Gilt nur in der Karte [„Hauswacht Alarm“](dashboard.md#ohne-pin-zwang); zugeordnete Konten schalten dort ohne PIN |
 | **Dashboard-Knöpfe trotz PIN erlauben** | „Unscharf schalten“, „Alarm beenden“ und die Scharf-Knöpfe funktionieren weiter. Der PIN schützt dann nur Bedienfeld, Keypads und Sprachassistenten – an die Knöpfe kommen ohnehin nur angemeldete Home-Assistant-Benutzer |
 
-- Ob ein Master-PIN eingerichtet ist, steht oben im Menü „Benutzer und PINs“ und in den
-  PIN-Regeln: „Master-PIN: ✅ eingerichtet“ bzw. „– keiner“. Der PIN selbst wird nie angezeigt.
+- Ob ein Master-PIN eingerichtet ist, steht in der Karte „PIN-Regeln und Master-PIN“: „Master-PIN
+  gesetzt“ bzw. „kein Master-PIN“. Der PIN selbst wird nie angezeigt.
 - PINs haben 4–8 Ziffern und werden nur als Hash gespeichert.
 - Ohne PIN darf die Anlage **nicht** für Sprachassistenten freigegeben werden.
 - Ein PIN aus Versionen vor 0.16.1 wurde beim Update zum Benutzer „Hauptbenutzer“.

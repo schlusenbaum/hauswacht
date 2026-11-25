@@ -2,28 +2,24 @@
 
 [Deutsch](../einstellungsseite.md) | **English**
 
-> The page **shows** the whole setup and you edit **everything** directly on it.
-> The settings dialog (button "Edit in the dialog" at the top right) stays as a second way. The
-> page switches nothing – the only exception is the **siren test** (tab Alarm devices, card
-> "Siren test"), with confirmation and for administrators only.
+> The page **shows** the whole setup, and you edit **everything** directly on it. Since 0.63.2 it
+> is the **only way** – the former settings dialog is gone. The page switches nothing – the only
+> exception is the **siren test** (tab Alarm devices, card "Siren test"), with confirmation and
+> for administrators only.
 
-The settings dialog always shows just one step. The page **Hauswacht** in the Home Assistant
-sidebar, on the other hand, shows everything at a glance: which sensors are in which group, in
-which profile they are armed, who gets which message.
+The page **Hauswacht** in the Home Assistant sidebar shows everything at a glance: which sensors
+are in which group, in which profile they are armed, who gets which message – and you change it
+right there.
 
 - Visible to **administrators** only.
-- **In addition** to the dialog and the [setup wizard](setup-wizard.md) – all ways use the same
-  settings. What is changed in the dialog appears on the page right after "Reload".
 - **Open it:** from the sidebar, from the link in the device info on the Hauswacht device page,
-  from the link at the very top of the "Configure" dialog or directly at `/hauswacht-settings`
-  (e.g. `http://homeassistant.local:8123/hauswacht-settings`).
+  via **Configure** on the integration (shows a link to here) or directly at
+  `/hauswacht-settings` (e.g. `http://homeassistant.local:8123/hauswacht-settings`).
 - **Hide instead of switch off** (from 0.61): the page always exists. Under System → **Settings
-  page** (or in the dialog: Configure → System → **Settings page: show in the sidebar**) you only
-  choose whether it is shown in the sidebar. When hidden, you reach it the ways above. Every user
-  can also hide it for themselves via "Edit sidebar" in Home Assistant.
-- **New settings are only here** (from 0.61, e.g. ["On return"](profiles.md#on-return) and
-  ["away" only with proof](profiles.md#away-only-with-proof)). The dialog shows a hint with a link
-  at that place.
+  page** you only choose whether it is shown in the sidebar. When hidden, you reach it the ways
+  above. Every user can also hide it for themselves via "Edit sidebar" in Home Assistant.
+- **New here?** In the tab **Documentation**, [How Hauswacht decides](how-hauswacht-decides.md)
+  explains the flows in pictures.
 - **Explanations right at the field** (from 0.62): in all side sheets – profiles, sensors,
   trigger rules, sirens and notifications, persons, controls, system – the fields have an **ⓘ**.
   Hovering shows the explanation, tapping (phone, tablet) expands it. Where it helps, a sentence
@@ -103,14 +99,14 @@ For special sensors the list shows suitable sources: for the tilt position selec
 sensors with values like "tilted" or names with "window", "handle" …; for the vibration strength
 number helpers and sensors with "vibration" in their name.
 
-As safe as the dialog:
+Saved safely:
 
-- **The same rules:** the page uses the same checks as the dialog. A sensor in two groups, a group
+- **Checked:** every change goes through the same settings rules. A sensor in two groups, a group
   without a name, "tilted" and "closed" for the same value – that is refused with a message at
   the field.
 - **Only disarmed:** if an area is armed, the buttons are missing; at the top it says "Changes are
   only possible while all areas are disarmed".
-- **Nothing gets overwritten:** if someone changed something in the dialog or on another device
+- **Nothing gets overwritten:** if someone changed something on another device
   in the meantime, the page does not save but reloads – then simply try again.
 - After saving, Hauswacht reloads its settings (a second or two), then the page shows the new
   state with "✓ Saved."
@@ -118,8 +114,7 @@ As safe as the dialog:
 ## Editing profiles
 
 The tab **Profiles** lists every profile with its values; **"Edit"** opens the side sheet,
-**"+ Add alarm profile"** an empty one with the usual defaults (30 s delay, 180 s alarm …). The
-sections match the dialog.
+**"+ Add alarm profile"** an empty one with the usual defaults (30 s delay, 180 s alarm …).
 
 **Explanations right at the field** (from 0.62):
 
@@ -145,7 +140,7 @@ sections match the dialog.
 | **Arm by closing the door** | On/off, exit doors (the sensors of type door in the chosen groups), settle time |
 | **Passage** | Allow passage, times, which door, sensors on the way – see [passage](passage.md). Letting in by phone has moved to "On return" |
 
-The same rules as in the dialog apply: a name is needed and must be unique, every button only
+These rules apply: a name is needed and must be unique, every button only
 once per area, "On return" (except "Nothing") only with at least one person. **Delete** asks once.
 
 ## Editing trigger rules
@@ -186,7 +181,7 @@ steps:
 - **Complex rules are YAML only** – the "Form" button is greyed out, and the list says
   "(YAML only)".
 - **Conditions** ("only if …") are shown in the form; they can only be changed in YAML.
-- Only what the dialog would save is saved: a name is needed and must be unique, no empty step,
+- Only a valid rule is saved: a name is needed and must be unique, no empty step,
   not the same sensor in two consecutive steps. **Delete** asks once and also removes the rule
   from all profiles.
 
@@ -198,7 +193,7 @@ people, PINs and rights are: see [users, PINs and lockout](users.md).
 
 | Field | Content |
 |---|---|
-| **Name** | Suggestions from the Home Assistant accounts. If the person has the same name as an account, they are linked (as in the dialog) |
+| **Name** | Suggestions from the Home Assistant accounts. If the person has the same name as an account, they are linked |
 | **Active** | Off = the person cannot switch anything (e.g. temporarily blocked) |
 | **May …** | arm, disarm, end an alarm. With several areas optionally **per area** – then one box per area |
 | **Arm anyway at the keypad** | bypass open sensors, see [arm anyway at the keypad](control-devices.md#arm-anyway-at-the-keypad) |
@@ -208,7 +203,7 @@ people, PINs and rights are: see [users, PINs and lockout](users.md).
 | **PIN** | New PIN and new [duress PIN](users.md#duress-pin), 4 to 8 digits each; empty = keep. Set PINs can be removed here |
 
 - **PINs are never shown** – not even here. The page only shows "PIN set" or "No PIN".
-- The [PIN rules](users.md#pin-rules) apply as in the dialog: a PIN must not be another person's
+- The [PIN rules](users.md#pin-rules) apply: a PIN must not be another person's
   duress PIN or an action code. If something does not fit, **nothing** is saved and the field
   shows the reason.
 - **Delete** asks once.
@@ -239,15 +234,14 @@ reports "problem", normal again above 6.") and the learning time.
 | **Radio networks and gateways** | Status sensors, e.g. the Zigbee2MQTT bridge – see [radio networks](sensors.md#monitor-radio-networks-and-gateways) |
 | **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation). Below that **"When does someone count as away?"** (from 0.61, only here): location outside **check precisely** or **simple**, under "More settings" the **time window for the proof** (default 15 minutes) with a recommendation from the "leaving" measurement and an **apply** button; per person **"Proof for 'away'"**: location only (safe) or also door + signal (uncertain, with a warning and its own time window); warning for persons without a location – see ["away" only with proof](profiles.md#away-only-with-proof). From 0.63 the card also shows **"Who counts as home right now?"**: home/away/unknown per person with the reason, and per profile one line about what the automation and "On return" are doing right now – see [Testing presence](test-mode.md#testing-presence). Below it the block **Measurements**: view, save, reset – see [Measurements on the settings page](observations.md#measurements-on-the-settings-page) |
 | **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |
-| **Settings page** | **Show in the sidebar** on/off. When hidden, only the sidebar entry disappears – the page stays reachable from the device page, the link in the dialog and `/hauswacht-settings` |
+| **Settings page** | **Show in the sidebar** on/off. When hidden, only the sidebar entry disappears – the page stays reachable from the device page, "Configure" on the integration and `/hauswacht-settings` |
 
 ## Editing alarm devices
 
 In the tab **Alarm devices**, **"Edit sirens"** opens the side sheet:
 
 - **Registered sirens** – remove with ✕; below, all other sirens (`siren.…`) to tap. When a
-  siren is removed, it also disappears from the profiles and its tone is forgotten – as in the
-  dialog.
+  siren is removed, it also disappears from the profiles and its tone is forgotten.
 - **Real siren control enabled** – only then can sirens really sound on an alarm. When **turning
   it on**, a warning and a second tick **"I understand …"** appear; without this tick nothing is
   saved ("Please confirm to enable."). Turning it off works any time without asking.
@@ -284,8 +278,7 @@ blocked, the card shows the reason (⛔). Only **administrators** may start it.
 
 The tab **Notifications** has two buttons:
 
-**"Edit recipients and events"** – everything from "Notifications – settings" in the dialog on
-one sheet:
+**"Edit recipients and events"** – all notification settings on one sheet:
 
 | Section | Content |
 |---|---|
@@ -328,7 +321,7 @@ alarm announcement, quiet hours from–to; per event on/off, announcement or spe
   [siren test](#siren-test-on-the-page-real-siren) with confirmation. It only changes settings, and only
   the ones you save. It only creates helpers when you explicitly want it ("create siren from
   switch", "create sensor from a measurement").
-- The **setup wizard** stays in the dialog (button "Edit in the dialog" → setup wizard).
+- There is currently no **setup wizard**; a new one on this page is planned – see [setup wizard](setup-wizard.md).
 - It shows the state at the time of opening; "Reload" (arrow at the top) fetches the current one.
 - The same content is available for printing in the card [Hauswacht overview](overview.md).
 - The page also works on a phone; wide tables can be scrolled sideways.

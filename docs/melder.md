@@ -16,7 +16,7 @@ Hauswacht überwacht nur Entitäten, die **offen/zu** kennen:
 
 Alles andere wird über einen **Helfer** in Home Assistant zum Binärsensor:
 
-- **Messwerte** (Temperatur, Feuchte, Leistung …): mit dem Assistenten
+- **Messwerte** (Temperatur, Feuchte, Leistung …): mit
   [Melder aus anderem Sensor erstellen](#melder-aus-anderem-sensor-erstellen).
 - **Kameras:** Die meisten Kamera-Integrationen liefern Bewegung, Person oder Fahrzeug schon als
   Binärsensoren – die direkt verwenden.
@@ -36,7 +36,7 @@ template:
 
 ## Meldergruppen
 
-**Alarmauslösung → Meldergruppen → Meldergruppe anlegen.**
+**Einstellungsseite → Melder → Meldergruppe anlegen.**
 
 Eine **Meldergruppe** fasst Melder zusammen, die immer gemeinsam scharf werden. Profile schalten
 ganze Meldergruppen scharf, nicht einzelne Melder. Typisch:
@@ -67,8 +67,8 @@ Label entfernt, bleibt der Melder bis zum Unscharfschalten überwacht.
 ## Typen
 
 Der **Typ** legt fest, *wie* ein Melder reagiert; *wann* er scharf ist, legen Meldergruppe und
-Alarmprofil fest. Nach dem Speichern einer Meldergruppe zeigt Hauswacht alle ihre Melder mit dem
-vorgeschlagenen Typ – meist passt er, sonst direkt dort ändern.
+Alarmprofil fest. Im Seitenblatt einer Meldergruppe steht jeder Melder mit dem vorgeschlagenen
+Typ – meist passt er, sonst direkt dort ändern.
 
 | Typ | Vorschlag bei | Verhalten |
 |---|---|---|
@@ -97,7 +97,7 @@ jedem Alarmprofil legst du fest, ob ein **gekipptes Fenster erlaubt** ist.
 
 ### Einrichten
 
-**Alarmauslösung → Besondere Melder → Melder mit Kippstellung anlegen.**
+**Einstellungsseite → Melder → Besondere Melder → + Kippstellung hinzufügen.**
 
 1. **Quelle wählen.** Woher die Stellung kommt, ist je Gerät verschieden:
 
@@ -153,7 +153,7 @@ jedem Alarmprofil legst du fest, ob ein **gekipptes Fenster erlaubt** ist.
   Simulieren.
 - **Anlagenübersicht:** Zustand „gekippt“.
 
-**Bearbeiten und entfernen** unter Alarmauslösung → Besondere Melder. Entfernen nimmt den Melder
+**Bearbeiten und entfernen** unter Einstellungsseite → Melder → Besondere Melder. Entfernen nimmt den Melder
 auch aus allen Meldergruppen; am Gerät ändert sich nichts.
 
 > **Erschütterung am Fenster:** Viele dieser Sensoren melden auch Erschütterung (Aufhebeln,
@@ -178,8 +178,8 @@ ihnen den eigenen Typ **Erschütterung**:
 ### Fehlalarmschutz: wie viele Erschütterungen bis zum Alarm?
 
 Erschütterungssensoren sind empfindlich: Eine zugeschlagene Tür, ein vorbeifahrender Lkw, ein
-Gewitter oder ein Ball gegen die Scheibe können auslösen. Deshalb fragt Hauswacht beim Speichern
-einer Meldergruppe mit Erschütterungsmeldern:
+Gewitter oder ein Ball gegen die Scheibe können auslösen. Deshalb zeigt das Seitenblatt einer
+Meldergruppe mit Erschütterungsmeldern den Abschnitt **Fehlalarmschutz für Erschütterung**:
 
 **„Alarm bei N Meldungen eines Melders innerhalb von S Sekunden“**
 
@@ -197,14 +197,15 @@ einer Meldergruppe mit Erschütterungsmeldern:
   „an“ (oft 60–90 Sekunden) und melden in dieser Zeit keine zweite. Für „2 in 60 Sekunden“ muss
   die Haltezeit deutlich kürzer sein – bei Zigbee2MQTT ist sie oft als Geräteoption einstellbar
   (z. B. 5–10 Sekunden).
-- Ändern: Meldergruppe bearbeiten → speichern → nach den Typen kommt die Frage erneut.
+- Ändern: Einstellungsseite → Melder → Meldergruppe bearbeiten → **Fehlalarmschutz für
+  Erschütterung**.
 
 ### Erschütterungsstärke als Zahl
 
 Manche Sensoren melden keine „an/aus“-Erschütterung, sondern eine **Stärke als Zahl** (z. B.
 `sensor.fenster_bad_vibration` eines Fenstersensors). Daraus wird ohne Helfer ein Melder:
 
-**Alarmauslösung → Besondere Melder → Erschütterungsstärke anlegen.**
+**Einstellungsseite → Melder → Besondere Melder → + Erschütterungsstärke hinzufügen.**
 
 1. Sensor wählen (zum Ausprobieren ohne Hardware: Helfer **Zahlenwert**, `input_number`).
 2. **Schwelle** eintragen: ab diesem Wert gilt es als Erschütterung. Am besten den Wert unter
@@ -222,7 +223,8 @@ sollen, die Kombination aber schon.
 
 ## Melder aus anderem Sensor erstellen
 
-**Alarmauslösung → Melder aus anderem Sensor erstellen.** Beispiel Frostwächter:
+**Einstellungsseite → Melder → Besondere Melder → + Melder aus Messwert erstellen.** Beispiel
+Frostwächter:
 
 | Feld | Beispiel |
 |---|---|
@@ -241,7 +243,7 @@ bleiben unverändert.
 
 ## Immer aktive Melder
 
-**Alarmauslösung → Immer aktiv.** Melder, die **auch im unscharfen Zustand** melden – z. B.
+**Einstellungsseite → Melder → Immer aktiv → Bearbeiten.** Melder, die **auch im unscharfen Zustand** melden – z. B.
 Tresor, Waffenschrank, Gartenhaus, Panikknopf. Meldergruppen und/oder einzelne Melder.
 
 | Zustand | Reaktion |
@@ -259,7 +261,7 @@ Melder den Hinweis „immer aktiv“.
 
 ## Funkstille von Sensoren
 
-**Systemeinstellungen → Funkstille von Sensoren.**
+**Einstellungsseite → System → Funkstille von Sensoren.**
 
 - Ein Melder ist **nicht verfügbar**, wenn er fehlt oder `unavailable` bzw. `unknown` meldet.
 - Optional gilt er auch als **ausgefallen**, wenn er sich so viele Stunden nicht gemeldet hat
@@ -276,8 +278,8 @@ Melder den Hinweis „immer aktiv“.
 ### Funkstille-Beobachtung: der richtige Wert aus euren Daten
 
 Hauswacht merkt sich je Melder die **längste Pause zwischen zwei Lebenszeichen** (jede Minute
-geprüft, über Neustarts gespeichert; Pausen über einen Neustart zählen nicht). Im Formular steht
-dann z. B.:
+geprüft, über Neustarts gespeichert; Pausen über einen Neustart zählen nicht). Auf der
+Einstellungsseite (System → Funkstille von Sensoren) steht dann z. B.:
 
 > Beobachtet seit 14 Tagen. Längste Pause: Türkontakt vorne 1 h 52 min. **Empfehlung: 3 h.**
 
@@ -309,8 +311,6 @@ Wert** geben.
   zeigt die Karte „Funkstille von Sensoren“ alle Melder mit längster Pause, Empfehlung und eigenem
   Wert (⚠️, wenn der eigene Wert unter der Empfehlung liegt). In der Melder-Tabelle steht ein
   eigener Wert als „⏱ 24 h“ bzw. „⏱ nie prüfen“ hinter dem Namen.
-- **Dialog:** Systemeinstellungen → Funkstille von Sensoren → unten „Eigenen Wert für einen Melder
-  einstellen“ wählen.
 - Melder mit eigenem Wert zählen für die **allgemeine Empfehlung** nicht mehr mit. Beispiel: Die
   Hintertür schweigt bis zu 16 Stunden, alle anderen höchstens 2 Stunden. Mit eigenem Wert für die
   Hintertür (24 h) empfiehlt die Beobachtung allgemein 3 h statt 24 h.
@@ -319,7 +319,7 @@ Wert** geben.
 
 ## Funknetz und Gateways überwachen
 
-**Systemeinstellungen → Funknetz und Gateways überwachen.** Binärsensoren, die melden, ob ein
+**Einstellungsseite → System → Funknetz und Gateways.** Binärsensoren, die melden, ob ein
 Funknetz oder Gateway läuft. Fällt so ein System aus, können alle Melder dahinter nichts mehr
 melden.
 

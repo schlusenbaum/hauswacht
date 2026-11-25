@@ -30,14 +30,13 @@ keypad.
 
 ## Users
 
-**System settings → Users and PINs.** The menu has:
+**[Settings page](settings-page.md#editing-people) → People and control devices.** There you find:
 
-| Menu item | What for |
+| Card | What for |
 |---|---|
-| Add / edit / delete user | name, rights, validity, Home Assistant account |
-| **Cards and tags** | all cards, fingers and lock IDs: learn, name, assign to a user, disable, delete – see [Control devices → Learning cards](control-devices.md#learning-cards) |
-| **PINs** | set, change, remove PIN and duress PIN per user – see [PINs](#pins) |
-| PIN rules | master PIN, PIN when arming … – see [PIN rules](#pin-rules) |
+| **Users** | every person with rights and credentials ("all rights · PIN · 2 cards"); **Add person**, **Edit** (name, rights, validity, Home Assistant account, PIN and duress PIN), delete |
+| **PIN rules and master PIN** | master PIN, PIN when arming … – see [PIN rules](#pin-rules) |
+| **Cards, tags and lock IDs** | all cards, fingers and lock IDs: learn, name, assign to a user, disable, delete – see [Control devices → Learning cards](control-devices.md#learning-cards) |
 
 Every person gets a user:
 
@@ -52,8 +51,9 @@ Every person gets a user:
 | Require PIN in the alarm card | for this user's Home Assistant account in the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin), e.g. for a tablet account. Default off |
 | Valid from / until | for guests: outside this time, the credentials are blocked |
 
-At the top, the user dialog shows the status, e.g. "2 cards · PIN set". You change cards and PINs
-themselves in their own lists. If a user is deleted, their cards are deleted too.
+The list shows the status of every person, e.g. "all rights · PIN · 2 cards". You set PINs in the
+person's side sheet and cards in the card "Cards, tags and lock IDs". If a user is deleted, their
+cards are deleted too.
 
 - **Shared PIN:** several users may have the same PIN ("shared PIN (Christian, Petra)"). An
   action is allowed if **at least one** of these users may do it.
@@ -66,23 +66,15 @@ themselves in their own lists. If a user is deleted, their cards are deleted too
 
 ## PINs
 
-**Users and PINs → PINs.** The list shows who has a PIN or duress PIN and when the PIN last
-switched:
-
-```
-Christian – PIN · duress PIN · last 07:10
-Anna – PIN · last 15.11.2026
-Guest – no PIN
-```
-
-Tap a user: **New PIN** (4–8 digits), **Remove PIN**, **New duress PIN**, **Remove duress PIN**.
-Empty fields change nothing.
+**People and control devices → Users → Edit → PIN.** The user list shows who has a PIN ("PIN" or
+"No PIN"). In the person's side sheet: **New PIN** and **new duress PIN** (4–8 digits each); PINs
+that are set can be removed there. Empty fields change nothing.
 
 PINs are stored as a hash only – Hauswacht can never show them, not here either. Whoever has
 forgotten their PIN gets a new one.
 
-**Example:** Petra is to get a PIN. Users and PINs → PINs → "Petra – no PIN" → New PIN `2580` →
-submit. The list now shows "Petra – PIN · never used".
+**Example:** Petra is to get a PIN. People and control devices → **Edit** at Petra → New PIN
+`2580` → save. The list now shows "PIN" at Petra.
 
 ## Rights
 
@@ -90,14 +82,14 @@ Without further areas, the three checkboxes apply. With several areas, choose **
 to"** for the user:
 
 - **All areas alike:** the checkboxes apply everywhere.
-- **Per area:** after saving, a page follows where you choose for each area: arm, disarm, end
-  alarm. An area without a selection is blocked for the user.
+- **Per area:** the person's side sheet shows a box per area: arm, disarm, end alarm. An area
+  without a selection is blocked for the user.
 
 A keypad for all areas only disarms the areas in which the user may do so.
 
 ## PIN rules
 
-**System settings → Users and PINs → PIN rules:**
+**Settings page → People and control devices → PIN rules and master PIN → Edit:**
 
 | Setting | Meaning |
 |---|---|
@@ -107,8 +99,8 @@ A keypad for all areas only disarms the areas in which the user may do so.
 | **Alarm card: require PIN for Home Assistant accounts without a Hauswacht user** | default on. Only applies in the card ["Hauswacht Alarm"](dashboard.md#no-forced-pin); linked accounts switch there without PIN |
 | **Allow dashboard buttons despite PIN** | "Disarm now", "End alarm" and the arm buttons keep working. The PIN then only protects the alarm panel, keypads and voice assistants – only logged-in Home Assistant users get to the buttons anyway |
 
-- Whether a master PIN is set up is shown at the top of the menu "Users and PINs" and in the PIN
-  rules: "Master PIN: ✅ set up" or "– none". The PIN itself is never shown.
+- Whether a master PIN is set up is shown in the card "PIN rules and master PIN": "master PIN
+  set" or "no master PIN". The PIN itself is never shown.
 - PINs have 4–8 digits and are stored as a hash only.
 - Without a PIN, the system must **not** be exposed to voice assistants.
 - A PIN from versions before 0.16.1 became the user "Main user" during the update.

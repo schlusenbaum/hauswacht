@@ -293,17 +293,6 @@ async def test_unknown_lock_id_is_offered_for_learning(
     await _nuki(hass, "1,0,4711,0,0")
     await _lock(hass, "unlocked")
     assert "NUKIAUTH4711" in entry.runtime_data.controls.unknown_cards
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "users", "cards"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"card": "__type__"})
-    assert flow["step_id"] == "card_new"
-    key = next(k for k in flow["data_schema"].schema if str(k) == "card")
-    options = flow["data_schema"].schema[key].config["options"]
-    new = next(o for o in options if o["value"] == "NUKIAUTH4711")
-    assert new["label"].startswith("Nuki user 4711")  # Testumgebung: Englisch
 
 
 async def test_lock_from_outside_arms_profile(
@@ -339,75 +328,6 @@ async def test_generic_who_sensor_disarms(hass: HomeAssistant, mqtt_mock: MqttMo
 
 
 # --- Einrichtung ------------------------------------------------------------------
-
-
-async def test_options_add_button_with_event_types(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
-) -> None:
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_button"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "control_button"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Taster Tür", "area": "__all__", "entity": BUTTON}
-    )
-    assert flow["step_id"] == "control_presses_event"
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {})
-    assert flow["errors"] == {"base": "button_no_press"}
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"single": "away"})
-    assert flow["type"] == "menu"
-    stored = entry.options["controls"]["taster_tuer"]
-    assert stored["kind"] == "button"
-    assert stored["presses"] == {"single": "away"}
-
-
-async def test_options_add_button_with_action_sensor(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
-) -> None:
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_button"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Taster Garage", "area": "__all__", "entity": ACTION_SENSOR}
-    )
-    assert flow["step_id"] == "control_presses"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"press_1": " single ", "profile_1": "away"}
-    )
-    assert flow["type"] == "menu"
-    assert entry.options["controls"]["taster_garage"]["presses"] == {"single": "away"}
-
-
-async def test_options_add_lock(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_lock"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "control_lock"
-    base = {"name": "Gartentür", "area": "__all__", "entity": LOCK}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "source": "nuki_mqtt"}
-    )
-    assert flow["errors"] == {"topic": "control_topic"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "source": "generic"}
-    )
-    assert flow["errors"] == {"who": "control_who"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "source": "nuki_mqtt", "topic": "nuki/ABCD/"}
-    )
-    assert flow["type"] == "menu"
-    stored = entry.options["controls"]["gartentuer"]
-    assert stored["topic"] == "nuki/ABCD"
-    assert stored["profile"] is None
 
 
 async def test_nuki_passage_keeps_armed(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> None:

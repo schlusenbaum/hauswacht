@@ -10,7 +10,6 @@ from typing import Any
 import pytest
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import async_capture_events
 
@@ -142,50 +141,3 @@ async def test_event_has_position(hass: HomeAssistant) -> None:
 async def test_profile_switch_exists(hass: HomeAssistant) -> None:
     await _setup(hass)
     assert any("tilted" in s.entity_id for s in hass.states.async_all("switch"))
-
-
-async def test_options_flow_adds_select_helper(hass: HomeAssistant) -> None:
-    hass.states.async_set("input_select.testfenster", "zu", {"options": ["offen", "gekippt", "zu"]})
-    await _setup(hass)
-    entry = hass.config_entries.async_entries("hauswacht")[0]
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "triggering"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "special_sensors"}
-    )
-    assert result["type"] is FlowResultType.MENU
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "tilt_add"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"entity": "input_select.testfenster"}
-    )
-    assert result["step_id"] == "tilt_map"
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"closed": ["zu"], "tilted": ["gekippt"], "target": "fenster"}
-    )
-    assert result["type"] is FlowResultType.MENU
-    await hass.async_block_till_done()
-    options = hass.config_entries.async_entries("hauswacht")[0].options
-    assert options["tilt_sensors"]["input_select.testfenster"]["tilted"] == ["gekippt"]
-    assert "input_select.testfenster" in options["zones"]["fenster"]["entities"]
-
-
-async def test_options_flow_needs_closed_value(hass: HomeAssistant) -> None:
-    hass.states.async_set("input_select.testfenster", "zu", {"options": ["offen", "gekippt", "zu"]})
-    await _setup(hass)
-    entry = hass.config_entries.async_entries("hauswacht")[0]
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("triggering", "special_sensors", "tilt_add"):
-        result = await hass.config_entries.options.async_configure(
-            result["flow_id"], {"next_step_id": step}
-        )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"entity": "input_select.testfenster"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"closed": [], "tilted": ["gekippt"]}
-    )
-    assert result["errors"] == {"closed": "tilt_no_closed"}

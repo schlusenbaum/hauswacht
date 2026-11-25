@@ -123,30 +123,30 @@ heimkommt ([Bei Rückkehr](profile.md#bei-rückkehr)). „Heimkommen“ heißt: 
 ```mermaid
 flowchart TD
     H["Jemand aus der Liste<br/>kommt heim"] --> M{"Bei Rückkehr"}
-    M -- aus --> N["nichts"]
-    M -- "nur nach Automatik" --> AU{"Hat die Automatik<br/>dieses Profil<br/>scharf geschaltet?"}
+    M -- Nichts --> N["nichts"]
+    M -- "Unscharf, nur wenn<br/>automatisch scharf" --> AU{"Hat die Automatik<br/>dieses Profil<br/>scharf geschaltet?"}
     AU -- ja --> U["unscharf"]
     AU -- nein --> N
-    M -- "mit Türbeleg" --> TB{"Ging im Zeitfenster<br/>eine Eingangstür auf?<br/>(vorher oder nachher)"}
+    M -- "Unscharf mit Türbeleg" --> TB{"Ging im Zeitfenster<br/>eine Eingangstür auf?<br/>(vorher oder nachher)"}
     TB -- ja --> U
     TB -- nein --> N
-    M -- immer --> LW{"War die Person<br/>mind. 5 min sicher weg?"}
+    M -- "Unscharf, auch nach<br/>Scharfschalten von Hand" --> LW{"War die Person<br/>mind. 5 min sicher weg?"}
     LW -- ja --> U
     LW -- nein --> N
-    M -- reinlassen --> RL{"Mind. 5 min weg<br/>und Tür im Zeitfenster?"}
+    M -- "Reinlassen" --> RL{"Mind. 5 min weg<br/>und Tür im Zeitfenster?"}
     RL -- ja --> S["Tür frei<br/>Profil bleibt scharf"]
     RL -- nein --> N
 ```
 
 | Einstellung | Wann sinnvoll | Worauf achten |
 |---|---|---|
-| **aus** | Das Profil soll nie von selbst unscharf werden | – |
-| **nur nach Automatik** | „Abwesend“ wurde durch „alle weg“ scharf – wer zuerst heimkommt, schaltet ab | Wirkt nur, solange das Profil scharf ist – nicht mehr in der Eingangsverzögerung. Das Handy muss also vor der Tür „zuhause“ melden |
-| **mit Türbeleg** | Der sichere Weg: Handy **und** Tür müssen zusammenpassen | Das [Zeitfenster](profile.md#was-das-zeitfenster-bedeutet) (Standard 5 min) gilt in beide Richtungen. Wirkt auch während der Eingangsverzögerung |
-| **immer** | Auch nach Scharfschalten von Hand, ohne Tür | Mit Warnhinweis: Ein Handy, das nach Pause „zuhause“ meldet, schaltet ab – auch wenn niemand an der Tür ist |
-| **reinlassen** | Nachts heimkommen, „Nacht“ soll scharf bleiben | Schaltet nicht unscharf, gibt nur die Tür frei ([Durchgang](durchgang.md#reinlassen-per-handy)) |
+| **Nichts** | Das Profil soll nie von selbst unscharf werden | – |
+| **Unscharf, nur wenn automatisch scharf** | „Abwesend“ wurde durch „alle weg“ scharf – wer zuerst heimkommt, schaltet ab | Wirkt nur, solange das Profil scharf ist – nicht mehr in der Eingangsverzögerung. Das Handy muss also vor der Tür „zuhause“ melden |
+| **Unscharf mit Türbeleg** | Der sichere Weg: Handy **und** Tür müssen zusammenpassen | Das [Zeitfenster](profile.md#was-das-zeitfenster-bedeutet) (Standard 5 min) gilt in beide Richtungen. Wirkt auch während der Eingangsverzögerung |
+| **Unscharf, auch nach Scharfschalten von Hand** | Auch nach Scharfschalten von Hand, ohne Tür | Mit Warnhinweis: Ein Handy, das nach Pause „zuhause“ meldet, schaltet ab – auch wenn niemand an der Tür ist |
+| **Reinlassen (Durchgang)** | Nachts heimkommen, „Nacht“ soll scharf bleiben | Schaltet nicht unscharf, gibt nur die Tür frei ([Durchgang](durchgang.md#reinlassen-per-handy)) |
 
-**Beispiel:** „Nacht“ steht auf „mit Türbeleg“. Niklas kommt um 1 Uhr heim. Sein iPhone meldet
+**Beispiel:** „Nacht“ steht auf „Unscharf mit Türbeleg“. Niklas kommt um 1 Uhr heim. Sein iPhone meldet
 sich um 1:02 im WLAN, um 1:03 geht die Haustür auf → beides im Zeitfenster → unscharf. Meldet
 sein iPhone sich erst, als er schon drin ist (Tür um 1:03, WLAN um 1:03:40), klappt es genauso –
 solange es innerhalb der Eingangsverzögerung passiert. Wie lange das bei euch dauert, misst die

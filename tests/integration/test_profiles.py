@@ -11,7 +11,7 @@ from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelState,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType, section
+from homeassistant.data_entry_flow import section
 from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -153,67 +153,6 @@ async def test_select_and_buttons(hass: HomeAssistant) -> None:
 # --- Optionen ---------------------------------------------------------------
 
 
-async def _open_profile_form(hass: HomeAssistant, entry: MockConfigEntry) -> dict[str, Any]:
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profiles"}
-    )
-    return await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profile_add"}
-    )
-
-
-async def test_options_flow_add_profile(hass: HomeAssistant) -> None:
-    entry = await _setup_plain(hass, {"zones": ZONES})
-    flow = await _open_profile_form(hass, entry)
-    assert flow["step_id"] == "profile_settings"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"],
-        {
-            "name": "Nacht EG",
-            "icon": "mdi:weather-night",
-            "panel_mode": "night",
-            "zones": ["aussen"],
-        },
-    )
-    assert flow["type"] is FlowResultType.MENU
-    await hass.async_block_till_done()
-    profile = entry.options["profiles"]["nacht_eg"]
-    assert profile["name"] == "Nacht EG"
-    assert profile["panel_mode"] == "night"
-    assert profile["zones"] == ["aussen"]
-
-
-async def test_options_flow_rejects_duplicate_name_and_button(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await _open_profile_form(hass, entry)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "nacht", "icon": "mdi:moon-waning-crescent", "panel_mode": "away"}
-    )
-    assert flow["errors"] == {"name": "profile_name_taken", "panel_mode": "panel_mode_taken"}
-
-
-async def test_options_flow_delete_profile(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profiles"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profile_delete"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"profile": "vacation"}
-    )
-    assert flow["type"] is FlowResultType.MENU
-    await hass.async_block_till_done()
-    assert "vacation" not in entry.options["profiles"]
-    features = _state(hass).attributes["supported_features"]
-    assert not features & AlarmControlPanelEntityFeature.ARM_VACATION
-
-
 def _initial_form_data(schema: vol.Schema) -> dict[str, Any]:
     """Nachbildung der Vorbelegung im Home-Assistant-Frontend (computeInitialHaFormData)."""
     data: dict[str, Any] = {}
@@ -240,40 +179,3 @@ def _missing_required(schema: vol.Schema, data: dict[str, Any]) -> list[str]:
         elif isinstance(key, vol.Required) and data.get(name) in (None, ""):
             missing.append(name)
     return missing
-
-
-@pytest.mark.parametrize("profile", ["night", "custom"])
-async def test_profile_form_can_be_submitted_unchanged(hass: HomeAssistant, profile: str) -> None:
-    """Regression: "OK" darf nicht an unbefüllten Pflichtfeldern im Bereich Automatik scheitern."""
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profiles"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profile_edit"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": profile})
-    assert flow["step_id"] == "profile_settings"
-    schema = flow["data_schema"]
-    data = _initial_form_data(schema)
-    assert _missing_required(schema, data) == []
-
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], data)
-    assert flow["type"] is FlowResultType.MENU
-
-
-async def test_rules_field_only_when_rules_exist(hass: HomeAssistant) -> None:
-    entry = await _setup_plain(hass, {"zones": ZONES})
-    flow = await _open_profile_form(hass, entry)
-    keys = {str(m) for m in flow["data_schema"].schema}
-    assert "rules" not in keys
-    assert "zones" in keys
-
-
-async def test_rules_field_shown_with_rules(hass: HomeAssistant) -> None:
-    rules = {"r": {"name": "Tür dann Flur", "steps": [{"sensors": [DOOR]}, {"sensors": [WINDOW]}]}}
-    entry = await _setup_plain(hass, {"zones": ZONES, "rules": rules})
-    flow = await _open_profile_form(hass, entry)
-    assert "rules" in {str(m) for m in flow["data_schema"].schema}

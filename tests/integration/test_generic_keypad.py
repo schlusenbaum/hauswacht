@@ -135,7 +135,7 @@ async def test_not_ready_names_open_sensors(hass: HomeAssistant) -> None:
 
 
 async def test_unknown_button_and_keypad(hass: HomeAssistant) -> None:
-    entry = await _setup(hass)
+    await _setup(hass)
     answer = await _input(hass, button="away", code=PIN)
     assert answer["result"] == "unknown_button"
     events = async_capture_events(hass, EVENT_HAUSWACHT)
@@ -143,14 +143,6 @@ async def test_unknown_button_and_keypad(hass: HomeAssistant) -> None:
     assert answer["result"] == "unknown_keypad"
     assert any(e.data.get("type") == "UnknownKeypad" for e in events)
     assert _panel(hass) == AlarmControlPanelState.DISARMED
-    # Beim Anlegen steht das gemeldete Keypad schon im Formular
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_generic_keypad"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "control_generic_keypad"
-    assert "`garage`" in flow["description_placeholders"]["unknown"]
 
 
 async def test_display_entity_as_keypad_reference(hass: HomeAssistant) -> None:
@@ -175,31 +167,6 @@ async def test_emergency_off_reports_unknown_button(hass: HomeAssistant) -> None
     answer = await _input(hass, button="emergency")
     assert answer["result"] == "unknown_button"
     assert _panel(hass) == AlarmControlPanelState.DISARMED
-
-
-async def test_options_add_generic_keypad(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "controls", "control_add_generic_keypad"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    assert flow["step_id"] == "control_generic_keypad"
-    base = {"name": "Keypad Garage", "area": "__all__", "login": "pin_or_card", "emergency": "off"}
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], base)
-    assert flow["errors"] == {"base": "control_no_buttons"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "button_1": "disarm", "profile_1": "night"}
-    )
-    assert flow["errors"] == {"base": "control_button_reserved"}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {**base, "button_1": "Away", "profile_1": "away"}
-    )
-    assert flow["type"] == "menu"
-    stored = entry.options["controls"]["keypad_garage"]
-    assert stored["kind"] == "generic_keypad"
-    assert stored["buttons"] == {"away": "away"}
 
 
 async def test_wrong_pin_warnings_replace_each_other(hass: HomeAssistant) -> None:

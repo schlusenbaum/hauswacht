@@ -36,8 +36,7 @@ const TEXTS = {
     title: "Hauswacht",
     loading: "Lade …",
     refresh: "Neu laden",
-    dialog: "Im Dialog bearbeiten",
-    hint: "Die ganze Einrichtung auf einen Blick – und alles direkt hier bearbeiten. Der Einstellungsdialog („Im Dialog bearbeiten“) bleibt als zweiter Weg. Auch der Sirenentest geht hier (Reiter Alarmgeber) – mit Rückfrage, nur für Administratoren.",
+    hint: "Die ganze Einrichtung auf einen Blick – und alles direkt hier bearbeiten. Auch der Sirenentest geht hier (Reiter Alarmgeber) – mit Rückfrage, nur für Administratoren. Neu hier? Im Reiter „Dokumentation“ erklärt „So entscheidet Hauswacht“ die Abläufe in Bildern.",
     addRule: "Auslöseregel anlegen",
     addPerson: "Person anlegen",
     noPeople: "Noch keine Person. Ohne Personen schaltet jeder ohne PIN – mit Personen bekommt jede ihren PIN, ihre Karten und ihre Rechte.",
@@ -243,8 +242,7 @@ const TEXTS = {
     title: "Hauswacht",
     loading: "Loading …",
     refresh: "Reload",
-    dialog: "Edit in the dialog",
-    hint: "The whole setup at a glance – and edit everything right here. The settings dialog (“Edit in the dialog”) stays as a second way. The siren test also works here (tab Alarm devices) – with confirmation, administrators only.",
+    hint: "The whole setup at a glance – and edit everything right here. The siren test also works here (tab Alarm devices) – with confirmation, administrators only. New here? In the tab “Documentation”, “How Hauswacht decides” explains the flows in pictures.",
     addRule: "Add trigger rule",
     addPerson: "Add person",
     noPeople: "No person yet. Without people anyone operates without a PIN – with people, each gets their PIN, cards and rights.",
@@ -1391,7 +1389,6 @@ class HauswachtPanel extends HTMLElement {
         ${menu}
         <div class="t"><ha-icon icon="mdi:shield-home"></ha-icon>${escHtml(this._t("title"))}</div>
         <button data-a="refresh" title="${escHtml(this._t("refresh"))}"><ha-icon icon="mdi:refresh"></ha-icon></button>
-        <button class="lnk" data-a="dialog">${escHtml(this._t("dialog"))}</button>
       </div>
       <div class="tabs">${TABS.map((tab) => `<button data-tab="${tab}" class="${tab === this._tab ? "on" : ""}">${escHtml(this._t("tabs")[tab])}</button>`).join("")}</div>
       <div class="content">
@@ -1419,7 +1416,6 @@ class HauswachtPanel extends HTMLElement {
         const action = button.dataset.a;
         if (action === "refresh") this._load();
         else if (action === "menu") this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true }));
-        else if (action === "dialog") this._navigate("/config/integrations/integration/hauswacht");
         else if (action === "print" || action === "sheet") this._print(action);
         else if (action === "hc-md" || action === "hc-csv") this._downloadHomecoming(action === "hc-csv" ? "csv" : "markdown");
         else if (action === "hc-show") this._toggleReport();
@@ -1461,11 +1457,6 @@ class HauswachtPanel extends HTMLElement {
       this._error = `${this._t("error")}: ${err?.message || err}`;
       this._render();
     }
-  }
-
-  _navigate(path) {
-    history.pushState(null, "", path);
-    window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
   }
 }
 

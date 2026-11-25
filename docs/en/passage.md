@@ -20,8 +20,7 @@ outer doors.
 
 ## Switching it on
 
-In the profile under **Passage** (settings page → Profiles, or in the settings dialog for the
-profile):
+In the profile under **Passage** (settings page → Profiles → Edit):
 
 | Setting | Meaning | Default |
 |---|---|---|

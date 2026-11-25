@@ -9,7 +9,6 @@ import pytest
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
@@ -261,36 +260,6 @@ async def test_arrival_does_not_disarm_manual_arming(hass: HomeAssistant) -> Non
 # --- Optionen ---------------------------------------------------------------
 
 
-async def test_options_flow_saves_automation(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profiles"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "profile_edit"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": "night"})
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"],
-        {
-            "name": "Nacht",
-            "automation": {
-                "auto_arm_time": "22:45:00",
-                "auto_weekdays": ["fri", "sat"],
-                "auto_away_delay": 20,
-            },
-        },
-    )
-    assert flow["type"] is FlowResultType.MENU
-    night = entry.options["profiles"]["night"]
-    assert night["auto_arm_time"] == "22:45:00"
-    assert night["auto_weekdays"] == ["fri", "sat"]
-    assert night["auto_away_delay"] == 20
-    assert night["zones"] == ["aussen", "keller"]
-
-
 # --- 0.42: Unscharf mit Türbeleg ----------------------------------------------
 
 SIGNAL = "binary_sensor.a_wlan"
@@ -463,36 +432,6 @@ async def test_earliest_signal_counts_as_arrival(hass: HomeAssistant) -> None:
     await _door(hass)
     await _person(hass, SIGNAL, "on")
     assert _state(hass) == AlarmControlPanelState.DISARMED
-
-
-async def test_options_flow_keeps_return_settings(hass: HomeAssistant) -> None:
-    """„Bei Rückkehr“ gibt es nur auf der Einstellungsseite – der Dialog lässt es stehen."""
-    hass.states.async_set(A, "home")
-    back = {"mode": "door", "persons": [A], "window": 3, "approach_delay": 0, "approach_valid": 15}
-    entry = make_entry({"profiles": {"away": {"return": back}}})
-    await setup_entry(hass, entry)
-
-    async def _edit(automation: dict[str, Any]) -> Any:
-        flow = await hass.config_entries.options.async_init(entry.entry_id)
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": "profiles"}
-        )
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": "profile_edit"}
-        )
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"profile": "away"}
-        )
-        return await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"name": "Abwesend", "automation": automation}
-        )
-
-    flow = await _edit({"auto_away_persons": [B]})
-    assert flow["type"] is FlowResultType.MENU
-    away = entry.options["profiles"]["away"]
-    assert away["return"] == back
-    assert away["auto_away_persons"] == [B]
-    assert "auto_arrival_mode" not in away
 
 
 async def test_old_settings_are_migrated_to_return(hass: HomeAssistant) -> None:

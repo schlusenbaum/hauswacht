@@ -15,7 +15,7 @@ Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can g
 Hauswacht provides everything it knows as entities, attributes and events, you connect it with
 **everything Home Assistant can do** – lights, cameras, shutters, heating, speakers.
 
-> **Status: 0.63.1 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.63.2 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -35,9 +35,10 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
 
 ## What Hauswacht can do
 
-- **Setup wizard** – guides you through the setup without prior knowledge: short introduction,
-  sensor suggestions by room, sensor groups, profiles, recipients, sirens, users and a trial run
-  in test mode; every step can be skipped.
+- **Settings page** in the sidebar – the whole setup at a glance and edit everything right there:
+  matrix "sensor × profile", ⓘ explanation at every field, "?" to the matching place in the docs,
+  siren test (with confirmation) and all measurements. The overview is given by
+  [How Hauswacht decides](docs/en/how-hauswacht-decides.md) in pictures.
 - **Alarm profiles instead of fixed modes** – "Home", "Night", "Vacation" … as many as you like,
   each with its own sensor groups, delays, sirens and recipients. Automatic arming by time or when
   everyone has left – with presence from several signals per person (Wi-Fi, Bluetooth, router,
@@ -50,7 +51,7 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
   tilted, open): tilted allowed at night, opening fully triggers; when away, tilted counts as
   open. Vibration sensors with false alarm protection ("2 knocks in 60 seconds"), also as a number.
 - **Trigger rules** – alarm only on a sequence ("door, then basement within 2 minutes"), with
-  exceptions and conditions; in a wizard or as YAML.
+  exceptions and conditions; as a form or as YAML.
 - **Alarm card without forced PIN** – a large card for the tablet: state with countdown, one
   button per profile, open sensors with "Arm anyway". Whoever is logged in switches with their own
   rights; it only asks for a PIN where configured – e.g. on the wall tablet in the hallway.
@@ -68,16 +69,12 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
   via speakers (e.g. Echo).
 - **Sirens with common sense** – controlled only according to their capabilities, never during a
   fire, a fire tone only as an expert release and never on smoke detectors; tone per siren (e.g.
-  Homematic IP alarm siren), sirens on a switch via a wizard; siren test individually, briefly and
+  Homematic IP alarm siren), sirens on a switch via a helper; siren test individually, briefly and
   quietly.
 - **Honest about faults** – failed sensors, radio silence and outages of Zigbee2MQTT or MQTT are
   made visible instead of hidden.
 - **Test mode and test card** – play everything through safely, without siren, without other
   automations noticing.
-- **Settings page** in the sidebar – everything at a glance, with a matrix "sensor ×
-  profile", edit everything right there, with a "?" to the matching place in the docs; in addition to
-  the dialog. Also the siren test (with confirmation) and all measurements to view, save and
-  reset.
 - **System overview** – the whole configuration at a glance, printable, with an emergency sheet
   for the family and check hints that find gaps and forgotten items.
 - **Observe instead of guess** – homecoming, leaving and radio silence observation deliver numbers
@@ -117,8 +114,8 @@ attribute `test_mode`.
 
    [![Set up Hauswacht](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=hauswacht)
 
-3. **With the setup wizard** (offered during setup): choose sensors, accept sensor groups and
-   profiles, enter your phone as recipient. Alternatively everything by hand under Configure.
+3. On the **settings page** (sidebar "Hauswacht"): add a sensor group and a profile, enter your
+   phone as recipient – [in five steps](docs/en/installation.md#five-steps-to-the-first-arming).
 4. Put the card **"Hauswacht Test"** on a dashboard, test mode on, play it through.
 5. Test mode off – done. Enable sirens only once everything works.
 
@@ -128,8 +125,8 @@ In detail: [Installation and first steps](docs/en/installation.md).
 
 | | |
 |---|---|
-| [Installation and first steps](docs/en/installation.md) | installation, menu, the first five steps |
-| [Setup wizard](docs/en/setup-wizard.md) | guided setup, every step can be skipped, trial run |
+| [How Hauswacht decides](docs/en/how-hauswacht-decides.md) | the overview in pictures: door opens, automation, coming home, home or away |
+| [Installation and first steps](docs/en/installation.md) | installation, settings page, the first five steps |
 | [Sensors and sensor groups](docs/en/sensors.md) | which sensors, types, always active, radio silence |
 | [Alarm profiles and areas](docs/en/profiles.md) | profiles, automation, presence, on return, arm by closing the door, areas |
 | [Trigger rules](docs/en/trigger-rules.md) | sequences, exceptions, conditions, YAML |
@@ -149,7 +146,7 @@ Everything at a glance: [docs/en/](docs/en/README.md).
 
 - Home Assistant **2026.10** or newer
 - Sensors with open/closed (door, window, motion sensors …) – independent of the manufacturer
-- Optional: sirens (`siren`, or switches via a wizard), Home Assistant app, Zigbee2MQTT for keypads
+- Optional: sirens (`siren`, or switches via a helper), Home Assistant app, Zigbee2MQTT for keypads
 - No cloud, no other integrations needed
 
 ## Safety

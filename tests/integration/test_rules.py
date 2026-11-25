@@ -11,7 +11,6 @@ from typing import Any
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
@@ -205,101 +204,6 @@ async def test_migration_turns_zone_confirmation_into_rule(hass: HomeAssistant) 
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
 
 
-async def _flow(hass: HomeAssistant, entry: MockConfigEntry, *steps: str) -> dict[str, Any]:
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in steps:
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    return flow  # type: ignore[no-any-return]
-
-
-async def _go(hass: HomeAssistant, flow: dict[str, Any], step: str) -> dict[str, Any]:
-    return await hass.config_entries.options.async_configure(  # type: ignore[no-any-return]
-        flow["flow_id"], {"next_step_id": step}
-    )
-
-
-async def _submit(
-    hass: HomeAssistant, flow: dict[str, Any], data: dict[str, Any]
-) -> dict[str, Any]:
-    return await hass.config_entries.options.async_configure(  # type: ignore[no-any-return]
-        flow["flow_id"], data
-    )
-
-
-async def test_rule_wizard(hass: HomeAssistant) -> None:
-    _motion2(hass, "off")
-    entry = make_entry({"zones": ZONES})
-    await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "triggering", "rules", "rule_add")
-    assert flow["step_id"] == "rule_meta"
-    flow = await _submit(hass, flow, {"name": "Tür, dann Keller", "result": "entry_delay"})
-    assert flow["step_id"] == "rule_step"
-    assert flow["description_placeholders"]["step"] == "1"
-    flow = await _submit(hass, flow, {})  # leerer Schritt
-    assert flow["errors"] == {"base": "step_empty"}
-    flow = await _submit(hass, flow, {"sensors": [DOOR, MOTION], "within": 60})
-    assert flow["step_id"] == "rule_overview"
-    flow = await _go(hass, flow, "rule_step_add")
-    assert flow["description_placeholders"]["step"] == "2"
-    flow = await _submit(hass, flow, {"sensors": [MOTION]})
-    # MOTION steht in Schritt 1 und 2: nicht speicherbar, Grund in der Übersicht
-    assert flow["description_placeholders"]["problems"]
-    flow = await _go(hass, flow, "rule_save")
-    assert flow["step_id"] == "rule_overview"
-    assert not entry.options.get("rules")
-    # Schritt 1 korrigieren
-    flow = await _go(hass, flow, "rule_step_edit")
-    flow = await _submit(hass, flow, {"step": "1"})
-    assert flow["step_id"] == "rule_step"
-    flow = await _submit(hass, flow, {"sensors": [DOOR], "within": 120})
-    assert flow["description_placeholders"]["problems"] == ""
-    assert "→" in flow["description_placeholders"]["rule_text"]
-    flow = await _go(hass, flow, "rule_save")
-    assert flow["step_id"] == "rules"
-    rule = next(iter(entry.options["rules"].values()))
-    assert rule["name"] == "Tür, dann Keller"
-    assert rule["result"] == "entry_delay"
-    assert rule["steps"] == [
-        {"any": [{"sensor": DOOR}], "within": 120},
-        {"any": [{"sensor": MOTION}], "within": 60},
-    ]
-    assert "Tür, dann Keller" in flow["description_placeholders"]["rules"]
-
-
-async def test_rule_wizard_edit_and_cancel(hass: HomeAssistant) -> None:
-    _motion2(hass, "off")
-    entry = make_entry({"zones": ZONES, "rules": RULES})
-    await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "triggering", "rules", "rule_edit")
-    flow = await _submit(hass, flow, {"rule": "tuer_keller"})
-    assert flow["step_id"] == "rule_overview"
-    flow = await _go(hass, flow, "rule_step_remove")
-    flow = await _go(hass, flow, "rule_cancel")
-    assert flow["step_id"] == "rules"
-    assert len(entry.options["rules"]["tuer_keller"]["steps"]) == 2  # nichts gespeichert
-
-
-async def test_profile_rule_hint_when_redundant(hass: HomeAssistant) -> None:
-    _motion2(hass, "off")
-    entry = make_entry({"zones": ZONES, "rules": RULES})
-    await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "profiles", "profile_edit")
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"profile": "night"})
-    data = {
-        "name": "Nacht",
-        "icon": "mdi:weather-night",
-        "panel_mode": "night",
-        "zones": ["tueren"],
-        "rules": ["tuer_keller"],
-    }
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], data)
-    assert flow["type"] is FlowResultType.MENU
-    assert entry.options["profiles"]["night"]["rules"] == ["tuer_keller"]
-    assert "Tür, dann Keller" in flow["description_placeholders"]["saved"]
-
-
 async def test_hint_for_open_rule_sensor_when_armed(hass: HomeAssistant) -> None:
     from homeassistant.components.persistent_notification import (  # noqa: PLC0415
         _async_get_or_create_notifications,
@@ -351,28 +255,6 @@ YAML_RULE = {
     "unless": {"any": [{"sensor": MOTION2}], "before": 300},
     "conditions": [{"state": {"entity": "input_boolean.scharf_erlaubt", "is": "on"}}],
 }
-
-
-async def test_rule_yaml_add_validates_and_saves(hass: HomeAssistant) -> None:
-    _motion2(hass, "off")
-    entry = make_entry({"zones": ZONES})
-    await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "triggering", "rules", "rule_yaml_add")
-    assert flow["step_id"] == "rule_yaml"
-    bad = {**YAML_RULE, "steps": [{"any": [{"group": "Fensterr"}]}]}
-    flow = await _submit(hass, flow, {"rule": bad})
-    assert flow["errors"] == {"base": "rule_yaml_invalid"}
-    assert "Fensterr" in flow["description_placeholders"]["problem"]
-    flow = await _submit(hass, flow, {"rule": YAML_RULE})
-    assert flow["step_id"] == "rules"
-    stored = entry.options["rules"]["fenster_dann_drinnen"]
-    assert stored["steps"][0] == {"any": [{"group": "fenster"}], "within": 60}
-    assert stored["unless"]["before"] == 300
-    assert stored["conditions"] == YAML_RULE["conditions"]
-    # verschachtelte Regel: Bearbeiten öffnet direkt den YAML-Editor
-    flow = await _flow(hass, entry, "triggering", "rules", "rule_edit")
-    flow = await _submit(hass, flow, {"rule": "fenster_dann_drinnen"})
-    assert flow["step_id"] == "rule_yaml"
 
 
 def _yaml_options(rule: dict[str, Any], **extra: Any) -> dict[str, Any]:
@@ -436,18 +318,3 @@ async def test_notify_result_only_notifies(hass: HomeAssistant) -> None:
     await _set(hass, MOTION, "on")
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
     assert any(c.data["title"] == "Hauswacht: trigger rule met" for c in push)
-
-
-async def test_wizard_unless(hass: HomeAssistant) -> None:
-    _motion2(hass, "off")
-    entry = make_entry({"zones": ZONES, "rules": RULES})
-    await setup_entry(hass, entry)
-    flow = await _flow(hass, entry, "triggering", "rules", "rule_edit")
-    flow = await _submit(hass, flow, {"rule": "fenster_keller"})
-    flow = await _go(hass, flow, "rule_unless")
-    assert flow["step_id"] == "rule_unless"
-    flow = await _submit(hass, flow, {"sensors": [MOTION2], "before": 120})
-    assert "120 s" in flow["description_placeholders"]["rule_text"]
-    flow = await _go(hass, flow, "rule_save")
-    stored = entry.options["rules"]["fenster_keller"]
-    assert stored["unless"] == {"any": [{"sensor": MOTION2}], "before": 120}

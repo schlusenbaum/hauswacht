@@ -4,8 +4,9 @@
 
 ## Empfänger
 
-**Benachrichtigungen** mit den Punkten „Empfänger und Ereignisse“, „Eigene
-Texte für Push-Nachrichten“ und zwei Punkten zur [Sprachausgabe](#sprachausgabe-lautsprecher).
+[Einstellungsseite](einstellungsseite.md#benachrichtigungen-bearbeiten) → Reiter
+**Benachrichtigungen** mit „Empfänger und Ereignisse bearbeiten“, „Eigene Texte“ und der
+[Sprachausgabe](#sprachausgabe-lautsprecher).
 
 - **Allgemeine Empfänger:** notify-Dienste, z. B. `mobile_app_…` der Home-Assistant-App, und
   **Benachrichtigungs-Entitäten** (`notify.…`), z. B. von WhatsApp-, Telegram- oder
@@ -81,7 +82,7 @@ automatisch unscharf geschaltet (Uhrzeit).“
 
 ## Eigene Texte und Platzhalter
 
-**Benachrichtigungen → Eigene Texte für Push-Nachrichten:** Titel und Text je Ereignis selbst
+**Einstellungsseite → Benachrichtigungen → Eigene Texte → Bearbeiten:** Titel und Text je Ereignis selbst
 formulieren. Im Feld steht zuerst der **Text von Hauswacht** als Vorlage – mit Platzhaltern statt
 Werten, z. B. `Profil {profil} scharf geschaltet ({wer}).` Einfach ändern und speichern. Bleibt die
 Vorlage **unverändert** (oder das Feld leer), wird nichts gespeichert und Hauswacht schickt seinen
@@ -93,7 +94,7 @@ Vorlage – das ist der vollständige Text von Hauswacht.
 > mit hinein, z. B. `{text} Bitte Nachbarn anrufen.`
 
 Zurück zum Text von Hauswacht: auf der [Einstellungsseite](einstellungsseite.md#benachrichtigungen-bearbeiten)
-der Knopf **„↺ Standardtext“**, im Dialog das Feld leeren. Dieselben Platzhalter gelten für die
+der Knopf **„↺ Standardtext“**. Dieselben Platzhalter gelten für die
 Sprachausgabe:
 
 | Platzhalter | englisch | Inhalt |
@@ -109,12 +110,10 @@ Sprachausgabe:
 | `{grund}` | `{reason}` | Grund, z. B. warum das Scharfschalten scheiterte |
 | `{text}` | `{text}` | der Standardtext von Hauswacht (im Titel: der Standardtitel) |
 
-Beide Schreibweisen funktionieren immer, auch gemischt. Der Einstellungsdialog nennt die Namen in
-der Sprache von Home Assistant.
+Beide Schreibweisen funktionieren immer, auch gemischt.
 
 Beispiel: `Einbruch {bereich}: {melder} ({profil}, {uhrzeit})`. Unbekannte Platzhalter oder
-Klammerfehler lassen sich nicht speichern; nach dem Speichern zeigt das Menü eine Vorschau mit
-Beispielwerten. Nicht vorhandene Werte bleiben leer. Die Knöpfe in Push-Nachrichten bleiben
+Klammerfehler lassen sich nicht speichern. Nicht vorhandene Werte bleiben leer. Die Knöpfe in Push-Nachrichten bleiben
 unverändert.
 
 ## Sprachausgabe (Lautsprecher)
@@ -123,7 +122,8 @@ Hauswacht kann Ereignisse über Lautsprecher ansagen, z. B. **Echo-Geräte** üb
 Home-Assistant-Integration „Alexa Devices“. Geeignet ist jedes Gerät mit
 Benachrichtigungs-Entitäten (`notify.…`).
 
-**Benachrichtigungen → Sprachausgabe – Lautsprecher, Wiederholung, Nachtruhe:**
+**Einstellungsseite → Benachrichtigungen → Sprachausgabe → Bearbeiten – Lautsprecher, Wiederholung,
+Nachtruhe:**
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -131,7 +131,7 @@ Benachrichtigungs-Entitäten (`notify.…`).
 | Alarm-Durchsage wiederholen alle | wiederholt die Alarm-Durchsage alle N Sekunden (10–300), bis der Alarm beendet ist; 0 = nur einmal |
 | Nachtruhe von–bis | in dieser Zeit nur Ereignisse mit „Auch in der Nachtruhe ansagen“ |
 
-**Benachrichtigungen → Sprachausgabe – Ereignisse, Art und Texte** (je Ereignis):
+**Sprachausgabe – Ereignisse, Art und Texte** (je Ereignis, im selben Seitenblatt):
 
 | Einstellung | Bedeutung |
 |---|---|
@@ -139,7 +139,7 @@ Benachrichtigungs-Entitäten (`notify.…`).
 | Art | **Durchsage** (mit Gong) oder **Sprechen**; Hauswacht wählt am Gerät die passende Entität |
 | Eigene Lautsprecher | statt der Standard-Lautsprecher |
 | Auch in der Nachtruhe ansagen | |
-| Text | eigener Text mit Platzhaltern, leer = Standardtext (die Form zeigt Standardtext und Vorschau) |
+| Text | eigener Text mit Platzhaltern, leer = Standardtext |
 
 Standardmäßig an (sobald Lautsprecher gewählt sind): Alarm, Eingangsverzögerung, Scharfschaltung
 abgelehnt, immer aktiver Melder. In der Nachtruhe standardmäßig erlaubt: Alarm,
@@ -195,7 +195,8 @@ Lücken mit Erklärung), `{profil}`, `{wer}`.
 
 ## Erinnerung „Alle weg, Anlage unscharf“
 
-**Benachrichtigungen → Erinnerung „Alle weg“:** Personen, Profil, Wartezeit.
+**Einstellungsseite → Benachrichtigungen → Empfänger und Ereignisse bearbeiten → Erinnerung „Alle
+weg, aber nicht scharf“:** Personen, Profil, Wartezeit.
 
 Sind alle gewählten Personen weg und die Anlage ist unscharf, kommt nach der Wartezeit
 **einmal** eine Erinnerung mit dem Knopf **„Jetzt scharf (Profil)“**. Hauswacht schaltet
@@ -205,7 +206,8 @@ Knopf gilt 2 Stunden.
 
 ## Push-Knopf „Unscharf schalten“
 
-**Benachrichtigungen → „Knopf ‚Unscharf schalten‘ / ‚Alarm beenden‘ in Benachrichtigungen“.**
+**Einstellungsseite → Benachrichtigungen → Empfänger und Ereignisse bearbeiten → „Knopf ‚Unscharf
+schalten‘ in der Alarm-Nachricht“.**
 
 Ist die Option an, bekommen die Alarm-Empfänger des Profils:
 

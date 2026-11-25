@@ -16,6 +16,7 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import async_capture_events
 
 from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
+from custom_components.hauswacht.core.changes.system import delete_area
 from custom_components.hauswacht.core.pin import hash_pin
 
 from .conftest import PANEL, WINDOW, ZONE_OPTIONS, make_entry, set_sensor, setup_entry
@@ -177,74 +178,6 @@ async def test_all_panel_reports_partial_failure(hass: HomeAssistant) -> None:
     assert _state(hass, GARAGE_PANEL) == AlarmControlPanelState.DISARMED
 
 
-async def test_options_locked_while_any_area_armed(hass: HomeAssistant) -> None:
-    entry = await _setup(hass)
-    await _service(hass, "alarm_control_panel", "alarm_arm_away", entity_id=GARAGE_PANEL)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    assert flow["type"] == "abort"
-    assert flow["reason"] == "disarm_first"
-
-
-async def test_options_add_area_and_assign_profile(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "areas", "area_add"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Gartenhaus", "icon": "mdi:greenhouse"}
-    )
-    assert flow["step_id"] == "areas"
-    assert entry.options["areas"]["gartenhaus"]["name"] == "Gartenhaus"
-    # Gleicher Name ein zweites Mal: Fehler
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "area_add"}
-    )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "gartenhaus", "icon": "mdi:greenhouse"}
-    )
-    assert flow["errors"] == {"name": "area_name_taken"}
-    await hass.async_block_till_done()
-    assert hass.states.get("alarm_control_panel.hauswacht_gartenhaus") is not None
-    assert _eid(hass, ALL_PANEL)
-
-
-async def test_options_area_with_profiles_cannot_be_deleted(hass: HomeAssistant) -> None:
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "areas", "area_delete"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"area": "garage"})
-    assert flow["errors"] == {"area": "area_has_profiles"}
-
-
-async def test_panel_mode_unique_per_area_only(hass: HomeAssistant) -> None:
-    """Garage und Haus dürfen beide einen "Abwesend"-Knopf haben."""
-    entry = await _setup(hass)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("profiles", "profile_edit"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"profile": "garage_away"}
-    )
-    assert flow["step_id"] == "profile_settings"
-    schema_keys = [str(k) for k in flow["data_schema"].schema]
-    assert "area" in schema_keys
-    # Der Garage den Knopf "Zuhause" geben, der im Haus schon belegt ist: erlaubt
-    defaults = {str(k): k.default() for k in flow["data_schema"].schema if callable(k.default)}
-    defaults.update({"panel_mode": "home"})
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], defaults)
-    assert flow["type"] == "menu"
-    assert entry.options["profiles"]["garage_away"]["panel_mode"] == "home"
-    assert entry.options["profiles"]["garage_away"]["area"] == "garage"
-
-
 async def test_simulation_reaches_every_area(hass: HomeAssistant) -> None:
     await _setup(hass)
     await _service(hass, "switch", "turn_on", entity_id="switch.hauswacht_test_mode")
@@ -262,13 +195,11 @@ async def test_deleted_area_leaves_no_device(hass: HomeAssistant) -> None:
     entry = make_entry({"areas": {"garage": {"name": "Garage"}}})
     await setup_entry(hass, entry)
     assert hass.states.get(GARAGE_PANEL) is not None
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "areas", "area_delete"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"area": "garage"})
-    assert flow["step_id"] == "areas"
+    # Bereich löschen wie auf der Einstellungsseite (dieselben Einstellungsregeln)
+    change = delete_area(entry.options, "garage")
+    assert not change.errors
+    assert change.options is not None
+    hass.config_entries.async_update_entry(entry, options=change.options)
     await hass.async_block_till_done()
     assert "garage" not in entry.options.get("areas", {})
     registry = er.async_get(hass)
@@ -301,48 +232,6 @@ async def test_user_rights_per_area(hass: HomeAssistant) -> None:
     )
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=GARAGE_PANEL, code="1357")
     assert _state(hass, GARAGE_PANEL) == AlarmControlPanelState.DISARMED
-
-
-async def test_options_user_rights_per_area(hass: HomeAssistant) -> None:
-    hass.states.async_set(GATE, "off", {"device_class": "window"})
-    entry = make_entry({**AREA_OPTIONS, "users": {"anna": _anna(areas=["garage"])}})
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("system", "users", "user_edit"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
-    assert flow["step_id"] == "user_settings"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Anna", "rights": "per_area"}
-    )
-    assert flow["step_id"] == "user_area_rights"
-    # Vorbelegung aus der alten Bereichsliste: Garage alles, Haus nichts
-    defaults = {str(k): k.default() for k in flow["data_schema"].schema}
-    assert defaults == {"Haus": [], "Garage": ["arm", "disarm", "end_alarm"]}
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"Haus": ["arm"], "Garage": ["disarm"]}
-    )
-    assert flow["type"] == "menu"
-    stored = entry.options["users"]["anna"]
-    assert stored["rights"] == "per_area"
-    assert stored["area_rights"] == {"main": ["arm"], "garage": ["disarm"]}
-    assert "areas" not in stored
-    assert stored["pin_digest"]  # PIN bleibt erhalten
-
-    # Zurück auf "alle Bereiche gleich"
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "user_edit"}
-    )
-    flow = await hass.config_entries.options.async_configure(flow["flow_id"], {"user": "anna"})
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"name": "Anna", "rights": "all"}
-    )
-    assert flow["type"] == "menu"
-    stored = entry.options["users"]["anna"]
-    assert stored["rights"] == "all"
-    assert "area_rights" not in stored
 
 
 async def test_area_device_hangs_below_main_device(hass: HomeAssistant) -> None:

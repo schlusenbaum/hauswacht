@@ -252,34 +252,6 @@ async def test_observation_off_by_default(hass: HomeAssistant) -> None:
     assert state.state == "unknown"
 
 
-async def test_homecoming_options(hass: HomeAssistant) -> None:
-    entry = make_entry()
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(
-        flow["flow_id"], {"next_step_id": "system"}
-    )
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"next_step_id": "homecoming"}
-    )
-    hass.states.async_set(PERSON, "home", {"friendly_name": "Anna"})
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {
-            "homecoming_observe": True,
-            "homecoming_persons": [PERSON],
-            "homecoming_ssids": "Heimnetz, Gast",
-        },
-    )
-    assert result["step_id"] == "homecoming_signals"
-    result = await hass.config_entries.options.async_configure(result["flow_id"], {"Anna": [WIFI]})
-    await hass.async_block_till_done()
-    assert entry.options["homecoming_observe"] is True
-    assert entry.options["homecoming_persons"] == [PERSON]
-    assert entry.options["homecoming_ssids"] == ["Heimnetz", "Gast"]
-    assert entry.options["homecoming_signals"] == {PERSON: [WIFI]}
-
-
 async def test_wifi_signal_and_earliest_signal(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:

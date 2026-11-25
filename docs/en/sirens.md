@@ -14,23 +14,23 @@ report fire? Does the siren have a burglar tone? Only then is a command sent. Ha
 **switch off** its own sirens even without the release – that is always the safe direction; only
 test mode and fire prevent it.
 
-## The menu "Alarm devices – sirens"
+## The tab "Alarm devices"
 
-Settings → Devices & services → Hauswacht → **Configure → Alarm devices – sirens**:
+Everything about sirens is on the [settings page](settings-page.md#editing-alarm-devices) in the
+tab **Alarm devices**:
 
-| Menu item | What for | Section |
+| Place | What for | Section |
 |---|---|---|
-| **Sirens and enabling** | which sirens Hauswacht may use; enable real control; experts: allow switches | [Setting up](#setting-up) |
-| **Create siren from switch** | wizard for sirens that only appear as a switch (`switch.…`) | [Create siren from switch](#create-siren-from-switch) |
+| **Edit sirens** | which sirens Hauswacht may use; enable real control; experts: allow switches | [Setting up](#setting-up) |
+| **Create siren from switch** | for sirens that only appear as a switch (`switch.…`) | [Create siren from switch](#create-siren-from-switch) |
 | **Tone per siren** | set the tone for sirens with their own tone names (e.g. Homematic IP) | [Tone per siren](#tone-per-siren) |
-| **Siren test (real siren!)** | check each siren individually, briefly and quietly | [Siren test](#siren-test) |
-| **Siren test – reminder and pre-warning** | remind you of the test regularly; pre-warning before the sound | [Siren test](#siren-test) |
+| **Siren test** | check each siren individually, briefly and quietly; reminder and pre-warning | [Siren test](#siren-test) |
 
 ## Which sirens work?
 
 Every Home Assistant entity of the domain `siren` – indoor and outdoor sirens as well as smoke
 detectors with a siren. Sirens that only appear as a switch can be added with a
-[wizard](#create-siren-from-switch).
+[helper](#create-siren-from-switch).
 
 Before every alarm, Hauswacht reads what a siren can do (`supported_features`,
 `available_tones`) and only sends that:
@@ -46,7 +46,7 @@ Before every alarm, Hauswacht reads what a siren can do (`supported_features`,
 | Neither duration nor switching off | not used – Hauswacht could not end it |
 | Maximum duration (`number.<siren>_max_duration`, Zigbee2MQTT) | duration is limited to it; if it is missing, 240 seconds apply |
 | Fire sensor on the same device (smoke detector) | device-related fire lock; an active fire at any sensor always locks |
-| Only available as a switch (`switch.…`) | via the [wizard](#create-siren-from-switch) or as an [expert feature](#experts-switch-directly-as-siren) |
+| Only available as a switch (`switch.…`) | via a [helper](#create-siren-from-switch) or as an [expert feature](#experts-switch-directly-as-siren) |
 
 **Proven** is the smoke detector **Develco/frient SMSZB-120** ("Smoke detector with siren") via
 Zigbee2MQTT – also with a real [siren test](#siren-test). Check other models first with test mode
@@ -55,15 +55,16 @@ and siren test. Feedback on further models is welcome
 
 ## Setting up
 
-1. **Sirens and enabling:** choose the sirens Hauswacht may use for burglar alarms. Leave "Allow
-   real siren control" **off** for now.
+1. **Edit sirens:** choose the sirens Hauswacht may use for burglar alarms. Leave "Real siren
+   control enabled" **off** for now.
 2. **Check the tone:** if a siren knows none of the usual burglar tones, set the tone under
    [Tone per siren](#tone-per-siren). The [overview](overview.md) points this out ("would stay
    silent on alarm").
 3. **Profiles:** in each alarm profile, set which of these sirens sound, with which tone and
    volume – or "Silent alarm" for notifications only. The running time is the profile's "alarm
    reaction time".
-4. **Enable:** only when everything fits, switch on **"Allow real siren control"** and tick the
+4. **Enable:** only when everything fits, switch on **"Real siren control enabled"** under **Edit
+   sirens** and tick the
    confirmation. Without this release, Hauswacht never sends a siren command.
 5. **Test:** check every siren once with the [siren test](#siren-test).
 
@@ -79,10 +80,10 @@ their tones differently. If Hauswacht finds no known burglar tone, the siren sta
 reasons (reason `no_burglar_tone`), and the [overview](overview.md#check-hints) reports this as an
 important check hint – also under Settings → Repairs.
 
-**How to:** Alarm devices – sirens → **Tone per siren** → choose siren → choose tone.
+**How to:** tab Alarm devices → **Tone per siren** → **Edit** at the siren → choose tone.
 
-- The list shows exactly the tones the siren reports itself; the dialog also names them in the
-  text. "Automatic (standard burglar tone)" removes the setting again.
+- The list shows exactly the tones the siren reports itself. "Automatic (standard burglar tone)"
+  removes the setting again.
 - The tone applies **on every alarm** of this siren (regardless of the tone in the profile) and
   **in the siren test**.
 - Fire tones – recognisable by "fire", "smoke" or "Brand" in the name – are locked, except with
@@ -95,8 +96,8 @@ Via the integration "Homematic(IP) Local" the alarm siren appears as `siren.…`
 if it does not get **tone and duration** at the same time, and its tones are called e.g.
 `FREQUENCY_RISING`, `FREQUENCY_RISING_AND_FALLING` or `DISARMED`.
 
-1. Alarm devices – sirens → Sirens and enabling → select the alarm siren.
-2. Tone per siren → alarm siren → **`FREQUENCY_RISING_AND_FALLING`** (or another alarm tone of
+1. Tab Alarm devices → **Edit sirens** → tap the alarm siren.
+2. **Tone per siren** → alarm siren → **`FREQUENCY_RISING_AND_FALLING`** (or another alarm tone of
    the siren).
 3. Add the alarm siren to the sirens in the profile.
 4. Siren test with 3 seconds. Hauswacht sends the duration automatically.
@@ -117,7 +118,7 @@ Sometimes the name is misleading, though. **Example:** an outdoor siren has only
 `chime` (quiet chime) and `fire` – and `fire` is simply its loud siren tone. Then:
 
 1. Tone per siren → outdoor siren → tone **`fire`** (marked as "fire tone" in the list).
-2. Switch on **"Experts: allow a fire tone for burglar alarms"**.
+2. Switch on **"Experts: allow fire tone for intrusion"**.
 3. Tick the confirmation: "I confirm: this siren is not a smoke detector, and everyone in the
    house knows this tone as the burglar alarm".
 
@@ -126,7 +127,7 @@ What applies:
 - The release only applies to **this one tone on this one siren**. Hauswacht never falls back to
   a fire tone on its own.
 - **Never for smoke detectors with a siren** (devices with their own smoke, heat or test button
-  sensors): the dialog does not offer the release there at all, and the siren guard also rejects
+  sensors): the page does not offer the release there at all, and the siren guard also rejects
   it.
 - The **fire lock stays:** if a smoke detector anywhere reports fire, Hauswacht switches no
   siren – whatever the tone.
@@ -137,15 +138,14 @@ What applies:
 
 Some sirens only appear in Home Assistant as a switch (`switch.…`), e.g. a siren on a Homematic
 switch actuator. Home Assistant can turn this into a siren itself: with the helper **"Change
-device type of a switch"**. Hauswacht has a wizard for this.
+device type of a switch"**. Hauswacht creates this helper on request.
 
 **Example:** the outdoor siren is connected to `switch.actuator_garage`.
 
-1. Alarm devices – sirens → **Create siren from switch**.
+1. Tab Alarm devices → **Create siren from switch**.
 2. Choose the switch `switch.actuator_garage`.
 3. Confirm: "this is a pure alarm siren, not a smoke detector".
-4. Done: the dialog shows e.g. "Created: siren.actuator_garage", and the new siren is already in
-   the list under "Sirens and enabling".
+4. Done: the new siren (e.g. `siren.actuator_garage`) is already among the registered sirens.
 5. Add the siren to the profile and check it with the siren test.
 
 Good to know:
@@ -165,9 +165,9 @@ Good to know:
 
 If you do not want to create a helper, you can also add switches directly:
 
-1. Alarm devices – sirens → **Sirens and enabling** → switch on **"Experts: allow switches
-   directly as sirens"** and save.
-2. The dialog opens again; now the siren list also offers switches.
+1. Tab Alarm devices → **Edit sirens** → switch on **"Experts: also allow switches as sirens"**
+   and save.
+2. Open **Edit sirens** again; now the list also offers switches.
 3. Select the switch, save, add it to the profile, do a siren test.
 
 Hauswacht switches such a switch exactly like a simple siren: `switch.turn_on` on alarm,
@@ -175,17 +175,16 @@ Hauswacht switches such a switch exactly like a simple siren: `switch.turn_on` o
 test mode, fire lock). If the expert feature is switched off again, the switches drop out of the
 list.
 
-The wizard is usually the better choice: the siren then looks like a siren everywhere in Home
+"Create siren from switch" is usually the better choice: the siren then looks like a siren everywhere in Home
 Assistant.
 
 ## Siren test
 
-**Alarm devices – sirens → Siren test (real siren!).** Checks each siren individually, briefly
-and quietly – via the same safe path as a real alarm.
-
-> From 0.60 on, the test also works on the [settings page](settings-page.md#siren-test-on-the-page-real-siren):
-> tab **Alarm devices** → card **Siren test** – with the tick "I am on site", a question per
-> siren and for administrators only. The locks below apply there just the same.
+**Tab Alarm devices → card Siren test (real siren!).** Checks each siren individually, briefly
+and quietly – via the same safe path as a real alarm. With the tick "I am on site", a question per
+siren and for administrators only – see
+[siren test on the page](settings-page.md#siren-test-on-the-page-real-siren). It also works in the
+card ["Hauswacht Test"](test-mode.md#card-hauswacht-test).
 
 1. Choose sirens (several are tested **one after another**), tone (burglar tones only), volume
    (default **low**) and duration (default **3 s**, at most **10 s**); tick "I am on site,
@@ -223,7 +222,7 @@ During the test,
 **arming is locked**; **disarming** stops the test. In case of fire, Hauswacht does not interfere
 – then the fire lock applies.
 
-**Alarm devices – sirens → Siren test – reminder and pre-warning:**
+**Tab Alarm devices → card Siren test → Edit (reminder and pre-warning):**
 
 | Setting | Meaning |
 |---|---|
@@ -255,13 +254,13 @@ reasons in plain language:
 
 | Reason | Meaning | What to do? |
 |---|---|---|
-| `hardware_disabled` | real siren control is not enabled | Sirens and enabling → enable |
+| `hardware_disabled` | real siren control is not enabled | Alarm devices → Edit sirens → enable |
 | `test_mode` | test mode is on | test mode off |
 | `fire_lock` | a smoke detector reports fire, or the fire state of a registered siren is unclear (sensor unavailable) | check the smoke detectors; in case of fire this is intended |
 | `no_burglar_tone` | the siren knows no burglar tone (or only fire tones) | [Tone per siren](#tone-per-siren) |
 | `cannot_limit` | the siren can neither take a duration nor be switched off | use another siren |
 | `invalid_duration` | the device's maximum duration is 0 | check the maximum duration on the device |
-| `unknown_device` | the siren is in the profile but no longer registered | check Sirens and enabling |
+| `unknown_device` | the siren is in the profile but no longer registered | check Alarm devices → Edit sirens |
 | `invalid_tone`, `invalid_volume` | tone or volume in the profile invalid | save the profile again |
 | `not_activated_by_hauswacht` | switching off a siren Hauswacht did not switch on | nothing – Hauswacht only switches off its own sirens |
 

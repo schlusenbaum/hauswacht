@@ -13,7 +13,6 @@ import pytest
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
@@ -84,25 +83,6 @@ async def test_armed_triggers_immediately_with_profile(hass: HomeAssistant) -> N
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL)
     assert _panel(hass) == AlarmControlPanelState.ARMED_NIGHT
-
-
-async def test_always_active_options(hass: HomeAssistant) -> None:
-    entry = make_entry({"sirens": ["siren.a"]})
-    await setup_entry(hass, entry)
-    flow = await hass.config_entries.options.async_init(entry.entry_id)
-    for step in ("triggering", "always_active"):
-        flow = await hass.config_entries.options.async_configure(
-            flow["flow_id"], {"next_step_id": step}
-        )
-    flow = await hass.config_entries.options.async_configure(
-        flow["flow_id"],
-        {"sensors": [SAFE], "sirens_enabled": True, "sirens": ["siren.a"], "reaction_time": 60},
-    )
-    assert flow["type"] is FlowResultType.MENU
-    stored = entry.options["always_active"]
-    assert stored["sensors"] == [SAFE]
-    assert stored["sirens_enabled"] is True
-    assert stored["reaction_time"] == 60
 
 
 # --- Scharf durch Schließen der Tür -----------------------------------------

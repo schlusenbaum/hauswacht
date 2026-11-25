@@ -20,8 +20,7 @@ an den Außentüren.
 
 ## Einschalten
 
-Im Profil unter **Durchgang** (Einstellungsseite → Profile, oder im Einstellungsdialog beim
-Profil):
+Im Profil unter **Durchgang** (Einstellungsseite → Profile → Bearbeiten):
 
 | Einstellung | Bedeutung | Standard |
 |---|---|---|

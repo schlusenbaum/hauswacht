@@ -8,7 +8,7 @@ steht bei den Meldern.
 
 ## Heimkehr-Beobachtung
 
-**Systemeinstellungen → Anwesenheit und Heimkehr-Beobachtung.** Personen auswählen und
+**Einstellungsseite → System → Anwesenheit und Heimkehr-Beobachtung → Bearbeiten.** Personen auswählen und
 „Heimkehr beobachten“ einschalten.
 
 Hauswacht zeichnet dann auf, wann eine **Eingangstür** (Sensoren mit der Rolle „entry“)
@@ -86,7 +86,7 @@ Die Knöpfe zum Zurücksetzen sehen nur Administratoren.
 
 ## Zusätzliche Signale je Person
 
-Im zweiten Schritt des Formulars wählst du je Person weitere Signale. Je früher und
+Im Seitenblatt „Anwesenheit und Heimkehr-Beobachtung“ wählst du je Person weitere Signale. Je früher und
 zuverlässiger ein Signal, desto besser.
 
 Die Signale gelten **auch für die Profil-Automatik** („Scharf, wenn alle weg“, „Bei

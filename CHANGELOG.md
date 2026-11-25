@@ -6,6 +6,44 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.2] - 2026-11-25
+
+Zusammenfassung von 0.63.2b1 – **die Einstellungsseite ist der einzige Weg**.
+
+### Geändert
+
+- Der frühere Einstellungsdialog ist entfallen; „Konfigurieren“ zeigt nur noch einen Link zur
+  Einstellungsseite und ändert nichts. Deine Einstellungen bleiben unverändert.
+- Installation in einem Schritt mit Link zur Einstellungsseite.
+- Hinweise in Home Assistant und die ganze Doku nennen die Stellen auf der Einstellungsseite.
+
+### Entfernt
+
+- Einrichtungsassistent im Dialog – ein neuer auf der Einstellungsseite ist geplant.
+
+## [0.63.2b1] - 2026-11-25
+
+### Geändert
+
+- **Die Einstellungsseite ist der einzige Weg.** Der frühere Einstellungsdialog (Einstellungen →
+  Geräte & Dienste → Hauswacht → **Konfigurieren**) ist entfallen. „Konfigurieren“ zeigt nur noch
+  einen Hinweis mit Link zur Einstellungsseite und ändert nichts. Die Seite kann alles, was der
+  Dialog konnte; **deine Einstellungen bleiben unverändert**.
+- **Installation:** ein einziger Schritt mit Link zur Einstellungsseite. Eingerichtet wird danach
+  alles auf der Seite – der Weg dahin steht unter
+  [In fünf Schritten zur ersten Scharfschaltung](docs/installation.md#in-fünf-schritten-zur-ersten-scharfschaltung).
+- Einstellungsseite: Der Knopf „Im Dialog bearbeiten“ ist weg; der Hinweis oben verweist auf
+  „So entscheidet Hauswacht“.
+- Hinweise in Home Assistant (Reparaturen, Fehlermeldungen) nennen jetzt die Stelle auf der
+  Einstellungsseite statt des Dialogs.
+- Doku überall auf die Einstellungsseite umgestellt (Installation, Melder, Profile, Auslöseregeln,
+  Sirenen, Benachrichtigungen, Benutzer, Bedienteile, Durchgang, Beobachtung, Fehlersuche).
+
+### Entfernt
+
+- **Einrichtungsassistent im Dialog.** Ein neuer Assistent direkt auf der Einstellungsseite ist
+  geplant – siehe [Einrichtungsassistent](docs/assistent.md).
+
 ## [0.63.1] - 2026-11-25
 
 Zusammenfassung von 0.63.1b1.

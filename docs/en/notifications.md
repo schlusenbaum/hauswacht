@@ -4,8 +4,8 @@
 
 ## Recipients
 
-**Notifications** with the items "Recipients and events", "Custom texts for push messages" and
-two items for [speech](#speech-speakers).
+[Settings page](settings-page.md#editing-notifications) → tab **Notifications** with "Edit
+recipients and events", "Own texts" and [speech](#speech-speakers).
 
 - **General recipients:** notify services, e.g. `mobile_app_…` of the Home Assistant app, and
   **notification entities** (`notify.…`), e.g. from WhatsApp, Telegram or e-mail integrations.
@@ -77,7 +77,7 @@ replaced by "Hauswacht: disarmed – Profile Night was disarmed automatically (t
 
 ## Custom texts and placeholders
 
-**Notifications → Custom texts for push messages:** write title and text per event yourself;
+**Settings page → Notifications → Own texts → Edit:** write title and text per event yourself;
 the field first shows **Hauswacht's text** as a template – with placeholders instead of values,
 e.g. `Profile {profile} armed ({who}).` Just change it and save. If the template stays
 **unchanged** (or the field empty), nothing is saved and Hauswacht sends its own text. Where that
@@ -89,7 +89,7 @@ Hauswacht's complete text.
 > `{text} Please call the neighbours.`
 
 Back to Hauswacht's text: on the [settings page](settings-page.md#editing-notifications) the
-button **"↺ Default text"**, in the dialog empty the field. The same placeholders apply to
+button **"↺ Default text"**. The same placeholders apply to
 speech:
 
 | Placeholder | German | Content |
@@ -105,11 +105,10 @@ speech:
 | `{reason}` | `{grund}` | reason, e.g. why arming failed |
 | `{text}` | `{text}` | Hauswacht's default text (in the title: the default title) |
 
-Both spellings always work, also mixed. The settings dialog names them in the language of Home
-Assistant.
+Both spellings always work, also mixed.
 
 Example: `Burglary {area}: {sensor} ({profile}, {time})`. Unknown placeholders or bracket errors
-cannot be saved; after saving, the menu shows a preview with example values. Missing values stay
+cannot be saved. Missing values stay
 empty. The buttons in push messages stay unchanged.
 
 ## Speech (speakers)
@@ -117,7 +116,7 @@ empty. The buttons in push messages stay unchanged.
 Hauswacht can announce events via speakers, e.g. **Echo devices** via the Home Assistant
 integration "Alexa Devices". Any device with notification entities (`notify.…`) is suitable.
 
-**Notifications → Speech – speakers, repeat, quiet hours:**
+**Settings page → Notifications → Speech → Edit – speakers, repeat, quiet hours:**
 
 | Setting | Meaning |
 |---|---|
@@ -125,7 +124,7 @@ integration "Alexa Devices". Any device with notification entities (`notify.…`
 | Repeat alarm announcement every | repeats the alarm announcement every N seconds (10–300) until the alarm has ended; 0 = only once |
 | Quiet hours from–until | during this time, only events with "Also during quiet hours" |
 
-**Notifications → Speech – events, mode and texts** (per event):
+**Speech – events, mode and texts** (per event, in the same side sheet):
 
 | Setting | Meaning |
 |---|---|
@@ -133,7 +132,7 @@ integration "Alexa Devices". Any device with notification entities (`notify.…`
 | Mode | **Announcement** (with chime) or **Speak**; Hauswacht picks the matching entity on the device |
 | Own speakers | instead of the default speakers |
 | Also during quiet hours | |
-| Text | own text with placeholders, empty = default text (the form shows the default text and a preview) |
+| Text | own text with placeholders, empty = default text |
 
 On by default (once speakers are chosen): alarm, entry delay, arming rejected, always-active
 sensor. Allowed during quiet hours by default: alarm, entry delay, always-active sensor.
@@ -185,7 +184,8 @@ explanation), `{profile}`, `{who}`.
 
 ## Reminder "everyone away, system disarmed"
 
-**Notifications → Reminder "everyone away":** persons, profile, delay.
+**Settings page → Notifications → Edit recipients and events → Reminder "all away, but not
+armed":** persons, profile, delay.
 
 If all selected persons are away and the system is disarmed, a reminder comes **once** after the
 delay, with the button **"Arm now (profile)"**. Hauswacht switches **nothing itself** – the safe
@@ -194,7 +194,8 @@ everything starts over. The button is valid for 2 hours.
 
 ## Push button "Disarm"
 
-**Notifications → "Button "Disarm" / "End alarm" in notifications".**
+**Settings page → Notifications → Edit recipients and events → "Button "Disarm" in the alarm
+message".**
 
 If the option is on, the alarm recipients of the profile get:
 

@@ -2,7 +2,7 @@
 
 Rein und ohne Home Assistant. Jede Funktion bekommt die bisherigen Einstellungen und eine
 Eingabe und liefert ein :class:`Change`: entweder die neuen Einstellungen (fertig zum Speichern)
-oder Fehler. Einstellungsdialog und Einrichtungsassistent rufen dieselben Funktionen auf – eine
+oder Fehler. Die Einstellungsseite ruft diese Funktionen auf – eine
 Regel steht so an genau einer Stelle (ADR 0009).
 
 Die Funktionen ändern die übergebenen Einstellungen nie, sie liefern immer eine Kopie.

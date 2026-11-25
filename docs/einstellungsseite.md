@@ -2,29 +2,25 @@
 
 **Deutsch** | [English](en/settings-page.md)
 
-> Die Seite **zeigt** die ganze Einrichtung und du bearbeitest **alles** direkt auf ihr. Der Einstellungsdialog (Knopf „Im Dialog bearbeiten“ oben rechts) bleibt als zweiter
-> Weg. Die Seite schaltet nichts – einzige Ausnahme ist der **Sirenentest** (Reiter Alarmgeber,
+> Die Seite **zeigt** die ganze Einrichtung, und du bearbeitest **alles** direkt auf ihr. Seit
+> 0.63.2 ist sie der **einzige Weg** – den früheren Einstellungsdialog gibt es nicht mehr.
+> Die Seite schaltet nichts – einzige Ausnahme ist der **Sirenentest** (Reiter Alarmgeber,
 > Karte „Sirenentest“), mit Rückfrage und nur für Administratoren.
 
-Der Einstellungsdialog zeigt immer nur einen Schritt. Die Seite **Hauswacht** in der
-Seitenleiste von Home Assistant zeigt dagegen alles auf einen Blick: welche Melder in welcher
-Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt.
+Die Seite **Hauswacht** in der Seitenleiste von Home Assistant zeigt alles auf einen Blick: welche
+Melder in welcher Gruppe stecken, in welchem Profil sie scharf sind, wer welche Nachricht bekommt –
+und du änderst es an Ort und Stelle.
 
 - Nur für **Administratoren** sichtbar.
-- **Zusätzlich** zum Dialog und zum [Einrichtungsassistenten](assistent.md) – alle Wege nutzen
-  dieselben Einstellungen. Was im Dialog geändert wird, steht nach „Neu laden“ sofort auf der
-  Seite.
 - **Öffnen:** über die Seitenleiste, über den Link in der Geräteinfo auf der Geräteseite von
-  Hauswacht, über den Link ganz oben im Dialog „Konfigurieren“ oder direkt unter
-  `/hauswacht-settings` (z. B. `http://homeassistant.local:8123/hauswacht-settings`).
+  Hauswacht, über **Konfigurieren** bei der Integration (zeigt einen Link hierher) oder direkt
+  unter `/hauswacht-settings` (z. B. `http://homeassistant.local:8123/hauswacht-settings`).
 - **Ausblenden statt abschalten** (ab 0.61): Die Seite gibt es immer. Unter System →
-  **Einstellungsseite** (oder im Dialog: Konfigurieren → System → **Einstellungsseite: in der
-  Seitenleiste zeigen**) stellst du nur ein, ob sie in der Seitenleiste steht. Ausgeblendet
+  **Einstellungsseite** stellst du nur ein, ob sie in der Seitenleiste steht. Ausgeblendet
   erreichst du sie über die Wege oben. Jeder Benutzer kann sie außerdem über „Seitenleiste
   bearbeiten“ in Home Assistant für sich ausblenden.
-- **Neue Einstellungen gibt es nur hier** (ab 0.61, z. B. [„Bei Rückkehr“](profile.md#bei-rückkehr)
-  und [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg)). Der Dialog zeigt an der Stelle einen
-  Hinweis mit Link.
+- **Neu hier?** Im Reiter **Dokumentation** erklärt
+  [So entscheidet Hauswacht](so-entscheidet-hauswacht.md) die Abläufe in Bildern.
 - **Erklärungen direkt am Feld** (ab 0.62): In allen Seitenblättern – Profile, Melder,
   Auslöseregeln, Alarmgeber und Benachrichtigungen, Personen, Bedienteile, System – steht hinter
   den Feldern ein **ⓘ**. Mauszeiger drauf zeigt die Erklärung, Antippen (Handy, Tablet) klappt
@@ -105,14 +101,14 @@ Bei Besonderen Meldern zeigt die Liste passende Quellen: für die Kippstellung A
 Sensoren mit Werten wie „tilted“ oder Namen mit „Fenster“, „Griff“ …; für die
 Erschütterungsstärke Zahlenwert-Helfer und Sensoren mit „vibration“ im Namen.
 
-So sicher wie der Dialog:
+Sicher gespeichert:
 
-- **Dieselben Regeln:** Die Seite nutzt dieselbe Prüfung wie der Dialog. Ein Melder in zwei
+- **Geprüft:** Jede Änderung läuft durch dieselben Einstellungsregeln. Ein Melder in zwei
   Gruppen, eine Gruppe ohne Namen, „gekippt“ und „zu“ für denselben Wert – das wird mit einer
   Meldung am Feld abgelehnt.
 - **Nur unscharf:** Ist ein Bereich scharf, fehlen die Knöpfe; oben steht „Ändern geht nur, wenn
   alle Bereiche unscharf sind“.
-- **Nichts überschreiben:** Hat jemand zwischendurch im Dialog oder auf einem anderen Gerät etwas
+- **Nichts überschreiben:** Hat jemand zwischendurch auf einem anderen Gerät etwas
   geändert, speichert die Seite nicht, sondern lädt neu – dann einfach noch einmal.
 - Nach dem Speichern lädt Hauswacht seine Einstellungen neu (ein, zwei Sekunden), danach zeigt
   die Seite den neuen Stand mit „✓ Gespeichert.“
@@ -121,7 +117,7 @@ So sicher wie der Dialog:
 
 Im Reiter **Profile** steht jedes Profil mit seinen Werten; **„Bearbeiten“** öffnet das
 Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgaben (30 s Verzögerung,
-180 s Alarm …). Die Abschnitte entsprechen dem Dialog.
+180 s Alarm …).
 
 **Erklärungen direkt am Feld** (ab 0.62):
 
@@ -148,7 +144,7 @@ Seitenblatt, **„+ Alarmprofil anlegen“** ein leeres mit den üblichen Vorgab
 | **Scharf durch Schließen der Tür** | An/aus, Ausgangstüren (die Melder vom Typ Tür in den gewählten Gruppen), Beruhigungszeit |
 | **Durchgang** | Durchgang erlauben, Zeiten, welche Tür, Melder auf dem Weg – siehe [Durchgang](durchgang.md). Das Handy-Reinlassen ist zu „Bei Rückkehr“ umgezogen |
 
-Es gelten dieselben Regeln wie im Dialog: Name nötig und eindeutig, jeder Knopf nur einmal je
+Es gelten diese Regeln: Name nötig und eindeutig, jeder Knopf nur einmal je
 Bereich, „Bei Rückkehr“ (außer „Nichts“) nur mit mindestens einer Person. **Löschen** fragt einmal nach.
 
 ## Auslöseregeln bearbeiten
@@ -190,7 +186,7 @@ steps:
 - **Komplexe Regeln gehen nur als YAML** – der Knopf „Formular“ ist dann ausgegraut, und in der
   Liste steht „(nur YAML)“.
 - **Bedingungen** („nur wenn …“) zeigt das Formular an; ändern lassen sie sich nur im YAML.
-- Gespeichert wird nur, was auch der Dialog speichern würde: Name nötig und eindeutig, kein
+- Gespeichert wird nur eine gültige Regel: Name nötig und eindeutig, kein
   leerer Schritt, nicht derselbe Melder in zwei Schritten hintereinander. **Löschen** fragt einmal
   nach und nimmt die Regel auch aus allen Profilen.
 
@@ -202,7 +198,7 @@ leeres. Was Personen, PINs und Rechte sind, steht unter [Benutzer, PINs und Sper
 
 | Feld | Inhalt |
 |---|---|
-| **Name** | Vorschläge aus den Home-Assistant-Konten. Heißt die Person wie ein Konto, wird sie damit verknüpft (wie im Dialog) |
+| **Name** | Vorschläge aus den Home-Assistant-Konten. Heißt die Person wie ein Konto, wird sie damit verknüpft |
 | **Aktiv** | Aus = die Person kann nichts schalten (z. B. vorübergehend gesperrt) |
 | **Darf …** | scharf schalten, unscharf schalten, Alarm beenden. Bei mehreren Bereichen wahlweise **je Bereich** – dann ein Kasten je Bereich |
 | **Trotzdem scharf am Keypad** | offene Melder überbrücken, siehe [Trotzdem scharf am Keypad](bedienteile.md#trotzdem-scharf-am-keypad) |
@@ -213,7 +209,7 @@ leeres. Was Personen, PINs und Rechte sind, steht unter [Benutzer, PINs und Sper
 
 - **PINs werden nie angezeigt** – auch hier nicht. Die Seite zeigt nur „PIN gesetzt“ oder „Kein
   PIN“.
-- Es gelten die [PIN-Regeln](benutzer.md#pin-regeln) wie im Dialog: Ein PIN darf keine
+- Es gelten die [PIN-Regeln](benutzer.md#pin-regeln): Ein PIN darf keine
   Bedrohungs-PIN einer anderen Person und kein Aktions-Code sein. Passt etwas nicht, wird **gar
   nichts** gespeichert und das Feld zeigt den Grund.
 - **Löschen** fragt einmal nach.
@@ -244,7 +240,7 @@ Messwert („Unter 5 meldet der Melder „Problem“, wieder normal über 6.“)
 | **Funknetz und Gateways** | Statussensoren, z. B. die Zigbee2MQTT-Bridge – siehe [Funknetz](melder.md#funknetz-und-gateways-überwachen) |
 | **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter **„Wann gilt jemand als weg?“** (ab 0.61, nur hier): Ortung außerhalb **genau prüfen** oder **einfach**, unter „Mehr Einstellungen“ das **Zeitfenster für den Beleg** (Standard 15 Minuten) mit Empfehlung aus der Messung „Weggehen“ und Knopf **übernehmen**; je Person **„Beleg für ‚weg‘“**: nur Ortung (sicher) oder auch Tür + Signal (unsicher, mit Warnung und eigenem Zeitfenster); Warnung für Personen ohne Ortung – siehe [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg). Ab 0.63 zeigt die Karte außerdem **„Wer gilt gerade als zuhause?“**: je Person zuhause/weg/unbekannt mit Grund und je Profil eine Zeile, was Automatik und „Bei Rückkehr“ gerade machen – siehe [Anwesenheit testen](testmodus.md#anwesenheit-testen). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
 | **Bereiche** | anlegen, umbenennen, Symbol, löschen (nur ohne Profile) – siehe [Bereiche](profile.md#bereiche) |
-| **Einstellungsseite** | **In der Seitenleiste zeigen** an/aus. Ausgeblendet verschwindet nur der Eintrag in der Seitenleiste – die Seite bleibt über die Geräteseite, den Link im Dialog und `/hauswacht-settings` erreichbar |
+| **Einstellungsseite** | **In der Seitenleiste zeigen** an/aus. Ausgeblendet verschwindet nur der Eintrag in der Seitenleiste – die Seite bleibt über die Geräteseite, „Konfigurieren“ bei der Integration und `/hauswacht-settings` erreichbar |
 
 ## Alarmgeber bearbeiten
 
@@ -252,7 +248,7 @@ Im Reiter **Alarmgeber** öffnet **„Sirenen bearbeiten“** das Seitenblatt:
 
 - **Eingetragene Sirenen** – mit ✕ austragen; darunter alle weiteren Sirenen (`siren.…`) zum
   Antippen. Wird eine Sirene ausgetragen, verschwindet sie auch aus den Profilen und ihr Ton wird
-  vergessen – wie im Dialog.
+  vergessen.
 - **Echte Sirenenansteuerung freigegeben** – erst damit können Sirenen bei einem Alarm wirklich
   ertönen. Beim **Einschalten** erscheint ein Warnhinweis und ein zweiter Haken **„Ich habe
   verstanden …“**; ohne diesen Haken wird nicht gespeichert („Zum Freigeben bitte bestätigen.“).
@@ -293,8 +289,7 @@ unscharf, Hardware-Freigabe an, Testmodus aus, keine Brandsperre, nur Einbrucht�
 
 Im Reiter **Benachrichtigungen** gibt es zwei Knöpfe:
 
-**„Empfänger und Ereignisse bearbeiten“** – alles aus „Benachrichtigungen – Einstellungen“ im
-Dialog auf einem Blatt:
+**„Empfänger und Ereignisse bearbeiten“** – alle Einstellungen zu Benachrichtigungen auf einem Blatt:
 
 | Abschnitt | Inhalt |
 |---|---|
@@ -339,7 +334,7 @@ Siehe [Sprachausgabe](benachrichtigungen.md#sprachausgabe-lautsprecher).
   [Sirenentest](#sirenentest-auf-der-seite-echte-sirene) mit Rückfrage. Sie ändert nur Einstellungen, und
   nur die, die du speicherst. Helfer legt sie nur an, wenn du es ausdrücklich willst („Sirene aus
   Schalter erstellen“, „Melder aus Messwert erstellen“).
-- Der **Einrichtungsassistent** bleibt im Dialog (Knopf „Im Dialog bearbeiten“ → Einrichtungsassistent).
+- Einen **Einrichtungsassistenten** gibt es derzeit nicht; ein neuer auf dieser Seite ist geplant – siehe [Einrichtungsassistent](assistent.md).
 - Gezeigt wird der Stand beim Öffnen; „Neu laden“ (Pfeil oben) holt den aktuellen.
 - Dieselben Inhalte gibt es zum Ausdrucken in der Karte [Hauswacht Übersicht](uebersicht.md).
 - Auf dem Handy geht die Seite auch; breite Tabellen lassen sich seitlich schieben.
