@@ -12,8 +12,18 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from homeassistant.components import persistent_notification
-from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.core import (
+    CALLBACK_TYPE,
+    Event,
+    EventStateChangedData,
+    EventStateReportedData,
+    HomeAssistant,
+    callback,
+)
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    async_track_state_report_event,
+)
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -34,6 +44,14 @@ from .core.departure import (
     departure_stats,
     judge_departures,
     wait_advice,
+)
+from .core.exit_check import (
+    CHECK_WINDOW,
+    exit_check_lines,
+    exit_check_stats,
+    exit_check_text,
+    note_life_sign,
+    parse_checks,
 )
 from .core.homecoming import (
     APPROACH_WINDOW,
@@ -103,6 +121,8 @@ class HomecomingObserver:
         self.doors: list[dict[str, Any]] = []
         self.arrivals: list[dict[str, Any]] = []
         self.departures: list[dict[str, Any]] = []
+        # Ausgangserkennung vorbereiten: Lebenszeichen rund um jede Türöffnung (0.63.1)
+        self.exit_checks: list[dict[str, Any]] = []
         # Auswertung nur einmal je Änderung berechnen (Attribute, Messungen, Bericht)
         self._rev = 0
         self._cache: dict[str, tuple[Any, Any]] = {}
@@ -122,6 +142,7 @@ class HomecomingObserver:
         self._owners: dict[str, tuple[str, ...]] = {}  # Quelle -> Personen
         self._presence: dict[str, PresenceState] = {}
         self._unsub: CALLBACK_TYPE | None = None
+        self._unsub_report: CALLBACK_TYPE | None = None
 
     # --- Lebenszyklus --------------------------------------------------------
 
@@ -130,6 +151,7 @@ class HomecomingObserver:
         self.doors = list(stored.get("doors", []))
         self.arrivals = list(stored.get("arrivals", []))
         self.departures = list(stored.get("departures", []))
+        self.exit_checks = list(stored.get("exit_checks", []))
         self.entries = list(stored.get("entries", []))
         self.since = stored.get("since")
         self.departure_since = stored.get("departure_since")
@@ -152,6 +174,9 @@ class HomecomingObserver:
         if self._unsub is not None:
             self._unsub()
             self._unsub = None
+        if self._unsub_report is not None:
+            self._unsub_report()
+            self._unsub_report = None
 
     @callback
     def refresh(self) -> None:
@@ -186,6 +211,10 @@ class HomecomingObserver:
         wanted = sorted(set(self._owners) | doors)
         if wanted:
             self._unsub = async_track_state_change_event(self.hass, wanted, self._on_state)
+        # Gleichbleibendes „zuhause“ (z. B. Ping bei jeder Abfrage) ist auch ein Lebenszeichen
+        signals = sorted(s for s in self._owners if not s.startswith("person."))
+        if signals:
+            self._unsub_report = async_track_state_report_event(self.hass, signals, self._on_report)
 
     def _initial_presence(self, source: str) -> PresenceState:
         state = self.hass.states.get(source)
@@ -297,7 +326,10 @@ class HomecomingObserver:
         if entity_id in self._door_entities and opened:
             self.doors.append({"at": now, "sensor": entity_id})
             self.proof.note_door(now)
+            self.exit_checks.append(self._exit_snapshot(entity_id, now))
             changed = True
+        if new is not None and entity_id in self._owners and not opened:
+            changed = self._life_sign(entity_id, new.state, now) or changed
         if entity_id in self._owners and new is not None:
             trackers_changed = (
                 old is not None
@@ -329,9 +361,84 @@ class HomecomingObserver:
             self.doors = prune(self.doors, now)
             self.arrivals = prune(self.arrivals, now)
             self.departures = prune(self.departures, now)
+            self.exit_checks = prune(self.exit_checks, now)
             self._store.async_delay_save(self._data, 10)
             self._rev += 1
             self._on_change()
+
+    # --- Ausgangserkennung vorbereiten (ADR 0014, 0.63.1) ---------------------
+
+    def _life_sources(self, person: str) -> list[str]:
+        """Signale, deren „zuhause“ ein Lebenszeichen ist – ohne Person und Richtung."""
+        return [
+            s for s in self._person_sources(person) if s != person and s not in self._directions
+        ]
+
+    def _exit_snapshot(self, door: str, now: float) -> dict[str, Any]:
+        """Beim Öffnen: Wie alt ist das letzte Lebenszeichen jeder Person?"""
+        persons: dict[str, dict[str, float | None]] = {}
+        for person in self.persons:
+            ages = [
+                now - state.last_reported.timestamp()
+                for source in self._life_sources(person)
+                if (state := self.hass.states.get(source)) is not None
+                and presence(state.state, self.ssids) is True
+            ]
+            persons[person] = {
+                "age": round(max(0.0, min(ages)), 1) if ages else None,
+                "confirm": None,
+                "last": None,
+            }
+        return {"at": now, "sensor": door, "persons": persons}
+
+    def _life_sign(self, entity_id: str, state: str, now: float) -> bool:
+        """Ein Signal meldet „zuhause“: als Lebenszeichen nach offenen Türöffnungen eintragen.
+
+        True nur beim ERSTEN Lebenszeichen je Türöffnung und Person – spätere verschieben nur
+        „zuletzt“ und lösen keine Aktualisierung der Anzeige aus.
+        """
+        if entity_id.startswith("person.") or entity_id in self._directions:
+            return False
+        if presence(state, self.ssids) is not True:
+            return False
+        first = False
+        dirty = False
+        for record in reversed(self.exit_checks):
+            if now - float(record["at"]) > CHECK_WINDOW:
+                break
+            for person in self._owners.get(entity_id, ()):
+                entry = record.get("persons", {}).get(person)
+                if entry is None:
+                    continue
+                was = entry.get("confirm")
+                if note_life_sign(record, person, now):
+                    dirty = True
+                    first = first or was is None
+        if dirty and not first:
+            self._store.async_delay_save(self._data, 30)
+        return first
+
+    @callback
+    def _on_report(self, event: Event[EventStateReportedData]) -> None:
+        """Gleicher Zustand erneut gemeldet (z. B. Ping antwortet weiter)."""
+        new = event.data["new_state"]
+        if new is None:
+            return
+        now = dt_util.utcnow().timestamp()
+        if self._life_sign(event.data["entity_id"], new.state, now):
+            self._store.async_delay_save(self._data, 10)
+            self._rev += 1
+            self._on_change()
+
+    def exit_stats(self) -> dict[str, dict[str, Any]]:
+        """Kennzahlen für die Ausgangserkennung je Person (nur abgeschlossene Messungen)."""
+        now = dt_util.utcnow().timestamp()
+        key = (self._rev, self.departure_since, int(now // 60))
+
+        def compute() -> dict[str, dict[str, Any]]:
+            return exit_check_stats(parse_checks(self.exit_checks), self.departure_verdicts(), now)
+
+        return self._cached("exit", key, compute)  # type: ignore[no-any-return]
 
     @callback
     def reset(self, part: str = "all") -> None:
@@ -347,6 +454,7 @@ class HomecomingObserver:
             self.since = now
         if part in ("departure", "all"):
             self.departures = []
+            self.exit_checks = []
             self.departure_since = now
         if part == "all":
             self.doors_since = now
@@ -364,6 +472,7 @@ class HomecomingObserver:
             "doors": self.doors,
             "arrivals": self.arrivals,
             "departures": self.departures,
+            "exit_checks": self.exit_checks,
             "since": self.since,
             "departure_since": self.departure_since,
             "doors_since": self.doors_since,
@@ -578,6 +687,10 @@ class HomecomingObserver:
                 plain_name(self.hass, person): values
                 for person, values in self.departure_advice().items()
             },
+            "exit_checks": {
+                plain_name(self.hass, person): values
+                for person, values in self.exit_stats().items()
+            },
         }
 
     def approach_advice(self) -> dict[str, dict[str, int | None]]:
@@ -628,6 +741,7 @@ class HomecomingObserver:
             out = left.get(person + EARLIEST)
             values = advice.get(person)
             name = plain_name(self.hass, person)
+            exits = self.exit_stats().get(person)
             persons.append(
                 {
                     "id": person,
@@ -646,6 +760,9 @@ class HomecomingObserver:
                         if values
                         else tr(lang, "dep_status_none", name=name)
                     ),
+                    # Vorbereitung Ausgangserkennung (0.63.1)
+                    "exit": exits,
+                    "exit_text": exit_check_text(exits, name, lang) if exits else [],
                 }
             )
         return {
@@ -718,6 +835,11 @@ class HomecomingObserver:
         )
         if leaving:
             text += "\n\n" + "\n".join(leaving)
+        exits = exit_check_lines(
+            self.exit_stats(), {p: plain_name(self.hass, p) for p in self.persons}, lang
+        )
+        if exits:
+            text += "\n\n" + "\n".join(exits)
         if not self.enabled:
             text = tr(lang, "hc_off") + "\n\n" + text
         return text

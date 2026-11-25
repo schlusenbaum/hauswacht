@@ -12,6 +12,7 @@ Gegenstück in der anderen Sprache.
 
 | Seite | Inhalt |
 |---|---|
+| [So entscheidet Hauswacht](so-entscheidet-hauswacht.md) | **Überblick zuerst:** Was passiert, wenn eine Tür aufgeht, wann die Automatik schaltet, was beim Heimkommen passiert, wann jemand als zuhause oder weg gilt – als Bilder mit Beispielen |
 | [Installation und erste Schritte](installation.md) | Voraussetzungen, Installation über Marketplace oder HACS, das Einstellungsmenü, der kürzeste Weg zur ersten Scharfschaltung, Updates |
 | [Einrichtungsassistent](assistent.md) | Geführte Einrichtung mit kurzer Einführung: Melder, Meldergruppen oder Auslöseregeln, Alarmprofile – jeder Schritt überspringbar |
 | [Melder und Meldergruppen](melder.md) | Welche Sensoren gehen, Meldergruppen, Typen (Tür, Fenster, Bewegung …), immer aktive Melder, Funkstille, Funknetz und Gateways |

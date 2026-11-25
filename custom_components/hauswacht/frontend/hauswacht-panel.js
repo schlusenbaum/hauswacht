@@ -154,6 +154,20 @@ const TEXTS = {
         waitHome: "Tür gesehen, wartet auf eine Heimkehr (noch {time})",
       },
     },
+    exitTitle: "Vorbereitung Ausgangserkennung",
+    exitIntro: "Nur Messung, schaltet nichts. Gezählt wird erst 15 Minuten nach einer Türöffnung.",
+    exitCols: {
+      sign: "Lebenszeichen vor dem Rausgehen",
+      confirm: "„noch da“ nach der Tür (typisch / längste)",
+      missing: "ohne „noch da“",
+      echo: "„zuhause“ nach dem Rausgehen",
+    },
+    exitInfo: {
+      sign: "Wie oft beim Rausgehen kurz vorher (bis 3 Minuten) ein Signal der Person „zuhause“ meldete – von allen Malen, die sie durch eine Tür rausging. Nur mit so einem Lebenszeichen kann die Ausgangserkennung die Person später erkennen.",
+      confirm: "Die Person bleibt zuhause (mit Lebenszeichen kurz vorher), während eine Tür aufgeht: So schnell meldet sich danach ein Signal wieder mit „zuhause“. So lange bliebe ein Einbruch mit Ausgangserkennung höchstens still.",
+      missing: "Wie oft sich in diesem Fall 15 Minuten lang gar kein Signal mit „zuhause“ meldete – von allen Malen. Dann käme der Alarm erst am Ende der Wartezeit.",
+      echo: "Wie oft Signale nach dem Öffnen noch „zuhause“ meldeten, obwohl die Person gerade rausging – in Klammern bis wie lange. Typisch für Ping mit Nachlaufzeit. Die Ausgangserkennung muss das berücksichtigen.",
+    },
     measResetAll: "Alle Messungen zurücksetzen",
     measResetSilence: "Messung zurücksetzen",
     measAskLeaving: "Messung „Weggehen“ löschen und neu beginnen? Heimkommen und Eingänge bleiben erhalten.",
@@ -346,6 +360,20 @@ const TEXTS = {
         waitDoor: "homecoming seen, waiting for the door ({time} left)",
         waitHome: "door seen, waiting for a homecoming ({time} left)",
       },
+    },
+    exitTitle: "Preparing exit detection",
+    exitIntro: "Measurement only, switches nothing. Counted 15 minutes after a door opening.",
+    exitCols: {
+      sign: "Sign of life before leaving",
+      confirm: "“still here” after the door (typical / longest)",
+      missing: "no “still here”",
+      echo: "“home” after leaving",
+    },
+    exitInfo: {
+      sign: "How often a signal of the person reported “home” shortly before leaving (up to 3 minutes) – out of all times they left through a door. Only with such a sign of life can exit detection recognise the person later.",
+      confirm: "The person stays home (with a sign of life shortly before) while a door opens: this is how fast a signal reports “home” again. A break-in would stay silent for at most this long with exit detection.",
+      missing: "How often no signal reported “home” at all for 15 minutes in that case – out of all times. The alarm would then only come at the end of the waiting time.",
+      echo: "How often signals still reported “home” after the door opened although the person was just leaving – in brackets for how long. Typical for ping with a grace period. Exit detection has to take this into account.",
     },
     measResetAll: "Reset all measurements",
     measResetSilence: "Reset measurement",
@@ -1000,6 +1028,29 @@ class HauswachtPanel extends HTMLElement {
         return `<div class="${warn ? "" : "muted"}">${warn ? "⚠️ " : p.status === "ok" ? "✅ " : ""}${escHtml(p.advice)}</div>`;
       })
       .join("");
+    // Vorbereitung Ausgangserkennung (0.63.1): Lebenszeichen rund um die Tür
+    const exitPersons = m.persons.filter((p) => p.exit);
+    const exitHead = (key) => `<th title="${escHtml(this._t("exitInfo")[key])}">${escHtml(this._t("exitCols")[key])} <span class="info">ⓘ</span></th>`;
+    const exitRows = exitPersons
+      .map((p) => {
+        const e = p.exit;
+        const confirm = e.confirm_median === null ? "–" : `${e.confirm_median} s / ${e.confirm_max} s`;
+        const echo = e.left_echo ? `${e.left_echo} (${e.left_echo_max} s)` : "0";
+        return `<tr><td>${escHtml(p.name)}</td><td class="nw">${e.left_with_sign} / ${e.left}</td><td class="nw">${escHtml(confirm)}</td><td class="nw">${e.unconfirmed} / ${e.stayed}</td><td class="nw">${escHtml(echo)}</td></tr>`;
+      })
+      .join("");
+    const exitExplain = ["sign", "confirm", "missing", "echo"]
+      .map((key) => `<div><b>${escHtml(this._t("exitCols")[key])}:</b> ${escHtml(this._t("exitInfo")[key])}</div>`)
+      .join("");
+    const exitText = exitPersons
+      .flatMap((p) => p.exit_text || [])
+      .map((line) => `<div class="muted">${escHtml(line)}</div>`)
+      .join("");
+    const exits = exitRows
+      ? `<div class="n" style="margin-top:10px">${escHtml(this._t("exitTitle"))}</div><div class="muted">${escHtml(this._t("exitIntro"))}</div>
+        <div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${exitHead("sign")}${exitHead("confirm")}${exitHead("missing")}${exitHead("echo")}</tr>${exitRows}</table></div>
+        <details class="explain"><summary>${escHtml(this._t("measExplain"))}</summary>${exitExplain}</details>${exitText}`
+      : "";
     const entryRows = m.entries
       .map((e) => `<tr><td>${escHtml(e.door)}</td><td class="nw">${e.count}</td><td class="nw">${escHtml(dash(e.longest, " s"))}</td><td class="nw">${escHtml(dash(e.recommended, " s"))}</td></tr>`)
       .join("");
@@ -1017,7 +1068,7 @@ class HauswachtPanel extends HTMLElement {
         ? `<div class="report"><ha-markdown breaks data-report></ha-markdown></div>`
         : `<pre class="report">${escHtml(this._report)}</pre>`
       : "";
-    return `<div class="meas"><div class="n">${escHtml(this._t("measTitle"))}</div>${since}${persons}${advice}${entries}${tools}${report}</div>`;
+    return `<div class="meas"><div class="n">${escHtml(this._t("measTitle"))}</div>${since}${persons}${advice}${exits}${entries}${tools}${report}</div>`;
   }
 
   async _toggleReport() {

@@ -13,6 +13,7 @@ ones of the English interface.
 
 | Page | Content |
 |---|---|
+| [How Hauswacht decides](how-hauswacht-decides.md) | **Overview first:** what happens when a door opens, when the automation switches, what happens when someone comes home, when someone counts as home or away – as pictures with examples |
 | [Installation and first steps](installation.md) | requirements, installation via Marketplace or HACS, the settings menu, the shortest way to the first arming, updates |
 | [Setup wizard](setup-wizard.md) | guided setup with a short introduction: sensors, sensor groups or trigger rules, alarm profiles – every step can be skipped |
 | [Sensors and sensor groups](sensors.md) | which sensors work, sensor groups, types (door, window, motion …), always-active sensors, radio silence, radio networks and gateways |

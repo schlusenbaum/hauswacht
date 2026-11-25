@@ -64,6 +64,9 @@ const DOC_LINKS = {
 
 // Reiter „Dokumentation“: [Schlüssel/Seite de, Seite en, Titel de, Titel en, Inhalt de, Inhalt en]
 const DOC_PAGES = [
+  ["so-entscheidet-hauswacht.md", "how-hauswacht-decides.md", "So entscheidet Hauswacht", "How Hauswacht decides",
+    "Überblick: Tür auf, Automatik, Heimkommen, zuhause oder weg – als Bilder",
+    "Overview: door opens, automation, coming home, home or away – as pictures"],
   ["installation.md", "installation.md", "Installation und erste Schritte", "Installation and first steps",
     "Installation, das Einstellungsmenü, der kürzeste Weg zur ersten Scharfschaltung, Updates",
     "Installation, the settings menu, the shortest way to the first arming, updates"],

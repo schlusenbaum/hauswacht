@@ -88,6 +88,7 @@ PAGES = {
     "referenz.md": "reference.md",
     "fehlersuche.md": "troubleshooting.md",
     "roadmap.md": "roadmap.md",
+    "so-entscheidet-hauswacht.md": "how-hauswacht-decides.md",
     "entwicklung/safety.md": "development/safety.md",
 }
 

@@ -581,3 +581,43 @@ async def test_earliest_signal_needs_a_real_homecoming(
     assert earliest["with_door"] == 1
     assert earliest["median_delay"] == 30  # erst die Person zählt, nicht "nähert sich"
     assert sources["Anna (overall)"]["median_delay"] == 30
+
+
+# --- Vorbereitung Ausgangserkennung (0.63.1) -----------------------------------
+
+
+async def test_exit_check_measures_life_signs_and_switches_nothing(
+    hass: HomeAssistant,
+    freezer: FrozenDateTimeFactory,
+    hass_ws_client: WebSocketGenerator,
+) -> None:
+    """Anna bleibt zuhause, die Tür geht auf: Ihr Router meldet sich nach 25 s wieder."""
+    push = async_mock_service(hass, "notify", PHONE)
+    _person(hass, "home", "home")
+    options = _night(homecoming_observe=True, homecoming_persons=[PERSON], push_disarm=True)
+    await setup_entry(hass, make_entry(options))
+    client = await hass_ws_client(hass)
+
+    freezer.tick(timedelta(seconds=30))
+    hass.states.async_set(ROUTER, "home", {"friendly_name": "Router"})  # Lebenszeichen
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=40))
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(seconds=25))
+    hass.states.async_set(ROUTER, "home", {"friendly_name": "Router"})  # gleich: „gemeldet“
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    freezer.tick(timedelta(minutes=20))
+    await hass.async_block_till_done()
+
+    assert _panel(hass) == AlarmControlPanelState.DISARMED
+    assert push == []
+    await client.send_json_auto_id({"type": "hauswacht/settings/get"})
+    reply = await client.receive_json()
+    assert reply["success"], reply
+    (anna,) = reply["result"]["system"]["homecoming"]["measurements"]["persons"]
+    exit_stats = anna["exit"]
+    assert exit_stats["stayed"] == 1
+    assert exit_stats["confirm_median"] == 25
+    assert exit_stats["left"] == 0

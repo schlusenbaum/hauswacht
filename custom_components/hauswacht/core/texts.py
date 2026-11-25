@@ -244,6 +244,23 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "hc_entry_passage": "per Durchgang reingelassen, blieb scharf – zählt nicht mit",
         "hc_filename": "hauswacht-heimkehr",
         # Beobachtung Weggehen (ADR 0014)
+        "exit_heading": "**Vorbereitung Ausgangserkennung** – Lebenszeichen rund um die Tür",
+        "exit_cols": "| Person | Lebenszeichen vor dem Rausgehen | „noch da“ nach der Tür "
+        "(typisch / längste) | ohne „noch da“ | „zuhause“ nach dem Rausgehen |",
+        "exit_legend": "**Lebenszeichen vor dem Rausgehen**: Beim Rausgehen meldete kurz vorher "
+        "(bis 3 Minuten) ein Signal „zuhause“. Nur dann kann die Ausgangserkennung die Person "
+        "später erkennen. **„noch da“ nach der Tür**: Jemand mit Lebenszeichen bleibt zuhause, "
+        "während eine Tür aufgeht – so schnell meldet sich ein Signal wieder mit „zuhause“. So "
+        "lange bliebe ein Einbruch höchstens still. **„zuhause“ nach dem Rausgehen**: Signale "
+        "meldeten nach dem Öffnen noch „zuhause“, obwohl die Person gerade rausging (z. B. Ping "
+        "mit Nachlaufzeit).",
+        "exit_sign": "{name}: beim Rausgehen {count} von {total}× mit Lebenszeichen kurz vorher.",
+        "exit_confirm": "{name}: bleibt zuhause, während eine Tür aufgeht – meldet sich typisch "
+        "nach {median} s, spätestens nach {longest} s wieder.",
+        "exit_confirm_missing": "{name}: bleibt zuhause, während eine Tür aufgeht – meldet sich "
+        "typisch nach {median} s wieder, aber {missing} von {total}× 15 Minuten lang gar nicht.",
+        "exit_echo": "{name}: nach dem Rausgehen meldeten Signale {count}× noch „zuhause“ "
+        "(bis {longest} s nach dem Öffnen).",
         "dep_heading": "**Weggehen** – wie schnell melden die Signale „weg“?",
         "dep_cols": "| Quelle | Rausgehen mit Tür | typisch bis „weg“ | längste | "
         "Schweigepausen | längste Pause |",
@@ -475,6 +492,24 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "hc_entry_passage": "let in by passage, stayed armed – not counted",
         "hc_filename": "hauswacht-homecoming",
         # Departure observation (ADR 0014)
+        "exit_heading": "**Preparing exit detection** – signs of life around the door",
+        "exit_cols": "| Person | sign of life before leaving | “still here” after the door "
+        "(typical / longest) | no “still here” | “home” after leaving |",
+        "exit_legend": "**Sign of life before leaving**: when leaving, a signal reported "
+        "“home” shortly before (up to 3 minutes). Only then can exit detection recognise the "
+        "person later. **“Still here” after the door**: someone with a sign of life stays home "
+        "while a door opens – this is how fast a signal reports “home” again. A break-in would "
+        "stay silent for at most that long. **“Home” after leaving**: signals still reported "
+        "“home” after the door opened although the person was just leaving (e.g. ping with a "
+        "grace period).",
+        "exit_sign": "{name}: when leaving, {count} of {total}× with a sign of life shortly "
+        "before.",
+        "exit_confirm": "{name}: stays home while a door opens – reports again typically after "
+        "{median} s, at the latest after {longest} s.",
+        "exit_confirm_missing": "{name}: stays home while a door opens – reports again typically "
+        "after {median} s, but {missing} of {total}× not at all for 15 minutes.",
+        "exit_echo": "{name}: after leaving, signals still reported “home” {count}× (up to "
+        "{longest} s after the door opened).",
         "dep_heading": "**Leaving** – how fast do the signals report “away”?",
         "dep_cols": "| Source | Left through a door | typical until “away” | longest | "
         "silent pauses | longest pause |",
