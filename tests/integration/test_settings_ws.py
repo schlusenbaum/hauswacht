@@ -850,14 +850,12 @@ async def test_advisor_scenarios_only_calculated(hass: HomeAssistant, hass_ws_cl
     assert after.state == before.state  # nichts geschaltet
 
 
-async def test_frozen_location_does_not_count(
-    hass: HomeAssistant, hass_ws_client: Any, freezer: Any
-) -> None:
+async def test_frozen_location_does_not_count(hass: HomeAssistant, hass_ws_client: Any) -> None:
     """0.64.0b5: eine Ortung, die 24 Stunden exakt gleich bleibt, zählt nicht als Ortung."""
-    from datetime import timedelta  # noqa: PLC0415
+    from custom_components.hauswacht.presence_proof import DATA_FROZEN  # noqa: PLC0415
 
     gps = "device_tracker.anna_gps"
-    # Draußen, weit weg von Zuhause (Zone aus der Testkonfiguration)
+    # Draußen, weit weg von Zuhause
     fake = {"latitude": 10.0, "longitude": 10.0, "gps_accuracy": 5, "friendly_name": "Fake"}
     hass.states.async_set(gps, "not_home", fake)
     hass.states.async_set(
@@ -867,9 +865,10 @@ async def test_frozen_location_does_not_count(
     await setup_entry(hass, entry)
     first = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
     assert first["findings"] == []  # Anna kann geortet werden
-    freezer.tick(timedelta(hours=25))
-    hass.states.async_set(gps, "not_home", fake)  # meldet sich, aber exakt gleich
-    await hass.async_block_till_done()
+    # Gemerkt: dieselben Koordinaten schon seit 25 Stunden (statt die Uhr vorzustellen)
+    store = hass.data[DATA_FROZEN]
+    lat, lon, since = store.data.seen[gps]
+    store.data.seen[gps] = (lat, lon, since - 25 * 3600)
     later = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
     codes = {f["code"] for f in later["findings"]}
     assert codes == {"away_never", "location_frozen"}
