@@ -11,6 +11,12 @@
     }
   },
   "options": {
+    "step": {
+      "init": {
+        "title": "Hauswacht",
+        "description": "You find all settings on the settings page: [open the settings page]({url})."
+      }
+    },
     "abort": {
       "use_settings_page": "You find all settings of Hauswacht on the **settings page** – in the sidebar under “Hauswacht” or here: [open the settings page]({url}).\n\nThe former settings dialog was removed in version 0.63.2; the page can do everything it could."
     }

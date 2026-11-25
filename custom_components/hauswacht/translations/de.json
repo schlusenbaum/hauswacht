@@ -11,6 +11,12 @@
     }
   },
   "options": {
+    "step": {
+      "init": {
+        "title": "Hauswacht",
+        "description": "Alle Einstellungen findest du auf der Einstellungsseite: [Einstellungsseite öffnen]({url})."
+      }
+    },
     "abort": {
       "use_settings_page": "Alle Einstellungen von Hauswacht findest du auf der **Einstellungsseite** – in der Seitenleiste unter „Hauswacht“ oder hier: [Einstellungsseite öffnen]({url}).\n\nDer frühere Einstellungsdialog ist seit Version 0.63.2 entfallen; die Seite kann alles, was er konnte."
     }
