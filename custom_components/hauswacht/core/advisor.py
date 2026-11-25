@@ -77,7 +77,9 @@ class Facts:
     entry_needed: Mapping[str, Measured] = field(default_factory=dict)
     # Gemessen: nötige Eingangsverzögerung je Person für „Unscharf mit Türbeleg“
     proof_needed: Mapping[str, Measured] = field(default_factory=dict)
-    # Anzeigenamen (Personen, Türen)
+    # Eingefrorene Ortungen je Person: Entität -> seit wie vielen Sekunden (0.64.0b5)
+    frozen: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
+    # Anzeigenamen (Personen, Türen, Ortungen)
     names: Mapping[str, str] = field(default_factory=dict)
 
     def name(self, entity_id: str) -> str:
@@ -184,6 +186,26 @@ TEXTS: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "text": "Profile {profile_name}: “entry delay when approaching” never applies.",
             "why": "No person in “On return” has a direction signal (e.g. proximity with "
             "“towards”). Without that signal the entry delay is never extended.",
+        },
+    },
+    "location_frozen": {
+        "de": {
+            "text": "{person}: Die Ortung „{entity}“ meldet seit {duration} exakt dieselbe "
+            "Position außerhalb von Zuhause – Hauswacht zählt sie nicht als Beleg für „weg“.",
+            "why": "Eine echte Ortung schwankt immer ein wenig. Exakt gleiche Koordinaten über so "
+            "lange Zeit deuten auf einen vorgetäuschten Standort oder eine hängende App hin. "
+            "Damit niemand fälschlich als weg gilt (und das Haus scharf wird, obwohl jemand da "
+            "ist), ignoriert Hauswacht diese Ortung, bis sie sich wieder bewegt. Ist sie dauerhaft "
+            "falsch, nimm sie unter System → Anwesenheit aus den Signalen der Person.",
+        },
+        "en": {
+            "text": "{person}: the location “{entity}” has reported exactly the same position "
+            "outside home for {duration} – Hauswacht does not count it as proof of “away”.",
+            "why": "A real location always varies a little. Exactly the same coordinates for "
+            "that long point to a faked location or a stuck app. So that nobody counts as away "
+            "by mistake (and the house is armed while someone is there), Hauswacht ignores this "
+            "location until it moves again. If it is permanently wrong, remove it from the "
+            "person's signals under System → Presence.",
         },
     },
     "weak_not_needed": {
@@ -506,8 +528,32 @@ def _delays(
     return found
 
 
+def _duration(seconds: float, lang: str) -> str:
+    hours = int(seconds // 3600)
+    if hours < 48:
+        return f"{hours} Stunden" if lang == "de" else f"{hours} hours"
+    days = hours // 24
+    return f"{days} Tagen" if lang == "de" else f"{days} days"
+
+
+def _frozen(facts: Facts, lang: str) -> list[dict[str, Any]]:
+    return [
+        _finding(
+            "location_frozen",
+            WARNING,
+            lang,
+            key=entity,
+            person=facts.name(person),
+            entity=facts.name(entity),
+            duration=_duration(seconds, lang),
+        )
+        for person in sorted(facts.frozen)
+        for entity, seconds in sorted(facts.frozen[person].items())
+    ]
+
+
 def _system(options: Mapping[str, Any], facts: Facts, lang: str) -> list[dict[str, Any]]:
-    found = []
+    found = _frozen(facts, lang)
     for person in sorted(parse_proof_settings(options).weak):
         if person not in facts.located:
             continue

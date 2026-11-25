@@ -386,7 +386,7 @@ const se = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // Befunde der gemeinsamen Prüfung, die zum Seitenblatt „Anwesenheit“ gehören
-const PRESENCE_CODES = ["away_never", "return_never", "weak_not_needed", "approach_without_direction"];
+const PRESENCE_CODES = ["away_never", "return_never", "weak_not_needed", "approach_without_direction", "location_frozen"];
 
 class HauswachtSystemEditor extends HTMLElement {
   // open({hass, settings, kind, item}) – item: ID (Bereich, Aktions-Code, Bedienteil) oder null

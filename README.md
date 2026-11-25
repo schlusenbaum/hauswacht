@@ -15,7 +15,7 @@ und ein Testmodus, in dem garantiert keine Sirene losgeht. Und weil Hauswacht al
 als Entitäten, Attribute und Ereignisse bereitstellt, verbindest du es mit **allem, was Home
 Assistant kann** – Licht, Kameras, Rollläden, Heizung, Lautsprecher.
 
-> **Status: 0.64.0b4 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
+> **Status: 0.64.0b5 – Beta.** Im eigenen Haus im Einsatz; Rückmeldungen sind ausdrücklich
 > erwünscht. Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und muss bewusst
 > freigegeben werden.
 

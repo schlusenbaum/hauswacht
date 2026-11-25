@@ -219,7 +219,9 @@ class AutomationEngine:
             if not cfg.away_persons:
                 continue
             if all_away_values(current.get(p) for p in cfg.away_persons):
-                if pid not in self.away_due:
+                # Nur planen, solange die Anlage unscharf ist – sonst würde nach dem automatischen
+                # Scharfschalten bei jeder Signaländerung neu geplant und dann verworfen (0.64.0b5)
+                if pid not in self.away_due and alarm.state is AlarmState.DISARMED:
                     self.away_due[pid] = now + cfg.away_delay * 60
                     actions.append(StartTimer(pid, cfg.away_delay * 60))
                     actions.append(Note("AutoArmScheduled", pid, {"minutes": cfg.away_delay}))

@@ -6,6 +6,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0b5] - 2026-11-25
+
+Eingefrorene Ortung erkennen; „alle weg“ plant nach dem Scharfschalten nicht mehr neu.
+
+### Neu
+
+- **Ortung, die sich nie bewegt:** Meldet eine Ortung seit mindestens 24 Stunden exakt dieselbe
+  Position außerhalb von Zuhause (vorgetäuschter Standort, hängende App), zählt sie nicht mehr als
+  Beleg für „weg“ und nicht als „kann geortet werden“ – bis sie sich wieder bewegt. Hauswacht
+  merkt sich das auch über einen Neustart hinweg. Der Assistent zeigt dazu eine Warnung (Check-up
+  und Seitenblatt Anwesenheit). Ortungen zuhause sind nie betroffen.
+
+### Geändert
+
+- **„Scharf, wenn alle weg“ plant nur noch, solange die Anlage unscharf ist.** Bisher wurde nach
+  dem automatischen Scharfschalten bei jeder Signaländerung neu geplant und nach der Wartezeit
+  wieder verworfen (Ereignisse `AutoArmScheduled` und `AutoArmSkipped` im Logbuch). Gefunden mit
+  der Szenario-Vorschau. Am Verhalten ändert sich sonst nichts: Wird aus der Ferne unscharf
+  geschaltet, während alle weg sind, plant die nächste Signaländerung wie bisher neu.
+
 ## [0.64.0b4] - 2026-11-25
 
 Szenario-Vorschau „Was passiert, wenn …?“ im Reiter Assistent ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).

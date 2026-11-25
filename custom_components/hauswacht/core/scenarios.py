@@ -418,19 +418,15 @@ class Sim:
         for action in actions:
             if action is REFRESH or isinstance(action, Note):
                 continue
-            # Wartezeit von „alle weg“: erwähnt nur, solange sie etwas bewirken kann (unscharf)
-            quiet = self.ctx.state is not AlarmState.DISARMED
             if isinstance(action, StartTimer):
                 self.timers.append(_Timer(self.now + action.seconds, "away", action.profile_id))
-                if not quiet:
-                    m = action.seconds // 60
-                    self.note("s_timer", profile=self.pname(action.profile_id), m=m)
+                m = action.seconds // 60
+                self.note("s_timer", profile=self.pname(action.profile_id), m=m)
             elif isinstance(action, CancelTimer):
                 self.timers = [
                     t for t in self.timers if not (t.kind == "away" and t.data == action.profile_id)
                 ]
-                if not quiet:
-                    self.note("s_cancel")
+                self.note("s_cancel")
             elif isinstance(action, Arm):
                 if arm_allowed(self.ctx.state, guest=False) is None:
                     self.note("s_auto_armed", profile=self.pname(action.profile_id))

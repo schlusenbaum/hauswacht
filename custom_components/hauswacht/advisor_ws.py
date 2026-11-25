@@ -47,7 +47,7 @@ from .core.sensor_types import SensorType, default_type, excluded_sensors
 from .core.sensors import parse_zones, resolve_zones
 from .core.tilt import effective_types
 from .names import plain_name
-from .presence_proof import locatable
+from .presence_proof import frozen_locations, locatable
 
 WS_CHECK = f"{DOMAIN}/advisor/check"
 WS_APPLY_FIX = f"{DOMAIN}/advisor/apply"
@@ -119,7 +119,9 @@ def build_facts(hass: HomeAssistant, main: Any, options: Mapping[str, Any]) -> F
     persons = _persons(options)
     entry, proof = _measured(main)
     doors, windows = _members(hass, options)
+    frozen = {p: f for p in persons if (f := frozen_locations(hass, p, _signals(options, p)))}
     names = {p: plain_name(hass, p) for p in persons}
+    names.update({e: plain_name(hass, e) for f in frozen.values() for e in f})
     for group in (doors, windows):
         names.update({e: plain_name(hass, e) for ids in group.values() for e in ids})
     return Facts(
@@ -129,6 +131,7 @@ def build_facts(hass: HomeAssistant, main: Any, options: Mapping[str, Any]) -> F
         windows=windows,
         entry_needed=entry,
         proof_needed=proof,
+        frozen=frozen,
         names=names,
     )
 

@@ -217,3 +217,15 @@ def test_patch_set_add_remove() -> None:
         "automation": {"auto_away_persons": [BEN]},
         "return": {"persons": [BEN]},
     }
+
+
+def test_frozen_location_is_a_warning() -> None:
+    gps = "device_tracker.anna_gps"
+    facts = _facts(frozen={ANNA: {gps: 3 * 86400}}, names={**NAMES, gps: "Annas iPhone"})
+    found = advise(_options(), facts)
+    assert _codes(found) == ["location_frozen"]
+    assert found[0]["level"] == WARNING
+    assert "seit 3 Tagen" in found[0]["text"]
+    assert "Annas iPhone" in found[0]["text"]
+    hours = advise(_options(), _facts(frozen={ANNA: {gps: 30 * 3600}}), "en")
+    assert "for 30 hours" in hours[0]["text"]

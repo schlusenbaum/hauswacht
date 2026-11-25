@@ -229,7 +229,7 @@ Türbeleg`, `Neustart`.
 
 | `type` | Wann | Felder |
 |---|---|---|
-| `AutoArmScheduled` | Alle weg – Scharfschalten nach Wartezeit geplant | `profile_id`, `minutes` |
+| `AutoArmScheduled` | Alle weg – Scharfschalten nach Wartezeit geplant (seit 0.64.0b5 nur, solange die Anlage unscharf ist) | `profile_id`, `minutes` |
 | `AutoArmCancelled` | Geplantes Scharfschalten abgebrochen (jemand zurück) | `profile_id` |
 | `AutoArmed` | Automatisch scharf geschaltet | `profile_id`, `reason` |
 | `AutoArmSkipped` | Nicht scharf geschaltet (nicht unscharf, Gastmodus …) | `profile_id`, `reason`, ggf. `guest_mode: true` |

@@ -55,7 +55,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| 0.64 | Tab **Assistant** with **check-up** ([ADR 0017](../entwicklung/adr/0017-assistent-check-up.md), German): checks how the settings work together with your measurements, suggests improvements (apply one by one); hints right in the side sheets; **scenario preview** "What happens if …?" with the same logic as in real operation; detect a **location that never moves** (e.g. a faked location: exactly the same coordinates for days) – it then does not count as proof of “away”, with a hint |
+| 0.64 | Tab **Assistant** with **check-up** ([ADR 0017](../entwicklung/adr/0017-assistent-check-up.md), German): checks how the settings work together with your measurements, suggests improvements (apply one by one); hints right in the side sheets; **scenario preview** "What happens if …?" with the same logic as in real operation; detect a **location that never moves** (exactly the same coordinates outside for 24 hours – does not count as proof, with a hint) |
 | 0.65 | Assistant: **set up by goals** – "secure the night", "arm automatically when everyone is away", "disarm when coming home" … |
 | 0.66 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |

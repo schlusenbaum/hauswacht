@@ -55,7 +55,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| 0.64 | Reiter **Assistent** mit **Check-up** ([ADR 0017](entwicklung/adr/0017-assistent-check-up.md)): prüft das Zusammenspiel der Einstellungen mit euren Messwerten, schlägt Verbesserungen vor (einzeln übernehmen); Hinweise direkt in den Seitenblättern; **Szenario-Vorschau** „Was passiert, wenn …?“ mit derselben Logik wie im Echtbetrieb; **Ortung, die sich nie bewegt** (z. B. vorgetäuschter Standort: tagelang exakt dieselben Koordinaten) erkennen – zählt dann nicht als Beleg für „weg“, mit Hinweis |
+| 0.64 | Reiter **Assistent** mit **Check-up** ([ADR 0017](entwicklung/adr/0017-assistent-check-up.md)): prüft das Zusammenspiel der Einstellungen mit euren Messwerten, schlägt Verbesserungen vor (einzeln übernehmen); Hinweise direkt in den Seitenblättern; **Szenario-Vorschau** „Was passiert, wenn …?“ mit derselben Logik wie im Echtbetrieb; **Ortung, die sich nie bewegt** erkennen (24 Stunden exakt dieselben Koordinaten außerhalb – zählt nicht als Beleg, mit Hinweis) |
 | 0.65 | Assistent: **Einrichten nach Zielen** – „nachts absichern“, „automatisch scharf, wenn alle weg sind“, „beim Heimkommen unscharf“ … |
 | 0.66 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |

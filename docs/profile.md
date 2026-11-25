@@ -217,6 +217,18 @@ haben keine Koordinaten – sie bestätigen nur, ein Beleg sind sie nie.
 Ist jemand einmal belegt weg, bleibt das so, bis die Person wieder zuhause ist – auch wenn die
 Ortung danach einschläft. Türen und Ortungen von vor der letzten Heimkehr zählen nicht.
 
+**Eingefrorene Ortung** (*ab 0.64.0b5*): Eine echte Ortung schwankt immer ein wenig. Meldet eine
+Ortung seit mindestens **24 Stunden exakt dieselbe Position außerhalb** der Zone „Zuhause“, ist der
+Standort vorgetäuscht oder die App hängt. Dann zählt sie **nicht** als Beleg und auch nicht als
+„kann geortet werden“ – bis sie sich wieder bewegt (dann sofort wieder). Der
+[Assistent](assistent.md#was-geprüft-wird) zeigt dazu eine Warnung. Eine Ortung, die zuhause steht
+(z. B. ein Tablet), ist davon nie betroffen. Wann sich die Koordinaten zuletzt geändert haben,
+merkt sich Hauswacht auch über einen Neustart hinweg.
+
+*Beispiel:* Ein Handy meldet über die App seit Tagen dieselbe Position in einer anderen Stadt,
+obwohl die Person zuhause ist (vorgetäuschter Standort). Ohne diese Regel könnte das Haus bei
+schlafendem WLAN-Handy scharf werden, obwohl die Person da ist.
+
 **Personen ohne Ortung – „auch Tür + Signal (unsicher)“:** Hat eine Person keine Ortung (z. B.
 nur WLAN-Sensor oder Ping), kannst du für sie unter Einstellungsseite → System → Anwesenheit und
 Heimkehr-Beobachtung, im Kasten der Person, **„Beleg für ‚weg‘: auch Tür + Signal (unsicher)“**

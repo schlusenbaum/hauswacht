@@ -175,3 +175,16 @@ def test_guards() -> None:
     assert disarm_allowed(PENDING, "away", allow_entry=True)
     assert not disarm_allowed(AlarmView("away", AlarmState.TRIGGERED), "away", allow_entry=True)
     assert not disarm_allowed(ARMED, "night", allow_entry=True)
+
+
+def test_all_away_not_rescheduled_while_armed() -> None:
+    """0.64.0b5: nach dem Scharfschalten wird „alle weg“ nicht bei jeder Änderung neu geplant."""
+    e = engine()
+    e.presence({A: False, B: False}, 0, DISARMED)
+    assert e.away_elapsed("away", [False, False]) == [Arm("away", REASON_AWAY)]
+    # scharf, alle noch weg: eine Signaländerung plant nichts neu
+    assert e.presence({A: False, B: False}, 60, ARMED) == []
+    assert e.away_due == {}
+    # wieder unscharf (z. B. aus der Ferne), alle noch weg: wieder ganz normal planen
+    actions = e.presence({A: False, B: False}, 120, DISARMED)
+    assert actions == [StartTimer("away", 900), Note("AutoArmScheduled", "away", {"minutes": 15})]

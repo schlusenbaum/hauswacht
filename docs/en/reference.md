@@ -228,7 +228,7 @@ proof), `Neustart` (restart).
 
 | `type` | When | Fields |
 |---|---|---|
-| `AutoArmScheduled` | Everyone left – arming after the waiting time planned | `profile_id`, `minutes` |
+| `AutoArmScheduled` | Everyone left – arming after the waiting time planned (since 0.64.0b5 only while the system is disarmed) | `profile_id`, `minutes` |
 | `AutoArmCancelled` | Planned arming cancelled (someone came back) | `profile_id` |
 | `AutoArmed` | Armed automatically | `profile_id`, `reason` |
 | `AutoArmSkipped` | Not armed (not disarmed, guest mode …) | `profile_id`, `reason`, possibly `guest_mode: true` |
