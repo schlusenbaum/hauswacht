@@ -6,6 +6,34 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0b2] - 2026-11-25
+
+Der Assistent schaut beim Bearbeiten mit ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Hinweise des Assistenten im Seitenblatt:** Im Seitenblatt eines Alarmprofils und unter
+  System → Anwesenheit erscheint über „Speichern“ ein Kasten **Assistent**, sobald etwas nicht
+  zusammenpasst – geprüft wird der Entwurf, wie er nach dem Speichern wäre. Nur Hinweis:
+  Speichern geht trotzdem. Jeder Hinweis sagt, was nicht passt, und unter „Warum?“ die
+  Begründung, mit Messwert aus der Beobachtung, wenn es einen gibt.
+- Erste Prüfungen: Person ohne Ortung in „Scharf, wenn alle weg“ (Profil wird nie scharf) oder
+  in „Bei Rückkehr“; „Unscharf, nur wenn automatisch scharf“ ohne Automatik; Türbeleg oder
+  Reinlassen ohne Eingangstür; Eingangsverzögerung kürzer als gemessen nötig (auch für den
+  Türbeleg einer Person); Verlängerung bei Annäherung ohne Richtungs-Signal; „Tür + Signal“
+  trotz Ortung. Messwerte zählen ab 3 Messungen.
+- **Vorschläge als Knopf:** Ein Klick ändert nur den Entwurf, gespeichert wird erst mit
+  „Speichern“. Vorschläge, die die Anlage nachgiebiger machen (z. B. längere
+  Eingangsverzögerung), sind mit ⚠ markiert und brauchen eine ausdrückliche Bestätigung.
+- Fehler des Assistenten stehen auch in den **Prüfhinweisen**.
+- Doku: [Assistent und Einrichtung](docs/assistent.md#hinweise-beim-bearbeiten-seit-0640b2) mit
+  allen Prüfungen und Beispielen.
+
+### Korrigiert
+
+- Installationsanleitung: „Seit 0.63.2 gibt es den früheren Einstellungsdialog nicht mehr“ nannte
+  in 0.64.0b1 versehentlich die falsche Version.
+
 ## [0.64.0b1] - 2026-11-25
 
 Erster Schritt zum Assistenten mit Check-up und Szenario-Vorschau

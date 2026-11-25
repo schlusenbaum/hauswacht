@@ -886,3 +886,91 @@ window.HauswachtRevealError =
       if (err) err.scrollIntoView({ block: "center", behavior: "smooth" });
     });
   });
+
+// Gemeinsame Prüfung (ADR 0017): Hinweise des Assistenten direkt im Seitenblatt – schon vor dem
+// Speichern. Nur Hinweis: Speichern geht trotzdem. Ein Vorschlag ändert nur den Entwurf im
+// Seitenblatt; gespeichert wird erst mit „Speichern“.
+const ADVISOR_TEXT = {
+  de: {
+    title: "Assistent",
+    level: { error: "Fehler", warning: "Warnung", tip: "Tipp" },
+    why: "Warum?",
+    elsewhere: "Vorschlag: {label} (an anderer Stelle ändern)",
+    weakens: "Dieser Vorschlag macht die Anlage an einer Stelle nachgiebiger:\n\n{label}\n\n{why}\n\nTrotzdem übernehmen? Gespeichert wird erst mit „Speichern“.",
+  },
+  en: {
+    title: "Assistant",
+    level: { error: "Error", warning: "Warning", tip: "Tip" },
+    why: "Why?",
+    elsewhere: "Suggestion: {label} (change it elsewhere)",
+    weakens: "This suggestion makes the system more lenient in one place:\n\n{label}\n\n{why}\n\nApply anyway? Nothing is saved until you press “Save”.",
+  },
+};
+const ADVISOR_ICON = { error: "⛔", warning: "⚠️", tip: "💡" };
+const ADVISOR_STYLE = `
+  .advice { margin: 14px 0 6px; }
+  .advice:empty { display: none; }
+  .advice h3 { font-size: .95rem; font-weight: 500; margin: 0 0 6px; }
+  .adv { border-left: 4px solid var(--divider-color); border-radius: 6px; padding: 8px 10px; margin: 6px 0; background: var(--secondary-background-color); font-size: .9rem; }
+  .adv.error { border-left-color: var(--error-color, #db4437); }
+  .adv.warning { border-left-color: var(--warning-color, #ffa600); }
+  .adv.tip { border-left-color: var(--info-color, #039be5); }
+  .adv details { margin-top: 4px; color: var(--secondary-text-color); }
+  .adv details summary { cursor: pointer; color: var(--primary-color); }
+  .adv .fixes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .adv .else { color: var(--secondary-text-color); font-size: .85rem; margin-top: 4px; }`;
+
+window.HauswachtAdvisor =
+  window.HauswachtAdvisor ||
+  (() => {
+    const esc = (value) =>
+      String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const text = (lang) => ADVISOR_TEXT[lang] || ADVISOR_TEXT.en;
+    return {
+      style: ADVISOR_STYLE,
+      // Einstellungen prüfen, wie sie nach „Speichern“ wären (nichts wird gespeichert)
+      async check(hass, action, data, lang) {
+        try {
+          return await hass.callWS({ type: "hauswacht/advisor/check", action, data, language: lang });
+        } catch (_err) {
+          return { findings: [] }; // Prüfung ist nur ein Hinweis – Fehler stillschweigend
+        }
+      },
+      // canApply(fix): kann dieses Seitenblatt den Vorschlag in den Entwurf übernehmen?
+      render(findings, lang, canApply) {
+        if (!findings || !findings.length) return "";
+        const t = text(lang);
+        const rows = findings.map((f, i) => {
+          const fixes = (f.fixes || []).map((fix, j) =>
+            canApply(fix)
+              ? `<button type="button" class="b" data-advfix="${i}:${j}">${fix.weakens ? "⚠ " : ""}${esc(fix.label)}</button>`
+              : `<div class="else">${esc(t.elsewhere.replace("{label}", fix.label))}</div>`
+          );
+          const buttons = fixes.filter((x) => x.startsWith("<button")).join("");
+          const notes = fixes.filter((x) => !x.startsWith("<button")).join("");
+          return `<div class="adv ${esc(f.level)}"><div>${ADVISOR_ICON[f.level] || ""} <b>${esc(t.level[f.level] || f.level)}:</b> ${esc(f.text)}</div>
+            <details><summary>${esc(t.why)}</summary>${esc(f.why)}</details>
+            ${buttons ? `<div class="fixes">${buttons}</div>` : ""}${notes}</div>`;
+        });
+        return `<h3>${esc(t.title)}</h3>${rows.join("")}`;
+      },
+      // Vorschlag in ein Objekt übernehmen: path „a.b“, op set | add | remove
+      apply(target, path, fix) {
+        const keys = path.split(".");
+        const last = keys.pop();
+        let obj = target;
+        for (const key of keys) {
+          obj[key] = obj[key] || {};
+          obj = obj[key];
+        }
+        if (fix.op === "set") obj[last] = fix.value;
+        else if (fix.op === "add") obj[last] = [...new Set([...(obj[last] || []), fix.value])];
+        else if (fix.op === "remove") obj[last] = (obj[last] || []).filter((x) => x !== fix.value);
+      },
+      // Abschwächende Vorschläge brauchen eine ausdrückliche Bestätigung
+      confirm(fix, finding, lang) {
+        if (!fix.weakens) return true;
+        return window.confirm(text(lang).weakens.replace("{label}", fix.label).replace("{why}", finding.why));
+      },
+    };
+  })();

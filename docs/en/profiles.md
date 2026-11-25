@@ -243,7 +243,8 @@ way, so that measurement and automation match.
 ### On return
 
 *New in 0.61. Set only on the [settings page](settings-page.md) → Profiles → profile → section
-**"On return"**.*
+**"On return"**. If something does not fit (e.g. "disarm with door proof" without an entry
+door), the [assistant](setup-wizard.md#hints-while-editing-since-0640b2) shows it while you edit.*
 
 Here you decide what happens when a certain person comes home. It is based on the person state in
 Home Assistant (usually the phone) plus the person's [signals](#how-hauswacht-knows-who-is-home).

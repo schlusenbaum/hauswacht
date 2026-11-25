@@ -84,6 +84,7 @@ Widersprüche. Jeder Hinweis sagt, **wo** man es ändert.
 | Störung eines überwachten Funknetzes/Gateways | ⚠️ |
 | Aktions-Code „scharf“, dessen Alarmprofil gelöscht wurde – der Code schaltet nichts | ⚠️ |
 | [Weggehen](beobachtung.md#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen): Rausgehen einer Person nicht sicher erkennbar (lange Schweigepausen oder zu langsam) – mit Tipp für ein besseres Signal | ⚠️ |
+| [Assistent](assistent.md#was-geprüft-wird): Einstellung, die so **nie greift** – z. B. Person ohne Ortung in „Scharf, wenn alle weg“, „Unscharf, nur wenn automatisch scharf“ ohne Automatik, Türbeleg ohne Eingangstür | ⚠️ |
 | Profil ohne Sirene (nur Benachrichtigung) | ℹ️ |
 | Sirenen in Profilen, aber noch nicht freigegeben | ℹ️ |
 | Sirene nie getestet oder letzter Test älter als ein halbes Jahr | ℹ️ |

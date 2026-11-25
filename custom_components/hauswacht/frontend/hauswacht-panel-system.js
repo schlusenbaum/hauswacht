@@ -385,6 +385,9 @@ const HELP = {
 const se = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+// Befunde der gemeinsamen Prüfung, die zum Seitenblatt „Anwesenheit“ gehören
+const PRESENCE_CODES = ["away_never", "return_never", "weak_not_needed", "approach_without_direction"];
+
 class HauswachtSystemEditor extends HTMLElement {
   // open({hass, settings, kind, item}) – item: ID (Bereich, Aktions-Code, Bedienteil) oder null
   open(options) {
@@ -759,7 +762,8 @@ class HauswachtSystemEditor extends HTMLElement {
       .how { margin: 8px 0 4px; font-size: .9rem; }
       details.more { margin-top: 10px; }
       details.more summary { cursor: pointer; color: var(--primary-color); }`;
-    this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style}</style><div class="sheet">${this._form()}
+    this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style + (window.HauswachtAdvisor?.style || "")}</style><div class="sheet">${this._form()}
+      ${this.kind === "homecoming" ? `<div class="advice" data-advice></div>` : ""}
       ${["restart", "area"].includes(this.kind) ? "" : this._err("base")}
       ${this.kind === "helper" ? ["upper", "lower", "hysteresis", "type", "target"].map((k) => this._err(k)).join("") : ""}
       <div class="bar">${canSave ? `<button class="b p" data-act="save" ${this._busy ? "disabled" : ""}>${se(this._busy ? this._t("saving") : this._t("save"))}</button>` : ""}
@@ -768,6 +772,49 @@ class HauswachtSystemEditor extends HTMLElement {
     this.shadowRoot.querySelector(".sheet").scrollTop = top;
     window.HauswachtDocs?.decorate(this.shadowRoot, HELP[this.kind], this._lang);
     this._wire();
+    if (this.kind === "homecoming") {
+      this._showAdvice();
+      this._scheduleAdvice();
+    }
+  }
+
+  // --- Hinweise des Assistenten (gemeinsame Prüfung, ADR 0017) ----------------------
+  // Hier geht es um Personen: wer als weg erkannt werden kann, und „Tür + Signal“.
+
+  _scheduleAdvice() {
+    clearTimeout(this._adviceTimer);
+    this._adviceTimer = setTimeout(() => this._advise(), 500);
+  }
+
+  async _advise() {
+    const advisor = window.HauswachtAdvisor;
+    if (!advisor || !this.isConnected || !this.shadowRoot.querySelector("[data-advice]")) return;
+    this._collect();
+    const seq = (this._adviceSeq = (this._adviceSeq || 0) + 1);
+    const [action, data] = this._payload();
+    const result = await advisor.check(this.hass, action, data, this._lang);
+    if (seq !== this._adviceSeq) return;
+    this._advice = (result.findings || []).filter((f) => PRESENCE_CODES.includes(f.code));
+    this._showAdvice();
+  }
+
+  _showAdvice() {
+    const advisor = window.HauswachtAdvisor;
+    const box = this.shadowRoot.querySelector("[data-advice]");
+    if (!advisor || !box) return;
+    // Hier lässt sich nur „Tür + Signal“ ändern; Profil-Vorschläge stehen nur als Text da
+    box.innerHTML = advisor.render(this._advice || [], this._lang, (fix) => fix.path === "away_proof_weak");
+    box.querySelectorAll("[data-advfix]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const [i, j] = btn.dataset.advfix.split(":").map(Number);
+        const finding = this._advice[i];
+        const fix = finding.fixes[j];
+        if (!advisor.confirm(fix, finding, this._lang)) return;
+        this._collect();
+        advisor.apply(this._draft, "proof_weak", fix);
+        this._render();
+      })
+    );
   }
 
   _wire() {

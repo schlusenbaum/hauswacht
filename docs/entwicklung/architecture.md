@@ -40,6 +40,8 @@ Assistant verbindet.
 | `core/changes/sensors.py`, `settings_ws.py` | 0.57.0 | Einstellungsseite: Melder bearbeiten über dieselbe Logikschicht; Websocket-Befehle `hauswacht/settings/get` und `…/apply` (nur Administratoren, mit Revision) ([ADR 0011](adr/0011-einstellungsseite.md)) |
 | `frontend/hauswacht-panel*.js` | 0.57.0 | Seite „Hauswacht“ in der Seitenleiste; nur `ha-card`, `ha-icon` und Theme-Farben, eigene Melder-Suche |
 | `core/wizard.py` | 0.53.0 | Vorschläge (Melder nach Etage und Raum) und Zusammenfassung, rein – für den geplanten neuen Assistenten auf der Einstellungsseite. Der alte Assistent im Dialog (`wizard.py`) ist mit 0.63.2 entfallen |
+| `core/automation_engine.py` | 0.64.0 | Entscheidungen der Profil-Automatik („alle weg“, „Bei Rückkehr“, Türbeleg, Reinlassen, Annäherung), rein – Echtbetrieb (`automation_runner.py`) und Szenario-Vorschau nutzen dieselben Regeln ([ADR 0017](adr/0017-assistent-check-up.md)) |
+| `core/advisor.py`, `advisor_ws.py` | 0.64.0 | Gemeinsame Prüfung: Befunde (Fehler, Warnung, Tipp) mit Begründung und Vorschlag; Websocket `hauswacht/advisor/check` prüft einen Entwurf, ohne zu speichern ([ADR 0017](adr/0017-assistent-check-up.md)) |
 | `store.py` | 0.2.0 | Persistenz im HA-Store, Schema-Version, Migrationen |
 | `config_flow.py` | 0.2.0 | Installation (ein Schritt) und „Konfigurieren“ als Wegweiser zur Einstellungsseite; bis 0.63.1 der ganze Einstellungsdialog |
 | `alarm_control_panel.py` | 0.2.0 | Standard-Entität für Bedienung und Status |

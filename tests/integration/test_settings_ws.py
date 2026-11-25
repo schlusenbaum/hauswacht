@@ -705,3 +705,62 @@ async def test_sensor_stale_limit_on_page(hass: HomeAssistant, hass_ws_client: A
     assert data["system"]["silence"]["overrides"] == {MOTION: 0}
     overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
     assert overview["monitoring"]["stale_overrides"][0]["hours"] == 0
+
+
+async def test_advisor_checks_draft_without_saving(
+    hass: HomeAssistant, hass_ws_client: Any
+) -> None:
+    """Gemeinsame Prüfung (ADR 0017): prüft den Entwurf, speichert nichts, schaltet nichts."""
+    # Anna ohne Koordinaten: kann nie als weg erkannt werden
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    stored = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    assert stored == {"findings": [], "item": None}
+    night = next(p for p in data["profile_edit"]["profiles"] if p["id"] == "night")
+    night["automation"]["auto_away_persons"] = ["person.anna"]
+    draft = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/advisor/check",
+        action="profile_save",
+        data=night,
+        language="de",
+    )
+    assert draft["item"] == "night"
+    assert [(f["code"], f["level"], f["profile"]) for f in draft["findings"]] == [
+        ("away_never", "error", "night")
+    ]
+    assert "Anna" in draft["findings"][0]["text"]
+    # Nichts gespeichert
+    after = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert after["revision"] == data["revision"]
+    # Gespeichert: der Fehler steht auch in den Prüfhinweisen
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data=night,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
+    codes = [f["code"] for f in overview["findings"]]
+    assert "advisor_away_never" in codes
+    # Mit „Tür + Signal“ für Anna (Seitenblatt Anwesenheit) passt es
+    fixed = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/advisor/check",
+        action="homecoming_save",
+        data={
+            "observe": False,
+            "persons": [],
+            "ssids": [],
+            "signals": {},
+            "proof_weak": ["person.anna"],
+        },
+    )
+    assert fixed["findings"] == []

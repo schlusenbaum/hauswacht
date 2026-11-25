@@ -250,7 +250,9 @@ Messung und Automatik übereinstimmen.
 ### Bei Rückkehr
 
 *Neu in 0.61. Einstellen nur auf der [Einstellungsseite](einstellungsseite.md) → Profile →
-Profil → Abschnitt **„Bei Rückkehr“**.*
+Profil → Abschnitt **„Bei Rückkehr“**. Passt etwas nicht zusammen (z. B. „Unscharf mit Türbeleg“
+ohne Eingangstür), zeigt der [Assistent](assistent.md#hinweise-beim-bearbeiten-seit-0640b2) das
+schon beim Bearbeiten.*
 
 Hier legst du fest, was passiert, wenn eine bestimmte Person nach Hause kommt. Grundlage ist der
 Personen-Status in Home Assistant (meist das Handy) plus die [Signale](#woran-hauswacht-erkennt-wer-zuhause-ist)

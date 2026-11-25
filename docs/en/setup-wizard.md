@@ -1,4 +1,4 @@
-# Setup wizard
+# Assistant and setup
 
 [Deutsch](../assistent.md) | **English**
 
@@ -20,15 +20,65 @@
 Every field on the settings page has an **ⓘ** with an explanation, and where it helps, a sentence
 **"This is how it behaves:"** with an example.
 
+## Hints while editing (since 0.64.0b2)
+
+The assistant **watches along** while you set things up. In the side sheet of an **alarm
+profile** and in the side sheet **System → Presence** a box **Assistant** appears above "Save"
+as soon as something does not fit. It checks your **draft** – as it would be after saving.
+Nothing is saved and nothing is switched.
+
+- The box is **only a hint**. You can still save – you decide.
+- Each hint says in one sentence **what** does not fit. **"Why?"** shows the reason, with a
+  **measurement** from the [observation](observations.md) where there is one.
+- Many hints have a **suggestion** as a button. A click only changes the draft in the side
+  sheet – it is saved only with **Save**.
+- Suggestions marked **⚠** make the system **more lenient** in one place (e.g. a longer entry
+  delay = a later alarm). You have to confirm them explicitly.
+- If a suggestion belongs somewhere else (e.g. "door + signal" in a profile), it is shown as text
+  only: "Suggestion: … (change it elsewhere)".
+
+Hints of level **error** also appear in the [check hints](overview.md#check-hints) – so you see
+them even when no side sheet is open.
+
+### What is checked
+
+| Hint | Level | Suggestion |
+|---|---|---|
+| A person in **"arm when all away"** can never be detected as away (no location, "door + signal" off) – the profile **never** arms automatically | ⛔ Error | Remove the person, or ⚠ allow "door + signal" for them |
+| **"Disarm only if armed automatically"**, but the profile has no automation (no time, no schedule, no "all away") | ⛔ Error | – |
+| **"Disarm with door proof"** or **"Let in"**, but the profile has no entry door (sensor of type door) | ⛔ Error | – |
+| A person in **"On return"** can never be detected as away – "On return" never applies to them | ⚠️ Warning | Remove the person, or ⚠ allow "door + signal" |
+| **Entry delay** shorter than measured (door open → disarmed, with buffer) | ⚠️ Warning | ⚠ Set the entry delay to the measured value |
+| **Entry delay** too short for the **door proof** of a person (the phone reports "home" only after the door) | ⚠️ Warning | ⚠ Set the entry delay to the measured value |
+| **"Entry delay when approaching"** is on, but no person in the list has a direction signal | ⚠️ Warning | Turn off the extension |
+| **"Door + signal"** is on although the person has a location | 💡 Tip | Turn off "door + signal" |
+
+Measurements count only from **3 measurements** on – before that the assistant says nothing
+about them.
+
+**Example:** In the profile "Away", Ben is in "arm when all away". Ben does not share his
+location. The assistant shows:
+
+> ⛔ **Error:** Profile Away: Ben can never be detected as away – "arm when all away" never arms
+> this profile.
+> [Remove Ben from "arm when all away"]
+> Suggestion: Allow "door + signal" for Ben (uncertain) (change it elsewhere)
+
+**Example with a measurement:** entry delay 30 s; at the front door, disarming took up to 36 s in
+5 measurements:
+
+> ⚠️ **Warning:** Profile Away: entry delay 30 s is shorter than measured (45 s).
+> [⚠ Set entry delay to 45 s]
+
 ## What comes next
 
-A **new setup wizard right on the settings page** is planned. It is meant to
+Next, the settings page gets its own tab **Assistant**: first a **check-up** of all settings at
+a glance (the same check as above), then a **preview** of what would happen in typical situations
+(burglary, coming home, phone asleep …). After that comes **setup by goals**. It is meant to
 
 - ask for **goals** instead of settings ("secure the night", "arm automatically when everyone is
   away", "disarm when coming home"),
 - know your household (people, phones, signals, measurements) and give recommendations from that,
-- **show contradictions at once** while you set things up (e.g. a person without a location in
-  "everyone away" – the profile would never arm),
 - explain with examples from your own home what the settings do.
 
 You can follow the status in the [roadmap](roadmap.md).
