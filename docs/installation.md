@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.63.2:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.64.0b1:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen
@@ -74,7 +74,7 @@ Alle Einstellungen liegen auf der Seite **Hauswacht** in der Seitenleiste (nur A
 siehe [Einstellungsseite](einstellungsseite.md). Sie zeigt die ganze Einrichtung auf einen Blick,
 und du bearbeitest alles direkt dort. Gespeichert wird nur, wenn **alle Bereiche unscharf** sind.
 
-> **Seit 0.63.2** gibt es den früheren Einstellungsdialog (Einstellungen → Geräte & Dienste →
+> **Seit 0.64.0b1** gibt es den früheren Einstellungsdialog (Einstellungen → Geräte & Dienste →
 > Hauswacht → **Konfigurieren**) nicht mehr. „Konfigurieren“ zeigt nur noch einen Link zur
 > Einstellungsseite. Die Seite kann alles, was der Dialog konnte; deine Einstellungen bleiben
 > unverändert.

@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0b1] - 2026-11-25
+
+Erster Schritt zum Assistenten mit Check-up und Szenario-Vorschau
+([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)) – **ohne sichtbare Änderung**.
+
+### Geändert
+
+- Die Entscheidungen der Profil-Automatik („alle weg“, „Bei Rückkehr“, Türbeleg, Reinlassen,
+  Annäherung) stehen jetzt an einer Stelle im Kern (`core/automation_engine.py`). Der Echtbetrieb
+  und die kommende Szenario-Vorschau nutzen damit **dieselben** Regeln. Das Verhalten ist
+  unverändert – alle bisherigen Tests laufen unverändert durch, dazu neue Tests für jede Regel.
+
 ## [0.63.2] - 2026-11-25
 
 Zusammenfassung von 0.63.2b1 – **die Einstellungsseite ist der einzige Weg**.
