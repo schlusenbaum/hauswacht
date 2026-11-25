@@ -55,8 +55,9 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| soon | New [setup wizard](setup-wizard.md) on the settings page: asks for goals instead of settings, knows the household and the measurements, shows contradictions at once (ADR to follow) |
-| 0.64 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
+| 0.64 | Tab **Assistant** with **check-up** ([ADR 0017](../entwicklung/adr/0017-assistent-check-up.md), German): checks how the settings work together with your measurements, suggests improvements (apply one by one); hints right in the side sheets; **scenario preview** "What happens if …?" with the same logic as in real operation |
+| 0.65 | Assistant: **set up by goals** – "secure the night", "arm automatically when everyone is away", "disarm when coming home" … |
+| 0.66 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |

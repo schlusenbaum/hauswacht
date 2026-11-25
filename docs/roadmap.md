@@ -55,8 +55,9 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| demnächst | Neuer [Einrichtungsassistent](assistent.md) auf der Einstellungsseite: fragt nach Zielen statt Einstellungen, kennt den Haushalt und die Messwerte, zeigt Widersprüche sofort (ADR folgt) |
-| 0.64 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
+| 0.64 | Reiter **Assistent** mit **Check-up** ([ADR 0017](entwicklung/adr/0017-assistent-check-up.md)): prüft das Zusammenspiel der Einstellungen mit euren Messwerten, schlägt Verbesserungen vor (einzeln übernehmen); Hinweise direkt in den Seitenblättern; **Szenario-Vorschau** „Was passiert, wenn …?“ mit derselben Logik wie im Echtbetrieb |
+| 0.65 | Assistent: **Einrichten nach Zielen** – „nachts absichern“, „automatisch scharf, wenn alle weg sind“, „beim Heimkommen unscharf“ … |
+| 0.66 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
 | später | Entwickler-Dokumentation (Architektur, Tests, ADRs) auf Englisch; englische Screenshots |

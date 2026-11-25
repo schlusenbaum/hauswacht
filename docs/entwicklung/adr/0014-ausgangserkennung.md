@@ -1,6 +1,6 @@
 # ADR 0014: Ausgangserkennung – Rausgehen ohne PIN erkennen
 
-- Status: vorgeschlagen (Messung umgesetzt in 0.60.0, Umsetzung der Ausgangserkennung in 0.64 – vorher kommen ADR 0015 und ADR 0016)
+- Status: vorgeschlagen (Messung umgesetzt in 0.60.0, ergänzt in 0.63.1; Umsetzung der Ausgangserkennung in 0.66 – vorher kommen ADR 0015, 0016 und 0017)
 - Datum: 2026-11-21
 - Baut auf: [ADR 0013 Durchgang](0013-durchgang.md)
 
@@ -86,7 +86,7 @@ einzurichten (z. B. Companion App mit WLAN-Sensor statt nur Ping).
 |---|---|
 | 0.59.0 | Durchgang (ADR 0013) ausprobieren und veröffentlichen |
 | 0.60 | Messung „Weggehen“ in der Beobachtung, Empfehlungen und Warnhinweise; ein, zwei Wochen laufen lassen |
-| 0.64 | Ausgangserkennung mit den gemessenen Werten |
+| 0.66 | Ausgangserkennung mit den gemessenen Werten (nach dem Assistenten, ADR 0017) |
 
 ## Abwägung
 
