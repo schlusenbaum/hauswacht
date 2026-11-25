@@ -6,6 +6,42 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-25
+
+Zusammenfassung von 0.64.0b1 bis 0.64.0b5 – **der Assistent**
+([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Hinweise beim Bearbeiten:** Im Seitenblatt eines Alarmprofils und unter System → Anwesenheit
+  zeigt der Assistent schon vor dem Speichern, was nicht zusammenpasst – mit Begründung, Messwert
+  und Vorschlag. Nur Hinweis: Speichern geht trotzdem. Fehler stehen auch in den Prüfhinweisen.
+- **Prüfungen:** Person ohne Ortung in „Scharf, wenn alle weg“ oder „Bei Rückkehr“;
+  „Unscharf, nur wenn automatisch scharf“ ohne Automatik; Türbeleg/Reinlassen ohne Eingangstür;
+  Eingangsverzögerung kürzer als gemessen (auch für den Türbeleg einer Person); Verlängerung bei
+  Annäherung ohne Richtungs-Signal; „Tür + Signal“ trotz Ortung; eingefrorene Ortung.
+- **Reiter „Assistent“ mit Check-up:** alle Befunde auf einen Blick, nach Profil sortiert.
+  Vorschläge einzeln übernehmen, mit Vorschau „bisher → neu“; abschwächende Vorschläge (⚠) nur
+  mit Häkchen. Übernehmen nur unscharf, nur aktuelle Vorschläge, über denselben Weg wie im
+  Seitenblatt.
+- **Szenario-Vorschau „Was passiert, wenn …?“:** Einbruch durch jede Tür und ein Fenster, jede
+  Person kommt heim (mit gemessener Zeit), alle gehen weg, Handys schlafen ein, kurz raus bei
+  „Tür + Signal“ – durchgespielt mit denselben Regeln wie im Echtbetrieb, ausgedachte Uhr, nichts
+  wird geschaltet. Ergebnis ✅ / ⚠️ / ❌ mit Ablauf Schritt für Schritt.
+- **Eingefrorene Ortung:** 24 Stunden exakt dieselbe Position außerhalb von Zuhause zählt nicht
+  als Beleg für „weg“ (vorgetäuschter Standort, hängende App) – bis sie sich wieder bewegt.
+
+### Geändert
+
+- Die Entscheidungen der Profil-Automatik stehen an einer Stelle im Kern
+  (`core/automation_engine.py`) – Echtbetrieb und Vorschau nutzen dieselben Regeln.
+- „Scharf, wenn alle weg“ plant nur noch, solange die Anlage unscharf ist (keine doppelten
+  `AutoArmScheduled`/`AutoArmSkipped` mehr nach dem automatischen Scharfschalten).
+
+### Korrigiert
+
+- Installationsanleitung nannte beim Wegfall des alten Einstellungsdialogs die falsche Version.
+
 ## [0.64.0b5] - 2026-11-25
 
 Eingefrorene Ortung erkennen; „alle weg“ plant nach dem Scharfschalten nicht mehr neu.
