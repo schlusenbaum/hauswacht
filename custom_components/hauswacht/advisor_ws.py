@@ -31,7 +31,6 @@ from .core.sensors import parse_zones, resolve_zones
 from .core.tilt import effective_types
 from .names import plain_name
 from .presence_proof import locatable
-from .runtime import device_class_of, entities_by_label
 
 WS_CHECK = f"{DOMAIN}/advisor/check"
 # Nur diese Änderungen lassen sich vorab prüfen (Seitenblätter Profil und Anwesenheit)
@@ -62,6 +61,8 @@ def _has_direction(hass: HomeAssistant, signals: tuple[str, ...]) -> bool:
 
 
 def _entry_doors(hass: HomeAssistant, options: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
+    from .runtime import device_class_of, entities_by_label  # noqa: PLC0415 – Import-Kreis
+
     zones = parse_zones(options)
     labels = entities_by_label(hass)
     types = effective_types(options)

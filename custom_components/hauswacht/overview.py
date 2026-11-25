@@ -16,7 +16,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from .advisor_ws import check
 from .const import (
     MASTER_USER_ID,
     OPT_DURESS_NOTIFY,
@@ -631,6 +630,8 @@ def _advisor_errors(
     hass: HomeAssistant, main: HauswachtRuntime, language: str
 ) -> list[dict[str, Any]]:
     """Fehler der gemeinsamen Prüfung (ADR 0017) – Einstellungen, die so nie greifen."""
+    from .advisor_ws import check  # noqa: PLC0415 – advisor_ws braucht runtime, runtime braucht uns
+
     return [
         {
             "code": f"advisor_{f['code']}",
