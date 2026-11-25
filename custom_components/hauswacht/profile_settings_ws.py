@@ -154,6 +154,11 @@ def _return_advice(main: Any) -> dict[str, Any]:
     return observer.approach_advice() if observer is not None else {}
 
 
+def profile_payload(options: Any, pid: str) -> dict[str, Any]:
+    """Formular eines Profils, wie das Seitenblatt es schickt (für Vorschläge des Assistenten)."""
+    return _profile(options, pid)
+
+
 def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     rules = parse_rules(options)

@@ -728,8 +728,9 @@ ${this._returnSection(c, lim, t)}
   }
 
   _render() {
-    const style = (window.HauswachtEditStyle || "") + PROFILE_STYLE;
+    const style = (window.HauswachtEditStyle || "") + PROFILE_STYLE + (window.HauswachtAdvisor?.style || "");
     this.shadowRoot.innerHTML = `<style>${style}</style><div class="sheet">${this._form()}
+      <div class="advice" data-advice></div>
       <div class="bar"><button class="b p" data-act="save" ${this._busy ? "disabled" : ""}>${pe(this._busy ? this._t("saving") : this._t("save"))}</button>
       <button class="b" data-act="cancel">${pe(this._t("cancel"))}</button>
       ${this.profile ? `<button class="b d" data-act="delete">${pe(this._t("delete"))}</button>` : ""}</div></div>`;
@@ -765,6 +766,11 @@ ${this._returnSection(c, lim, t)}
     };
     sheet.addEventListener("input", refreshHow);
     sheet.addEventListener("change", refreshHow);
+    // Hinweise des Assistenten ziehen bei jeder Eingabe nach (ADR 0017)
+    sheet.addEventListener("input", () => this._scheduleAdvice());
+    sheet.addEventListener("change", () => this._scheduleAdvice());
+    this._showAdvice();
+    this._scheduleAdvice();
     // Verlängerung an/aus blendet die Gültigkeit ein; Empfehlung übernehmen
     const redraw = () => {
       const top = this.shadowRoot.querySelector(".sheet").scrollTop;
@@ -787,6 +793,46 @@ ${this._returnSection(c, lim, t)}
       el.addEventListener("change", () => {
         const top = this.shadowRoot.querySelector(".sheet").scrollTop;
         this._collect();
+        this._render();
+        this.shadowRoot.querySelector(".sheet").scrollTop = top;
+      })
+    );
+  }
+
+  // --- Hinweise des Assistenten (gemeinsame Prüfung, ADR 0017) ----------------------
+
+  _scheduleAdvice() {
+    clearTimeout(this._adviceTimer);
+    this._adviceTimer = setTimeout(() => this._advise(), 500);
+  }
+
+  async _advise() {
+    const advisor = window.HauswachtAdvisor;
+    if (!advisor || !this.isConnected || !this.shadowRoot.querySelector("[data-advice]")) return;
+    this._collect();
+    const seq = (this._adviceSeq = (this._adviceSeq || 0) + 1);
+    // Geprüft wird der Entwurf, wie er nach „Speichern“ wäre – gespeichert wird nichts
+    const result = await advisor.check(this.hass, "profile_save", this._payload(), this._lang);
+    if (seq !== this._adviceSeq) return; // inzwischen neuere Eingabe
+    this._advice = (result.findings || []).filter((f) => f.profile && f.profile === result.item);
+    this._showAdvice();
+  }
+
+  _showAdvice() {
+    const advisor = window.HauswachtAdvisor;
+    const box = this.shadowRoot.querySelector("[data-advice]");
+    if (!advisor || !box) return;
+    // Hier lässt sich nur das eigene Profil ändern; allgemeine Vorschläge stehen nur als Text da
+    box.innerHTML = advisor.render(this._advice || [], this._lang, (fix) => fix.profile !== null);
+    box.querySelectorAll("[data-advfix]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const [i, j] = btn.dataset.advfix.split(":").map(Number);
+        const finding = this._advice[i];
+        const fix = finding.fixes[j];
+        if (!advisor.confirm(fix, finding, this._lang)) return;
+        this._collect();
+        advisor.apply(this._draft, fix.path, fix);
+        const top = this.shadowRoot.querySelector(".sheet").scrollTop;
         this._render();
         this.shadowRoot.querySelector(".sheet").scrollTop = top;
       })

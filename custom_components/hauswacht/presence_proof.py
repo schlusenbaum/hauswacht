@@ -1,13 +1,91 @@
 """Ortungen einer Person aus Home Assistant lesen – für „weg“ nur mit Beleg (ADR 0015).
 
 Die Regeln selbst stehen in ``core/away_proof.py``; hier nur das Lesen der Zustände.
+
+Seit 0.64.0b5: Eine Ortung, die seit mindestens 24 Stunden exakt dieselbe Position **außerhalb**
+von Zuhause meldet, gilt als eingefroren (vorgetäuschter Standort, hängende App). Sie zählt dann
+weder als Beleg noch als „kann geortet werden“. Wann sich die Koordinaten zuletzt geändert haben,
+merkt sich Hauswacht (auch über einen Neustart hinweg).
 """
 
 from __future__ import annotations
 
-from homeassistant.core import HomeAssistant, State
+import logging
+from typing import Any
 
-from .core.away_proof import Fix, Home, is_locator, locate
+from homeassistant.core import HomeAssistant, State
+from homeassistant.helpers.storage import Store
+
+from .const import DOMAIN
+from .core.away_proof import Fix, FrozenLocations, Home, is_locator, locate
+
+_LOGGER = logging.getLogger(__name__)
+DATA_FROZEN = f"{DOMAIN}_frozen_locations"
+STORE_KEY = f"{DOMAIN}.frozen_locations"
+STORE_VERSION = 1
+SAVE_DELAY = 60  # Sekunden
+
+
+class FrozenStore:
+    """``FrozenLocations`` mit Speicher in Home Assistant."""
+
+    def __init__(self, hass: HomeAssistant) -> None:
+        self.data = FrozenLocations()
+        self._store: Store[dict[str, Any]] = Store(hass, STORE_VERSION, STORE_KEY)
+
+    async def async_load(self) -> None:
+        stored = await self._store.async_load()
+        if stored:
+            self.data.load(stored.get("seen"))
+
+    def note(self, entity_id: str, state: State) -> None:
+        lat, lon = state.attributes.get("latitude"), state.attributes.get("longitude")
+        if not isinstance(lat, int | float) or not isinstance(lon, int | float):
+            return
+        if self.data.see(entity_id, float(lat), float(lon), _updated(state)):
+            self._store.async_delay_save(lambda: {"seen": self.data.dump()}, SAVE_DELAY)
+
+    def frozen_for(self, entity_id: str, state: State) -> float | None:
+        """Eingefroren (Sekunden) – nur außerhalb von Zuhause; zuhause zählt eine Ortung nie."""
+        self.note(entity_id, state)
+        if state.state == "home":
+            return None
+        return self.data.frozen_for(entity_id, _updated(state))
+
+
+async def async_load_frozen(hass: HomeAssistant) -> None:
+    """Beim Start einmal laden (mehrere Einträge/Bereiche teilen sich den Stand)."""
+    if DATA_FROZEN in hass.data:
+        return
+    store = FrozenStore(hass)
+    hass.data[DATA_FROZEN] = store
+    try:
+        await store.async_load()
+    except (OSError, ValueError) as err:  # pragma: no cover - nur Protokoll
+        _LOGGER.warning("Gespeicherte Ortungen nicht lesbar: %s", err)
+
+
+def _frozen(hass: HomeAssistant, entity_id: str, state: State) -> bool:
+    store: FrozenStore | None = hass.data.get(DATA_FROZEN)
+    return store is not None and store.frozen_for(entity_id, state) is not None
+
+
+def frozen_locations(
+    hass: HomeAssistant, person: str, signals: tuple[str, ...]
+) -> dict[str, float]:
+    """Eingefrorene Ortungen einer Person: Entität -> seit wie vielen Sekunden."""
+    store: FrozenStore | None = hass.data.get(DATA_FROZEN)
+    if store is None:
+        return {}
+    found: dict[str, float] = {}
+    for entity_id in _candidates(hass, person, signals):
+        state = hass.states.get(entity_id)
+        if state is None or not is_locator(state.attributes):
+            continue
+        seconds = store.frozen_for(entity_id, state)
+        if seconds is not None:
+            found[entity_id] = seconds
+    return found
 
 
 def home_zone(hass: HomeAssistant) -> Home | None:
@@ -50,7 +128,7 @@ def person_fixes(
     fixes: list[Fix] = []
     for entity_id in _candidates(hass, person, signals):
         state = hass.states.get(entity_id)
-        if state is None:
+        if state is None or (is_locator(state.attributes) and _frozen(hass, entity_id, state)):
             continue
         fix = locate(state.state, state.attributes, _updated(state), home=home, accuracy=accuracy)
         if fix is not None:
@@ -61,6 +139,8 @@ def person_fixes(
 def locatable(hass: HomeAssistant, person: str, signals: tuple[str, ...]) -> bool:
     """Kann die Person überhaupt außerhalb geortet werden (eine Entität mit Koordinaten)?"""
     return any(
-        (state := hass.states.get(entity_id)) is not None and is_locator(state.attributes)
+        (state := hass.states.get(entity_id)) is not None
+        and is_locator(state.attributes)
+        and not _frozen(hass, entity_id, state)
         for entity_id in _candidates(hass, person, signals)
     )

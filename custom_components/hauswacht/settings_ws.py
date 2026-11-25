@@ -24,6 +24,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import label_registry as lr
 from homeassistant.util.yaml import parse_yaml
 
+from .advisor_ws import async_register_advisor_websocket
 from .alarm_notify_settings_ws import build_alarm_notify_settings
 from .const import DOMAIN
 from .core.always_active import parse_always_active
@@ -560,4 +561,5 @@ def async_register_settings_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_settings_apply)
     websocket_api.async_register_command(hass, ws_rule_check)
     websocket_api.async_register_command(hass, ws_new_cards)
+    async_register_advisor_websocket(hass)
     hass.data[DATA_WS] = True

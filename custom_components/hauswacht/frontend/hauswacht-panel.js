@@ -209,10 +209,48 @@ const TEXTS = {
     addStrength: "Erschütterungsstärke hinzufügen",
     armedNote: "Ändern geht nur, wenn alle Bereiche unscharf sind.",
     saved: "Gespeichert.",
+    asst: {
+      title: "Check-up",
+      intro: "Der Assistent prüft, ob deine Einstellungen zusammenpassen – auch mit den Messwerten aus der Beobachtung. Er ändert nichts von selbst: Jeden Vorschlag übernimmst du einzeln, nach einer Vorschau.",
+      allGood: "Alles passt zusammen – der Assistent hat nichts gefunden.",
+      count: "{e} Fehler · {w} Warnungen · {t} Tipps",
+      levels: { error: "Fehler", warning: "Warnung", tip: "Tipp" },
+      general: "Allgemein",
+      why: "Warum?",
+      preview: "Das ändert sich",
+      inProfile: "Profil {p}",
+      inSystem: "System → Anwesenheit",
+      before: "bisher",
+      after: "neu",
+      add: "kommt dazu",
+      remove: "fällt weg",
+      weakens: "Achtung: Dieser Vorschlag macht die Anlage an einer Stelle nachgiebiger. Lies unter „Warum?“, weshalb er trotzdem sinnvoll sein kann.",
+      confirm: "Ich habe das verstanden und möchte es übernehmen.",
+      apply: "Übernehmen",
+      cancel: "Abbrechen",
+      applied: "Übernommen. Hauswacht lädt mit der neuen Einstellung.",
+      recheck: "Neu prüfen",
+      unavailable: "Der Check-up ist gerade nicht verfügbar. Bitte die Seite neu laden.",
+      errors: {
+        disarm_first: "Ändern geht nur, wenn alle Bereiche unscharf sind.",
+        changed_elsewhere: "Inzwischen wurde etwas anderes geändert – der Check-up ist neu geladen. Bitte noch einmal ansehen.",
+        fix_not_offered: "Dieser Vorschlag gilt nicht mehr (vermutlich schon behoben) – der Check-up ist neu geladen.",
+        confirm_needed: "Bitte erst bestätigen.",
+        failed: "Übernehmen hat nicht geklappt.",
+      },
+      scTitle: "Was passiert, wenn …?",
+      scIntro: "Typische Situationen, durchgespielt mit deinen Einstellungen und Messwerten – mit denselben Regeln wie im Echtbetrieb, aber mit ausgedachter Uhr. Es wird nichts geschaltet.",
+      scLoading: "Wird durchgespielt …",
+      scNone: "Noch nichts durchzuspielen – die Profile haben keine Türen, Fenster oder Automatik.",
+      scCount: "{b} unerwünscht · {w} mit Haken · {o} in Ordnung",
+      scSteps: "Ablauf",
+      scSimple: "Vereinfacht: Jede Person hat ein Handy, das „zuhause“ oder „weg“ meldet, und – wenn Hauswacht eine kennt – eine Ortung. Gemessene Zeiten zählen ab 3 Messungen.",
+    },
     adminOnly: "Diese Seite ist nur für Administratoren.",
     error: "Fehler",
     tabs: {
       overview: "Übersicht",
+      assistant: "Assistent",
       sensors: "Melder",
       profiles: "Profile",
       rules: "Auslöseregeln",
@@ -415,10 +453,48 @@ const TEXTS = {
     addStrength: "Add vibration strength",
     armedNote: "Changes are only possible while all areas are disarmed.",
     saved: "Saved.",
+    asst: {
+      title: "Check-up",
+      intro: "The assistant checks whether your settings fit together – including the measurements from the observation. It changes nothing on its own: you apply each suggestion one by one, after a preview.",
+      allGood: "Everything fits together – the assistant found nothing.",
+      count: "{e} errors · {w} warnings · {t} tips",
+      levels: { error: "Error", warning: "Warning", tip: "Tip" },
+      general: "General",
+      why: "Why?",
+      preview: "What changes",
+      inProfile: "Profile {p}",
+      inSystem: "System → Presence",
+      before: "before",
+      after: "new",
+      add: "is added",
+      remove: "is removed",
+      weakens: "Caution: this suggestion makes the system more lenient in one place. See “Why?” for why it can still make sense.",
+      confirm: "I understand and want to apply it.",
+      apply: "Apply",
+      cancel: "Cancel",
+      applied: "Applied. Hauswacht reloads with the new setting.",
+      recheck: "Check again",
+      unavailable: "The check-up is not available right now. Please reload the page.",
+      errors: {
+        disarm_first: "Changes are only possible while all areas are disarmed.",
+        changed_elsewhere: "Something else was changed in the meantime – the check-up has been reloaded. Please look again.",
+        fix_not_offered: "This suggestion no longer applies (probably already fixed) – the check-up has been reloaded.",
+        confirm_needed: "Please confirm first.",
+        failed: "Applying did not work.",
+      },
+      scTitle: "What happens if …?",
+      scIntro: "Typical situations, played through with your settings and measurements – with the same rules as in real operation, but with a made-up clock. Nothing is switched.",
+      scLoading: "Playing it through …",
+      scNone: "Nothing to play through yet – the profiles have no doors, windows or automation.",
+      scCount: "{b} unwanted · {w} with a catch · {o} fine",
+      scSteps: "Sequence",
+      scSimple: "Simplified: every person has a phone that reports “home” or “away” and – if Hauswacht knows one – a location. Measured times count from 3 measurements on.",
+    },
     adminOnly: "This page is for administrators only.",
     error: "Error",
     tabs: {
       overview: "Overview",
+      assistant: "Assistant",
       sensors: "Sensors",
       profiles: "Profiles",
       rules: "Trigger rules",
@@ -446,7 +522,7 @@ const TEXTS = {
   },
 };
 
-const TABS = ["overview", "sensors", "profiles", "rules", "sirens", "notifications", "people", "system", "docs"];
+const TABS = ["overview", "assistant", "sensors", "profiles", "rules", "sirens", "notifications", "people", "system", "docs"];
 // Welche Abschnitte der Übersicht in welchem Reiter stehen
 const TAB_PARTS = {
   overview: ["findings", "status"],
@@ -511,6 +587,18 @@ const PANEL_STYLE = `
   details.explain summary { cursor: pointer; color: var(--primary-color); }
   details.explain div { margin: 4px 0; }
   h3 { margin: 12px 0 4px; font-size: 1rem; font-weight: 500; }
+  .asst { border-left: 4px solid var(--divider-color); border-radius: 6px; padding: 8px 10px; margin: 6px 0; background: var(--secondary-background-color); }
+  .asst.error { border-left-color: var(--error-color, #db4437); }
+  .asst.warning { border-left-color: var(--warning-color, #ffa600); }
+  .asst.tip { border-left-color: var(--info-color, #039be5); }
+  .asst.ok { border-left-color: var(--success-color, #43a047); }
+  .asst .fixes { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .asst .preview { border: 1px solid var(--divider-color); border-radius: 8px; padding: 8px 10px; background: var(--card-background-color); width: 100%; }
+  .asst .preview div { margin: 3px 0; }
+  .asst-warn { color: var(--warning-color, #ffa600); margin: 6px 0; }
+  .asst-err { color: var(--error-color, #db4437); margin: 8px 0; }
+  .asst label.chk { display: block; margin: 6px 0; cursor: pointer; }
+  button.e:disabled { opacity: .5; cursor: not-allowed; }
 `;
 
 const escHtml = (value) =>
@@ -698,10 +786,12 @@ class HauswachtPanel extends HTMLElement {
 
   async _load() {
     this._error = null;
+    this._scenarios = undefined;
     try {
-      [this._data, this._settings] = await Promise.all([
+      [this._data, this._settings, this._advice] = await Promise.all([
         this._hass.callWS({ type: "hauswacht/overview" }),
         this._hass.callWS({ type: "hauswacht/settings/get" }).catch(() => null),
+        this._fetchAdvice(),
       ]);
     } catch (err) {
       this._data = null;
@@ -720,6 +810,8 @@ class HauswachtPanel extends HTMLElement {
         if (expected && settings.loaded_revision !== expected && i < 19) continue;
         this._settings = settings;
         this._data = await this._hass.callWS({ type: "hauswacht/overview" });
+        this._advice = await this._fetchAdvice();
+        this._scenarios = undefined;
         this._error = null;
         break;
       } catch (_err) {
@@ -1134,6 +1226,211 @@ class HauswachtPanel extends HTMLElement {
     );
   }
 
+  // --- Reiter „Assistent“: Check-up (ADR 0017) --------------------------------------------
+  // Dieselbe Prüfung wie in den Seitenblättern. Vorschläge werden einzeln übernommen, nach einer
+  // Vorschau; abschwächende nur mit Häkchen. Hauswacht prüft beim Übernehmen alles noch einmal
+  // (unscharf, Revision, Vorschlag noch aktuell, Bestätigung) – die Seite schaltet nichts.
+
+  async _fetchAdvice() {
+    try {
+      return await this._hass.callWS({ type: "hauswacht/advisor/check", language: this._lang });
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  _asst(key) {
+    return this._t("asst")[key];
+  }
+
+  _assistantTab() {
+    const a = (k) => this._asst(k);
+    const help = "assistant";
+    if (!this._advice) return this._card(a("title"), `<div class="muted">${escHtml(a("unavailable"))}</div>`, help);
+    const findings = this._advice.findings || [];
+    const count = (level) => findings.filter((f) => f.level === level).length;
+    const summary = findings.length
+      ? `<div><b>${escHtml(a("count").replace("{e}", count("error")).replace("{w}", count("warning")).replace("{t}", count("tip")))}</b></div>`
+      : `<div class="ok">✓ ${escHtml(a("allGood"))}</div>`;
+    const intro = `<div class="muted">${escHtml(a("intro"))}</div>${summary}`;
+    const armed = this._settings && !this._settings.editable ? `<div class="muted">${escHtml(this._t("armedNote"))}</div>` : "";
+    const msg = armed + (this._asstError ? `<div class="asst-err">${escHtml(this._asstError)}</div>` : "");
+    const tools = `<div class="tool"><button class="e" data-asst="recheck">${escHtml(a("recheck"))}</button></div>`;
+    // Nach Profil gruppiert, allgemeine Befunde zuletzt
+    const profiles = this._settings?.profiles || [];
+    const groups = [...profiles.map((p) => [p.id, p.name]), [null, a("general")]];
+    const blocks = groups
+      .map(([pid, name]) => {
+        const items = findings.map((f, i) => [f, i]).filter(([f]) => (f.profile || null) === pid);
+        if (!items.length) return "";
+        return `<h3>${escHtml(pid ? a("inProfile").replace("{p}", name) : name)}</h3>${items.map(([f, i]) => this._findingHtml(f, i)).join("")}`;
+      })
+      .join("");
+    return this._card(a("title"), intro + msg + blocks + tools, help) + this._scenariosCard();
+  }
+
+  // --- Szenario-Vorschau „Was passiert, wenn …?“ ------------------------------------------
+
+  async _loadScenarios() {
+    this._scLoading = true;
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/advisor/scenarios", language: this._lang });
+      this._scenarios = r.scenarios || [];
+    } catch (_err) {
+      this._scenarios = null;
+    }
+    this._scLoading = false;
+    if (this._tab === "assistant") this._render();
+  }
+
+  _scenariosCard() {
+    const a = (k) => this._asst(k);
+    const help = "scenarios";
+    if (this._scenarios === undefined) {
+      if (!this._scLoading) this._loadScenarios();
+      return this._card(a("scTitle"), `<div class="muted">${escHtml(a("scLoading"))}</div>`, help);
+    }
+    if (this._scenarios === null) return this._card(a("scTitle"), `<div class="muted">${escHtml(a("unavailable"))}</div>`, help);
+    const list = this._scenarios;
+    const intro = `<div class="muted">${escHtml(a("scIntro"))}</div>`;
+    if (!list.length) return this._card(a("scTitle"), intro + `<div>${escHtml(a("scNone"))}</div>`, help);
+    const count = (r) => list.filter((x) => x.result === r).length;
+    const summary = `<div><b>${escHtml(a("scCount").replace("{b}", count("bad")).replace("{w}", count("warn")).replace("{o}", count("ok")))}</b></div>`;
+    const icon = { bad: "❌", warn: "⚠️", ok: "✅" };
+    const level = { bad: "error", warn: "warning", ok: "ok" };
+    const profiles = this._settings?.profiles || [];
+    const blocks = profiles
+      .map((p) => {
+        const items = list.filter((x) => x.profile === p.id);
+        if (!items.length) return "";
+        const rows = items
+          .map((x) => {
+            const steps = x.steps.map((st) => `<div><span class="muted">${escHtml(this._clock(st.t))}</span> ${escHtml(st.text)}</div>`).join("");
+            return `<div class="asst ${level[x.result]}"><div>${icon[x.result] || ""} <b>${escHtml(x.title)}</b></div><div>${escHtml(x.summary)}</div>
+              <details class="explain"><summary>${escHtml(a("scSteps"))}</summary>${steps}</details></div>`;
+          })
+          .join("");
+        return `<h3>${escHtml(a("inProfile").replace("{p}", p.name))}</h3>${rows}`;
+      })
+      .join("");
+    const simple = `<div class="muted" style="margin-top:10px">${escHtml(a("scSimple"))}</div>`;
+    return this._card(a("scTitle"), intro + summary + blocks + simple, help);
+  }
+
+  _clock(seconds) {
+    // Ausgedachte Uhr: Minuten und Sekunden seit Beginn des Szenarios (h:mm:ss)
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const sec = seconds % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+  }
+
+  _findingHtml(f, i) {
+    const a = (k) => this._asst(k);
+    const icon = { error: "⛔", warning: "⚠️", tip: "💡" }[f.level] || "";
+    const fixes = (f.fixes || [])
+      .map((fix, j) => {
+        const open = this._asstOpen === `${i}:${j}`;
+        const button = `<button class="e" data-asst="open:${i}:${j}">${fix.weakens ? "⚠ " : ""}${escHtml(fix.label)}</button>`;
+        if (this._settings && !this._settings.editable) return `<span class="muted">${escHtml(fix.label)}</span>`;
+        return open ? this._fixPreview(fix, i, j) : button;
+      })
+      .join(" ");
+    return `<div class="asst ${escHtml(f.level)}"><div>${icon} <b>${escHtml(a("levels")[f.level] || f.level)}:</b> ${escHtml(f.text)}</div>
+      <details class="explain"><summary>${escHtml(a("why"))}</summary><div>${escHtml(f.why)}</div></details>
+      ${fixes ? `<div class="fixes">${fixes}</div>` : ""}</div>`;
+  }
+
+  _fixPreview(fix, i, j) {
+    const a = (k) => this._asst(k);
+    const where = fix.profile
+      ? a("inProfile").replace("{p}", (this._settings?.profiles || []).find((p) => p.id === fix.profile)?.name || fix.profile)
+      : a("inSystem");
+    const value = typeof fix.value === "string" && fix.value.includes(".") ? this._entityName(fix.value) : fix.value;
+    const change =
+      fix.op === "set"
+        ? `${escHtml(a("before"))}: <b>${escHtml(fix.current ?? "–")}</b> → ${escHtml(a("after"))}: <b>${escHtml(value)}</b>`
+        : `<b>${escHtml(value)}</b> ${escHtml(fix.op === "add" ? a("add") : a("remove"))}`;
+    const warn = fix.weakens
+      ? `<div class="asst-warn">${escHtml(a("weakens"))}</div><label class="chk"><input type="checkbox" data-asst-sure> ${escHtml(a("confirm"))}</label>`
+      : "";
+    return `<div class="preview"><div><b>${escHtml(a("preview"))}</b> (${escHtml(where)}): ${escHtml(fix.label)}</div><div>${change}</div>${warn}
+      <div class="tool"><button class="e" data-asst="apply:${i}:${j}" ${fix.weakens ? "disabled" : ""}>${escHtml(a("apply"))}</button><button class="e" data-asst="close">${escHtml(a("cancel"))}</button></div></div>`;
+  }
+
+  _entityName(id) {
+    const state = this._hass?.states?.[id];
+    return state?.attributes?.friendly_name || id;
+  }
+
+  _wireAssistant() {
+    const root = this.shadowRoot;
+    root.querySelectorAll("[data-asst]").forEach((el) =>
+      el.addEventListener("click", () => {
+        const [act, i, j] = el.dataset.asst.split(":");
+        this._asstError = null;
+        if (act === "recheck") this._recheckAdvice();
+        else if (act === "open") {
+          this._asstOpen = `${i}:${j}`;
+          this._render();
+        } else if (act === "close") {
+          this._asstOpen = null;
+          this._render();
+        } else if (act === "apply") this._applyFix(Number(i), Number(j));
+      })
+    );
+    const sure = root.querySelector("[data-asst-sure]");
+    if (sure) {
+      sure.addEventListener("change", () => {
+        const button = root.querySelector('[data-asst^="apply:"]');
+        if (button) button.disabled = !sure.checked;
+      });
+    }
+  }
+
+  async _recheckAdvice() {
+    this._asstOpen = null;
+    this._scenarios = undefined; // Vorschau neu durchspielen
+    [this._advice, this._settings] = await Promise.all([
+      this._fetchAdvice(),
+      this._hass.callWS({ type: "hauswacht/settings/get" }).catch(() => this._settings),
+    ]);
+    this._render();
+  }
+
+  async _applyFix(i, j) {
+    const finding = (this._advice?.findings || [])[i];
+    const fix = finding?.fixes?.[j];
+    if (!fix || !this._settings) return;
+    const sure = this.shadowRoot.querySelector("[data-asst-sure]");
+    let result;
+    try {
+      result = await this._hass.callWS({
+        type: "hauswacht/advisor/apply",
+        revision: this._settings.revision,
+        fix,
+        confirm: Boolean(fix.weakens && sure?.checked),
+        language: this._lang,
+      });
+    } catch (_err) {
+      result = { ok: false, errors: { base: "failed" } };
+    }
+    this._asstOpen = null;
+    if (result.ok) {
+      this._flash = this._asst("applied");
+      this._reloadAfterSave(result.revision);
+      return;
+    }
+    const code = result.errors?.base || "failed";
+    this._asstError = this._asst("errors")[code] || `${this._asst("errors").failed} (${code})`;
+    if (["changed_elsewhere", "fix_not_offered"].includes(code)) {
+      await this._recheckAdvice();
+      return;
+    }
+    this._render();
+  }
+
   _docsTab() {
     const docs = window.HauswachtDocs;
     if (!docs) return `<ha-card><div class="wrap muted">${escHtml(this._t("reloadHint"))}</div></ha-card>`;
@@ -1365,6 +1662,7 @@ class HauswachtPanel extends HTMLElement {
     if (this._tab === "profiles") return this._profilesTab(view);
     if (this._tab === "rules") return this._rulesTab(view);
     if (this._tab === "docs") return this._docsTab();
+    if (this._tab === "assistant") return this._assistantTab();
     if (this._tab === "people") return this._peopleTab(view);
     if (this._tab === "system") return this._systemTab(view);
     if (this._tab === "sirens") return this._sirensTab(view);
@@ -1408,6 +1706,7 @@ class HauswachtPanel extends HTMLElement {
       })
     );
     this._renderSirenTest();
+    this._wireAssistant();
     // Heimkehr-Bericht in der Einstellungsseite anzeigen (Markdown von Home Assistant)
     const report = this.shadowRoot.querySelector("ha-markdown[data-report]");
     if (report) report.content = this._report || "";

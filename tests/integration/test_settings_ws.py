@@ -705,3 +705,175 @@ async def test_sensor_stale_limit_on_page(hass: HomeAssistant, hass_ws_client: A
     assert data["system"]["silence"]["overrides"] == {MOTION: 0}
     overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
     assert overview["monitoring"]["stale_overrides"][0]["hours"] == 0
+
+
+async def test_advisor_checks_draft_without_saving(
+    hass: HomeAssistant, hass_ws_client: Any
+) -> None:
+    """Gemeinsame Prüfung (ADR 0017): prüft den Entwurf, speichert nichts, schaltet nichts."""
+    # Anna ohne Koordinaten: kann nie als weg erkannt werden
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    await setup_entry(hass, make_entry())
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    stored = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    assert stored == {"findings": [], "item": None}
+    night = next(p for p in data["profile_edit"]["profiles"] if p["id"] == "night")
+    night["automation"]["auto_away_persons"] = ["person.anna"]
+    draft = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/advisor/check",
+        action="profile_save",
+        data=night,
+        language="de",
+    )
+    assert draft["item"] == "night"
+    assert [(f["code"], f["level"], f["profile"]) for f in draft["findings"]] == [
+        ("away_never", "error", "night")
+    ]
+    assert "Anna" in draft["findings"][0]["text"]
+    # Nichts gespeichert
+    after = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert after["revision"] == data["revision"]
+    # Gespeichert: der Fehler steht auch in den Prüfhinweisen
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/settings/apply",
+        revision=data["revision"],
+        action="profile_save",
+        data=night,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    overview = await _ws(hass_ws_client, hass, type="hauswacht/overview")
+    codes = [f["code"] for f in overview["findings"]]
+    assert "advisor_away_never" in codes
+    # Mit „Tür + Signal“ für Anna (Seitenblatt Anwesenheit) passt es
+    fixed = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/advisor/check",
+        action="homecoming_save",
+        data={
+            "observe": False,
+            "persons": [],
+            "ssids": [],
+            "signals": {},
+            "proof_weak": ["person.anna"],
+        },
+    )
+    assert fixed["findings"] == []
+
+
+async def test_advisor_apply_fix_with_safeguards(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Check-up (ADR 0017): nur aktuelle Vorschläge, abschwächende nur mit Bestätigung."""
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    entry = make_entry({"profiles": {"night": {"auto_away_persons": ["person.anna"]}}})
+    await setup_entry(hass, entry)
+    before = dict(_options(hass)["profiles"]["night"])
+    check = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    (finding,) = check["findings"]
+    assert finding["code"] == "away_never"
+    remove, weak = finding["fixes"]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+
+    async def apply(fix: dict[str, Any], **extra: Any) -> dict[str, Any]:
+        return await _ws(
+            hass_ws_client,
+            hass,
+            type="hauswacht/advisor/apply",
+            revision=extra.pop("revision", data["revision"]),
+            fix=fix,
+            **extra,
+        )
+
+    assert (await apply(remove, revision="alt"))["errors"] == {"base": "changed_elsewhere"}
+    # Nur, was der Assistent gerade selbst vorschlägt
+    other = {**remove, "path": "entry_delay", "op": "set", "value": 1}
+    assert (await apply(other))["errors"] == {"base": "fix_not_offered"}
+    # Abschwächend („Tür + Signal“): nur mit Bestätigung
+    assert weak["weakens"] is True
+    assert (await apply(weak))["errors"] == {"base": "confirm_needed"}
+    assert "away_proof_weak" not in _options(hass) or not _options(hass)["away_proof_weak"]
+    # Person aus „alle weg“ nehmen: genau diese eine Änderung
+    result = await apply(remove)
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    after = _options(hass)["profiles"]["night"]
+    assert after["auto_away_persons"] == []
+    assert after["entry_delay"] == before.get("entry_delay", after["entry_delay"])
+    assert after["zones"] == before["zones"]
+    again = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check")
+    assert again["findings"] == []
+    # Der alte Vorschlag gilt nicht mehr
+    assert (await apply(remove, revision=result["revision"]))["errors"] == {
+        "base": "fix_not_offered"
+    }
+
+
+async def test_advisor_apply_refused_while_armed(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
+    await setup_entry(
+        hass, make_entry({"profiles": {"night": {"auto_away_persons": ["person.anna"]}}})
+    )
+    check = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check")
+    fix = check["findings"][0]["fixes"][0]
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    await hass.services.async_call(
+        "hauswacht", "arm", {"entity_id": PANEL, "profile": "home"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/advisor/apply",
+        revision=data["revision"],
+        fix=fix,
+    )
+    assert result == {"ok": False, "errors": {"base": "disarm_first"}}
+    assert _options(hass)["profiles"]["night"]["auto_away_persons"] == ["person.anna"]
+
+
+async def test_advisor_scenarios_only_calculated(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Szenario-Vorschau: gerechnet mit den echten Einstellungen – nichts wird geschaltet."""
+    await setup_entry(hass, make_entry())
+    before = hass.states.get(PANEL)
+    assert before is not None
+    result = await _ws(hass_ws_client, hass, type="hauswacht/advisor/scenarios", language="de")
+    found = {s["key"]: s for s in result["scenarios"]}
+    door = next(s for key, s in found.items() if key == f"burglary_door:away:{DOOR}")
+    assert door["result"] == "ok"
+    assert door["summary"].startswith("Alarm nach")
+    after = hass.states.get(PANEL)
+    assert after is not None
+    assert after.state == before.state  # nichts geschaltet
+
+
+async def test_frozen_location_does_not_count(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """0.64.0b5: eine Ortung, die 24 Stunden exakt gleich bleibt, zählt nicht als Ortung."""
+    from custom_components.hauswacht.presence_proof import DATA_FROZEN  # noqa: PLC0415
+
+    gps = "device_tracker.anna_gps"
+    # Draußen, weit weg von Zuhause
+    fake = {"latitude": 10.0, "longitude": 10.0, "gps_accuracy": 5, "friendly_name": "Fake"}
+    hass.states.async_set(gps, "not_home", fake)
+    hass.states.async_set(
+        "person.anna", "not_home", {"friendly_name": "Anna", "device_trackers": [gps]}
+    )
+    entry = make_entry({"profiles": {"night": {"auto_away_persons": ["person.anna"]}}})
+    await setup_entry(hass, entry)
+    first = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    assert first["findings"] == []  # Anna kann geortet werden
+    # Gemerkt: dieselben Koordinaten schon seit 25 Stunden (statt die Uhr vorzustellen)
+    store = hass.data[DATA_FROZEN]
+    lat, lon, since = store.data.seen[gps]
+    store.data.seen[gps] = (lat, lon, since - 25 * 3600)
+    later = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    codes = {f["code"] for f in later["findings"]}
+    assert codes == {"away_never", "location_frozen"}
+    # Bewegt sie sich wieder, zählt sie sofort wieder
+    hass.states.async_set(gps, "not_home", {**fake, "latitude": 10.0001})
+    await hass.async_block_till_done()
+    moved = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
+    assert moved["findings"] == []

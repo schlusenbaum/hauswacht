@@ -287,3 +287,55 @@ class AwayTracker:
 
     def proven(self, person: str) -> bool:
         return person in self._proven
+
+
+# --- Ortung, die sich nie bewegt (0.64.0b5) --------------------------------------------------
+
+# So lange exakt dieselben Koordinaten außerhalb von Zuhause: die Ortung gilt als eingefroren
+FROZEN_AFTER = 24 * 3600  # Sekunden
+_DIGITS = 6  # Koordinaten auf etwa 10 cm vergleichen
+
+
+class FrozenLocations:
+    """Merkt sich je Ortung, seit wann sie exakt dieselben Koordinaten meldet.
+
+    Eine echte Ortung schwankt immer ein wenig. Meldet sie über ``FROZEN_AFTER`` hinweg exakt
+    dieselbe Position außerhalb von Zuhause, ist der Standort vorgetäuscht oder die App hängt –
+    dann zählt sie nicht als Beleg für „weg“ (sichere Seite: niemand gilt fälschlich als weg).
+    Bewegt sie sich wieder, zählt sie sofort wieder.
+    """
+
+    def __init__(self) -> None:
+        self.seen: dict[str, tuple[float, float, float]] = {}  # Entität -> (lat, lon, seit)
+
+    def see(self, entity_id: str, latitude: float, longitude: float, now: float) -> bool:
+        """Koordinaten notieren. ``True``, wenn sich der Stand geändert hat (speichern)."""
+        lat, lon = round(latitude, _DIGITS), round(longitude, _DIGITS)
+        known = self.seen.get(entity_id)
+        if known is not None and known[0] == lat and known[1] == lon:
+            return False
+        self.seen[entity_id] = (lat, lon, now)
+        return True
+
+    def frozen_for(self, entity_id: str, now: float) -> float | None:
+        """Seit wie vielen Sekunden eingefroren – ``None``, wenn (noch) nicht eingefroren."""
+        known = self.seen.get(entity_id)
+        if known is None:
+            return None
+        seconds = now - known[2]
+        return seconds if seconds >= FROZEN_AFTER else None
+
+    def dump(self) -> dict[str, list[float]]:
+        return {k: [v[0], v[1], v[2]] for k, v in self.seen.items()}
+
+    def load(self, data: Any) -> None:
+        if not isinstance(data, Mapping):
+            return
+        for entity_id, value in data.items():
+            if (
+                isinstance(entity_id, str)
+                and isinstance(value, list | tuple)
+                and len(value) == 3
+                and all(_number(v) is not None for v in value)
+            ):
+                self.seen[entity_id] = (float(value[0]), float(value[1]), float(value[2]))

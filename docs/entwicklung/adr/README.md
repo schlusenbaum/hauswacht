@@ -20,3 +20,4 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0014](0014-ausgangserkennung.md) | Ausgangserkennung – Rausgehen ohne PIN erkennen (vorgeschlagen) |
 | [0015](0015-rueckkehr.md) | Rückkehr neu geregelt – „Bei Rückkehr“, „weg“ nur mit Beleg, Annäherung (umgesetzt in 0.61.0, Nachtrag „Tür + Signal“) |
 | [0016](0016-anwesenheit-testen.md) | Anwesenheit in der Testkarte – simulieren und sehen, warum (angenommen, 0.63) |
+| [0017](0017-assistent-check-up.md) | Assistent auf der Einstellungsseite – Check-up, Szenarien, Einrichten nach Zielen (angenommen, 0.64; Ziele folgen in 0.65) |

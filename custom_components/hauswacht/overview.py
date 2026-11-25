@@ -25,6 +25,7 @@ from .const import (
     OPT_SIRENS_HARDWARE_ENABLED,
 )
 from .core.action_codes import ALL_KEYPADS, CodeAction, parse_action_codes
+from .core.advisor import errors
 from .core.always_active import parse_always_active, parse_arm_on_close
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
@@ -617,5 +618,28 @@ def build_overview(main: HauswachtRuntime) -> dict[str, Any]:
     }
     overview["findings"] = run_checks(
         overview, language, duress_configured=any(u.duress_pin for u in users)
-    )
+    ) + _advisor_errors(hass, main, language)
     return overview
+
+
+ADVISOR_WHERE = {"de": "Alarmprofile", "en": "Alarm profiles"}
+ADVISOR_WHERE_SYSTEM = {"de": "System – Anwesenheit", "en": "System – presence"}
+
+
+def _advisor_errors(
+    hass: HomeAssistant, main: HauswachtRuntime, language: str
+) -> list[dict[str, Any]]:
+    """Fehler der gemeinsamen Prüfung (ADR 0017) – Einstellungen, die so nie greifen."""
+    from .advisor_ws import check  # noqa: PLC0415 – advisor_ws braucht runtime, runtime braucht uns
+
+    return [
+        {
+            "code": f"advisor_{f['code']}",
+            "key": f["key"],
+            "severity": "warning",
+            "important": False,
+            "text": f["text"],
+            "where": (ADVISOR_WHERE if f["profile"] else ADVISOR_WHERE_SYSTEM)[language],
+        }
+        for f in errors(check(hass, main, main.entry.options, language))
+    ]

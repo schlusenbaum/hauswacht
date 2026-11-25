@@ -15,7 +15,7 @@ ones of the English interface.
 |---|---|
 | [How Hauswacht decides](how-hauswacht-decides.md) | **Overview first:** what happens when a door opens, when the automation switches, what happens when someone comes home, when someone counts as home or away – as pictures with examples |
 | [Installation and first steps](installation.md) | requirements, installation via Marketplace or HACS, the settings page, the shortest way to the first arming, updates |
-| [Setup wizard](setup-wizard.md) | the former wizard was removed in 0.63.2 – how to set up now, and what comes next |
+| [Assistant and setup](setup-wizard.md) | the assistant's hints while editing (what does not fit, with a suggestion), how to set up, and what comes next |
 | [Sensors and sensor groups](sensors.md) | which sensors work, sensor groups, types (door, window, motion …), always-active sensors, radio silence, radio networks and gateways |
 | [Alarm profiles and areas](profiles.md) | creating profiles, delays, reaction, automation and presence, disarm on arrival, arm by closing the door, several areas (e.g. house and garage) |
 | [Trigger rules](trigger-rules.md) | sequences like "door, then basement", exceptions, conditions, YAML expert mode |

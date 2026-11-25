@@ -6,6 +6,137 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-25
+
+Zusammenfassung von 0.64.0b1 bis 0.64.0b5 – **der Assistent**
+([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Hinweise beim Bearbeiten:** Im Seitenblatt eines Alarmprofils und unter System → Anwesenheit
+  zeigt der Assistent schon vor dem Speichern, was nicht zusammenpasst – mit Begründung, Messwert
+  und Vorschlag. Nur Hinweis: Speichern geht trotzdem. Fehler stehen auch in den Prüfhinweisen.
+- **Prüfungen:** Person ohne Ortung in „Scharf, wenn alle weg“ oder „Bei Rückkehr“;
+  „Unscharf, nur wenn automatisch scharf“ ohne Automatik; Türbeleg/Reinlassen ohne Eingangstür;
+  Eingangsverzögerung kürzer als gemessen (auch für den Türbeleg einer Person); Verlängerung bei
+  Annäherung ohne Richtungs-Signal; „Tür + Signal“ trotz Ortung; eingefrorene Ortung.
+- **Reiter „Assistent“ mit Check-up:** alle Befunde auf einen Blick, nach Profil sortiert.
+  Vorschläge einzeln übernehmen, mit Vorschau „bisher → neu“; abschwächende Vorschläge (⚠) nur
+  mit Häkchen. Übernehmen nur unscharf, nur aktuelle Vorschläge, über denselben Weg wie im
+  Seitenblatt.
+- **Szenario-Vorschau „Was passiert, wenn …?“:** Einbruch durch jede Tür und ein Fenster, jede
+  Person kommt heim (mit gemessener Zeit), alle gehen weg, Handys schlafen ein, kurz raus bei
+  „Tür + Signal“ – durchgespielt mit denselben Regeln wie im Echtbetrieb, ausgedachte Uhr, nichts
+  wird geschaltet. Ergebnis ✅ / ⚠️ / ❌ mit Ablauf Schritt für Schritt.
+- **Eingefrorene Ortung:** 24 Stunden exakt dieselbe Position außerhalb von Zuhause zählt nicht
+  als Beleg für „weg“ (vorgetäuschter Standort, hängende App) – bis sie sich wieder bewegt.
+
+### Geändert
+
+- Die Entscheidungen der Profil-Automatik stehen an einer Stelle im Kern
+  (`core/automation_engine.py`) – Echtbetrieb und Vorschau nutzen dieselben Regeln.
+- „Scharf, wenn alle weg“ plant nur noch, solange die Anlage unscharf ist (keine doppelten
+  `AutoArmScheduled`/`AutoArmSkipped` mehr nach dem automatischen Scharfschalten).
+
+### Korrigiert
+
+- Installationsanleitung nannte beim Wegfall des alten Einstellungsdialogs die falsche Version.
+
+## [0.64.0b5] - 2026-11-25
+
+Eingefrorene Ortung erkennen; „alle weg“ plant nach dem Scharfschalten nicht mehr neu.
+
+### Neu
+
+- **Ortung, die sich nie bewegt:** Meldet eine Ortung seit mindestens 24 Stunden exakt dieselbe
+  Position außerhalb von Zuhause (vorgetäuschter Standort, hängende App), zählt sie nicht mehr als
+  Beleg für „weg“ und nicht als „kann geortet werden“ – bis sie sich wieder bewegt. Hauswacht
+  merkt sich das auch über einen Neustart hinweg. Der Assistent zeigt dazu eine Warnung (Check-up
+  und Seitenblatt Anwesenheit). Ortungen zuhause sind nie betroffen.
+
+### Geändert
+
+- **„Scharf, wenn alle weg“ plant nur noch, solange die Anlage unscharf ist.** Bisher wurde nach
+  dem automatischen Scharfschalten bei jeder Signaländerung neu geplant und nach der Wartezeit
+  wieder verworfen (Ereignisse `AutoArmScheduled` und `AutoArmSkipped` im Logbuch). Gefunden mit
+  der Szenario-Vorschau. Am Verhalten ändert sich sonst nichts: Wird aus der Ferne unscharf
+  geschaltet, während alle weg sind, plant die nächste Signaländerung wie bisher neu.
+
+## [0.64.0b4] - 2026-11-25
+
+Szenario-Vorschau „Was passiert, wenn …?“ im Reiter Assistent ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Was passiert, wenn …?** Unter dem Check-up spielt Hauswacht typische Situationen mit deinen
+  Einstellungen und Messwerten durch – mit denselben Regeln wie im Echtbetrieb (Zustandsmaschine,
+  Automatik, Beleg für „weg“), aber mit ausgedachter Uhr. Es wird nichts geschaltet.
+- Szenarien je Profil: Einbruch durch jede Eingangstür und durch ein Fenster; jede Person aus
+  „Bei Rückkehr“ kommt heim (mit ihrer gemessenen Zeit nach der Tür, ab 3 Messungen); alle gehen
+  weg; alle sind zuhause und die Handys schlafen ein (auch: WLAN fällt aus); bei „Tür + Signal“:
+  jemand geht kurz raus, und dabei schläft ein Handy ein.
+- Jedes Szenario mit Ergebnis ✅ / ⚠️ / ❌, einem Satz dazu und dem Ablauf Schritt für Schritt.
+- Doku: [Was passiert, wenn …?](docs/assistent.md#was-passiert-wenn--seit-0640b4) mit allen
+  Szenarien, Beispiel und dem, was vereinfacht ist.
+
+## [0.64.0b3] - 2026-11-25
+
+Neuer Reiter **Assistent** mit dem Check-up ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Check-up:** Der Reiter „Assistent“ auf der Einstellungsseite zeigt alle Befunde des
+  Assistenten auf einen Blick – für alle Profile und die allgemeinen Einstellungen, nach Profil
+  sortiert, mit Zusammenfassung („1 Fehler · 2 Warnungen · 0 Tipps“ oder „Alles passt zusammen“)
+  und Knopf „Neu prüfen“.
+- **Vorschläge einzeln übernehmen, mit Vorschau:** Ein Klick zeigt, wo und was sich ändert
+  („bisher 30 → neu 50“, „kommt dazu“, „fällt weg“). Erst „Übernehmen“ speichert genau diese eine
+  Änderung. Vorschläge mit ⚠ (machen die Anlage nachgiebiger) brauchen zusätzlich ein Häkchen.
+- **Sicherungen beim Übernehmen:** nur, wenn alle Bereiche unscharf sind; nur ein Vorschlag, den
+  der Assistent gerade jetzt selbst macht; hat sich inzwischen etwas geändert, wird nichts
+  gespeichert und der Check-up lädt neu. Gespeichert wird über denselben Weg wie im Seitenblatt.
+- Doku: [Check-up im Reiter „Assistent“](docs/assistent.md#check-up-im-reiter-assistent-seit-0640b3).
+
+## [0.64.0b2] - 2026-11-25
+
+Der Assistent schaut beim Bearbeiten mit ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)).
+
+### Neu
+
+- **Hinweise des Assistenten im Seitenblatt:** Im Seitenblatt eines Alarmprofils und unter
+  System → Anwesenheit erscheint über „Speichern“ ein Kasten **Assistent**, sobald etwas nicht
+  zusammenpasst – geprüft wird der Entwurf, wie er nach dem Speichern wäre. Nur Hinweis:
+  Speichern geht trotzdem. Jeder Hinweis sagt, was nicht passt, und unter „Warum?“ die
+  Begründung, mit Messwert aus der Beobachtung, wenn es einen gibt.
+- Erste Prüfungen: Person ohne Ortung in „Scharf, wenn alle weg“ (Profil wird nie scharf) oder
+  in „Bei Rückkehr“; „Unscharf, nur wenn automatisch scharf“ ohne Automatik; Türbeleg oder
+  Reinlassen ohne Eingangstür; Eingangsverzögerung kürzer als gemessen nötig (auch für den
+  Türbeleg einer Person); Verlängerung bei Annäherung ohne Richtungs-Signal; „Tür + Signal“
+  trotz Ortung. Messwerte zählen ab 3 Messungen.
+- **Vorschläge als Knopf:** Ein Klick ändert nur den Entwurf, gespeichert wird erst mit
+  „Speichern“. Vorschläge, die die Anlage nachgiebiger machen (z. B. längere
+  Eingangsverzögerung), sind mit ⚠ markiert und brauchen eine ausdrückliche Bestätigung.
+- Fehler des Assistenten stehen auch in den **Prüfhinweisen**.
+- Doku: [Assistent und Einrichtung](docs/assistent.md#hinweise-beim-bearbeiten-seit-0640b2) mit
+  allen Prüfungen und Beispielen.
+
+### Korrigiert
+
+- Installationsanleitung: „Seit 0.63.2 gibt es den früheren Einstellungsdialog nicht mehr“ nannte
+  in 0.64.0b1 versehentlich die falsche Version.
+
+## [0.64.0b1] - 2026-11-25
+
+Erster Schritt zum Assistenten mit Check-up und Szenario-Vorschau
+([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md)) – **ohne sichtbare Änderung**.
+
+### Geändert
+
+- Die Entscheidungen der Profil-Automatik („alle weg“, „Bei Rückkehr“, Türbeleg, Reinlassen,
+  Annäherung) stehen jetzt an einer Stelle im Kern (`core/automation_engine.py`). Der Echtbetrieb
+  und die kommende Szenario-Vorschau nutzen damit **dieselben** Regeln. Das Verhalten ist
+  unverändert – alle bisherigen Tests laufen unverändert durch, dazu neue Tests für jede Regel.
+
 ## [0.63.2] - 2026-11-25
 
 Zusammenfassung von 0.63.2b1 – **die Einstellungsseite ist der einzige Weg**.

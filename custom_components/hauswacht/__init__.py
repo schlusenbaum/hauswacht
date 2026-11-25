@@ -29,8 +29,11 @@ PLATFORMS: list[str] = [
 
 async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) -> bool:
     from .core.areas import MAIN_AREA, parse_areas  # noqa: PLC0415
+    from .presence_proof import async_load_frozen  # noqa: PLC0415
     from .runtime import HauswachtRuntime  # noqa: PLC0415
 
+    # Ortungen, die sich nie bewegen (0.64.0b5) – vor dem Start der Automatik laden
+    await async_load_frozen(hass)
     runtime = HauswachtRuntime(hass, entry)
     # Weitere Bereiche: je eine eigene Runtime, der Hauptbereich hält sie
     for area_id in parse_areas(entry.options):

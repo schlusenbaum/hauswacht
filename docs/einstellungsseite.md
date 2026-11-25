@@ -32,6 +32,7 @@ und du änderst es an Ort und Stelle.
 | Reiter | Inhalt |
 |---|---|
 | **Übersicht** | Prüfhinweise (z. B. „Profil ohne Empfänger“) und der Zustand je Bereich; Knöpfe **Drucken** und **Notfallblatt** wie in der Karte [Hauswacht Übersicht](uebersicht.md) |
+| **Assistent** | [Check-up](assistent.md#check-up-im-reiter-assistent-seit-0640b3): was in den Einstellungen nicht zusammenpasst, mit Begründung und Vorschlägen zum einzelnen Übernehmen |
 | **Melder** | Alle Melder **nach Meldergruppen**, mit Typ, Zustand und Batterie – und je Profil eine Spalte (Matrix, siehe unten). Darunter [Besondere Melder](melder.md#melder-mit-kippstellung-gekippt) und [Immer aktiv](melder.md#immer-aktive-melder) |
 | **Profile** | Jedes Profil mit Gruppen, Regeln, Zeiten, Reaktion, Empfängern und Automatik |
 | **Auslöseregeln** | Jede Regel als Satz und wo sie gilt |

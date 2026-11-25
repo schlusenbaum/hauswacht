@@ -211,6 +211,18 @@ coordinates – they only confirm, they are never proof.
 Once someone is proven away, that stays so until the person is home again – even if the location
 falls asleep afterwards. Doors and locations from before the last homecoming do not count.
 
+**Frozen location** (*since 0.64.0b5*): a real location always varies a little. If a location has
+reported **exactly the same position outside** the zone "Home" for at least **24 hours**, the
+location is faked or the app is stuck. Then it does **not** count as proof, nor as "can be
+located" – until it moves again (then immediately again). The
+[assistant](setup-wizard.md#what-is-checked) shows a warning about it. A location that sits at home
+(e.g. a tablet) is never affected. Hauswacht remembers when the coordinates last changed, even
+across a restart.
+
+*Example:* a phone has reported the same position in another town for days via the app, although
+the person is at home (faked location). Without this rule the house could be armed while the
+Wi-Fi phone is asleep, although the person is there.
+
 **Persons without a location – "also door + signal (uncertain)":** if a person has no location
 (e.g. only a Wi-Fi sensor or ping), you can choose **"Proof for 'away': also door + signal
 (uncertain)"** for them under settings page → System → Presence and homecoming observation, in
@@ -243,7 +255,8 @@ way, so that measurement and automation match.
 ### On return
 
 *New in 0.61. Set only on the [settings page](settings-page.md) → Profiles → profile → section
-**"On return"**.*
+**"On return"**. If something does not fit (e.g. "disarm with door proof" without an entry
+door), the [assistant](setup-wizard.md#hints-while-editing-since-0640b2) shows it while you edit.*
 
 Here you decide what happens when a certain person comes home. It is based on the person state in
 Home Assistant (usually the phone) plus the person's [signals](#how-hauswacht-knows-who-is-home).

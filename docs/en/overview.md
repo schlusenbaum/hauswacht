@@ -83,6 +83,7 @@ contradictions. Every hint says **where** to change it.
 | fault of a monitored radio network/gateway | ⚠️ |
 | action code "arm" whose alarm profile was deleted – the code arms nothing | ⚠️ |
 | [Leaving](observations.md#leaving-preparation-for-detect-leaving-without-pin): leaving of a person cannot be detected reliably (long silent pauses or too slow) – with a tip for a better signal | ⚠️ |
+| [Assistant](setup-wizard.md#what-is-checked): a setting that **never applies** – e.g. a person without a location in "arm when all away", "disarm only if armed automatically" without automation, door proof without an entry door | ⚠️ |
 | profile without siren (notification only) | ℹ️ |
 | sirens in profiles, but not enabled yet | ℹ️ |
 | siren never tested or last test older than half a year | ℹ️ |
