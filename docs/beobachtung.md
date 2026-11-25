@@ -252,3 +252,56 @@ des Sensors „Heimkehr-Beobachtung“, und jede einzelne Messung als Zeile „W
 > Gut zu wissen: Fällt eine Schweigepause zufällig in die 15 Minuten nach einer Türöffnung
 > (jemand anderes geht raus), zählt sie als „Rausgehen mit Tür“ mit langer Zeit. Wirkt eine
 > Empfehlung zu hoch, lohnt ein Blick in die CSV-Tabelle.
+
+### Lebenszeichen rund um die Tür
+
+*Ab 0.63.1 – nur Messung, schaltet nichts.*
+
+Für die spätere Ausgangserkennung reicht es nicht zu wissen, wie schnell „weg“ kommt. Zwei
+weitere Fragen entscheiden, ob sie bei euch überhaupt schützt. Deshalb hält die Beobachtung bei
+**jeder Türöffnung** je Person fest, wann ihre Signale zuletzt und danach wieder „zuhause“
+gemeldet haben. Ein **Lebenszeichen** ist jede Meldung „zuhause“ eines Signals der Person, auch
+wenn sich der Wert nicht ändert (z. B. Ping antwortet bei jeder Abfrage erneut). Die Person
+selbst und Richtungssensoren zählen nicht.
+
+**a) Lebenszeichen vor dem Rausgehen.** Die Ausgangserkennung greift später nur für Personen,
+deren Handy kurz vor dem Öffnen (bis 3 Minuten) „zuhause“ gemeldet hat. Schläft das Handy beim
+Rausgehen meist schon, nützt die Ausgangserkennung dieser Person wenig.
+
+> *Beispiel:* „Niklas: beim Rausgehen 2 von 9× mit Lebenszeichen kurz vorher.“ – Sein iPhone
+> schläft meistens schon, wenn er geht. Die Ausgangserkennung würde ihn selten erkennen.
+
+**b) „Noch da“ nach der Tür.** Jemand mit Lebenszeichen bleibt zuhause, während eine Tür aufgeht
+(z. B. ein Einbrecher – oder jemand anderes geht raus). Wie schnell meldet sich danach eines
+seiner Signale wieder mit „zuhause“? Die Ausgangserkennung wird bei einem Einbruch Alarm geben,
+sobald sich alle, die zuhause waren, wieder gemeldet haben. **So lange bliebe ein Einbruch
+höchstens still.**
+
+> *Beispiel:* „Christian: bleibt zuhause, während eine Tür aufgeht – meldet sich typisch nach
+> 20 s, spätestens nach 45 s wieder.“ – Ein Einbruch bliebe höchstens 45 s still.
+>
+> „Finja: … meldet sich typisch nach 60 s wieder, aber 3 von 12× 15 Minuten lang gar nicht.“
+> – In diesen Fällen käme der Alarm erst am Ende der Wartezeit.
+
+Dazu gehört die Gegenprobe: **„zuhause“ nach dem Rausgehen.** Melden die Signale von jemandem,
+der gerade rausgeht, nach dem Öffnen noch eine Weile „zuhause“? Das passiert z. B. bei Ping:
+Die Ping-Integration meldet ein Handy erst nach einer Nachlaufzeit (meist 3 Minuten) als „weg“.
+Die Ausgangserkennung muss solche Meldungen später richtig einordnen – die Messung zeigt, wie
+lange sie dauern.
+
+**Wo du das siehst:**
+
+- Einstellungsseite → System → Anwesenheit → **Messungen**: Tabelle **„Vorbereitung
+  Ausgangserkennung“** mit ⓘ an jeder Spalte und den Sätzen je Person (erst ab 3 Messungen).
+- Im Bericht der Abschnitt **„Vorbereitung Ausgangserkennung“**.
+- Attribut `exit_checks` des Sensors „Heimkehr-Beobachtung“.
+
+| Spalte | Bedeutung |
+|---|---|
+| Lebenszeichen vor dem Rausgehen | mit Lebenszeichen / alle Male durch eine Tür rausgegangen |
+| „noch da“ nach der Tür | typische / längste Zeit bis zum nächsten „zuhause“, wenn die Person blieb |
+| ohne „noch da“ | wie oft 15 Minuten lang gar nichts kam / alle Male |
+| „zuhause“ nach dem Rausgehen | wie oft und bis wie lange nach dem Öffnen noch „zuhause“ kam |
+
+Gezählt wird eine Türöffnung erst **15 Minuten danach** – vorher ist noch offen, ob jemand
+rausgegangen ist. „Weggehen zurücksetzen“ löscht auch diese Messung.

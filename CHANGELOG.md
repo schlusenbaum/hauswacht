@@ -6,6 +6,41 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.63.1] - 2026-11-25
+
+Zusammenfassung von 0.63.1b1.
+
+### Hinzugefügt
+
+- **Doku-Seite [So entscheidet Hauswacht](docs/so-entscheidet-hauswacht.md)**: der Überblick in
+  Bildern – Tür auf, Automatik, Heimkommen, zuhause oder weg, was Hauswacht nie von selbst tut,
+  wo man was einstellt.
+- **Messung „Lebenszeichen rund um die Tür“** (Vorbereitung der Ausgangserkennung): Lebenszeichen
+  vor dem Rausgehen, „noch da“ nach der Tür, „zuhause“ nach dem Rausgehen – schaltet nichts.
+  Doku: [Lebenszeichen rund um die Tür](docs/beobachtung.md#lebenszeichen-rund-um-die-tür).
+
+## [0.63.1b1] - 2026-11-25
+
+### Hinzugefügt
+
+- **Neue Doku-Seite [So entscheidet Hauswacht](docs/so-entscheidet-hauswacht.md)**: der Überblick
+  in Bildern – was passiert, wenn bei scharfer Anlage eine Tür aufgeht, wann die Automatik
+  schaltet, was beim Heimkommen passiert, wann jemand als zuhause oder weg gilt, was Hauswacht
+  nie von selbst tut und wo man was einstellt. Auch im Reiter „Dokumentation“ der
+  Einstellungsseite.
+- **Messung „Lebenszeichen rund um die Tür“** (Vorbereitung der Ausgangserkennung, ADR 0014) in
+  der Heimkehr-Beobachtung – schaltet nichts:
+  - **Lebenszeichen vor dem Rausgehen:** Hatte, wer rausgeht, kurz vorher ein Signal mit
+    „zuhause“? Nur dann kann die Ausgangserkennung die Person später erkennen.
+  - **„Noch da“ nach der Tür:** Wie schnell meldet sich das Handy von jemandem, der zuhause
+    bleibt, nach dem Öffnen wieder? So lange bliebe ein Einbruch höchstens still.
+  - **„Zuhause“ nach dem Rausgehen:** Melden Signale nach dem Öffnen noch „zuhause“, obwohl die
+    Person gerade geht (z. B. Ping mit Nachlaufzeit)?
+  Zu sehen auf der Einstellungsseite (System → Anwesenheit → Messungen, Tabelle „Vorbereitung
+  Ausgangserkennung“), im Bericht und im Attribut `exit_checks`. Gemessen wird ab diesem Update;
+  „Weggehen zurücksetzen“ löscht auch diese Messung. Doku:
+  [Lebenszeichen rund um die Tür](docs/beobachtung.md#lebenszeichen-rund-um-die-tür).
+
 ## [0.63.0] - 2026-11-24
 
 Zusammenfassung von 0.63.0b1 bis 0.63.0b3 – **Anwesenheit testen** ([ADR 0016](docs/entwicklung/adr/0016-anwesenheit-testen.md)).

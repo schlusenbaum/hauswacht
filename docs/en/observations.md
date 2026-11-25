@@ -248,3 +248,54 @@ of the sensor "Homecoming observation", and every single measurement as a "Leavi
 > Good to know: if a silent pause happens to fall into the 15 minutes after a door opening
 > (someone else goes out), it counts as "left through a door" with a long time. If a
 > recommendation looks too high, have a look at the CSV table.
+
+### Signs of life around the door
+
+*From 0.63.1 – measurement only, switches nothing.*
+
+For the later exit detection it is not enough to know how fast "away" comes. Two more questions
+decide whether it protects you at all. So at **every door opening** the observation records, per
+person, when their signals last reported "home" and when they did so again afterwards. A **sign
+of life** is any "home" report of one of the person's signals, even if the value does not change
+(e.g. ping answering again at every poll). The person entity itself and direction sensors do not
+count.
+
+**a) Sign of life before leaving.** Exit detection will only work for people whose phone
+reported "home" shortly before the door opened (up to 3 minutes). If the phone is usually already
+asleep when the person leaves, exit detection will rarely help them.
+
+> *Example:* "Niklas: when leaving, 2 of 9× with a sign of life shortly before." – His iPhone is
+> usually already asleep when he leaves. Exit detection would rarely recognise him.
+
+**b) "Still here" after the door.** Someone with a sign of life stays home while a door opens
+(e.g. a burglar – or someone else goes out). How fast does one of their signals report "home"
+again? On a break-in, exit detection will raise the alarm as soon as everyone who was home has
+reported again. **A break-in would stay silent for at most this long.**
+
+> *Example:* "Christian: stays home while a door opens – reports again typically after 20 s, at
+> the latest after 45 s." – A break-in would stay silent for at most 45 s.
+>
+> "Finja: … reports again typically after 60 s, but 3 of 12× not at all for 15 minutes." – In
+> those cases the alarm would only come at the end of the waiting time.
+
+The cross-check: **"home" after leaving.** Do the signals of someone who is just leaving still
+report "home" for a while after the door opened? This happens with ping, for example: the ping
+integration only reports a phone as "away" after a grace period (usually 3 minutes). Exit
+detection has to classify such reports correctly later – the measurement shows how long they last.
+
+**Where you see this:**
+
+- Settings page → System → Presence → **Measurements**: table **"Preparing exit detection"**
+  with ⓘ at every column and the sentences per person (only from 3 measurements).
+- In the report, the section **"Preparing exit detection"**.
+- Attribute `exit_checks` of the sensor "Homecoming observation".
+
+| Column | Meaning |
+|---|---|
+| Sign of life before leaving | with sign of life / all times left through a door |
+| "still here" after the door | typical / longest time until the next "home" when the person stayed |
+| no "still here" | how often nothing came for 15 minutes / all times |
+| "home" after leaving | how often and for how long "home" still came after the door opened |
+
+A door opening only counts **15 minutes later** – before that, it is still open whether someone
+left. "Reset leaving" also clears this measurement.

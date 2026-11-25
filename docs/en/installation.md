@@ -2,7 +2,7 @@
 
 [Deutsch](../installation.md) | **English**
 
-> **As of 0.63.0:** Real siren control is **locked** after installation and has to be enabled
+> **As of 0.63.1:** Real siren control is **locked** after installation and has to be enabled
 > deliberately – until then Hauswacht cannot make a sound.
 
 ## Requirements
