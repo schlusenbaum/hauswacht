@@ -40,14 +40,16 @@ async def test_debug_log_shows_decisions_without_secrets(
         hass,
         make_entry({"users": {"p": _user("Petra Beispiel")}, "notify_system": [f"notify.{PHONE}"]}),
     )
+    # Unscharf: Tür auf zählt nicht
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    await hass.async_block_till_done()
     await _service(hass, "alarm_control_panel", "alarm_arm_night", entity_id=PANEL)
     # Fenster auf: im Profil „Nacht“ überwacht → Alarm (ohne Sirenen)
     set_sensor(hass, WINDOW, "on")
     await hass.async_block_till_done()
     await _service(hass, "alarm_control_panel", "alarm_disarm", entity_id=PANEL, code=PIN)
-    # Unscharf: Tür auf zählt nicht
-    set_sensor(hass, DOOR, "on")
-    await hass.async_block_till_done()
 
     debug = "\n".join(r.getMessage() for r in caplog.records if r.levelno == logging.DEBUG)
     assert "Bereich main: ArmRequested(profile=night" in debug
