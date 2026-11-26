@@ -66,6 +66,7 @@ from .core.changes.users import delete_user, save_person
 from .core.sensor_types import SensorType, default_type
 from .core.tilt import effective_types, parse_tilt_sources
 from .core.vibration import parse_vibration_sources, rule_for_zone_id
+from .export_ws import async_register_export_websocket
 from .goals_ws import async_register_goals_websocket
 from .names import display_name
 from .people_settings_ws import build_people_settings, ha_user_choices, to_iso
@@ -564,4 +565,5 @@ def async_register_settings_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_new_cards)
     async_register_advisor_websocket(hass)
     async_register_goals_websocket(hass)
+    async_register_export_websocket(hass)
     hass.data[DATA_WS] = True

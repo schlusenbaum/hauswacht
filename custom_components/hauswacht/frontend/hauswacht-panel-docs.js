@@ -10,6 +10,7 @@ const DOC_REPO = "https://github.com/schlusenbaum/hauswacht/blob";
 const DOC_LINKS = {
   index: ["README.md", "README.md"],
   settingsPage: ["einstellungsseite.md", "settings-page.md"],
+  export: ["einstellungsseite.md#konfiguration-herunterladen", "settings-page.md#download-configuration"],
   matrix: ["einstellungsseite.md#die-matrix-melder--profile", "settings-page.md#the-matrix-sensor--profile"],
   sensors: ["melder.md", "sensors.md"],
   groups: ["melder.md#meldergruppen", "sensors.md#sensor-groups"],

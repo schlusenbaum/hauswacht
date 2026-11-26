@@ -236,6 +236,61 @@ reports "problem", normal again above 6.") and the learning time.
 | **Presence and homecoming observation** | Observation on/off, persons, home Wi-Fi(s), additional signals per person – see [homecoming observation](observations.md#homecoming-observation). Below that **"When does someone count as away?"** (from 0.61, only here): location outside **check precisely** or **simple**, under "More settings" the **time window for the proof** (default 15 minutes) with a recommendation from the "leaving" measurement and an **apply** button; per person **"Proof for 'away'"**: location only (safe) or also door + signal (uncertain, with a warning and its own time window); from 0.65.0b4 per person **"Counts as location (geofence)"** for sources without coordinates that evaluate the position ([more](profiles.md#away-only-with-proof)); warning for persons without a location – see ["away" only with proof](profiles.md#away-only-with-proof). From 0.63 the card also shows **"Who counts as home right now?"**: home/away/unknown per person with the reason, and per profile one line about what the automation and "On return" are doing right now; from 0.65.0b4 for "no proof" also what is missing, and a **Refresh** button – see [Testing presence](test-mode.md#testing-presence). Below it the block **Measurements**: view, save, reset – see [Measurements on the settings page](observations.md#measurements-on-the-settings-page) |
 | **Areas** | add, rename, icon, delete (only without profiles) – see [areas](profiles.md#areas) |
 | **Settings page** | **Show in the sidebar** on/off. When hidden, only the sidebar entry disappears – the page stays reachable from the device page, "Configure" on the integration and `/hauswacht-settings` |
+| **Download configuration** | A file (JSON) for troubleshooting, with placeholders instead of names and secrets – see [Download configuration](#download-configuration) (from 0.65.0b8) |
+
+## Download configuration
+
+*From 0.65.0b8.* At the very bottom of the **System** tab there is the card **"Download
+configuration"**. The **⬇ Download** button saves a file `hauswacht-konfiguration-<date>.json`.
+It is meant for **troubleshooting**: when Hauswacht does something you did not expect, the file
+contains everything needed to understand it – without asking ten times. Attach it e.g. to an
+[issue](https://github.com/schlusenbaum/hauswacht/issues) or a forum post.
+
+**What it contains**
+
+| Section | Content |
+|---|---|
+| `versions` | versions of Hauswacht, Home Assistant and Python |
+| `options` | all settings, exactly as stored |
+| `overview` | the [system overview](overview.md) with check hints |
+| `presence` | **"Who counts as home right now?"** – per person with the reason, per profile what the automation does |
+| `facts` | what Hauswacht knows from Home Assistant: who can be located, who has a direction signal, frozen locations, entry doors and windows per profile |
+| `measurements` | the [measurements](observations.md#measurements-on-the-settings-page) (homecoming, leaving, entries) |
+| `findings` | the result of the [check-up](setup-wizard.md) |
+| `scenarios` | "What happens if …?" – calculated with your settings |
+| `entities` | state of Hauswacht's own entities and of all entities used in the settings (e.g. sensors, trackers, signals): state, last change, integration, selected attributes such as `source_type` or `in_zones` |
+
+**What it does not contain – placeholders instead of real values**
+
+Before saving, Hauswacht replaces everything personal with **placeholders**. The mapping is kept:
+the same person has the same name everywhere, also in entity IDs and sentences. So you can see
+*which* tracker belongs to *which* person, but not who that is.
+
+| Real | In the file |
+|---|---|
+| `person.anna`, "Anna", `sensor.handy_von_anna`, "Annas Zimmer" | `person.person_1`, "Person 1", `sensor.handy_von_person_1`, "Person 1s Zimmer" |
+| user "Ben Beispiel" | `benutzer_1`, "Benutzer 1" |
+| card number `04A1B2C3D4`, card name | `karte_1`, "Kartenname 1" |
+| `notify.mobile_app_handy_von_anna` | `notify.empfaenger_1` |
+| Wi-Fi name, MQTT topic, device ID, HA account, speaker | `wlan_1`, `topic_1`, `geraet_1`, `konto_1`, `media_player.lautsprecher_1` |
+| PIN hashes, salts, action codes | `***` |
+| coordinates | never included – only `has_coordinates: true/false` |
+
+The placeholders are German words (`benutzer` = user, `karte` = card, `empfaenger` = recipient,
+`geraet` = device, `konto` = account, `lautsprecher` = speaker).
+
+There is deliberately no version without placeholders: such a file easily ends up in a forum by
+mistake.
+
+**Please still have a quick look:** names of sensors, zones, areas and profiles stay ("Front
+door", "Night"), because they are needed to understand the file. If one of them contains
+something personal that is not the name of a person in Home Assistant (e.g. "Grandma Erika's
+room"), it stays – change it before passing the file on.
+
+The button only reads – it switches nothing and changes nothing. Only administrators can use it.
+Home Assistant's [diagnostics file](overview.md#diagnostics-file-for-bug-reports) still exists; the
+new file contains more (state, facts, check-up) and does not remove people but replaces them with
+placeholders.
 
 ## Editing alarm devices
 

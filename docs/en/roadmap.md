@@ -56,7 +56,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 
 | When | Content |
 |---|---|
-| 0.65 | Assistant: **set up by goals** – "secure the night", "arm automatically when everyone is away", "disarm when coming home" … |
+| 0.65 | Assistant: **set up by goals** – "secure the night", "arm automatically when everyone is away", "disarm when coming home" …; **download configuration** for troubleshooting (placeholders instead of names) |
 | 0.66 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |

@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b8] - 2026-11-26
+
+### Neu
+
+- **Konfiguration herunterladen** (Reiter System, ganz unten): eine JSON-Datei für die
+  Fehlersuche mit allen Einstellungen, der Übersicht, „Wer gilt gerade als zuhause?“, den Fakten
+  aus Home Assistant (wer geortet werden kann, eingefrorene Ortungen …), den Messungen, dem
+  Check-up, den Szenarien und dem Zustand der beteiligten Entitäten. Personen, Benutzer, Karten,
+  Empfänger, WLAN-Namen, MQTT-Topics, Geräte-IDs und Konten stehen darin nur als
+  **gleichbleibende Platzhalter** (`person.person_1`, „Person 1“, `karte_1` …), auch in
+  Entitäts-IDs wie `sensor.handy_von_person_1`. PIN-Hashes und Aktions-Codes werden zu `***`,
+  Koordinaten sind nie dabei. Eine Fassung ohne Platzhalter gibt es bewusst nicht. Der Knopf liest
+  nur und ist nur für Administratoren
+  ([ADR 0019](docs/entwicklung/adr/0019-konfiguration-herunterladen.md)).
+
 ## [0.65.0b7] - 2026-11-26
 
 ### Korrigiert

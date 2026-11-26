@@ -196,6 +196,9 @@ const TEXTS = {
     areas: "Bereiche",
     addArea: "Bereich anlegen",
     page: "Einstellungsseite",
+    export: "Konfiguration herunterladen",
+    exportText: "Eine Datei (JSON) mit allen Einstellungen, dem aktuellen Zustand, den Messungen und dem Check-up – für die Fehlersuche. Personen, Benutzer, Karten, Empfänger, WLAN-Namen und Geräte stehen darin nur als Platzhalter (Person 1, Karte 1 …), PINs und Codes als ***. Koordinaten sind nie dabei. Melder-, Zonen- und Profilnamen bleiben – bitte vor dem Weitergeben kurz drüberschauen.",
+    exportBtn: "Herunterladen",
     pageOn: "in der Seitenleiste sichtbar",
     pageOff: "in der Seitenleiste ausgeblendet – erreichbar über die Geräteseite oder /hauswacht-settings",
     noRules: "Noch keine Auslöseregel. Eine Regel löst erst bei einer Abfolge aus, z. B. „Haustür, dann innerhalb von 60 s Keller“.",
@@ -450,6 +453,9 @@ const TEXTS = {
     areas: "Areas",
     addArea: "Add area",
     page: "Settings page",
+    export: "Download configuration",
+    exportText: "A file (JSON) with all settings, the current state, the measurements and the check-up – for troubleshooting. People, users, cards, recipients, Wi-Fi names and devices only appear as placeholders (Person 1, Card 1 …), PINs and codes as ***. Coordinates are never included. Sensor, zone and profile names stay – please have a quick look before passing it on.",
+    exportBtn: "Download",
     pageOn: "visible in the sidebar",
     pageOff: "hidden in the sidebar – reachable from the device page or /hauswacht-settings",
     noRules: "No trigger rule yet. A rule only triggers on a sequence, e.g. “front door, then basement within 60 s”.",
@@ -1261,7 +1267,9 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
       this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${this._presenceNowHtml(h.status)}${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
-      this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage")
+      this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage") +
+      // Konfiguration herunterladen (ADR 0019): nur lesen, mit Platzhaltern
+      this._card(this._t("export"), `<div class="muted">${escHtml(this._t("exportText"))}</div><div class="tool"><button class="e" data-a="export">⬇ ${escHtml(this._t("exportBtn"))}</button></div>`, "export")
     );
   }
 
@@ -1800,6 +1808,7 @@ class HauswachtPanel extends HTMLElement {
         else if (action === "print" || action === "sheet") this._print(action);
         else if (action === "hc-md" || action === "hc-csv") this._downloadHomecoming(action === "hc-csv" ? "csv" : "markdown");
         else if (action === "hc-show") this._toggleReport();
+        else if (action === "export") this._downloadExport();
         else if (action.startsWith("reset-")) this._resetMeasurement(action.slice(6));
       })
     );
@@ -1817,6 +1826,29 @@ class HauswachtPanel extends HTMLElement {
     const view = this._view();
     if (!view) return;
     view._print(kind === "sheet" ? view._sheetHtml() : view._printHtml());
+  }
+
+  async _downloadExport() {
+    // Konfiguration herunterladen (ADR 0019) – Hauswacht ersetzt Namen und Geheimnisse vorher
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/export", language: this._lang });
+      this._saveFile(`${r.filename}.json`, JSON.stringify(r.data, null, 2), "application/json;charset=utf-8");
+    } catch (err) {
+      this._flash = null;
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
+    }
+  }
+
+  _saveFile(name, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   async _downloadHomecoming(kind) {
