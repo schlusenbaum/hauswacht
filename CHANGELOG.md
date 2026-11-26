@@ -6,6 +6,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b9] - 2026-11-26
+
+### Neu
+
+- **Debug-Log:** Mit „Debug-Protokollierung aktivieren“ (Einstellungen → Geräte & Dienste →
+  Hauswacht) schreibt Hauswacht jetzt jede Entscheidung ins Log. Dazu gehören jeder
+  Melderwechsel mit Grund (überwacht, überbrückt, unscharf, nicht im Profil), Ereignis und
+  Wirkungen der Zustandsmaschine und die Anwesenheit je Person mit Grund. Ebenso stehen dort
+  Automatik-Schritte, Sirenen (gesendet und gesperrt), Benachrichtigungen (nur Empfänger) und
+  Eingaben an Bedienteilen (nur „Ausweis ja/nein“). Standardmäßig aus. PINs, Codes, Karten,
+  Benutzernamen, Koordinaten, WLAN-Namen und Nachrichtentexte stehen nie darin. Die Anleitung
+  steht unter [Fehlersuche](docs/fehlersuche.md#debug-log-was-hat-hauswacht-entschieden)
+  ([ADR 0020](docs/entwicklung/adr/0020-debug-log.md)).
+
+### Geändert
+
+- **Keine Benutzernamen mehr im Log:** „Falscheingaben zurückgesetzt“ und „Durchgang
+  reinkommen/rausgehen“ nannten bisher den Namen. Wer es war, steht weiter im Logbuch. Ein Test
+  prüft jetzt alle Log-Zeilen von Hauswacht auf Namen, Codes, Karten, Orte und Texte.
+
 ## [0.65.0b8] - 2026-11-26
 
 ### Neu

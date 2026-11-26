@@ -229,3 +229,79 @@ def test_no_deprecated_device_registry_access() -> None:
         if bad.search(line) and "executor" not in line
     ]
     assert found == []
+
+
+# Datenschutz im Log (ADR 0020): Diese Werte landen nie in einer Log-Zeile. Erlaubt ist nur die
+# Frage „gibt es einen?“ als Bedingung, z. B. ``"mit Ausweis" if code else ""``.
+LOG_SECRETS = {
+    "code",
+    "codes",
+    "pin",
+    "pin_digest",
+    "pin_salt",
+    "tag",
+    "tags",
+    "card",
+    "cards",
+    "latitude",
+    "longitude",
+    "ssid",
+    "ssids",
+    "title",
+    "message",
+    "text",
+    "filled",
+    "values",
+    "identity",
+    "user_name",
+    "person_name",
+    "by",  # Benutzername („von wem“) – steht im Logbuch, nicht im Log
+    "changed_by",
+}
+
+
+def _log_calls(tree: ast.AST) -> list[ast.Call]:
+    return [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "_LOGGER"
+    ]
+
+
+def _used_names(node: ast.AST) -> list[str]:
+    if isinstance(node, ast.IfExp):
+        # Bedingung darf ein Geheimnis prüfen; ausgegeben werden nur die beiden Zweige
+        return _used_names(node.body) + _used_names(node.orelse)
+    found = []
+    if isinstance(node, ast.Name):
+        found.append(node.id)
+    elif isinstance(node, ast.Attribute):
+        found.append(node.attr)
+    for child in ast.iter_child_nodes(node):
+        found.extend(_used_names(child))
+    return found
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(SOURCE_ROOT)))
+def test_no_secrets_in_log_lines(path: Path) -> None:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    bad = [
+        f"{path.name}:{call.lineno} {name}"
+        for call in _log_calls(tree)
+        for arg in [*call.args[1:], *(k.value for k in call.keywords)]
+        for name in _used_names(arg)
+        if name in LOG_SECRETS
+    ]
+    assert not bad, bad
+
+
+def test_log_secret_check_catches_a_pin() -> None:
+    tree = ast.parse(
+        '_LOGGER.debug("PIN %s", user.pin)\n_LOGGER.info("x %s", "ja" if code else "")'
+    )
+    names = [n for call in _log_calls(tree) for a in call.args[1:] for n in _used_names(a)]
+    assert "pin" in names
+    assert "code" not in names

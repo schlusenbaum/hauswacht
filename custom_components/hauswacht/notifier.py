@@ -152,7 +152,7 @@ class Notifier:
             profile_targets=profile_targets,
             push_disarm=bool(self.options.get(OPT_PUSH_DISARM, False)),
         )
-        return self.send(
+        sent = self.send(
             targets,
             title,
             message,
@@ -160,6 +160,15 @@ class Notifier:
             data=data,
             base=push_data(event, critical_allowed=self.critical_allowed),
         )
+        # Nur Ereignis und Empfänger-IDs, nie Titel oder Text (ADR 0020)
+        _LOGGER.debug(
+            "Benachrichtigung %s: Empfänger %s, gesendet %s%s",
+            event.value,
+            sorted(targets) or "-",
+            sorted(sent) or "-",
+            " (Testmodus)" if test_mode else "",
+        )
+        return sent
 
     @callback
     def speak(

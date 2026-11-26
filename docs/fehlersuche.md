@@ -222,8 +222,65 @@ Deutsch bei deutscher Einstellung, sonst Englisch. Meldungen folgen der Umstellu
 Entitätsnamen bleiben, wie sie beim Einrichten angelegt wurden. Eigene Texte werden so verschickt,
 wie sie eingetragen sind.
 
+## Debug-Log: Was hat Hauswacht entschieden?
+
+*Ab 0.65.0b9.* Wenn Hauswacht etwas anders macht als erwartet, zeigt das Debug-Log Schritt für
+Schritt, **was ankam, was Hauswacht daraus gemacht hat und was es getan hat**. Damit lässt sich
+fast jeder Fehler einer von vier Ursachen zuordnen:
+
+1. **Der Melder oder das Signal meldet etwas Falsches.** Im Log steht ein anderer Zustand als
+   erwartet, oder gar keiner.
+2. **Hauswacht deutet es anders als gedacht.** Die Zeile nennt den Grund, z. B. „im Profil night
+   nicht überwacht“ oder „Anwesenheit person.… = unklar“.
+3. **Hauswacht entscheidet richtig, aber die Aktion klappt nicht.** Dann steht dort z. B. eine
+   gesperrte Sirene oder eine Benachrichtigung ohne Empfänger.
+4. **Home Assistant oder eine andere Integration hat ein Problem.** Dann stehen Fehler anderer
+   Integrationen im Log.
+
+**Einschalten:** Einstellungen → Geräte & Dienste → Hauswacht → **Debug-Protokollierung
+aktivieren**. Dann das Problem nachstellen oder abwarten. Zum Schluss **Debug-Protokollierung
+deaktivieren** – Home Assistant bietet die Datei danach zum Herunterladen an. Standardmäßig ist
+das Debug-Log **aus**; ohne Einschalten schreibt Hauswacht keine dieser Zeilen.
+
+**So sehen die Zeilen aus** (Beispiele):
+
+```
+Bereich main: Melder binary_sensor.kuechenfenster off → on (instant, überwacht, löst aus)
+Bereich main: SensorTriggered(sensor_key=binary_sensor.kuechenfenster, role=instant) → StateChanged(old=armed, new=triggered, cause=instant_sensor), ActivateReaction(profile_id=night, cycle=1, sensor_key=binary_sensor.kuechenfenster, test_mode=False)
+Sirenen activate: gesendet ['turn_on siren.flur'], gesperrt {'keller': 'fire_lock'}
+Benachrichtigung alarm: Empfänger ['notify.mobile_app_…'], gesendet ['notify.mobile_app_…']
+Bereich main: Melder binary_sensor.haustuer off → on (entry, unscharf, nicht immer aktiv)
+Bereich main: Anwesenheit person.… = unklar {kind=no_proof, located=False, weak=False, window=15, …}
+Bereich main: AutoArmSkipped (Profil away) {reason=away}
+Bedienteil a1b2c3: Taste arm_away, Ausweis ja, trotzdem nein → ok
+```
+
+| Zeile | Was sie zeigt |
+|---|---|
+| `Melder … (…)` | Jeder Wechsel eines Melders, mit Rolle und ob er gerade zählt (überwacht, überbrückt, unscharf, nicht im Profil) |
+| `Bereich …: Eingang → Wirkungen` | Was die Zustandsmaschine aus einem Ereignis macht: Scharfschalten, Verzögerungen, Alarm, Ablehnung mit Grund (`Rejected`, `Ignored`) |
+| `Anwesenheit … = …` | Wenn sich die Anwesenheit ändert: zuhause, weg oder unklar, mit Grund (Beleg, was fehlt) |
+| `Automatik …` | Was „Scharf, wenn alle weg“, Zeitpläne und „Bei Rückkehr“ tun oder warum nicht |
+| `Sirenen …` | Welche Sirenen einen Befehl bekamen und welche gesperrt waren (z. B. Brandsperre) |
+| `Benachrichtigung …` | An welche Empfänger eine Nachricht ging – ohne Titel und Text |
+| `Bedienteil …` | Taste und Ergebnis einer Eingabe – nur „Ausweis ja/nein“, nie der Code |
+
+**Datenschutz – was nie im Log steht:** PINs, Codes und Kartennummern, Benutzernamen,
+Koordinaten, WLAN-Namen und die Texte von Benachrichtigungen. Ein Test prüft bei jeder Änderung,
+dass keine Log-Zeile von Hauswacht solche Werte enthält – auch nicht ohne Debug. Hauswacht
+schickt das Log nirgendwohin; es bleibt auf deinem Home Assistant.
+
+**Vor dem Weitergeben bitte prüfen:** Das Log nennt **Entitäts-IDs**, und die enthalten oft
+Namen (`person.anna`, `notify.mobile_app_annas_iphone`). Außerdem ist es ein **zeitlicher
+Ablauf**: Wer es liest, sieht z. B., wann die Haustür aufging und wann jemand als weg galt. Ersetze
+vor dem Posten Namen in Entitäts-IDs (z. B. `person.anna` → `person.person_1`, überall gleich)
+und schicke nur den Zeitraum mit, um den es geht. Für die Einstellungen selbst gibt es
+[Konfiguration herunterladen](einstellungsseite.md#konfiguration-herunterladen) – dort ersetzt
+Hauswacht Namen automatisch.
+
 ## Hilfe holen
 
 Ein [Issue](https://github.com/schlusenbaum/hauswacht/issues) mit Hauswacht-Version,
-Home-Assistant-Version und den passenden Log-Zeilen hilft am meisten. Bitte vorher Namen,
+Home-Assistant-Version und den passenden Log-Zeilen hilft am meisten – am besten aus dem
+[Debug-Log](#debug-log-was-hat-hauswacht-entschieden). Bitte vorher Namen,
 IP-Adressen, Tokens und andere persönliche Daten aus Logs entfernen.

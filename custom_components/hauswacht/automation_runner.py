@@ -72,6 +72,7 @@ from .core.away_proof import (
     AwayTracker,
     parse_proof_settings,
 )
+from .core.debug_log import describe
 from .core.homecoming import DIRECTION_HINT as DIRECTION_APPROACH
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
@@ -483,12 +484,29 @@ class AutomationRunner:
     @callback
     def _evaluate(self, now: float) -> None:
         """Anwesenheit neu bewerten: Rückkehr erkennen, „alle weg“ planen oder abbrechen."""
-        current = {person: self.person_home(person) for person in list(self._home)}
+        assessed = {person: self._assess(person) for person in list(self._home)}
+        current = {person: result for person, (result, _why) in assessed.items()}
         self._run(self.engine.presence(current, now, self._alarm()))
         # Anzeige (Testkarte, Einstellungsseite) nur bei einer Änderung auffrischen
         signature = (tuple(sorted(current.items())), tuple(sorted(self.engine.away_due)))
         if signature != self._shown:
             self._shown = signature
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                # Anwesenheit mit Grund (ADR 0020) – nur bei einer Änderung, nur Entitäts-IDs
+                for person, (result, why) in sorted(assessed.items()):
+                    _LOGGER.debug(
+                        "Bereich %s: Anwesenheit %s = %s %s",
+                        self.runtime.area_id,
+                        person,
+                        {True: "zuhause", False: "weg", None: "unklar"}[result],
+                        # „by“ sind hier Entitäts-IDs der Signale, keine Namen
+                        describe({**why, "signals": why.get("by")}),
+                    )
+                _LOGGER.debug(
+                    "Bereich %s: „alle weg“ geplant für %s",
+                    self.runtime.area_id,
+                    sorted(self.engine.away_due) or "-",
+                )
             self._refresh_display()
 
     def _refresh_display(self) -> None:
@@ -503,6 +521,8 @@ class AutomationRunner:
     def _run(self, actions: list[Action]) -> None:
         """Aktionen der Maschine der Reihe nach ausführen."""
         for action in actions:
+            if action is not REFRESH:
+                _LOGGER.debug("Bereich %s: Automatik %s", self.runtime.area_id, describe(action))
             if isinstance(action, Disarm):
                 self.auto_disarm(
                     action.profile_id,
@@ -648,4 +668,7 @@ class AutomationRunner:
 
     @callback
     def _event(self, kind: str, profile_id: str, **data: Any) -> None:
+        _LOGGER.debug(
+            "Bereich %s: %s (Profil %s) %s", self.runtime.area_id, kind, profile_id, describe(data)
+        )
         self.runtime.fire_event({"type": kind, "profile_id": profile_id, **data})

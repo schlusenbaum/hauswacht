@@ -364,6 +364,12 @@ class SirenExecutor:
 
     @callback
     def _report(self, action: str, decision: GuardDecision) -> None:
+        _LOGGER.debug(
+            "Sirenen %s: gesendet %s, gesperrt %s",
+            action,
+            [f"{c.action} {c.entity_id}" for c in decision.commands] or "-",
+            {b.device_key: b.reason.value for b in decision.blocked} or "-",
+        )
         self.last_result = {
             "action": action,
             "sent": [c.entity_id for c in decision.commands],

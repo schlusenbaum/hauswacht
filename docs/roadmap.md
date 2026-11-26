@@ -56,7 +56,7 @@ Details zu jeder Version: [CHANGELOG](../CHANGELOG.md).
 
 | Wann | Inhalt |
 |---|---|
-| 0.65 | Assistent: **Einrichten nach Zielen** – „nachts absichern“, „automatisch scharf, wenn alle weg sind“, „beim Heimkommen unscharf“ …; **Konfiguration herunterladen** für die Fehlersuche (Platzhalter statt Namen) |
+| 0.65 | Assistent: **Einrichten nach Zielen** – „nachts absichern“, „automatisch scharf, wenn alle weg sind“, „beim Heimkommen unscharf“ …; **Konfiguration herunterladen** für die Fehlersuche (Platzhalter statt Namen), **Debug-Log** ohne Namen und Geheimnisse |
 | 0.66 | Ausgangserkennung: wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn sein Handy kurz danach „weg“ ist – der Alarm wird nur aufgeschoben, nie ohne Beleg unterdrückt |
 | bei Bedarf | ZHA-Keypads (frient, Xfinity, Centralite) mit Geräteanpassung für ZHA – sobald jemand mit so einem Gerät mittesten kann |
 | demnächst | Ton der HmIP-ASIR je Anlass automatisch wählen (Einbruch, Brand, Test) – wird geprüft |
