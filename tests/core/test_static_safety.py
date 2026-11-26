@@ -286,6 +286,19 @@ def _used_names(node: ast.AST) -> list[str]:
 
 
 @pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(SOURCE_ROOT)))
+def test_log_format_is_fixed_text(path: Path) -> None:
+    # Der Text einer Log-Zeile steht fest im Code – nie eine fertige Nachricht (mit Namen darin)
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    bad = [
+        f"{path.name}:{call.lineno}"
+        for call in _log_calls(tree)
+        if call.func.attr != "isEnabledFor"  # type: ignore[attr-defined]
+        and not (call.args and isinstance(call.args[0], ast.Constant))
+    ]
+    assert not bad, bad
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(SOURCE_ROOT)))
 def test_no_secrets_in_log_lines(path: Path) -> None:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     bad = [

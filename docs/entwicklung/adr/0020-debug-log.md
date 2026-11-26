@@ -35,9 +35,11 @@ Export: Das ist Freitext mit Uhrzeiten, den die Platzhalter nicht sicher erfasse
 4. **Statischer Test für alle Log-Zeilen**, auch Info und Warnung: Kein `_LOGGER`-Aufruf darf
    `code`, `pin`, `tag`, `card`, `latitude`, `longitude`, `ssid`, `title`, `message`, `text`,
    `by`, `identity` … ausgeben. Erlaubt ist nur die Frage „gibt es einen?“ als Bedingung
-   (`"mit Ausweis" if code else ""`). Dabei fielen drei bestehende Zeilen auf, die einen
-   Benutzernamen ins Log schrieben (Falscheingaben zurückgesetzt, Durchgang rein und raus). Sie
-   nennen keinen Namen mehr; wer es war, steht weiter im Logbuch.
+   (`"mit Ausweis" if code else ""`). Außerdem muss der Text jeder Log-Zeile fest im Code
+   stehen; eine fertige Nachricht als Text ist verboten. Dabei fielen vier bestehende Zeilen
+   auf, die einen Benutzernamen ins Log schrieben: Falscheingaben zurückgesetzt, Durchgang rein
+   und raus, und „Alarm beendet von …“, die den ganzen Nachrichtentext loggte. Sie nennen keinen
+   Namen mehr; wer es war, steht weiter im Logbuch.
 
 ## Folgen
 

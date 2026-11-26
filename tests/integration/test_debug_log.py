@@ -61,7 +61,11 @@ async def test_debug_log_shows_decisions_without_secrets(
     assert "unscharf, nicht immer aktiv" in debug
     assert "Benachrichtigung alarm" in debug
 
-    everything = "\n".join(r.getMessage() for r in caplog.records)
+    # Alle Zeilen von Hauswacht, jeder Stufe
+    everything = "\n".join(
+        r.getMessage() for r in caplog.records if r.name.startswith("custom_components.hauswacht")
+    )
+    assert "Alarm quittiert (Profil night)" in everything
     for secret in (PIN, "Petra", "Beispiel"):
         assert secret not in everything, secret
 

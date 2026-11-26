@@ -22,9 +22,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Geändert
 
-- **Keine Benutzernamen mehr im Log:** „Falscheingaben zurückgesetzt“ und „Durchgang
-  reinkommen/rausgehen“ nannten bisher den Namen. Wer es war, steht weiter im Logbuch. Ein Test
-  prüft jetzt alle Log-Zeilen von Hauswacht auf Namen, Codes, Karten, Orte und Texte.
+- **Keine Benutzernamen mehr im Log:** „Falscheingaben zurückgesetzt“, „Durchgang
+  reinkommen/rausgehen“ und „Alarm beendet von …“ nannten bisher den Namen. Die letzte Zeile hat
+  dafür den ganzen Nachrichtentext ins Log geschrieben. Jetzt heißt sie „Alarm quittiert (Profil
+  …)“. Wer es war, steht weiter im Logbuch. Tests prüfen jetzt alle Log-Zeilen von Hauswacht:
+  Der Text steht fest im Code, und es kommen keine Namen, Codes, Karten, Orte oder Texte hinein.
 
 ## [0.65.0b8] - 2026-11-26
 

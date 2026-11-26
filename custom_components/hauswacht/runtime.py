@@ -3384,7 +3384,12 @@ class HauswachtRuntime:
                 display_name(self.hass, s) for s in sorted(effect.bypassed_until_closed)
             )
             message += tr(lang, "alarm_ended_bypassed", sensors=names)
-        _LOGGER.warning(message)
+        # Ins Log nur, was passiert ist – wer quittiert hat, steht im Logbuch (ADR 0020)
+        _LOGGER.warning(
+            "Alarm quittiert (Profil %s), bleibt scharf; bis zum Schließen nicht überwacht: %s",
+            effect.profile_id,
+            sorted(effect.bypassed_until_closed) or "-",
+        )
         targets = parse_reaction(self.entry.options, effect.profile_id).notify
         # Ersetzt die Alarm-Nachricht (gleicher tag) und verschwindet beim Unscharfschalten
         sent = set(
