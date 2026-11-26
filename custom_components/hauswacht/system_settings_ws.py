@@ -110,19 +110,40 @@ def keypad_topic(hass: HomeAssistant, device_id: str | None) -> str:
     return f"{Z2M_BASE_TOPIC}/{device.name}"
 
 
+def all_devices(hass: HomeAssistant) -> list[dr.DeviceEntry]:
+    """Alle Geräte – ohne die veralteten Zugriffe auf ``device_registry.devices``.
+
+    Seit HA 2026.x liefert das Durchlaufen von ``devices`` die Geräte selbst; Zugriffe wie auf
+    ein Wörterbuch (``.values()``, ``.get()``) sind veraltet und gehen ab 2027.9 nicht mehr.
+    Ältere Versionen liefern beim Durchlaufen die IDs – beides wird hier verstanden.
+    """
+    registry = dr.async_get(hass)
+    found: list[dr.DeviceEntry] = []
+    for item in registry.devices:
+        device = item if isinstance(item, dr.DeviceEntry) else registry.async_get(item)
+        if device is not None:
+            found.append(device)
+    return found
+
+
 def _devices(hass: HomeAssistant, *, domain: str | None = None) -> list[dict[str, str]]:
-    found = []
-    for device in dr.async_get(hass).devices.values():
-        if domain is not None:
-            domains = {
-                entry.domain
-                for ce in device.config_entries
-                if (entry := hass.config_entries.async_get_entry(ce)) is not None
-            }
-            if domain not in domains:
-                continue
-        name = device.name_by_user or device.name or device.id
-        found.append({"id": device.id, "name": str(name)})
+    if domain is None:
+        devices = all_devices(hass)
+    else:
+        # Geräte einer Integration über ihre Einträge – ohne DeviceEntry.config_entries
+        # (veraltet, geht ab HA 2027.10 nicht mehr)
+        registry = dr.async_get(hass)
+        devices = list(
+            {
+                device.id: device
+                for entry in hass.config_entries.async_entries(domain)
+                for device in dr.async_entries_for_config_entry(registry, entry.entry_id)
+            }.values()
+        )
+    found = [
+        {"id": device.id, "name": str(device.name_by_user or device.name or device.id)}
+        for device in devices
+    ]
     return sorted(found, key=lambda d: d["name"].casefold())
 
 

@@ -1010,3 +1010,14 @@ async def test_goals_garage_creates_area(hass: HomeAssistant, hass_ws_client: An
     state = hass.states.get("alarm_control_panel.hauswacht_garage")
     assert state is not None
     assert state.state == "disarmed"
+
+
+async def test_settings_page_uses_no_deprecated_registry_access(
+    hass: HomeAssistant, hass_ws_client: Any, caplog: Any
+) -> None:
+    """Die Geräteauswahl (Bedienteile) nutzt keine veralteten Zugriffe der Geräte-Registry."""
+    await setup_entry(hass, make_entry())
+    caplog.clear()
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert "revision" in data
+    assert "custom integration 'hauswacht'" not in caplog.text

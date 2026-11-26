@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b6] - 2026-11-26
+
+### Korrigiert
+
+- **Vorbereitet auf Home Assistant 2027.9 und 2027.10:** Die Geräteauswahl der Bedienteile nutzt
+  keine veralteten Zugriffe auf die Geräte-Registry mehr (`device_registry.devices` wie ein
+  Wörterbuch, `DeviceEntry.config_entries`). Home Assistant hatte dazu Warnungen ins Log
+  geschrieben; ab 2027.9 bzw. 2027.10 wäre die Auswahl sonst ausgefallen. Für dich ändert sich
+  nichts.
+
 ## [0.65.0b5] - 2026-11-26
 
 ### Geändert

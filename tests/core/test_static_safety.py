@@ -213,3 +213,19 @@ def test_controls_only_send_keypad_state() -> None:
     for path in SOURCE_ROOT.rglob("*.py"):
         if path.name != "controls.py":
             assert "async_publish" not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_no_deprecated_device_registry_access() -> None:
+    """HA 2027.9/2027.10: kein ``devices.values()``/``.get()``, kein ``config_entries`` am Gerät."""
+    import re  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    root = Path(__file__).parents[2] / "custom_components" / "hauswacht"
+    bad = re.compile(r"\.devices\.(values|items|keys|get|get_entries)\(|device\.config_entries\b")
+    found = [
+        f"{path.name}:{n}"
+        for path in root.glob("*.py")
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
+        if bad.search(line) and "executor" not in line
+    ]
+    assert found == []
