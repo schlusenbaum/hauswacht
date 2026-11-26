@@ -62,7 +62,10 @@ const PT = {
     scheduleHint: "Öffnet die Helfer in einem neuen Fenster: „Helfer erstellen“ → „Zeitplan“. Danach hier „Liste aktualisieren“ – deine Eingaben bleiben erhalten.",
     refreshLists: "↻ Liste aktualisieren",
     awayEntity: "Eigener Auslöser für „alle weg“ (statt der Personen oben)",
-    awayEntityNone: "– keiner: Personen wie oben –",
+    awayEntityNone: "Keiner – es gelten die Personen oben.",
+    awayEntitySearch: "Name oder Entität suchen …",
+    awayEntityChosen: "Gewählt:",
+    awayEntityClear: "Entfernen",
     awayEntityState: "Dieser Zustand heißt „alle weg“",
     awayEntityStates: { on: "an (on)", off: "aus (off)", not_home: "nicht zuhause (not_home, z. B. Personengruppe)" },
     awayEntityWarn: "Damit prüft Hauswacht nicht mehr selbst, ob wirklich alle weg sind: Zeigt die Entität den Zustand, wird nach der Wartezeit scharf geschaltet – egal, was Handys und Ortungen sagen. Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Unbekannt oder nicht verfügbar zählt nie als weg.",
@@ -246,7 +249,10 @@ const PT = {
     scheduleHint: "Opens the helpers in a new window: “Create helper” → “Schedule”. Then “Refresh list” here – your entries are kept.",
     refreshLists: "↻ Refresh list",
     awayEntity: "Own trigger for “all away” (instead of the persons above)",
-    awayEntityNone: "– none: persons as above –",
+    awayEntityNone: "None – the persons above apply.",
+    awayEntitySearch: "Search name or entity …",
+    awayEntityChosen: "Chosen:",
+    awayEntityClear: "Remove",
     awayEntityState: "This state means “all away”",
     awayEntityStates: { on: "on", off: "off", not_home: "not home (not_home, e.g. a person group)" },
     awayEntityWarn: "Hauswacht then no longer checks itself whether everyone is really away: when the entity shows the state, it arms after the waiting time – whatever phones and locations say. If the entity is wrong while someone is home, there is a false alarm. Unknown or unavailable never counts as away.",
@@ -453,6 +459,29 @@ class HauswachtProfileEditor extends HTMLElement {
   }
 
   // „Mehr Einstellungen“ zum Aufklappen; bleibt beim Neuzeichnen offen
+  // Eigener Auslöser für „alle weg“: Suchfeld statt langer Liste (Name oder Entitäts-ID tippen)
+  _awayEntityPick(c, a) {
+    const choices = c.away_entities || [];
+    const current = choices.find((x) => x.id === a.auto_away_entity);
+    const shown = current ? current.name : a.auto_away_entity || "";
+    const options = choices.map((x) => `<option value="${pe(x.name)}">${pe(x.id)}</option>`).join("");
+    const chosen = a.auto_away_entity
+      ? `<div class="muted">${pe(this._t("awayEntityChosen"))} ${pe(a.auto_away_entity)} <button type="button" class="b" data-act="away-entity-clear">${pe(this._t("awayEntityClear"))}</button></div>`
+      : `<div class="muted">${pe(this._t("awayEntityNone"))}</div>`;
+    return `<input data-awayent list="hw-prof-awayent" value="${pe(shown)}" placeholder="${pe(this._t("awayEntitySearch"))}" autocomplete="off"><datalist id="hw-prof-awayent">${options}</datalist>${chosen}`;
+  }
+
+  _awayEntityValue(text) {
+    // Getippt oder gewählt: Name (eindeutig) oder Entitäts-ID; leer = kein eigener Auslöser
+    const value = (text || "").trim();
+    if (!value) return null;
+    const choices = this.settings?.profile_edit?.choices?.away_entities || [];
+    const lower = value.toLowerCase();
+    const hit = choices.find((x) => x.id === value) || choices.find((x) => x.name.toLowerCase() === lower);
+    if (hit) return hit.id;
+    return /^[a-z_]+\.[a-z0-9_]+$/.test(value) ? value : this._draft.automation.auto_away_entity || null;
+  }
+
   _more(id, body) {
     return `<details class="more" data-more="${pe(id)}" ${this._opened.has(id) ? "open" : ""}><summary>${pe(this._t("moreSettings"))}</summary>${body}</details>`;
   }
@@ -570,7 +599,7 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("persons"))}${inf("auto_away_persons")}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span>${this._noFix(x)}</div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
       <label>${pe(this._t("awayDelay"))}${inf("auto_away_delay")}</label><input class="small" type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}">
       ${this._how("auto")}
-      ${this._more("auto", `<label>${pe(this._t("awayEntity"))}</label><select data-a="auto_away_entity"><option value="">${pe(this._t("awayEntityNone"))}</option>${(c.away_entities || []).map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_away_entity ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
+      ${this._more("auto", `<label>${pe(this._t("awayEntity"))}</label>${this._awayEntityPick(c, a)}
       ${a.auto_away_entity ? `<label>${pe(this._t("awayEntityState"))}</label><select data-a="auto_away_entity_state">${Object.entries(this._t("awayEntityStates")).map(([v, l]) => `<option value="${v}" ${v === (a.auto_away_entity_state || "on") ? "selected" : ""}>${pe(l)}</option>`).join("")}</select><div class="warn">${pe(this._t("awayEntityWarn"))}</div>` : ""}
       <label>${pe(this._t("schedule"))}${inf("auto_schedule")}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
       <div class="tool" style="margin-top:6px"><a class="b" href="/config/helpers" target="_blank" rel="noopener">${pe(this._t("scheduleCreate"))}</a><button class="b" data-act="refresh">${pe(this._t("refreshLists"))}</button></div>
@@ -684,6 +713,8 @@ ${this._returnSection(c, lim, t)}
       else if (["excluded", "rules"].includes(key) && !root.querySelector(`[data-m="${key}"]`)) d[key] = key === "excluded" ? [] : d[key];
     }
     root.querySelectorAll("[data-a]").forEach((el) => (d.automation[el.dataset.a] = el.dataset.num ? Number(el.value) : el.value || null));
+    const awayEnt = root.querySelector("[data-awayent]");
+    if (awayEnt) d.automation.auto_away_entity = this._awayEntityValue(awayEnt.value);
     const am = {};
     root.querySelectorAll("[data-am]").forEach((el) => {
       am[el.dataset.am] = am[el.dataset.am] || [];
@@ -791,7 +822,14 @@ ${this._returnSection(c, lim, t)}
       this.shadowRoot.querySelector(".sheet").scrollTop = top;
     };
     this.shadowRoot.querySelector('[data-r="approach_delay"]')?.addEventListener("change", redraw);
-    this.shadowRoot.querySelector('[data-a="auto_away_entity"]')?.addEventListener("change", redraw);
+    this.shadowRoot.querySelector("[data-awayent]")?.addEventListener("change", redraw);
+    this.shadowRoot.querySelector('[data-act="away-entity-clear"]')?.addEventListener("click", () => {
+      this._collect();
+      this._draft.automation.auto_away_entity = null;
+      const top = this.shadowRoot.querySelector(".sheet").scrollTop;
+      this._render();
+      this.shadowRoot.querySelector(".sheet").scrollTop = top;
+    });
     this.shadowRoot.querySelectorAll("[data-rec]").forEach((btn) =>
       btn.addEventListener("click", () => {
         this._collect();

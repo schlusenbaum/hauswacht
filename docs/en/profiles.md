@@ -280,7 +280,7 @@ dropped (both must come together within the time window). **Refresh** fetches th
 *From 0.65.0b4* ([ADR 0018](../entwicklung/adr/0018-geofence-und-eigener-ausloeser.md), German).
 If you already have your own logic (e.g. a switch `input_boolean.all_away` or a person group), you
 can choose it in the profile under Automation → "More settings" → **"Own trigger for 'all
-away'"**, plus the state that means "all away" (on, off or `not_home` for a person group). The
+away'"** – type a name or entity ID in the search field, suggestions appear as you type –, plus the state that means "all away" (on, off or `not_home` for a person group). The
 entity then applies **instead of** the persons: when it shows the state, the profile arms after
 the waiting time; unknown or unavailable never counts as away. The other rules stay (only from
 "disarmed", open sensors are never confirmed automatically).

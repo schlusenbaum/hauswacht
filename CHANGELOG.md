@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b5] - 2026-11-26
+
+### Geändert
+
+- **Eigener Auslöser für „alle weg“ lässt sich suchen:** Statt einer langen Auswahlliste gibt es
+  ein Suchfeld – Name oder Entitäts-ID tippen, Vorschläge erscheinen beim Tippen. Darunter steht,
+  welche Entität gewählt ist, mit „Entfernen“.
+
 ## [0.65.0b4] - 2026-11-26
 
 Geofence als Ortung, eigener Auslöser für „alle weg“, „Warum nicht scharf?“
