@@ -53,6 +53,7 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 | **Eingangsverzögerung** reicht nicht für den **Türbeleg** einer Person (Handy meldet „zuhause“ erst nach der Tür) | ⚠️ Warnung | ⚠ Eingangsverzögerung auf den gemessenen Wert |
 | **„Eingangsverzögerung bei Annäherung“** ist an, aber keine Person der Liste hat ein Richtungs-Signal | ⚠️ Warnung | Verlängerung ausschalten |
 | Eine **Ortung meldet seit mindestens 24 Stunden exakt dieselbe Position** außerhalb von Zuhause (vorgetäuscht oder hängende App) – sie zählt nicht als Beleg ([mehr](profile.md#weg-nur-mit-beleg)) | ⚠️ Warnung | – (bei dauerhaft falscher Ortung: unter System → Anwesenheit aus den Signalen nehmen) |
+| **„Scharf, wenn alle weg“ folgt einem eigenen Auslöser** (Entität statt Personen) – Hauswacht prüft dann nicht selbst ([mehr](profile.md#eigener-auslöser-für-alle-weg)) | ⚠️ Warnung | – |
 | **„Tür + Signal“** ist an, obwohl die Person eine Ortung hat | 💡 Tipp | „Tür + Signal“ ausschalten |
 
 Messwerte zählen erst ab **3 Messungen** – vorher sagt der Assistent dazu nichts.

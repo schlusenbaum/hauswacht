@@ -36,6 +36,7 @@ from .core.automation import (
     AutoConfig,
     combine,
     disarm_due,
+    entity_away_value,
     is_active_day,
     parse_automation,
     person_value,
@@ -301,6 +302,11 @@ class AutomationRunner:
     def _assess(self, person: str) -> tuple[bool | None, dict[str, Any]]:
         """Bewertung einer Person mit Grund (für die Anzeige in Testkarte und Einstellungen)."""
         now = dt_util.utcnow().timestamp()
+        away_state = self._away_entities().get(person)
+        if away_state is not None:
+            # Eigener Auslöser für „alle weg“ (ADR 0018): die Entität entscheidet, kein Beleg
+            value = entity_away_value(self._state(person), away_state)
+            return value, {"kind": "entity", "state": self._state(person)}
         simulated = self.runtime.presence_simulated(person)
         if simulated is not None:
             if simulated == SIM_HOME:
@@ -318,7 +324,13 @@ class AutomationRunner:
                 values[signal] = presence(state, self.ssids)
         combined = combine(list(values.values()))
         fixes = (
-            person_fixes(self.hass, person, signals, self.proof.settings.accuracy)
+            person_fixes(
+                self.hass,
+                person,
+                signals,
+                self.proof.settings.accuracy,
+                self.proof.settings.geofence,
+            )
             if combined is False
             else []
         )
@@ -333,8 +345,26 @@ class AutomationRunner:
                 "at": kind[1] if kind else None,
             }
         if combined is False:
-            return None, {"kind": "no_proof"}
+            # Was fehlt? (ADR 0018: „Warum nicht scharf?“)
+            settings = self.proof.settings
+            return None, {
+                "kind": "no_proof",
+                "located": locatable(self.hass, person, signals, settings.geofence),
+                "weak": person in settings.weak,
+                "door_at": self.proof.last_door(),
+                "left_at": self.proof.last_left(person),
+                "window": settings.window,
+                "weak_window": settings.weak_window,
+            }
         return None, {"kind": "unclear", "by": [e for e, v in values.items() if v is None]}
+
+    def _away_entities(self) -> dict[str, str]:
+        """Eigene Auslöser für „alle weg“: Entität -> Zustand, der „alle weg“ heißt."""
+        return {
+            cfg.away_entity: cfg.away_entity_state
+            for cfg in self.configs.values()
+            if cfg.away_entity
+        }
 
     def unlocatable(self) -> list[str]:
         """Personen der Automatik ohne Ortung und ohne „Tür + Signal“ – nie weg (Hinweis)."""
@@ -342,15 +372,16 @@ class AutomationRunner:
             p
             for p in self._home
             if p not in self.proof.settings.weak
-            and not locatable(self.hass, p, self.signals.get(p, ()))
+            and p not in self._away_entities()
+            and not locatable(self.hass, p, self.signals.get(p, ()), self.proof.settings.geofence)
         ]
 
     # --- Anwesenheit testen und anzeigen (ADR 0016) ---------------------------
 
     @property
     def presence_persons(self) -> list[str]:
-        """Personen aus den Profil-Automatiken dieses Bereichs."""
-        return list(self._home)
+        """Personen aus den Profil-Automatiken dieses Bereichs (ohne eigene Auslöser)."""
+        return [p for p in self._home if p not in self._away_entities()]
 
     @callback
     def presence_simulated_changed(self, person: str, value: str) -> None:
@@ -405,7 +436,7 @@ class AutomationRunner:
         for pid in dict.fromkeys([*self.configs, *self.returns]):
             cfg = self.configs.get(pid)
             back = self.returns.get(pid)
-            away = list(cfg.away_persons) if cfg else []
+            away = list(cfg.away_sources) if cfg else []
             if not away and back is None:
                 continue
             waiting = [p for p in away if persons.get(p, {}).get("state") != "away"]
@@ -500,7 +531,7 @@ class AutomationRunner:
     def _away_elapsed(self, profile_id: str, _now: datetime) -> None:
         self._away_timers.pop(profile_id, None)
         cfg = self.configs.get(profile_id)
-        values = [self.person_home(p) for p in cfg.away_persons] if cfg is not None else []
+        values = [self.person_home(p) for p in cfg.away_sources] if cfg is not None else []
         self._run(self.engine.away_elapsed(profile_id, values))
 
     # --- Annäherung verlängert die Eingangsverzögerung (ADR 0015) -----------------

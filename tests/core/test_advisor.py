@@ -229,3 +229,13 @@ def test_frozen_location_is_a_warning() -> None:
     assert "Annas iPhone" in found[0]["text"]
     hours = advise(_options(), _facts(frozen={ANNA: {gps: 30 * 3600}}), "en")
     assert "for 30 hours" in hours[0]["text"]
+
+
+def test_own_trigger_is_a_warning_not_an_error() -> None:
+    entity = "input_boolean.alle_weg"
+    options = _options(auto_away_persons=[BEN], auto_away_entity=entity)
+    found = advise(options, _facts(names={**NAMES, entity: "Alle weg"}))
+    assert _codes(found) == ["away_entity"]
+    assert found[0]["level"] == WARNING
+    assert "Alle weg" in found[0]["text"]
+    assert "„on“" in found[0]["why"]

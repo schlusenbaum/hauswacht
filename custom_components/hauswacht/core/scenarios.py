@@ -86,6 +86,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "t_all_leave": "Alle gehen weg",
         "t_phones_sleep": "Alle sind zuhause, die Handys schlafen ein",
         "t_short_out": "Jemand geht kurz raus – dabei schläft das Handy von {person} ein",
+        "t_entity": "Alle gehen weg (eigener Auslöser)",
+        "r_entity": "Nicht durchgespielt: Ob alle weg sind, entscheidet die Entität „{entity}“ "
+        "– Hauswacht prüft das hier nicht selbst.",
         # Schritte
         "s_armed_manual": "Profil {profile} wird von Hand scharf geschaltet.",
         "s_armed": "Profil {profile} ist scharf.",
@@ -144,6 +147,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "t_all_leave": "Everyone leaves",
         "t_phones_sleep": "Everyone is home, the phones go to sleep",
         "t_short_out": "Someone steps out briefly – meanwhile the phone of {person} goes to sleep",
+        "t_entity": "Everyone leaves (own trigger)",
+        "r_entity": "Not played through: whether everyone is away is decided by the entity "
+        "“{entity}” – Hauswacht does not check it itself here.",
         "s_armed_manual": "Profile {profile} is armed by hand.",
         "s_armed": "Profile {profile} is armed.",
         "s_arming": "Exit delay running ({s} s).",
@@ -240,7 +246,9 @@ class Sim:
             {pid: parse_return(self.options, pid) for pid in pids},
         )
         self.tracker = AwayTracker(parse_proof_settings(self.options))
-        self.people = {p: _Person() for p in self.engine.persons}
+        # Nur echte Personen – ein eigener Auslöser für „alle weg“ ist keine (ADR 0018)
+        entities = {c.away_entity for c in self.engine.configs.values() if c.away_entity}
+        self.people = {p: _Person() for p in self.engine.persons if p not in entities}
         self.timers: list[_Timer] = []
         self.engine.begin(self._current(), self.now)
 
@@ -366,7 +374,7 @@ class Sim:
         if timer.kind == "away":
             pid = timer.data
             config = self.engine.configs[pid]
-            values = [self._current().get(p) for p in config.away_persons]
+            values = [self._current().get(p) for p in config.away_sources]
             self.run(self.engine.away_elapsed(pid, values))
             return
         kind, token = timer.data
@@ -625,7 +633,11 @@ def scenarios(
         if back.active:
             found.extend(_return(options, facts, lang, pid, p) for p in back.persons)
         auto = parse_automation(options, pid)
-        if auto.away_persons:
+        if auto.away_entity:
+            sim = Sim(options, facts, lang)
+            sim.label(f"all_leave:{pid}", pid, "t_entity")
+            found.append(sim.result(WARN, "r_entity", entity=facts.name(auto.away_entity)))
+        elif auto.away_persons:
             found.append(_all_leave(options, facts, lang, pid))
             found.append(_phones_sleep(options, facts, lang, pid))
             found.extend(

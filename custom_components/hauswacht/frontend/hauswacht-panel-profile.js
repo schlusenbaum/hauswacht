@@ -61,6 +61,11 @@ const PT = {
     scheduleCreate: "Zeitplan anlegen ↗",
     scheduleHint: "Öffnet die Helfer in einem neuen Fenster: „Helfer erstellen“ → „Zeitplan“. Danach hier „Liste aktualisieren“ – deine Eingaben bleiben erhalten.",
     refreshLists: "↻ Liste aktualisieren",
+    awayEntity: "Eigener Auslöser für „alle weg“ (statt der Personen oben)",
+    awayEntityNone: "– keiner: Personen wie oben –",
+    awayEntityState: "Dieser Zustand heißt „alle weg“",
+    awayEntityStates: { on: "an (on)", off: "aus (off)", not_home: "nicht zuhause (not_home, z. B. Personengruppe)" },
+    awayEntityWarn: "Damit prüft Hauswacht nicht mehr selbst, ob wirklich alle weg sind: Zeigt die Entität den Zustand, wird nach der Wartezeit scharf geschaltet – egal, was Handys und Ortungen sagen. Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Unbekannt oder nicht verfügbar zählt nie als weg.",
     persons: "Scharf, wenn alle diese Personen weg sind",
     awayDelay: "Wartezeit, wenn alle weg sind (min)",
     passagePhoneMoved: "Handy-Reinlassen ist umgezogen: oben bei „Bei Rückkehr“ → „Reinlassen (Durchgang)“.",
@@ -240,6 +245,11 @@ const PT = {
     scheduleCreate: "Create schedule ↗",
     scheduleHint: "Opens the helpers in a new window: “Create helper” → “Schedule”. Then “Refresh list” here – your entries are kept.",
     refreshLists: "↻ Refresh list",
+    awayEntity: "Own trigger for “all away” (instead of the persons above)",
+    awayEntityNone: "– none: persons as above –",
+    awayEntityState: "This state means “all away”",
+    awayEntityStates: { on: "on", off: "off", not_home: "not home (not_home, e.g. a person group)" },
+    awayEntityWarn: "Hauswacht then no longer checks itself whether everyone is really away: when the entity shows the state, it arms after the waiting time – whatever phones and locations say. If the entity is wrong while someone is home, there is a false alarm. Unknown or unavailable never counts as away.",
     persons: "Arm when all these persons are away",
     awayDelay: "Waiting time when everyone is away (min)",
     passagePhoneMoved: "Letting in by phone has moved: above at “On return” → “Let in (passage)”.",
@@ -560,7 +570,9 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("persons"))}${inf("auto_away_persons")}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span>${this._noFix(x)}</div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
       <label>${pe(this._t("awayDelay"))}${inf("auto_away_delay")}</label><input class="small" type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}">
       ${this._how("auto")}
-      ${this._more("auto", `<label>${pe(this._t("schedule"))}${inf("auto_schedule")}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
+      ${this._more("auto", `<label>${pe(this._t("awayEntity"))}</label><select data-a="auto_away_entity"><option value="">${pe(this._t("awayEntityNone"))}</option>${(c.away_entities || []).map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_away_entity ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
+      ${a.auto_away_entity ? `<label>${pe(this._t("awayEntityState"))}</label><select data-a="auto_away_entity_state">${Object.entries(this._t("awayEntityStates")).map(([v, l]) => `<option value="${v}" ${v === (a.auto_away_entity_state || "on") ? "selected" : ""}>${pe(l)}</option>`).join("")}</select><div class="warn">${pe(this._t("awayEntityWarn"))}</div>` : ""}
+      <label>${pe(this._t("schedule"))}${inf("auto_schedule")}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
       <div class="tool" style="margin-top:6px"><a class="b" href="/config/helpers" target="_blank" rel="noopener">${pe(this._t("scheduleCreate"))}</a><button class="b" data-act="refresh">${pe(this._t("refreshLists"))}</button></div>
       <div class="muted">${pe(this._t("scheduleHint"))}</div>`)}
 ${this._returnSection(c, lim, t)}
@@ -779,6 +791,7 @@ ${this._returnSection(c, lim, t)}
       this.shadowRoot.querySelector(".sheet").scrollTop = top;
     };
     this.shadowRoot.querySelector('[data-r="approach_delay"]')?.addEventListener("change", redraw);
+    this.shadowRoot.querySelector('[data-a="auto_away_entity"]')?.addEventListener("change", redraw);
     this.shadowRoot.querySelectorAll("[data-rec]").forEach((btn) =>
       btn.addEventListener("click", () => {
         this._collect();

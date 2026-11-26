@@ -9,6 +9,7 @@ from ..always_active import DEFAULT_SETTLE
 from ..areas import MAIN_AREA, profile_area
 from ..automation import (
     DEFAULT_AWAY_DELAY,
+    DEFAULT_AWAY_ENTITY_STATE,
     WEEKDAYS,
 )
 from ..passage import passage_from_input
@@ -36,6 +37,9 @@ def automation_from_input(data: Mapping[str, Any]) -> dict[str, Any]:
         "auto_away_persons": list(data.get("auto_away_persons") or []),
         "auto_away_delay": int(data.get("auto_away_delay", DEFAULT_AWAY_DELAY)),
         "auto_schedule": data.get("auto_schedule") or None,
+        # Eigener Auslöser für „alle weg“ (ADR 0018)
+        "auto_away_entity": data.get("auto_away_entity") or None,
+        "auto_away_entity_state": data.get("auto_away_entity_state") or DEFAULT_AWAY_ENTITY_STATE,
     }
 
 

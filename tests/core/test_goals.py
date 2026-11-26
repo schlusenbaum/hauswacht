@@ -446,3 +446,25 @@ def test_smoke_detector_siren_only_registered_with_note() -> None:
     assert not after.get("sirens_hardware_enabled")
     assert after["profiles"]["nacht"]["sirens"] == [SMOKE]
     assert any(n.startswith("Rauchmelder als Einbruchsirene") for n in plan["notes"])
+
+
+def test_away_goal_replaces_own_trigger_with_confirm() -> None:
+    options = _options(
+        profiles={
+            "away": {
+                "name": "Abwesend",
+                "panel_mode": "away",
+                "zones": ["aussen"],
+                "auto_away_entity": "input_boolean.alle_weg",
+            }
+        }
+    )
+    hh = _hh()
+    answers = _answers(options, hh, AWAY)
+    assert answers[AWAY]["persons"] == [ANNA]  # nie die Entität als Person
+    plan, after = build(options, hh, answers)
+    assert after is not None, plan
+    assert not after["profiles"]["away"].get("auto_away_entity")
+    assert plan["needs_confirm"] is True
+    labels = [c["label"] for c in plan["steps"][0]["changes"]]
+    assert "Eigener Auslöser „alle weg“" in labels

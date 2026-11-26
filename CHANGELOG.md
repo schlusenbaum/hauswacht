@@ -6,6 +6,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b4] - 2026-11-26
+
+Geofence als Ortung, eigener Auslöser für „alle weg“, „Warum nicht scharf?“
+([ADR 0018](docs/entwicklung/adr/0018-geofence-und-eigener-ausloeser.md)). Anlass: Rückmeldung aus
+dem Test – „Scharf, wenn alle weg“ griff mit Geofence-Trackern ohne Koordinaten nie.
+
+### Neu
+
+- **„Zählt als Ortung (Geofence)“:** Unter System → Anwesenheit lässt sich je Person ein Signal oder
+  Tracker ohne Koordinaten als Ortung markieren – für Quellen, die den Standort auswerten (z. B.
+  Anwesenheit aus Apple Home über einen Template-Tracker). „Weg“ ist dann ein Beleg wie eine
+  frische, genaue Ortung. Nicht für WLAN, Ping oder Bluetooth (Hinweis an der Einstellung).
+- **Eigener Auslöser für „alle weg“:** Im Profil unter Automatik → „Mehr Einstellungen“ eine
+  Entität (Schalter, Binärsensor, Gruppe) und den Zustand, der „alle weg“ heißt. Sie gilt statt
+  der Personen; unbekannt oder nicht verfügbar zählt nie als weg. Hauswacht prüft dann nicht
+  selbst – dazu eine Warnung im Assistenten und an der Einstellung.
+- **„Warum nicht scharf?“:** „Wer gilt gerade als zuhause?“ sagt bei „kein Beleg“, was fehlt
+  (keine Ortung, Ortung nicht frisch oder nicht draußen, bei „Tür + Signal“ letzte Tür und wann das
+  Signal wegfiel), mit Knopf **Aktualisieren**.
+
 ## [0.65.0b3] - 2026-11-25
 
 Garage als eigener **Bereich** statt als Profil.

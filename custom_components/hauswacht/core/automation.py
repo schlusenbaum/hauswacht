@@ -9,6 +9,9 @@ Gespeichert im jeweiligen Profil:
   dafür nicht (der Zeitplan hat seine eigenen).
 - ``auto_away_persons``: Personen; sind alle weg, wird nach ``auto_away_delay`` Minuten
   scharf geschaltet
+- ``auto_away_entity`` / ``auto_away_entity_state`` (ADR 0018): eigener Auslöser statt der
+  Personen – zeigt die Entität den Zustand (Standard „on“), gilt „alle weg“. Hauswacht prüft dann
+  nicht selbst, ob wirklich alle weg sind; unbekannt oder nicht verfügbar zählt nie als weg.
 
 Was bei Rückkehr passiert, steht seit 0.61 in core/returning.py („Bei Rückkehr“, ADR 0015).
 
@@ -34,6 +37,7 @@ WEEKDAYS: tuple[str, ...] = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 HOME_STATE = "home"
 UNKNOWN_STATES = frozenset({"unavailable", "unknown"})
 DEFAULT_AWAY_DELAY = 15  # Minuten
+DEFAULT_AWAY_ENTITY_STATE = "on"
 MAX_AWAY_DELAY = 240
 
 
@@ -45,10 +49,18 @@ class AutoConfig:
     away_persons: tuple[str, ...] = ()
     away_delay: int = DEFAULT_AWAY_DELAY
     schedule: str | None = None
+    # Eigener Auslöser für „alle weg“ statt der Personen (ADR 0018)
+    away_entity: str | None = None
+    away_entity_state: str = DEFAULT_AWAY_ENTITY_STATE
+
+    @property
+    def away_sources(self) -> tuple[str, ...]:
+        """Was für „alle weg“ zählt: die eigene Entität – oder die Personen."""
+        return (self.away_entity,) if self.away_entity else self.away_persons
 
     @property
     def enabled(self) -> bool:
-        return bool(self.arm_time or self.disarm_time or self.away_persons or self.schedule)
+        return bool(self.arm_time or self.disarm_time or self.away_sources or self.schedule)
 
 
 def parse_time(value: Any) -> time | None:
@@ -88,7 +100,24 @@ def parse_automation(options: Mapping[str, Any], profile_id: str) -> AutoConfig:
         else (),
         away_delay=delay_int,
         schedule=_schedule(stored.get("auto_schedule")),
+        away_entity=_entity(stored.get("auto_away_entity")),
+        away_entity_state=_away_state(stored.get("auto_away_entity_state")),
     )
+
+
+def _entity(value: Any) -> str | None:
+    return value if isinstance(value, str) and "." in value.strip(".") else None
+
+
+def _away_state(value: Any) -> str:
+    return value.strip() if isinstance(value, str) and value.strip() else DEFAULT_AWAY_ENTITY_STATE
+
+
+def entity_away_value(state: str | None, away_state: str) -> bool | None:
+    """Eigener Auslöser als „Person“: weg (False), da (True) oder unbekannt (None)."""
+    if state is None or state in UNKNOWN_STATES or state == "":
+        return None
+    return state != away_state
 
 
 def _schedule(value: Any) -> str | None:

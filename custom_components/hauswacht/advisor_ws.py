@@ -52,6 +52,7 @@ from .presence_proof import frozen_locations, locatable
 WS_CHECK = f"{DOMAIN}/advisor/check"
 WS_APPLY_FIX = f"{DOMAIN}/advisor/apply"
 WS_SCENARIOS = f"{DOMAIN}/advisor/scenarios"
+WS_PRESENCE = f"{DOMAIN}/presence/status"
 # Nur diese Änderungen lassen sich vorab prüfen (Seitenblätter Profil und Anwesenheit)
 CHECK_ACTIONS = ("profile_save", "homecoming_save")
 _DIRECTIONS = DIRECTION_HOME | DIRECTION_AWAY | DIRECTION_NEUTRAL
@@ -123,15 +124,19 @@ def build_facts(
 ) -> Facts:
     """Fakten für die Prüfung; ``extra_persons``: zusätzlich (alle Personen fürs Einrichten)."""
     persons = list(dict.fromkeys([*_persons(options), *extra_persons]))
+    geofence = parse_proof_settings(options).geofence
     entry, proof = _measured(main)
     doors, windows = _members(hass, options)
     frozen = {p: f for p in persons if (f := frozen_locations(hass, p, _signals(options, p)))}
     names = {p: plain_name(hass, p) for p in persons}
+    for pid in profile_ids(options):
+        if entity := parse_automation(options, pid).away_entity:
+            names[entity] = plain_name(hass, entity)
     names.update({e: plain_name(hass, e) for f in frozen.values() for e in f})
     for group in (doors, windows):
         names.update({e: plain_name(hass, e) for ids in group.values() for e in ids})
     return Facts(
-        located=frozenset(p for p in persons if locatable(hass, p, _signals(options, p))),
+        located=frozenset(p for p in persons if locatable(hass, p, _signals(options, p), geofence)),
         direction=frozenset(p for p in persons if _has_direction(hass, _signals(options, p))),
         entry_doors=doors,
         windows=windows,
@@ -202,6 +207,7 @@ def homecoming_payload(options: Mapping[str, Any]) -> dict[str, Any]:
         "proof_accuracy": proof.accuracy,
         "proof_weak": sorted(proof.weak),
         "proof_weak_window": proof.weak_window,
+        "proof_geofence": sorted(proof.geofence),
     }
 
 
@@ -291,8 +297,25 @@ def ws_advisor_scenarios(
     connection.send_result(msg["id"], {"scenarios": scenarios(options, facts, language)})
 
 
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): WS_PRESENCE})
+@callback
+def ws_presence_status(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """„Wer gilt gerade als zuhause?“ – jetzt, mit Grund und was fehlt (ADR 0018). Nur lesen."""
+    from .settings_ws import _main  # noqa: PLC0415
+
+    main = _main(hass)
+    if main is None:
+        connection.send_error(msg["id"], "not_loaded", "Hauswacht ist nicht geladen.")
+        return
+    connection.send_result(msg["id"], main.presence_overview())
+
+
 @callback
 def async_register_advisor_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_advisor_check)
     websocket_api.async_register_command(hass, ws_advisor_apply)
     websocket_api.async_register_command(hass, ws_advisor_scenarios)
+    websocket_api.async_register_command(hass, ws_presence_status)

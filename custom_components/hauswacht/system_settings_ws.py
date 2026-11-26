@@ -20,7 +20,7 @@ from .const import MASTER_USER_ID
 from .core.action_codes import ACTION_CODE_KEYS, ALL_KEYPADS, CodeAction, parse_action_codes
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation
-from .core.away_proof import ACCURACY_MODES, parse_proof_settings
+from .core.away_proof import ACCURACY_MODES, is_locator, parse_proof_settings
 from .core.away_proof import MAX_WEAK_WINDOW as PROOF_MAX_WEAK_WINDOW
 from .core.away_proof import MAX_WINDOW as PROOF_MAX_WINDOW
 from .core.changes.cards import all_cards
@@ -52,6 +52,23 @@ def _signals(options: Mapping[str, Any], person: str) -> tuple[str, ...]:
     raw = options.get("homecoming_signals", {})
     entities = raw.get(person, []) if isinstance(raw, Mapping) else []
     return tuple(e for e in entities if isinstance(e, str))
+
+
+def _geofence_choices(
+    hass: HomeAssistant, person: str, signals: tuple[str, ...]
+) -> list[dict[str, str]]:
+    """Was sich als Ortung markieren lässt: Tracker der Person und Signale ohne Koordinaten."""
+    state = hass.states.get(person)
+    trackers = state.attributes.get("device_trackers", []) if state is not None else []
+    found = [t for t in trackers if isinstance(t, str)] if isinstance(trackers, list) else []
+    found.extend(signals)
+    result = []
+    for entity_id in dict.fromkeys(found):
+        tracked = hass.states.get(entity_id)
+        if tracked is None or is_locator(tracked.attributes):
+            continue  # mit Koordinaten zählt es ohnehin als Ortung
+        result.append({"id": entity_id, "name": display_name(hass, entity_id)})
+    return result
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
@@ -270,11 +287,18 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "proof_weak": sorted(proof.weak),
             "proof_weak_window": proof.weak_window,
             "proof_weak_max": PROOF_MAX_WEAK_WINDOW,
+            # Signale und Tracker, die als Ortung zählen (Geofence ohne Koordinaten, ADR 0018)
+            "proof_geofence": sorted(proof.geofence),
+            "geofence_choices": {
+                p: _geofence_choices(hass, p, _signals(options, p))
+                for p in _presence_persons(options)
+            },
             # ohne Ortung und ohne „Tür + Signal“: gilt nie als weg
             "no_fix": [
                 display_name(hass, p)
                 for p in _presence_persons(options)
-                if p not in proof.weak and not locatable(hass, p, _signals(options, p))
+                if p not in proof.weak
+                and not locatable(hass, p, _signals(options, p), proof.geofence)
             ],
         },
         "areas": [

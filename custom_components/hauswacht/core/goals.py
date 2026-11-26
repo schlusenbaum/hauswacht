@@ -95,6 +95,7 @@ LABELS: Mapping[str, Mapping[str, str]] = {
         "auto_disarm_time": "Unscharf um",
         "auto_away_persons": "Scharf, wenn alle weg",
         "auto_away_delay": "Wartezeit „alle weg“",
+        "auto_away_entity": "Eigener Auslöser „alle weg“",
         "return_mode": "Bei Rückkehr",
         "return_persons": "Bei Rückkehr – Personen",
         "sirens": "Sirenen",
@@ -158,6 +159,7 @@ LABELS: Mapping[str, Mapping[str, str]] = {
         "auto_disarm_time": "Disarm at",
         "auto_away_persons": "Arm when all away",
         "auto_away_delay": "Waiting time “all away”",
+        "auto_away_entity": "Own trigger “all away”",
         "return_mode": "On return",
         "return_persons": "On return – persons",
         "sirens": "Sirens",
@@ -308,7 +310,7 @@ def suggestions(options: Mapping[str, Any], hh: Household) -> dict[str, Any]:
         auto = parse_automation(options, away)
         result[AWAY] = {
             "zones": list(profile_behaviour(options, away).zones),
-            "persons": list(auto.away_persons) or people,
+            "persons": [p for p in auto.away_persons if p in hh.persons] or people,
             "delay": auto.away_delay,
         }
         back = parse_return(options, away)
@@ -412,6 +414,8 @@ def _automation(options: Mapping[str, Any], pid: str | None) -> dict[str, Any]:
         "auto_schedule": auto.schedule,
         "auto_away_persons": list(auto.away_persons),
         "auto_away_delay": auto.away_delay,
+        "auto_away_entity": auto.away_entity,
+        "auto_away_entity_state": auto.away_entity_state,
     }
 
 
@@ -468,6 +472,7 @@ def _payload(b: _Builder, goal: str, pid: str | None, answers: Mapping[str, Any]
         data["return"] = back
     if goal == AWAY and AWAY in goals:
         automation["auto_away_persons"] = _strings(own.get("persons"), b.hh.persons)
+        automation["auto_away_entity"] = None  # Ziel mit Personen ersetzt einen eigenen Auslöser
         try:
             delay = int(own.get("delay", DEFAULT_AWAY_DELAY))
         except (TypeError, ValueError):
@@ -935,6 +940,7 @@ _FIELDS = (
     ("entry_delay", "seconds"),
     ("auto_arm_time", "text"),
     ("auto_disarm_time", "text"),
+    ("auto_away_entity", "list1"),
     ("auto_away_persons", "list"),
     ("auto_away_delay", "minutes"),
     ("return_mode", "mode"),
@@ -960,6 +966,7 @@ def _snapshot(options: Mapping[str, Any], pid: str | None) -> dict[str, Any]:
         "auto_disarm_time": _hhmm(auto.disarm_time),
         "auto_away_persons": list(auto.away_persons),
         "auto_away_delay": auto.away_delay,
+        "auto_away_entity": auto.away_entity,
         "return_mode": back.mode if back.active else RETURN_OFF,
         "return_persons": list(back.persons) if back.active else [],
         "sirens": list(reaction.sirens),
@@ -972,6 +979,8 @@ def _show(b: _Builder, kind: str, value: Any) -> str:
         return b.t("none")
     if kind == "list":
         return b.names(value)
+    if kind == "list1":
+        return b.names([value])
     if kind == "seconds":
         return b.t("seconds", v=value)
     if kind == "minutes":

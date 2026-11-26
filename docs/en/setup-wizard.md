@@ -52,6 +52,7 @@ them even when no side sheet is open.
 | **Entry delay** too short for the **door proof** of a person (the phone reports "home" only after the door) | ⚠️ Warning | ⚠ Set the entry delay to the measured value |
 | **"Entry delay when approaching"** is on, but no person in the list has a direction signal | ⚠️ Warning | Turn off the extension |
 | A **location has reported exactly the same position for at least 24 hours** outside home (faked or stuck app) – it does not count as proof ([more](profiles.md#away-only-with-proof)) | ⚠️ Warning | – (if permanently wrong: remove it from the signals under System → Presence) |
+| **"Arm when all away" follows an own trigger** (entity instead of persons) – Hauswacht does not check itself ([more](profiles.md#own-trigger-for-all-away)) | ⚠️ Warning | – |
 | **"Door + signal"** is on although the person has a location | 💡 Tip | Turn off "door + signal" |
 
 Measurements count only from **3 measurements** on – before that the assistant says nothing

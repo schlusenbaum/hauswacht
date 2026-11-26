@@ -147,3 +147,13 @@ def test_sorted_bad_first_and_english() -> None:
     assert found[0]["result"] == BAD
     assert found[0]["title"] == "Anna comes home"
     assert found[0]["summary"].startswith("False alarm after 30 s")
+
+
+def test_own_trigger_is_not_played_through() -> None:
+    entity = "input_boolean.alle_weg"
+    options = _options(auto_away_entity=entity, auto_away_persons=[ANNA])
+    found = _by_key(scenarios(options, _facts(names={**NAMES, entity: "Alle weg"})))
+    leave = found["all_leave:away"]
+    assert leave["result"] == WARN
+    assert "Alle weg" in leave["summary"]
+    assert "phones_sleep:away" not in found

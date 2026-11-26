@@ -103,6 +103,8 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
             "auto_schedule": auto.schedule,
             "auto_away_persons": list(auto.away_persons),
             "auto_away_delay": auto.away_delay,
+            "auto_away_entity": auto.away_entity,
+            "auto_away_entity_state": auto.away_entity_state,
         },
         # „Bei Rückkehr“ (ADR 0015)
         "return": return_to_storage(parse_return(options, pid)),
@@ -163,7 +165,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
     options = main.entry.options
     rules = parse_rules(options)
     areas = parse_areas(options)
-    weak = parse_proof_settings(options).weak
+    proof = parse_proof_settings(options)
+    weak, geofence = proof.weak, proof.geofence
     registered = [s for s in options.get("sirens", []) if isinstance(s, str)]
     return {
         "profiles": [_profile(options, pid) for pid in options.get("profiles", {})],
@@ -186,9 +189,14 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                     "id": s.entity_id,
                     "name": s.name,
                     "locatable": s.entity_id in weak
-                    or locatable(hass, s.entity_id, _signals(options, s.entity_id)),
+                    or locatable(hass, s.entity_id, _signals(options, s.entity_id), geofence),
                 }
                 for s in hass.states.async_all("person")
+            ],
+            # Eigener Auslöser für „alle weg“ (ADR 0018): Schalter, Binärsensoren, Gruppen
+            "away_entities": [
+                {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
+                for s in hass.states.async_all(["input_boolean", "binary_sensor", "group"])
             ],
             "schedules": [
                 {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("schedule")
@@ -226,6 +234,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 "auto_schedule": None,
                 "auto_away_persons": [],
                 "auto_away_delay": DEFAULT_AWAY_DELAY,
+                "auto_away_entity": None,
+                "auto_away_entity_state": "on",
             },
             "return": return_to_storage(ReturnConfig()),
             "arm_on_close": {"enabled": False, "doors": [], "settle": DEFAULT_SETTLE},

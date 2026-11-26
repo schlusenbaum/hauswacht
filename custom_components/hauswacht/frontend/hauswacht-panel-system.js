@@ -42,6 +42,9 @@ const ST = {
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
     proofKind: "Beleg für „weg“",
     proofKinds: { fix: "nur Ortung (sicher)", weak: "auch Tür + Signal (unsicher)" },
+    geofence: "Zählt als Ortung (Geofence)",
+    geofenceHint: "Nur für Quellen, die den Standort des Handys auswerten – z. B. die Anwesenheit aus Apple Home oder ein Template-Tracker, der darauf beruht. Sie melden „zuhause“ oder „weg“ ohne Koordinaten. Nicht für WLAN, Ping oder Bluetooth: Die werden weg, wenn das Handy schläft – als Ortung markiert, würde ein schlafendes Handy die Person abwesend machen.",
+    geofenceNone: "Keine Quelle ohne Koordinaten – Signale mit Koordinaten zählen ohnehin als Ortung.",
     proofWeakWarn: "Unsicher: Weg gilt auch, wenn eine Eingangstür aufgeht und kurz danach ein Signal dieser Person (WLAN, Ping, Bluetooth) von „da“ auf „weg“ wechselt. Öffnet jemand anderes die Tür, während dieses Handy zufällig einschläft, gilt die Person fälschlich als weg – „Scharf, wenn alle weg“ kann dann scharf schalten, obwohl sie zuhause ist. Nur wählen, wenn es für die Person keine Ortung gibt.",
     weakWindow: "Zeitfenster Tür + Signal (Minuten)",
     weakRecDefault: "Empfehlung: 5 Minuten.",
@@ -223,6 +226,9 @@ const ST = {
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
     proofKind: "Proof for “away”",
     proofKinds: { fix: "location only (safe)", weak: "also door + signal (uncertain)" },
+    geofence: "Counts as location (geofence)",
+    geofenceHint: "Only for sources that evaluate the phone's position – e.g. presence from Apple Home or a template tracker based on it. They report “home” or “away” without coordinates. Not for Wi-Fi, ping or Bluetooth: those turn away when the phone sleeps – marked as location, a sleeping phone would make the person absent.",
+    geofenceNone: "No source without coordinates – signals with coordinates count as location anyway.",
     proofWeakWarn: "Uncertain: away also counts when an entry door opens and shortly after a signal of this person (Wi-Fi, ping, Bluetooth) changes from “there” to “away”. If someone else opens the door while this phone happens to fall asleep, the person wrongly counts as away – “arm when all away” may then arm although the person is home. Only choose this if there is no location for the person.",
     weakWindow: "Time window door + signal (minutes)",
     weakRecDefault: "Recommendation: 5 minutes.",
@@ -488,6 +494,18 @@ class HauswachtSystemEditor extends HTMLElement {
       ${weak ? `<div class="warn">${se(this._t("proofWeakWarn"))}</div>` : ""}`;
   }
 
+  _geofencePick(person, d) {
+    // Signale/Tracker ohne Koordinaten, die als Ortung zählen sollen (ADR 0018)
+    const known = (d.geofence_choices || {})[person] || [];
+    const extra = (d.signals[person] || []).filter((id) => !known.some((c) => c.id === id)).map((id) => ({ id, name: (d.signal_choices.find((c) => c.id === id) || { name: id }).name }));
+    const items = [...known, ...extra];
+    const geo = d.proof_geofence || [];
+    const rows = items.length
+      ? items.map((x) => `<div class="chk"><input type="checkbox" data-geo="${se(x.id)}" ${geo.includes(x.id) ? "checked" : ""}><span>${se(x.name)}</span></div>`).join("")
+      : `<div class="muted">${se(this._t("geofenceNone"))}</div>`;
+    return `<details class="geo"${items.some((x) => geo.includes(x.id)) ? " open" : ""}><summary>${se(this._t("geofence"))}</summary><div class="muted">${se(this._t("geofenceHint"))}</div>${rows}</details>`;
+  }
+
   _weakRecommend(d) {
     // Längste Zeit „Tür auf“ → ein einzelnes Signal „weg“ bei den Personen mit Tür + Signal, plus 2 min
     const rows = (d.measurements?.persons || []).filter((p) => d.proof_weak.includes(p.id));
@@ -583,7 +601,7 @@ class HauswachtSystemEditor extends HTMLElement {
     if (k === "homecoming") {
       const persons = [...new Set([...d.persons, ...d.signal_persons])];
       const signals = persons
-        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._weakPick(p, d)}</div>`)
+        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._weakPick(p, d)}${this._geofencePick(p, d)}</div>`)
         .join("");
       return `<h2>${se(this._t("homecoming"))}</h2>
         ${this._chk("observe", d.observe, this._t("observe"))}
@@ -674,6 +692,11 @@ class HauswachtSystemEditor extends HTMLElement {
         d.proof_weak = d.proof_weak.filter((x) => x !== p);
         if (el.value === "weak") d.proof_weak.push(p);
       });
+      const geo = [...root.querySelectorAll("[data-geo]")];
+      if (geo.length) {
+        const shown = new Set(geo.map((el) => el.dataset.geo));
+        d.proof_geofence = [...(d.proof_geofence || []).filter((id) => !shown.has(id)), ...geo.filter((el) => el.checked).map((el) => el.dataset.geo)];
+      }
       const more = root.querySelector("details.more");
       if (more) this._moreOpen = more.open;
     }
@@ -706,7 +729,7 @@ class HauswachtSystemEditor extends HTMLElement {
       case "network":
         return ["network_save", { entities: d.entities }];
       case "homecoming":
-        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window }];
+        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window, proof_geofence: d.proof_geofence || [] }];
       case "area":
         return ["area_save", { id: this.item, name: d.name, icon: d.icon }];
       case "page":
@@ -886,6 +909,7 @@ class HauswachtSystemEditor extends HTMLElement {
       })
     );
     root.querySelectorAll("[data-weak]").forEach((el) => el.addEventListener("change", redraw));
+    root.querySelectorAll("[data-geo]").forEach((el) => el.addEventListener("change", () => this._scheduleAdvice?.()));
     root.querySelector('[data-f="proof_window"]')?.addEventListener("input", (ev) => {
       const how = root.querySelector("[data-how]");
       if (how) how.textContent = this._proofHow({ ...this._draft, proof_window: Number(ev.target.value) || this._draft.proof_window });

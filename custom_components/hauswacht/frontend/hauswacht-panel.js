@@ -132,11 +132,17 @@ const TEXTS = {
     measResetLeaving: "Weggehen zurücksetzen",
     presenceNow: {
       title: "Wer gilt gerade als zuhause?",
-      hint: "Stand beim Öffnen der Seite. Im Testmodus kannst du die Anwesenheit in der Testkarte simulieren.",
+      hint: "Stand beim Öffnen der Seite oder nach „Aktualisieren“. Im Testmodus kannst du die Anwesenheit in der Testkarte simulieren.",
       states: { home: "zuhause", away: "weg", unknown: "unbekannt" },
       sim: "simuliert",
       home: "laut {by}",
       noProof: "kein Beleg – zählt nicht als weg",
+      missNoFix: "es fehlt eine Ortung: Ortung mit Standort einrichten, ein Geofence-Signal als Ortung markieren oder „Tür + Signal“ erlauben (System → Anwesenheit)",
+      missFix: "Ortung nicht frisch genug oder nicht außerhalb (Zeitfenster {w} min)",
+      missWeak: "Tür + Signal: letzte Tür {door}, Signal weg {left} – beides muss innerhalb von {w} min zusammenkommen",
+      entity: "eigener Auslöser, Zustand „{s}“",
+      never: "nie",
+      refresh: "Aktualisieren",
       unclear: "unklar: {by}",
       proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", simulated: "simuliert", other: "Beleg vorhanden" },
       line: {
@@ -379,11 +385,17 @@ const TEXTS = {
     measResetLeaving: "Reset leaving",
     presenceNow: {
       title: "Who counts as home right now?",
-      hint: "State when the page was opened. In test mode you can simulate presence in the test card.",
+      hint: "State when the page was opened or after “Refresh”. In test mode you can simulate presence in the test card.",
       states: { home: "home", away: "away", unknown: "unknown" },
       sim: "simulated",
       home: "according to {by}",
       noProof: "no proof – does not count as away",
+      missNoFix: "a location is missing: set up a location with position, mark a geofence signal as location or allow “door + signal” (System → Presence)",
+      missFix: "location not fresh enough or not outside (time window {w} min)",
+      missWeak: "door + signal: last door {door}, signal away {left} – both must come together within {w} min",
+      entity: "own trigger, state “{s}”",
+      never: "never",
+      refresh: "Refresh",
       unclear: "unclear: {by}",
       proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", simulated: "simulated", other: "proof available" },
       line: {
@@ -1088,7 +1100,16 @@ class HauswachtPanel extends HTMLElement {
       if (r.kind === "simulated") return t.sim;
       if (r.kind === "home") return t.home.replace("{by}", (r.by || []).join(", ") || "–");
       if (r.kind === "away") return t.proofs[r.proof] || t.proofs.other;
-      if (r.kind === "no_proof") return t.noProof;
+      if (r.kind === "entity") return t.entity.replace("{s}", r.state ?? "–");
+      if (r.kind === "no_proof") {
+        // Was fehlt? (ADR 0018)
+        const time = (ts) => (ts ? new Date(ts * 1000).toLocaleTimeString(this._lang, { hour: "2-digit", minute: "2-digit" }) : t.never);
+        const parts = [t.noProof];
+        if (r.located === false && !r.weak) parts.push(t.missNoFix);
+        if (r.located) parts.push(t.missFix.replace("{w}", r.window ?? "–"));
+        if (r.weak) parts.push(t.missWeak.replace("{door}", time(r.door_at)).replace("{left}", time(r.left_at)).replace("{w}", r.weak_window ?? "–"));
+        return parts.join(" – ");
+      }
       if (r.kind === "unclear") return t.unclear.replace("{by}", (r.by || []).join(", ") || "–");
       return "";
     };
@@ -1099,7 +1120,8 @@ class HauswachtPanel extends HTMLElement {
     const profiles = (st.profiles || [])
       .map((p) => `<div class="muted">${escHtml(p.name)} – ${escHtml(hauswachtProfileLine(p, t.line, now))}</div>`)
       .join("");
-    return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div></div>`;
+    const refresh = `<div class="tool"><button class="e" data-presence-refresh>${escHtml(t.refresh)}</button></div>`;
+    return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div>${refresh}</div>`;
   }
 
   _measurementsHtml(m) {
@@ -1379,6 +1401,16 @@ class HauswachtPanel extends HTMLElement {
 
   _wireAssistant() {
     const root = this.shadowRoot;
+    // „Wer gilt gerade als zuhause?“ neu holen (nur lesen)
+    root.querySelector("[data-presence-refresh]")?.addEventListener("click", async () => {
+      try {
+        const status = await this._hass.callWS({ type: "hauswacht/presence/status" });
+        if (this._settings?.system?.homecoming) this._settings.system.homecoming.status = status;
+      } catch (_err) {
+        // nur Anzeige
+      }
+      this._render();
+    });
     root.querySelectorAll("[data-asst]").forEach((el) =>
       el.addEventListener("click", () => {
         const [act, i, j] = el.dataset.asst.split(":");
