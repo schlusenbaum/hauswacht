@@ -224,10 +224,36 @@ be assigned to one of four causes:
 4. **Home Assistant or another integration has a problem.** Then errors of other integrations
    appear in the log.
 
-**Switching it on:** Settings → Devices & services → Hauswacht → **Enable debug logging**. Then
-reproduce the problem or wait for it. Finally **Disable debug logging** – Home Assistant then
-offers the file for download. The debug log is **off** by default; without switching it on,
-Hauswacht writes none of these lines.
+The debug log is **off** by default; without switching it on, Hauswacht writes none of these
+lines.
+
+**Switching it on and downloading – step by step:**
+
+1. In Home Assistant open **Settings → Devices & services** and click **Hauswacht**.
+2. Tap **⋮** at the top right and choose **Enable debug logging**.
+3. Reproduce the problem (e.g. arm, open the door) or wait until it happens.
+4. Again **⋮ → Disable debug logging**. Home Assistant then offers a file with all log lines
+   since switching it on for download.
+
+**Reading along live without switching off:** **Settings → System → Logs**, at the top right
+**⋮ → Show full logs** and type `hauswacht` into the search field. New lines appear there as
+soon as something happens.
+
+**Across a restart:** if the error happens during or right after a restart (e.g. "behaviour
+after restart"), switch on the debug log in `configuration.yaml` and restart Home Assistant:
+
+```yaml
+logger:
+  logs:
+    custom_components.hauswacht: debug
+```
+
+If your `configuration.yaml` already has a `logger:` section, only add the line under `logs:`.
+After troubleshooting remove the line again and restart – otherwise Home Assistant keeps writing
+more to the log.
+
+**How much and how long?** Debug costs hardly any computing time but makes the log bigger. Only
+leave it on as long as you need it for troubleshooting.
 
 **What the lines look like** (examples; the log lines are in German):
 
@@ -267,7 +293,14 @@ automatically.
 
 ## Getting help
 
-An [issue](https://github.com/schlusenbaum/hauswacht/issues) with the Hauswacht version, the Home
-Assistant version and the relevant log lines helps most – ideally from the
-[debug log](#debug-log-what-did-hauswacht-decide). Questions in English are welcome. Please
-remove names, IP addresses, tokens and other personal data from logs first.
+For an [issue](https://github.com/schlusenbaum/hauswacht/issues) or a forum post, this helps
+most (questions in English are welcome):
+
+1. **What happened, what did you expect?** In one or two sentences, with the approximate time.
+2. **The file from [Download configuration](settings-page.md#download-configuration)** (System
+   tab, at the very bottom). It contains versions, settings and the current state; names are
+   already replaced by placeholders.
+3. **The relevant lines from the [debug log](#debug-log-what-did-hauswacht-decide)**, only for
+   the period that matters.
+
+Please remove names in entity IDs, IP addresses, tokens and other personal data from logs first.

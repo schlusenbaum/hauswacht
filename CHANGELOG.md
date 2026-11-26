@@ -6,6 +6,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Doku
+
+- **Fehlersuche:** Debug-Log Schritt für Schritt (⋮-Menü der Integration), live mitlesen unter
+  System → Protokolle, über einen Neustart hinweg per `configuration.yaml`. „Hilfe holen“ nennt
+  jetzt, was in einen Fehlerbericht gehört: kurze Beschreibung, „Konfiguration herunterladen“,
+  Zeilen aus dem Debug-Log. Inhaltsverzeichnisse ergänzt.
+
 ## [0.65.0b9] - 2026-11-26
 
 ### Neu

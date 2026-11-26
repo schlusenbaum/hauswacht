@@ -237,10 +237,36 @@ fast jeder Fehler einer von vier Ursachen zuordnen:
 4. **Home Assistant oder eine andere Integration hat ein Problem.** Dann stehen Fehler anderer
    Integrationen im Log.
 
-**Einschalten:** Einstellungen → Geräte & Dienste → Hauswacht → **Debug-Protokollierung
-aktivieren**. Dann das Problem nachstellen oder abwarten. Zum Schluss **Debug-Protokollierung
-deaktivieren** – Home Assistant bietet die Datei danach zum Herunterladen an. Standardmäßig ist
-das Debug-Log **aus**; ohne Einschalten schreibt Hauswacht keine dieser Zeilen.
+Standardmäßig ist das Debug-Log **aus**; ohne Einschalten schreibt Hauswacht keine dieser Zeilen.
+
+**Einschalten und herunterladen – Schritt für Schritt:**
+
+1. In Home Assistant **Einstellungen → Geräte & Dienste** öffnen und **Hauswacht** anklicken.
+2. Oben rechts auf **⋮** tippen und **Debug-Protokollierung aktivieren** wählen.
+3. Das Problem nachstellen (z. B. scharf schalten, Tür öffnen) oder abwarten, bis es auftritt.
+4. Wieder **⋮ → Debug-Protokollierung deaktivieren**. Home Assistant bietet danach eine Datei mit
+   allen Log-Zeilen seit dem Einschalten zum Herunterladen an.
+
+**Live mitlesen, ohne auszuschalten:** **Einstellungen → System → Protokolle**, oben rechts
+**⋮ → Vollständige Protokolle anzeigen** und ins Suchfeld `hauswacht` eintippen. Neue Zeilen
+erscheinen dort, sobald etwas passiert.
+
+**Über einen Neustart hinweg:** Tritt der Fehler gerade beim oder nach dem Neustart auf (z. B.
+„Verhalten nach Neustart“), schalte das Debug-Log über die `configuration.yaml` ein und starte
+Home Assistant neu:
+
+```yaml
+logger:
+  logs:
+    custom_components.hauswacht: debug
+```
+
+Steht in deiner `configuration.yaml` schon ein Abschnitt `logger:`, ergänze dort nur die Zeile
+unter `logs:`. Nach der Fehlersuche die Zeile wieder entfernen und neu starten – sonst schreibt
+Home Assistant dauerhaft mehr ins Log.
+
+**Wie viel und wie lange?** Debug kostet kaum Rechenzeit, macht das Log aber größer. Lass es nur
+so lange an, wie du für die Fehlersuche brauchst.
 
 **So sehen die Zeilen aus** (Beispiele):
 
@@ -280,7 +306,15 @@ Hauswacht Namen automatisch.
 
 ## Hilfe holen
 
-Ein [Issue](https://github.com/schlusenbaum/hauswacht/issues) mit Hauswacht-Version,
-Home-Assistant-Version und den passenden Log-Zeilen hilft am meisten – am besten aus dem
-[Debug-Log](#debug-log-was-hat-hauswacht-entschieden). Bitte vorher Namen,
-IP-Adressen, Tokens und andere persönliche Daten aus Logs entfernen.
+Für ein [Issue](https://github.com/schlusenbaum/hauswacht/issues) oder einen Forenbeitrag hilft
+am meisten:
+
+1. **Was ist passiert, was hättest du erwartet?** In ein, zwei Sätzen, mit ungefährer Uhrzeit.
+2. **Die Datei aus [Konfiguration herunterladen](einstellungsseite.md#konfiguration-herunterladen)**
+   (Reiter System, ganz unten). Sie enthält Versionen, Einstellungen und den aktuellen Zustand,
+   Namen sind darin schon durch Platzhalter ersetzt.
+3. **Die passenden Zeilen aus dem [Debug-Log](#debug-log-was-hat-hauswacht-entschieden)**, nur
+   für den Zeitraum, um den es geht.
+
+Bitte vorher Namen in Entitäts-IDs, IP-Adressen, Tokens und andere persönliche Daten aus Logs
+entfernen.
