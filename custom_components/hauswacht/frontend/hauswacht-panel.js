@@ -113,6 +113,7 @@ const TEXTS = {
     measLongest: "längste Zeit bis „weg“",
     measPauses: "Schweigepausen (längste)",
     measExplain: "Was bedeuten die Spalten?",
+    infoLabel: "Erklärung",
     measInfo: {
       measHome: "Wie oft die Person heimgekommen ist; in Klammern, wie oft dabei eine Eingangstür aufging.",
       measLeft: "Wie oft alle Signale der Person „weg“ meldeten und bis zu 15 Minuten vorher eine Eingangstür aufging – echtes Rausgehen.",
@@ -366,6 +367,7 @@ const TEXTS = {
     measLongest: "longest time until “away”",
     measPauses: "Silent pauses (longest)",
     measExplain: "What do the columns mean?",
+    infoLabel: "Explanation",
     measInfo: {
       measHome: "How often the person came home; in brackets, how often an entry door opened.",
       measLeft: "How often all signals of the person reported “away” and an entry door opened up to 15 minutes before – real leaving.",
@@ -600,7 +602,9 @@ const PANEL_STYLE = `
   .ok { color: var(--success-color, #43a047); margin: 0 0 10px; }
   tr.grp td { background: var(--secondary-background-color); font-weight: 500; }
   tr.grp .muted { font-weight: 400; }
-  th .info { color: var(--primary-color); cursor: help; font-weight: 400; }
+  th .info { border: none; background: none; color: var(--primary-color); cursor: help; font: inherit; font-weight: 400; padding: 0 2px; }
+  .tip[hidden] { display: none; }
+  .tip { display: block; font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); }
   details.explain { margin: 6px 0; font-size: .85rem; }
   details.explain summary { cursor: pointer; color: var(--primary-color); }
   details.explain div { margin: 4px 0; }
@@ -1124,6 +1128,12 @@ class HauswachtPanel extends HTMLElement {
     return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div>${refresh}</div>`;
   }
 
+  _colHead(label, text, table) {
+    // Spaltenkopf mit ⓘ: Mauszeiger zeigt den Text (title), Antippen zeigt ihn unter der Tabelle
+    const info = `<button type="button" class="info" data-col-info="${escHtml(table)}" data-text="${escHtml(text)}" title="${escHtml(text)}" aria-label="${escHtml(this._t("infoLabel"))}">ⓘ</button>`;
+    return `<th title="${escHtml(text)}">${escHtml(label)} ${info}</th>`;
+  }
+
   _measurementsHtml(m) {
     // Messungen der Heimkehr-Beobachtung: einsehen, speichern, zurücksetzen
     if (!m) return `<div class="muted">${escHtml(this._t("measOff"))}</div>`;
@@ -1132,13 +1142,13 @@ class HauswachtPanel extends HTMLElement {
     const rows = m.persons
       .map((p) => `<tr><td>${escHtml(p.name)}</td><td class="nw">${p.arrivals} (${p.arrivals_with_door})</td><td class="nw">${p.left}</td><td class="nw">${escHtml(dash(p.longest_left, " s"))}</td><td class="nw">${p.pauses}${p.longest_pause !== null ? ` (${p.longest_pause} min)` : ""}</td></tr>`)
       .join("");
-    // Spaltenüberschriften mit ⓘ: Mauszeiger zeigt die Erklärung, darunter zum Aufklappen
-    const head = (key) => `<th title="${escHtml(this._t("measInfo")[key])}">${escHtml(this._t(key))} <span class="info">ⓘ</span></th>`;
+    // Spaltenüberschriften mit ⓘ: Mauszeiger zeigt die Erklärung, Antippen klappt sie unter der Tabelle auf
+    const head = (key) => this._colHead(this._t(key), this._t("measInfo")[key], "meas");
     const explain = ["measHome", "measLeft", "measLongest", "measPauses"]
       .map((key) => `<div><b>${escHtml(this._t(key))}:</b> ${escHtml(this._t("measInfo")[key])}</div>`)
       .join("");
     const persons = rows
-      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${head("measHome")}${head("measLeft")}${head("measLongest")}${head("measPauses")}</tr>${rows}</table></div>
+      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${head("measHome")}${head("measLeft")}${head("measLongest")}${head("measPauses")}</tr>${rows}</table></div><div class="tip" data-col-tip="meas" hidden></div>
         <details class="explain"><summary>${escHtml(this._t("measExplain"))}</summary>${explain}</details>`
       : "";
     const advice = m.persons
@@ -1149,7 +1159,7 @@ class HauswachtPanel extends HTMLElement {
       .join("");
     // Vorbereitung Ausgangserkennung (0.63.1): Lebenszeichen rund um die Tür
     const exitPersons = m.persons.filter((p) => p.exit);
-    const exitHead = (key) => `<th title="${escHtml(this._t("exitInfo")[key])}">${escHtml(this._t("exitCols")[key])} <span class="info">ⓘ</span></th>`;
+    const exitHead = (key) => this._colHead(this._t("exitCols")[key], this._t("exitInfo")[key], "exit");
     const exitRows = exitPersons
       .map((p) => {
         const e = p.exit;
@@ -1167,7 +1177,7 @@ class HauswachtPanel extends HTMLElement {
       .join("");
     const exits = exitRows
       ? `<div class="n" style="margin-top:10px">${escHtml(this._t("exitTitle"))}</div><div class="muted">${escHtml(this._t("exitIntro"))}</div>
-        <div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${exitHead("sign")}${exitHead("confirm")}${exitHead("missing")}${exitHead("echo")}</tr>${exitRows}</table></div>
+        <div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${exitHead("sign")}${exitHead("confirm")}${exitHead("missing")}${exitHead("echo")}</tr>${exitRows}</table></div><div class="tip" data-col-tip="exit" hidden></div>
         <details class="explain"><summary>${escHtml(this._t("measExplain"))}</summary>${exitExplain}</details>${exitText}`
       : "";
     const entryRows = m.entries
@@ -1401,6 +1411,17 @@ class HauswachtPanel extends HTMLElement {
 
   _wireAssistant() {
     const root = this.shadowRoot;
+    // ⓘ in Spaltenköpfen: Erklärung unter der Tabelle zeigen, nochmal antippen blendet sie aus
+    root.querySelectorAll("[data-col-info]").forEach((btn) =>
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const tip = root.querySelector(`[data-col-tip="${CSS.escape(btn.dataset.colInfo)}"]`);
+        if (!tip) return;
+        const same = !tip.hidden && tip.textContent === btn.dataset.text;
+        tip.textContent = btn.dataset.text;
+        tip.hidden = same;
+      })
+    );
     // „Wer gilt gerade als zuhause?“ neu holen (nur lesen)
     root.querySelector("[data-presence-refresh]")?.addEventListener("click", async () => {
       try {

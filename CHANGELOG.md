@@ -6,6 +6,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0b7] - 2026-11-26
+
+### Korrigiert
+
+- **ⓘ in den Messtabellen der Systemseite lassen sich antippen.** Bei „Heimkehr messen“ und
+  „Vorbereitung Ausgangserkennung“ zeigten die ⓘ an den Spaltenköpfen ihre Erklärung nur mit dem
+  Mauszeiger; auf Handy und Tablet passierte nichts. Jetzt erscheint die Erklärung nach dem
+  Antippen direkt unter der Tabelle, nochmal Antippen blendet sie aus – wie bei allen anderen ⓘ.
+
 ## [0.65.0b6] - 2026-11-26
 
 ### Korrigiert
