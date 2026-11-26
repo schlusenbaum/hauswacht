@@ -194,10 +194,17 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 for s in hass.states.async_all("person")
             ],
             # Eigener Auslöser für „alle weg“ (ADR 0018): Schalter, Binärsensoren, Gruppen
-            "away_entities": [
-                {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
-                for s in hass.states.async_all(["input_boolean", "binary_sensor", "group"])
-            ],
+            "away_entities": sorted(
+                (
+                    {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
+                    for s in hass.states.async_all(["input_boolean", "binary_sensor", "group"])
+                ),
+                # nach Art (Schalter, Gruppen, Binärsensoren), darin nach Name
+                key=lambda x: (
+                    ("input_boolean", "group", "binary_sensor").index(x["id"].split(".")[0]),
+                    x["name"].casefold(),
+                ),
+            ),
             "schedules": [
                 {"id": s.entity_id, "name": s.name} for s in hass.states.async_all("schedule")
             ],

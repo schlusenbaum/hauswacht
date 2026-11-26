@@ -63,7 +63,9 @@ const PT = {
     refreshLists: "↻ Liste aktualisieren",
     awayEntity: "Eigener Auslöser für „alle weg“ (statt der Personen oben)",
     awayEntityNone: "Keiner – es gelten die Personen oben.",
-    awayEntitySearch: "Name oder Entität suchen …",
+    awayEntitySearch: "Aus der Liste wählen oder Name/Entität tippen …",
+    awayEntityNoHit: "Nichts gefunden.",
+    awayEntityKinds: { input_boolean: "Schalter (Helfer)", binary_sensor: "Binärsensoren", group: "Gruppen" },
     awayEntityChosen: "Gewählt:",
     awayEntityClear: "Entfernen",
     awayEntityState: "Dieser Zustand heißt „alle weg“",
@@ -250,7 +252,9 @@ const PT = {
     refreshLists: "↻ Refresh list",
     awayEntity: "Own trigger for “all away” (instead of the persons above)",
     awayEntityNone: "None – the persons above apply.",
-    awayEntitySearch: "Search name or entity …",
+    awayEntitySearch: "Choose from the list or type a name/entity …",
+    awayEntityNoHit: "Nothing found.",
+    awayEntityKinds: { input_boolean: "Switches (helpers)", binary_sensor: "Binary sensors", group: "Groups" },
     awayEntityChosen: "Chosen:",
     awayEntityClear: "Remove",
     awayEntityState: "This state means “all away”",
@@ -382,6 +386,13 @@ const PT = {
 };
 
 const PROFILE_STYLE = `
+  .picker { position: relative; }
+  .pick-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--divider-color); border-radius: 8px; margin-top: 4px; background: var(--card-background-color); }
+  .pick-head { position: sticky; top: 0; font-size: .78rem; padding: 4px 10px; background: var(--secondary-background-color); color: var(--secondary-text-color); }
+  .pick-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 6px 10px; font: inherit; color: var(--primary-text-color); cursor: pointer; }
+  .pick-item:hover, .pick-item:focus { background: var(--secondary-background-color); }
+  .pick-item .muted { font-size: .8rem; }
+  .pick-empty { padding: 6px 10px; }
   .sec { font-weight: 500; margin: 18px 0 2px; padding-top: 10px; border-top: 1px solid var(--divider-color); }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
   .days { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -459,16 +470,67 @@ class HauswachtProfileEditor extends HTMLElement {
   }
 
   // „Mehr Einstellungen“ zum Aufklappen; bleibt beim Neuzeichnen offen
-  // Eigener Auslöser für „alle weg“: Suchfeld statt langer Liste (Name oder Entitäts-ID tippen)
+  // Eigener Auslöser für „alle weg“: Liste zum Durchblättern UND Suchen in einem.
+  // Klick ins Feld zeigt alle (nach Art sortiert), Tippen filtert nach Name oder Entitäts-ID.
   _awayEntityPick(c, a) {
     const choices = c.away_entities || [];
     const current = choices.find((x) => x.id === a.auto_away_entity);
     const shown = current ? current.name : a.auto_away_entity || "";
-    const options = choices.map((x) => `<option value="${pe(x.name)}">${pe(x.id)}</option>`).join("");
     const chosen = a.auto_away_entity
       ? `<div class="muted">${pe(this._t("awayEntityChosen"))} ${pe(a.auto_away_entity)} <button type="button" class="b" data-act="away-entity-clear">${pe(this._t("awayEntityClear"))}</button></div>`
       : `<div class="muted">${pe(this._t("awayEntityNone"))}</div>`;
-    return `<input data-awayent list="hw-prof-awayent" value="${pe(shown)}" placeholder="${pe(this._t("awayEntitySearch"))}" autocomplete="off"><datalist id="hw-prof-awayent">${options}</datalist>${chosen}`;
+    return `<div class="picker"><input data-awayent value="${pe(shown)}" placeholder="${pe(this._t("awayEntitySearch"))}" autocomplete="off">
+      <div class="pick-list" hidden>${this._pickItems(choices, "")}</div></div>${chosen}`;
+  }
+
+  _pickItems(choices, filter) {
+    const f = filter.trim().toLowerCase();
+    const hits = choices.filter((x) => !f || x.name.toLowerCase().includes(f) || x.id.toLowerCase().includes(f));
+    if (!hits.length) return `<div class="muted pick-empty">${pe(this._t("awayEntityNoHit"))}</div>`;
+    const groups = this._t("awayEntityKinds");
+    let last = null;
+    return hits
+      .map((x) => {
+        const domain = x.id.split(".")[0];
+        const head = domain !== last ? `<div class="pick-head">${pe(groups[domain] || domain)}</div>` : "";
+        last = domain;
+        return `${head}<button type="button" class="pick-item" data-pick-id="${pe(x.id)}">${pe(x.name)} <span class="muted">${pe(x.id)}</span></button>`;
+      })
+      .join("");
+  }
+
+  _wirePicker() {
+    const root = this.shadowRoot;
+    const input = root.querySelector("[data-awayent]");
+    const list = root.querySelector(".pick-list");
+    if (!input || !list) return;
+    const choices = this.settings?.profile_edit?.choices?.away_entities || [];
+    const show = () => {
+      // Ist schon etwas gewählt, zeigt der Klick zuerst die ganze Liste (nicht nur den Treffer)
+      const filter = input.dataset.typed ? input.value : "";
+      list.innerHTML = this._pickItems(choices, filter);
+      list.hidden = false;
+    };
+    input.addEventListener("focus", show);
+    input.addEventListener("input", () => {
+      input.dataset.typed = "1";
+      show();
+    });
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") list.hidden = true;
+    });
+    input.addEventListener("blur", () => setTimeout(() => (list.hidden = true), 150));
+    // mousedown statt click: sonst schließt das Verlassen des Feldes die Liste vor dem Klick
+    list.addEventListener("mousedown", (ev) => {
+      const item = ev.target.closest("[data-pick-id]");
+      if (!item) return;
+      ev.preventDefault();
+      this._collect();
+      this._draft.automation.auto_away_entity = item.dataset.pickId;
+      const top = root.querySelector(".sheet").scrollTop;
+      this._render();
+      root.querySelector(".sheet").scrollTop = top;
+    });
   }
 
   _awayEntityValue(text) {
@@ -823,6 +885,7 @@ ${this._returnSection(c, lim, t)}
     };
     this.shadowRoot.querySelector('[data-r="approach_delay"]')?.addEventListener("change", redraw);
     this.shadowRoot.querySelector("[data-awayent]")?.addEventListener("change", redraw);
+    this._wirePicker();
     this.shadowRoot.querySelector('[data-act="away-entity-clear"]')?.addEventListener("click", () => {
       this._collect();
       this._draft.automation.auto_away_entity = null;

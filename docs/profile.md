@@ -289,7 +289,7 @@ holt den Stand neu.
 *Ab 0.65.0b4* ([ADR 0018](entwicklung/adr/0018-geofence-und-eigener-ausloeser.md)). Wer schon
 eine eigene Logik hat (z. B. einen Schalter `input_boolean.alle_weg` oder eine Personengruppe),
 kann sie im Profil unter Automatik → „Mehr Einstellungen“ → **„Eigener Auslöser für ‚alle weg‘“**
-wählen – im Suchfeld Name oder Entitäts-ID tippen, Vorschläge erscheinen beim Tippen –, dazu den Zustand, der „alle weg“ heißt (an, aus oder `not_home` für eine
+wählen – ein Klick ins Feld zeigt alle passenden Entitäten nach Art sortiert, Tippen filtert nach Name oder Entitäts-ID –, dazu den Zustand, der „alle weg“ heißt (an, aus oder `not_home` für eine
 Personengruppe). Dann gilt die Entität **statt** der Personen: Zeigt sie den Zustand, wird nach
 der Wartezeit scharf geschaltet; unbekannt oder nicht verfügbar zählt nie als weg. Die übrigen
 Regeln bleiben (nur aus „unscharf“, offene Melder nie automatisch bestätigt).
