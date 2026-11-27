@@ -18,6 +18,7 @@ from custom_components.hauswacht.core.advisor import (
     errors,
     find_fix,
     patch,
+    person_uses,
 )
 
 ANNA = "person.anna"
@@ -235,7 +236,68 @@ def test_own_trigger_is_a_warning_not_an_error() -> None:
     entity = "input_boolean.alle_weg"
     options = _options(auto_away_persons=[BEN], auto_away_entity=entity)
     found = advise(options, _facts(names={**NAMES, entity: "Alle weg"}))
-    assert _codes(found) == ["away_entity"]
+    assert _codes(found) == ["away_entity", "away_persons_ignored"]
     assert found[0]["level"] == WARNING
     assert "Alle weg" in found[0]["text"]
     assert "„on“" in found[0]["why"]
+
+
+def test_persons_ignored_with_own_trigger_offers_untick() -> None:
+    """ADR 0021: Personen neben eigenem Auslöser werden nicht beachtet – Hinweis mit Vorschlag."""
+    entity = "input_boolean.alle_weg"
+    options = _options(auto_away_persons=[ANNA, BEN], auto_away_entity=entity)
+    found = advise(options, _facts(names={**NAMES, entity: "Alle weg"}))
+    tip = next(f for f in found if f["code"] == "away_persons_ignored")
+    assert tip["level"] == TIP
+    assert "Anna, Ben" in tip["why"]
+    fix = tip["fixes"][0]
+    assert (fix["path"], fix["op"], fix["value"], fix["weakens"]) == (
+        "automation.auto_away_persons",
+        "set",
+        [],
+        False,
+    )
+    # ohne angehakte Personen kein Hinweis
+    assert _codes(advise(_options(auto_away_entity=entity), _facts())) == ["away_entity"]
+
+
+def test_presence_settings_without_effect() -> None:
+    signals = {"homecoming_signals": {ANNA: ["sensor.anna_wlan"]}}
+    # Anna steht nirgends -> Hinweis
+    found = advise({**_options(), **signals}, _facts())
+    assert _codes(found) == ["presence_unused"]
+    # nur in einem Profil mit eigenem Auslöser -> wirkt trotzdem nirgends
+    trigger = _options(auto_away_persons=[ANNA], auto_away_entity="input_boolean.x")
+    assert "presence_unused" in _codes(advise({**trigger, **signals}, _facts()))
+    # in „Scharf, wenn alle weg“ -> kein Hinweis
+    used = _options(auto_away_persons=[ANNA])
+    assert "presence_unused" not in _codes(
+        advise({**used, **signals}, _facts(located=frozenset({ANNA})))
+    )
+
+
+def test_one_is_enough_counts_as_detectable() -> None:
+    """„eines reicht (nach Tür)“: auch ohne Ortung als weg erkennbar – kein „nie weg“."""
+    options = {**_options(auto_away_persons=[BEN]), "presence_leave_mode": {BEN: "one"}}
+    assert "away_never" not in _codes(advise(options, _facts()))
+
+
+def test_person_uses() -> None:
+    options = {
+        "profiles": {
+            "away": {"name": "Abwesend", "auto_away_persons": [ANNA]},
+            "night": {
+                "name": "Nacht",
+                "auto_away_persons": [ANNA],
+                "auto_away_entity": "input_boolean.x",
+            },
+        },
+        "homecoming_observe": True,
+        "homecoming_persons": [ANNA],
+    }
+    assert person_uses(options, ANNA) == [
+        ("away", "away"),
+        ("away_ignored", "night"),
+        ("observe", None),
+    ]
+    assert person_uses(options, BEN) == []

@@ -36,6 +36,7 @@ from typing import Any
 
 from .automation import parse_automation
 from .away_proof import parse_proof_settings
+from .presence_rules import leaves_by_door, parse_presence_rules
 from .profiles import profile_ids, profile_info, profile_settings
 from .returning import RETURN_AUTO_ONLY, parse_return
 
@@ -226,6 +227,36 @@ TEXTS: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "person's signals under System → Presence.",
         },
     },
+    "away_persons_ignored": {
+        "de": {
+            "text": "Profil {profile_name}: Die Personen bei „Scharf, wenn alle weg“ werden "
+            "nicht beachtet – es gilt der eigene Auslöser „{entity}“.",
+            "why": "Ist ein eigener Auslöser gesetzt, entscheidet nur er, ob in diesem Profil alle "
+            "weg sind. Die angehakten Personen ({persons}) und ihre Signale unter Anwesenheit "
+            "spielen dafür keine Rolle. Das ist kein Fehler, aber leicht misszuverstehen.",
+        },
+        "en": {
+            "text": "Profile {profile_name}: the persons in “arm when all away” are ignored – the "
+            "own trigger “{entity}” applies.",
+            "why": "When an own trigger is set, only it decides whether everyone is away in this "
+            "profile. The ticked persons ({persons}) and their signals under Presence play no "
+            "part in that. This is not an error, but easy to misunderstand.",
+        },
+    },
+    "presence_unused": {
+        "de": {
+            "text": "{person}: Die Einstellungen unter Anwesenheit wirken zurzeit nirgends.",
+            "why": "{person} steht in keinem Profil bei „Scharf, wenn alle weg“ (ohne eigenen "
+            "Auslöser) und bei keinem „Bei Rückkehr“, und die Heimkehr-Beobachtung misst "
+            "{person} nicht. Signale, Haken und „Weggehen erkennen“ ändern so nichts.",
+        },
+        "en": {
+            "text": "{person}: the settings under Presence currently have no effect anywhere.",
+            "why": "{person} is not in “arm when all away” of any profile (without an own "
+            "trigger), not in any “On return”, and the homecoming observation does not measure "
+            "{person}. Signals, ticks and “detect leaving” therefore change nothing.",
+        },
+    },
     "weak_not_needed": {
         "de": {
             "text": "{person}: „Tür + Signal“ ist an, obwohl es eine Ortung gibt.",
@@ -262,6 +293,10 @@ FIX_TEXTS: Mapping[str, Mapping[str, str]] = {
     "approach_off": {
         "de": "Verlängerung bei Annäherung ausschalten",
         "en": "Turn off the extension when approaching",
+    },
+    "clear_away_persons": {
+        "de": "Personen bei „Scharf, wenn alle weg“ abwählen (sie werden ohnehin nicht beachtet)",
+        "en": "Untick the persons in “arm when all away” (they are ignored anyway)",
     },
     "weak_off": {
         "de": "„Tür + Signal“ für {person} ausschalten",
@@ -330,10 +365,10 @@ def _finding(  # noqa: PLR0913
 def _away(
     options: Mapping[str, Any], pid: str, facts: Facts, lang: str, pname: str
 ) -> list[dict[str, Any]]:
-    weak = parse_proof_settings(options).weak
+    weak = parse_proof_settings(options).weak | leaves_by_door(options)
     auto = parse_automation(options, pid)
     if auto.away_entity:
-        return [
+        entity_found = [
             _finding(
                 "away_entity",
                 WARNING,
@@ -345,6 +380,31 @@ def _away(
                 state=auto.away_entity_state,
             )
         ]
+        if auto.away_persons:
+            entity_found.append(
+                _finding(
+                    "away_persons_ignored",
+                    TIP,
+                    lang,
+                    key=pid,
+                    profile=pid,
+                    profile_name=pname,
+                    entity=facts.name(auto.away_entity),
+                    persons=", ".join(facts.name(p) for p in auto.away_persons),
+                    fixes=[
+                        _fix(
+                            "clear_away_persons",
+                            lang,
+                            profile=pid,
+                            path="automation.auto_away_persons",
+                            op=OP_SET,
+                            value=[],
+                            current=list(auto.away_persons),
+                        )
+                    ],
+                )
+            )
+        return entity_found
     found = []
     for person in auto.away_persons:
         if person in facts.located or person in weak:
@@ -392,7 +452,7 @@ def _return(
     if not back.active:
         return []
     found: list[dict[str, Any]] = []
-    weak = parse_proof_settings(options).weak
+    weak = parse_proof_settings(options).weak | leaves_by_door(options)
     for person in back.persons:
         if person in facts.located or person in weak:
             continue
@@ -584,8 +644,42 @@ def _frozen(facts: Facts, lang: str) -> list[dict[str, Any]]:
     ]
 
 
+USE_AWAY = "away"  # „Scharf, wenn alle weg“
+USE_AWAY_IGNORED = "away_ignored"  # angehakt, aber das Profil hat einen eigenen Auslöser
+USE_RETURN = "return"  # „Bei Rückkehr“
+USE_OBSERVE = "observe"  # Heimkehr-Beobachtung
+
+
+def person_uses(options: Mapping[str, Any], person: str) -> list[tuple[str, str | None]]:
+    """Wofür die Anwesenheit einer Person zählt: (Art, Profil-ID oder None)."""
+    uses: list[tuple[str, str | None]] = []
+    for pid in profile_ids(options):
+        auto = parse_automation(options, pid)
+        if person in auto.away_persons:
+            uses.append((USE_AWAY_IGNORED if auto.away_entity else USE_AWAY, pid))
+        back = parse_return(options, pid)
+        if back.active and person in back.persons:
+            uses.append((USE_RETURN, pid))
+    observed = options.get("homecoming_persons", [])
+    if options.get("homecoming_observe") and isinstance(observed, list) and person in observed:
+        uses.append((USE_OBSERVE, None))
+    return uses
+
+
+def _configured_persons(options: Mapping[str, Any]) -> list[str]:
+    """Personen, für die unter Anwesenheit etwas eingestellt ist (Signale oder Regeln)."""
+    signals = options.get("homecoming_signals", {})
+    found = [p for p, e in signals.items() if e] if isinstance(signals, Mapping) else []
+    found.extend(parse_presence_rules(options))
+    return sorted({p for p in found if isinstance(p, str)})
+
+
 def _system(options: Mapping[str, Any], facts: Facts, lang: str) -> list[dict[str, Any]]:
     found = _frozen(facts, lang)
+    for person in _configured_persons(options):
+        if any(kind != USE_AWAY_IGNORED for kind, _pid in person_uses(options, person)):
+            continue
+        found.append(_finding("presence_unused", TIP, lang, key=person, person=facts.name(person)))
     for person in sorted(parse_proof_settings(options).weak):
         if person not in facts.located:
             continue

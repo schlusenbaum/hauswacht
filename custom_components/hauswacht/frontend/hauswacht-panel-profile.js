@@ -70,6 +70,7 @@ const PT = {
     awayEntityClear: "Entfernen",
     awayEntityState: "Dieser Zustand heißt „alle weg“",
     awayEntityStates: { on: "an (on)", off: "aus (off)", not_home: "nicht zuhause (not_home, z. B. Personengruppe)" },
+    awayEntityPersons: "Ein eigener Auslöser ist gesetzt (unter „Mehr Einstellungen“): Die Personen hier werden für „alle weg“ nicht beachtet – und damit auch ihre Signale unter System → Anwesenheit. Es zählt nur die Entität.",
     awayEntityWarn: "Damit prüft Hauswacht nicht mehr selbst, ob wirklich alle weg sind: Zeigt die Entität den Zustand, wird nach der Wartezeit scharf geschaltet – egal, was Handys und Ortungen sagen. Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Unbekannt oder nicht verfügbar zählt nie als weg.",
     persons: "Scharf, wenn alle diese Personen weg sind",
     awayDelay: "Wartezeit, wenn alle weg sind (min)",
@@ -120,6 +121,7 @@ const PT = {
       autoArm: "Scharf um {t} ({days}).",
       autoDisarm: "Unscharf um {t} ({days}).",
       autoAway: "Scharf, wenn alle {n} Personen {m} Minuten sicher weg sind.",
+      autoEntity: "Scharf, wenn „{e}“ {m} Minuten lang „{s}“ zeigt – die Personen zählen dafür nicht.",
       closeOff: "Aus: Nach dem Scharfschalten läuft immer die volle Ausgangsverzögerung.",
       closeOn: "Tür auf, raus, Tür zu – {s} s später ist die Anlage scharf, statt nach {exit} s Ausgangsverzögerung.",
       closeNoDoors: "An, aber noch keine Ausgangstür gewählt.",
@@ -259,6 +261,7 @@ const PT = {
     awayEntityClear: "Remove",
     awayEntityState: "This state means “all away”",
     awayEntityStates: { on: "on", off: "off", not_home: "not home (not_home, e.g. a person group)" },
+    awayEntityPersons: "An own trigger is set (under “More settings”): the persons here are ignored for “all away” – and so are their signals under System → Presence. Only the entity counts.",
     awayEntityWarn: "Hauswacht then no longer checks itself whether everyone is really away: when the entity shows the state, it arms after the waiting time – whatever phones and locations say. If the entity is wrong while someone is home, there is a false alarm. Unknown or unavailable never counts as away.",
     persons: "Arm when all these persons are away",
     awayDelay: "Waiting time when everyone is away (min)",
@@ -309,6 +312,7 @@ const PT = {
       autoArm: "Arm at {t} ({days}).",
       autoDisarm: "Disarm at {t} ({days}).",
       autoAway: "Arm when all {n} persons have been reliably away for {m} minutes.",
+      autoEntity: "Arm when “{e}” has shown “{s}” for {m} minutes – the persons do not count for that.",
       closeOff: "Off: after arming, the full exit delay always runs.",
       closeOn: "Door open, out, door closed – {s} s later the system is armed instead of after the {exit} s exit delay.",
       closeNoDoors: "On, but no exit door chosen yet.",
@@ -579,7 +583,8 @@ class HauswachtProfileEditor extends HTMLElement {
         if (a.auto_arm_time) parts.push(fill(h.autoArm, { t: a.auto_arm_time, days }));
         if (a.auto_disarm_time) parts.push(fill(h.autoDisarm, { t: a.auto_disarm_time, days }));
       }
-      if (a.auto_away_persons.length) parts.push(fill(h.autoAway, { n: a.auto_away_persons.length, m: a.auto_away_delay }));
+      if (a.auto_away_entity) parts.push(fill(h.autoEntity, { e: this._name(a.auto_away_entity), s: a.auto_away_entity_state || "on", m: a.auto_away_delay }));
+      else if (a.auto_away_persons.length) parts.push(fill(h.autoAway, { n: a.auto_away_persons.length, m: a.auto_away_delay }));
       return parts.length ? parts.join(" ") : h.autoOff;
     }
     if (id === "close") {
@@ -659,6 +664,7 @@ class HauswachtProfileEditor extends HTMLElement {
       <div><label>${pe(this._t("disarmTime"))}${inf("auto_disarm_time")}</label><input type="time" data-a="auto_disarm_time" value="${pe(a.auto_disarm_time || "")}"></div></div>
       <label>${pe(this._t("weekdays"))}${inf("auto_weekdays")}</label><div class="days">${c.weekdays.map((w) => `<div class="chk"><input type="checkbox" data-am="auto_weekdays" value="${w}" ${a.auto_weekdays.includes(w) ? "checked" : ""}><span>${pe(t("days", w))}</span></div>`).join("")}</div>
       <label>${pe(this._t("persons"))}${inf("auto_away_persons")}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span>${this._noFix(x)}</div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
+      ${a.auto_away_entity ? `<div class="warn">${pe(this._t("awayEntityPersons"))}</div>` : ""}
       <label>${pe(this._t("awayDelay"))}${inf("auto_away_delay")}</label><input class="small" type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}">
       ${this._how("auto")}
       ${this._more("auto", `<label>${pe(this._t("awayEntity"))}</label>${this._awayEntityPick(c, a)}

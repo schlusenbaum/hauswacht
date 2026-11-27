@@ -44,7 +44,7 @@ them even when no side sheet is open.
 
 | Hint | Level | Suggestion |
 |---|---|---|
-| A person in **"arm when all away"** can never be detected as away (no location, "door + signal" off) – the profile **never** arms automatically | ⛔ Error | Remove the person, or ⚠ allow "door + signal" for them |
+| A person in **"arm when all away"** can never be detected as away (no location, "door + signal" off, leaving not set to "one is enough") – the profile **never** arms automatically | ⛔ Error | Remove the person, or ⚠ allow "door + signal" for them |
 | **"Disarm only if armed automatically"**, but the profile has no automation (no time, no schedule, no "all away") | ⛔ Error | – |
 | **"Disarm with door proof"** or **"Let in"**, but the profile has no entry door (sensor of type door) | ⛔ Error | – |
 | A person in **"On return"** can never be detected as away – "On return" never applies to them | ⚠️ Warning | Remove the person, or ⚠ allow "door + signal" |
@@ -53,6 +53,8 @@ them even when no side sheet is open.
 | **"Entry delay when approaching"** is on, but no person in the list has a direction signal | ⚠️ Warning | Turn off the extension |
 | A **location has reported exactly the same position for at least 24 hours** outside home (faked or stuck app) – it does not count as proof ([more](profiles.md#away-only-with-proof)) | ⚠️ Warning | – (if permanently wrong: remove it from the signals under System → Presence) |
 | **"Arm when all away" follows an own trigger** (entity instead of persons) – Hauswacht does not check itself ([more](profiles.md#own-trigger-for-all-away)) | ⚠️ Warning | – |
+| An **own trigger** is set, but persons are still ticked in "arm when all away" – they are ignored ([more](profiles.md#own-trigger-for-all-away), from 0.66.0b3) | 💡 Tip | Untick the persons |
+| Something is set for a person under **Presence** (signals, ticks, "detect leaving"), but the person counts **nowhere**: in no "arm when all away" without own trigger, in no "On return", not in the observation (from 0.66.0b3) | 💡 Tip | – |
 | **"Door + signal"** is on although the person has a location | 💡 Tip | Turn off "door + signal" |
 
 Measurements count only from **3 measurements** on – before that the assistant says nothing

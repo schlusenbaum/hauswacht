@@ -207,6 +207,12 @@ is home. Detecting a homecoming quickly never causes a false alarm.
 "home" (Bluetooth through the door) does not keep the person home when leaving. It counts again
 once it was away in between and then reports "home" again.
 
+Above the table, **"What does this count for?"** (*from 0.66.0b3*) shows in which profiles the
+person is in "arm when all away" or "On return" and whether the homecoming observation measures
+them. If they are in a profile with an [own trigger](#own-trigger-for-all-away), it says that they
+do not count in that profile. If they count nowhere, the page warns: then the settings in the
+table change nothing.
+
 Below the table, one sentence says **what happens** – it changes as soon as you tick a box. If a
 whole column has no tick, the page warns: without an arriving signal the person is never
 detected as home, without a leaving signal never as away.
@@ -348,6 +354,32 @@ the waiting time; unknown or unavailable never counts as away. The other rules s
 > proof. If the entity is wrong while someone is home, there is a false alarm. The
 > [assistant](setup-wizard.md#what-is-checked) shows a warning, and the scenario preview does not
 > play through "everyone leaves" for such a profile. "On return" stays with the persons.
+
+**What still counts with an own trigger – and what does not** (*from 0.66.0b3*):
+
+| Setting | Counts for this profile? |
+|---|---|
+| The entity and its state "all away" | **yes** – only it decides whether everyone is away |
+| The waiting time ("after … minutes") | **yes** |
+| The ticked persons in "arm when all away" | **no** – they are ignored |
+| Signals, ticks and "detect leaving" of these persons under System → Presence | **no**, not for "all away" in this profile |
+| "Away only with proof" (location, time window, "door + signal") | **no** – the entity needs no proof |
+| "On return" in this profile | **yes** – that stays with the persons and their signals |
+| Other profiles without an own trigger, homecoming observation | **yes** – persons and signals count there as usual |
+
+So that nobody sets something that has no effect, Hauswacht shows this in three places:
+
+- **In the profile** a note appears below the persons as soon as an own trigger is set, and the
+  sentence "This is how it behaves:" names the entity instead of the persons.
+- **Under System → Presence** each person shows **"What does this count for?"** – e.g. ""On
+  return" in profile Away · homecoming observation" – and below it "Not in profile Night: an own
+  trigger decides there …". If the person counts nowhere, a warning appears.
+- **In the check-up** of the [assistant](setup-wizard.md#what-is-checked) the tips "persons are
+  ignored" (with a suggestion to untick them) and "settings under Presence have no effect" appear.
+
+*Example:* In the profile "Away", `input_boolean.alle_weg` is set as own trigger, and Anna and Ben
+are still ticked. Away arms when the switch has been "on" for 15 minutes – whatever Anna's Wi-Fi
+says. When Anna comes home, "On return" still works via her signals.
 
 ### On return
 

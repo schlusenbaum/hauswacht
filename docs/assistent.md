@@ -45,7 +45,7 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 
 | Hinweis | Stufe | Vorschlag |
 |---|---|---|
-| Eine Person in **„Scharf, wenn alle weg“** kann nie als weg erkannt werden (keine Ortung, „Tür + Signal“ aus) – das Profil wird so **nie** automatisch scharf | ⛔ Fehler | Person aus der Liste nehmen, oder ⚠ „Tür + Signal“ für sie erlauben |
+| Eine Person in **„Scharf, wenn alle weg“** kann nie als weg erkannt werden (keine Ortung, „Tür + Signal“ aus, Weggehen nicht auf „eines reicht“) – das Profil wird so **nie** automatisch scharf | ⛔ Fehler | Person aus der Liste nehmen, oder ⚠ „Tür + Signal“ für sie erlauben |
 | **„Unscharf, nur wenn automatisch scharf“**, aber das Profil hat keine Automatik (keine Uhrzeit, kein Zeitplan, kein „alle weg“) | ⛔ Fehler | – |
 | **„Unscharf mit Türbeleg“** oder **„Reinlassen“**, aber das Profil hat keine Eingangstür (Melder vom Typ Tür) | ⛔ Fehler | – |
 | Eine Person in **„Bei Rückkehr“** kann nie als weg erkannt werden – für sie greift „Bei Rückkehr“ nie | ⚠️ Warnung | Person aus der Liste nehmen, oder ⚠ „Tür + Signal“ erlauben |
@@ -54,6 +54,8 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 | **„Eingangsverzögerung bei Annäherung“** ist an, aber keine Person der Liste hat ein Richtungs-Signal | ⚠️ Warnung | Verlängerung ausschalten |
 | Eine **Ortung meldet seit mindestens 24 Stunden exakt dieselbe Position** außerhalb von Zuhause (vorgetäuscht oder hängende App) – sie zählt nicht als Beleg ([mehr](profile.md#weg-nur-mit-beleg)) | ⚠️ Warnung | – (bei dauerhaft falscher Ortung: unter System → Anwesenheit aus den Signalen nehmen) |
 | **„Scharf, wenn alle weg“ folgt einem eigenen Auslöser** (Entität statt Personen) – Hauswacht prüft dann nicht selbst ([mehr](profile.md#eigener-auslöser-für-alle-weg)) | ⚠️ Warnung | – |
+| Ein **eigener Auslöser** ist gesetzt, aber bei „Scharf, wenn alle weg“ sind noch Personen angehakt – sie werden nicht beachtet ([mehr](profile.md#eigener-auslöser-für-alle-weg), ab 0.66.0b3) | 💡 Tipp | Personen abwählen |
+| Für eine Person ist unter **Anwesenheit** etwas eingestellt (Signale, Haken, „Weggehen erkennen“), aber sie zählt **nirgends**: in keinem „Scharf, wenn alle weg“ ohne eigenen Auslöser, in keinem „Bei Rückkehr“, nicht in der Beobachtung (ab 0.66.0b3) | 💡 Tipp | – |
 | **„Tür + Signal“** ist an, obwohl die Person eine Ortung hat | 💡 Tipp | „Tür + Signal“ ausschalten |
 
 Messwerte zählen erst ab **3 Messungen** – vorher sagt der Assistent dazu nichts.

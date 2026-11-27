@@ -6,6 +6,32 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b3] - 2026-11-27
+
+Zeigen, was wirklich zählt – vor allem beim **eigenen Auslöser für „alle weg“**.
+
+### Neu
+
+- **„Wofür zählt das?“** unter System → Anwesenheit, bei jeder Person: in welchen Profilen sie bei
+  „Scharf, wenn alle weg“ oder „Bei Rückkehr“ steht und ob die Beobachtung sie misst. Bei einem
+  Profil mit eigenem Auslöser steht dort, dass sie in diesem Profil nicht zählt. Zählt sie
+  nirgends, warnt die Seite.
+- **Check-up:** zwei neue Tipps.
+  - „Personen werden nicht beachtet“: Ein eigener Auslöser ist gesetzt, aber bei „Scharf, wenn
+    alle weg“ sind noch Personen angehakt. Mit Vorschlag, sie abzuwählen.
+  - „Einstellungen unter Anwesenheit wirken nirgends“: Für eine Person sind Signale oder Regeln
+    eingestellt, aber sie steht in keinem Profil und wird nicht beobachtet.
+- **Profil:** Ist ein eigener Auslöser gesetzt, steht unter den Personen ein Hinweis, dass sie für
+  „alle weg“ nicht beachtet werden. „So verhält sich das:“ nennt die Entität statt der Personen.
+- **Doku:** Tabelle „Was beim eigenen Auslöser noch zählt – und was nicht“ unter
+  [Eigener Auslöser](docs/profile.md#eigener-auslöser-für-alle-weg).
+
+### Geändert
+
+- Wer bei Weggehen „eines reicht (nach Tür)“ hat, gilt nicht mehr als „kann nie als weg erkannt
+  werden“ – auch ohne Ortung. Der Fehler im Check-up und die Markierung „keine Ortung“ im Profil
+  entfallen dann.
+
 ## [0.66.0b2] - 2026-11-27
 
 ### Korrigiert

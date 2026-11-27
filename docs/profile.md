@@ -214,6 +214,12 @@ zuhause. Schnelles Erkennen beim Heimkommen macht nie einen Fehlalarm.
 sagt (Bluetooth durch die Tür), hält die Person beim Weggehen nicht zuhause. Es zählt erst
 wieder, wenn es zwischendurch weg war und dann wieder „zuhause“ sagt.
 
+Über der Tabelle steht **„Wofür zählt das?“** (*ab 0.66.0b3*): in welchen Profilen die Person bei
+„Scharf, wenn alle weg“ oder „Bei Rückkehr“ steht und ob die Heimkehr-Beobachtung sie misst. Steht
+sie in einem Profil mit [eigenem Auslöser](#eigener-auslöser-für-alle-weg), steht dort, dass sie
+in diesem Profil nicht zählt. Zählt sie nirgends, warnt die Seite: Dann ändern die Einstellungen
+in der Tabelle nichts.
+
 Unter der Tabelle steht in einem Satz, **was passiert** – er ändert sich sofort, wenn du einen
 Haken setzt. Fehlt ein Haken in einer ganzen Spalte, warnt die Seite: Ohne Ankommen-Signal wird
 die Person nie als zuhause erkannt, ohne Weggehen-Signal nie als weg.
@@ -358,6 +364,34 @@ Regeln bleiben (nur aus „unscharf“, offene Melder nie automatisch bestätigt
 > Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Der
 > [Assistent](assistent.md#was-geprüft-wird) zeigt dazu eine Warnung, und die Szenario-Vorschau
 > spielt „alle gehen weg“ für so ein Profil nicht durch. „Bei Rückkehr“ bleibt bei den Personen.
+
+**Was beim eigenen Auslöser noch zählt – und was nicht** (*ab 0.66.0b3*):
+
+| Einstellung | Zählt für dieses Profil? |
+|---|---|
+| Die Entität und ihr Zustand „alle weg“ | **ja** – nur sie entscheidet, ob alle weg sind |
+| Die Wartezeit („nach … Minuten“) | **ja** |
+| Die angehakten Personen bei „Scharf, wenn alle weg“ | **nein** – sie werden nicht beachtet |
+| Signale, Haken und „Weggehen erkennen“ dieser Personen unter System → Anwesenheit | **nein**, nicht für „alle weg“ in diesem Profil |
+| „Weg nur mit Beleg“ (Ortung, Zeitfenster, „Tür + Signal“) | **nein** – die Entität braucht keinen Beleg |
+| „Bei Rückkehr“ in diesem Profil | **ja** – das bleibt bei den Personen und ihren Signalen |
+| Andere Profile ohne eigenen Auslöser, Heimkehr-Beobachtung | **ja** – dort zählen Personen und Signale wie gewohnt |
+
+Damit man nichts einstellt, was gar nicht wirkt, zeigt Hauswacht das an drei Stellen:
+
+- **Im Profil** steht unter den Personen ein Hinweis, sobald ein eigener Auslöser gesetzt ist, und
+  der Satz „So verhält sich das:“ nennt die Entität statt der Personen.
+- **Unter System → Anwesenheit** steht bei jeder Person **„Wofür zählt das?“** – z. B.
+  „„Bei Rückkehr“ im Profil Abwesend · Heimkehr-Beobachtung“ – und darunter „Nicht im Profil
+  Nacht: Dort entscheidet ein eigener Auslöser …“. Zählt die Person nirgends, steht dort eine
+  Warnung.
+- **Im Check-up** des [Assistenten](assistent.md#was-geprüft-wird) stehen die Tipps „Personen
+  werden nicht beachtet“ (mit Vorschlag, sie abzuwählen) und „Einstellungen unter Anwesenheit
+  wirken nirgends“.
+
+*Beispiel:* Im Profil „Abwesend“ ist `input_boolean.alle_weg` als eigener Auslöser gesetzt, und
+Anna und Ben sind noch angehakt. Abwesend wird scharf, wenn der Schalter 15 Minuten „an“ ist –
+egal, was Annas WLAN sagt. Kommt Anna heim, greift „Bei Rückkehr“ trotzdem über ihre Signale.
 
 ### Bei Rückkehr
 

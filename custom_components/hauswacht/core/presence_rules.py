@@ -94,6 +94,11 @@ def parse_presence_rules(options: Mapping[str, Any]) -> dict[str, PersonRules]:
     return rules
 
 
+def leaves_by_door(options: Mapping[str, Any]) -> frozenset[str]:
+    """Personen mit „eines reicht“: Sie können auch ohne Ortung als weg erkannt werden."""
+    return frozenset(p for p, r in parse_presence_rules(options).items() if r.mode == MODE_ONE)
+
+
 def dump_presence_rules(rules: Mapping[str, PersonRules]) -> dict[str, Any]:
     """Regeln zurück in Optionen (nur Abweichungen, sortiert – für stabile Vergleiche)."""
     arrive = {p: sorted(r.arrive_off) for p, r in sorted(rules.items()) if r.arrive_off}

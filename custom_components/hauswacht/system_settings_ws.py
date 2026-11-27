@@ -18,6 +18,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import MASTER_USER_ID
 from .core.action_codes import ACTION_CODE_KEYS, ALL_KEYPADS, CodeAction, parse_action_codes
+from .core.advisor import person_uses
 from .core.areas import parse_areas, profile_area
 from .core.automation import parse_automation, person_value
 from .core.away_proof import ACCURACY_MODES, is_locator, parse_proof_settings
@@ -34,7 +35,7 @@ from .core.controls import (
     parse_controls,
 )
 from .core.homecoming import direction_hint, presence
-from .core.presence_rules import DEFAULT_RULES, parse_presence_rules
+from .core.presence_rules import DEFAULT_RULES, leaves_by_door, parse_presence_rules
 from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info, stale_override_hours
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
 from .core.returning import parse_return
@@ -332,6 +333,14 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             # Ankommen/Weggehen je Signal und Person (ADR 0021) und was die Signale gerade sagen
             "presence": _presence_rules(options),
             "signal_now": _signal_now(hass, options),
+            # Wofür die Anwesenheit jeder Person zählt (Profil-Automatik, Rückkehr, Beobachtung)
+            "uses": {
+                p: [
+                    {"kind": kind, "profile": profile_info(options, pid).name if pid else None}
+                    for kind, pid in person_uses(options, p)
+                ]
+                for p in _presence_persons(options)
+            },
             # Wer gilt gerade als zuhause/weg und warum (ADR 0016)
             "status": _presence_status(main),
             # Messungen der Beobachtung (Heimkehr, Eingänge, Weggehen) – nur wenn sie läuft
@@ -355,6 +364,7 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 display_name(hass, p)
                 for p in _presence_persons(options)
                 if p not in proof.weak
+                and p not in leaves_by_door(options)
                 and not locatable(hass, p, _signals(options, p), proof.geofence)
             ],
         },

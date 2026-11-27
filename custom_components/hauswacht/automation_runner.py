@@ -76,7 +76,7 @@ from .core.debug_log import describe
 from .core.homecoming import DIRECTION_HINT as DIRECTION_APPROACH
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
-from .core.presence_rules import Signal, parse_presence_rules
+from .core.presence_rules import DEFAULT_RULES, MODE_ONE, Signal, parse_presence_rules
 from .core.profiles import profile_ids
 from .core.returning import ReturnConfig, parse_return
 from .core.state_machine import AlarmState
@@ -387,6 +387,7 @@ class AutomationRunner:
             for p in self._home
             if p not in self.proof.settings.weak
             and p not in self._away_entities()
+            and self.proof.rules.get(p, DEFAULT_RULES).mode != MODE_ONE
             and not locatable(self.hass, p, self.signals.get(p, ()), self.proof.settings.geofence)
         ]
 

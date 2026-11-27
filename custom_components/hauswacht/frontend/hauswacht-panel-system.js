@@ -41,6 +41,10 @@ const ST = {
     signals: "Zusätzliche Signale je Person",
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
     presTitle: "Welche Signale zählen?",
+    presUses: "Wofür zählt das?",
+    presUseKinds: { away: "„Scharf, wenn alle weg“ im Profil {p}", return: "„Bei Rückkehr“ im Profil {p}", observe: "Heimkehr-Beobachtung (misst nur)" },
+    presUseIgnored: "Nicht im Profil {p}: Dort entscheidet ein eigener Auslöser, ob alle weg sind. {name} und diese Signale werden dafür nicht beachtet.",
+    presUseNone: "Wirkt zurzeit nirgends: {name} steht in keinem Profil bei „Scharf, wenn alle weg“ (ohne eigenen Auslöser) oder „Bei Rückkehr“ und wird nicht beobachtet. Diese Einstellungen ändern so nichts.",
     presSignal: "Signal",
     presArrive: "Ankommen",
     presLeave: "Weggehen",
@@ -249,6 +253,10 @@ const ST = {
     signals: "Additional signals per person",
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
     presTitle: "Which signals count?",
+    presUses: "What does this count for?",
+    presUseKinds: { away: "“arm when all away” in profile {p}", return: "“On return” in profile {p}", observe: "homecoming observation (only measures)" },
+    presUseIgnored: "Not in profile {p}: an own trigger decides there whether everyone is away. {name} and these signals are ignored for that.",
+    presUseNone: "Currently has no effect: {name} is not in “arm when all away” (without an own trigger) or “On return” of any profile and is not observed. These settings therefore change nothing.",
     presSignal: "Signal",
     presArrive: "Arriving",
     presLeave: "Leaving",
@@ -440,7 +448,7 @@ const se = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // Befunde der gemeinsamen Prüfung, die zum Seitenblatt „Anwesenheit“ gehören
-const PRESENCE_CODES = ["away_never", "return_never", "weak_not_needed", "approach_without_direction", "location_frozen"];
+const PRESENCE_CODES = ["presence_unused", "away_never", "return_never", "weak_not_needed", "approach_without_direction", "location_frozen"];
 
 class HauswachtSystemEditor extends HTMLElement {
   // open({hass, settings, kind, item}) – item: ID (Bereich, Aktions-Code, Bedienteil) oder null
@@ -559,7 +567,7 @@ class HauswachtSystemEditor extends HTMLElement {
       .join("");
     const modes = this._t("presModes");
     const one = rule.mode === "one";
-    return `<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
+    return `${this._presenceUses(person, pname, d)}<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
       <div class="ptwrap"><table class="pt"><thead><tr><th>${se(this._t("presSignal"))}</th><th>${se(this._t("presArrive"))}</th><th>${se(this._t("presLeave"))}</th><th>${se(this._t("presNow"))}</th></tr></thead><tbody>${body}</tbody></table></div>
       <label>${se(this._t("presMode"))} ${this._info("presMode", person)}</label>
       <select data-pmode="${se(person)}">${["all", "one"].map((m) => `<option value="${m}" ${rule.mode === m ? "selected" : ""}>${se(modes[m])}</option>`).join("")}</select>
@@ -567,6 +575,19 @@ class HauswachtSystemEditor extends HTMLElement {
       ${one && !rule.door ? `<div class="warn">${se(this._t("presNoDoorWarn").replaceAll("{name}", pname))}</div>` : ""}
       ${this._presenceWarn(person, pname, rows, rule)}
       <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._presenceHow(person, pname, rows, rule, sname, d))}</div></div>`;
+  }
+
+  _presenceUses(person, pname, d) {
+    // Wofür die Anwesenheit dieser Person zählt – und wo sie wegen eines eigenen Auslösers nicht zählt
+    const uses = (d.uses || {})[person];
+    if (!uses) return "";
+    const kinds = this._t("presUseKinds");
+    const used = uses.filter((u) => u.kind !== "away_ignored").map((u) => kinds[u.kind].replace("{p}", u.profile || ""));
+    const ignored = uses.filter((u) => u.kind === "away_ignored").map((u) => `<div class="muted">${se(this._t("presUseIgnored").replace("{p}", u.profile).replace("{name}", pname))}</div>`).join("");
+    const line = used.length
+      ? `<div class="uses"><b>${se(this._t("presUses"))}</b> ${se(used.join(" · "))}</div>`
+      : `<div class="warn">${se(this._t("presUseNone").replaceAll("{name}", pname))}</div>`;
+    return line + ignored;
   }
 
   _presenceWarn(person, pname, rows, rule) {
@@ -908,6 +929,7 @@ class HauswachtSystemEditor extends HTMLElement {
       .how { margin: 8px 0 4px; font-size: .9rem; }
       details.more { margin-top: 10px; }
       .pres { margin: 10px 0; }
+      .uses { margin: 8px 0 2px; font-size: .9rem; }
       .ptwrap { max-width: 100%; overflow-x: auto; }
       table.pt { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6px 0; font-size: .9rem; }
       table.pt th, table.pt td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); overflow-wrap: anywhere; vertical-align: middle; }

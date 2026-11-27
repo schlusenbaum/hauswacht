@@ -26,6 +26,7 @@ from .core.away_proof import parse_proof_settings
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
 from .core.passage import parse_passage, passage_from_input
+from .core.presence_rules import leaves_by_door
 from .core.profiles import (
     DEFAULT_ALARM_CYCLES,
     DEFAULT_ENTRY_DELAY,
@@ -189,6 +190,7 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                     "id": s.entity_id,
                     "name": s.name,
                     "locatable": s.entity_id in weak
+                    or s.entity_id in leaves_by_door(options)
                     or locatable(hass, s.entity_id, _signals(options, s.entity_id), geofence),
                 }
                 for s in hass.states.async_all("person")
