@@ -123,3 +123,11 @@ def test_report_section() -> None:
     assert any(line.startswith("| Niklas | 1 / 1 |") for line in lines)
     assert any(line.startswith("| Petra | 0 / 0 | 20 s / 20 s | 0 / 1 |") for line in lines)
     assert exit_check_lines({}, {}, DE) == []
+
+
+def test_echo_stops_when_everyone_is_away() -> None:
+    """0.66.0b8: Ein Lebenszeichen nach „alle weg“ ist die Rückkehr, kein Nachklang."""
+    raw = [check(1000, niklas=(20, 5, 360))]  # nach 6 min wieder da
+    stats = exit_check_stats(parse_checks(raw), verdicts_for([1000.0]), NOW)[NIKLAS]
+    assert stats["left_echo"] == 1
+    assert stats["left_echo_max"] == 120  # alle Signale waren nach 120 s weg

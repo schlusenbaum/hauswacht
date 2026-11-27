@@ -1,6 +1,6 @@
 # ADR 0021: Anwesenheit je Person – Signale fürs Ankommen und Weggehen, mit „Was wäre wenn“
 
-- Status: angenommen (wird in 0.66 umgesetzt)
+- Status: umgesetzt (0.66.0b1 bis 0.66.0b8, Nachtrag unten)
 - Anlass: Rückmeldung aus dem eigenen Haushalt. „Scharf, wenn alle weg“ braucht teilweise mehr als
   15 Minuten, bis sicher feststeht, dass jemand weg ist. Zum Scharfschalten ist das zu lange. Die
   Einstellungen dafür sind auf drei Stellen verteilt und schwer zu durchschauen.
@@ -148,19 +148,46 @@ Abschwächende Vorschläge brauchen wie im Check-up (ADR 0017) eine Bestätigung
 
 ## Folgen
 
-- Eine neue Ansicht unter System → Anwesenheit & Heimkehr ersetzt die bisherige Signalliste. Die
-  Optionen `homecoming_signals`, `away_proof_*` werden übernommen bzw. aufgeteilt, ohne dass sich
-  das Verhalten ändert.
-- Der Kern bekommt eine reine Funktion für „Was wäre wenn“. Live-Erkennung und Vorschau nutzen
-  dieselben Regeln.
-- Die Messung „Lebenszeichen rund um die Tür“ zählt heute auch nach einer Rückkehr weiter.
-  Das wird dabei behoben: Sie endet beim Weggehen oder bei der Rückkehr.
-- Doku: Einstellungsseite, „So entscheidet Hauswacht“, Profile, Fehlersuche, jeweils deutsch und
-  englisch, mit Beispielen (Anna, Ben).
-- Tests: Übernahme alter Einstellungen ohne Verhaltensänderung, „nach Tür“ an/aus, unbekannt zählt
-  nie als weg, „Haus leer“ nur bei allen, eigener Auslöser unverändert, keine Orte im Speicher.
+- Die Tabelle „Welche Signale zählen?“ steht im Kasten jeder Person unter System → Anwesenheit &
+  Heimkehr. Die Signalliste (`homecoming_signals`) und „Weg nur mit Beleg“ (`away_proof_*`)
+  bleiben, wie sie sind. Neu sind nur die Abweichungen je Person: `presence_arrive_off`,
+  `presence_leave_off`, `presence_leave_mode`, `presence_leave_no_door`. Wer nichts einstellt,
+  hat keine dieser Optionen – das Verhalten ist unverändert.
+- Der Kern hat eine reine Funktion für „Was wäre wenn“ (`core/presence_whatif.py`). Live-Erkennung
+  (`AwayTracker.judge_signals`), Szenario-Vorschau und Nachrechnung nutzen dieselben Regeln.
+- Die Messung „Lebenszeichen rund um die Tür“ zählte den Nachklang auch nach einer Rückkehr
+  weiter. Behoben in 0.66.0b8: Er endet, sobald alle Signale der Person „weg“ sagen.
+- Doku: Einstellungsseite, „So entscheidet Hauswacht“, Profile, Assistent, Testmodus,
+  Beobachtungen, jeweils deutsch und englisch, mit Beispielen (Anna, Ben).
+- Tests: alle Signalfolgen mit alter und neuer Regel gleich, „nach Tür“ an/aus, unbekannt zählt
+  nie als weg, „Haus leer“ nur bei allen, eigener Auslöser unverändert, Garage wie Haus,
+  Nachrechnung speichert nichts.
+
+## Nachtrag: Umsetzung in 0.66
+
+- **Ankommen nach dem Weggehen (b1):** Weggehen hat Vorrang vor Ankommen-Signalen, die einfach
+  weiter „zuhause“ sagen (Bluetooth durch die Tür). Ein Ankommen-Signal zählt danach erst wieder,
+  wenn es neu auf „zuhause“ wechselt. Kommt genau das Signal zurück, das „eines reicht“ ausgelöst
+  hat, gilt die Person wieder als zuhause (Irrtum) – auch wenn es nur fürs Weggehen zählt.
+- **Was zählt wofür (b3):** „Wofür zählt das?“ je Person, Hinweis im Profil beim eigenen Auslöser,
+  Check-up-Tipps „Personen werden nicht beachtet“ und „Einstellungen wirken nirgends“. Wer
+  „eines reicht“ hat, gilt nicht mehr als „kann nie als weg erkannt werden“.
+- **Alle Bereiche gleich (b4):** Signale, Heim-WLANs und die Regeln je Person gelten auch in
+  weiteren Bereichen (vorher sah z. B. die Garage nur die Personen-Entität).
+- **Datenquelle (b5):** „Was wäre wenn“ rechnet mit den vorhandenen Messungen der
+  Heimkehr-Beobachtung statt mit eigenen Daten (Aufbewahrung wie dort, höchstens 60 Tage).
+- **Empfehlung (b6):** probiert alle Kombinationen von Weggehen-Signalen durch und nennt den
+  Grund, wenn es bei „alle müssen“ bleibt. Bei „alle müssen“ wird nur abgewählt, was Weggänge
+  verhindert. Vorläufige Zahlen auch unter 5 Weggängen, ohne Empfehlung.
+- **„Fälschlich“ = länger als die Wartezeit (b7, Variante B):** Ein Irrtum zählt nur, wenn er
+  länger gedauert hat als die Wartezeit des Profils mit „alle weg“ (die kürzeste, sonst 15 min).
+  Kürzere hätten nicht scharf geschaltet. Erwogen und verworfen: auf Haus-Ebene zählen (hängt vom
+  Zufall ab, wer gerade zuhause war) und eine erlaubte Anzahl (weicht „0 Fehlalarme“ auf).
+  Bei der Rückkehr zählen nur Türen **nach** dem Wegfallen (vorher wurden kurze Irrtümer
+  übersehen).
+- **Szenario-Vorschau (b8):** kennt „eines reicht (nach Tür)“ und „ohne Tür“.
 
 ## Offen
 
 - Wie bindet die Ausgangserkennung (ADR 0014) die neue Regel „eines reicht (nach Tür)“ ein?
-  Vermutlich gewinnt sie direkt an Tempo. Das klären wir beim Bauen.
+  Vermutlich gewinnt sie direkt an Tempo. Das klären wir, wenn die Ausgangserkennung gebaut wird.

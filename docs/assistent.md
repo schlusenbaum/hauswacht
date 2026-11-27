@@ -146,9 +146,9 @@ Je Profil, soweit es passt:
 | **Einbruch durch die Tür …** | je Eingangstür des Profils | Profil scharf, die Tür geht auf, niemand schaltet unscharf |
 | **Einbruch durch ein Fenster** | Profil hat Fenster | Profil scharf, ein Fenster geht auf |
 | **… kommt heim** | je Person aus „Bei Rückkehr“ | Alle gehen weg (schaltet „alle weg“, ist das Profil automatisch scharf, sonst von Hand), zwei Stunden später kommt die Person heim. Das Handy meldet sich 30 s **vor** der Tür – oder, wenn gemessen, so spät **nach** der Tür wie bei euch beobachtet |
-| **Alle gehen weg** | Profil hat „Scharf, wenn alle weg“ | Alle gehen nacheinander durch die Tür, danach meldet das Handy „weg“ |
-| **Alle sind zuhause, die Handys schlafen ein** | Profil hat „Scharf, wenn alle weg“ | Alle Handys melden „weg“, ohne dass eine Tür aufgeht (auch: WLAN fällt aus) |
-| **Jemand geht kurz raus – dabei schläft das Handy von … ein** | je Person mit „Tür + Signal“ | Die anderen sind unterwegs. Jemand öffnet kurz die Tür (Paket, Müll), kurz danach schläft das Handy der Person ein |
+| **Alle gehen weg** | Profil hat „Scharf, wenn alle weg“ | Alle gehen nacheinander durch die Tür, danach meldet das Handy „weg“. Personen mit „eines reicht (nach Tür)“ gelten damit als weg, auch ohne Ortung (ab 0.66.0b8) |
+| **Alle sind zuhause, die Handys schlafen ein** | Profil hat „Scharf, wenn alle weg“ | Alle Handys melden „weg“, ohne dass eine Tür aufgeht (auch: WLAN fällt aus). Ist bei jemandem „nach Tür“ abgeschaltet, wird das Profil hier scharf – ❌ |
+| **Jemand geht kurz raus – dabei schläft das Handy von … ein** | je Person mit „Tür + Signal“ oder „eines reicht (nach Tür)“ (ab 0.66.0b8) | Die anderen sind unterwegs. Jemand öffnet kurz die Tür (Paket, Müll), kurz danach schläft das Handy der Person ein |
 
 **Beispiel:** Profil Nacht mit „Unscharf mit Türbeleg“ für Anna, Eingangsverzögerung 30 s. Annas
 Handy hat sich in drei Heimkehrten bis zu 38 s nach der Tür gemeldet. Die Vorschau zeigt:
@@ -175,7 +175,7 @@ Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dic
 **Assistent** → **Einrichten nach Zielen** öffnet sich ein Seitenblatt mit sechs Schritten:
 
 1. **Haushalt:** Welche Personen Home Assistant kennt und ob sie als „weg“ erkannt werden können
-   (✓ Ortung, „Tür + Signal“, ✓ Richtung, ⚠ Ortung eingefroren, ⚠ kann nicht als weg erkannt
+   (✓ Ortung, „Tür + Signal“ bzw. „eines reicht“, ✓ Richtung, ⚠ Ortung eingefroren, ⚠ kann nicht als weg erkannt
    werden). Nur Anzeige – Ortung und „Tür + Signal“ stellst du unter System → Anwesenheit ein.
 2. **Türen und Fenster** (*seit 0.65.0b2*), sortiert nach Etage und Raum:
    - **Noch in keiner Meldergruppe:** Türen, Fenster und Bewegungsmelder, die Home Assistant kennt,

@@ -6,6 +6,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b8] - 2026-11-27
+
+Durchsicht vor dem Abschluss von 0.66.
+
+### Korrigiert
+
+- **Szenario-Vorschau kennt „eines reicht (nach Tür)“.** „Alle gehen weg“ meldete für Personen
+  ohne Ortung „wird nie scharf“, obwohl sie mit „eines reicht“ erkannt werden. Jetzt spielt die
+  Vorschau die Regel durch: „Jemand geht kurz raus …“ gibt es auch für diese Personen, und mit
+  abgeschaltetem „nach Tür“ zeigt „Handys schlafen ein“ ❌.
+- **Einrichten nach Zielen:** Personen mit „eines reicht“ gelten im Schritt „Haushalt“ als „kann
+  als weg erkannt werden“.
+- **Messung „Lebenszeichen rund um die Tür“:** Der Nachklang nach dem Rausgehen zählt nur noch
+  bis „alle Signale weg“. Eine Rückkehr kurz danach wurde bisher als langer Nachklang gezählt.
+
+### Doku
+
+- Fehlersuche „Scharf, wenn alle weg schaltet nicht scharf“: Hinweis auf „Welche Signale zählen?“,
+  eigenen Auslöser und Wartezeit. Testmodus: neue Belege „Tür + eines der Signale“. Assistent:
+  Szenarien mit „eines reicht“. „So entscheidet Hauswacht“: Zeile „Welche Signale zählen?“.
+  README: Anwesenheit je Signal. ADR 0021: umgesetzt, mit Nachtrag.
+
 ## [0.66.0b7] - 2026-11-27
 
 ### Geändert

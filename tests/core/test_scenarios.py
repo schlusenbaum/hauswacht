@@ -157,3 +157,26 @@ def test_own_trigger_is_not_played_through() -> None:
     assert leave["result"] == WARN
     assert "Alle weg" in leave["summary"]
     assert "phones_sleep:away" not in found
+
+
+def test_one_is_enough_in_scenarios() -> None:
+    """ADR 0021: „eines reicht (nach Tür)“ – Ben ohne Ortung wird erkannt; ohne Tür unsicher."""
+    options = {
+        **_options(auto_away_persons=[ANNA, BEN], auto_away_delay=10),
+        "presence_leave_mode": {BEN: "one"},
+    }
+    found = _by_key(scenarios(options, _facts(located=frozenset({ANNA}))))
+    leave = found["all_leave:away"]
+    assert leave["result"] == OK
+    assert any("eines reicht" in step["text"] for step in leave["steps"])
+    assert found["phones_sleep:away"]["result"] == OK  # schlafendes Handy ohne Tür: nichts
+    assert found[f"short_out:away:{BEN}"]["result"] == WARN  # fremde Tür + Handy schläft
+    # „nach Tür“ abgeschaltet: ein schlafendes Handy schaltet scharf
+    no_door = {
+        **_options(auto_away_persons=[BEN], auto_away_delay=10),
+        "presence_leave_mode": {BEN: "one"},
+        "presence_leave_no_door": [BEN],
+    }
+    found = _by_key(scenarios(no_door, _facts(located=frozenset({ANNA}))))
+    assert found["phones_sleep:away"]["result"] == BAD
+    assert found["all_leave:away"]["result"] == WARN

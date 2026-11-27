@@ -229,6 +229,7 @@ Everything on the [settings page](settings-page.md) (page "Hauswacht" in the sid
 | Arm automatically: time, schedule, everyone away | Profile → automation | [Automation](profiles.md#automation) |
 | On return, time window, approach | Profile → On return | [On return](profiles.md#on-return) |
 | Signals per person, proof for "away" | System → Presence | [How Hauswacht knows who is home](profiles.md#how-hauswacht-knows-who-is-home) |
+| Which signals count for arriving and leaving, "one is enough (after a door)", recommendation | System → Presence → "Which signals count?" | [Arriving and leaving per signal](profiles.md#arriving-and-leaving-per-signal) |
 | Passage | Profile, control devices | [Passage](passage.md) |
 | Guest mode | Switch "Guest mode" | [Guest mode](profiles.md#guest-mode) |
 | What happens on alarm | Profile → sirens, notify | [Sirens](sirens.md), [Notifications](notifications.md) |

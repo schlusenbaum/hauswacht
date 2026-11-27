@@ -39,6 +39,7 @@ from .changes.areas import save_area
 from .changes.profiles import save_profile
 from .changes.sirens import save_sirens
 from .changes.zones import save_zone
+from .presence_rules import leaves_by_door
 from .profiles import (
     DEFAULT_ENTRY_DELAY,
     MAX_DELAY,
@@ -256,8 +257,8 @@ def _lang(language: str) -> str:
 
 
 def detectable(options: Mapping[str, Any], hh: Household) -> frozenset[str]:
-    """Personen, die als weg erkannt werden können (Ortung oder „Tür + Signal“)."""
-    weak = parse_proof_settings(options).weak
+    """Personen, die als weg erkannt werden können (Ortung, „Tür + Signal“ oder „eines reicht“)."""
+    weak = parse_proof_settings(options).weak | leaves_by_door(options)
     return frozenset(p for p in hh.persons if p in hh.facts.located or p in weak)
 
 

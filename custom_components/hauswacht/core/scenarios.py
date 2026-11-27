@@ -42,6 +42,7 @@ from .automation_engine import (
     disarm_allowed,
 )
 from .away_proof import AwayTracker, Fix, parse_proof_settings
+from .presence_rules import MODE_ONE, PersonRules, Signal, parse_presence_rules
 from .profiles import build_profiles, profile_ids, profile_info
 from .returning import parse_return
 from .state_machine import (
@@ -116,6 +117,8 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "proof_fresh": "Ortung",
         "proof_door": "Tür und Ortung",
         "proof_weak": "Tür + Signal – unsicher",
+        "proof_one_door": "Tür, danach eines der Signale weg (eines reicht)",
+        "proof_one": "eines der Signale weg, ohne Tür – unsicher",
         # Ergebnisse
         "r_alarm_after": "Alarm nach {s} s – so soll es sein.",
         "r_alarm_now": "Sofort Alarm – so soll es sein.",
@@ -134,11 +137,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "r_armed_weak": "Scharf nach {m} Minuten – aber nur mit unsicherem Beleg (Tür + Signal) "
         "für {who}.",
         "r_never_armed": "Wird nie scharf: {who} gilt nie als weg (keine Ortung, „Tür + Signal“ "
-        "aus).",
+        "aus, Weggehen nicht auf „eines reicht“).",
         "r_stays_disarmed": "Bleibt unscharf – ein schlafendes Handy macht niemanden abwesend.",
         "r_armed_home": "Achtung: Profil {profile} wird scharf, obwohl {who} zuhause ist – "
-        "„Tür + Signal“ hält das einschlafende Handy für Weggehen. Bewegt sich {who}, gibt es "
-        "Alarm.",
+        "„Tür + Signal“ bzw. „eines reicht“ hält das einschlafende Handy für Weggehen. Bewegt "
+        "sich {who}, gibt es Alarm.",
     },
     "en": {
         "t_burglary_door": "Burglary through the door {door}",
@@ -175,6 +178,8 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "proof_fresh": "location",
         "proof_door": "door and location",
         "proof_weak": "door + signal – uncertain",
+        "proof_one_door": "door, then one of the signals away (one is enough)",
+        "proof_one": "one of the signals away, without a door – uncertain",
         "r_alarm_after": "Alarm after {s} s – as it should be.",
         "r_alarm_now": "Immediate alarm – as it should be.",
         "r_no_alarm": "No alarm! The door does not trigger in this profile.",
@@ -192,10 +197,11 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "r_armed_weak": "Armed after {m} minutes – but only with an uncertain proof (door + "
         "signal) for {who}.",
         "r_never_armed": "Never arms: {who} never counts as away (no location, “door + signal” "
-        "off).",
+        "off, leaving not set to “one is enough”).",
         "r_stays_disarmed": "Stays disarmed – a sleeping phone makes nobody absent.",
         "r_armed_home": "Caution: profile {profile} arms although {who} is at home – “door + "
-        "signal” takes the sleeping phone for leaving. If {who} moves, there is an alarm.",
+        "signal” or “one is enough” takes the sleeping phone for leaving. If {who} moves, there "
+        "is an alarm.",
     },
 }
 
@@ -206,6 +212,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
 @dataclass
 class _Person:
     phone: bool = True  # Handy meldet „zuhause“ (WLAN, Ping …)
+    phone_since: float = 0.0  # seit wann (für „eines reicht“, ADR 0021)
     fix_at: float | None = None  # letzte Ortung (nur mit Ortung)
     fix_out: bool = False
 
@@ -246,6 +253,12 @@ class Sim:
             {pid: parse_return(self.options, pid) for pid in pids},
         )
         self.tracker = AwayTracker(parse_proof_settings(self.options))
+        # „eines reicht“ (ADR 0021): das Handy steht hier für die Weggehen-Signale der Person
+        self.tracker.rules = {
+            person: PersonRules(mode=MODE_ONE, door=rule.door)
+            for person, rule in parse_presence_rules(self.options).items()
+            if rule.mode == MODE_ONE
+        }
         # Nur echte Personen – ein eigener Auslöser für „alle weg“ ist keine (ADR 0018)
         entities = {c.away_entity for c in self.engine.configs.values() if c.away_entity}
         self.people = {p: _Person() for p in self.engine.persons if p not in entities}
@@ -293,7 +306,11 @@ class Sim:
         current: dict[str, bool | None] = {}
         for person, p in self.people.items():
             before = self.tracker.proven(person)
-            value = self.tracker.judge(person, p.phone, self._fixes(person), self.now)
+            if person in self.tracker.rules:
+                phone = Signal(_phone(person), p.phone, p.phone_since)
+                value = self.tracker.judge_signals(person, [phone], self._fixes(person), self.now)
+            else:
+                value = self.tracker.judge(person, p.phone, self._fixes(person), self.now)
             if value is False and not before:
                 kind = (self.tracker.kind(person) or ("", 0.0))[0]
                 self.proofs[person] = kind
@@ -311,7 +328,9 @@ class Sim:
     def phone(self, person: str, home: bool, *, quiet: bool = False) -> None:
         p = self.people[person]
         if p.phone and not home:
-            self.tracker.note_signal_left(person, self.now)
+            self.tracker.note_signal_left(person, self.now, _phone(person))
+        if p.phone != home:
+            p.phone_since = self.now
         p.phone = home
         if not quiet:
             self.note("s_phone_home" if home else "s_phone_away", person=self.name(person))
@@ -563,6 +582,11 @@ def _return_verdict(sim: Sim, person: str, opened: float) -> dict[str, Any]:
     return sim.result(WARN, "r_pin_needed", s=seconds, person=sim.name(person))
 
 
+def _phone(person: str) -> str:
+    """Kennung des gedachten Handys einer Person in der Szenario-Vorschau."""
+    return f"{person}#handy"
+
+
 def _all_leave(options: Mapping[str, Any], facts: Facts, lang: str, pid: str) -> dict[str, Any]:
     auto = parse_automation(options, pid)
     doors = facts.entry_doors.get(pid, ())
@@ -575,7 +599,7 @@ def _all_leave(options: Mapping[str, Any], facts: Facts, lang: str, pid: str) ->
         who = ", ".join(sim.name(p) for p in auto.away_persons if p not in sim.proofs)
         return sim.result(BAD, "r_never_armed", who=who)
     minutes = round((sim.now - start) / 60)
-    weak = [p for p in auto.away_persons if sim.proofs.get(p) == "weak"]
+    weak = [p for p in auto.away_persons if sim.proofs.get(p) in ("weak", "one")]
     if weak:
         return sim.result(WARN, "r_armed_weak", m=minutes, who=", ".join(map(sim.name, weak)))
     return sim.result(OK, "r_armed_after", m=minutes)
@@ -622,7 +646,10 @@ def scenarios(
     """Alle Standard-Szenarien je Profil: Unerwünschtes zuerst, dann mit Haken, dann gut."""
     lang = "de" if language == "de" else "en"
     found: list[dict[str, Any]] = []
-    weak = parse_proof_settings(options).weak
+    # Wer auch ohne Ortung über Tür + Signal als weg gilt: „Tür + Signal“ oder „eines reicht“
+    weak = parse_proof_settings(options).weak | {
+        p for p, r in parse_presence_rules(options).items() if r.mode == MODE_ONE and r.door
+    }
     for pid in profile_ids(options):
         doors = facts.entry_doors.get(pid, ())
         windows = facts.windows.get(pid, ())

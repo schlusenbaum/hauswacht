@@ -100,6 +100,7 @@ Pro Person eine Zeile: **zuhause**, **weg** oder **unbekannt** – und warum. Be
 | Niklas: **zuhause** – zuhause laut: Niklas iPhone WLAN | Mindestens ein Signal sagt „zuhause“. |
 | Finja: **weg** – Beleg: frische Ortung außerhalb (14:32) | Eine frische, genaue Ortung liegt außerhalb der Heimzone. |
 | Martin: **weg** – Beleg: Tür + Signal (unsicher) | Tür ging auf, danach meldete das Signal „weg“ (nur, wenn für ihn erlaubt). |
+| Anna: **weg** – Beleg: Tür + eines der Signale | „Weggehen erkennen: eines reicht (nach Tür)“ – Tür ging auf, danach sagte eines ihrer Weggehen-Signale „weg“ (ab 0.66.0b1). Ohne „nach Tür“ heißt es „eines der Signale (ohne Tür, unsicher)“. |
 | Niklas: **zuhause** – alle Signale „weg“, aber kein Beleg | Alles sagt „weg“, aber es gibt keinen Beleg. Für Hauswacht zählt er weiter als **nicht weg**. |
 | Finja: **unbekannt** – unklar: Finja iPhone | Ein Signal liefert gerade nichts Brauchbares. |
 

@@ -234,6 +234,7 @@ Alles auf der [Einstellungsseite](einstellungsseite.md) (Seite „Hauswacht“ i
 | Automatisch scharf: Uhrzeit, Zeitplan, alle weg | Profil → Automatik | [Automatik](profile.md#automatik) |
 | Bei Rückkehr, Zeitfenster, Annäherung | Profil → Bei Rückkehr | [Bei Rückkehr](profile.md#bei-rückkehr) |
 | Signale je Person, Beleg für „weg“ | System → Anwesenheit | [Woran Hauswacht erkennt, wer zuhause ist](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist) |
+| Welche Signale fürs Ankommen und Weggehen zählen, „eines reicht (nach Tür)“, Empfehlung | System → Anwesenheit → „Welche Signale zählen?“ | [Ankommen und Weggehen je Signal](profile.md#ankommen-und-weggehen-je-signal) |
 | Durchgang | Profil, Bedienteile | [Durchgang](durchgang.md) |
 | Gastmodus | Schalter „Gastmodus“ | [Gastmodus](profile.md#gastmodus) |
 | Was beim Alarm passiert | Profil → Sirenen, Benachrichtigen | [Sirenen](sirenen.md), [Benachrichtigungen](benachrichtigungen.md) |

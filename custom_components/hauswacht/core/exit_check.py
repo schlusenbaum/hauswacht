@@ -93,13 +93,13 @@ def note_life_sign(record: dict[str, Any], person: str, now: float) -> bool:
     return True
 
 
-def _left_doors(verdicts: Iterable[DepartureVerdict]) -> dict[str, set[float]]:
-    """Je Person: Zeitpunkte der Türöffnungen, durch die sie rausgegangen ist."""
-    left: dict[str, set[float]] = {}
+def _left_doors(verdicts: Iterable[DepartureVerdict]) -> dict[str, dict[float, float]]:
+    """Je Person: Türöffnungen, durch die sie rausgegangen ist -> Sekunden bis „alle weg“."""
+    left: dict[str, dict[float, float]] = {}
     for v in verdicts:
         if v.door is None or not v.departure.source.endswith(EARLIEST):
             continue
-        left.setdefault(v.departure.person, set()).add(v.door.at)
+        left.setdefault(v.departure.person, {})[v.door.at] = max(0.0, v.delay or 0.0)
     return left
 
 
@@ -112,8 +112,15 @@ def exit_check_stats(
     done = [c for c in checks if now - c.at >= CHECK_WINDOW]
     persons = {p for c in done for p in c.persons}
     for person in sorted(persons):
-        gone = left.get(person, set())
+        gone = left.get(person, {})
         out = [c.persons[person] for c in done if person in c.persons and c.at in gone]
+        # Nachklang: nur bis alle Signale weg waren (0.66.0b8). Ein Lebenszeichen danach ist
+        # die Rückkehr, kein Nachklang – vorher zählte z. B. eine Rückkehr nach 6 min mit.
+        out_until = [
+            (c.persons[person], gone[c.at])
+            for c in done
+            if person in c.persons and c.at in gone and c.persons[person].fresh
+        ]
         stay = [
             c.persons[person]
             for c in done
@@ -121,7 +128,7 @@ def exit_check_stats(
         ]
         out_ages = [p.age for p in out if p.age is not None]
         out_fresh = [p for p in out if p.fresh]
-        echoes = [p.last for p in out_fresh if p.last is not None]
+        echoes = [min(p.last, until) for p, until in out_until if p.last is not None]
         confirms = [p.confirm for p in stay if p.confirm is not None]
         result[person] = {
             # a) Lebenszeichen vor dem Rausgehen

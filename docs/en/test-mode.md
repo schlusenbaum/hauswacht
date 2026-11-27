@@ -97,6 +97,7 @@ One line per person: **home**, **away** or **unknown** – and why. Examples:
 | Niklas: **home** – home according to: Niklas iPhone Wi-Fi | At least one signal says "home". |
 | Finja: **away** – Proof: fresh location outside (14:32) | A fresh, accurate location is outside the home zone. |
 | Martin: **away** – Proof: door + signal (uncertain) | The door opened, then the signal reported "away" (only if allowed for him). |
+| Anna: **away** – Proof: door + one of the signals | "Detect leaving: one is enough (after a door)" – the door opened, then one of her leaving signals reported "away" (from 0.66.0b1). Without "after a door" it says "one of the signals (no door, uncertain)". |
 | Niklas: **home** – all signals "away", but no proof | Everything says "away", but there is no proof. For Hauswacht he still counts as **not away**. |
 | Finja: **unknown** – unclear: Finja iPhone | A signal currently delivers nothing usable. |
 

@@ -142,9 +142,9 @@ Per profile, where it fits:
 | **Burglary through the door …** | per entry door of the profile | Profile armed, the door opens, nobody disarms |
 | **Burglary through a window** | profile has windows | Profile armed, a window opens |
 | **… comes home** | per person in "On return" | Everyone leaves (if "all away" arms the profile, it is armed automatically, otherwise by hand); two hours later the person comes home. The phone reports 30 s **before** the door – or, if measured, as late **after** the door as observed in your home |
-| **Everyone leaves** | profile has "arm when all away" | Everyone leaves through the door one after another, then the phone reports "away" |
-| **Everyone is home, the phones go to sleep** | profile has "arm when all away" | All phones report "away" without any door opening (also: Wi-Fi outage) |
-| **Someone steps out briefly – meanwhile the phone of … goes to sleep** | per person with "door + signal" | The others are out. Someone opens the door briefly (parcel, rubbish), shortly after that the person's phone goes to sleep |
+| **Everyone leaves** | profile has "arm when all away" | Everyone leaves through the door one after another, then the phone reports "away". Persons with "one is enough (after a door)" thus count as away, even without a location (from 0.66.0b8) |
+| **Everyone is home, the phones go to sleep** | profile has "arm when all away" | All phones report "away" without any door opening (also: Wi-Fi outage). If "after a door" is switched off for someone, the profile arms here – ❌ |
+| **Someone steps out briefly – meanwhile the phone of … goes to sleep** | per person with "door + signal" or "one is enough (after a door)" (from 0.66.0b8) | The others are out. Someone opens the door briefly (parcel, rubbish), shortly after that the person's phone goes to sleep |
 
 **Example:** profile Night with "disarm with door proof" for Anna, entry delay 30 s. Anna's phone
 reported up to 38 s after the door in three homecomings. The preview shows:
@@ -171,7 +171,7 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
 **Assistant** → **Set up by goals**, a side sheet with six steps opens:
 
 1. **Household:** which people Home Assistant knows and whether they can be detected as "away"
-   (✓ location, "door + signal", ✓ direction, ⚠ location frozen, ⚠ cannot be detected as away).
+   (✓ location, "door + signal" or "one is enough", ✓ direction, ⚠ location frozen, ⚠ cannot be detected as away).
    Display only – set up locations and "door + signal" under System → Presence.
 2. **Doors and windows** (*since 0.65.0b2*), sorted by floor and room:
    - **Not in any sensor group yet:** doors, windows and motion sensors that Home Assistant knows
