@@ -68,6 +68,12 @@ const ST = {
     wmNever: "sagt beim Weggehen meist nicht „weg“ ({seen} von {n}) – fürs Weggehen besser abwählen",
     wmMistakes: "{n} Irrtümer",
     wmMistake1: "1 Irrtum",
+    wmLongest: " (längster {t})",
+    wmLong: ", {n} davon länger als die Wartezeit",
+    wiWait: "Gezählt werden nur Irrtümer, die länger als {w} min gedauert haben – kürzere hätten nicht scharf geschaltet, weil Hauswacht abbricht, sobald die Person wieder als zuhause gilt. {src}",
+    wiWaitProfile: "Die {w} min sind die Wartezeit im Profil {p} (Automatik → „Scharf, wenn alle weg“). Kürzer eingestellt, wird die Empfehlung strenger.",
+    wiWaitDefault: "Die {w} min sind die voreingestellte Wartezeit, weil noch kein Profil „Scharf, wenn alle weg“ mit Personen nutzt. Sobald eines das tut, gilt dessen Wartezeit.",
+    wiHouseNone: "Kein Profil schaltet bei „alle weg“ automatisch scharf. Einstellen lässt sich das im Profil unter Automatik.",
     wmNone: "noch nicht gemessen",
     wiHouseTitle: "Was heißt das fürs Haus?",
     wiHouseNot: "Profil {p}: Nicht alle Personen bei „Scharf, wenn alle weg“ werden beobachtet – keine Nachrechnung.",
@@ -319,6 +325,12 @@ const ST = {
     wmNever: "mostly does not report “away” when leaving ({seen} of {n}) – better untick for leaving",
     wmMistakes: "{n} mistakes",
     wmMistake1: "1 mistake",
+    wmLongest: " (longest {t})",
+    wmLong: ", {n} of them longer than the waiting time",
+    wiWait: "Only mistakes that lasted longer than {w} min count – shorter ones would not have armed, because Hauswacht stops as soon as the person counts as home again. {src}",
+    wiWaitProfile: "The {w} min are the waiting time in profile {p} (Automation → “arm when all away”). Set shorter, the recommendation gets stricter.",
+    wiWaitDefault: "The {w} min are the default waiting time, because no profile uses “arm when all away” with persons yet. As soon as one does, its waiting time applies.",
+    wiHouseNone: "No profile arms automatically when everyone is away. You can set this in the profile under Automation.",
     wmNone: "not measured yet",
     wiHouseTitle: "What does this mean for the house?",
     wiHouseNot: "Profile {p}: not all persons in “arm when all away” are observed – no recalculation.",
@@ -713,8 +725,12 @@ class HauswachtSystemEditor extends HTMLElement {
     const house = root.querySelector("[data-wihouse]");
     if (house) {
       const rows = Object.values(wi.enabled ? wi.profiles || {} : {});
-      house.hidden = !rows.length;
-      house.innerHTML = rows.length ? `<b>${se(this._t("wiHouseTitle"))}</b>${rows.map((r) => this._wiHouse(r, wi)).join("")}<div class="muted">${se(this._t("wiHouseHint"))}</div>` : "";
+      house.hidden = !wi.enabled;
+      house.innerHTML = !wi.enabled
+        ? ""
+        : rows.length
+          ? `<b>${se(this._t("wiHouseTitle"))}</b>${rows.map((r) => this._wiHouse(r, wi)).join("")}<div class="muted">${se(this._t("wiHouseHint"))}</div>`
+          : `<b>${se(this._t("wiHouseTitle"))}</b><div class="muted">${se(this._t("wiHouseNone"))}</div>`;
     }
   }
 
@@ -723,7 +739,10 @@ class HauswachtSystemEditor extends HTMLElement {
     const parts = [];
     if (info.seen >= Math.max(1, Math.round(info.trips * 0.5))) parts.push(this._t("wmSeen").replace("{t}", this._dur(info.median)));
     else parts.push(this._t("wmNever").replace("{seen}", info.seen).replace("{n}", info.trips));
-    parts.push(info.mistakes === 1 ? this._t("wmMistake1") : this._t("wmMistakes").replace("{n}", info.mistakes));
+    let mist = info.mistakes === 1 ? this._t("wmMistake1") : this._t("wmMistakes").replace("{n}", info.mistakes);
+    if (info.mistakes && info.longest_mistake) mist += this._t("wmLongest").replace("{t}", this._dur(info.longest_mistake));
+    if (info.mistakes_long) mist += this._t("wmLong").replace("{n}", info.mistakes_long);
+    parts.push(mist);
     return parts.join(" · ");
   }
 
@@ -770,6 +789,7 @@ class HauswachtSystemEditor extends HTMLElement {
       <tr><td>${se(this._t("wiDetected"))}</td><td>${se(cell(info.current, "median") + missed(info.current))}</td><td>${se(cell(adv, "median") + missed(adv))}</td></tr>
       <tr><td>${se(this._t("wiMistakes"))}</td><td>${se(cell(info.current, "m"))}</td><td>${se(cell(adv, "m"))}</td></tr></tbody></table>
       ${why ? `<div class="muted">${se(why)}</div>` : ""}
+      <div class="muted">${se(this._t("wiWait").replace("{w}", info.wait).replace("{src}", (info.wait_profile_name ? this._t("wiWaitProfile").replace("{p}", info.wait_profile_name) : this._t("wiWaitDefault")).replace("{w}", info.wait)))}</div>
       <div class="muted">${se(this._t("wiBasis").replace("{n}", info.trips).replace("{d}", wi.days))}</div>
       <div class="muted">${se(this._t("wiNoDoor").replace("{n}", info.no_door.mistakes).replace("{night}", night))}</div>
       ${rule.mode === "all" || adv.mode === "all" ? `<div class="muted">${se(this._t("wiAllNote"))}</div>` : ""}

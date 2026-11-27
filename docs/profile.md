@@ -267,8 +267,16 @@ So zählt Hauswacht:
 |---|---|
 | **Weggang** | Eine Eingangstür war auf, danach waren alle Signale der Person weg, und bei der Rückkehr ging wieder eine Tür auf (oder die Person ist noch weg) |
 | **Irrtum** | Ein Signal sagt „weg“ und kommt zurück, **ohne** dass dabei eine Tür aufging – die Person war also gar nicht draußen |
-| **Vermutlich fälschlich „weg“** | So oft hätte die Regel jemanden als weg gezählt, obwohl es ein Irrtum war. Bei „nach Tür“ zählen nur Irrtümer kurz nach einer Tür |
+| **Vermutlich fälschlich „weg“** | So oft hätte die Regel jemanden als weg gezählt, obwohl es ein Irrtum war – und zwar **länger als die Wartezeit** (siehe unten). Bei „nach Tür“ zählen nur Irrtümer kurz nach einer Tür |
 
+- **Nur Irrtümer, die länger als die Wartezeit dauern, zählen als fälschlich** (*ab 0.66.0b7*).
+  Kommt das Signal vorher zurück, gilt die Person wieder als zuhause, und Hauswacht bricht das
+  Scharfschalten ab – ein kurzer WLAN-Schluckauf schadet also nicht. Als Wartezeit gilt die
+  kürzeste der Profile, in denen die Person bei „Scharf, wenn alle weg“ steht; nutzt kein Profil
+  „alle weg“ mit Personen, die voreingestellten **15 Minuten**. Ändern lässt sie sich im Profil
+  unter Automatik. **Kürzere Wartezeit heißt strengere Empfehlung**, weil dann auch kürzere
+  Irrtümer zählen. Unter jedem Signal steht, wie lang der längste Irrtum war, z. B. „2 Irrtümer
+  (längster ~40 s)“, und wie viele davon länger als die Wartezeit waren.
 - Eine Empfehlung gibt es erst ab **5 Weggängen** in den 14 Tagen. Davor zeigt der Kasten
   trotzdem die **vorläufigen Zahlen**, z. B. „Vorläufig für Ben – noch keine Empfehlung (4 von 5
   Weggängen in 14 Tagen)“, aber ohne Knopf „Übernehmen“ (*ab 0.66.0b6*).
@@ -283,7 +291,8 @@ So zählt Hauswacht:
   müssen“ schlägt Hauswacht nur vor, Signale abzuwählen, die Weggänge **verhindern** (weil sie
   beim Weggehen nie „weg“ sagen).
 - Hat ein Profil einen [eigenen Auslöser](#eigener-auslöser-für-alle-weg), steht bei „Was heißt das
-  fürs Haus?“: „eigener Auslöser – hier entscheidet die Entität, keine Nachrechnung“.
+  fürs Haus?“: „eigener Auslöser – hier entscheidet die Entität, keine Nachrechnung“. Schaltet
+  kein Profil bei „alle weg“, steht dort genau das.
 - Bei **„alle müssen weg sein“** braucht es im Echtbetrieb zusätzlich den Beleg (Ortung). Den kann
   die Nachrechnung nicht nachspielen. Sie zeigt nur, wann alle Weggehen-Signale weg waren, und
   schreibt bei den Irrtümern „durch Beleg geschützt“.

@@ -35,6 +35,7 @@ EVAL_DAYS = 14  # so weit zurück wird nachgerechnet
 MIN_TRIPS = 5  # so viele Weggänge braucht eine Empfehlung
 MAX_MISTAKES = 0  # so oft darf „eines reicht“ in den 14 Tagen fälschlich gewesen sein
 MIN_DETECTED = 0.8  # so viele Weggänge muss eine Empfehlung erkennen (Anteil)
+DEFAULT_WAIT = 15  # min: Wartezeit, solange kein Profil „alle weg“ mit Personen nutzt
 MAX_SEARCH = 8  # bis zu so vielen Signalen werden alle Kombinationen probiert
 SAME_EVENT = 60  # s: Irrtümer mehrerer Signale so nah beieinander zählen einmal
 SHORT_TRIP = 10 * 60  # s: so kurz weg = „nur kurz raus“ (Müll, Briefkasten)
@@ -58,6 +59,10 @@ class Flip:
     @property
     def mistake(self) -> bool:
         return self.back is not None and not self.door_at_back
+
+    @property
+    def duration(self) -> float:
+        return (self.back - self.at) if self.back is not None else 0.0
 
 
 @dataclass(frozen=True)
@@ -88,8 +93,11 @@ class Outcome:
         }
 
 
-def _door_at(index: DoorIndex, at: float) -> bool:
-    return index.latest_between(at - DEPARTURE_WINDOW, at + DEPARTURE_EARLY) is not None
+def _door_at_return(index: DoorIndex, left: float, back: float) -> bool:
+    """Ging bei der Rückkehr eine Tür auf? Nur Türen **nach** dem Wegfallen zählen – die Tür, durch
+    die jemand (scheinbar) ging, ist keine Rückkehr."""
+    start = max(back - DEPARTURE_WINDOW, left + 1)
+    return index.latest_between(start, back + DEPARTURE_EARLY) is not None
 
 
 def collect(
@@ -104,7 +112,7 @@ def collect(
         if dep.at < since:
             continue
         back = dep.at + v.away if v.back else None
-        door_back = back is not None and _door_at(index, back)
+        door_back = back is not None and _door_at_return(index, dep.at, back)
         if dep.source.endswith(EARLIEST):
             if v.door is not None and (back is None or door_back):
                 trips.setdefault(dep.person, []).append(Trip(v.door.at, back))
@@ -142,6 +150,9 @@ class History:
     now: float
     window: float  # s: Zeitfenster nach der Tür (wie „Tür + Signal“)
     is_night: Callable[[float], bool] = lambda _t: False
+    # s: Wartezeit im Profil. Kürzere Irrtümer hätten nicht scharf geschaltet – Hauswacht bricht
+    # ab, sobald die Person wieder zuhause ist – und zählen deshalb nicht als „fälschlich“.
+    wait: float = DEFAULT_WAIT * 60
 
 
 def simulate(
@@ -170,7 +181,7 @@ def simulate(
         backs: dict[float, float | None] = {}
         for s in leave:
             for flip in hist.flips.get(s, ()):
-                if not flip.mistake:
+                if not flip.mistake or flip.duration < hist.wait:
                     continue
                 if rules.door and (
                     flip.door_before is None or not 0 <= flip.at - flip.door_before <= hist.window
@@ -195,6 +206,11 @@ def signal_summary(signal: str, hist: History) -> dict[str, Any]:
         "seen": len(delays),  # bei so vielen Weggängen sagte das Signal „weg“
         "median": round(statistics.median(delays)) if delays else None,
         "mistakes": len(_count_events(f.at for f in flips if f.mistake)),
+        # davon so lang, dass sie scharf geschaltet hätten (länger als die Wartezeit)
+        "mistakes_long": len(
+            _count_events(f.at for f in flips if f.mistake and f.duration >= hist.wait)
+        ),
+        "longest_mistake": round(max((f.duration for f in flips if f.mistake), default=0)) or None,
     }
 
 
@@ -375,6 +391,17 @@ class WhatIfInput:
     is_night: Callable[[float], bool] = lambda _t: False
 
 
+def _wait(person: str, profiles: Mapping[str, tuple[Sequence[str], int]]) -> tuple[int, str | None]:
+    """Welche Wartezeit für die Person zählt: die kürzeste der Profile mit ihr bei „alle weg“,
+    sonst die kürzeste aller solchen Profile, sonst der Standard (15 min)."""
+    mine = [(delay, pid) for pid, (members, delay) in profiles.items() if person in members]
+    found = mine or [(delay, pid) for pid, (_m, delay) in profiles.items()]
+    if not found:
+        return DEFAULT_WAIT, None
+    delay, pid = min(found)
+    return delay, pid
+
+
 def whatif(data: WhatIfInput) -> dict[str, Any]:
     """Nachrechnung für die Seite „Anwesenheit“: je Person und je Profil."""
     since = data.now - EVAL_DAYS * 86400
@@ -386,14 +413,20 @@ def whatif(data: WhatIfInput) -> dict[str, Any]:
         rule = data.rules.get(person, PersonRules())
         signals = list(data.signals.get(person, ()))
         own = [person, *signals]
+        wait, wait_profile = _wait(person, data.profiles)
         hist = History(
             trips.get(person, []),
             {s: flips.get((person, s), []) for s in own},
             data.now,
             data.window,
             data.is_night,
+            wait * 60,
         )
-        result["persons"][person] = person_whatif(person, rule, signals, hist)
+        result["persons"][person] = {
+            **person_whatif(person, rule, signals, hist),
+            "wait": wait,
+            "wait_profile": wait_profile,
+        }
         _o, current_away[person] = simulate(rule, own, hist)
         _p, advised_away[person] = simulate(recommend(rule, own, hist), own, hist)
     for pid, (members, delay) in data.profiles.items():

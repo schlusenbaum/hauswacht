@@ -77,6 +77,9 @@ def build_whatif(main: Any, options: Mapping[str, Any]) -> dict[str, Any]:
     )
     for pid, entry in result["profiles"].items():
         entry["name"] = names.get(pid, pid)
+    for person in result["persons"].values():
+        pid = person.get("wait_profile")
+        person["wait_profile_name"] = names.get(pid) if pid else None
     for pid, name in triggers.items():
         result["profiles"][pid] = {"observed": False, "trigger": True, "name": name}
     return {"enabled": True, **result}

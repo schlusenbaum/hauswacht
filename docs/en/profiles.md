@@ -261,8 +261,16 @@ How Hauswacht counts:
 |---|---|
 | **Departure** | An entry door was open, afterwards all signals of the person were away, and on return a door opened again (or the person is still away) |
 | **Mistake** | A signal reports "away" and comes back **without** a door opening – so the person was not outside at all |
-| **Probably wrongly "away"** | How often the rule would have counted someone as away although it was a mistake. With "after a door" only mistakes shortly after a door count |
+| **Probably wrongly "away"** | How often the rule would have counted someone as away although it was a mistake – for **longer than the waiting time** (see below). With "after a door" only mistakes shortly after a door count |
 
+- **Only mistakes that last longer than the waiting time count as wrong** (*from 0.66.0b7*). If
+  the signal comes back earlier, the person counts as home again and Hauswacht stops arming – so
+  a short Wi-Fi hiccup does no harm. The waiting time is the shortest of the profiles in which the
+  person is in "arm when all away"; if no profile uses "all away" with persons, the default
+  **15 minutes**. You change it in the profile under Automation. **A shorter waiting time means a
+  stricter recommendation**, because shorter mistakes count then too. Below each signal you see
+  how long the longest mistake was, e.g. "2 mistakes (longest ~40 s)", and how many of them were
+  longer than the waiting time.
 - A recommendation needs at least **5 departures** in the 14 days. Before that the box still shows
   the **preliminary numbers**, e.g. "Preliminary for Ben – no recommendation yet (4 of 5
   departures in 14 days)", but without the "Apply" button (*from 0.66.0b6*).
@@ -277,7 +285,8 @@ How Hauswacht counts:
   away" Hauswacht only suggests unticking signals that **prevent** departures (because they never
   report "away" when leaving).
 - If a profile has an [own trigger](#own-trigger-for-all-away), "What does this mean for the
-  house?" says: "own trigger – the entity decides here, no recalculation".
+  house?" says: "own trigger – the entity decides here, no recalculation". If no profile arms when
+  everyone is away, it says exactly that.
 - With **"all must be away"** real operation also needs proof (location). The recalculation cannot
   replay that. It only shows when all leaving signals were away and says "protected by proof" for
   mistakes.

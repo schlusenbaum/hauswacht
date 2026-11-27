@@ -6,6 +6,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b7] - 2026-11-27
+
+### Geändert
+
+- **Nur Irrtümer, die länger als die Wartezeit dauern, zählen als „fälschlich“.** Ein kurzer
+  WLAN-Schluckauf hätte nie scharf geschaltet – Hauswacht bricht ab, sobald die Person wieder als
+  zuhause gilt. Als Wartezeit gilt die des Profils mit „Scharf, wenn alle weg“ (die kürzeste, wenn
+  es mehrere sind), sonst 15 Minuten. Kürzere Wartezeit = strengere Empfehlung. Der Kasten
+  erklärt, welche Wartezeit gilt und woher sie kommt.
+- **Dauer der Irrtümer** unter jedem Signal, z. B. „2 Irrtümer (längster ~40 s)“, und wie viele
+  davon länger als die Wartezeit waren.
+- **„Was heißt das fürs Haus?“** sagt, wenn kein Profil bei „alle weg“ scharf schaltet, statt
+  leer zu bleiben.
+
+### Korrigiert
+
+- **Kurze Irrtümer wurden übersehen.** Die Tür, kurz bevor ein Signal wegfiel, zählte auch als
+  Tür bei dessen Rückkehr. Fiel das WLAN nach einer fremden Tür für ein paar Minuten weg, galt
+  das deshalb nicht als Irrtum, und „eines reicht“ sah sicherer aus, als es ist. Jetzt zählen
+  bei der Rückkehr nur Türen, die **danach** aufgingen.
+
 ## [0.66.0b6] - 2026-11-27
 
 ### Geändert

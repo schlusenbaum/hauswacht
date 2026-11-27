@@ -183,3 +183,36 @@ def test_profiles_in_result() -> None:
     assert away["advised_quick"]["delay"] == 3
     assert away["advised"]["after"] < away["current"]["after"]
     assert result["profiles"]["night"] == {"observed": False}  # Ben wird nicht beobachtet
+
+
+def test_short_mistake_does_not_count_rule_b() -> None:
+    """Regel B: Ein Irrtum kürzer als die Wartezeit hätte nicht scharf geschaltet."""
+    world = World()
+    _five_trips(world)
+    at = 13 * DAY + 12 * 3600
+    world.door(at)
+    world.flip(ANNA, WLAN, at + 60, at + 60 + 40)  # 40 s WLAN-Schluckauf nach fremder Tür
+    rules = {ANNA: PersonRules(mode=MODE_ONE)}
+    anna = world.run(rules)["persons"][ANNA]
+    assert anna["wait"] == 15  # Standard ohne Profil
+    assert anna["wait_profile"] is None
+    assert anna["current"]["mistakes"] == 0
+    wlan = {s["id"]: s for s in anna["signals"]}[WLAN]
+    assert wlan["mistakes"] == 1
+    assert wlan["mistakes_long"] == 0
+    assert wlan["longest_mistake"] == 40
+
+
+def test_wait_comes_from_the_persons_profile() -> None:
+    world = World()
+    _five_trips(world)
+    at = 13 * DAY + 12 * 3600
+    world.door(at)
+    world.flip(ANNA, WLAN, at + 60, at + 60 + 240)  # 4 min
+    rules = {ANNA: PersonRules(mode=MODE_ONE)}
+    long_wait = world.run(rules, profiles={"away": ([ANNA], 15)})["persons"][ANNA]
+    assert long_wait["current"]["mistakes"] == 0
+    short_wait = world.run(rules, profiles={"away": ([ANNA], 3)})["persons"][ANNA]
+    assert short_wait["wait"] == 3
+    assert short_wait["wait_profile"] == "away"
+    assert short_wait["current"]["mistakes"] == 1  # kürzere Wartezeit -> strenger
