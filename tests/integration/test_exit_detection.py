@@ -266,7 +266,7 @@ async def test_automatic_passage_ends_when_phone_away(
     assert any(e.data.get("type") == "ExitDetected" for e in events)
     state = hass.states.get(PANEL)
     assert state is not None
-    assert state.attributes["exit_detection"]["mode"] is None
+    assert state.attributes["exit_detection"] is None
     # Durchgang vorbei: Tür auf -> Eingangsverzögerung
     await _door(hass)
     assert _panel(hass) == AlarmControlPanelState.PENDING
