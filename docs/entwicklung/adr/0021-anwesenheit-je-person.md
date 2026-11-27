@@ -111,8 +111,8 @@ Abschwächende Vorschläge brauchen wie im Check-up (ADR 0017) eine Bestätigung
   bleiben lokal im Speicher der Integration, werden über **14 Tage** ausgewertet und nach
   **30 Tagen** gelöscht. Der Export (ADR 0019) enthält sie nur zusammengefasst und mit
   Platzhaltern.
-- Bei zu wenig Daten gibt es **keine Empfehlung**, sondern z. B. „Noch zu wenig Daten (3 von 5
-  Weggängen)“.
+- Eine Empfehlung gibt es erst ab **5 Weggängen** der Person im Auswertungszeitraum. Davor
+  steht z. B. „Noch zu wenig Daten (3 von 5 Weggängen)“.
 - „Fälschlich“ ist eine Schätzung. Hauswacht weiß nicht sicher, ob jemand wirklich weg war, und
   schreibt deshalb „vermutlich“.
 
@@ -162,4 +162,3 @@ Abschwächende Vorschläge brauchen wie im Check-up (ADR 0017) eine Bestätigung
 
 - Wie bindet die Ausgangserkennung (ADR 0014) die neue Regel „eines reicht (nach Tür)“ ein?
   Vermutlich gewinnt sie direkt an Tempo. Das klären wir beim Bauen.
-- Welche Mindestzahl an Weggängen reicht für eine Empfehlung? Vorschlag: 5.
