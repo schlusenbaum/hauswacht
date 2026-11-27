@@ -21,6 +21,14 @@ const PT = {
     secAuto: "Automatik",
     secClose: "Scharf durch Schließen der Tür",
     secPassage: "Durchgang – rein oder raus, bleibt scharf",
+    exitOn: "Rausgehen ohne PIN erkennen (Ausgangserkennung)",
+    exitWait: "Stille Wartezeit (Minuten)",
+    exitInside: "Melder im Haus (empfohlen)",
+    exitInsideNone: "Keine passenden Melder gefunden (Bewegungsmelder, Lichter, Schalter).",
+    exitNoInside: "Ohne Melder im Haus gilt die stille Wartezeit für jede Öffnung der Eingangstür, solange jemand zuhause ist – auch für einen Einbruch: Die Sirene käme erst nach der Wartezeit. Die Nachricht mit „Alarm jetzt“ kommt trotzdem sofort. Empfehlung: einen Bewegungsmelder im Flur oder an der Treppe oder das Treppenlicht eintragen.",
+    exitExpert: "Längere Wartezeit erlauben (bis 15 Minuten, Expertenoption)",
+    exitExpertWarn: "So lange bliebe ein Einbruch ohne Melder im Haus still. Nur wählen, wenn eure Handys wirklich so lange brauchen, um „weg“ zu melden.",
+    exitNoDelay: "Das Profil hat keine Eingangsverzögerung – ohne sie gibt es nichts aufzuschieben.",
     passageOn: "Durchgang erlauben",
     passageHint: "Gedacht für Profile, die nur die Außenhaut überwachen: Melder im Haus bleiben scharf – der Durchgang hilft nur an den Außentüren. Reinkommen: in der Eingangsverzögerung PIN oder Karte und eine Profil-Taste (oder die Durchgang-Taste) am Keypad. Rausgehen: solange scharf, PIN oder Karte und irgendeine Profil-Taste (es wird nie umgeschaltet) oder die Durchgang-Taste.",
     passageDuration: "Durchgangszeit (Minuten)",
@@ -126,6 +134,9 @@ const PT = {
       closeOn: "Tür auf, raus, Tür zu – {s} s später ist die Anlage scharf, statt nach {exit} s Ausgangsverzögerung.",
       closeNoDoors: "An, aber noch keine Ausgangstür gewählt.",
       passageOff: "Aus: Wer rein oder raus will, schaltet unscharf.",
+      exitOff: "Aus: Wer beim Rausgehen den PIN vergisst, löst nach der Eingangsverzögerung Alarm aus.",
+      exitOn: "Geht eine Eingangstür auf, während jemand zuhause ist{inside}, wartet Hauswacht bis zu {w} min still. Sagt in der Zeit das Handy einer Person 30 s lang „weg“, bleibt das Profil scharf – sonst Alarm. Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm jetzt“.",
+      exitInsideHow: " und vorher der Melder im Haus etwas gemeldet hat",
       passageOn: "Rein oder raus ohne unscharf: Die Tür ist {m} Minuten frei, {which}, Ende {end}. {n} Melder auf dem Weg sind frei, nach dem Schließen noch {after} s. Alles andere bleibt scharf.",
       passageWhich: { first: "nur die erste Tür", all: "alle Eingangstüren" },
       passageEnd: { time: "nach Ablauf der Zeit", returned: "sobald du zurück bist" },
@@ -161,6 +172,9 @@ const PT = {
       close_enabled: "An: Nach dem Scharfschalten genügt es, durch eine Ausgangstür zu gehen und sie zu schließen – dann ist die Anlage scharf, ohne die volle Ausgangsverzögerung abzuwarten. Die Ausgangstüren dürfen beim Scharfschalten offen sein.",
       close_doors: "Durch diese Türen gehst du beim Verlassen, z. B. Haustür vorne und hinten.",
       close_settle: "So lange muss die Tür nach dem Schließen zu bleiben, bevor scharf geschaltet wird. Geht sie vorher wieder auf, beginnt die Zeit neu.",
+      exit_enabled: "Sicherheitsnetz, falls jemand beim Rausgehen PIN und Durchgang vergisst: Geht eine Eingangstür auf, während jemand nachweislich zuhause ist, läuft statt der Eingangsverzögerung eine stille Wartezeit. Sagt das Handy einer Person in der Zeit „weg“ (Regeln unter System → Anwesenheit), bleibt das Profil scharf – sonst gibt es danach Alarm. Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm jetzt“.",
+      exit_wait: "So lange wartet Hauswacht still, ob jemand rausgegangen ist. So lange bliebe ein Einbruch ohne Melder im Haus höchstens still. Die Messung „Weggehen“ zeigt, wie schnell eure Handys nach der Tür „weg“ sagen.",
+      exit_inside: "Bewegungsmelder, Licht oder Schalter im Haus (muss nicht scharf sein). Hat er höchstens 2 Minuten vor dem Öffnen „an“ gemeldet, kam jemand von innen – nur dann gilt die stille Wartezeit. Sonst normale Eingangsverzögerung.",
       passage_enabled: "An: In diesem Profil darf man rein oder raus, ohne unscharf zu schalten – mit PIN und Profil-Taste am Keypad, per Push-Knopf „Reinlassen“, Türschloss oder „Bei Rückkehr: Reinlassen“. Alles andere bleibt scharf.",
       passage_duration: "Rausgehen: so lange ist die Tür frei. Reinkommen: so lange darf die Tür offen stehen, bevor eine Warnung kommt.",
       passage_path_after: "Reinkommen: so lange bleiben die Melder auf dem Weg noch frei, nachdem die Tür zu ist.",
@@ -212,6 +226,14 @@ const PT = {
     secAuto: "Automation",
     secClose: "Arm by closing the door",
     secPassage: "Passage – in or out, stays armed",
+    exitOn: "Detect going out without a PIN (exit detection)",
+    exitWait: "Silent waiting time (minutes)",
+    exitInside: "Sensor in the house (recommended)",
+    exitInsideNone: "No suitable sensors found (motion sensors, lights, switches).",
+    exitNoInside: "Without a sensor in the house the silent waiting time applies to every opening of the entry door while someone is home – also to a break-in: the siren would only come after the waiting time. The message with “Alarm now” still comes immediately. Recommendation: add a motion sensor in the hallway or on the stairs, or the stair light.",
+    exitExpert: "Allow a longer waiting time (up to 15 minutes, expert option)",
+    exitExpertWarn: "A break-in without a sensor in the house would stay silent that long. Only choose this if your phones really take that long to report “away”.",
+    exitNoDelay: "The profile has no entry delay – without it there is nothing to postpone.",
     passageOn: "Allow passage",
     passageHint: "Meant for profiles that only watch the outer shell: sensors inside stay armed – the passage only helps at the outer doors. Coming in: during the entry delay, PIN or card and any profile key (or the passage key) at the keypad. Going out: while armed, PIN or card and any profile key (never switches profile) or the passage key.",
     passageDuration: "Passage time (minutes)",
@@ -317,6 +339,9 @@ const PT = {
       closeOn: "Door open, out, door closed – {s} s later the system is armed instead of after the {exit} s exit delay.",
       closeNoDoors: "On, but no exit door chosen yet.",
       passageOff: "Off: whoever wants to go in or out disarms.",
+      exitOff: "Off: whoever forgets the PIN when going out triggers an alarm after the entry delay.",
+      exitOn: "If an entry door opens while someone is home{inside}, Hauswacht waits silently up to {w} min. If a person's phone reports “away” for 30 s in that time, the profile stays armed – otherwise alarm. All alarm recipients immediately get a message with “Alarm now”.",
+      exitInsideHow: " and the sensor in the house reported something before",
       passageOn: "In or out without disarming: the door is free for {m} minutes, {which}, ending {end}. {n} sensor(s) on the way are free, after closing for {after} s more. Everything else stays armed.",
       passageWhich: { first: "only the first door", all: "all entry doors" },
       passageEnd: { time: "when the time is up", returned: "as soon as you are back" },
@@ -352,6 +377,9 @@ const PT = {
       close_enabled: "On: after arming it is enough to go through an exit door and close it – then the system is armed without waiting for the full exit delay. The exit doors may be open when arming.",
       close_doors: "You leave through these doors, e.g. front and back door.",
       close_settle: "This long the door has to stay closed after closing before arming. If it opens again before, the time starts over.",
+      exit_enabled: "Safety net if someone forgets PIN and passage when going out: if an entry door opens while someone is verifiably home, a silent waiting time runs instead of the entry delay. If a person's phone reports “away” during that time (rules under System → Presence), the profile stays armed – otherwise there is an alarm afterwards. All alarm recipients immediately get a message with “Alarm now”.",
+      exit_wait: "This long Hauswacht waits silently whether someone went out. A break-in without a sensor in the house would stay silent at most this long. The “leaving” measurement shows how quickly your phones report “away” after the door.",
+      exit_inside: "Motion sensor, light or switch in the house (does not have to be armed). If it reported “on” at most 2 minutes before the opening, someone came from inside – only then the silent waiting time applies. Otherwise the normal entry delay.",
       passage_enabled: "On: in this profile you may go in or out without disarming – with PIN and profile key on the keypad, the push button “Let in”, a door lock or “On return: let in”. Everything else stays armed.",
       passage_duration: "Going out: this long the door is free. Coming in: this long the door may stand open before a warning comes.",
       passage_path_after: "Coming in: this long the sensors on the way stay free after the door is closed.",
@@ -390,6 +418,7 @@ const PT = {
 };
 
 const PROFILE_STYLE = `
+  .scroll { max-height: 220px; overflow-y: auto; border: 1px solid var(--divider-color); border-radius: 8px; padding: 4px 8px; }
   .picker { position: relative; }
   .pick-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--divider-color); border-radius: 8px; margin-top: 4px; background: var(--card-background-color); }
   .pick-head { position: sticky; top: 0; font-size: .78rem; padding: 4px 10px; background: var(--secondary-background-color); color: var(--secondary-text-color); }
@@ -592,6 +621,11 @@ class HauswachtProfileEditor extends HTMLElement {
       if (!c.enabled) return h.closeOff;
       return c.doors.length ? fill(h.closeOn, { s: c.settle, exit: d.exit_delay }) : h.closeNoDoors;
     }
+    if (id === "exit") {
+      const x = d.exit_detect || {};
+      if (!x.enabled) return h.exitOff;
+      return fill(h.exitOn, { w: x.wait, inside: (x.inside || []).length ? h.exitInsideHow : "" });
+    }
     if (id === "passage") {
       const p = d.passage;
       if (!p.enabled) return h.passageOff;
@@ -688,7 +722,27 @@ ${this._returnSection(c, lim, t)}
       ${pass.enabled ? this._more("passage", `<label>${pe(this._t("passageOutDoors"))}${inf("passage_out_doors")}</label><select data-p="out_doors">${["first", "all"].map((v) => `<option value="${v}" ${v === pass.out_doors ? "selected" : ""}>${pe(t("outDoors", v))}</option>`).join("")}</select>
       <label>${pe(this._t("passageOutEnd"))}${inf("passage_out_end")}</label><select data-p="out_end">${["time", "returned"].map((v) => `<option value="${v}" ${v === pass.out_end ? "selected" : ""}>${pe(t("outEnd", v))}</option>`).join("")}</select>`) : ""}
       <div class="muted">${pe(this._t("passagePhoneMoved"))}</div>
+      ${this._exitSection(c, d, lim, inf)}
       ${this._err("base")}`;
+  }
+
+  // --- Ausgangserkennung (ADR 0014) -------------------------------------------------
+
+  _exitSection(c, d, lim, inf) {
+    d.exit_detect = d.exit_detect || { enabled: false, wait: 3, expert: false, inside: [] };
+    const x = d.exit_detect;
+    const items = c.inside || [];
+    const max = x.expert ? lim.exit_wait_expert : lim.exit_wait;
+    const inside = items.length
+      ? items.map((e) => `<div class="chk"><input type="checkbox" data-xm="inside" value="${pe(e.id)}" ${x.inside.includes(e.id) ? "checked" : ""}><span>${pe(e.name)}</span></div>`).join("")
+      : `<div class="muted">${pe(this._t("exitInsideNone"))}</div>`;
+    return `<div class="chk" style="margin-top:12px"><input type="checkbox" data-x="enabled" ${x.enabled ? "checked" : ""}><span><b>${pe(this._t("exitOn"))}</b>${inf("exit_enabled")}</span></div>
+      ${x.enabled && !Number(d.entry_delay) ? `<div class="warn">${pe(this._t("exitNoDelay"))}</div>` : ""}
+      ${x.enabled ? `<label>${pe(this._t("exitWait"))}${inf("exit_wait")}</label><input class="small" type="number" min="1" max="${max}" data-x="wait" data-num="1" value="${pe(Math.min(x.wait, max))}">
+      <label>${pe(this._t("exitInside"))}${inf("exit_inside")}</label><div class="scroll">${inside}</div>
+      ${x.inside.length ? "" : `<div class="warn">${pe(this._t("exitNoInside"))}</div>`}` : ""}
+      ${this._how("exit")}
+      ${x.enabled ? this._more("exit", `<div class="chk"><input type="checkbox" data-x="expert" ${x.expert ? "checked" : ""}><span>${pe(this._t("exitExpert"))}</span></div>${x.expert ? `<div class="warn">${pe(this._t("exitExpertWarn"))}</div>` : ""}`) : ""}`;
   }
 
   // --- Bei Rückkehr (ADR 0015) ----------------------------------------------------
@@ -799,6 +853,14 @@ ${this._returnSection(c, lim, t)}
       d.passage[el.dataset.p] = el.type === "checkbox" ? el.checked : el.dataset.num ? Number(el.value) : el.value;
     });
     d.passage.path = [...root.querySelectorAll('[data-pm="path"]')].filter((el) => el.checked).map((el) => el.value);
+    if (d.exit_detect) {
+      root.querySelectorAll("[data-x]").forEach((el) => {
+        d.exit_detect[el.dataset.x] = el.type === "checkbox" ? el.checked : Number(el.value) || 1;
+      });
+      if (root.querySelector('[data-xm="inside"]')) {
+        d.exit_detect.inside = [...root.querySelectorAll('[data-xm="inside"]')].filter((el) => el.checked).map((el) => el.value);
+      }
+    }
     root.querySelectorAll("[data-r]").forEach((el) => (d.return[el.dataset.r] = el.dataset.num ? Number(el.value) : el.value));
     if (root.querySelector('[data-rm="persons"]')) {
       d.return.persons = [...root.querySelectorAll('[data-rm="persons"]')].filter((el) => el.checked).map((el) => el.value);
@@ -909,7 +971,7 @@ ${this._returnSection(c, lim, t)}
       })
     );
     // Gruppen ändern die Listen "Ausgenommen" und "Ausgangstüren", der Modus bei Rückkehr die Felder
-    this.shadowRoot.querySelectorAll('[data-m="zones"], [data-r="mode"], [data-c="enabled"], [data-p="enabled"]').forEach((el) =>
+    this.shadowRoot.querySelectorAll('[data-m="zones"], [data-r="mode"], [data-c="enabled"], [data-p="enabled"], [data-x="enabled"], [data-x="expert"], [data-xm="inside"]').forEach((el) =>
       el.addEventListener("change", () => {
         const top = this.shadowRoot.querySelector(".sheet").scrollTop;
         this._collect();

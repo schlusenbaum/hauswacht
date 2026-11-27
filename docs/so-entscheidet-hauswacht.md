@@ -59,6 +59,11 @@ So liest du das:
   Alarmkarte oder der [Push-Knopf](benachrichtigungen.md) – und „Bei Rückkehr“ mit Türbeleg
   (nächster Abschnitt).
 - **Durchgang** heißt: rein oder raus, ohne unscharf zu schalten – siehe [Durchgang](durchgang.md).
+- **Ausgangserkennung** (ab 0.66.0b9, je Profil, Standard aus): Ist beim Öffnen jemand
+  nachweislich zuhause (und hat – falls eingetragen – der Melder im Haus vorher etwas gemeldet),
+  läuft statt der Eingangsverzögerung eine stille Wartezeit. Sagt das Handy einer Person in der
+  Zeit „weg“, bleibt das Profil scharf, sonst gibt es danach Alarm – siehe
+  [Rausgehen ohne PIN erkennen](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung).
 
 **Beispiel:** „Nacht“ ist scharf. Petra kommt um 23 Uhr heim, die Haustür geht auf → 30 s
 Eingangsverzögerung. Ihr Handy meldet nach 12 s „zuhause“, das Profil steht auf „Unscharf mit
@@ -236,6 +241,7 @@ Alles auf der [Einstellungsseite](einstellungsseite.md) (Seite „Hauswacht“ i
 | Signale je Person, Beleg für „weg“ | System → Anwesenheit | [Woran Hauswacht erkennt, wer zuhause ist](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist) |
 | Welche Signale fürs Ankommen und Weggehen zählen, „eines reicht (nach Tür)“, Empfehlung | System → Anwesenheit → „Welche Signale zählen?“ | [Ankommen und Weggehen je Signal](profile.md#ankommen-und-weggehen-je-signal) |
 | Durchgang | Profil, Bedienteile | [Durchgang](durchgang.md) |
+| Rausgehen ohne PIN erkennen (Ausgangserkennung) | Profil → Durchgang | [Ausgangserkennung](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung) |
 | Gastmodus | Schalter „Gastmodus“ | [Gastmodus](profile.md#gastmodus) |
 | Was beim Alarm passiert | Profil → Sirenen, Benachrichtigen | [Sirenen](sirenen.md), [Benachrichtigungen](benachrichtigungen.md) |
 | Messwerte für gute Einstellungen | System → Anwesenheit → Messungen | [Beobachtungen](beobachtung.md) |

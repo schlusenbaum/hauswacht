@@ -54,6 +54,8 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 | **„Eingangsverzögerung bei Annäherung“** ist an, aber keine Person der Liste hat ein Richtungs-Signal | ⚠️ Warnung | Verlängerung ausschalten |
 | Eine **Ortung meldet seit mindestens 24 Stunden exakt dieselbe Position** außerhalb von Zuhause (vorgetäuscht oder hängende App) – sie zählt nicht als Beleg ([mehr](profile.md#weg-nur-mit-beleg)) | ⚠️ Warnung | – (bei dauerhaft falscher Ortung: unter System → Anwesenheit aus den Signalen nehmen) |
 | **„Scharf, wenn alle weg“ folgt einem eigenen Auslöser** (Entität statt Personen) – Hauswacht prüft dann nicht selbst ([mehr](profile.md#eigener-auslöser-für-alle-weg)) | ⚠️ Warnung | – |
+| **Ausgangserkennung** ist an, aber das Profil hat keine Eingangsverzögerung – sie greift nie ([mehr](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung), ab 0.66.0b9) | ⛔ Fehler | – |
+| **Ausgangserkennung ohne Melder im Haus** – auch ein Einbruch durch die Eingangstür gibt erst nach der Wartezeit Alarm, solange jemand zuhause ist (ab 0.66.0b9) | ⚠️ Warnung | – (Melder im Haus im Profil eintragen) |
 | Ein **eigener Auslöser** ist gesetzt, aber bei „Scharf, wenn alle weg“ sind noch Personen angehakt – sie werden nicht beachtet ([mehr](profile.md#eigener-auslöser-für-alle-weg), ab 0.66.0b3) | 💡 Tipp | Personen abwählen |
 | Für eine Person ist unter **Anwesenheit** etwas eingestellt (Signale, Haken, „Weggehen erkennen“), aber sie zählt **nirgends**: in keinem „Scharf, wenn alle weg“ ohne eigenen Auslöser, in keinem „Bei Rückkehr“, nicht in der Beobachtung (ab 0.66.0b3) | 💡 Tipp | – |
 | **„Tür + Signal“** ist an, obwohl die Person eine Ortung hat | 💡 Tipp | „Tür + Signal“ ausschalten |
@@ -144,6 +146,7 @@ Je Profil, soweit es passt:
 | Szenario | Wann | Was durchgespielt wird |
 |---|---|---|
 | **Einbruch durch die Tür …** | je Eingangstür des Profils | Profil scharf, die Tür geht auf, niemand schaltet unscharf |
+| **Einbruch durch die Tür …, während jemand zuhause ist** | Profil hat die Ausgangserkennung an (ab 0.66.0b9) | Ohne Melder im Haus: ⚠️ Sirene erst nach der Wartezeit. Mit Melder im Haus: ✅ normale Eingangsverzögerung, weil niemand von innen kam |
 | **Einbruch durch ein Fenster** | Profil hat Fenster | Profil scharf, ein Fenster geht auf |
 | **… kommt heim** | je Person aus „Bei Rückkehr“ | Alle gehen weg (schaltet „alle weg“, ist das Profil automatisch scharf, sonst von Hand), zwei Stunden später kommt die Person heim. Das Handy meldet sich 30 s **vor** der Tür – oder, wenn gemessen, so spät **nach** der Tür wie bei euch beobachtet |
 | **Alle gehen weg** | Profil hat „Scharf, wenn alle weg“ | Alle gehen nacheinander durch die Tür, danach meldet das Handy „weg“. Personen mit „eines reicht (nach Tür)“ gelten damit als weg, auch ohne Ortung (ab 0.66.0b8) |

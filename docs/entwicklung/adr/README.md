@@ -17,7 +17,7 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0011](0011-einstellungsseite.md) | Einstellungsseite in der Seitenleiste – zusätzlich zum Dialog |
 | [0012](0012-keypads-allgemein.md) | Keypads allgemein anbinden – ein Eingang für alle Geräte, Blueprints und MQTT |
 | [0013](0013-durchgang.md) | Durchgang – rein oder raus, ohne unscharf zu schalten |
-| [0014](0014-ausgangserkennung.md) | Ausgangserkennung – Rausgehen ohne PIN erkennen (angenommen, Umsetzung 0.66) |
+| [0014](0014-ausgangserkennung.md) | Ausgangserkennung – Rausgehen ohne PIN erkennen (umgesetzt, 0.66) |
 | [0015](0015-rueckkehr.md) | Rückkehr neu geregelt – „Bei Rückkehr“, „weg“ nur mit Beleg, Annäherung (umgesetzt in 0.61.0, Nachtrag „Tür + Signal“) |
 | [0016](0016-anwesenheit-testen.md) | Anwesenheit in der Testkarte – simulieren und sehen, warum (angenommen, 0.63) |
 | [0017](0017-assistent-check-up.md) | Assistent auf der Einstellungsseite – Check-up, Szenarien, Einrichten nach Zielen (umgesetzt, 0.64; Ziele in 0.65) |

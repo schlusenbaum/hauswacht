@@ -1,7 +1,7 @@
 # ADR 0014: Ausgangserkennung – Rausgehen ohne PIN erkennen
 
-- Status: angenommen (Messung umgesetzt in 0.60.0, ergänzt in 0.63.1; Ausgangserkennung wird in
-  0.66 umgesetzt, Fassung vom 2026-11-27 auf Grundlage von ADR 0021)
+- Status: umgesetzt (Messung in 0.60.0, ergänzt in 0.63.1; Ausgangserkennung in 0.66.0b9,
+  Fassung vom 2026-11-27 auf Grundlage von ADR 0021)
 - Datum: 2026-11-21, überarbeitet 2026-11-27
 - Baut auf: [ADR 0013 Durchgang](0013-durchgang.md),
   [ADR 0021 Anwesenheit je Person](0021-anwesenheit-je-person.md)

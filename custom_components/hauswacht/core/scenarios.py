@@ -42,6 +42,7 @@ from .automation_engine import (
     disarm_allowed,
 )
 from .away_proof import AwayTracker, Fix, parse_proof_settings
+from .exit_detection import parse_exit
 from .presence_rules import MODE_ONE, PersonRules, Signal, parse_presence_rules
 from .profiles import build_profiles, profile_ids, profile_info
 from .returning import parse_return
@@ -82,6 +83,16 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
     "de": {
         # Titel
         "t_burglary_door": "Einbruch durch die Tür {door}",
+        "t_burglary_home": "Einbruch durch die Tür {door}, während jemand zuhause ist",
+        "s_exit_wait": "Jemand ist zuhause – stille Wartezeit statt Eingangsverzögerung "
+        "(Ausgangserkennung). Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm "
+        "jetzt“.",
+        "s_exit_inside": "Der Melder im Haus hat vorher nichts gemeldet – niemand kam von innen, "
+        "normale Eingangsverzögerung.",
+        "r_exit_late": "Sirene erst nach {m} min – so lange wartet die Ausgangserkennung still, "
+        "ob jemand rausgegangen ist. Die Nachricht mit „Alarm jetzt“ kommt sofort. Abhilfe: "
+        "Melder im Haus eintragen.",
+        "r_exit_inside": "Alarm nach {s} s – der Melder im Haus zeigt, dass niemand von innen kam.",
         "t_burglary_window": "Einbruch durch ein Fenster ({window})",
         "t_return": "{person} kommt heim",
         "t_all_leave": "Alle gehen weg",
@@ -145,6 +156,16 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
     },
     "en": {
         "t_burglary_door": "Burglary through the door {door}",
+        "t_burglary_home": "Burglary through the door {door} while someone is home",
+        "s_exit_wait": "Someone is home – silent waiting time instead of the entry delay (exit "
+        "detection). All alarm recipients immediately get a message with “Alarm now”.",
+        "s_exit_inside": "The sensor in the house reported nothing before – nobody came from "
+        "inside, normal entry delay.",
+        "r_exit_late": "Siren only after {m} min – that long exit detection waits silently "
+        "whether someone went out. The message with “Alarm now” comes immediately. Remedy: add a "
+        "sensor in the house.",
+        "r_exit_inside": "Alarm after {s} s – the sensor in the house shows that nobody came from "
+        "inside.",
         "t_burglary_window": "Burglary through a window ({window})",
         "t_return": "{person} comes home",
         "t_all_leave": "Everyone leaves",
@@ -498,6 +519,21 @@ def _burglary_door(
     return sim.result(OK, "r_alarm_after", s=round(sim.alarm_at - opened))
 
 
+def _burglary_home(
+    options: Mapping[str, Any], facts: Facts, lang: str, pid: str, door: str
+) -> dict[str, Any]:
+    """Ausgangserkennung (ADR 0014): Einbruch, während jemand schläft – wann kommt die Sirene?"""
+    config = parse_exit(options, pid)
+    sim = Sim(options, facts, lang)
+    sim.label(f"burglary_home:{pid}:{door}", pid, "t_burglary_home", door=facts.name(door))
+    seconds = sim.profiles[pid].entry_delay
+    if config.inside:
+        sim.note("s_exit_inside")
+        return sim.result(OK, "r_exit_inside", s=seconds)
+    sim.note("s_exit_wait")
+    return sim.result(WARN, "r_exit_late", m=config.wait)
+
+
 def _burglary_window(
     options: Mapping[str, Any], facts: Facts, lang: str, pid: str, window: str
 ) -> dict[str, Any]:
@@ -582,6 +618,11 @@ def _return_verdict(sim: Sim, person: str, opened: float) -> dict[str, Any]:
     return sim.result(WARN, "r_pin_needed", s=seconds, person=sim.name(person))
 
 
+def sim_entry_delay(options: Mapping[str, Any], pid: str) -> int:
+    """Eingangsverzögerung eines Profils (0: die Ausgangserkennung greift nie)."""
+    return build_profiles(options)[pid].entry_delay
+
+
 def _phone(person: str) -> str:
     """Kennung des gedachten Handys einer Person in der Szenario-Vorschau."""
     return f"{person}#handy"
@@ -654,6 +695,9 @@ def scenarios(
         doors = facts.entry_doors.get(pid, ())
         windows = facts.windows.get(pid, ())
         found.extend(_burglary_door(options, facts, lang, pid, door) for door in doors)
+        exit_config = parse_exit(options, pid)
+        if exit_config.enabled and doors and sim_entry_delay(options, pid):
+            found.append(_burglary_home(options, facts, lang, pid, doors[0]))
         if windows:
             found.append(_burglary_window(options, facts, lang, pid, windows[0]))
         back = parse_return(options, pid)

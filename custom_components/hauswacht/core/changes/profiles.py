@@ -12,6 +12,7 @@ from ..automation import (
     DEFAULT_AWAY_ENTITY_STATE,
     WEEKDAYS,
 )
+from ..exit_detection import exit_from_input
 from ..passage import passage_from_input
 from ..profiles import DEFAULT_ICON, PANEL_MODE_NONE, profile_infos
 from ..returning import KEY as RETURN_KEY
@@ -165,6 +166,9 @@ def save_profile(
         merged = dict(before) if isinstance(before, Mapping) else {}
         merged.update(data.get("passage") or {})
         stored["passage"] = passage_from_input(merged)
+    if isinstance(data.get("exit_detect"), Mapping):
+        # Ausgangserkennung (ADR 0014)
+        stored["exit_detect"] = exit_from_input(data["exit_detect"])
     profiles[new_id] = stored
     new[OPT_PROFILES] = profiles
     return Change(options=new, item_id=new_id)

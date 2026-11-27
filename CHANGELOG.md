@@ -6,10 +6,37 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b9] - 2026-11-27
+
+**Ausgangserkennung – Rausgehen ohne PIN erkennen**
+([ADR 0014](docs/entwicklung/adr/0014-ausgangserkennung.md)).
+
+### Neu
+
+- **„Rausgehen ohne PIN erkennen“** je Profil (Abschnitt Durchgang, Standard aus) – das
+  Sicherheitsnetz, wenn jemand bei scharfem Profil rausgeht und PIN und Durchgang vergisst. Geht
+  eine Eingangstür auf, während jemand nachweislich zuhause ist, läuft statt der
+  Eingangsverzögerung eine **stille Wartezeit** (1–5 Minuten, Standard 3). Sagt das Handy einer
+  Person in der Zeit 30 Sekunden lang „weg“ (Regeln aus „Welche Signale zählen?“), bleibt das
+  Profil scharf und die Tür wird bis zum Schließen überbrückt. Sonst gibt es danach Alarm.
+- **Sofort eine Nachricht an alle Alarm-Empfänger** mit **[Alarm jetzt]** und **[Durchlassen]**.
+- **Melder im Haus** (empfohlen, nicht Pflicht): Bewegungsmelder, Licht oder Schalter. Ist einer
+  eingetragen, gilt die stille Wartezeit nur, wenn er kurz vorher etwas gemeldet hat – ein
+  Einbruch von außen bekommt die normale Eingangsverzögerung. Ohne Melder im Haus steht ein
+  deutlicher Warnhinweis an der Einstellung, im Check-up und in der Szenario-Vorschau.
+- **Schutz gegen WLAN-Ausfall:** Sagen mehrere Personen fast gleichzeitig nur über WLAN „weg“,
+  zählt das nicht als rausgegangen.
+- Wartezeit über 5 Minuten (bis 15) nur als **Expertenoption** mit Warnhinweis.
+- Neue Ereignisse `ExitWaitStarted`, `ExitDetected`, `ExitLetThrough`.
+- Anleitung mit Beispiel:
+  [Rausgehen ohne PIN erkennen](docs/durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung).
+
 ### Doku
 
 - **Fehlersuche:** Der Menüpunkt zum Mitlesen heißt in Home Assistant „Unveränderte Protokolle
-  anzeigen“ (englisch „Show raw logs“), nicht „Vollständige Protokolle anzeigen“.
+  anzeigen“ (englisch „Show raw logs“).
+- Assistent (Check-up, Szenarien), „So entscheidet Hauswacht“ und Referenz um die
+  Ausgangserkennung ergänzt.
 
 ## [0.66.0b8] - 2026-11-27
 

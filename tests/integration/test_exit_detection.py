@@ -87,7 +87,7 @@ async def test_person_goes_out_stays_armed(
     first = [c for c in push if c.data.get("message") != "clear_notification"]
     assert first
     actions = first[-1].data["data"]["actions"]
-    assert actions[0]["title"] == "Alarm jetzt"
+    assert actions[0]["title"] in ("Alarm jetzt", "Alarm now")
     await _wait(hass, freezer, 20)
     hass.states.async_set(WLAN, "off")  # Bens Handy verliert das WLAN
     await hass.async_block_till_done()

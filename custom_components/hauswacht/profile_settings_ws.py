@@ -23,6 +23,7 @@ from .core.automation import (
     parse_automation,
 )
 from .core.away_proof import parse_proof_settings
+from .core.exit_detection import MAX_WAIT, MAX_WAIT_EXPERT, exit_from_input, parse_exit
 from .core.passage import MAX_DURATION as PASSAGE_MAX_DURATION
 from .core.passage import MAX_PATH_AFTER as PASSAGE_MAX_AFTER
 from .core.passage import parse_passage, passage_from_input
@@ -114,6 +115,7 @@ def _profile(options: Any, pid: str) -> dict[str, Any]:
             "doors": sorted(close.doors),
             "settle": close.settle,
         },
+        "exit_detect": _exit(options, pid),
         "passage": passage_from_input(
             {
                 "enabled": passage.enabled,
@@ -157,6 +159,16 @@ def _return_advice(main: Any) -> dict[str, Any]:
     return observer.approach_advice() if observer is not None else {}
 
 
+def _exit(options: Mapping[str, Any], pid: str) -> dict[str, Any]:
+    config = parse_exit(options, pid)
+    return {
+        "enabled": config.enabled,
+        "wait": config.wait,
+        "expert": config.expert,
+        "inside": sorted(config.inside),
+    }
+
+
 def profile_payload(options: Any, pid: str) -> dict[str, Any]:
     """Formular eines Profils, wie das Seitenblatt es schickt (für Vorschläge des Assistenten)."""
     return _profile(options, pid)
@@ -195,6 +207,18 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 }
                 for s in hass.states.async_all("person")
             ],
+            # Melder im Haus für die Ausgangserkennung (ADR 0014): Bewegung, Licht, Schalter
+            "inside": sorted(
+                (
+                    {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
+                    for s in hass.states.async_all(
+                        ["binary_sensor", "light", "switch", "input_boolean"]
+                    )
+                    if not s.entity_id.startswith("binary_sensor.")
+                    or s.attributes.get("device_class") in ("motion", "occupancy", "presence")
+                ),
+                key=lambda x: (x["id"].split(".")[0] != "binary_sensor", x["name"].casefold()),
+            ),
             # Eigener Auslöser für „alle weg“ (ADR 0018): Schalter, Binärsensoren, Gruppen
             "away_entities": sorted(
                 (
@@ -249,6 +273,7 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "return": return_to_storage(ReturnConfig()),
             "arm_on_close": {"enabled": False, "doors": [], "settle": DEFAULT_SETTLE},
             "passage": passage_from_input({}),
+            "exit_detect": exit_from_input({}),
         },
         "limits": {
             "delay": MAX_DELAY,
@@ -257,6 +282,8 @@ def build_profile_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "away_delay": MAX_AWAY_DELAY,
             "return_window": RETURN_MAX_WINDOW,
             "approach_delay": MAX_APPROACH_DELAY,
+            "exit_wait": MAX_WAIT,
+            "exit_wait_expert": MAX_WAIT_EXPERT,
             "approach_valid": MAX_APPROACH_VALID,
             "settle": MAX_SETTLE,
             "passage_duration": PASSAGE_MAX_DURATION,

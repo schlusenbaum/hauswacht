@@ -180,3 +180,17 @@ def test_one_is_enough_in_scenarios() -> None:
     found = _by_key(scenarios(no_door, _facts(located=frozenset({ANNA}))))
     assert found["phones_sleep:away"]["result"] == BAD
     assert found["all_leave:away"]["result"] == WARN
+
+
+def test_burglary_while_someone_home_with_exit_detection() -> None:
+    """ADR 0014: ohne Melder im Haus kommt die Sirene erst nach der Wartezeit."""
+    options = _options(exit_detect={"enabled": True, "wait": 3})
+    found = _by_key(scenarios(options, _facts()))
+    home = found[f"burglary_home:away:{DOOR}"]
+    assert home["result"] == WARN
+    assert "3 min" in home["summary"]
+    inside = _options(exit_detect={"enabled": True, "wait": 3, "inside": ["binary_sensor.treppe"]})
+    home = _by_key(scenarios(inside, _facts()))[f"burglary_home:away:{DOOR}"]
+    assert home["result"] == OK
+    assert "30 s" in home["summary"]
+    assert f"burglary_home:away:{DOOR}" not in _by_key(scenarios(_options(), _facts()))

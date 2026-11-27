@@ -36,6 +36,7 @@ from typing import Any
 
 from .automation import parse_automation
 from .away_proof import parse_proof_settings
+from .exit_detection import parse_exit
 from .presence_rules import leaves_by_door, parse_presence_rules
 from .profiles import profile_ids, profile_info, profile_settings
 from .returning import RETURN_AUTO_ONLY, parse_return
@@ -225,6 +226,40 @@ TEXTS: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "by mistake (and the house is armed while someone is there), Hauswacht ignores this "
             "location until it moves again. If it is permanently wrong, remove it from the "
             "person's signals under System → Presence.",
+        },
+    },
+    "exit_no_inside": {
+        "de": {
+            "text": "Profil {profile_name}: Die Ausgangserkennung läuft ohne Melder im Haus – auch "
+            "ein Einbruch durch die Eingangstür gibt erst nach {m} min Alarm, solange jemand "
+            "zuhause ist.",
+            "why": "Ohne Melder im Haus kann Hauswacht nicht unterscheiden, ob jemand von innen "
+            "kam. Die Nachricht mit „Alarm jetzt“ kommt sofort, die Sirene erst nach der "
+            "Wartezeit. Ein Bewegungsmelder im Flur oder an der Treppe oder das Treppenlicht als "
+            "„Melder im Haus“ beschränkt die Wartezeit auf Öffnungen von innen.",
+        },
+        "en": {
+            "text": "Profile {profile_name}: exit detection runs without a sensor in the house – "
+            "a break-in through the entry door also only gives an alarm after {m} min while "
+            "someone is home.",
+            "why": "Without a sensor in the house Hauswacht cannot tell whether someone came from "
+            "inside. The message with “Alarm now” comes immediately, the siren only after the "
+            "waiting time. A motion sensor in the hallway or on the stairs or the stair light as "
+            "“sensor in the house” limits the waiting time to openings from inside.",
+        },
+    },
+    "exit_no_delay": {
+        "de": {
+            "text": "Profil {profile_name}: Die Ausgangserkennung ist an, aber das Profil hat "
+            "keine Eingangsverzögerung – sie greift so nie.",
+            "why": "Die stille Wartezeit ersetzt die Eingangsverzögerung. Ohne sie löst eine "
+            "Eingangstür sofort aus, und es gibt nichts aufzuschieben.",
+        },
+        "en": {
+            "text": "Profile {profile_name}: exit detection is on, but the profile has no entry "
+            "delay – so it never applies.",
+            "why": "The silent waiting time replaces the entry delay. Without it an entry door "
+            "triggers immediately and there is nothing to postpone.",
         },
     },
     "away_persons_ignored": {
@@ -537,6 +572,29 @@ def _return(
     return found
 
 
+def _exit(options: Mapping[str, Any], pid: str, lang: str, pname: str) -> list[dict[str, Any]]:
+    """Ausgangserkennung (ADR 0014): ohne Eingangsverzögerung wirkungslos, ohne Melder im Haus
+    verzögert sie auch einen Einbruch."""
+    config = parse_exit(options, pid)
+    if not config.enabled:
+        return []
+    if not profile_settings(options, pid)["entry_delay"]:
+        return [_finding("exit_no_delay", ERROR, lang, key=pid, profile=pid, profile_name=pname)]
+    if not config.inside:
+        return [
+            _finding(
+                "exit_no_inside",
+                WARNING,
+                lang,
+                key=pid,
+                profile=pid,
+                profile_name=pname,
+                m=config.wait,
+            )
+        ]
+    return []
+
+
 def _delays(
     options: Mapping[str, Any], pid: str, facts: Facts, lang: str, pname: str
 ) -> list[dict[str, Any]]:
@@ -716,6 +774,7 @@ def advise(options: Mapping[str, Any], facts: Facts, language: str = "de") -> li
         found.extend(_away(options, pid, facts, lang, pname))
         found.extend(_return(options, pid, facts, lang, pname))
         found.extend(_delays(options, pid, facts, lang, pname))
+        found.extend(_exit(options, pid, lang, pname))
     found.extend(_system(options, facts, lang))
     return sorted(found, key=lambda f: LEVELS.index(f["level"]))
 

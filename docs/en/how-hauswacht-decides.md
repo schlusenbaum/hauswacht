@@ -58,6 +58,11 @@ How to read it:
   the alarm card or the [push button](notifications.md) – and "On return" with door proof (next
   section).
 - **Passage** means: in or out without disarming – see [passage](passage.md).
+- **Exit detection** (from 0.66.0b9, per profile, off by default): if someone is verifiably home
+  at the opening (and – if set – the sensor in the house reported something before), a silent
+  waiting time runs instead of the entry delay. If a person's phone reports "away" during that
+  time, the profile stays armed, otherwise there is an alarm afterwards – see
+  [detect going out without a PIN](passage.md#detect-going-out-without-a-pin-exit-detection).
 
 **Example:** "Night" is armed. Petra comes home at 11 pm, the front door opens → 30 s entry
 delay. Her phone reports "home" after 12 s, the profile is set to "disarm with door proof" →
@@ -231,6 +236,7 @@ Everything on the [settings page](settings-page.md) (page "Hauswacht" in the sid
 | Signals per person, proof for "away" | System → Presence | [How Hauswacht knows who is home](profiles.md#how-hauswacht-knows-who-is-home) |
 | Which signals count for arriving and leaving, "one is enough (after a door)", recommendation | System → Presence → "Which signals count?" | [Arriving and leaving per signal](profiles.md#arriving-and-leaving-per-signal) |
 | Passage | Profile, control devices | [Passage](passage.md) |
+| Detect going out without a PIN (exit detection) | Profile → Passage | [Exit detection](passage.md#detect-going-out-without-a-pin-exit-detection) |
 | Guest mode | Switch "Guest mode" | [Guest mode](profiles.md#guest-mode) |
 | What happens on alarm | Profile → sirens, notify | [Sirens](sirens.md), [Notifications](notifications.md) |
 | Measurements for good settings | System → Presence → Measurements | [Observations](observations.md) |

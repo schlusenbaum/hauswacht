@@ -301,3 +301,17 @@ def test_person_uses() -> None:
         ("observe", None),
     ]
     assert person_uses(options, BEN) == []
+
+
+def test_exit_detection_findings() -> None:
+    """ADR 0014: ohne Melder im Haus Warnung, ohne Eingangsverzögerung Fehler."""
+    on = {"enabled": True, "wait": 3}
+    found = advise(_options(exit_detect=on), _facts())
+    warn = next(f for f in found if f["code"] == "exit_no_inside")
+    assert warn["level"] == WARNING
+    assert "3 min" in warn["text"]
+    inside = {**on, "inside": ["binary_sensor.treppe"]}
+    assert "exit_no_inside" not in _codes(advise(_options(exit_detect=inside), _facts()))
+    no_delay = advise(_options(exit_detect=on, entry_delay=0), _facts())
+    assert _codes(no_delay) == ["exit_no_delay"]
+    assert no_delay[0]["level"] == ERROR

@@ -187,7 +187,5 @@ Abschwächende Vorschläge brauchen wie im Check-up (ADR 0017) eine Bestätigung
   übersehen).
 - **Szenario-Vorschau (b8):** kennt „eines reicht (nach Tür)“ und „ohne Tür“.
 
-## Offen
-
-- Wie bindet die Ausgangserkennung (ADR 0014) die neue Regel „eines reicht (nach Tür)“ ein?
-  Vermutlich gewinnt sie direkt an Tempo. Das klären wir, wenn die Ausgangserkennung gebaut wird.
+- **Ausgangserkennung (b9, ADR 0014):** nutzt dieselben Weggehen-Signale und Regeln. Bei „alle
+  müssen“ reicht dort „alle Weggehen-Signale weg“ – die Tür ist der Beleg.
