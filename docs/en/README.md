@@ -15,7 +15,7 @@ ones of the English interface.
 |---|---|
 | [How Hauswacht decides](how-hauswacht-decides.md) | **Overview first:** what happens when a door opens, when the automation switches, what happens when someone comes home, when someone counts as home or away – as pictures with examples |
 | [Installation and first steps](installation.md) | requirements, installation via Marketplace or HACS, the settings page, the shortest way to the first arming, updates |
-| [Assistant and setup](setup-wizard.md) | the assistant's hints while editing (what does not fit, with a suggestion), how to set up, and what comes next |
+| [Assistant and setup](setup-wizard.md) | hints while editing, check-up, “What happens if …?” and setup by goals (secure the night, arm automatically, disarm when coming home) |
 | [Sensors and sensor groups](sensors.md) | which sensors work, sensor groups, types (door, window, motion …), always-active sensors, radio silence, radio networks and gateways |
 | [Alarm profiles and areas](profiles.md) | creating profiles, delays, reaction, automation and presence, disarm on arrival, arm by closing the door, several areas (e.g. house and garage) |
 | [Trigger rules](trigger-rules.md) | sequences like "door, then basement", exceptions, conditions, YAML expert mode |
@@ -27,12 +27,12 @@ ones of the English interface.
 | [Notifications and speech](notifications.md) | recipients per event, custom texts, announcements via speakers, push buttons |
 | [Test mode and test card](test-mode.md) | play everything through safely: simulate sensors, no siren |
 | [Observations](observations.md) | homecoming observation and "door open to disarmed" – measure before automating |
-| [Settings page](settings-page.md) | page "Hauswacht" in the sidebar: the whole setup at a glance, matrix "sensor × profile" |
+| [Settings page](settings-page.md) | page "Hauswacht" in the sidebar: the whole setup at a glance, matrix "sensor × profile", download configuration |
 | [System overview](overview.md) | card with the whole configuration, printing, emergency sheet, check hints, diagnostics file |
 | [Automations: what to use for what?](automations.md) | cheat sheet: the right trigger for every occasion (`phase`, event, entity) and the most common pitfalls |
 | [Examples](examples.md) | connect Hauswacht to other devices: lights on alarm and back as before, camera image to the phone, shutters, status light, heating while away, guest mode from the calendar … |
 | [Reference](reference.md) | look-up: all entities (German and English IDs), attributes of the alarm panel, all events with their fields, actions |
-| [Troubleshooting](troubleshooting.md) | common questions and problems |
+| [Troubleshooting](troubleshooting.md) | common questions and problems, switching on and reading the debug log, what helps in a bug report |
 
 ## For developers
 

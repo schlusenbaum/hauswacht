@@ -95,6 +95,7 @@ from .core.code_guard import (
 from .core.conditions import all_met as conditions_met
 from .core.confirmation import FREQUENT_COUNT, LoneTriggerCounter
 from .core.controls import looks_like_card, normalize_tag
+from .core.debug_log import describe
 from .core.infrastructure import SystemReport, faulty_indicators, system_report
 from .core.notify_events import NotifyEvent
 from .core.notify_events import enabled as notify_enabled
@@ -1244,7 +1245,8 @@ class HauswachtRuntime:
         self.fire_event(
             {"type": "CodeLockReset", "by": by, "failures": failures, **self.all_areas_event()}
         )
-        _LOGGER.info("Falscheingaben zurückgesetzt (%s Fehlversuche) von %s", failures, by)
+        # Wer zurückgesetzt hat, steht im Logbuch – im Log nie ein Name (ADR 0020)
+        _LOGGER.info("Falscheingaben zurückgesetzt (%s Fehlversuche)", failures)
         if self.main._code_pushed:
             self.notifier.clear(self.main._code_pushed, PUSH_CODE_TAG)
             self.main._code_pushed.clear()
@@ -1506,7 +1508,7 @@ class HauswachtRuntime:
             door = None  # schon wieder zu: nichts zu überbrücken
         path = path_sensors(config, self.armed_sensors, self.ctx.bypassed)
         self.changed_by = by or self.changed_by
-        _LOGGER.warning("Durchgang reinkommen durch %s (Tür %s)", by, door)
+        _LOGGER.warning("Durchgang reinkommen (Tür %s)", door)
         self._dispatch(PassageIn(door=door, path=path, by=by))
         if door is not None:
             self._passage_in_doors[door] = path
@@ -1534,7 +1536,7 @@ class HauswachtRuntime:
                 translation_domain=DOMAIN, translation_key="passage_no_doors"
             )
         self._passage_out_end(warn=False)  # ein neuer Ausgang ersetzt einen laufenden
-        _LOGGER.warning("Durchgang rausgehen durch %s (%s Min.)", by, config.duration)
+        _LOGGER.warning("Durchgang rausgehen (%s Min.)", config.duration)
         self.changed_by = by or self.changed_by
         self._dispatch(
             PassageOut(doors=doors, path=path, first_only=config.out_doors is OutDoors.FIRST, by=by)
@@ -2774,6 +2776,16 @@ class HauswachtRuntime:
             or entity_id in self.always_sensors
             or (armed and entity_id in self.armed_sensors)
         )
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug(
+                "Bereich %s: Melder %s %s → %s (%s, %s)",
+                self.area_id,
+                entity_id,
+                old_state,
+                new_state,
+                role.value,
+                self._sensor_verdict(entity_id, armed, relevant, old_state, new_state),
+            )
         if (
             armed
             and self._in_startup_grace()
@@ -2814,6 +2826,26 @@ class HauswachtRuntime:
             self._dispatch(SensorClosed(sensor_key=entity_id))
             return
         self._notify()
+
+    def _sensor_verdict(
+        self,
+        entity_id: str,
+        armed: bool,
+        relevant: bool,
+        old_state: str | None,
+        new_state: str | None,
+    ) -> str:
+        """Kurzer Grund für das Debug-Log: Warum zählt dieser Wechsel – oder nicht?"""
+        if entity_id in self.ctx.bypassed or entity_id in self.ctx.bypassed_until_closed:
+            return "überbrückt"
+        if not relevant:
+            if not armed:
+                return "unscharf, nicht immer aktiv"
+            profile = self.ctx.profile.profile_id if self.ctx.profile else "-"
+            return f"im Profil {profile} nicht überwacht"
+        if not is_trigger(old_state, new_state):
+            return "überwacht, aber kein auslösender Wechsel"
+        return "überwacht, löst aus"
 
     @callback
     def _vibration_counts(self, entity_id: str) -> bool:
@@ -2968,6 +3000,14 @@ class HauswachtRuntime:
     def _dispatch(self, event: Event) -> tuple[Effect, ...]:
         old_ctx = self.ctx
         self.ctx, effects = step(self.ctx, event, time.monotonic())
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            # Eingang → Wirkungen (ADR 0020): ohne Namen, Codes und Nachrichtentexte
+            _LOGGER.debug(
+                "Bereich %s: %s → %s",
+                self.area_id,
+                describe(event),
+                ", ".join(describe(e) for e in effects) or "keine Wirkung",
+            )
         # Stellung beim Überbrücken merken (gekippt überbrückt -> ganz offen löst aus)
         for entity_id in self.ctx.bypassed - old_ctx.bypassed:
             if entity_id in self.tilt_sources:
@@ -3344,7 +3384,12 @@ class HauswachtRuntime:
                 display_name(self.hass, s) for s in sorted(effect.bypassed_until_closed)
             )
             message += tr(lang, "alarm_ended_bypassed", sensors=names)
-        _LOGGER.warning(message)
+        # Ins Log nur, was passiert ist – wer quittiert hat, steht im Logbuch (ADR 0020)
+        _LOGGER.warning(
+            "Alarm quittiert (Profil %s), bleibt scharf; bis zum Schließen nicht überwacht: %s",
+            effect.profile_id,
+            sorted(effect.bypassed_until_closed) or "-",
+        )
         targets = parse_reaction(self.entry.options, effect.profile_id).notify
         # Ersetzt die Alarm-Nachricht (gleicher tag) und verschwindet beim Unscharfschalten
         sent = set(

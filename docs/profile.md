@@ -197,6 +197,24 @@ Als **Ortung** zählt alles mit Koordinaten: die Companion App (GPS), iCloud3, e
 die Person selbst, wenn sie gerade per GPS geortet wird. **WLAN, Ping, Router und Bluetooth**
 haben keine Koordinaten – sie bestätigen nur, ein Beleg sind sie nie.
 
+**Geofence ohne Koordinaten – „zählt als Ortung“** (*ab 0.65.0b4*, [ADR 0018](entwicklung/adr/0018-geofence-und-eigener-ausloeser.md)):
+Manche Quellen werten den **Standort** des Handys aus, melden aber nur „zuhause“ oder „weg“ –
+z. B. die Anwesenheit aus Apple Home, über einen Template-Device-Tracker nach Home Assistant
+gebracht. Unter System → Anwesenheit, im Kasten der Person, lässt sich so ein Signal (oder ein
+Tracker der Person) unter **„Zählt als Ortung (Geofence)“** markieren. Dann zählt es wie eine
+genaue Ortung: „weg“ (nicht „home“) ist ein Beleg, solange die letzte Meldung im Zeitfenster
+liegt, und die Person gilt als „kann geortet werden“. Unbekannt oder nicht verfügbar ortet
+nichts.
+
+> **Nur für Standort-Quellen.** WLAN, Ping oder Bluetooth nie als Ortung markieren: Die werden
+> „weg“, wenn das Handy schläft – markiert, würde ein schlafendes Handy die Person abwesend machen,
+> und genau das soll „weg nur mit Beleg“ verhindern.
+
+*Beispiel:* Annas Tracker kommt aus Apple Home und meldet „not_home“, sobald ihr iPhone den
+Geofence verlässt – ohne Koordinaten. Bisher war sie für Hauswacht nie belegt weg. Als Ortung
+markiert, gilt sie kurz nach dem Verlassen als weg (frische Ortung), und „Scharf, wenn alle weg“
+greift.
+
 **Genau genug** – einstellbar unter Einstellungsseite → System → Anwesenheit und Heimkehr-Beobachtung:
 
 | Einstellung | „außerhalb“ heißt | Beispiel |
@@ -258,6 +276,28 @@ Profil („⚠ keine Ortung – gilt nie als weg“), unter System → Anwesenhe
 
 Dasselbe gilt für die [Heimkehr-Beobachtung](beobachtung.md): Sie zählt „weg“ genauso, damit
 Messung und Automatik übereinstimmen.
+
+**Warum nicht scharf?** (*ab 0.65.0b4*): Unter System → Anwesenheit zeigt **„Wer gilt gerade als
+zuhause?“** je Person, was Hauswacht gerade glaubt – und bei „kein Beleg“, **was fehlt**: keine
+Ortung (dann eine einrichten, ein Geofence-Signal als Ortung markieren oder „Tür + Signal“
+erlauben), Ortung nicht frisch oder nicht draußen, oder bei „Tür + Signal“ die Uhrzeit der letzten
+Tür und wann das Signal wegfiel (beides muss im Zeitfenster zusammenkommen). **Aktualisieren**
+holt den Stand neu.
+
+#### Eigener Auslöser für „alle weg“
+
+*Ab 0.65.0b4* ([ADR 0018](entwicklung/adr/0018-geofence-und-eigener-ausloeser.md)). Wer schon
+eine eigene Logik hat (z. B. einen Schalter `input_boolean.alle_weg` oder eine Personengruppe),
+kann sie im Profil unter Automatik → „Mehr Einstellungen“ → **„Eigener Auslöser für ‚alle weg‘“**
+wählen – ein Klick ins Feld zeigt alle passenden Entitäten nach Art sortiert, Tippen filtert nach Name oder Entitäts-ID –, dazu den Zustand, der „alle weg“ heißt (an, aus oder `not_home` für eine
+Personengruppe). Dann gilt die Entität **statt** der Personen: Zeigt sie den Zustand, wird nach
+der Wartezeit scharf geschaltet; unbekannt oder nicht verfügbar zählt nie als weg. Die übrigen
+Regeln bleiben (nur aus „unscharf“, offene Melder nie automatisch bestätigt).
+
+> **Hauswacht prüft dann nicht mehr selbst**, ob wirklich alle weg sind – auch nicht mit Beleg.
+> Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Der
+> [Assistent](assistent.md#was-geprüft-wird) zeigt dazu eine Warnung, und die Szenario-Vorschau
+> spielt „alle gehen weg“ für so ein Profil nicht durch. „Bei Rückkehr“ bleibt bei den Personen.
 
 ### Bei Rückkehr
 

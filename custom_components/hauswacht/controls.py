@@ -606,6 +606,21 @@ class ControlManager:
     async def async_input(
         self, keypad: Control, button: str, code: str | None, *, force: bool = False
     ) -> InputOutcome:
+        """Eine Keypad-Eingabe auswerten und – ohne Code oder Karte – ins Debug-Log schreiben."""
+        outcome = await self._input(keypad, button, code, force=force)
+        _LOGGER.debug(
+            "Bedienteil %s: Taste %s, Ausweis %s, trotzdem %s → %s",
+            keypad.control_id,
+            button,
+            "ja" if code else "nein",
+            "ja" if force else "nein",
+            outcome.result,
+        )
+        return outcome
+
+    async def _input(
+        self, keypad: Control, button: str, code: str | None, *, force: bool = False
+    ) -> InputOutcome:
         """Keypad-Kern: eine Eingabe (Taste + Ausweis) auswerten – für alle Keypads gleich.
 
         Zigbee2MQTT-Keypad und allgemeines Keypad (ADR 0012) nutzen genau diesen Weg: Anmeldung,

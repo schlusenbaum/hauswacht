@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
-from .core.away_proof import Fix, FrozenLocations, Home, is_locator, locate
+from .core.away_proof import Fix, FrozenLocations, Home, geofence_fix, is_locator, locate
 
 _LOGGER = logging.getLogger(__name__)
 DATA_FROZEN = f"{DOMAIN}_frozen_locations"
@@ -122,25 +122,45 @@ def _updated(state: State) -> float:
 
 
 def person_fixes(
-    hass: HomeAssistant, person: str, signals: tuple[str, ...], accuracy: str
+    hass: HomeAssistant,
+    person: str,
+    signals: tuple[str, ...],
+    accuracy: str,
+    geofence: frozenset[str] = frozenset(),
 ) -> list[Fix]:
+    """Ortungen der Person – mit Koordinaten oder als Geofence markiert (ADR 0018)."""
     home = home_zone(hass)
     fixes: list[Fix] = []
     for entity_id in _candidates(hass, person, signals):
         state = hass.states.get(entity_id)
-        if state is None or (is_locator(state.attributes) and _frozen(hass, entity_id, state)):
+        if state is None:
             continue
-        fix = locate(state.state, state.attributes, _updated(state), home=home, accuracy=accuracy)
+        if entity_id in geofence and not is_locator(state.attributes):
+            fix = geofence_fix(state.state, _updated(state))
+        elif is_locator(state.attributes) and _frozen(hass, entity_id, state):
+            continue
+        else:
+            fix = locate(
+                state.state, state.attributes, _updated(state), home=home, accuracy=accuracy
+            )
         if fix is not None:
             fixes.append(fix)
     return fixes
 
 
-def locatable(hass: HomeAssistant, person: str, signals: tuple[str, ...]) -> bool:
-    """Kann die Person überhaupt außerhalb geortet werden (eine Entität mit Koordinaten)?"""
-    return any(
-        (state := hass.states.get(entity_id)) is not None
-        and is_locator(state.attributes)
-        and not _frozen(hass, entity_id, state)
-        for entity_id in _candidates(hass, person, signals)
-    )
+def locatable(
+    hass: HomeAssistant,
+    person: str,
+    signals: tuple[str, ...],
+    geofence: frozenset[str] = frozenset(),
+) -> bool:
+    """Kann die Person außerhalb geortet werden (Koordinaten oder Geofence, ADR 0018)?"""
+    for entity_id in _candidates(hass, person, signals):
+        state = hass.states.get(entity_id)
+        if state is None:
+            continue
+        if entity_id in geofence:
+            return True
+        if is_locator(state.attributes) and not _frozen(hass, entity_id, state):
+            return True
+    return False

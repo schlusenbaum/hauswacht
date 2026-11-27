@@ -45,6 +45,7 @@ def test_help_keys_used_by_panel_exist() -> None:
         "hauswacht-panel-people.js",
         "hauswacht-panel-system.js",
         "hauswacht-panel-controls.js",
+        "hauswacht-panel-goals.js",
     ):
         text = (frontend / name).read_text(encoding="utf-8")
         text = re.sub(r'===\s*"\w+"', "", text)  # Vergleiche sind keine Schlüssel
@@ -57,3 +58,14 @@ def test_help_keys_used_by_panel_exist() -> None:
     used |= set(re.findall(r'_card\([^;]*?,\s*"(\w+)"\)', panel))
     missing = sorted(u for u in used if u not in keys)
     assert not missing, missing
+
+
+def test_every_info_symbol_is_a_button() -> None:
+    # Ein ⓘ nur mit title (Mauszeiger) geht auf Handy und Tablet nicht: es muss ein Knopf sein
+    frontend = ROOT / "custom_components" / "hauswacht" / "frontend"
+    bad = []
+    for path in sorted(frontend.glob("*.js")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if "ⓘ" in line and not line.lstrip().startswith("//") and "<button" not in line:
+                bad.append(f"{path.name}:{number}")
+    assert not bad, bad

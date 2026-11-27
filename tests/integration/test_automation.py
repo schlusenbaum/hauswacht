@@ -785,3 +785,63 @@ async def test_profile_line_without_armed_profile(hass: HomeAssistant) -> None:
     assert line["away_persons"] is True
     assert line["other_armed"] is None
     assert len(line["waiting"]) == 2
+
+
+# --- 0.65.0b4: Geofence als Ortung, eigener Auslöser (ADR 0018) ------------------------------
+
+
+async def test_geofence_signal_counts_as_location(hass: HomeAssistant) -> None:
+    """Ein Tracker ohne Koordinaten, als Ortung markiert, belegt „weg“ (z. B. Apple Home)."""
+    geo = "device_tracker.a_homekit"
+    hass.states.async_set(geo, "home")
+    await _setup(
+        hass,
+        {"homecoming_signals": {A: [geo]}, "away_proof_geofence": [geo]},
+        auto_away_persons=[A],
+        auto_away_delay=1,
+    )
+    hass.states.async_set(A, "not_home")  # Person ohne Koordinaten
+    hass.states.async_set(geo, "not_home")  # Geofence verlassen
+    await hass.async_block_till_done()
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_geofence_unmarked_is_only_a_signal(hass: HomeAssistant) -> None:
+    geo = "device_tracker.a_homekit"
+    hass.states.async_set(geo, "home")
+    await _setup(hass, {"homecoming_signals": {A: [geo]}}, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(A, "not_home")
+    hass.states.async_set(geo, "not_home")
+    await hass.async_block_till_done()
+    await _later(hass, 5)
+    assert _state(hass) == AlarmControlPanelState.DISARMED  # kein Beleg ohne Markierung
+
+
+async def test_own_trigger_for_all_away(hass: HomeAssistant) -> None:
+    """Eigener Auslöser: die Entität entscheidet „alle weg“, Personen spielen keine Rolle."""
+    switch = "input_boolean.alle_weg"
+    hass.states.async_set(switch, "off")
+    await _setup(
+        hass,
+        auto_away_entity=switch,
+        auto_away_entity_state="on",
+        auto_away_delay=1,
+        auto_away_persons=[A],
+    )
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED  # A ist zuhause, Schalter aus
+    hass.states.async_set(switch, "on")
+    await hass.async_block_till_done()
+    await _later(hass, 2)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_own_trigger_unavailable_is_never_away(hass: HomeAssistant) -> None:
+    switch = "binary_sensor.alle_weg"
+    hass.states.async_set(switch, "off")
+    await _setup(hass, auto_away_entity=switch, auto_away_entity_state="off", auto_away_delay=1)
+    hass.states.async_set(switch, "unavailable")
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED

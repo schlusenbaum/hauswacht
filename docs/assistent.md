@@ -53,6 +53,7 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 | **Eingangsverzögerung** reicht nicht für den **Türbeleg** einer Person (Handy meldet „zuhause“ erst nach der Tür) | ⚠️ Warnung | ⚠ Eingangsverzögerung auf den gemessenen Wert |
 | **„Eingangsverzögerung bei Annäherung“** ist an, aber keine Person der Liste hat ein Richtungs-Signal | ⚠️ Warnung | Verlängerung ausschalten |
 | Eine **Ortung meldet seit mindestens 24 Stunden exakt dieselbe Position** außerhalb von Zuhause (vorgetäuscht oder hängende App) – sie zählt nicht als Beleg ([mehr](profile.md#weg-nur-mit-beleg)) | ⚠️ Warnung | – (bei dauerhaft falscher Ortung: unter System → Anwesenheit aus den Signalen nehmen) |
+| **„Scharf, wenn alle weg“ folgt einem eigenen Auslöser** (Entität statt Personen) – Hauswacht prüft dann nicht selbst ([mehr](profile.md#eigener-auslöser-für-alle-weg)) | ⚠️ Warnung | – |
 | **„Tür + Signal“** ist an, obwohl die Person eine Ortung hat | 💡 Tipp | „Tür + Signal“ ausschalten |
 
 Messwerte zählen erst ab **3 Messungen** – vorher sagt der Assistent dazu nichts.
@@ -166,13 +167,84 @@ Nach dem Übernehmen des Vorschlags (50 s) zeigt dieselbe Vorschau:
 - Gastmodus, Durchgang von Hand, offene Melder beim Scharfschalten und Bedienteile kommen in den
   Szenarien nicht vor.
 
+## Einrichten nach Zielen (seit 0.65.0b1)
+
+Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dich tun soll**. Im Reiter
+**Assistent** → **Einrichten nach Zielen** öffnet sich ein Seitenblatt mit sechs Schritten:
+
+1. **Haushalt:** Welche Personen Home Assistant kennt und ob sie als „weg“ erkannt werden können
+   (✓ Ortung, „Tür + Signal“, ✓ Richtung, ⚠ Ortung eingefroren, ⚠ kann nicht als weg erkannt
+   werden). Nur Anzeige – Ortung und „Tür + Signal“ stellst du unter System → Anwesenheit ein.
+2. **Türen und Fenster** (*seit 0.65.0b2*), sortiert nach Etage und Raum:
+   - **Noch in keiner Meldergruppe:** Türen, Fenster und Bewegungsmelder, die Home Assistant kennt,
+     aber noch nicht überwacht werden. **Nichts ist vorausgewählt** – solche Melder sind oft für
+     Licht oder Heizung da (Bewegungsmelder fürs Licht, Kühlschranktür); überwacht wird nur, was
+     du ausdrücklich wählst. Türen und Fenster kommen in eine Gruppe
+     für außen (die vorhandene mit den meisten Türen und Fenstern oder eine neue „Außen“),
+     Bewegungsmelder in eine Gruppe für innen (vorhanden oder neu „Innen“).
+   - **Eingangstüren:** Welche Türen haben eine **Eingangsverzögerung** (du kommst rein und
+     schaltest in dieser Zeit unscharf)? Alle anderen Türen und Fenster lösen **sofort** aus –
+     z. B. eine Terrassentür, die nur von innen geöffnet wird. Vorausgewählt ist, was heute schon
+     so eingestellt ist.
+3. **Ziele** (mehrere möglich), jeweils mit dem Hinweis, welches Profil es betrifft („ergänzt das
+   Profil Nacht“ oder „legt das Profil Nacht neu an“):
+
+   | Ziel | Was eingestellt wird |
+   |---|---|
+   | **Nachts absichern** | Profil mit dem Knopf „Nacht“: Meldergruppen (vorgeschlagen: alle ohne Bewegungsmelder), auf Wunsch „Scharf um“ und „Unscharf um“ |
+   | **Automatisch scharf, wenn alle weg sind** | Profil mit dem Knopf „Abwesend“: Meldergruppen, „Scharf, wenn alle weg“ mit Personen und Wartezeit |
+   | **Beim Heimkommen unscharf** | „Bei Rückkehr“ im Abwesend-Profil: Personen und wie sicher (empfohlen: Türbeleg); die Eingangsverzögerung nach euren Messungen |
+   | **Nachts heimkommen, ohne dass „Nacht“ aus ist** | „Bei Rückkehr: Reinlassen“ im Nacht-Profil – wer heimkommt, wird reingelassen, das Profil bleibt scharf |
+   | **Garage oder Werkstatt getrennt** (*seit 0.65.0b3*) | Eigener [Bereich](profile.md#bereiche) „Garage“ mit eigenem Bedienfeld (`alarm_control_panel.hauswacht_garage`) – unabhängig vom Haus scharf, z. B. nachts, während im Haus noch jemand wach ist. Dazu eine Meldergruppe „Garage“ und im Bereich ein Profil mit dem Knopf „Abwesend“, sodass „Alle Bereiche → Abwesend“ die Garage mitschaltet. Auf Wunsch „Scharf, wenn alle weg“ (dieselben Personen wie im Haus) und Uhrzeiten. Gibt es den Bereich schon, wird er ergänzt |
+
+4. **Rückfragen** je Ziel – vorausgefüllt mit dem, was schon eingestellt ist, sonst mit
+   Vorschlägen. Personen, die nicht als weg erkannt werden können, sind mit ⚠ markiert.
+5. **Sirenen und Empfänger** für die betroffenen Profile. Sirenen werden **nur eingetragen, nie
+   freigegeben** – die Freigabe bleibt ein eigener Schritt unter Alarmgeber. Sirenen von
+   **Rauchmeldern** stehen mit 🔥 und dem Hinweis da: Als Einbruchsirene bekommen sie nur den
+   Einbruchton, nie den Brandton, und bei einem Brand schaltet Hauswacht sie nicht ab. Die
+   Brandfunktion des Rauchmelders bleibt unverändert.
+6. **Plan:** je Profil „bisher → neu“, Hinweise, was der Assistent danach prüft, und die
+   [Szenario-Vorschau](#was-passiert-wenn--seit-0640b4) für die Einstellungen, wie sie danach
+   wären. Erst **Übernehmen** speichert.
+
+### Was der Assistent beim Einrichten garantiert
+
+- Vorhandenes wird **nur ergänzt**: Listen (Meldergruppen, Personen, Sirenen, Empfänger) werden
+  erweitert, andere Einstellungen des Profils bleiben, wie sie sind.
+- Was **überschrieben** würde (z. B. „Bei Rückkehr“ von „Unscharf, nur wenn automatisch scharf“
+  auf „Unscharf mit Türbeleg“) oder die Anlage **nachgiebiger** macht (z. B. längere
+  Eingangsverzögerung), ist im Plan mit ⚠ markiert. Übernehmen geht dann erst mit dem Häkchen
+  „Ich habe die markierten Änderungen gesehen …“.
+- Übernehmen geht nur, wenn **alle Bereiche unscharf** sind. Hauswacht rechnet den Plan dabei aus
+  deinen Antworten **neu** – mit denselben Regeln wie im Seitenblatt. Hat sich inzwischen etwas
+  geändert, wird nichts gespeichert.
+- **Garage:** Melder aus einer Gruppe des Hauses kommen in die Gruppe „Garage“, und jedes Profil des
+  Hauses, das die bisherige Gruppe überwacht, bekommt die Gruppe „Garage“ dazu – im Haus ändert
+  sich also nichts, die Melder sind in beiden Bereichen. Eine Meldergruppe wird nie leer geräumt,
+  und Melder, die über ein Label in einer Gruppe stecken, werden nicht verschoben.
+- Ohne Antwort zu den Eingangstüren bleiben die Typen der Melder, wie sie sind.
+- Es wird nichts geschaltet, keine Sirene freigegeben, an der Brandfunktion der Rauchmelder nichts
+  geändert und keine Automation angelegt.
+
+**Beispiel:** Es gibt schon die Profile „Zuhause“ und „Abwesend“, aber keins für die Nacht. Du
+wählst „Nachts absichern“ (Scharf um 22:30) und „Beim Heimkommen unscharf“ für Anna mit Türbeleg.
+Der Plan zeigt:
+
+> **Neues Profil Nacht** – Meldergruppen: → Außen · Ausgangsverzögerung → 0 s ·
+> Eingangsverzögerung → 30 s · Scharf um → 22:30
+>
+> **Profil Abwesend** – Bei Rückkehr: Nichts → Unscharf mit Türbeleg · Bei Rückkehr – Personen:
+> – → Anna · Eingangsverzögerung: 30 s → 50 s ⚠ nachgiebiger
+>
+> Gut zu wissen: Eingangsverzögerung 50 s aus euren Messungen (längste gemessene Zeit plus Puffer).
+
+Wegen des ⚠ setzt du das Häkchen, dann **Übernehmen**.
+
 ## Was kommt
 
-Als Nächstes folgt die **Einrichtung nach Zielen**. Sie soll
-
-- nach **Zielen** fragen statt nach Einstellungen („nachts absichern“, „automatisch scharf, wenn
-  alle weg sind“, „beim Heimkommen unscharf“),
-- euren Haushalt kennen (Personen, Handys, Signale, Messwerte) und daraus Empfehlungen geben,
-- mit Beispielen aus dem eigenen Haus erklären, was die Einstellungen bewirken.
+- **0.66:** Ausgangserkennung – wer den PIN beim Rausgehen vergisst, löst keinen Alarm aus, wenn
+  sein Handy kurz danach „weg“ ist. Die Szenarien oben werden dafür die Sicherheitstabelle: Rein
+  darf dadurch nicht unsicherer werden.
 
 Den Stand siehst du in der [Roadmap](roadmap.md).

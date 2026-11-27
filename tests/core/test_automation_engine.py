@@ -188,3 +188,33 @@ def test_all_away_not_rescheduled_while_armed() -> None:
     # wieder unscharf (z. B. aus der Ferne), alle noch weg: wieder ganz normal planen
     actions = e.presence({A: False, B: False}, 120, DISARMED)
     assert actions == [StartTimer("away", 900), Note("AutoArmScheduled", "away", {"minutes": 15})]
+
+
+def test_own_trigger_replaces_persons() -> None:
+    """ADR 0018: eigener Auslöser statt Personen – die Entität ist die einzige „Person“."""
+    from custom_components.hauswacht.core.automation import (  # noqa: PLC0415
+        entity_away_value,
+        parse_automation,
+    )
+
+    options = {
+        "profiles": {
+            "away": {
+                "auto_away_persons": [A, B],
+                "auto_away_entity": "input_boolean.alle_weg",
+                "auto_away_entity_state": "on",
+            }
+        }
+    }
+    cfg = parse_automation(options, "away")
+    assert cfg.away_sources == ("input_boolean.alle_weg",)
+    assert cfg.enabled is True
+    assert entity_away_value("on", "on") is False  # „weg“
+    assert entity_away_value("off", "on") is True
+    assert entity_away_value("unavailable", "on") is None
+    assert entity_away_value(None, "on") is None
+    e = AutomationEngine()
+    e.configure({"away": cfg}, {})
+    assert set(e.persons) == {"input_boolean.alle_weg"}
+    actions = e.presence({"input_boolean.alle_weg": False}, 0, DISARMED)
+    assert actions[0] == StartTimer("away", 900)

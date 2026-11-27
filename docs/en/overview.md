@@ -121,3 +121,7 @@ configuration without asking ten times.
 Before creating it, Hauswacht automatically removes: PINs and their hashes, card numbers, the user
 list, action codes, recipients, persons, speakers, Wi-Fi names, MQTT topics and device IDs of readers. Sensor
 and profile names stay in – please have a quick look before uploading.
+
+More for troubleshooting – state, presence, check-up, people as placeholders instead of removed –
+is provided from 0.65.0b8 by [Download configuration](settings-page.md#download-configuration) in
+the System tab.

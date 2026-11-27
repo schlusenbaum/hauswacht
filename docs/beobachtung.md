@@ -58,8 +58,9 @@ Heimkehr-Beobachtung** → Block **Messungen**:
   |---|---|---|---|---|
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
-  Hinter jeder Spaltenüberschrift steht ein **ⓘ** (Mauszeiger drauf), darunter klappt
-  **„Was bedeuten die Spalten?“** alle Erklärungen auf – auch auf dem Handy. Eine
+  Hinter jeder Spaltenüberschrift steht ein **ⓘ**: Mauszeiger drauf zeigt die Erklärung,
+  Antippen (Handy, Tablet) zeigt sie direkt unter der Tabelle, nochmal Antippen blendet sie aus.
+  Darunter klappt **„Was bedeuten die Spalten?“** alle Erklärungen auf einmal auf. Eine
   **Schweigepause** ist ein „weg“ ohne Tür davor, siehe [Was ist eine Schweigepause?](#was-ist-eine-schweigepause).
   Gezählt wird beim Heimkommen das **frühestes Signal** je Person, beim Rausgehen **alle
   Signale** zusammen – beides so, wie die Profil-Automatik zählt (siehe [Weggehen](#weggehen-vorbereitung-für-rausgehen-ohne-pin-erkennen)).

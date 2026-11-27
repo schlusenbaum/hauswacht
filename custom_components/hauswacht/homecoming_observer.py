@@ -274,7 +274,13 @@ class HomecomingObserver:
             raw = False
         signals = tuple(s for s in sources if s != person)
         fixes = (
-            person_fixes(self.hass, person, signals, self.proof.settings.accuracy)
+            person_fixes(
+                self.hass,
+                person,
+                signals,
+                self.proof.settings.accuracy,
+                self.proof.settings.geofence,
+            )
             if raw is False
             else []
         )

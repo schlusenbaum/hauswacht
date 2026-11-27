@@ -208,8 +208,99 @@ Hauswacht follows the language of Home Assistant (Settings → System → Genera
 with a German setting, otherwise English. Messages follow a change at once; entity names and IDs
 stay as they were created when setting up. Custom texts are sent as entered.
 
+## Debug log: what did Hauswacht decide?
+
+*From 0.65.0b9.* When Hauswacht does something you did not expect, the debug log shows step by
+step **what came in, what Hauswacht made of it and what it did**. That way almost every error can
+be assigned to one of four causes:
+
+1. **The sensor or signal reports something wrong.** The log shows a different state than
+   expected, or none at all.
+2. **Hauswacht interprets it differently than you thought.** The line names the reason, e.g. "im
+   Profil night nicht überwacht" (not monitored in profile night) or "Anwesenheit person.… =
+   unklar" (presence unclear).
+3. **Hauswacht decides correctly, but the action fails.** Then you see e.g. a blocked siren or a
+   notification without recipients.
+4. **Home Assistant or another integration has a problem.** Then errors of other integrations
+   appear in the log.
+
+The debug log is **off** by default; without switching it on, Hauswacht writes none of these
+lines.
+
+**Switching it on and downloading – step by step:**
+
+1. In Home Assistant open **Settings → Devices & services** and click **Hauswacht**.
+2. Tap **⋮** at the top right and choose **Enable debug logging**.
+3. Reproduce the problem (e.g. arm, open the door) or wait until it happens.
+4. Again **⋮ → Disable debug logging**. Home Assistant then offers a file with all log lines
+   since switching it on for download.
+
+**Reading along live without switching off:** **Settings → System → Logs**, at the top right
+**⋮ → Show full logs** and type `hauswacht` into the search field. New lines appear there as
+soon as something happens.
+
+**Across a restart:** if the error happens during or right after a restart (e.g. "behaviour
+after restart"), switch on the debug log in `configuration.yaml` and restart Home Assistant:
+
+```yaml
+logger:
+  logs:
+    custom_components.hauswacht: debug
+```
+
+If your `configuration.yaml` already has a `logger:` section, only add the line under `logs:`.
+After troubleshooting remove the line again and restart – otherwise Home Assistant keeps writing
+more to the log.
+
+**How much and how long?** Debug costs hardly any computing time but makes the log bigger. Only
+leave it on as long as you need it for troubleshooting.
+
+**What the lines look like** (examples; the log lines are in German):
+
+```
+Bereich main: Melder binary_sensor.kuechenfenster off → on (instant, überwacht, löst aus)
+Bereich main: SensorTriggered(sensor_key=binary_sensor.kuechenfenster, role=instant) → StateChanged(old=armed, new=triggered, cause=instant_sensor), ActivateReaction(profile_id=night, cycle=1, sensor_key=binary_sensor.kuechenfenster, test_mode=False)
+Sirenen activate: gesendet ['turn_on siren.flur'], gesperrt {'keller': 'fire_lock'}
+Benachrichtigung alarm: Empfänger ['notify.mobile_app_…'], gesendet ['notify.mobile_app_…']
+Bereich main: Melder binary_sensor.haustuer off → on (entry, unscharf, nicht immer aktiv)
+Bereich main: Anwesenheit person.… = unklar {kind=no_proof, located=False, weak=False, window=15, …}
+Bereich main: AutoArmSkipped (Profil away) {reason=away}
+Bedienteil a1b2c3: Taste arm_away, Ausweis ja, trotzdem nein → ok
+```
+
+| Line | What it shows |
+|---|---|
+| `Melder … (…)` (sensor) | Every change of a sensor, with its role and whether it counts right now (monitored, bypassed, disarmed, not in the profile) |
+| `Bereich …: input → effects` (area) | What the state machine makes of an event: arming, delays, alarm, refusal with reason (`Rejected`, `Ignored`) |
+| `Anwesenheit … = …` (presence) | When presence changes: home (zuhause), away (weg) or unclear (unklar), with the reason (proof, what is missing) |
+| `Automatik …` (automation) | What "arm when everyone is away", schedules and "on return" do, or why not |
+| `Sirenen …` (sirens) | Which sirens got a command (gesendet) and which were blocked (gesperrt, e.g. fire lock) |
+| `Benachrichtigung …` (notification) | Which recipients a message went to – without title and text |
+| `Bedienteil …` (control device) | Key and result of an input – only "credential yes/no" (Ausweis ja/nein), never the code |
+
+**Privacy – what is never in the log:** PINs, codes and card numbers, user names, coordinates,
+Wi-Fi names and the texts of notifications. A test checks on every change that no log line of
+Hauswacht contains such values – also without debug. Hauswacht sends the log nowhere; it stays on
+your Home Assistant.
+
+**Please check before passing it on:** the log names **entity IDs**, and they often contain names
+(`person.anna`, `notify.mobile_app_annas_iphone`). It is also a **timeline**: whoever reads it
+sees e.g. when the front door opened and when someone counted as away. Before posting, replace
+names in entity IDs (e.g. `person.anna` → `person.person_1`, the same everywhere) and only send
+the period that matters. For the settings themselves there is
+[Download configuration](settings-page.md#download-configuration) – there Hauswacht replaces names
+automatically.
+
 ## Getting help
 
-An [issue](https://github.com/schlusenbaum/hauswacht/issues) with the Hauswacht version, the Home
-Assistant version and the relevant log lines helps most. Questions in English are welcome. Please
-remove names, IP addresses, tokens and other personal data from logs first.
+For an [issue](https://github.com/schlusenbaum/hauswacht/issues) or a forum post, this helps
+most (questions in English are welcome):
+
+1. **What happened, what did you expect?** In one or two sentences, with the approximate time.
+2. **The file from [Download configuration](settings-page.md#download-configuration)** (System
+   tab, at the very bottom). It contains versions, settings and the current state; names are
+   already replaced by placeholders.
+3. **The relevant lines from the [debug log](#debug-log-what-did-hauswacht-decide)**, only for
+   the period that matters.
+
+Please remove names in entity IDs, IP addresses, tokens and other personal data from logs first.

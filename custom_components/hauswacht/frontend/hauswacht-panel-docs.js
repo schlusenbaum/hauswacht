@@ -10,6 +10,7 @@ const DOC_REPO = "https://github.com/schlusenbaum/hauswacht/blob";
 const DOC_LINKS = {
   index: ["README.md", "README.md"],
   settingsPage: ["einstellungsseite.md", "settings-page.md"],
+  export: ["einstellungsseite.md#konfiguration-herunterladen", "settings-page.md#download-configuration"],
   matrix: ["einstellungsseite.md#die-matrix-melder--profile", "settings-page.md#the-matrix-sensor--profile"],
   sensors: ["melder.md", "sensors.md"],
   groups: ["melder.md#meldergruppen", "sensors.md#sensor-groups"],
@@ -58,6 +59,7 @@ const DOC_LINKS = {
   status: ["dashboard.md#scharf-und-unscharf-schalten", "dashboard.md#arming-and-disarming"],
   findings: ["uebersicht.md#prüfhinweise", "overview.md#check-hints"],
   assistant: ["assistent.md#check-up-im-reiter-assistent-seit-0640b3", "setup-wizard.md#check-up-in-the-assistant-tab-since-0640b3"],
+  goals: ["assistent.md#einrichten-nach-zielen-seit-0650b1", "setup-wizard.md#set-up-by-goals-since-0650b1"],
   scenarios: ["assistent.md#was-passiert-wenn--seit-0640b4", "setup-wizard.md#what-happens-if--since-0640b4"],
   testMode: ["testmodus.md", "test-mode.md"],
   troubleshooting: ["fehlersuche.md", "troubleshooting.md"],

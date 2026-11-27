@@ -191,6 +191,23 @@ Anything with coordinates counts as a **location**: the Companion app (GPS), iCl
 tracker, the person itself while located by GPS. **Wi-Fi, ping, router and Bluetooth** have no
 coordinates – they only confirm, they are never proof.
 
+**Geofence without coordinates – "counts as location"** (*from 0.65.0b4*, [ADR 0018](../entwicklung/adr/0018-geofence-und-eigener-ausloeser.md), German):
+some sources evaluate the phone's **position** but only report "home" or "away" – e.g. presence
+from Apple Home, brought into Home Assistant via a template device tracker. Under System →
+Presence, in the person's box, such a signal (or a tracker of the person) can be marked under
+**"Counts as location (geofence)"**. It then counts like a precise location: "away" (not "home")
+is proof as long as its last report is within the time window, and the person counts as "can be
+located". Unknown or unavailable locates nothing.
+
+> **Only for position sources.** Never mark Wi-Fi, ping or Bluetooth as a location: they turn
+> "away" when the phone sleeps – marked, a sleeping phone would make the person absent, which is
+> exactly what "away only with proof" prevents.
+
+*Example:* Anna's tracker comes from Apple Home and reports "not_home" as soon as her iPhone leaves
+the geofence – without coordinates. Until now she was never proven away for Hauswacht. Marked as
+a location, she counts as away shortly after leaving (fresh location), and "arm when all away"
+works.
+
 **Precise enough** – set under settings page → System → Presence and homecoming observation:
 
 | Setting | "outside" means | Example |
@@ -251,6 +268,27 @@ list – that is the safe side. Hauswacht shows this at the person selection in 
 
 The same applies to the [homecoming observation](observations.md): it counts "away" the same
 way, so that measurement and automation match.
+
+**Why not armed?** (*from 0.65.0b4*): under System → Presence, **"Who counts as home right now?"**
+shows per person what Hauswacht currently believes – and for "no proof", **what is missing**: no
+location (then set one up, mark a geofence signal as location or allow "door + signal"), location
+not fresh or not outside, or for "door + signal" the time of the last door and when the signal
+dropped (both must come together within the time window). **Refresh** fetches the current state.
+
+#### Own trigger for "all away"
+
+*From 0.65.0b4* ([ADR 0018](../entwicklung/adr/0018-geofence-und-eigener-ausloeser.md), German).
+If you already have your own logic (e.g. a switch `input_boolean.all_away` or a person group), you
+can choose it in the profile under Automation → "More settings" → **"Own trigger for 'all
+away'"** – a click into the field shows all matching entities sorted by kind, typing filters by name or entity ID –, plus the state that means "all away" (on, off or `not_home` for a person group). The
+entity then applies **instead of** the persons: when it shows the state, the profile arms after
+the waiting time; unknown or unavailable never counts as away. The other rules stay (only from
+"disarmed", open sensors are never confirmed automatically).
+
+> **Hauswacht then no longer checks itself** whether everyone is really away – not even with
+> proof. If the entity is wrong while someone is home, there is a false alarm. The
+> [assistant](setup-wizard.md#what-is-checked) shows a warning, and the scenario preview does not
+> play through "everyone leaves" for such a profile. "On return" stays with the persons.
 
 ### On return
 

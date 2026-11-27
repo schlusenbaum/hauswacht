@@ -32,7 +32,7 @@ und du änderst es an Ort und Stelle.
 | Reiter | Inhalt |
 |---|---|
 | **Übersicht** | Prüfhinweise (z. B. „Profil ohne Empfänger“) und der Zustand je Bereich; Knöpfe **Drucken** und **Notfallblatt** wie in der Karte [Hauswacht Übersicht](uebersicht.md) |
-| **Assistent** | [Check-up](assistent.md#check-up-im-reiter-assistent-seit-0640b3): was in den Einstellungen nicht zusammenpasst, mit Begründung und Vorschlägen zum einzelnen Übernehmen |
+| **Assistent** | [Einrichten nach Zielen](assistent.md#einrichten-nach-zielen-seit-0650b1), [Check-up](assistent.md#check-up-im-reiter-assistent-seit-0640b3) (was in den Einstellungen nicht zusammenpasst, mit Vorschlägen zum einzelnen Übernehmen) und [„Was passiert, wenn …?“](assistent.md#was-passiert-wenn--seit-0640b4) |
 | **Melder** | Alle Melder **nach Meldergruppen**, mit Typ, Zustand und Batterie – und je Profil eine Spalte (Matrix, siehe unten). Darunter [Besondere Melder](melder.md#melder-mit-kippstellung-gekippt) und [Immer aktiv](melder.md#immer-aktive-melder) |
 | **Profile** | Jedes Profil mit Gruppen, Regeln, Zeiten, Reaktion, Empfängern und Automatik |
 | **Auslöseregeln** | Jede Regel als Satz und wo sie gilt |
@@ -239,9 +239,61 @@ Messwert („Unter 5 meldet der Melder „Problem“, wieder normal über 6.“)
 | **Verhalten nach Neustart** | Vorherigen Zustand wiederherstellen · immer scharf (mit Profil je Bereich) · immer unscharf; „Laufenden Alarm fortsetzen“ – siehe [Verhalten nach einem Neustart](installation.md#verhalten-nach-einem-neustart) |
 | **Funkstille von Sensoren** | Allgemeiner Wert (Stunden bis „ausgefallen“, 0 = aus) und eine Tabelle **je Melder**: längste Pause, Empfehlung, eigener Wert – Melder anklicken, um ihm einen eigenen Wert zu geben. Seit wann gemessen wird, steht unten; **Messung zurücksetzen** löscht die Messung aller Melder und beginnt neu. Siehe [Funkstille](melder.md#funkstille-von-sensoren) |
 | **Funknetz und Gateways** | Statussensoren, z. B. die Zigbee2MQTT-Bridge – siehe [Funknetz](melder.md#funknetz-und-gateways-überwachen) |
-| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter **„Wann gilt jemand als weg?“** (ab 0.61, nur hier): Ortung außerhalb **genau prüfen** oder **einfach**, unter „Mehr Einstellungen“ das **Zeitfenster für den Beleg** (Standard 15 Minuten) mit Empfehlung aus der Messung „Weggehen“ und Knopf **übernehmen**; je Person **„Beleg für ‚weg‘“**: nur Ortung (sicher) oder auch Tür + Signal (unsicher, mit Warnung und eigenem Zeitfenster); Warnung für Personen ohne Ortung – siehe [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg). Ab 0.63 zeigt die Karte außerdem **„Wer gilt gerade als zuhause?“**: je Person zuhause/weg/unbekannt mit Grund und je Profil eine Zeile, was Automatik und „Bei Rückkehr“ gerade machen – siehe [Anwesenheit testen](testmodus.md#anwesenheit-testen). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
+| **Anwesenheit und Heimkehr-Beobachtung** | Beobachtung an/aus, Personen, Heim-WLAN(s), zusätzliche Signale je Person – siehe [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung). Darunter **„Wann gilt jemand als weg?“** (ab 0.61, nur hier): Ortung außerhalb **genau prüfen** oder **einfach**, unter „Mehr Einstellungen“ das **Zeitfenster für den Beleg** (Standard 15 Minuten) mit Empfehlung aus der Messung „Weggehen“ und Knopf **übernehmen**; je Person **„Beleg für ‚weg‘“**: nur Ortung (sicher) oder auch Tür + Signal (unsicher, mit Warnung und eigenem Zeitfenster); ab 0.65.0b4 je Person **„Zählt als Ortung (Geofence)“** für Quellen ohne Koordinaten, die den Standort auswerten ([mehr](profile.md#weg-nur-mit-beleg)); Warnung für Personen ohne Ortung – siehe [„weg“ nur mit Beleg](profile.md#weg-nur-mit-beleg). Ab 0.63 zeigt die Karte außerdem **„Wer gilt gerade als zuhause?“**: je Person zuhause/weg/unbekannt mit Grund und je Profil eine Zeile, was Automatik und „Bei Rückkehr“ gerade machen; ab 0.65.0b4 bei „kein Beleg“ auch, was fehlt, und ein Knopf **Aktualisieren** – siehe [Anwesenheit testen](testmodus.md#anwesenheit-testen). Darunter der Block **Messungen**: ansehen, speichern, zurücksetzen – siehe [Messungen auf der Einstellungsseite](beobachtung.md#messungen-auf-der-einstellungsseite) |
 | **Bereiche** | anlegen, umbenennen, Symbol, löschen (nur ohne Profile) – siehe [Bereiche](profile.md#bereiche) |
 | **Einstellungsseite** | **In der Seitenleiste zeigen** an/aus. Ausgeblendet verschwindet nur der Eintrag in der Seitenleiste – die Seite bleibt über die Geräteseite, „Konfigurieren“ bei der Integration und `/hauswacht-settings` erreichbar |
+| **Konfiguration herunterladen** | Eine Datei (JSON) für die Fehlersuche, mit Platzhaltern statt Namen und Geheimnissen – siehe [Konfiguration herunterladen](#konfiguration-herunterladen) (ab 0.65.0b8) |
+
+## Konfiguration herunterladen
+
+*Ab 0.65.0b8.* Im Reiter **System** steht ganz unten die Karte **„Konfiguration herunterladen“**.
+Der Knopf **⬇ Herunterladen** speichert eine Datei `hauswacht-konfiguration-<Datum>.json`. Sie ist
+für die **Fehlersuche** gedacht: Wenn Hauswacht etwas anders macht als erwartet, steht darin alles,
+um es nachzuvollziehen – ohne zehnmal nachzufragen. Anhängen z. B. an ein
+[Issue](https://github.com/schlusenbaum/hauswacht/issues) oder an einen Forenbeitrag.
+
+**Was drinsteht**
+
+| Abschnitt | Inhalt |
+|---|---|
+| `versions` | Versionen von Hauswacht, Home Assistant und Python |
+| `options` | alle Einstellungen, genau wie gespeichert |
+| `overview` | die [Anlagenübersicht](uebersicht.md) mit Prüfhinweisen |
+| `presence` | **„Wer gilt gerade als zuhause?“** – je Person mit Grund, je Profil, was die Automatik macht |
+| `facts` | was Hauswacht aus Home Assistant weiß: wer geortet werden kann, wer ein Richtungs-Signal hat, eingefrorene Ortungen, Eingangstüren und Fenster je Profil |
+| `measurements` | die [Messungen](beobachtung.md#messungen-auf-der-einstellungsseite) (Heimkehr, Weggehen, Eingänge) |
+| `findings` | das Ergebnis des [Check-ups](assistent.md) |
+| `scenarios` | „Was passiert, wenn …?“ – durchgerechnet mit deinen Einstellungen |
+| `entities` | Zustand der eigenen Hauswacht-Entitäten und aller Entitäten, die in den Einstellungen vorkommen (z. B. Melder, Tracker, Signale): Zustand, letzte Änderung, Integration, ausgewählte Attribute wie `source_type` oder `in_zones` |
+
+**Was nicht drinsteht – Platzhalter statt echter Werte**
+
+Hauswacht ersetzt vor dem Speichern alles Persönliche durch **Platzhalter**. Die Zuordnung bleibt
+erhalten: Dieselbe Person heißt überall gleich, auch in Entitäts-IDs und Sätzen. So sieht man,
+*welcher* Tracker zu *welcher* Person gehört, aber nicht, wer das ist.
+
+| Echt | In der Datei |
+|---|---|
+| `person.anna`, „Anna“, `sensor.handy_von_anna`, „Annas Zimmer“ | `person.person_1`, „Person 1“, `sensor.handy_von_person_1`, „Person 1s Zimmer“ |
+| Benutzer „Ben Beispiel“ | `benutzer_1`, „Benutzer 1“ |
+| Kartennummer `04A1B2C3D4`, Kartenname | `karte_1`, „Kartenname 1“ |
+| `notify.mobile_app_handy_von_anna` | `notify.empfaenger_1` |
+| WLAN-Name, MQTT-Topic, Geräte-ID, HA-Konto, Lautsprecher | `wlan_1`, `topic_1`, `geraet_1`, `konto_1`, `media_player.lautsprecher_1` |
+| PIN-Hashes, Salze, Aktions-Codes | `***` |
+| Koordinaten | nie dabei – nur `has_coordinates: true/false` |
+
+Eine Fassung ohne Platzhalter gibt es bewusst nicht: So eine Datei landet schnell versehentlich
+im Forum.
+
+**Bitte trotzdem kurz drüberschauen:** Namen von Meldern, Zonen, Bereichen und Profilen bleiben
+(„Haustür“, „Nacht“), weil man sie zum Verstehen braucht. Steht darin etwas Persönliches, das
+nicht der Name einer Person in Home Assistant ist (z. B. „Zimmer von Oma Erika“), bleibt es
+stehen – dann vor dem Weitergeben ändern.
+
+Der Knopf liest nur – er schaltet nichts und ändert nichts. Nur Administratoren können ihn nutzen.
+Die [Diagnose-Datei](uebersicht.md#diagnose-datei-für-fehlerberichte) von Home Assistant gibt es
+weiterhin; die neue Datei enthält mehr (Zustand, Fakten, Check-up) und entfernt Personen nicht,
+sondern ersetzt sie durch Platzhalter.
 
 ## Alarmgeber bearbeiten
 

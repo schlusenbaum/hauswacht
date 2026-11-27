@@ -105,6 +105,24 @@ TEXTS: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "sleeping phone must not make anyone absent.",
         },
     },
+    "away_entity": {
+        "de": {
+            "text": "Profil {profile_name}: „Scharf, wenn alle weg“ folgt der Entität „{entity}“ "
+            "– Hauswacht prüft dabei nicht selbst, ob wirklich alle weg sind.",
+            "why": "Zeigt „{entity}“ den Zustand „{state}“, schaltet Hauswacht nach der Wartezeit "
+            "scharf – egal, was Handys und Ortungen sagen. Ist jemand zuhause und die Entität "
+            "irrt sich, gibt es einen Fehlalarm. Die Prüfung mit Beleg (ein schlafendes Handy "
+            "macht niemanden abwesend) gilt hier nicht.",
+        },
+        "en": {
+            "text": "Profile {profile_name}: “arm when all away” follows the entity “{entity}” – "
+            "Hauswacht does not check itself whether everyone is really away.",
+            "why": "When “{entity}” shows the state “{state}”, Hauswacht arms after the waiting "
+            "time – whatever phones and locations say. If someone is home and the entity is "
+            "wrong, there is a false alarm. The check with proof (a sleeping phone makes nobody "
+            "absent) does not apply here.",
+        },
+    },
     "return_never": {
         "de": {
             "text": "Profil {profile_name}: „Bei Rückkehr“ greift für {person} nie.",
@@ -313,8 +331,22 @@ def _away(
     options: Mapping[str, Any], pid: str, facts: Facts, lang: str, pname: str
 ) -> list[dict[str, Any]]:
     weak = parse_proof_settings(options).weak
+    auto = parse_automation(options, pid)
+    if auto.away_entity:
+        return [
+            _finding(
+                "away_entity",
+                WARNING,
+                lang,
+                key=pid,
+                profile=pid,
+                profile_name=pname,
+                entity=facts.name(auto.away_entity),
+                state=auto.away_entity_state,
+            )
+        ]
     found = []
-    for person in parse_automation(options, pid).away_persons:
+    for person in auto.away_persons:
         if person in facts.located or person in weak:
             continue
         name = facts.name(person)

@@ -877,3 +877,147 @@ async def test_frozen_location_does_not_count(hass: HomeAssistant, hass_ws_clien
     await hass.async_block_till_done()
     moved = await _ws(hass_ws_client, hass, type="hauswacht/advisor/check", language="de")
     assert moved["findings"] == []
+
+
+async def test_goals_plan_and_apply(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """Einrichten nach Zielen (0.65): Plan ohne Speichern, Übernehmen mit Sicherungen."""
+    hass.states.async_set(
+        "person.anna", "home", {"friendly_name": "Anna", "latitude": 1.0, "longitude": 1.0}
+    )
+    await setup_entry(hass, make_entry())
+    start = await _ws(hass_ws_client, hass, type="hauswacht/goals/start")
+    assert start["targets"]["night"]["id"] == "night"
+    assert start["targets"]["away"]["id"] == "away"
+    anna = next(p for p in start["persons"] if p["id"] == "person.anna")
+    assert anna["detectable"] is True
+    door = next(x for x in start["sensors"] if x["id"] == DOOR)
+    assert (door["kind"], door["group"]) == ("door", "aussen")
+    assert DOOR in start["answers"]["sensors"]["entry_doors"]
+    answers = start["answers"]
+    answers["goals"] = ["away"]
+    answers["away"]["persons"] = ["person.anna"]
+    before = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    planned = await _ws(
+        hass_ws_client, hass, type="hauswacht/goals/plan", answers=answers, language="de"
+    )
+    plan = planned["plan"]
+    assert plan["errors"] == []
+    assert plan["profiles"] == ["away"]
+    away = next(step for step in plan["steps"] if step["profile"] == "away")
+    labels = [c["label"] for c in away["changes"]]
+    assert "Scharf, wenn alle weg" in labels
+    assert any(s["key"].startswith("all_leave:away") for s in planned["scenarios"])
+    # Nur gerechnet – nichts gespeichert
+    after_plan = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert after_plan["revision"] == before["revision"]
+    refused = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/goals/apply",
+        revision="alt",
+        answers=answers,
+    )
+    assert refused["errors"] == {"base": "changed_elsewhere"}
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/goals/apply",
+        revision=start["revision"],
+        answers=answers,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    assert _options(hass)["profiles"]["away"]["auto_away_persons"] == ["person.anna"]
+    assert not _options(hass).get("sirens_hardware_enabled")
+
+
+async def test_goals_overwrite_needs_confirm(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    hass.states.async_set(
+        "person.anna", "home", {"friendly_name": "Anna", "latitude": 1.0, "longitude": 1.0}
+    )
+    entry = make_entry(
+        {"profiles": {"away": {"return": {"mode": "auto_only", "persons": ["person.anna"]}}}}
+    )
+    await setup_entry(hass, entry)
+    start = await _ws(hass_ws_client, hass, type="hauswacht/goals/start")
+    answers = start["answers"]
+    answers["goals"] = ["return"]
+    answers["return"] = {"persons": ["person.anna"], "mode": "door"}
+
+    async def apply(**extra: Any) -> dict[str, Any]:
+        return await _ws(
+            hass_ws_client,
+            hass,
+            type="hauswacht/goals/apply",
+            revision=start["revision"],
+            answers=answers,
+            **extra,
+        )
+
+    assert (await apply())["errors"] == {"base": "confirm_needed"}
+    assert _options(hass)["profiles"]["away"]["return"]["mode"] == "auto_only"
+    result = await apply(confirm=True)
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    assert _options(hass)["profiles"]["away"]["return"]["mode"] == "door"
+
+
+async def test_goals_apply_refused_while_armed(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    start = await _ws(hass_ws_client, hass, type="hauswacht/goals/start")
+    await hass.services.async_call(
+        "hauswacht", "arm", {"entity_id": PANEL, "profile": "home"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    answers = start["answers"]
+    answers["goals"] = ["night"]
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/goals/apply",
+        revision=start["revision"],
+        answers=answers,
+    )
+    assert result == {"ok": False, "errors": {"base": "disarm_first"}}
+
+
+async def test_goals_garage_creates_area(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """0.65.0b3: Ziel Garage legt einen eigenen Bereich mit Bedienfeld an – nichts geschaltet."""
+    await setup_entry(hass, make_entry())
+    start = await _ws(hass_ws_client, hass, type="hauswacht/goals/start")
+    answers = start["answers"]
+    answers["goals"] = ["garage"]
+    answers["garage"] = {"sensors": [WINDOW], "away": False}
+    planned = await _ws(hass_ws_client, hass, type="hauswacht/goals/plan", answers=answers)
+    assert planned["plan"]["errors"] == []
+    assert planned["plan"]["needs_confirm"] is True  # Fenster verlässt die Gruppe Außen
+    result = await _ws(
+        hass_ws_client,
+        hass,
+        type="hauswacht/goals/apply",
+        revision=start["revision"],
+        answers=answers,
+        confirm=True,
+    )
+    assert result["ok"] is True, result
+    await hass.async_block_till_done()
+    options = _options(hass)
+    assert options["areas"]["garage"]["name"] == "Garage"
+    assert options["zones"]["garage"]["entities"] == [WINDOW]
+    assert options["profiles"]["garage"]["area"] == "garage"
+    # Das Haus überwacht das Fenster weiter (Profile mit „Außen“ haben jetzt auch „Garage“)
+    assert "garage" in options["profiles"]["home"]["zones"]
+    state = hass.states.get("alarm_control_panel.hauswacht_garage")
+    assert state is not None
+    assert state.state == "disarmed"
+
+
+async def test_settings_page_uses_no_deprecated_registry_access(
+    hass: HomeAssistant, hass_ws_client: Any, caplog: Any
+) -> None:
+    """Die Geräteauswahl (Bedienteile) nutzt keine veralteten Zugriffe der Geräte-Registry."""
+    await setup_entry(hass, make_entry())
+    caplog.clear()
+    data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert "revision" in data
+    assert "custom integration 'hauswacht'" not in caplog.text

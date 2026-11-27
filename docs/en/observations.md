@@ -58,8 +58,9 @@ block **Measurements**:
   |---|---|---|---|---|
   | Christian | 23 (21) | 4 | 95 s | 2 (6 min) |
 
-  Each column heading has an **ⓘ** (hover over it); below, **"What do the columns mean?"**
-  expands all explanations – on the phone too. A **silent pause** is an "away" without a door
+  Each column heading has an **ⓘ**: hovering shows the explanation, tapping (phone, tablet)
+  shows it right below the table, tapping again hides it. Below, **"What do the columns
+  mean?"** expands all explanations at once. A **silent pause** is an "away" without a door
   before it, see [What is a silent pause?](#what-is-a-silent-pause).
   Homecoming counts the **earliest signal** per person, leaving counts **all signals** together
   – both as the profile automation counts (see [Leaving](#leaving-preparation-for-detect-leaving-without-pin)).

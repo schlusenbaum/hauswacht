@@ -61,6 +61,16 @@ const PT = {
     scheduleCreate: "Zeitplan anlegen ↗",
     scheduleHint: "Öffnet die Helfer in einem neuen Fenster: „Helfer erstellen“ → „Zeitplan“. Danach hier „Liste aktualisieren“ – deine Eingaben bleiben erhalten.",
     refreshLists: "↻ Liste aktualisieren",
+    awayEntity: "Eigener Auslöser für „alle weg“ (statt der Personen oben)",
+    awayEntityNone: "Keiner – es gelten die Personen oben.",
+    awayEntitySearch: "Aus der Liste wählen oder Name/Entität tippen …",
+    awayEntityNoHit: "Nichts gefunden.",
+    awayEntityKinds: { input_boolean: "Schalter (Helfer)", binary_sensor: "Binärsensoren", group: "Gruppen" },
+    awayEntityChosen: "Gewählt:",
+    awayEntityClear: "Entfernen",
+    awayEntityState: "Dieser Zustand heißt „alle weg“",
+    awayEntityStates: { on: "an (on)", off: "aus (off)", not_home: "nicht zuhause (not_home, z. B. Personengruppe)" },
+    awayEntityWarn: "Damit prüft Hauswacht nicht mehr selbst, ob wirklich alle weg sind: Zeigt die Entität den Zustand, wird nach der Wartezeit scharf geschaltet – egal, was Handys und Ortungen sagen. Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Unbekannt oder nicht verfügbar zählt nie als weg.",
     persons: "Scharf, wenn alle diese Personen weg sind",
     awayDelay: "Wartezeit, wenn alle weg sind (min)",
     passagePhoneMoved: "Handy-Reinlassen ist umgezogen: oben bei „Bei Rückkehr“ → „Reinlassen (Durchgang)“.",
@@ -240,6 +250,16 @@ const PT = {
     scheduleCreate: "Create schedule ↗",
     scheduleHint: "Opens the helpers in a new window: “Create helper” → “Schedule”. Then “Refresh list” here – your entries are kept.",
     refreshLists: "↻ Refresh list",
+    awayEntity: "Own trigger for “all away” (instead of the persons above)",
+    awayEntityNone: "None – the persons above apply.",
+    awayEntitySearch: "Choose from the list or type a name/entity …",
+    awayEntityNoHit: "Nothing found.",
+    awayEntityKinds: { input_boolean: "Switches (helpers)", binary_sensor: "Binary sensors", group: "Groups" },
+    awayEntityChosen: "Chosen:",
+    awayEntityClear: "Remove",
+    awayEntityState: "This state means “all away”",
+    awayEntityStates: { on: "on", off: "off", not_home: "not home (not_home, e.g. a person group)" },
+    awayEntityWarn: "Hauswacht then no longer checks itself whether everyone is really away: when the entity shows the state, it arms after the waiting time – whatever phones and locations say. If the entity is wrong while someone is home, there is a false alarm. Unknown or unavailable never counts as away.",
     persons: "Arm when all these persons are away",
     awayDelay: "Waiting time when everyone is away (min)",
     passagePhoneMoved: "Letting in by phone has moved: above at “On return” → “Let in (passage)”.",
@@ -366,6 +386,13 @@ const PT = {
 };
 
 const PROFILE_STYLE = `
+  .picker { position: relative; }
+  .pick-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--divider-color); border-radius: 8px; margin-top: 4px; background: var(--card-background-color); }
+  .pick-head { position: sticky; top: 0; font-size: .78rem; padding: 4px 10px; background: var(--secondary-background-color); color: var(--secondary-text-color); }
+  .pick-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 6px 10px; font: inherit; color: var(--primary-text-color); cursor: pointer; }
+  .pick-item:hover, .pick-item:focus { background: var(--secondary-background-color); }
+  .pick-item .muted { font-size: .8rem; }
+  .pick-empty { padding: 6px 10px; }
   .sec { font-weight: 500; margin: 18px 0 2px; padding-top: 10px; border-top: 1px solid var(--divider-color); }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
   .days { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -443,6 +470,80 @@ class HauswachtProfileEditor extends HTMLElement {
   }
 
   // „Mehr Einstellungen“ zum Aufklappen; bleibt beim Neuzeichnen offen
+  // Eigener Auslöser für „alle weg“: Liste zum Durchblättern UND Suchen in einem.
+  // Klick ins Feld zeigt alle (nach Art sortiert), Tippen filtert nach Name oder Entitäts-ID.
+  _awayEntityPick(c, a) {
+    const choices = c.away_entities || [];
+    const current = choices.find((x) => x.id === a.auto_away_entity);
+    const shown = current ? current.name : a.auto_away_entity || "";
+    const chosen = a.auto_away_entity
+      ? `<div class="muted">${pe(this._t("awayEntityChosen"))} ${pe(a.auto_away_entity)} <button type="button" class="b" data-act="away-entity-clear">${pe(this._t("awayEntityClear"))}</button></div>`
+      : `<div class="muted">${pe(this._t("awayEntityNone"))}</div>`;
+    return `<div class="picker"><input data-awayent value="${pe(shown)}" placeholder="${pe(this._t("awayEntitySearch"))}" autocomplete="off">
+      <div class="pick-list" hidden>${this._pickItems(choices, "")}</div></div>${chosen}`;
+  }
+
+  _pickItems(choices, filter) {
+    const f = filter.trim().toLowerCase();
+    const hits = choices.filter((x) => !f || x.name.toLowerCase().includes(f) || x.id.toLowerCase().includes(f));
+    if (!hits.length) return `<div class="muted pick-empty">${pe(this._t("awayEntityNoHit"))}</div>`;
+    const groups = this._t("awayEntityKinds");
+    let last = null;
+    return hits
+      .map((x) => {
+        const domain = x.id.split(".")[0];
+        const head = domain !== last ? `<div class="pick-head">${pe(groups[domain] || domain)}</div>` : "";
+        last = domain;
+        return `${head}<button type="button" class="pick-item" data-pick-id="${pe(x.id)}">${pe(x.name)} <span class="muted">${pe(x.id)}</span></button>`;
+      })
+      .join("");
+  }
+
+  _wirePicker() {
+    const root = this.shadowRoot;
+    const input = root.querySelector("[data-awayent]");
+    const list = root.querySelector(".pick-list");
+    if (!input || !list) return;
+    const choices = this.settings?.profile_edit?.choices?.away_entities || [];
+    const show = () => {
+      // Ist schon etwas gewählt, zeigt der Klick zuerst die ganze Liste (nicht nur den Treffer)
+      const filter = input.dataset.typed ? input.value : "";
+      list.innerHTML = this._pickItems(choices, filter);
+      list.hidden = false;
+    };
+    input.addEventListener("focus", show);
+    input.addEventListener("input", () => {
+      input.dataset.typed = "1";
+      show();
+    });
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") list.hidden = true;
+    });
+    input.addEventListener("blur", () => setTimeout(() => (list.hidden = true), 150));
+    // mousedown statt click: sonst schließt das Verlassen des Feldes die Liste vor dem Klick
+    list.addEventListener("mousedown", (ev) => {
+      const item = ev.target.closest("[data-pick-id]");
+      if (!item) return;
+      ev.preventDefault();
+      this._collect();
+      this._draft.automation.auto_away_entity = item.dataset.pickId;
+      const top = root.querySelector(".sheet").scrollTop;
+      this._render();
+      root.querySelector(".sheet").scrollTop = top;
+    });
+  }
+
+  _awayEntityValue(text) {
+    // Getippt oder gewählt: Name (eindeutig) oder Entitäts-ID; leer = kein eigener Auslöser
+    const value = (text || "").trim();
+    if (!value) return null;
+    const choices = this.settings?.profile_edit?.choices?.away_entities || [];
+    const lower = value.toLowerCase();
+    const hit = choices.find((x) => x.id === value) || choices.find((x) => x.name.toLowerCase() === lower);
+    if (hit) return hit.id;
+    return /^[a-z_]+\.[a-z0-9_]+$/.test(value) ? value : this._draft.automation.auto_away_entity || null;
+  }
+
   _more(id, body) {
     return `<details class="more" data-more="${pe(id)}" ${this._opened.has(id) ? "open" : ""}><summary>${pe(this._t("moreSettings"))}</summary>${body}</details>`;
   }
@@ -560,7 +661,9 @@ class HauswachtProfileEditor extends HTMLElement {
       <label>${pe(this._t("persons"))}${inf("auto_away_persons")}</label>${c.persons.map((x) => `<div class="chk"><input type="checkbox" data-am="auto_away_persons" value="${pe(x.id)}" ${a.auto_away_persons.includes(x.id) ? "checked" : ""}><span>${pe(x.name)}</span>${this._noFix(x)}</div>`).join("") || `<div class="muted">${pe(this._t("none"))}</div>`}
       <label>${pe(this._t("awayDelay"))}${inf("auto_away_delay")}</label><input class="small" type="number" min="1" max="${lim.away_delay}" data-a="auto_away_delay" data-num="1" value="${pe(a.auto_away_delay)}">
       ${this._how("auto")}
-      ${this._more("auto", `<label>${pe(this._t("schedule"))}${inf("auto_schedule")}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
+      ${this._more("auto", `<label>${pe(this._t("awayEntity"))}</label>${this._awayEntityPick(c, a)}
+      ${a.auto_away_entity ? `<label>${pe(this._t("awayEntityState"))}</label><select data-a="auto_away_entity_state">${Object.entries(this._t("awayEntityStates")).map(([v, l]) => `<option value="${v}" ${v === (a.auto_away_entity_state || "on") ? "selected" : ""}>${pe(l)}</option>`).join("")}</select><div class="warn">${pe(this._t("awayEntityWarn"))}</div>` : ""}
+      <label>${pe(this._t("schedule"))}${inf("auto_schedule")}</label><select data-a="auto_schedule"><option value="">${pe(this._t("noSchedule"))}</option>${c.schedules.map((x) => `<option value="${pe(x.id)}" ${x.id === a.auto_schedule ? "selected" : ""}>${pe(x.name)}</option>`).join("")}</select>
       <div class="tool" style="margin-top:6px"><a class="b" href="/config/helpers" target="_blank" rel="noopener">${pe(this._t("scheduleCreate"))}</a><button class="b" data-act="refresh">${pe(this._t("refreshLists"))}</button></div>
       <div class="muted">${pe(this._t("scheduleHint"))}</div>`)}
 ${this._returnSection(c, lim, t)}
@@ -672,6 +775,8 @@ ${this._returnSection(c, lim, t)}
       else if (["excluded", "rules"].includes(key) && !root.querySelector(`[data-m="${key}"]`)) d[key] = key === "excluded" ? [] : d[key];
     }
     root.querySelectorAll("[data-a]").forEach((el) => (d.automation[el.dataset.a] = el.dataset.num ? Number(el.value) : el.value || null));
+    const awayEnt = root.querySelector("[data-awayent]");
+    if (awayEnt) d.automation.auto_away_entity = this._awayEntityValue(awayEnt.value);
     const am = {};
     root.querySelectorAll("[data-am]").forEach((el) => {
       am[el.dataset.am] = am[el.dataset.am] || [];
@@ -779,6 +884,15 @@ ${this._returnSection(c, lim, t)}
       this.shadowRoot.querySelector(".sheet").scrollTop = top;
     };
     this.shadowRoot.querySelector('[data-r="approach_delay"]')?.addEventListener("change", redraw);
+    this.shadowRoot.querySelector("[data-awayent]")?.addEventListener("change", redraw);
+    this._wirePicker();
+    this.shadowRoot.querySelector('[data-act="away-entity-clear"]')?.addEventListener("click", () => {
+      this._collect();
+      this._draft.automation.auto_away_entity = null;
+      const top = this.shadowRoot.querySelector(".sheet").scrollTop;
+      this._render();
+      this.shadowRoot.querySelector(".sheet").scrollTop = top;
+    });
     this.shadowRoot.querySelectorAll("[data-rec]").forEach((btn) =>
       btn.addEventListener("click", () => {
         this._collect();

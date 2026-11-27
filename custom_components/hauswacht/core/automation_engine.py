@@ -165,7 +165,7 @@ class AutomationEngine:
         """Alle Personen aus „alle weg“ und „Bei Rückkehr“."""
         persons: set[str] = set()
         for cfg in self.configs.values():
-            persons.update(cfg.away_persons)
+            persons.update(cfg.away_sources)
         for back in self.returns.values():
             persons.update(back.persons)
         return persons
@@ -216,9 +216,9 @@ class AutomationEngine:
                 self.home[person] = new
         actions += self._returned(now, arrived, long_away, alarm)
         for pid, cfg in self.configs.items():
-            if not cfg.away_persons:
+            if not cfg.away_sources:
                 continue
-            if all_away_values(current.get(p) for p in cfg.away_persons):
+            if all_away_values(current.get(p) for p in cfg.away_sources):
                 # Nur planen, solange die Anlage unscharf ist – sonst würde nach dem automatischen
                 # Scharfschalten bei jeder Signaländerung neu geplant und dann verworfen (0.64.0b5)
                 if pid not in self.away_due and alarm.state is AlarmState.DISARMED:

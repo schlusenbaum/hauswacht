@@ -36,6 +36,8 @@ OPT_AWAY_WINDOW = "away_proof_window"
 OPT_AWAY_ACCURACY = "away_proof_accuracy"
 # Unsicherer Beleg „Tür + Signal“ je Person (Nachtrag 0.61 zu ADR 0015)
 OPT_AWAY_WEAK = "away_proof_weak"
+# Signale, die als Ortung zählen (Geofence ohne Koordinaten, z. B. Apple Home) – ADR 0018
+OPT_AWAY_GEOFENCE = "away_proof_geofence"
 OPT_AWAY_WEAK_WINDOW = "away_proof_weak_window"
 DEFAULT_WEAK_WINDOW = 5  # Minuten
 MAX_WEAK_WINDOW = 30
@@ -69,6 +71,8 @@ class ProofSettings:
     # Personen, bei denen auch „Tür + Signal weg“ reicht (unsicher), und dessen Zeitfenster
     weak: frozenset[str] = frozenset()
     weak_window: int = DEFAULT_WEAK_WINDOW  # Minuten
+    # Signale, die als Ortung zählen (Geofence) – ADR 0018
+    geofence: frozenset[str] = frozenset()
 
     @property
     def seconds(self) -> float:
@@ -100,7 +104,13 @@ def parse_proof_settings(options: Mapping[str, Any]) -> ProofSettings:
     except (TypeError, ValueError):
         weak_window = DEFAULT_WEAK_WINDOW
     weak_window = min(max(weak_window, 1), MAX_WEAK_WINDOW)
-    return ProofSettings(window, str(accuracy), weak, weak_window)
+    raw_geo = options.get(OPT_AWAY_GEOFENCE, [])
+    geofence = (
+        frozenset(e for e in raw_geo if isinstance(e, str))
+        if isinstance(raw_geo, list)
+        else frozenset()
+    )
+    return ProofSettings(window, str(accuracy), weak, weak_window, geofence)
 
 
 def distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -145,6 +155,18 @@ def locate(
         spread = max(_number(attributes.get("gps_accuracy")) or 0.0, 0.0)
         sure = distance_m(lat, lon, home.latitude, home.longitude) > home.radius + spread
     return Fix(outside_zone, outside_zone and sure, at)
+
+
+def geofence_fix(state: str | None, at: float) -> Fix | None:
+    """Ortung aus einem Geofence-Signal ohne Koordinaten (ADR 0018).
+
+    Nicht „home“ heißt draußen – sicher, denn ein Geofence wertet den Standort aus (anders als
+    WLAN oder Ping). Unbekannt oder nicht verfügbar ortet nichts.
+    """
+    if state is None or state in _NOT_LOCATED:
+        return None
+    outside = state != "home"
+    return Fix(outside, outside, at)
 
 
 # Anwesenheit simulieren – nur Testmodus, nur für Hauswacht (ADR 0016)
@@ -287,6 +309,14 @@ class AwayTracker:
 
     def proven(self, person: str) -> bool:
         return person in self._proven
+
+    def last_left(self, person: str) -> float | None:
+        """Wann zuletzt ein Signal der Person auf „weg“ wechselte (Anzeige „was fehlt“)."""
+        left = self._left.get(person)
+        return left[-1] if left else None
+
+    def last_door(self) -> float | None:
+        return self.doors[-1] if self.doors else None
 
 
 # --- Ortung, die sich nie bewegt (0.64.0b5) --------------------------------------------------

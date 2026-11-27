@@ -122,3 +122,7 @@ kennt die genaue Einstellung, ohne zehnmal nachzufragen.
 Vor dem Erstellen entfernt Hauswacht automatisch: PINs und ihre Hashes, Kartennummern, die
 Benutzerliste, Aktions-Codes, Empfänger, Personen, Lautsprecher, WLAN-Namen, MQTT-Topics und Geräte-IDs von
 Lesern. Melder- und Profilnamen bleiben drin – bitte vor dem Hochladen kurz drüberschauen.
+
+Mehr für die Fehlersuche – Zustand, Anwesenheit, Check-up, Personen als Platzhalter statt
+entfernt – liefert ab 0.65.0b8 [Konfiguration herunterladen](einstellungsseite.md#konfiguration-herunterladen)
+im Reiter System.

@@ -113,6 +113,7 @@ const TEXTS = {
     measLongest: "längste Zeit bis „weg“",
     measPauses: "Schweigepausen (längste)",
     measExplain: "Was bedeuten die Spalten?",
+    infoLabel: "Erklärung",
     measInfo: {
       measHome: "Wie oft die Person heimgekommen ist; in Klammern, wie oft dabei eine Eingangstür aufging.",
       measLeft: "Wie oft alle Signale der Person „weg“ meldeten und bis zu 15 Minuten vorher eine Eingangstür aufging – echtes Rausgehen.",
@@ -132,11 +133,17 @@ const TEXTS = {
     measResetLeaving: "Weggehen zurücksetzen",
     presenceNow: {
       title: "Wer gilt gerade als zuhause?",
-      hint: "Stand beim Öffnen der Seite. Im Testmodus kannst du die Anwesenheit in der Testkarte simulieren.",
+      hint: "Stand beim Öffnen der Seite oder nach „Aktualisieren“. Im Testmodus kannst du die Anwesenheit in der Testkarte simulieren.",
       states: { home: "zuhause", away: "weg", unknown: "unbekannt" },
       sim: "simuliert",
       home: "laut {by}",
       noProof: "kein Beleg – zählt nicht als weg",
+      missNoFix: "es fehlt eine Ortung: Ortung mit Standort einrichten, ein Geofence-Signal als Ortung markieren oder „Tür + Signal“ erlauben (System → Anwesenheit)",
+      missFix: "Ortung nicht frisch genug oder nicht außerhalb (Zeitfenster {w} min)",
+      missWeak: "Tür + Signal: letzte Tür {door}, Signal weg {left} – beides muss innerhalb von {w} min zusammenkommen",
+      entity: "eigener Auslöser, Zustand „{s}“",
+      never: "nie",
+      refresh: "Aktualisieren",
       unclear: "unklar: {by}",
       proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", simulated: "simuliert", other: "Beleg vorhanden" },
       line: {
@@ -189,6 +196,9 @@ const TEXTS = {
     areas: "Bereiche",
     addArea: "Bereich anlegen",
     page: "Einstellungsseite",
+    export: "Konfiguration herunterladen",
+    exportText: "Eine Datei (JSON) mit allen Einstellungen, dem aktuellen Zustand, den Messungen und dem Check-up – für die Fehlersuche. Personen, Benutzer, Karten, Empfänger, WLAN-Namen und Geräte stehen darin nur als Platzhalter (Person 1, Karte 1 …), PINs und Codes als ***. Koordinaten sind nie dabei. Melder-, Zonen- und Profilnamen bleiben – bitte vor dem Weitergeben kurz drüberschauen.",
+    exportBtn: "Herunterladen",
     pageOn: "in der Seitenleiste sichtbar",
     pageOff: "in der Seitenleiste ausgeblendet – erreichbar über die Geräteseite oder /hauswacht-settings",
     noRules: "Noch keine Auslöseregel. Eine Regel löst erst bei einer Abfolge aus, z. B. „Haustür, dann innerhalb von 60 s Keller“.",
@@ -238,6 +248,9 @@ const TEXTS = {
         confirm_needed: "Bitte erst bestätigen.",
         failed: "Übernehmen hat nicht geklappt.",
       },
+      goalsTitle: "Einrichten nach Zielen",
+      goalsIntro: "Sag, was Hauswacht für dich tun soll – nachts absichern, automatisch scharf, wenn alle weg sind, beim Heimkommen unscharf. Der Assistent schlägt die Einstellungen vor und zeigt vor dem Übernehmen genau, was sich ändert.",
+      goalsOpen: "Einrichten nach Zielen",
       scTitle: "Was passiert, wenn …?",
       scIntro: "Typische Situationen, durchgespielt mit deinen Einstellungen und Messwerten – mit denselben Regeln wie im Echtbetrieb, aber mit ausgedachter Uhr. Es wird nichts geschaltet.",
       scLoading: "Wird durchgespielt …",
@@ -357,6 +370,7 @@ const TEXTS = {
     measLongest: "longest time until “away”",
     measPauses: "Silent pauses (longest)",
     measExplain: "What do the columns mean?",
+    infoLabel: "Explanation",
     measInfo: {
       measHome: "How often the person came home; in brackets, how often an entry door opened.",
       measLeft: "How often all signals of the person reported “away” and an entry door opened up to 15 minutes before – real leaving.",
@@ -376,11 +390,17 @@ const TEXTS = {
     measResetLeaving: "Reset leaving",
     presenceNow: {
       title: "Who counts as home right now?",
-      hint: "State when the page was opened. In test mode you can simulate presence in the test card.",
+      hint: "State when the page was opened or after “Refresh”. In test mode you can simulate presence in the test card.",
       states: { home: "home", away: "away", unknown: "unknown" },
       sim: "simulated",
       home: "according to {by}",
       noProof: "no proof – does not count as away",
+      missNoFix: "a location is missing: set up a location with position, mark a geofence signal as location or allow “door + signal” (System → Presence)",
+      missFix: "location not fresh enough or not outside (time window {w} min)",
+      missWeak: "door + signal: last door {door}, signal away {left} – both must come together within {w} min",
+      entity: "own trigger, state “{s}”",
+      never: "never",
+      refresh: "Refresh",
       unclear: "unclear: {by}",
       proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", simulated: "simulated", other: "proof available" },
       line: {
@@ -433,6 +453,9 @@ const TEXTS = {
     areas: "Areas",
     addArea: "Add area",
     page: "Settings page",
+    export: "Download configuration",
+    exportText: "A file (JSON) with all settings, the current state, the measurements and the check-up – for troubleshooting. People, users, cards, recipients, Wi-Fi names and devices only appear as placeholders (Person 1, Card 1 …), PINs and codes as ***. Coordinates are never included. Sensor, zone and profile names stay – please have a quick look before passing it on.",
+    exportBtn: "Download",
     pageOn: "visible in the sidebar",
     pageOff: "hidden in the sidebar – reachable from the device page or /hauswacht-settings",
     noRules: "No trigger rule yet. A rule only triggers on a sequence, e.g. “front door, then basement within 60 s”.",
@@ -482,6 +505,9 @@ const TEXTS = {
         confirm_needed: "Please confirm first.",
         failed: "Applying did not work.",
       },
+      goalsTitle: "Set up by goals",
+      goalsIntro: "Tell Hauswacht what it should do for you – secure the night, arm automatically when everyone is away, disarm when coming home. The assistant suggests the settings and shows exactly what changes before you apply.",
+      goalsOpen: "Set up by goals",
       scTitle: "What happens if …?",
       scIntro: "Typical situations, played through with your settings and measurements – with the same rules as in real operation, but with a made-up clock. Nothing is switched.",
       scLoading: "Playing it through …",
@@ -582,7 +608,9 @@ const PANEL_STYLE = `
   .ok { color: var(--success-color, #43a047); margin: 0 0 10px; }
   tr.grp td { background: var(--secondary-background-color); font-weight: 500; }
   tr.grp .muted { font-weight: 400; }
-  th .info { color: var(--primary-color); cursor: help; font-weight: 400; }
+  th .info { border: none; background: none; color: var(--primary-color); cursor: help; font: inherit; font-weight: 400; padding: 0 2px; }
+  .tip[hidden] { display: none; }
+  .tip { display: block; font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); }
   details.explain { margin: 6px 0; font-size: .85rem; }
   details.explain summary { cursor: pointer; color: var(--primary-color); }
   details.explain div { margin: 4px 0; }
@@ -777,6 +805,7 @@ class HauswachtPanel extends HTMLElement {
       await import(`/hauswacht/hauswacht-panel-people.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-system.js?v=${this._panel?.config?.version || "0"}`);
       await import(`/hauswacht/hauswacht-panel-controls.js?v=${this._panel?.config?.version || "0"}`);
+      await import(`/hauswacht/hauswacht-panel-goals.js?v=${this._panel?.config?.version || "0"}`);
     } catch (_err) {
       // ohne Bearbeiten weiter nutzbar
     }
@@ -1081,7 +1110,16 @@ class HauswachtPanel extends HTMLElement {
       if (r.kind === "simulated") return t.sim;
       if (r.kind === "home") return t.home.replace("{by}", (r.by || []).join(", ") || "–");
       if (r.kind === "away") return t.proofs[r.proof] || t.proofs.other;
-      if (r.kind === "no_proof") return t.noProof;
+      if (r.kind === "entity") return t.entity.replace("{s}", r.state ?? "–");
+      if (r.kind === "no_proof") {
+        // Was fehlt? (ADR 0018)
+        const time = (ts) => (ts ? new Date(ts * 1000).toLocaleTimeString(this._lang, { hour: "2-digit", minute: "2-digit" }) : t.never);
+        const parts = [t.noProof];
+        if (r.located === false && !r.weak) parts.push(t.missNoFix);
+        if (r.located) parts.push(t.missFix.replace("{w}", r.window ?? "–"));
+        if (r.weak) parts.push(t.missWeak.replace("{door}", time(r.door_at)).replace("{left}", time(r.left_at)).replace("{w}", r.weak_window ?? "–"));
+        return parts.join(" – ");
+      }
       if (r.kind === "unclear") return t.unclear.replace("{by}", (r.by || []).join(", ") || "–");
       return "";
     };
@@ -1092,7 +1130,14 @@ class HauswachtPanel extends HTMLElement {
     const profiles = (st.profiles || [])
       .map((p) => `<div class="muted">${escHtml(p.name)} – ${escHtml(hauswachtProfileLine(p, t.line, now))}</div>`)
       .join("");
-    return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div></div>`;
+    const refresh = `<div class="tool"><button class="e" data-presence-refresh>${escHtml(t.refresh)}</button></div>`;
+    return `<div class="report"><b>${escHtml(t.title)}</b>${persons}${profiles}<div class="muted">${escHtml(t.hint)}</div>${refresh}</div>`;
+  }
+
+  _colHead(label, text, table) {
+    // Spaltenkopf mit ⓘ: Mauszeiger zeigt den Text (title), Antippen zeigt ihn unter der Tabelle
+    const info = `<button type="button" class="info" data-col-info="${escHtml(table)}" data-text="${escHtml(text)}" title="${escHtml(text)}" aria-label="${escHtml(this._t("infoLabel"))}">ⓘ</button>`;
+    return `<th title="${escHtml(text)}">${escHtml(label)} ${info}</th>`;
   }
 
   _measurementsHtml(m) {
@@ -1103,13 +1148,13 @@ class HauswachtPanel extends HTMLElement {
     const rows = m.persons
       .map((p) => `<tr><td>${escHtml(p.name)}</td><td class="nw">${p.arrivals} (${p.arrivals_with_door})</td><td class="nw">${p.left}</td><td class="nw">${escHtml(dash(p.longest_left, " s"))}</td><td class="nw">${p.pauses}${p.longest_pause !== null ? ` (${p.longest_pause} min)` : ""}</td></tr>`)
       .join("");
-    // Spaltenüberschriften mit ⓘ: Mauszeiger zeigt die Erklärung, darunter zum Aufklappen
-    const head = (key) => `<th title="${escHtml(this._t("measInfo")[key])}">${escHtml(this._t(key))} <span class="info">ⓘ</span></th>`;
+    // Spaltenüberschriften mit ⓘ: Mauszeiger zeigt die Erklärung, Antippen klappt sie unter der Tabelle auf
+    const head = (key) => this._colHead(this._t(key), this._t("measInfo")[key], "meas");
     const explain = ["measHome", "measLeft", "measLongest", "measPauses"]
       .map((key) => `<div><b>${escHtml(this._t(key))}:</b> ${escHtml(this._t("measInfo")[key])}</div>`)
       .join("");
     const persons = rows
-      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${head("measHome")}${head("measLeft")}${head("measLongest")}${head("measPauses")}</tr>${rows}</table></div>
+      ? `<div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${head("measHome")}${head("measLeft")}${head("measLongest")}${head("measPauses")}</tr>${rows}</table></div><div class="tip" data-col-tip="meas" hidden></div>
         <details class="explain"><summary>${escHtml(this._t("measExplain"))}</summary>${explain}</details>`
       : "";
     const advice = m.persons
@@ -1120,7 +1165,7 @@ class HauswachtPanel extends HTMLElement {
       .join("");
     // Vorbereitung Ausgangserkennung (0.63.1): Lebenszeichen rund um die Tür
     const exitPersons = m.persons.filter((p) => p.exit);
-    const exitHead = (key) => `<th title="${escHtml(this._t("exitInfo")[key])}">${escHtml(this._t("exitCols")[key])} <span class="info">ⓘ</span></th>`;
+    const exitHead = (key) => this._colHead(this._t("exitCols")[key], this._t("exitInfo")[key], "exit");
     const exitRows = exitPersons
       .map((p) => {
         const e = p.exit;
@@ -1138,7 +1183,7 @@ class HauswachtPanel extends HTMLElement {
       .join("");
     const exits = exitRows
       ? `<div class="n" style="margin-top:10px">${escHtml(this._t("exitTitle"))}</div><div class="muted">${escHtml(this._t("exitIntro"))}</div>
-        <div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${exitHead("sign")}${exitHead("confirm")}${exitHead("missing")}${exitHead("echo")}</tr>${exitRows}</table></div>
+        <div class="scroll"><table><tr><th>${escHtml(this._t("measPerson"))}</th>${exitHead("sign")}${exitHead("confirm")}${exitHead("missing")}${exitHead("echo")}</tr>${exitRows}</table></div><div class="tip" data-col-tip="exit" hidden></div>
         <details class="explain"><summary>${escHtml(this._t("measExplain"))}</summary>${exitExplain}</details>${exitText}`
       : "";
     const entryRows = m.entries
@@ -1222,7 +1267,9 @@ class HauswachtPanel extends HTMLElement {
       this._card(this._t("network"), `<div>${escHtml(sys.network.entities.map((e) => name(sys.network.choices, e)).join(", ") || "–")}</div>${edit("network")}`, "network") +
       this._card(this._t("homecoming"), `<div>${escHtml(homeText)}</div>${this._presenceNowHtml(h.status)}${edit("homecoming")}${leaving}`, "homecoming") +
       this._card(this._t("areas"), areas + this._armedOr(`<div class="tool">${this._btn("sys:area:", "+ " + this._t("addArea"))}</div>`), "areas") +
-      this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage")
+      this._card(this._t("page"), `<div>${escHtml(this._t(sys.settings_page ? "pageOn" : "pageOff"))}</div>${edit("page")}`, "settingsPage") +
+      // Konfiguration herunterladen (ADR 0019): nur lesen, mit Platzhaltern
+      this._card(this._t("export"), `<div class="muted">${escHtml(this._t("exportText"))}</div><div class="tool"><button class="e" data-a="export">⬇ ${escHtml(this._t("exportBtn"))}</button></div>`, "export")
     );
   }
 
@@ -1266,7 +1313,13 @@ class HauswachtPanel extends HTMLElement {
         return `<h3>${escHtml(pid ? a("inProfile").replace("{p}", name) : name)}</h3>${items.map(([f, i]) => this._findingHtml(f, i)).join("")}`;
       })
       .join("");
-    return this._card(a("title"), intro + msg + blocks + tools, help) + this._scenariosCard();
+    return this._goalsCard() + this._card(a("title"), intro + msg + blocks + tools, help) + this._scenariosCard();
+  }
+
+  _goalsCard() {
+    const a = (k) => this._asst(k);
+    const button = `<div class="tool">${this._btn("goals:", a("goalsOpen"))}</div>`;
+    return this._card(a("goalsTitle"), `<div class="muted">${escHtml(a("goalsIntro"))}</div>${button}`, "goals");
   }
 
   // --- Szenario-Vorschau „Was passiert, wenn …?“ ------------------------------------------
@@ -1366,6 +1419,27 @@ class HauswachtPanel extends HTMLElement {
 
   _wireAssistant() {
     const root = this.shadowRoot;
+    // ⓘ in Spaltenköpfen: Erklärung unter der Tabelle zeigen, nochmal antippen blendet sie aus
+    root.querySelectorAll("[data-col-info]").forEach((btn) =>
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const tip = root.querySelector(`[data-col-tip="${CSS.escape(btn.dataset.colInfo)}"]`);
+        if (!tip) return;
+        const same = !tip.hidden && tip.textContent === btn.dataset.text;
+        tip.textContent = btn.dataset.text;
+        tip.hidden = same;
+      })
+    );
+    // „Wer gilt gerade als zuhause?“ neu holen (nur lesen)
+    root.querySelector("[data-presence-refresh]")?.addEventListener("click", async () => {
+      try {
+        const status = await this._hass.callWS({ type: "hauswacht/presence/status" });
+        if (this._settings?.system?.homecoming) this._settings.system.homecoming.status = status;
+      } catch (_err) {
+        // nur Anzeige
+      }
+      this._render();
+    });
     root.querySelectorAll("[data-asst]").forEach((el) =>
       el.addEventListener("click", () => {
         const [act, i, j] = el.dataset.asst.split(":");
@@ -1542,6 +1616,22 @@ class HauswachtPanel extends HTMLElement {
     else if (kind === "fromswitch") this._openAlarmEditor("fromswitch");
     else if (kind === "notify") this._openAlarmEditor("notify");
     else if (kind === "text") this._openAlarmEditor("text", id);
+    else if (kind === "goals") this._openGoals();
+  }
+
+  _openGoals() {
+    // Einrichten nach Zielen (ADR 0017, 0.65)
+    if (!customElements.get("hauswacht-goals-sheet")) return;
+    const sheet = document.createElement("hauswacht-goals-sheet");
+    sheet.addEventListener("hw-close", () => this._closeEditor());
+    sheet.addEventListener("hw-saved", (ev) => {
+      this._closeEditor();
+      this._flash = this._t("saved");
+      this._reloadAfterSave(ev.detail?.revision);
+    });
+    this._editor = sheet;
+    this.shadowRoot.appendChild(sheet);
+    sheet.open({ hass: this._hass });
   }
 
   get _canEdit() {
@@ -1718,6 +1808,7 @@ class HauswachtPanel extends HTMLElement {
         else if (action === "print" || action === "sheet") this._print(action);
         else if (action === "hc-md" || action === "hc-csv") this._downloadHomecoming(action === "hc-csv" ? "csv" : "markdown");
         else if (action === "hc-show") this._toggleReport();
+        else if (action === "export") this._downloadExport();
         else if (action.startsWith("reset-")) this._resetMeasurement(action.slice(6));
       })
     );
@@ -1735,6 +1826,29 @@ class HauswachtPanel extends HTMLElement {
     const view = this._view();
     if (!view) return;
     view._print(kind === "sheet" ? view._sheetHtml() : view._printHtml());
+  }
+
+  async _downloadExport() {
+    // Konfiguration herunterladen (ADR 0019) – Hauswacht ersetzt Namen und Geheimnisse vorher
+    try {
+      const r = await this._hass.callWS({ type: "hauswacht/export", language: this._lang });
+      this._saveFile(`${r.filename}.json`, JSON.stringify(r.data, null, 2), "application/json;charset=utf-8");
+    } catch (err) {
+      this._flash = null;
+      this._error = `${this._t("error")}: ${err?.message || err}`;
+      this._render();
+    }
+  }
+
+  _saveFile(name, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   async _downloadHomecoming(kind) {
