@@ -1,6 +1,6 @@
 # ADR 0017: Assistent auf der Einstellungsseite – Check-up, Szenarien, Einrichten nach Zielen
 
-- Status: angenommen (0.64: Check-up, Hinweise in den Seitenblättern, Szenario-Vorschau; Einrichten nach Zielen folgt in 0.65)
+- Status: umgesetzt (0.64: Check-up, Hinweise in den Seitenblättern, Szenario-Vorschau; 0.65: Einrichten nach Zielen)
 - Datum: 2026-11-25
 - Baut auf: [ADR 0009](0009-einrichtungsassistent.md) (gemeinsame Logikschicht),
   [ADR 0011](0011-einstellungsseite.md) (Einstellungsseite, Nachtrag 0.63.2),

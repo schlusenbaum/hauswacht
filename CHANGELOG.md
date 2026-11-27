@@ -6,12 +6,60 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-11-27
+
+Zusammenfassung von 0.65.0b1 bis 0.65.0b9 – **Einrichten nach Zielen, Fehlersuche ohne
+Datenpreisgabe** ([ADR 0017](docs/entwicklung/adr/0017-assistent-check-up.md),
+[ADR 0018](docs/entwicklung/adr/0018-geofence-und-eigener-ausloeser.md),
+[ADR 0019](docs/entwicklung/adr/0019-konfiguration-herunterladen.md),
+[ADR 0020](docs/entwicklung/adr/0020-debug-log.md)).
+
+### Neu
+
+- **Einrichten nach Zielen** im Reiter Assistent: Statt Einstellung für Einstellung fragt der
+  Assistent, was Hauswacht tun soll – nachts absichern, automatisch scharf, wenn alle weg sind,
+  beim Heimkommen unscharf, nachts heimkommen, ohne dass „Nacht“ aus ist. Dazu der Schritt
+  „Türen und Fenster“ (Melder aufnehmen, Eingangstüren festlegen) und das Ziel „Garage oder
+  Werkstatt getrennt“ als **eigener Bereich**. Vor dem Speichern zeigt ein Plan je Profil
+  „bisher → neu“ mit Prüfung und Szenario-Vorschau. Vorhandenes wird nur ergänzt, Abschwächendes
+  braucht ein Häkchen, Übernehmen geht nur unscharf
+  ([Anleitung](docs/assistent.md#einrichten-nach-zielen-seit-0650b1)).
+- **„Zählt als Ortung (Geofence)“:** Ein Signal oder Tracker ohne Koordinaten, das den Standort
+  auswertet (z. B. Apple Home), lässt sich je Person als Ortung markieren.
+- **Eigener Auslöser für „alle weg“:** Im Profil eine Entität und der Zustand, der „alle weg“
+  heißt – statt der Personen. Unbekannt oder nicht verfügbar zählt nie als weg
+  ([Profile](docs/profile.md#eigener-auslöser-für-alle-weg)).
+- **„Warum nicht scharf?“:** „Wer gilt gerade als zuhause?“ sagt bei „kein Beleg“, was fehlt.
+- **Konfiguration herunterladen** (Reiter System): eine JSON-Datei für die Fehlersuche.
+  Personen, Benutzer, Karten, Empfänger, WLAN-Namen und Geräte stehen darin nur als
+  gleichbleibende Platzhalter, PINs und Codes als `***`, Koordinaten nie
+  ([Anleitung](docs/einstellungsseite.md#konfiguration-herunterladen)).
+- **Debug-Log:** Mit „Debug-Protokollierung aktivieren“ schreibt Hauswacht jede Entscheidung ins
+  Log – Melder mit Grund, Zustandswechsel, Anwesenheit je Person, Automatik, Sirenen,
+  Benachrichtigungen (nur Empfänger), Eingaben an Bedienteilen (nur „Ausweis ja/nein“). Namen,
+  PINs, Codes, Karten, Koordinaten, WLAN-Namen und Nachrichtentexte stehen nie darin
+  ([Anleitung](docs/fehlersuche.md#debug-log-was-hat-hauswacht-entschieden)).
+
+### Geändert
+
+- **Sirenen von Rauchmeldern** werden beim Einrichten angeboten – mit 🔥 und dem Hinweis, dass sie
+  nur den Einbruchton bekommen und bei Brand gesperrt sind. Sie werden nur eingetragen, nie
+  freigegeben; die Brandfunktion bleibt unverändert.
+- **Eigener Auslöser:** Liste und Suche in einem Feld.
+- **Keine Benutzernamen mehr im Log**, auch nicht in Info- und Warnzeilen. Tests prüfen alle
+  Log-Zeilen von Hauswacht auf festen Text ohne Namen, Codes, Karten, Orte oder Texte.
+
+### Korrigiert
+
+- **ⓘ in den Messtabellen** der Systemseite lassen sich auf Handy und Tablet antippen.
+- **Vorbereitet auf Home Assistant 2027.9 und 2027.10:** keine veralteten Zugriffe auf die
+  Geräte-Registry mehr.
+
 ### Doku
 
-- **Fehlersuche:** Debug-Log Schritt für Schritt (⋮-Menü der Integration), live mitlesen unter
-  System → Protokolle, über einen Neustart hinweg per `configuration.yaml`. „Hilfe holen“ nennt
-  jetzt, was in einen Fehlerbericht gehört: kurze Beschreibung, „Konfiguration herunterladen“,
-  Zeilen aus dem Debug-Log. Inhaltsverzeichnisse ergänzt.
+- **Fehlersuche:** Debug-Log Schritt für Schritt, live mitlesen unter System → Protokolle, über
+  einen Neustart hinweg per `configuration.yaml`; „Hilfe holen“ nennt, was in einen
+  Fehlerbericht gehört.
 - **ADR 0021 (Diskussion):** Anwesenheit je Person – Signale fürs Ankommen und Weggehen getrennt
   wählen, „eines reicht (nach Tür)“, Empfehlung mit „Was wäre wenn“. Geplant für 0.66.
 
