@@ -42,6 +42,7 @@ from .core.returning import parse_return
 from .core.silence import format_duration
 from .names import display_name
 from .presence_proof import locatable
+from .presence_whatif_ws import build_whatif
 
 
 def _measurements(main: Any) -> dict[str, Any] | None:
@@ -333,6 +334,8 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             # Ankommen/Weggehen je Signal und Person (ADR 0021) und was die Signale gerade sagen
             "presence": _presence_rules(options),
             "signal_now": _signal_now(hass, options),
+            # „Was wäre wenn“ mit den gespeicherten Einstellungen (ADR 0021)
+            "whatif": build_whatif(main, options),
             # Wofür die Anwesenheit jeder Person zählt (Profil-Automatik, Rückkehr, Beobachtung)
             "uses": {
                 p: [
