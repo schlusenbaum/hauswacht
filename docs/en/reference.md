@@ -239,6 +239,9 @@ proof), `Neustart` (restart).
 | `PhoneArrivalNoted` | [On return: let in](passage.md#let-in-by-phone): arrival detected (away for at least 5 minutes before), profile armed | `profile_id`, `persons` |
 | `DoorNoted` | "Disarm with door proof": entry door detected | `profile_id`, `door` |
 | `EntryDelayExtended` | [Approach](profiles.md#approach-extends-the-entry-delay): entry delay extended because a person from "On return" approached | `profile_id`, `seconds`, `normal`, `persons` |
+| `ExitWaitStarted` | [Exit detection](passage.md#detect-going-out-without-a-pin-exit-detection): silent waiting time instead of the entry delay, because someone was verifiably home | `profile_id`, `door`, `seconds`, `persons` |
+| `ExitDetected` | Exit detection: a person went out – the profile stays armed, the door is bypassed until closed | `profile_id`, `door`, `person` |
+| `ExitLetThrough` | Exit detection: "Let through" via push – the profile stays armed | `profile_id`, `door`, `person` (empty) |
 
 ### Operation
 

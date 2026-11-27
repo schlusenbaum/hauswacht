@@ -116,8 +116,8 @@ erkannt wird.
   deutlich in Einstellung, Check-up, Szenario-Vorschau und Doku.
 - Der Kern bekommt eine reine Entscheidung „wer ist rausgegangen“ mit denselben Regeln wie die
   Anwesenheit (ADR 0021); Echtbetrieb und Vorschau nutzen sie.
-- Doku (deutsch und englisch) mit Beispiel: Ben geht bei scharfer Nacht raus, Annas
-  Bewegungsmelder an der Treppe als „Melder im Haus“.
+- Doku (deutsch und englisch) mit Beispiel: „Nacht“ ist scharf, Ben geht morgens raus und
+  vergisst den PIN. Der Bewegungsmelder an der Treppe ist als „Melder im Haus“ eingetragen.
 - Tests: Einbruch ohne Lebenszeichen → normale Eingangsverzögerung; mit Melder im Haus ohne
   Bewegung → normale Eingangsverzögerung; Ben geht raus → kein Alarm; niemand geht → Alarm nach
   der Wartezeit; WLAN-Ausfall bei allen → Alarm; Aussetzer kürzer als 30 s → kein „rausgegangen“;

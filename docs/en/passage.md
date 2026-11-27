@@ -136,6 +136,76 @@ sensor on the way that still reports motion at the end.
 > **Careful with contacts that wrongly report "open":** then the door stays unmonitored although
 > it is closed. The warning shows this. Check the contact (often the magnet is too far away).
 
+## Detect going out without a PIN (exit detection)
+
+*From 0.66.0b9* ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md), German). The safety
+net for everyone who forgets the passage.
+
+**Example:** "Night" is armed. Ben leaves for work at 6 am and forgets the PIN and the passage.
+Without exit detection the entry delay runs out and there is an alarm – Ben is long at the bus
+stop. With exit detection Hauswacht notices that Ben's phone is "away" shortly after the door and
+simply keeps "Night" armed.
+
+**Switching it on:** settings page → Profiles → profile (e.g. "Night") → section **Passage** →
+**"Detect going out without a PIN"**. Default: off. The entry door needs an entry delay (type
+door), otherwise there is nothing to postpone.
+
+### How it works
+
+An entry door opens, the profile is armed, and **at least one person is verifiably home** – one
+of their leaving signals currently reports "home" (see
+[Which signals count?](profiles.md#arriving-and-leaving-per-signal)). Then:
+
+1. Instead of the entry delay a **silent waiting time** runs (default 3 minutes). No siren.
+2. **Immediately** **all alarm recipients** get an important message: "Door opened – was that one
+   of you?" with the buttons **[Alarm now]** and **[Let through]**.
+3. Hauswacht watches whether the leaving signals of one of these persons report "away" – with
+   their rules under "Which signals count?": with **"one is enough"** one signal, with **"all must
+   be away"** all of them (the door counts as proof here, no location is needed).
+4. If that holds for **30 seconds**, the person **went out**: no alarm, the profile stays armed,
+   the door is bypassed until closed. All alarm recipients get "Ben went out – Night stays
+   armed". If the signal comes back within the 30 seconds, it was a hiccup.
+5. If **nobody** went out by the end of the waiting time: **alarm** – as after the entry delay.
+6. **[Alarm now]** triggers immediately (every recipient may do that). **[Let through]** (only
+   with the push button and a valid user), PIN, card or keypad also end the waiting time.
+
+### Sensor in the house – recommended
+
+> ⚠️ **Without a sensor in the house the waiting time applies to every opening of the entry door
+> while someone is home – also to a break-in.** The siren would then only come after the waiting
+> time. The message with [Alarm now] still comes immediately.
+
+So: add a **sensor in the house** – a motion sensor in the hallway or on the stairs, the stair
+light, a switch. It does not have to be armed. If it reported something (on) **at most 2 minutes
+before the opening**, someone came from inside and the waiting time applies. Otherwise the normal
+entry delay runs – a break-in from outside is handled as always.
+
+*Example:* the motion sensor on the stairs is set as "sensor in the house". Ben walks down the
+stairs (sensor: motion), opens the front door → silent waiting time. If someone forces the front
+door at night without anyone coming down the stairs before → normal entry delay, alarm after 30 s.
+
+The assistant shows a warning in the check-up as long as exit detection runs without a sensor in
+the house, and the scenario preview plays "break-in through the front door while someone is
+home".
+
+### Waiting time
+
+| Setting | Value |
+|---|---|
+| **Waiting time** | 1 to 5 minutes, default 3. A break-in without a sensor in the house would stay silent at most this long. The "leaving" measurement under System → Presence shows how quickly your phones report "away" after the door |
+| **Longer than 5 minutes** (under "More settings", expert option) | up to 15 minutes – with a clear warning |
+
+### What stays safe
+
+- **Whoever was not home cannot go out.** If nobody reports "home" at the opening, the normal
+  entry delay applies.
+- **Wi-Fi outage:** if several persons report "away" almost at the same time only via
+  Wi-Fi-dependent signals (ping, router, Wi-Fi sensor of the app), it is more likely the Wi-Fi –
+  that does **not** count as going out. Bluetooth and location still count.
+- **Passage takes priority:** for whoever uses it, everything works as before.
+- Exit detection **never disarms**, never stops a running siren and changes nothing about fire
+  alarm, 24h sensors, tamper and windows.
+
 ## What else applies
 
 | Case | Behaviour |

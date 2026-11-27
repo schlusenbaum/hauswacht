@@ -96,6 +96,35 @@ class Notifier:
         return sent
 
     @callback
+    def send_to_alarm_recipients(
+        self,
+        title: str,
+        message: str,
+        *,
+        profile_targets: Iterable[str] = (),
+        data: Mapping[str, Any] | None = None,
+        test_mode: bool = False,
+    ) -> list[str]:
+        """An genau die Empfänger, die auch den Alarm bekämen – wichtig, ohne Sprachausgabe.
+
+        Für die Ausgangserkennung (ADR 0014): Ihre Nachricht geht immer an alle
+        Alarm-Empfänger, unabhängig davon, welche anderen Nachrichten eingeschaltet sind.
+        """
+        targets = route(
+            self.options,
+            NotifyEvent.ALARM,
+            system_targets=self.system_targets,
+            profile_targets=profile_targets,
+        )
+        return self.send(
+            targets,
+            title,
+            message,
+            test_mode=test_mode,
+            data=data,
+            base=push_data(None, critical_allowed=self.critical_allowed),
+        )
+
     def send_system(
         self,
         title: str,

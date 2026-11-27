@@ -142,6 +142,80 @@ einen Melder auf dem Weg, der am Ende noch Bewegung meldet.
 > **Achtung bei Kontakten, die fälschlich „offen“ melden:** Dann bleibt die Tür unbewacht,
 > obwohl sie zu ist. Die Warnung zeigt das. Prüfe den Kontakt (oft sitzt der Magnet zu weit weg).
 
+## Rausgehen ohne PIN erkennen (Ausgangserkennung)
+
+*Ab 0.66.0b9* ([ADR 0014](entwicklung/adr/0014-ausgangserkennung.md)). Das Sicherheitsnetz für
+alle, die den Durchgang vergessen.
+
+**Beispiel:** „Nacht“ ist scharf. Ben geht morgens um 6 Uhr zur Arbeit und vergisst PIN und
+Durchgang. Ohne Ausgangserkennung läuft die Eingangsverzögerung ab, und es gibt Alarm – Ben ist
+längst an der Bushaltestelle. Mit Ausgangserkennung merkt Hauswacht, dass Bens Handy kurz nach
+der Tür „weg“ ist, und lässt „Nacht“ einfach scharf.
+
+**Einschalten:** Einstellungsseite → Profile → Profil (z. B. „Nacht“) → Abschnitt **Durchgang** →
+**„Rausgehen ohne PIN erkennen“**. Standard: aus. Die Eingangstür braucht eine
+Eingangsverzögerung (Typ Tür), sonst gibt es nichts aufzuschieben.
+
+### So läuft es ab
+
+Eine Eingangstür geht auf, das Profil ist scharf, und **mindestens eine Person ist nachweislich
+zuhause** – eines ihrer Weggehen-Signale sagt gerade „zuhause“ (siehe
+[Welche Signale zählen?](profile.md#ankommen-und-weggehen-je-signal)). Dann:
+
+1. Statt der Eingangsverzögerung läuft eine **stille Wartezeit** (Standard 3 Minuten). Keine
+   Sirene.
+2. **Sofort** bekommen **alle Alarm-Empfänger** eine wichtige Nachricht: „Tür geöffnet – war das
+   jemand von euch?“ mit den Knöpfen **[Alarm jetzt]** und **[Durchlassen]**.
+3. Hauswacht schaut, ob die Weggehen-Signale einer dieser Personen „weg“ sagen – mit ihren Regeln
+   unter „Welche Signale zählen?“: bei **„eines reicht“** ein Signal, bei **„alle müssen weg
+   sein“** alle (die Tür gilt hier als Beleg, eine Ortung braucht es nicht).
+4. Bleibt das **30 Sekunden** so, ist die Person **rausgegangen**: kein Alarm, das Profil bleibt
+   scharf, die Tür wird bis zum Schließen überbrückt. Alle Alarm-Empfänger bekommen „Ben ist
+   rausgegangen – Nacht bleibt scharf“. Kommt das Signal in den 30 Sekunden zurück, war es ein
+   Aussetzer.
+5. Ist bis zum Ende der Wartezeit **niemand** rausgegangen: **Alarm** – wie nach der
+   Eingangsverzögerung.
+6. **[Alarm jetzt]** löst sofort aus (jeder Empfänger darf das). **[Durchlassen]** (nur mit
+   Push-Knopf und gültigem Benutzer), PIN, Karte oder Keypad beenden die Wartezeit ebenfalls.
+
+### Melder im Haus – empfohlen
+
+> ⚠️ **Ohne Melder im Haus gilt die Wartezeit für jede Öffnung der Eingangstür, solange jemand
+> zuhause ist – auch für einen Einbruch.** Die Sirene käme dann erst nach der Wartezeit. Die
+> Nachricht mit [Alarm jetzt] kommt trotzdem sofort.
+
+Darum: Trag einen **Melder im Haus** ein – einen Bewegungsmelder im Flur oder an der Treppe, das
+Treppenlicht, einen Schalter. Er muss nicht scharf sein. Hat er **höchstens 2 Minuten vor dem
+Öffnen** etwas gemeldet (an), kam jemand von innen, und die Wartezeit gilt. Sonst läuft die
+normale Eingangsverzögerung – ein Einbruch von außen wird behandelt wie immer.
+
+*Beispiel:* Der Bewegungsmelder an der Treppe ist als „Melder im Haus“ eingetragen. Ben läuft die
+Treppe runter (Melder: Bewegung), öffnet die Haustür → stille Wartezeit. Bricht jemand nachts die
+Haustür auf, ohne dass vorher drinnen jemand die Treppe herunterkam → normale
+Eingangsverzögerung, Alarm nach 30 s.
+
+Der Assistent zeigt im Check-up eine Warnung, solange die Ausgangserkennung ohne Melder im Haus
+läuft, und die Szenario-Vorschau spielt „Einbruch durch die Haustür, während jemand zuhause ist“
+durch.
+
+### Wartezeit
+
+| Einstellung | Wert |
+|---|---|
+| **Wartezeit** | 1 bis 5 Minuten, Standard 3. So lange bliebe ein Einbruch ohne Melder im Haus höchstens still. Die Messung „Weggehen“ zeigt unter System → Anwesenheit, wie schnell eure Handys nach der Tür „weg“ sagen |
+| **Länger als 5 Minuten** (unter „Mehr Einstellungen“, Expertenoption) | bis 15 Minuten – mit deutlichem Warnhinweis |
+
+### Was sicher bleibt
+
+- **Wer nicht zuhause war, kann nicht rausgehen.** Sagt beim Öffnen niemand „zuhause“, gilt die
+  normale Eingangsverzögerung.
+- **WLAN-Ausfall:** Sagen mehrere Personen fast gleichzeitig nur über WLAN-abhängige Signale
+  (Ping, Router, WLAN-Sensor der App) „weg“, ist eher das WLAN weg – das zählt **nicht** als
+  rausgegangen. Bluetooth und Ortung zählen weiter.
+- **Durchgang hat Vorrang:** Wer ihn nutzt, für den läuft alles wie bisher.
+- Die Ausgangserkennung **schaltet nie unscharf**, hält keine laufende Sirene an und ändert
+  nichts an Brandalarm, 24h-Meldern, Sabotage und Fenstern.
+
 ## Was sonst gilt
 
 | Fall | Verhalten |
