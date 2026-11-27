@@ -242,7 +242,7 @@ lines.
    since switching it on for download.
 
 **Reading along live without switching off:** **Settings → System → Logs**, at the top right
-**⋮ → Show full logs** and type `hauswacht` into the search field. New lines appear there as
+**⋮ → Show raw logs** and type `hauswacht` into the search field. New lines appear there as
 soon as something happens.
 
 **Across a restart:** if the error happens during or right after a restart (e.g. "behaviour

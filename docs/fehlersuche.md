@@ -254,7 +254,7 @@ Standardmäßig ist das Debug-Log **aus**; ohne Einschalten schreibt Hauswacht k
    allen Log-Zeilen seit dem Einschalten zum Herunterladen an.
 
 **Live mitlesen, ohne auszuschalten:** **Einstellungen → System → Protokolle**, oben rechts
-**⋮ → Vollständige Protokolle anzeigen** und ins Suchfeld `hauswacht` eintippen. Neue Zeilen
+**⋮ → Unveränderte Protokolle anzeigen** und ins Suchfeld `hauswacht` eintippen. Neue Zeilen
 erscheinen dort, sobald etwas passiert.
 
 **Über einen Neustart hinweg:** Tritt der Fehler gerade beim oder nach dem Neustart auf (z. B.

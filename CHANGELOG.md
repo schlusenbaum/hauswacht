@@ -6,6 +6,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Doku
+
+- **Fehlersuche:** Der Menüpunkt zum Mitlesen heißt in Home Assistant „Unveränderte Protokolle
+  anzeigen“ (englisch „Show raw logs“), nicht „Vollständige Protokolle anzeigen“.
+
 ## [0.66.0b8] - 2026-11-27
 
 Durchsicht vor dem Abschluss von 0.66.
