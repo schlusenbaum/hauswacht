@@ -304,6 +304,7 @@ async def test_garage_uses_the_same_presence_signals(hass: HomeAssistant) -> Non
         "homecoming_signals": {person: [wlan]},
         "presence_leave_mode": {person: "one"},
     }
+    hass.states.async_set(GATE, "off", {"device_class": "window"})
     await setup_entry(hass, make_entry(options))
     set_sensor(hass, DOOR, "on")  # Haustür (Eingangstür des Hauses)
     await hass.async_block_till_done()
