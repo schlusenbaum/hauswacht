@@ -12,6 +12,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   System → Protokolle, über einen Neustart hinweg per `configuration.yaml`. „Hilfe holen“ nennt
   jetzt, was in einen Fehlerbericht gehört: kurze Beschreibung, „Konfiguration herunterladen“,
   Zeilen aus dem Debug-Log. Inhaltsverzeichnisse ergänzt.
+- **ADR 0021 (Diskussion):** Anwesenheit je Person – Signale fürs Ankommen und Weggehen getrennt
+  wählen, „eines reicht (nach Tür)“, Empfehlung mit „Was wäre wenn“. Geplant für 0.66.
 
 ## [0.65.0b9] - 2026-11-26
 

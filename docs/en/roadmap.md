@@ -57,7 +57,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | When | Content |
 |---|---|
 | 0.65 | Assistant: **set up by goals** – "secure the night", "arm automatically when everyone is away", "disarm when coming home" …; **download configuration** for troubleshooting (placeholders instead of names), **debug log** without names and secrets |
-| 0.66 | Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
+| 0.66 | **Presence per person** ([ADR 0021](../entwicklung/adr/0021-anwesenheit-je-person.md), in discussion, German): choose per signal whether it counts for arriving and for leaving; leaving "one is enough (after a door)" or "all must agree"; plain-language explanation of what happens and a recommendation with "what if" based on your own measurements. Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |

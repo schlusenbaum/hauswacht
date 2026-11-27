@@ -24,3 +24,4 @@ Wichtige Entscheidungen mit Kontext, Abwägung und Folgen.
 | [0018](0018-geofence-und-eigener-ausloeser.md) | Geofence als Ortung, eigener Auslöser für „alle weg“, „Warum nicht scharf?“ (angenommen, 0.65.0b4) |
 | [0019](0019-konfiguration-herunterladen.md) | Konfiguration herunterladen: alles für die Fehlersuche, Platzhalter statt Namen und Geheimnisse (angenommen, 0.65.0b8) |
 | [0020](0020-debug-log.md) | Debug-Log: Entscheidungen nachvollziehen, ohne Namen und Geheimnisse; kein Verlauf im Export (angenommen, 0.65.0b9) |
+| [0021](0021-anwesenheit-je-person.md) | Anwesenheit je Person: Signale fürs Ankommen und Weggehen, „eines reicht (nach Tür)“, Empfehlung mit „Was wäre wenn“ (Diskussion, geplant 0.66) |
