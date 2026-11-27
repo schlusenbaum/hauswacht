@@ -67,6 +67,13 @@ At the top of the card:
   shows it). "Real" takes over the real value – if the window is really open and the system is
   armed, this then causes a test alarm.
 - **Test mode off = everything real again.** After a restart, simulations are gone too.
+- **Sensors in the house** of exit detection (*from 0.66.0b10*): the card shows the sensors in the
+  house of the **selected or armed profile** – if you change the profile, the list changes with it.
+  If the sensor is not an alarm sensor anyway, it says "sensor in the house for 'detect going out
+  without a PIN' – triggers nothing itself", otherwise as an addition. Simulated "on" counts like a
+  real one: this way you can play through going out – sensor in the house "on", door open, then
+  set the person to "away" under "Testing presence"
+  ([exit detection](passage.md#detect-going-out-without-a-pin-exit-detection)).
 
 The same as actions:
 

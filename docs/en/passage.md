@@ -184,6 +184,10 @@ entry delay runs – a break-in from outside is handled as always.
 stairs (sensor: motion), opens the front door → silent waiting time. If someone forces the front
 door at night without anyone coming down the stairs before → normal entry delay, alarm after 30 s.
 
+**Trying it out** without a siren: in [test mode](test-mode.md#how-the-simulation-works) set the
+sensor in the house to "on" in the test card, the door to "open" and the person to "away" under
+"Testing presence".
+
 The assistant shows a warning in the check-up as long as exit detection runs without a sensor in
 the house, and the scenario preview plays "break-in through the front door while someone is
 home".

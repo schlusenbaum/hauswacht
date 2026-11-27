@@ -69,6 +69,12 @@ Oben in der Karte:
   zeigt ihn trotzdem an). „Echt“ übernimmt den echten Wert – ist das Fenster in Wirklichkeit
   offen und die Anlage scharf, gibt es dann einen Testalarm.
 - **Testmodus aus = alles wieder echt.** Nach einem Neustart sind Simulationen ebenfalls weg.
+- **Melder im Haus** der Ausgangserkennung (*ab 0.66.0b10*): Die Karte zeigt die Melder im Haus
+  des **gewählten bzw. scharfen Profils** – wechselst du das Profil, wechselt die Liste mit. Ist der
+  Melder nicht ohnehin ein Alarmmelder, steht dort „Melder im Haus für ‚Rausgehen ohne PIN
+  erkennen‘ – löst selbst nichts aus“, sonst als Zusatz. Simuliert „an“ zählt wie echt: So lässt
+  sich das Rausgehen durchspielen – Melder im Haus „an“, Tür auf, dann unter „Anwesenheit testen“
+  die Person auf „weg“ ([Ausgangserkennung](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung)).
 
 Dasselbe als Aktionen:
 

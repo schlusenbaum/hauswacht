@@ -2511,6 +2511,7 @@ class HauswachtRuntime:
         known: set[str] = set()
         for area in self.main.areas.values():
             known |= area.candidates | area.armed_sensors
+            known |= area.exit.all_inside()  # Melder im Haus (Ausgangserkennung, ADR 0014)
         return frozenset(known)
 
     def _require_simulation(self, entity_id: str) -> None:
@@ -2556,6 +2557,10 @@ class HauswachtRuntime:
                 area._handle_sensor_change(entity_id, old, new, device_class)
             else:
                 area._notify()
+        if new == "on":
+            # Melder im Haus der Ausgangserkennung (ADR 0014): simuliert wie echt
+            for area in self.areas.values():
+                area.exit.note_inside(entity_id)
         if old == "off" and new == "on":
             # Simulierte Eingangstür zählt wie die echte: „Bei Rückkehr“, Beleg für „weg“,
             # Durchgang (ADR 0016) – sonst ließe sich das im Testmodus nicht ausprobieren
@@ -2669,7 +2674,12 @@ class HauswachtRuntime:
         """Alle Hauswacht-Sensoren mit echtem und simuliertem Zustand (für die Testkarte)."""
         rows: list[dict[str, Any]] = []
         areas = list(self.main.areas.values())
+        # Melder im Haus des gewählten bzw. scharfen Profils je Bereich (Ausgangserkennung)
+        inside_now = {e: a for a in areas for e in a.exit.inside_of(a.selected_profile)}
         for entity_id in self._all_known():
+            only_inside = all(entity_id not in (a.candidates | a.armed_sensors) for a in areas)
+            if only_inside and entity_id not in inside_now:
+                continue  # gehört zu einem anderen Profil – dynamisch je Auswahl
             state = self.hass.states.get(entity_id)
             device_class = state.attributes.get("device_class") if state else None
             # Status aus dem Bereich, der mit dem Melder gerade am meisten tut
@@ -2683,6 +2693,8 @@ class HauswachtRuntime:
                 self.main,
             )
             status = owner._sensor_status(entity_id, device_class)
+            if only_inside:
+                status = "exit_inside"
             idle = status in ("disarmed", "not_monitored")
             rows.append(
                 {
@@ -2698,6 +2710,8 @@ class HauswachtRuntime:
                     "simulated": self.simulated(entity_id),
                     "status": status,
                     "rules": owner.rule_names(entity_id),
+                    # Melder im Haus für „Rausgehen ohne PIN erkennen“ im gewählten Profil
+                    "exit_inside": entity_id in inside_now,
                     "area": owner.area_name if len(areas) > 1 and not idle else None,
                 }
             )

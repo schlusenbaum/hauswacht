@@ -194,6 +194,10 @@ Treppe runter (Melder: Bewegung), öffnet die Haustür → stille Wartezeit. Bri
 Haustür auf, ohne dass vorher drinnen jemand die Treppe herunterkam → normale
 Eingangsverzögerung, Alarm nach 30 s.
 
+**Ausprobieren** ohne Sirene: im [Testmodus](testmodus.md#so-funktioniert-die-simulation) den
+Melder im Haus in der Testkarte auf „an“, die Tür auf „offen“ und unter „Anwesenheit testen“ die
+Person auf „weg“ stellen.
+
 Der Assistent zeigt im Check-up eine Warnung, solange die Ausgangserkennung ohne Melder im Haus
 läuft, und die Szenario-Vorschau spielt „Einbruch durch die Haustür, während jemand zuhause ist“
 durch.

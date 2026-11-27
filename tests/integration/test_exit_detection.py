@@ -11,13 +11,14 @@ from typing import Any
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
     async_fire_time_changed,
     async_mock_service,
 )
 
-from custom_components.hauswacht.const import EVENT_HAUSWACHT
+from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
 
 from .conftest import DOOR, MOTION, PANEL, make_entry, set_sensor, setup_entry
 
@@ -151,3 +152,46 @@ async def test_alarm_now(hass: HomeAssistant, freezer: FrozenDateTimeFactory) ->
     entry.runtime_data.exit_alarm_now()
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_inside_sensor_in_test_card_and_simulation(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    """Melder im Haus erscheint in der Testkarte (je nach Profil) und lässt sich simulieren."""
+    light = "light.treppe"
+    hass.states.async_set(light, "off")
+    async_mock_service(hass, "notify", PHONE)
+    hass.states.async_set(BEN, "home")
+    hass.states.async_set(WLAN, "on")
+    entry = make_entry(_options(inside=[light]))
+    await setup_entry(hass, entry)
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": "switch.hauswacht_test_mode"}, blocking=True
+    )
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    sim_id = er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}_simulation"
+    )
+    assert sim_id is not None
+    rows = {r["entity_id"]: r for r in hass.states.get(sim_id).attributes["sensors"]}
+    assert rows[light]["status"] == "exit_inside"
+    await hass.services.async_call(
+        DOMAIN,
+        "simulate_state",
+        {"entity_id": PANEL, "sensor": light, "state": "on"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await hass.services.async_call(
+        DOMAIN,
+        "simulate_state",
+        {"entity_id": PANEL, "sensor": DOOR, "state": "on"},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    assert any(e.data.get("type") == "ExitWaitStarted" for e in events)
+    assert _panel(hass) == AlarmControlPanelState.PENDING

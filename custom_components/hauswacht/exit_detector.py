@@ -33,6 +33,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import OPT_HOMECOMING_SIGNALS, OPT_HOMECOMING_SSIDS
 from .core.automation import parse_automation, person_value
+from .core.away_proof import SIM_HOME, SIM_REAL
 from .core.exit_detection import (
     CONFIRM,
     ExitWatch,
@@ -103,7 +104,21 @@ class ExitDetector:
     def _on_inside(self, event: Event[EventStateChangedData]) -> None:
         new = event.data["new_state"]
         if new is not None and new.state == "on":
-            self._inside_last[event.data["entity_id"]] = dt_util.utcnow().timestamp()
+            self.note_inside(event.data["entity_id"])
+
+    @callback
+    def note_inside(self, entity_id: str) -> None:
+        """Melder im Haus meldet „an“ – echt oder im Testmodus simuliert."""
+        self._inside_last[entity_id] = dt_util.utcnow().timestamp()
+
+    def inside_of(self, profile_id: str | None) -> frozenset[str]:
+        """Melder im Haus eines Profils (nur, wenn die Ausgangserkennung dort an ist)."""
+        config = parse_exit(self.runtime.options, profile_id)
+        return config.inside if config.enabled else frozenset()
+
+    def all_inside(self) -> frozenset[str]:
+        options = self.runtime.options
+        return frozenset(e for pid in profile_ids(options) for e in self.inside_of(pid))
 
     @property
     def active(self) -> bool:
@@ -114,6 +129,13 @@ class ExitDetector:
     def _ssids(self) -> frozenset[str]:
         raw = self.runtime.options.get(OPT_HOMECOMING_SSIDS, [])
         return frozenset(s.strip() for s in raw if isinstance(s, str) and s)
+
+    def _simulated(self, person: str) -> bool | None:
+        """Im Testmodus simulierte Anwesenheit (ADR 0016): True zuhause, False weg, None echt."""
+        value = self.runtime.presence_simulated(person)
+        if value is None or value == SIM_REAL:
+            return None
+        return value == SIM_HOME
 
     def _signals(self, person: str) -> list[Signal]:
         raw = self.runtime.options.get(OPT_HOMECOMING_SIGNALS, {})
@@ -164,7 +186,8 @@ class ExitDetector:
         home = frozenset(
             p
             for p in presence_persons(runtime.options)
-            if can_leave(rules.get(p, DEFAULT_RULES), self._signals(p))
+            if (sim := self._simulated(p)) is True
+            or (sim is None and can_leave(rules.get(p, DEFAULT_RULES), self._signals(p)))
         )
         if not home:
             _LOGGER.debug("Ausgangserkennung: niemand nachweislich zuhause – normale Verzögerung")
@@ -215,6 +238,10 @@ class ExitDetector:
         now = dt_util.utcnow().timestamp()
         rules = parse_presence_rules(self.runtime.options)
         for person in watch.candidates:
+            sim = self._simulated(person)
+            if sim is not None:  # Testmodus: simulierte Anwesenheit (ADR 0016)
+                watch.note(person, not sim, now)
+                continue
             away = gone(rules.get(person, DEFAULT_RULES), self._signals(person), watch.opened_at)
             wlan = bool(away) and all(self._wlan_dependent(e) for e in away)
             watch.note(person, bool(away), now, wlan_only=wlan)

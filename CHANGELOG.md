@@ -6,6 +6,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b10] - 2026-11-27
+
+### Neu
+
+- **Testkarte zeigt die Melder im Haus** der Ausgangserkennung – passend zum gewählten bzw.
+  scharfen Profil; wechselt das Profil, wechselt die Liste mit. Im Testmodus lassen sie sich wie
+  jeder Melder auf „an“ simulieren, und das zählt für die Ausgangserkennung wie echt.
+- **Simulierte Anwesenheit** („Anwesenheit testen“) gilt auch für die Ausgangserkennung: Person
+  auf „weg“ stellen = rausgegangen. So lässt sich der ganze Ablauf ohne Sirene durchspielen.
+
 ## [0.66.0b9] - 2026-11-27
 
 **Ausgangserkennung – Rausgehen ohne PIN erkennen**

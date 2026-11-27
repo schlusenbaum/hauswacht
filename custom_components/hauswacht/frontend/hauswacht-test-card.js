@@ -119,6 +119,7 @@ const TEXT = {
       in_rule: "nur in Auslöseregeln:",
       always_active: "immer aktiv – löst auch unscharf aus",
       not_monitored: "nicht im aktiven Profil – wird ignoriert",
+      exit_inside: "Melder im Haus für „Rausgehen ohne PIN erkennen“ – löst selbst nichts aus",
       bypassed: "überbrückt – bis zum Unscharfschalten nicht überwacht",
       bypassed_until_closed: "überbrückt bis zum Schließen – erst „Zu“, dann wieder überwacht",
       tamper_alarm: "Manipulation löst Alarm aus",
@@ -133,6 +134,7 @@ const TEXT = {
       alarm_hold: "Alarm (Sirenen aus, noch nicht beendet)",
     },
     profile: "Profil",
+    exitInsideToo: "auch Melder im Haus für „Rausgehen ohne PIN erkennen“",
     rules: "Auslöseregeln im aktiven Profil",
     ruleIdle: "nicht begonnen",
     ruleStep: "Schritt {done} von {steps} erfüllt",
@@ -217,6 +219,7 @@ const TEXT = {
       in_rule: "only in trigger rules:",
       always_active: "always active – triggers even when disarmed",
       not_monitored: "not in the active profile – ignored",
+      exit_inside: "sensor in the house for “detect going out without a PIN” – triggers nothing itself",
       bypassed: "bypassed – not monitored until disarming",
       bypassed_until_closed: "bypassed until closed – press \"Closed\" to monitor again",
       tamper_alarm: "tamper triggers an alarm",
@@ -231,6 +234,7 @@ const TEXT = {
       alarm_hold: "alarm (sirens off, not ended yet)",
     },
     profile: "Profile",
+    exitInsideToo: "also sensor in the house for “detect going out without a PIN”",
     rules: "Trigger rules in the active profile",
     ruleIdle: "not started",
     ruleStep: "step {done} of {steps} fulfilled",
@@ -852,6 +856,9 @@ class HauswachtTestCard extends HTMLElement {
       let statusText = (this._t("status") || {})[sensor.status] || "";
       if (sensor.status === "in_rule" && Array.isArray(sensor.rules)) {
         statusText += " " + sensor.rules.join(", ");
+      }
+      if (sensor.exit_inside && sensor.status !== "exit_inside") {
+        statusText = statusText ? `${statusText} · ${this._t("exitInsideToo")}` : this._t("exitInsideToo");
       }
       if (statusText && sensor.area) statusText += ` [${sensor.area}]`;
       item.status.textContent = statusText;
