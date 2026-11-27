@@ -19,17 +19,12 @@ MAIN_AREA = "main"
 DEFAULT_MAIN_NAME = "Haus"
 DEFAULT_ICON = "mdi:home-outline"
 
-# Nur für den Hauptbereich
+# Nur für den Hauptbereich. Signale, Heim-WLANs und Anwesenheit je Person gelten bewusst in
+# allen Bereichen (ab 0.66.0b4): Eine Person ist überall gleich zuhause oder weg.
 MAIN_ONLY_KEYS = (
     "always_active",
     "homecoming_observe",
     "homecoming_persons",
-    "homecoming_signals",
-    "homecoming_ssids",
-    "presence_arrive_off",
-    "presence_leave_off",
-    "presence_leave_mode",
-    "presence_leave_no_door",
     "reminder_persons",
     "reminder_profile",
 )

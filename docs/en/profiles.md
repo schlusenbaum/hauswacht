@@ -602,6 +602,12 @@ armed while someone is in the house. Without further areas nothing changes.
 - **Shared by all areas:** PIN lockout, test mode and sirens. Test mode can only be switched
   while all areas are disarmed; a siren used by two areas at the same time stays on until both
   have ended their alarm.
+- **Presence is the same in all areas** (*from 0.66.0b4*): signals per person, home Wi-Fis,
+  [arriving and leaving per signal](#arriving-and-leaving-per-signal), "away only with proof" and
+  all entry doors apply to every area. Whoever counts as away in the house also counts as away for
+  "arm when all away" in the garage. Up to 0.66.0b3 an additional area only saw the person
+  entity, not the additional signals. Measuring (homecoming observation) only happens in the
+  first area.
 - **Notifications** carry the area name in the title, e.g. "Hauswacht: alarm (Garage)".
 - An area can only be deleted when no alarm profile belongs to it any more. Its device and
   entities disappear with it.

@@ -623,6 +623,12 @@ nichts.
 - **Gemeinsam für alle Bereiche:** PIN-Sperre, Testmodus und Sirenen. Der Testmodus lässt sich
   nur umschalten, wenn alle Bereiche unscharf sind; eine Sirene, die zwei Bereiche gleichzeitig
   nutzen, bleibt an, bis beide ihren Alarm beendet haben.
+- **Anwesenheit ist in allen Bereichen gleich** (*ab 0.66.0b4*): Signale je Person, Heim-WLANs,
+  [Ankommen und Weggehen je Signal](#ankommen-und-weggehen-je-signal), „Weg nur mit Beleg“ und
+  alle Eingangstüren gelten für jeden Bereich. Wer im Haus als weg gilt, gilt auch für „Scharf,
+  wenn alle weg“ in der Garage als weg. Bis 0.66.0b3 sah ein weiterer Bereich nur die
+  Personen-Entität, nicht die zusätzlichen Signale. Gemessen (Heimkehr-Beobachtung) wird nur im
+  ersten Bereich.
 - **Benachrichtigungen** tragen den Bereichsnamen im Titel, z. B. „Hauswacht: Alarm (Garage)“.
 - Ein Bereich lässt sich nur löschen, wenn ihm kein Alarmprofil mehr gehört. Gerät und
   Entitäten verschwinden dann mit.

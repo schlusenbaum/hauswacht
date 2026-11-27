@@ -6,6 +6,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b4] - 2026-11-27
+
+### Geändert
+
+- **Anwesenheit gilt in allen Bereichen gleich.** Weitere Bereiche (z. B. die Garage) haben für
+  „Scharf, wenn alle weg“ und „Bei Rückkehr“ bisher nur die Personen-Entität gesehen – nicht die
+  zusätzlichen Signale (WLAN, Ping, Bluetooth …), die Heim-WLANs und die Haken unter
+  „Welche Signale zählen?“. Jetzt entscheidet jeder Bereich genau wie das Haus, ob jemand
+  zuhause oder weg ist. Bei „alle müssen weg sein“ kann die Garage dadurch etwas später scharf
+  werden als bisher, weil jetzt alle Signale weg sein müssen. Gemessen wird weiter nur im
+  ersten Bereich ([Bereiche](docs/profile.md#bereiche)).
+
 ## [0.66.0b3] - 2026-11-27
 
 Zeigen, was wirklich zählt – vor allem beim **eigenen Auslöser für „alle weg“**.
