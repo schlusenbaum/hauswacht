@@ -242,7 +242,10 @@ def test_save_person_with_pins_and_area_rights() -> None:
     assert anna["area_rights"] == {"main": ["arm", "disarm"], "garage": []}
     assert anna["pin_digest"]
     assert anna["duress_digest"]
-    assert "4711" not in str(anna)
+    # Die PIN steht nirgends im Klartext – Hashes ausgenommen (die können die Ziffern zufällig
+    # enthalten)
+    plain = {k: v for k, v in anna.items() if not k.endswith("_digest")}
+    assert "4711" not in str(plain)
     # PIN-Fehler: nichts wird gespeichert, Name und PIN werden gemeinsam gemeldet
     bad = save_person(change.options, None, {"name": "Anna", "new_pin": "12"})
     assert bad.errors == {"name": "user_name_taken", "new_pin": "invalid_pin"}
