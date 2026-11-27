@@ -300,6 +300,32 @@ How Hauswacht counts:
 profile still applies instead of the persons. And the house still only counts as empty when
 **all** persons are away – "one is enough" only applies within one person.
 
+#### Own trigger per person
+
+*From 0.66.0b11.* If you already have your own logic for a person – a switch
+`input_boolean.ben_weg`, a HomeKit variable, a person group, your own tracker –, you can choose it
+under System → Presence in the person's box at **"Own trigger (instead of the signals)"**, plus
+the state that means **"away"** (off, on or `not_home`).
+
+Then **only the trigger** applies to this person:
+
+| | with own trigger |
+|---|---|
+| Home or away | if the entity shows the chosen state: **away**, otherwise **home**; unknown or unavailable **never counts as away** |
+| Signals, ticks, "detect leaving" | are **ignored** (the table is hidden) |
+| "Away only with proof" | does **not** apply – the entity needs no proof |
+| "Arm when all away" | the person counts via the trigger |
+| "On return" | coming home = the trigger switches to home. With **"disarm with door proof"** the **door** is still required – the trigger alone never disarms |
+| Exit detection | went out = the trigger switches to "away" after the opening |
+| "What if" | no recalculation for this person – the entity decides |
+
+> ⚠️ **Hauswacht no longer checks this person itself.** If the entity is wrong while the person is
+> home, "arm when all away" may arm. The person's box and the check-up point this out.
+
+*Example:* Ben has no smartphone with the Companion app, but an automation that switches on
+`input_boolean.ben_weg` when his car leaves the driveway. Own trigger: `input_boolean.ben_weg`,
+"away" = on. While the switch is on, Ben is away for Hauswacht – everywhere.
+
 #### "Away" only with proof
 
 *From 0.61.* A sleeping phone must not make anybody away. If a phone in the house loses its Wi-Fi

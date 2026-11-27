@@ -86,6 +86,16 @@ const ST = {
     wiShort: ", davon {n}× nur kurz (nach unter 10 min wieder da)",
     wiHouseHint: "Die Wartezeit stellst du im Profil unter Automatik ein. Kürzer heißt: schneller scharf, aber auch öfter scharf, wenn jemand nur kurz rausgeht.",
     presTitle: "Welche Signale zählen?",
+    trigTitle: "Eigener Auslöser (statt der Signale)",
+    trigNone: "Keiner – es gelten die Signale unten.",
+    trigPick: "Entität wählen (Schalter, Binärsensor, Gruppe, Tracker) …",
+    trigAway: "Dieser Zustand heißt „weg“",
+    trigAways: { off: "aus (off)", on: "an (on)", not_home: "nicht zuhause (not_home)" },
+    trigClear: "Entfernen",
+    trigWarn: "Damit prüft Hauswacht für {name} nicht mehr selbst: Zeigt die Entität den Zustand, gilt {name} als weg – ohne Beleg, egal was Handy und Ortung sagen. Irrt sich die Entität, kann „Scharf, wenn alle weg“ scharf schalten, obwohl {name} zuhause ist. Unbekannt oder nicht verfügbar zählt nie als weg. Die Signale unten zählen dann nicht.",
+    trigHow: "{name} gilt als weg, wenn „{e}“ „{s}“ zeigt, sonst als zuhause (jetzt: „{now}“). Gilt für „Scharf, wenn alle weg“, „Bei Rückkehr“ (dort braucht es beim Türbeleg weiter die Tür) und die Ausgangserkennung.",
+    trigIgnored: "Wird nicht beachtet – es gilt der eigene Auslöser oben.",
+    wiTrigger: "Eigener Auslöser – keine Nachrechnung, die Entität entscheidet.",
     presUses: "Wofür zählt das?",
     presUseKinds: { away: "„Scharf, wenn alle weg“ im Profil {p}", return: "„Bei Rückkehr“ im Profil {p}", observe: "Heimkehr-Beobachtung (misst nur)" },
     presUseIgnored: "Nicht im Profil {p}: Dort entscheidet ein eigener Auslöser, ob alle weg sind. {name} und diese Signale werden dafür nicht beachtet.",
@@ -343,6 +353,16 @@ const ST = {
     wiShort: ", {n}× of them only briefly (back after less than 10 min)",
     wiHouseHint: "You set the waiting time in the profile under Automation. Shorter means: armed sooner, but also armed more often when someone only steps out briefly.",
     presTitle: "Which signals count?",
+    trigTitle: "Own trigger (instead of the signals)",
+    trigNone: "None – the signals below apply.",
+    trigPick: "Choose an entity (switch, binary sensor, group, tracker) …",
+    trigAway: "This state means “away”",
+    trigAways: { off: "off", on: "on", not_home: "not home (not_home)" },
+    trigClear: "Remove",
+    trigWarn: "Hauswacht then no longer checks {name} itself: when the entity shows the state, {name} counts as away – without proof, whatever phone and location say. If the entity is wrong, “arm when all away” may arm although {name} is home. Unknown or unavailable never counts as away. The signals below do not count then.",
+    trigHow: "{name} counts as away when “{e}” shows “{s}”, otherwise as home (now: “{now}”). Applies to “arm when all away”, “On return” (the door proof still needs the door there) and exit detection.",
+    trigIgnored: "Ignored – the own trigger above applies.",
+    wiTrigger: "Own trigger – no recalculation, the entity decides.",
     presUses: "What does this count for?",
     presUseKinds: { away: "“arm when all away” in profile {p}", return: "“On return” in profile {p}", observe: "homecoming observation (only measures)" },
     presUseIgnored: "Not in profile {p}: an own trigger decides there whether everyone is away. {name} and these signals are ignored for that.",
@@ -637,7 +657,7 @@ class HauswachtSystemEditor extends HTMLElement {
 
   _presRule(person, d) {
     d.presence = d.presence || {};
-    d.presence[person] = d.presence[person] || { arrive_off: [], leave_off: [], mode: "all", door: true };
+    d.presence[person] = d.presence[person] || { arrive_off: [], leave_off: [], mode: "all", door: true, trigger: null, trigger_away: "off" };
     return d.presence[person];
   }
 
@@ -661,7 +681,15 @@ class HauswachtSystemEditor extends HTMLElement {
       .join("");
     const modes = this._t("presModes");
     const one = rule.mode === "one";
-    return `${this._presenceUses(person, pname, d)}<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
+    const trig = rule.trigger;
+    if (trig) {
+      const tname = (d.trigger_choices || []).find((c) => c.id === trig)?.name || trig;
+      const now = (d.trigger_now || {})[trig];
+      return `${this._presenceUses(person, pname, d)}${this._triggerBlock(person, pname, rule, d)}
+        <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._t("trigHow").replaceAll("{name}", pname).replace("{e}", tname).replace("{s}", rule.trigger_away).replace("{now}", now ?? "–"))}</div>
+        <div class="pres muted"><b>${se(this._t("presTitle"))}</b> ${se(this._t("trigIgnored"))}</div>`;
+    }
+    return `${this._presenceUses(person, pname, d)}${this._triggerBlock(person, pname, rule, d)}<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
       <div class="ptwrap"><table class="pt"><thead><tr><th>${se(this._t("presSignal"))}</th><th>${se(this._t("presArrive"))}</th><th>${se(this._t("presLeave"))}</th><th>${se(this._t("presNow"))}</th></tr></thead><tbody>${body}</tbody></table></div>
       <label>${se(this._t("presMode"))} ${this._info("presMode", person)}</label>
       <select data-pmode="${se(person)}">${["all", "one"].map((m) => `<option value="${m}" ${rule.mode === m ? "selected" : ""}>${se(modes[m])}</option>`).join("")}</select>
@@ -670,6 +698,22 @@ class HauswachtSystemEditor extends HTMLElement {
       ${this._presenceWarn(person, pname, rows, rule)}
       <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._presenceHow(person, pname, rows, rule, sname, d))}</div>
       <div class="wi" data-wi="${se(person)}"></div></div>`;
+  }
+
+  _triggerBlock(person, pname, rule, d) {
+    // Eigener Auslöser je Person: ersetzt die Signale (ohne Beleg)
+    const choices = d.trigger_choices || [];
+    const shown = rule.trigger ? (choices.find((c) => c.id === rule.trigger)?.name || rule.trigger) : "";
+    const list = `hw-sys-trig`;
+    const aways = this._t("trigAways");
+    return `<details class="geo"${rule.trigger ? " open" : ""}><summary>${se(this._t("trigTitle"))}</summary>
+      <input list="${list}" data-ptrig="${se(person)}" value="${se(shown)}" placeholder="${se(this._t("trigPick"))}">
+      ${rule.trigger
+        ? `<label>${se(this._t("trigAway"))}</label><select data-ptaway="${se(person)}">${Object.entries(aways).map(([v, l]) => `<option value="${v}" ${v === rule.trigger_away ? "selected" : ""}>${se(l)}</option>`).join("")}</select>
+           <button type="button" class="b" data-act="trig-clear" data-person="${se(person)}">${se(this._t("trigClear"))}</button>
+           <div class="warn">${se(this._t("trigWarn").replaceAll("{name}", pname))}</div>`
+        : `<div class="muted">${se(this._t("trigNone"))}</div>`}
+      ${this._datalist("trig", choices)}</details>`;
   }
 
   _presenceUses(person, pname, d) {
@@ -748,6 +792,7 @@ class HauswachtSystemEditor extends HTMLElement {
 
   _wiPerson(p, name, wi, info) {
     if (!wi.enabled) return `<div class="muted">${se(this._t("wiOff"))}</div>`;
+    if (this._presRule(p, this._draft).trigger) return `<div class="muted">${se(this._t("wiTrigger"))}</div>`;
     if (!info) return `<div class="muted">${se(this._t("wiNotObserved").replaceAll("{name}", name))}</div>`;
     const d = this._draft;
     const modes = this._t("presModes");
@@ -1089,6 +1134,14 @@ class HauswachtSystemEditor extends HTMLElement {
       flip("data-pl", "leave_off");
       root.querySelectorAll("[data-pmode]").forEach((el) => (this._presRule(el.dataset.pmode, d).mode = el.value));
       root.querySelectorAll("[data-pdoor]").forEach((el) => (this._presRule(el.dataset.pdoor, d).door = el.checked));
+      root.querySelectorAll("[data-ptrig]").forEach((el) => {
+        const value = el.value.trim();
+        const rule = this._presRule(el.dataset.ptrig, d);
+        const match = (d.trigger_choices || []).find((c) => c.id === value || c.name === value);
+        rule.trigger = match ? match.id : value.includes(".") ? value : null;
+        rule.trigger_away = rule.trigger_away || "off";
+      });
+      root.querySelectorAll("[data-ptaway]").forEach((el) => (this._presRule(el.dataset.ptaway, d).trigger_away = el.value));
     }
   }
 
@@ -1317,7 +1370,15 @@ class HauswachtSystemEditor extends HTMLElement {
       })
     );
     root.querySelectorAll("[data-weak]").forEach((el) => el.addEventListener("change", redraw));
-    root.querySelectorAll("[data-pa], [data-pl], [data-pmode], [data-pdoor]").forEach((el) => el.addEventListener("change", redraw));
+    root.querySelectorAll("[data-pa], [data-pl], [data-pmode], [data-pdoor], [data-ptrig], [data-ptaway]").forEach((el) => el.addEventListener("change", redraw));
+    root.querySelectorAll('[data-act="trig-clear"]').forEach((btn) =>
+      btn.addEventListener("click", () => {
+        this._collect();
+        const rule = this._presRule(btn.dataset.person, this._draft);
+        rule.trigger = null;
+        this._render();
+      })
+    );
     root.querySelectorAll("[data-geo]").forEach((el) => el.addEventListener("change", () => this._scheduleAdvice?.()));
     root.querySelector('[data-f="proof_window"]')?.addEventListener("input", (ev) => {
       const how = root.querySelector("[data-how]");

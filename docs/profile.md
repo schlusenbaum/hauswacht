@@ -322,6 +322,33 @@ typisch 3,9 min nach der Tür des Letzten, davon 1× nur kurz.“
 im Profil gilt weiter statt der Personen. Und das Haus ist weiterhin erst leer, wenn **alle**
 Personen weg sind – „eines reicht“ gilt nur innerhalb einer Person.
 
+#### Eigener Auslöser je Person
+
+*Ab 0.66.0b11.* Wer für eine Person schon eine eigene Logik hat – einen Schalter
+`input_boolean.ben_weg`, eine HomeKit-Variable, eine Personengruppe, einen eigenen Tracker –, kann
+sie unter System → Anwesenheit im Kasten der Person bei **„Eigener Auslöser (statt der
+Signale)“** wählen, dazu den Zustand, der **„weg“** heißt (aus, an oder `not_home`).
+
+Dann gilt für diese Person **nur noch der Auslöser**:
+
+| | mit eigenem Auslöser |
+|---|---|
+| Zuhause oder weg | zeigt die Entität den gewählten Zustand: **weg**, sonst **zuhause**; unbekannt oder nicht verfügbar zählt **nie als weg** |
+| Signale, Haken, „Weggehen erkennen“ | werden **nicht beachtet** (die Tabelle ist ausgeblendet) |
+| „Weg nur mit Beleg“ | gilt **nicht** – die Entität braucht keinen Beleg |
+| „Scharf, wenn alle weg“ | die Person zählt über den Auslöser |
+| „Bei Rückkehr“ | Heimkommen = der Auslöser wechselt auf zuhause. Bei **„Unscharf mit Türbeleg“** braucht es weiterhin die **Tür** – der Auslöser allein schaltet nie unscharf |
+| Ausgangserkennung | rausgegangen = der Auslöser wechselt nach dem Öffnen auf „weg“ |
+| „Was wäre wenn“ | keine Nachrechnung für diese Person – die Entität entscheidet |
+
+> ⚠️ **Hauswacht prüft für diese Person nicht mehr selbst.** Irrt sich die Entität, während die
+> Person zuhause ist, kann „Scharf, wenn alle weg“ scharf schalten. Darauf weisen der Kasten der
+> Person und der Check-up hin.
+
+*Beispiel:* Ben hat kein Smartphone mit Companion App, aber eine Automation, die
+`input_boolean.ben_weg` einschaltet, wenn sein Auto die Einfahrt verlässt. Eigener Auslöser:
+`input_boolean.ben_weg`, „weg“ = an. Ist der Schalter an, ist Ben für Hauswacht weg – überall.
+
 #### „weg“ nur mit Beleg
 
 *Ab 0.61.* Ein schlafendes Handy darf niemanden abwesend machen. Fällt nachts das WLAN eines

@@ -56,6 +56,7 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 | **„Scharf, wenn alle weg“ folgt einem eigenen Auslöser** (Entität statt Personen) – Hauswacht prüft dann nicht selbst ([mehr](profile.md#eigener-auslöser-für-alle-weg)) | ⚠️ Warnung | – |
 | **Ausgangserkennung** ist an, aber das Profil hat keine Eingangsverzögerung – sie greift nie ([mehr](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung), ab 0.66.0b9) | ⛔ Fehler | – |
 | **Ausgangserkennung ohne Melder im Haus** – auch ein Einbruch durch die Eingangstür gibt erst nach der Wartezeit Alarm, solange jemand zuhause ist (ab 0.66.0b9) | ⚠️ Warnung | – (Melder im Haus im Profil eintragen) |
+| Für eine Person entscheidet ein **eigener Auslöser** statt der Signale – Hauswacht prüft für sie nicht selbst ([mehr](profile.md#eigener-auslöser-je-person), ab 0.66.0b11) | ⚠️ Warnung | – |
 | Ein **eigener Auslöser** ist gesetzt, aber bei „Scharf, wenn alle weg“ sind noch Personen angehakt – sie werden nicht beachtet ([mehr](profile.md#eigener-auslöser-für-alle-weg), ab 0.66.0b3) | 💡 Tipp | Personen abwählen |
 | Für eine Person ist unter **Anwesenheit** etwas eingestellt (Signale, Haken, „Weggehen erkennen“), aber sie zählt **nirgends**: in keinem „Scharf, wenn alle weg“ ohne eigenen Auslöser, in keinem „Bei Rückkehr“, nicht in der Beobachtung (ab 0.66.0b3) | 💡 Tipp | – |
 | **„Tür + Signal“** ist an, obwohl die Person eine Ortung hat | 💡 Tipp | „Tür + Signal“ ausschalten |

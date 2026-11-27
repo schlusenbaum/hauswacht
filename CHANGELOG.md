@@ -6,6 +6,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b11] - 2026-11-27
+
+### Neu
+
+- **Eigener Auslöser je Person** (System → Anwesenheit, im Kasten der Person): eine Entität
+  (Schalter, Binärsensor, Gruppe, Tracker) und der Zustand, der „weg“ heißt. Sie **ersetzt** die
+  Signale der Person und gilt **überall** – „Scharf, wenn alle weg“, „Bei Rückkehr“ und
+  Ausgangserkennung. Kein Beleg nötig, unbekannt zählt nie als weg; bei „Unscharf mit Türbeleg“
+  braucht es weiter die Tür. Deutlicher Warnhinweis im Kasten der Person und im Check-up.
+  Anleitung: [Eigener Auslöser je Person](docs/profile.md#eigener-auslöser-je-person).
+
 ## [0.66.0b10] - 2026-11-27
 
 ### Neu

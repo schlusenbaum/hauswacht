@@ -55,6 +55,7 @@ them even when no side sheet is open.
 | **"Arm when all away" follows an own trigger** (entity instead of persons) – Hauswacht does not check itself ([more](profiles.md#own-trigger-for-all-away)) | ⚠️ Warning | – |
 | **Exit detection** is on, but the profile has no entry delay – it never applies ([more](passage.md#detect-going-out-without-a-pin-exit-detection), from 0.66.0b9) | ⛔ Error | – |
 | **Exit detection without a sensor in the house** – a break-in through the entry door also only gives an alarm after the waiting time while someone is home (from 0.66.0b9) | ⚠️ Warning | – (add a sensor in the house in the profile) |
+| For a person an **own trigger** decides instead of the signals – Hauswacht does not check this person itself ([more](profiles.md#own-trigger-per-person), from 0.66.0b11) | ⚠️ Warning | – |
 | An **own trigger** is set, but persons are still ticked in "arm when all away" – they are ignored ([more](profiles.md#own-trigger-for-all-away), from 0.66.0b3) | 💡 Tip | Untick the persons |
 | Something is set for a person under **Presence** (signals, ticks, "detect leaving"), but the person counts **nowhere**: in no "arm when all away" without own trigger, in no "On return", not in the observation (from 0.66.0b3) | 💡 Tip | – |
 | **"Door + signal"** is on although the person has a location | 💡 Tip | Turn off "door + signal" |
