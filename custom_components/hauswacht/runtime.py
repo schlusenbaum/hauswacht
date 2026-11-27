@@ -1596,6 +1596,8 @@ class HauswachtRuntime:
     def _passage_out_end(self, warn: bool = True) -> None:
         """Rausgehen vorbei: Wegmelder und Tür wieder überwachen – offene erst, wenn sie zu
         sind (mit Warnung)."""
+        if self._exit_passage_door is not None:
+            self.exit.end()
         self._exit_passage_door = None
         run, self._passage_out = self._passage_out, None
         self._cancel_passage_timer("out")
@@ -1822,6 +1824,36 @@ class HauswachtRuntime:
         self._dispatch(AlarmNow(sensor_key=door))
 
     @callback
+    def exit_passage_left(self, who: str, person: str) -> None:
+        """Automatischer Durchgang: jemand ist wirklich weg – Durchgang sofort beenden."""
+        if self._exit_passage_door is None:
+            return
+        door = self._exit_passage_door
+        self._passage_out_end(warn=True)
+        self.fire_event(
+            {
+                "type": "ExitDetected",
+                "profile_id": self.ctx.profile.profile_id if self.ctx.profile else None,
+                "door": door,
+                "person": person,
+            }
+        )
+        self.notifier.send_to_alarm_recipients(
+            tr(self.lang, "exit_title"),
+            tr(
+                self.lang,
+                "exit_passage_left",
+                who=who,
+                door=display_name(self.hass, door),
+                profile=self._profile_label(),
+            ),
+            profile_targets=self._alarm_targets(),
+            data={"tag": PUSH_TAG},
+            test_mode=self.ctx.test_mode,
+        )
+        self._notify()
+
+    @callback
     def _exit_auto_passage(self, door: str) -> None:
         """Melder im Haus meldete vor dem Öffnen: wie die Durchgang-Taste „rausgehen“ – die Tür
         ist für die Durchgangszeit frei (raus und wieder rein), das Profil bleibt scharf."""
@@ -1843,6 +1875,7 @@ class HauswachtRuntime:
         self._passage_out = run
         self._passage_later("out", config.duration * 60, self._passage_out_end)
         self._exit_passage_door = door
+        self.exit.watch_passage(door, run.until)
         _LOGGER.info("Ausgangserkennung: automatischer Durchgang (%s Min.)", config.duration)
         self._send_exit_push(auto_minutes=config.duration)
         self._notify()
@@ -2711,8 +2744,17 @@ class HauswachtRuntime:
             row["name"] = display_name(self.hass, person)
             by = row["reason"].get("by")
             if by:
-                row["reason"] = {**row["reason"], "by": [display_name(self.hass, e) for e in by]}
+                if row["reason"].get("kind") == "unclear":
+                    # Mit dem echten Zustand: „unknown“, „unavailable“ oder gar nicht vorhanden
+                    names = [f"{display_name(self.hass, e)} ({self._raw_state(e)})" for e in by]
+                else:
+                    names = [display_name(self.hass, e) for e in by]
+                row["reason"] = {**row["reason"], "by": names}
         return {"persons": persons, "profiles": profiles, "test_mode": self.main.ctx.test_mode}
+
+    def _raw_state(self, entity_id: str) -> str:
+        state = self.hass.states.get(entity_id)
+        return state.state if state is not None else tr(self.lang, "entity_missing")
 
     def simulation_overview(self) -> list[dict[str, Any]]:
         """Alle Hauswacht-Sensoren mit echtem und simuliertem Zustand (für die Testkarte)."""
@@ -3284,7 +3326,9 @@ class HauswachtRuntime:
                 )
                 if effect.old is AlarmState.DISARMED:
                     self._session = secrets.token_hex(8)
-                if effect.old is AlarmState.PENDING and effect.new is not AlarmState.PENDING:
+                if (
+                    effect.old is AlarmState.PENDING and effect.new is not AlarmState.PENDING
+                ) or effect.new in (AlarmState.DISARMED, AlarmState.TRIGGERED):
                     self.exit.end()
                 if effect.new is AlarmState.PENDING:
                     self._on_entry_delay()

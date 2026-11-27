@@ -75,6 +75,9 @@ Oben in der Karte:
   erkennen‘ – löst selbst nichts aus“, sonst als Zusatz. Simuliert „an“ zählt wie echt: So lässt
   sich das Rausgehen durchspielen – Melder im Haus „an“, Tür auf, dann unter „Anwesenheit testen“
   die Person auf „weg“ ([Ausgangserkennung](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung)).
+  *Ab 0.66.0b13* zeigt die Karte unter dem Zustand, was die Ausgangserkennung gerade macht:
+  automatischer Durchgang oder stille Wartezeit, die Restzeit, wer beobachtet wird und wessen
+  Handy seit wie vielen Sekunden „weg“ sagt.
 
 Dasselbe als Aktionen:
 
@@ -108,7 +111,7 @@ Pro Person eine Zeile: **zuhause**, **weg** oder **unbekannt** – und warum. Be
 | Martin: **weg** – Beleg: Tür + Signal (unsicher) | Tür ging auf, danach meldete das Signal „weg“ (nur, wenn für ihn erlaubt). |
 | Anna: **weg** – Beleg: Tür + eines der Signale | „Weggehen erkennen: eines reicht (nach Tür)“ – Tür ging auf, danach sagte eines ihrer Weggehen-Signale „weg“ (ab 0.66.0b1). Ohne „nach Tür“ heißt es „eines der Signale (ohne Tür, unsicher)“. |
 | Niklas: **zuhause** – alle Signale „weg“, aber kein Beleg | Alles sagt „weg“, aber es gibt keinen Beleg. Für Hauswacht zählt er weiter als **nicht weg**. |
-| Finja: **unbekannt** – unklar: Finja iPhone | Ein Signal liefert gerade nichts Brauchbares. |
+| Finja: **unbekannt** – unklar: Finja iPhone (unknown) | Ein Signal liefert gerade nichts Brauchbares. In Klammern steht *ab 0.66.0b13* sein echter Zustand – z. B. `unknown` oder `unavailable` (oft kurz nach einem Neustart) oder „gibt es nicht“, wenn die Entität fehlt (umbenannt oder gelöscht). |
 
 Darüber steht **pro Profil mit Automatik oder „Bei Rückkehr“** eine Zeile, was gerade los ist:
 

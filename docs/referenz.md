@@ -94,6 +94,7 @@ in seinen Attributen. Für Automationen ist **`phase`** der wichtigste Auslöser
 | `open_rule_sensors` | Offene Melder, die im aktiven Profil nur in Auslöseregeln vorkommen | `[]` |
 | `bypassed_sensors`, `bypassed_until_closed` | Überbrückte Melder (bis unscharf bzw. bis zum Schließen) | `[]` |
 | `passage` | Laufender [Durchgang](durchgang.md): `direction` (`in` reinkommen, `out` rausgehen), `until` (Ende beim Rausgehen), `by`, `doors` (benutzte Türen), `doors_allowed` (beim Rausgehen noch erlaubte Türen), `sensors` (gerade vom Durchgang überbrückt); sonst leer | `{"direction": "out", "until": "…", …}` |
+| `exit_detection` | Laufende [Ausgangserkennung](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung): `mode` (`passage` automatischer Durchgang, `wait` stille Wartezeit), `until` (Ende), `persons` (beobachtet, waren beim Öffnen zuhause), `gone` (Person → seit wann „weg“), `confirm` (so viele Sekunden muss „weg“ halten); sonst leer | `{"mode": "passage", "until": "…", "persons": ["person.anna"], …}` |
 | `zones` | Meldergruppen mit ihren tatsächlichen Meldern | `{"Außen": […]}` |
 | `last_contact` | Letzter Kontakt je Melder | `{…}` |
 | `sirens_hardware_enabled` | Echte Sirenenansteuerung freigegeben | `true` |

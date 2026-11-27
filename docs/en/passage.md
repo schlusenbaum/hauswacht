@@ -179,6 +179,22 @@ comes back after the passage time needs PIN, card or "On return" as usual.
 > minutes, they get in without an alarm. Whoever is inside still gets the message with [Alarm now]
 > immediately.
 
+**The passage ends early as soon as the phone says "away"** (*from 0.66.0b13*): during the passage,
+Hauswacht watches the persons who were home when the door opened. If one of their leaving signals
+says "away" **for 30 seconds**, the person is outside – the passage is over immediately and the
+door is armed again. All alarm recipients get: "Ben is away – passage at front door ended,
+profile Night is fully armed again." If Ben comes back afterwards, he needs PIN, card or "On return".
+
+*Example:* Ben goes to work while "Night" is armed. The sensor on the stairs saw him, the front
+door is free for 5 minutes. After one minute his phone loses the Wi-Fi – 30 seconds later the
+front door is armed again, not only after 5 minutes. If Anna only takes the rubbish out and her
+phone stays in the Wi-Fi, the passage runs normally until the end.
+
+The test card shows what is going on: "Exit detection: passage (sensor in the house) – door free,
+4:12 left. Watched: Ben, Anna." If a phone says "away", it also says "Ben “away” for 12 s (counts
+from 30 s)". The same is in the alarm panel's `exit_detection` attribute
+([reference](reference.md)).
+
 ### Without a sensor in the house: silent waiting time
 
 An entry door opens, the profile is armed, and **at least one person is verifiably home** – one

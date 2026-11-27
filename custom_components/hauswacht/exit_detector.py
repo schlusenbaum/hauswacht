@@ -85,6 +85,8 @@ class ExitDetector:
         self.runtime = runtime
         self.hass = runtime.hass
         self.watch: ExitWatch | None = None
+        self.mode: str | None = None  # "wait" (stille Wartezeit) oder "passage" (Durchgang)
+        self.until: float | None = None  # Ende der Wartezeit bzw. des Durchgangs
         self.seconds = 0
         self._inside_last: dict[str, float] = {}
         self._unsub_inside: CALLBACK_TYPE | None = None
@@ -217,20 +219,12 @@ class ExitDetector:
                 {"type": "ExitPassage", "profile_id": profile.profile_id, "door": door}
             )
             return "passage"
-        home = frozenset(
-            p
-            for p in presence_persons(runtime.options)
-            if (sim := self._simulated(p)) is True
-            or (sim is None and can_leave(self._rules(p), self._signals(p)))
-        )
+        home = self._home()
         if not home:
             _LOGGER.debug("Ausgangserkennung: niemand nachweislich zuhause – normale Verzögerung")
             return None
-        self.watch = ExitWatch(now, door, home)
         self.seconds = config.wait * 60
-        watched = sorted({s.entity_id for p in home for s in self._signals(p)})
-        self._unsubs.append(async_track_state_change_event(self.hass, watched, self._on_signal))
-        self._unsubs.append(async_track_time_interval(self.hass, self._tick, CHECK_EVERY))
+        self._watch("wait", now, door, home, now + self.seconds)
         _LOGGER.info(
             "Ausgangserkennung: stille Wartezeit %s min, zuhause: %s",
             config.wait,
@@ -247,13 +241,45 @@ class ExitDetector:
         )
         return "wait"
 
+    def _home(self) -> frozenset[str]:
+        """Wer ist nachweislich zuhause (ein Weggehen-Signal sagt „zuhause“)?"""
+        return frozenset(
+            p
+            for p in presence_persons(self.runtime.options)
+            if (sim := self._simulated(p)) is True
+            or (sim is None and can_leave(self._rules(p), self._signals(p)))
+        )
+
+    def _watch(
+        self, mode: str, opened: float, door: str | None, home: frozenset[str], until: float
+    ) -> None:
+        self.watch = ExitWatch(opened, door, home)
+        self.mode = mode
+        self.until = until
+        watched = sorted({s.entity_id for p in home for s in self._signals(p)})
+        self._unsubs.append(async_track_state_change_event(self.hass, watched, self._on_signal))
+        self._unsubs.append(async_track_time_interval(self.hass, self._tick, CHECK_EVERY))
+
+    @callback
+    def watch_passage(self, door: str, until: float) -> None:
+        """Automatischer Durchgang läuft: Sagt jemand, der zuhause war, „weg“, endet er sofort."""
+        self.end()
+        now = dt_util.utcnow().timestamp()
+        self.mode = "passage"
+        self.until = until
+        home = self._home()
+        if home:
+            self._watch("passage", now, door, home, until)
+
     @callback
     def end(self) -> None:
-        """Wartezeit vorbei (unscharf, Alarm, Durchgang …): nicht mehr beobachten."""
+        """Wartezeit oder Durchgang vorbei (unscharf, Alarm …): nicht mehr beobachten."""
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
         self.watch = None
+        self.mode = None
+        self.until = None
         self.seconds = 0
 
     @callback
@@ -282,14 +308,26 @@ class ExitDetector:
         if person is None:
             return
         door = watch.door
+        mode = self.mode
         self.end()
         _LOGGER.info("Ausgangserkennung: %s ist rausgegangen", person)
-        self.runtime.exit_let_out(door, display_name(self.hass, person), person)
+        if mode == "passage":
+            self.runtime.exit_passage_left(display_name(self.hass, person), person)
+        else:
+            self.runtime.exit_let_out(door, display_name(self.hass, person), person)
 
-    def message_values(self) -> dict[str, Any]:
-        """Für Anzeige und Nachrichten: wie lange, wer war zuhause."""
+    def info(self) -> dict[str, Any] | None:
+        """Für Anzeige und Attribute: was die Ausgangserkennung gerade tut (sonst None)."""
+        if self.mode is None:
+            return None
         watch = self.watch
         return {
+            "mode": self.mode,
+            "until": dt_util.utc_from_timestamp(self.until).isoformat() if self.until else None,
             "persons": sorted(watch.candidates) if watch else [],
+            "gone": {
+                p: dt_util.utc_from_timestamp(t).isoformat()
+                for p, t in (watch.gone_since.items() if watch else [])
+            },
             "confirm": CONFIRM,
         }

@@ -114,6 +114,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "exit_auto": "{door} von innen geöffnet (Melder im Haus) – Durchgang für {minutes} min, "
         "Profil {profile} bleibt scharf. Wenn das keiner von euch war: „Alarm jetzt“ drücken.",
         "exit_label": "Ausgangserkennung",
+        "entity_missing": "gibt es nicht",
+        "exit_passage_left": "{who} ist weg – Durchgang an {door} beendet, Profil {profile} ist "
+        "wieder ganz scharf.",
         "passage_in": "{who} hereingelassen ({door}) – Profil {profile} bleibt scharf.",
         "passage_out": "{who}: Durchgang für {minutes} Minuten – Profil {profile} bleibt scharf.",
         "passage_open": "{door} nach dem Durchgang noch offen – wird nicht überwacht, bis sie "
@@ -384,6 +387,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "exit_auto": "{door} opened from inside (sensor in the house) – passage for {minutes} min, "
         "profile {profile} stays armed. If that was none of you: press “Alarm now”.",
         "exit_label": "Exit detection",
+        "entity_missing": "does not exist",
+        "exit_passage_left": "{who} is away – passage at {door} ended, profile {profile} is fully "
+        "armed again.",
         "passage_in": "{who} let in ({door}) – profile {profile} stays armed.",
         "passage_out": "{who}: passage for {minutes} minutes – profile {profile} stays armed.",
         "passage_open": "{door} still open after the passage – not monitored until it is "

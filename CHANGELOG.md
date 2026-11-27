@@ -6,6 +6,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b13] - 2026-11-27
+
+### Geändert
+
+- **Automatischer Durchgang endet vorzeitig.** Sagt während des Durchgangs (Melder im Haus) ein
+  Signal fürs Weggehen einer Person, die beim Öffnen zuhause war, 30 Sekunden lang „weg“, ist der
+  Durchgang sofort vorbei und die Tür wieder scharf – nicht erst nach der Durchgangszeit. Alle
+  Alarm-Empfänger bekommen eine Nachricht.
+- **Testkarte zeigt die laufende Ausgangserkennung:** Durchgang oder stille Wartezeit, Restzeit,
+  beobachtete Personen und wessen Handy seit wie vielen Sekunden „weg“ sagt. Neues Attribut
+  `exit_detection` am Alarm-Panel.
+- **„unklar“ zeigt den echten Zustand:** In der Anwesenheit steht hinter dem unklaren Signal in
+  Klammern sein Zustand (z. B. `unknown`, `unavailable`) oder „gibt es nicht“.
+
 ## [0.66.0b12] - 2026-11-27
 
 ### Geändert

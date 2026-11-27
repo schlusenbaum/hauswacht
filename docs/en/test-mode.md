@@ -74,6 +74,9 @@ At the top of the card:
   real one: this way you can play through going out – sensor in the house "on", door open, then
   set the person to "away" under "Testing presence"
   ([exit detection](passage.md#detect-going-out-without-a-pin-exit-detection)).
+  *From 0.66.0b13* the card shows below the state what exit detection is doing right now:
+  automatic passage or silent waiting time, the time left, who is watched and whose phone has
+  been saying "away" for how many seconds.
 
 The same as actions:
 
@@ -106,7 +109,7 @@ One line per person: **home**, **away** or **unknown** – and why. Examples:
 | Martin: **away** – Proof: door + signal (uncertain) | The door opened, then the signal reported "away" (only if allowed for him). |
 | Anna: **away** – Proof: door + one of the signals | "Detect leaving: one is enough (after a door)" – the door opened, then one of her leaving signals reported "away" (from 0.66.0b1). Without "after a door" it says "one of the signals (no door, uncertain)". |
 | Niklas: **home** – all signals "away", but no proof | Everything says "away", but there is no proof. For Hauswacht he still counts as **not away**. |
-| Finja: **unknown** – unclear: Finja iPhone | A signal currently delivers nothing usable. |
+| Finja: **unknown** – unclear: Finja iPhone (unknown) | A signal currently delivers nothing usable. *From 0.66.0b13* its real state is shown in brackets – e.g. `unknown` or `unavailable` (often shortly after a restart) or "does not exist" if the entity is missing (renamed or deleted). |
 
 Above that, **for each profile with automation or "On return"**, one line about what is going on:
 

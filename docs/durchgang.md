@@ -184,6 +184,22 @@ Alarm. Wer nach der Durchgangszeit zurückkommt, braucht wie sonst PIN, Karte od
 > Restrisiko: Bricht genau in diesen Minuten jemand von außen durch **dieselbe** Tür ein, kommt er
 > ohne Alarm herein. Wer drinnen ist, bekommt aber sofort die Nachricht mit [Alarm jetzt].
 
+**Durchgang endet vorzeitig, sobald das Handy „weg“ sagt** (*ab 0.66.0b13*): Hauswacht beobachtet
+während des Durchgangs die Personen, die beim Öffnen zuhause waren. Sagt eines ihrer Signale
+fürs Weggehen **30 Sekunden lang** „weg“, ist die Person draußen – der Durchgang ist sofort vorbei,
+die Tür ist wieder scharf. Alle Alarm-Empfänger bekommen: „Ben ist weg – Durchgang an Haustür
+beendet, Profil Nacht ist wieder ganz scharf.“ Kommt Ben danach zurück, braucht er PIN, Karte oder „Bei Rückkehr“.
+
+*Beispiel:* Ben geht bei scharfer „Nacht“ zur Arbeit. Der Melder an der Treppe hat ihn gesehen, die
+Haustür ist 5 Minuten frei. Nach einer Minute verliert sein Handy das WLAN – 30 Sekunden später ist
+die Haustür wieder scharf, nicht erst nach 5 Minuten. Bringt Anna nur den Müll raus und ihr Handy
+bleibt im WLAN, läuft der Durchgang normal bis zum Ende.
+
+Die Testkarte zeigt, was gerade läuft: „Ausgangserkennung: Durchgang (Melder im Haus) – Tür frei,
+noch 4:12. Beobachtet: Ben, Anna.“ Sagt ein Handy „weg“, steht dort zusätzlich „Ben ‚weg‘ seit
+12 s (zählt ab 30 s)“. Dasselbe steht im Attribut `exit_detection` des Alarm-Panels
+([Referenz](referenz.md)).
+
 ### Ohne Melder im Haus: stille Wartezeit
 
 Eine Eingangstür geht auf, das Profil ist scharf, und **mindestens eine Person ist nachweislich

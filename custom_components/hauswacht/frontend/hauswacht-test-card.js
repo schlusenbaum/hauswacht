@@ -135,6 +135,12 @@ const TEXT = {
       alarm_hold: "Alarm (Sirenen aus, noch nicht beendet)",
     },
     profile: "Profil",
+    exit: {
+      passage: "Ausgangserkennung: Durchgang (Melder im Haus) – Tür frei, noch {t}.",
+      wait: "Ausgangserkennung: stille Wartezeit – Alarm in {t}, wenn niemand rausgeht.",
+      watched: "Beobachtet: {who}.",
+      gone: "{who} „weg“ seit {s} s (zählt ab 30 s)",
+    },
     exitInsideToo: "auch Melder im Haus für „Rausgehen ohne PIN erkennen“",
     rules: "Auslöseregeln im aktiven Profil",
     ruleIdle: "nicht begonnen",
@@ -236,6 +242,12 @@ const TEXT = {
       alarm_hold: "alarm (sirens off, not ended yet)",
     },
     profile: "Profile",
+    exit: {
+      passage: "Exit detection: passage (sensor in the house) – door free, {t} left.",
+      wait: "Exit detection: silent waiting time – alarm in {t} if nobody goes out.",
+      watched: "Watched: {who}.",
+      gone: "{who} “away” for {s} s (counts from 30 s)",
+    },
     exitInsideToo: "also sensor in the house for “detect going out without a PIN”",
     rules: "Trigger rules in the active profile",
     ruleIdle: "not started",
@@ -669,10 +681,28 @@ class HauswachtTestCard extends HTMLElement {
       const left = Math.max(0, Math.ceil((Date.parse(attrs.timer_ends_at) - Date.now()) / 1000));
       text += ` · ${left} s`;
     }
+    // Ausgangserkennung (ADR 0014): was gerade läuft
+    const ex = attrs.exit_detection;
+    let exitRunning = false;
+    if (ex && ex.mode) {
+      const name = (id) => (this._hass.states[id] && this._hass.states[id].attributes.friendly_name) || id;
+      const left = ex.until ? Math.max(0, Math.ceil((Date.parse(ex.until) - Date.now()) / 1000)) : null;
+      const clock = left === null ? "" : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+      const e = this._t("exit");
+      let line = (ex.mode === "passage" ? e.passage : e.wait).replace("{t}", clock);
+      if (ex.persons && ex.persons.length) line += " " + e.watched.replace("{who}", ex.persons.map(name).join(", "));
+      const gone = Object.entries(ex.gone || {});
+      if (gone.length) {
+        line += " " + gone.map(([p, since]) => e.gone.replace("{who}", name(p)).replace("{s}", Math.max(0, Math.round((Date.now() - Date.parse(since)) / 1000)))).join(", ");
+      }
+      text += `\n${line}`;
+      exitRunning = true;
+    }
     this._phase.textContent = text;
+    this._phase.style.whiteSpace = "pre-line";
     this._phase.classList.toggle("alarm", phase === "triggered" || phase === "alarm_hold");
-    this._phase.classList.toggle("delay", Boolean(delay));
-    this._delayRunning = Boolean(delay);
+    this._phase.classList.toggle("delay", Boolean(delay) || exitRunning);
+    this._delayRunning = Boolean(delay) || exitRunning;
   }
 
   _updateRules() {

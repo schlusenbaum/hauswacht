@@ -2,7 +2,7 @@
 
 **Deutsch** | [English](en/installation.md)
 
-> **Stand 0.66.0b12:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
+> **Stand 0.66.0b13:** Die echte Sirenenansteuerung ist nach der Installation **gesperrt** und
 > muss bewusst freigegeben werden – bis dahin kann Hauswacht keinen Ton auslösen.
 
 ## Voraussetzungen

@@ -233,3 +233,40 @@ async def test_alarm_now_during_automatic_passage(
     entry.runtime_data.exit_alarm_now()
     await hass.async_block_till_done()
     assert _panel(hass) == AlarmControlPanelState.TRIGGERED
+
+
+async def test_automatic_passage_ends_when_phone_away(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    """Ben geht raus, sein Handy ortet „weg“: Durchgang endet sofort, Tür wieder scharf."""
+    light = "light.treppe"
+    hass.states.async_set(light, "off")
+    async_mock_service(hass, "notify", PHONE)
+    hass.states.async_set(BEN, "home")
+    hass.states.async_set(WLAN, "on")
+    await setup_entry(hass, make_entry(_options(inside=[light])))
+    await hass.services.async_call(
+        "alarm_control_panel", "alarm_arm_night", {"entity_id": PANEL}, blocking=True
+    )
+    await hass.async_block_till_done()
+    hass.states.async_set(light, "on")
+    await hass.async_block_till_done()
+    events = async_capture_events(hass, EVENT_HAUSWACHT)
+    await _door(hass)
+    assert any(e.data.get("type") == "ExitPassage" for e in events)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["exit_detection"]["mode"] == "passage"
+    assert BEN in state.attributes["exit_detection"]["persons"]
+    set_sensor(hass, DOOR, "off")
+    await hass.async_block_till_done()
+    hass.states.async_set(WLAN, "off")  # Bens Handy ist weg
+    await hass.async_block_till_done()
+    await _wait(hass, freezer, 40)  # 30 s Puffer
+    assert any(e.data.get("type") == "ExitDetected" for e in events)
+    state = hass.states.get(PANEL)
+    assert state is not None
+    assert state.attributes["exit_detection"]["mode"] is None
+    # Durchgang vorbei: Tür auf -> Eingangsverzögerung
+    await _door(hass)
+    assert _panel(hass) == AlarmControlPanelState.PENDING
