@@ -58,6 +58,7 @@ Details for every version: [CHANGELOG](../../CHANGELOG.md) (German).
 | When | Content |
 |---|---|
 | 0.66 | **Presence per person** ([ADR 0021](../entwicklung/adr/0021-anwesenheit-je-person.md), German): choose per signal whether it counts for arriving and for leaving; leaving "one is enough (after a door)" or "all must agree"; plain-language explanation of what happens and a recommendation with "what if" based on your own measurements. Exit detection: whoever forgets the PIN when going out does not trigger an alarm if their phone is "away" shortly afterwards – the alarm is only postponed, never suppressed without evidence |
+| 0.67 | **Privacy: no more stored coordinates.** Today, the "frozen location" detection keeps the last position of each tracker (rounded to 6 digits) in `.storage/hauswacht.frozen_locations`. In future only a short check value (hash) of the rounded position – "did not move" can be detected just as well, without a location lying around in a file. The old file is converted on update (suggestion from the forum) |
 | on demand | ZHA keypads (frient, Xfinity, Centralite) with a device adaptation for ZHA – as soon as someone with such a device can help testing |
 | soon | choose the HmIP-ASIR tone automatically per occasion (burglary, fire, test) – being looked into |
 | later | developer documentation (architecture, tests, ADRs) in English; English screenshots |
