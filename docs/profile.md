@@ -240,6 +240,63 @@ passiert nachts nichts, wenn ihr WLAN einschläft.
 Ben hat nur Ping, und das irrt sich öfter. Für ihn bleibt **alle müssen weg sein** die richtige
 Wahl.
 
+#### Gemessen, Empfehlung und „Was wäre wenn“
+
+*Ab 0.66.0b5.* Läuft die [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung) und wird
+die Person beobachtet, rechnet Hauswacht die Einstellungen auf den **letzten 14 Tagen** nach. Es
+wird dabei nichts geschaltet und nichts gespeichert.
+
+- **Unter jedem Signal** steht klein, was gemessen wurde, z. B. „weg nach ~40 s · 1 Irrtum“. Sagt
+  ein Signal beim Weggehen meist gar nicht „weg“ (Bluetooth, das durch die Tür sieht), steht dort
+  „sagt beim Weggehen meist nicht ‚weg‘ – fürs Weggehen besser abwählen“.
+- **Empfehlung je Person** mit Vergleich „Jetzt“ gegen „Mit Empfehlung“: nach wie vielen Sekunden
+  oder Minuten sie als weg erkannt worden wäre und wie oft vermutlich fälschlich. Darunter, was
+  ohne „nach Tür“ passiert wäre, mit der Zahl der Fälle nachts. Ein Knopf **„Empfehlung
+  übernehmen“** stellt „Weggehen erkennen“ um. Gespeichert wird erst mit „Speichern“.
+- **„Was heißt das fürs Haus?“** – je Profil mit „Scharf, wenn alle weg“: wie oft es in den
+  14 Tagen scharf geworden wäre und wie lange nach der Tür des Letzten. Einmal so wie jetzt,
+  einmal mit den Empfehlungen und – wenn die Wartezeit länger ist – mit 3 Minuten Wartezeit.
+  Dort steht auch, wie oft jemand nach weniger als 10 Minuten wieder da war. Die Wartezeit selbst
+  stellst du im Profil ein.
+
+Alles ändert sich **sofort**, wenn du einen Haken setzt oder „Weggehen erkennen“ umstellst.
+
+So zählt Hauswacht:
+
+| Begriff | Bedeutung |
+|---|---|
+| **Weggang** | Eine Eingangstür war auf, danach waren alle Signale der Person weg, und bei der Rückkehr ging wieder eine Tür auf (oder die Person ist noch weg) |
+| **Irrtum** | Ein Signal sagt „weg“ und kommt zurück, **ohne** dass dabei eine Tür aufging – die Person war also gar nicht draußen |
+| **Vermutlich fälschlich „weg“** | So oft hätte die Regel jemanden als weg gezählt, obwohl es ein Irrtum war. Bei „nach Tür“ zählen nur Irrtümer kurz nach einer Tür |
+
+- Eine Empfehlung gibt es erst ab **5 Weggängen** in den 14 Tagen. Davor steht z. B. „Noch zu
+  wenig Daten (3 von 5 Weggängen)“.
+- „Eines reicht (nach Tür)“ wird nur empfohlen, wenn es in den 14 Tagen **nie** fälschlich gewesen
+  wäre und mindestens 4 von 5 Weggängen erkannt hätte.
+- Bei **„alle müssen weg sein“** braucht es im Echtbetrieb zusätzlich den Beleg (Ortung). Den kann
+  die Nachrechnung nicht nachspielen. Sie zeigt nur, wann alle Weggehen-Signale weg waren, und
+  schreibt bei den Irrtümern „durch Beleg geschützt“.
+- **Alles ist geschätzt.** Hauswacht weiß nicht sicher, wer wirklich draußen war, sondern schließt
+  es aus Türen und Rückkehr.
+- Gerechnet wird mit den Daten, die die Heimkehr-Beobachtung ohnehin speichert: nur Uhrzeiten,
+  keine Orte. Wie lange sie aufbewahrt werden, steht unter
+  [Beobachtungen](beobachtung.md#heimkehr-beobachtung).
+
+**Beispiel:** Bei Anna steht nach zwei Wochen:
+
+> Empfehlung für Anna: eines reicht (nach Tür)
+>
+> | | Jetzt | Mit Empfehlung |
+> |---|---|---|
+> | Als weg erkannt nach | ~9 min | ~45 s |
+> | Vermutlich fälschlich „weg“ | durch Beleg geschützt | 0× |
+>
+> Grundlage: 6 Weggänge, 14 Tage. Ohne „nach Tür“: vermutlich fälschlich 4×, davon 3× nachts.
+
+Und darunter: „Profil Abwesend (Wartezeit 15 min) – so wie jetzt: 5× scharf geworden, typisch
+24,5 min nach der Tür des Letzten. Mit den Empfehlungen und 3 min Wartezeit: 6× scharf geworden,
+typisch 3,9 min nach der Tür des Letzten, davon 1× nur kurz.“
+
 **Wer nichts ändert, merkt keinen Unterschied:** Alle Haken sind gesetzt, Weggehen steht auf
 „alle müssen weg sein“ – genau wie vor 0.66. Der [eigene Auslöser](#eigener-auslöser-für-alle-weg)
 im Profil gilt weiter statt der Personen. Und das Haus ist weiterhin erst leer, wenn **alle**

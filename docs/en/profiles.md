@@ -233,6 +233,48 @@ Leaving: **one is enough (after a door)**. Anna walks out of the front door in t
 Ben only has ping, and it is wrong more often. For him **all must be away** stays the right
 choice.
 
+#### Measured, recommendation and "what if"
+
+*From 0.66.0b5.* If the [homecoming observation](observations.md#homecoming-observation) runs and
+the person is observed, Hauswacht recalculates the settings on the **last 14 days**. Nothing is
+switched and nothing is saved.
+
+- **Below each signal** a small line shows what was measured, e.g. "away after ~40 s · 1 mistake".
+  If a signal mostly does not report "away" when leaving (Bluetooth that sees through the door),
+  it says "mostly does not report 'away' when leaving – better untick for leaving".
+- **Recommendation per person** with the comparison "Now" against "With recommendation": after
+  how many seconds or minutes they would have been detected as away and how often probably
+  wrongly. Below it, what would have happened without "after a door", with the number of cases at
+  night. A button **"Apply recommendation"** switches "detect leaving". It is only saved with
+  "Save".
+- **"What does this mean for the house?"** – per profile with "arm when all away": how often it
+  would have armed in the 14 days and how long after the last person's door. Once as now, once
+  with the recommendations and – if the waiting time is longer – with 3 minutes waiting time. It
+  also says how often someone was back after less than 10 minutes. You set the waiting time
+  itself in the profile.
+
+Everything changes **immediately** when you tick a box or switch "detect leaving".
+
+How Hauswacht counts:
+
+| Term | Meaning |
+|---|---|
+| **Departure** | An entry door was open, afterwards all signals of the person were away, and on return a door opened again (or the person is still away) |
+| **Mistake** | A signal reports "away" and comes back **without** a door opening – so the person was not outside at all |
+| **Probably wrongly "away"** | How often the rule would have counted someone as away although it was a mistake. With "after a door" only mistakes shortly after a door count |
+
+- A recommendation needs at least **5 departures** in the 14 days. Before that it says e.g. "Not
+  enough data yet (3 of 5 departures)".
+- "One is enough (after a door)" is only recommended if it would **never** have been wrong in the
+  14 days and would have detected at least 4 out of 5 departures.
+- With **"all must be away"** real operation also needs proof (location). The recalculation cannot
+  replay that. It only shows when all leaving signals were away and says "protected by proof" for
+  mistakes.
+- **Everything is estimated.** Hauswacht does not know for sure who was really outside; it infers
+  it from doors and returns.
+- It uses the data the homecoming observation stores anyway: only times, no locations. How long
+  they are kept is described under [observations](observations.md#homecoming-observation).
+
 **If you change nothing, you notice no difference:** all boxes are ticked, leaving is set to
 "all must be away" – exactly as before 0.66. The [own trigger](#own-trigger-for-all-away) in the
 profile still applies instead of the persons. And the house still only counts as empty when

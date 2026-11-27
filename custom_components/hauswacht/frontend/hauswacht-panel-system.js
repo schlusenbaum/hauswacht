@@ -40,6 +40,38 @@ const ST = {
     ssids: "Heim-WLAN(s), durch Komma getrennt",
     signals: "Zusätzliche Signale je Person",
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
+    wiOff: "Messwerte und Empfehlung gibt es, sobald die Heimkehr-Beobachtung läuft (oben „Heimkehr beobachten“).",
+    wiNotObserved: "{name} wird nicht beobachtet – keine Messwerte. Für Messwerte {name} oben bei „Personen für die Beobachtung“ eintragen.",
+    wiFew: "Noch zu wenig Daten für eine Empfehlung ({n} von {m} Weggängen in den letzten {d} Tagen).",
+    wiTitle: "Empfehlung für {name}: {mode}",
+    wiNow: "Jetzt",
+    wiWith: "Mit Empfehlung",
+    wiDetected: "Als weg erkannt nach",
+    wiMistakes: "Vermutlich fälschlich „weg“",
+    wiMissed: "Nicht erkannt",
+    wiProtected: "durch Beleg geschützt",
+    wiBasis: "Grundlage: {n} Weggänge, {d} Tage. Alles geschätzt – Hauswacht weiß nicht sicher, wer wirklich draußen war.",
+    wiNoDoor: "Ohne „nach Tür“: vermutlich fälschlich {n}×{night}.",
+    wiNight: ", davon {n}× nachts",
+    wiSame: "Deine Einstellung entspricht der Empfehlung.",
+    wiApply: "Empfehlung übernehmen",
+    wiAllNote: "Bei „alle müssen weg sein“ kommt im Echtbetrieb noch der Beleg (Ortung) dazu – das kann länger dauern.",
+    wiTimes: "{n}×",
+    wmSeen: "weg nach {t}",
+    wmNever: "sagt beim Weggehen meist nicht „weg“ ({seen} von {n}) – fürs Weggehen besser abwählen",
+    wmMistakes: "{n} Irrtümer",
+    wmMistake1: "1 Irrtum",
+    wmNone: "noch nicht gemessen",
+    wiHouseTitle: "Was heißt das fürs Haus?",
+    wiHouseNot: "Profil {p}: Nicht alle Personen bei „Scharf, wenn alle weg“ werden beobachtet – keine Nachrechnung.",
+    wiHouse: "Profil {p} (Wartezeit {w} min), letzte {d} Tage – {label}: {n}× scharf geworden{after}{wrong}{short}.",
+    wiHouseNow: "so wie jetzt",
+    wiHouseAdv: "mit den Empfehlungen",
+    wiHouseQuick: "mit den Empfehlungen und {w} min Wartezeit",
+    wiAfter: ", typisch {m} min nach der Tür des Letzten",
+    wiWrong: ", davon vermutlich {n}× fälschlich",
+    wiShort: ", davon {n}× nur kurz (nach unter 10 min wieder da)",
+    wiHouseHint: "Die Wartezeit stellst du im Profil unter Automatik ein. Kürzer heißt: schneller scharf, aber auch öfter scharf, wenn jemand nur kurz rausgeht.",
     presTitle: "Welche Signale zählen?",
     presUses: "Wofür zählt das?",
     presUseKinds: { away: "„Scharf, wenn alle weg“ im Profil {p}", return: "„Bei Rückkehr“ im Profil {p}", observe: "Heimkehr-Beobachtung (misst nur)" },
@@ -252,6 +284,38 @@ const ST = {
     ssids: "Home Wi-Fi(s), separated by commas",
     signals: "Additional signals per person",
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
+    wiOff: "Measurements and recommendation are available as soon as the homecoming observation runs (“Observe homecoming” above).",
+    wiNotObserved: "{name} is not observed – no measurements. For measurements, add {name} above under “Persons for the observation”.",
+    wiFew: "Not enough data for a recommendation yet ({n} of {m} departures in the last {d} days).",
+    wiTitle: "Recommendation for {name}: {mode}",
+    wiNow: "Now",
+    wiWith: "With recommendation",
+    wiDetected: "Detected as away after",
+    wiMistakes: "Probably wrongly “away”",
+    wiMissed: "Not detected",
+    wiProtected: "protected by proof",
+    wiBasis: "Based on {n} departures, {d} days. All estimated – Hauswacht does not know for sure who was really outside.",
+    wiNoDoor: "Without “after a door”: probably wrongly away {n}×{night}.",
+    wiNight: ", {n}× of them at night",
+    wiSame: "Your setting matches the recommendation.",
+    wiApply: "Apply recommendation",
+    wiAllNote: "With “all must be away”, real operation also needs proof (location) – that can take longer.",
+    wiTimes: "{n}×",
+    wmSeen: "away after {t}",
+    wmNever: "mostly does not report “away” when leaving ({seen} of {n}) – better untick for leaving",
+    wmMistakes: "{n} mistakes",
+    wmMistake1: "1 mistake",
+    wmNone: "not measured yet",
+    wiHouseTitle: "What does this mean for the house?",
+    wiHouseNot: "Profile {p}: not all persons in “arm when all away” are observed – no recalculation.",
+    wiHouse: "Profile {p} (waiting time {w} min), last {d} days – {label}: armed {n}×{after}{wrong}{short}.",
+    wiHouseNow: "as now",
+    wiHouseAdv: "with the recommendations",
+    wiHouseQuick: "with the recommendations and {w} min waiting time",
+    wiAfter: ", typically {m} min after the last person's door",
+    wiWrong: ", {n}× of them probably wrong",
+    wiShort: ", {n}× of them only briefly (back after less than 10 min)",
+    wiHouseHint: "You set the waiting time in the profile under Automation. Shorter means: armed sooner, but also armed more often when someone only steps out briefly.",
     presTitle: "Which signals count?",
     presUses: "What does this count for?",
     presUseKinds: { away: "“arm when all away” in profile {p}", return: "“On return” in profile {p}", observe: "homecoming observation (only measures)" },
@@ -464,7 +528,11 @@ class HauswachtSystemEditor extends HTMLElement {
     if (kind === "restart") this._draft = copy(sys.restart);
     else if (kind === "silence") this._draft = copy(sys.silence);
     else if (kind === "network") this._draft = copy(sys.network);
-    else if (kind === "homecoming") this._draft = copy(sys.homecoming);
+    else if (kind === "homecoming") {
+      this._draft = copy(sys.homecoming);
+      this._whatif = null;
+      this._wiDirty = false;
+    }
     else if (kind === "page") this._draft = { enabled: sys.settings_page };
     else if (kind === "pinrules") this._draft = { ...copy(sys.pin_rules), master_pin: "", remove_master_pin: false };
     else if (kind === "learn") this._draft = { minutes: sys.controls.learn_minutes };
@@ -560,7 +628,7 @@ class HauswachtSystemEditor extends HTMLElement {
     };
     const key = (id) => se(`${person}|${id}`);
     const body = rows
-      .map((id) => `<tr><td title="${se(id)}">${se(sname(id))}</td>
+      .map((id) => `<tr><td title="${se(id)}">${se(sname(id))}<div class="wm" data-wm="${key(id)}"></div></td>
         <td class="c"><input type="checkbox" data-pa="${key(id)}" ${rule.arrive_off.includes(id) ? "" : "checked"} aria-label="${se(this._t("presArrive"))}"></td>
         <td class="c"><input type="checkbox" data-pl="${key(id)}" ${rule.leave_off.includes(id) ? "" : "checked"} aria-label="${se(this._t("presLeave"))}"></td>
         <td>${se(nowText(id))}</td></tr>`)
@@ -574,7 +642,8 @@ class HauswachtSystemEditor extends HTMLElement {
       ${one ? `<div class="chk"><input type="checkbox" data-pdoor="${se(person)}" ${rule.door ? "checked" : ""}><span>${se(this._t("presDoor"))}${this._info("presDoor", person)}</span></div>` : ""}
       ${one && !rule.door ? `<div class="warn">${se(this._t("presNoDoorWarn").replaceAll("{name}", pname))}</div>` : ""}
       ${this._presenceWarn(person, pname, rows, rule)}
-      <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._presenceHow(person, pname, rows, rule, sname, d))}</div></div>`;
+      <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._presenceHow(person, pname, rows, rule, sname, d))}</div>
+      <div class="wi" data-wi="${se(person)}"></div></div>`;
   }
 
   _presenceUses(person, pname, d) {
@@ -588,6 +657,118 @@ class HauswachtSystemEditor extends HTMLElement {
       ? `<div class="uses"><b>${se(this._t("presUses"))}</b> ${se(used.join(" · "))}</div>`
       : `<div class="warn">${se(this._t("presUseNone").replaceAll("{name}", pname))}</div>`;
     return line + ignored;
+  }
+
+  // --- „Was wäre wenn“ (ADR 0021): Messwerte, Empfehlung, Haus – live mit dem Entwurf ----------
+
+  _dur(sec) {
+    if (sec === null || sec === undefined) return "–";
+    return sec < 90 ? `~${Math.round(sec)} s` : `~${Math.round(sec / 60)} min`;
+  }
+
+  _wiFill() {
+    const root = this.shadowRoot;
+    const d = this._draft;
+    if (!root || !d || this.kind !== "homecoming") return;
+    const wi = this._whatif || d.whatif || { enabled: false };
+    const persons = wi.persons || {};
+    const pname = (p) => (d.person_choices.find((c) => c.id === p) || { name: p }).name;
+    root.querySelectorAll("[data-wm]").forEach((el) => {
+      const raw = el.dataset.wm;
+      const cut = raw.indexOf("|");
+      const info = (persons[raw.slice(0, cut)]?.signals || []).find((x) => x.id === raw.slice(cut + 1));
+      el.textContent = info ? this._wmText(info) : "";
+    });
+    root.querySelectorAll("[data-wi]").forEach((el) => {
+      const p = el.dataset.wi;
+      el.innerHTML = this._wiPerson(p, pname(p), wi, persons[p]);
+    });
+    root.querySelectorAll('[data-act="wi-apply"]').forEach((btn) =>
+      btn.addEventListener("click", () => {
+        this._collect();
+        const rule = this._presRule(btn.dataset.person, d);
+        rule.mode = btn.dataset.mode;
+        rule.door = true;
+        this._render();
+      })
+    );
+    const house = root.querySelector("[data-wihouse]");
+    if (house) {
+      const rows = Object.values(wi.enabled ? wi.profiles || {} : {});
+      house.hidden = !rows.length;
+      house.innerHTML = rows.length ? `<b>${se(this._t("wiHouseTitle"))}</b>${rows.map((r) => this._wiHouse(r, wi)).join("")}<div class="muted">${se(this._t("wiHouseHint"))}</div>` : "";
+    }
+  }
+
+  _wmText(info) {
+    if (!info.trips) return this._t("wmNone");
+    const parts = [];
+    if (info.seen >= Math.max(1, Math.round(info.trips * 0.5))) parts.push(this._t("wmSeen").replace("{t}", this._dur(info.median)));
+    else parts.push(this._t("wmNever").replace("{seen}", info.seen).replace("{n}", info.trips));
+    parts.push(info.mistakes === 1 ? this._t("wmMistake1") : this._t("wmMistakes").replace("{n}", info.mistakes));
+    return parts.join(" · ");
+  }
+
+  _wiPerson(p, name, wi, info) {
+    if (!wi.enabled) return `<div class="muted">${se(this._t("wiOff"))}</div>`;
+    if (!info) return `<div class="muted">${se(this._t("wiNotObserved").replaceAll("{name}", name))}</div>`;
+    if (!info.enough) return `<div class="muted">${se(this._t("wiFew").replace("{n}", info.trips).replace("{m}", info.min_trips).replace("{d}", wi.days))}</div>`;
+    const modes = this._t("presModes");
+    const adv = info.advice;
+    const rule = this._presRule(p, this._draft);
+    const same = rule.mode === adv.mode && (adv.mode === "all" || rule.door);
+    const cell = (o, key) => {
+      if (key === "median") return o.detected ? this._dur(o.median) : this._t("wiMissed");
+      return o.mistakes === null ? this._t("wiProtected") : this._t("wiTimes").replace("{n}", o.mistakes);
+    };
+    const missed = (o) => (o.detected < o.trips ? ` (${o.trips - o.detected}× ${this._t("wiMissed").toLowerCase()})` : "");
+    const night = info.no_door.night ? this._t("wiNight").replace("{n}", info.no_door.night) : "";
+    return `<div class="wibox"><b>${se(this._t("wiTitle").replace("{name}", name).replace("{mode}", modes[adv.mode]))}</b>
+      <table class="wt"><thead><tr><th></th><th>${se(this._t("wiNow"))}</th><th>${se(this._t("wiWith"))}</th></tr></thead><tbody>
+      <tr><td>${se(this._t("wiDetected"))}</td><td>${se(cell(info.current, "median") + missed(info.current))}</td><td>${se(cell(adv, "median") + missed(adv))}</td></tr>
+      <tr><td>${se(this._t("wiMistakes"))}</td><td>${se(cell(info.current, "m"))}</td><td>${se(cell(adv, "m"))}</td></tr></tbody></table>
+      <div class="muted">${se(this._t("wiBasis").replace("{n}", info.trips).replace("{d}", wi.days))}</div>
+      <div class="muted">${se(this._t("wiNoDoor").replace("{n}", info.no_door.mistakes).replace("{night}", night))}</div>
+      ${rule.mode === "all" || adv.mode === "all" ? `<div class="muted">${se(this._t("wiAllNote"))}</div>` : ""}
+      ${same ? `<div class="muted">${se(this._t("wiSame"))}</div>` : `<button type="button" class="b" data-act="wi-apply" data-person="${se(p)}" data-mode="${se(adv.mode)}">${se(this._t("wiApply"))}</button>`}</div>`;
+  }
+
+  _wiHouse(r, wi) {
+    if (!r.observed) return `<div class="muted">${se(this._t("wiHouseNot").replace("{p}", r.name || ""))}</div>`;
+    const line = (label, res, wait) =>
+      this._t("wiHouse")
+        .replace("{p}", r.name)
+        .replace("{w}", wait)
+        .replace("{d}", wi.days)
+        .replace("{label}", label)
+        .replace("{n}", res.armed)
+        .replace("{after}", res.after !== null ? this._t("wiAfter").replace("{m}", String(res.after).replace(".", this._lang === "de" ? "," : ".")) : "")
+        .replace("{wrong}", res.wrong ? this._t("wiWrong").replace("{n}", res.wrong) : "")
+        .replace("{short}", res.short ? this._t("wiShort").replace("{n}", res.short) : "");
+    const out = [line(this._t("wiHouseNow"), r.current, r.delay), line(this._t("wiHouseAdv"), r.advised, r.delay)];
+    if (r.advised_quick.delay < r.delay) out.push(line(this._t("wiHouseQuick").replace("{w}", r.advised_quick.delay), r.advised_quick, r.advised_quick.delay));
+    return out.map((t) => `<div class="wih">${se(t)}</div>`).join("");
+  }
+
+  _scheduleWhatif() {
+    if (this.kind !== "homecoming") return;
+    clearTimeout(this._wiTimer);
+    this._wiTimer = setTimeout(() => this._fetchWhatif(), 400);
+  }
+
+  async _fetchWhatif() {
+    if (!this.isConnected || !this.hass) return;
+    this._collect();
+    const seq = (this._wiSeq = (this._wiSeq || 0) + 1);
+    const [, data] = this._payload();
+    try {
+      const result = await this.hass.callWS({ type: "hauswacht/presence/whatif", data });
+      if (seq !== this._wiSeq) return;
+      this._whatif = result;
+      this._wiFill();
+    } catch (err) {
+      // Nur Anzeige – bei einem Fehler bleibt der letzte Stand stehen
+    }
   }
 
   _presenceWarn(person, pname, rows, rule) {
@@ -738,6 +919,7 @@ class HauswachtSystemEditor extends HTMLElement {
         ${this._lab("persons", this._t("persons"))}${this._entityList("per", d.persons, d.person_choices)}${this._datalist("per", d.person_choices)}
         ${this._lab("ssids", this._t("ssids"))}<input data-f="ssids" value="${se(d.ssids.join(", "))}">
         ${this._lab("signals", this._t("signals"))}<div class="muted">${se(this._t("signalsHint"))}</div>${signals}${this._datalist("sig", d.signal_choices)}
+        <div class="box" data-wihouse></div>
         ${this._proofForm(d)}`;
     }
     if (k === "area") {
@@ -930,6 +1112,12 @@ class HauswachtSystemEditor extends HTMLElement {
       details.more { margin-top: 10px; }
       .pres { margin: 10px 0; }
       .uses { margin: 8px 0 2px; font-size: .9rem; }
+      .wm { font-size: .8rem; color: var(--secondary-text-color); }
+      .wibox { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: var(--secondary-background-color); font-size: .9rem; }
+      table.wt { width: 100%; border-collapse: collapse; margin: 6px 0; table-layout: fixed; }
+      table.wt th, table.wt td { text-align: left; padding: 3px 4px; overflow-wrap: anywhere; }
+      .wih { margin: 6px 0; font-size: .9rem; }
+      [data-wihouse][hidden] { display: none; }
       .ptwrap { max-width: 100%; overflow-x: auto; }
       table.pt { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6px 0; font-size: .9rem; }
       table.pt th, table.pt td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); overflow-wrap: anywhere; vertical-align: middle; }
@@ -951,6 +1139,9 @@ class HauswachtSystemEditor extends HTMLElement {
     if (this.kind === "homecoming") {
       this._showAdvice();
       this._scheduleAdvice();
+      this._wiFill();
+      if (this._wiDirty) this._scheduleWhatif();
+      this._wiDirty = true;
     }
   }
 

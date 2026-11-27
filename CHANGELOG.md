@@ -6,6 +6,29 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b5] - 2026-11-27
+
+**Anwesenheit je Person**, Teil 2: Messwerte und „Was wäre wenn“
+([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md)).
+
+### Neu
+
+- **Gemessen** unter jedem Signal in „Welche Signale zählen?“: wie schnell es beim Weggehen „weg“
+  sagt und wie oft es sich geirrt hat (z. B. „weg nach ~40 s · 1 Irrtum“). Signale, die beim
+  Weggehen meist nicht „weg“ sagen, bekommen den Hinweis, sie fürs Weggehen abzuwählen.
+- **Empfehlung je Person** mit Vergleich „Jetzt“ gegen „Mit Empfehlung“: erkannt nach wie
+  vielen Sekunden oder Minuten, vermutlich fälschlich wie oft, und was ohne „nach Tür“ passiert
+  wäre (mit Fällen nachts). Knopf „Empfehlung übernehmen“. Eine Empfehlung gibt es erst ab
+  5 Weggängen.
+- **„Was heißt das fürs Haus?“**: je Profil mit „Scharf, wenn alle weg“, wie oft es in den letzten
+  14 Tagen scharf geworden wäre und wie lange nach der Tür des Letzten – so wie jetzt, mit den
+  Empfehlungen und mit 3 Minuten Wartezeit.
+- Alles rechnet **live** mit dem Entwurf nach, sobald du einen Haken setzt. Es wird nichts
+  gespeichert und nichts geschaltet. Grundlage sind die Messungen der Heimkehr-Beobachtung (nur
+  Uhrzeiten, keine Orte).
+- Anleitung mit Beispiel:
+  [Gemessen, Empfehlung und „Was wäre wenn“](docs/profile.md#gemessen-empfehlung-und-was-wäre-wenn).
+
 ## [0.66.0b4] - 2026-11-27
 
 ### Geändert

@@ -104,13 +104,15 @@ Abschwächende Vorschläge brauchen wie im Check-up (ADR 0017) eine Bestätigung
 
 ### 6. Was dafür gemessen wird
 
-- Hauswacht schreibt je Person und Signal mit, **wann** es von zuhause auf weg kippt und zurück,
-  und **ob kurz davor eine Tür auf war**.
+- Grundlage sind die Messungen der **Heimkehr-Beobachtung**, die schon je Person und Signal
+  mitschreibt, **wann** es von zuhause auf weg kippt und zurück, und wann eine Eingangstür aufging.
+  Neue Daten werden dafür nicht gespeichert. *Umsetzung 0.66.0b5:* Ursprünglich war ein eigener
+  Speicher mit Löschung nach 30 Tagen geplant. Weil die Beobachtung genau diese Daten schon hat,
+  rechnet „Was wäre wenn“ direkt mit ihnen – sie werden wie bisher höchstens 60 Tage aufbewahrt
+  (siehe Beobachtungen). Ausgewertet werden die letzten **14 Tage**.
 - **Irrtum** heißt: Ein Signal kippt auf weg und kommt **ohne Tür** wieder zurück.
-- Gespeichert werden nur Uhrzeiten und Dauern, keine Orte und keine Koordinaten. Die Daten
-  bleiben lokal im Speicher der Integration, werden über **14 Tage** ausgewertet und nach
-  **30 Tagen** gelöscht. Der Export (ADR 0019) enthält sie nur zusammengefasst und mit
-  Platzhaltern.
+- Gespeichert sind nur Uhrzeiten und Dauern, keine Orte und keine Koordinaten. Der Export
+  (ADR 0019) enthält sie nur zusammengefasst und mit Platzhaltern.
 - Eine Empfehlung gibt es erst ab **5 Weggängen** der Person im Auswertungszeitraum. Davor
   steht z. B. „Noch zu wenig Daten (3 von 5 Weggängen)“.
 - „Fälschlich“ ist eine Schätzung. Hauswacht weiß nicht sicher, ob jemand wirklich weg war, und
