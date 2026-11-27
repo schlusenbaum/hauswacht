@@ -43,7 +43,7 @@ from .automation_engine import (
 )
 from .away_proof import AwayTracker, Fix, parse_proof_settings
 from .exit_detection import parse_exit
-from .presence_rules import MODE_ONE, PersonRules, Signal, parse_presence_rules
+from .presence_rules import MODE_ONE, PersonRules, Signal, parse_presence_rules, triggered
 from .profiles import build_profiles, profile_ids, profile_info
 from .returning import parse_return
 from .state_machine import (
@@ -130,6 +130,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "proof_weak": "Tür + Signal – unsicher",
         "proof_one_door": "Tür, danach eines der Signale weg (eines reicht)",
         "proof_one": "eines der Signale weg, ohne Tür – unsicher",
+        "proof_trigger": "eigener Auslöser",
         # Ergebnisse
         "r_alarm_after": "Alarm nach {s} s – so soll es sein.",
         "r_alarm_now": "Sofort Alarm – so soll es sein.",
@@ -201,6 +202,7 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "proof_weak": "door + signal – uncertain",
         "proof_one_door": "door, then one of the signals away (one is enough)",
         "proof_one": "one of the signals away, without a door – uncertain",
+        "proof_trigger": "own trigger",
         "r_alarm_after": "Alarm after {s} s – as it should be.",
         "r_alarm_now": "Immediate alarm – as it should be.",
         "r_no_alarm": "No alarm! The door does not trigger in this profile.",
@@ -278,8 +280,10 @@ class Sim:
         self.tracker.rules = {
             person: PersonRules(mode=MODE_ONE, door=rule.door)
             for person, rule in parse_presence_rules(self.options).items()
-            if rule.mode == MODE_ONE
+            if rule.mode == MODE_ONE or rule.trigger is not None
         }
+        # Eigener Auslöser: das gedachte Handy steht für die Entität, ohne Tür und ohne Beleg
+        self.triggered = frozenset(triggered(self.options))
         # Nur echte Personen – ein eigener Auslöser für „alle weg“ ist keine (ADR 0018)
         entities = {c.away_entity for c in self.engine.configs.values() if c.away_entity}
         self.people = {p: _Person() for p in self.engine.persons if p not in entities}
@@ -327,7 +331,9 @@ class Sim:
         current: dict[str, bool | None] = {}
         for person, p in self.people.items():
             before = self.tracker.proven(person)
-            if person in self.tracker.rules:
+            if person in self.triggered:
+                value = self.tracker.judge_trigger(person, p.phone, self.now)
+            elif person in self.tracker.rules:
                 phone = Signal(_phone(person), p.phone, p.phone_since)
                 value = self.tracker.judge_signals(person, [phone], self._fixes(person), self.now)
             else:
@@ -652,7 +658,8 @@ def _phones_sleep(options: Mapping[str, Any], facts: Facts, lang: str, pid: str)
     sim = Sim(options, facts, lang)
     sim.label(f"phones_sleep:{pid}", pid, "t_phones_sleep")
     for person in auto.away_persons:
-        sim.phone(person, False)
+        if person not in triggered(options):  # eigener Auslöser: kein Handy, das einschläft
+            sim.phone(person, False)
     sim.wait(auto.away_delay * 60 + 30 * 60)
     if sim.ctx.state is not AlarmState.DISARMED:
         who = ", ".join(sim.name(p) for p in auto.away_persons)
@@ -712,6 +719,8 @@ def scenarios(
             found.append(_all_leave(options, facts, lang, pid))
             found.append(_phones_sleep(options, facts, lang, pid))
             found.extend(
-                _short_out(options, facts, lang, pid, p) for p in auto.away_persons if p in weak
+                _short_out(options, facts, lang, pid, p)
+                for p in auto.away_persons
+                if p in weak and p not in triggered(options)
             )
     return sorted(found, key=lambda s: RESULTS.index(s["result"]))

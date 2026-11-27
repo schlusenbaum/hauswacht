@@ -184,6 +184,7 @@ PROOF_DOOR = "door"  # Tür und danach Ortung außerhalb
 PROOF_WEAK = "weak"  # Tür und danach Signal weg (unsicher)
 PROOF_ONE_DOOR = "one_door"  # „eines reicht“: Tür und danach eines der Signale weg (ADR 0021)
 PROOF_ONE = "one"  # „eines reicht“ ohne Tür (unsicher, ADR 0021)
+PROOF_TRIGGER = "trigger"  # eigener Auslöser der Person – Hauswacht prüft nicht selbst
 
 
 def proven_away(
@@ -387,6 +388,22 @@ class AwayTracker:
             self._kind[person] = (kind, now)
             return False
         return None
+
+    def judge_trigger(self, person: str, value: bool | None, now: float) -> bool | None:
+        """Eigener Auslöser der Person: er allein entscheidet, ohne Beleg.
+
+        True zuhause, False weg, None unbekannt (zählt nie als weg).
+        """
+        if value is True:
+            self._set_home(person, now)
+            return True
+        self._leave_home(person, now)
+        if value is None:
+            return None
+        if person not in self._proven:
+            self._proven.add(person)
+            self._kind[person] = (PROOF_TRIGGER, now)
+        return False
 
     def _one_left(
         self, person: str, rules: PersonRules, leave: Iterable[Signal]

@@ -76,7 +76,13 @@ from .core.debug_log import describe
 from .core.homecoming import DIRECTION_HINT as DIRECTION_APPROACH
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
-from .core.presence_rules import DEFAULT_RULES, MODE_ONE, Signal, parse_presence_rules
+from .core.presence_rules import (
+    DEFAULT_RULES,
+    MODE_ONE,
+    Signal,
+    parse_presence_rules,
+    trigger_value,
+)
 from .core.profiles import profile_ids
 from .core.returning import ReturnConfig, parse_return
 from .core.state_machine import AlarmState
@@ -195,6 +201,9 @@ class AutomationRunner:
             owners: dict[str, list[str]] = {}
             for person in persons:
                 sources = [person, *self.signals.get(person, ())]
+                rule = self.proof.rules.get(person)
+                if rule is not None and rule.trigger is not None:
+                    sources.append(rule.trigger)  # eigener Auslöser der Person
                 state = self.hass.states.get(person)
                 trackers = state.attributes.get("device_trackers", []) if state else []
                 if isinstance(trackers, list):  # Ortungen der Person (Frische, Beleg)
@@ -324,6 +333,12 @@ class AutomationRunner:
             if not self.proof.proven(person):
                 self.proof.mark_proven(person, "simulated", now)
             return False, {"kind": "simulated"}
+        rule = self.proof.rules.get(person)
+        if rule is not None and rule.trigger is not None:
+            # Eigener Auslöser der Person: er allein entscheidet, ohne Beleg
+            state = self._state(rule.trigger)
+            value = trigger_value(state, rule.trigger_away)
+            return self.proof.judge_trigger(person, value, now), {"kind": "entity", "state": state}
         signals = self.signals.get(person, ())
         values = {person: person_value(self._state(person))}
         for signal in signals:

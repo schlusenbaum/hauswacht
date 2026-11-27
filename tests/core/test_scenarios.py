@@ -194,3 +194,17 @@ def test_burglary_while_someone_home_with_exit_detection() -> None:
     assert home["result"] == OK
     assert "30 s" in home["summary"]
     assert f"burglary_home:away:{DOOR}" not in _by_key(scenarios(_options(), _facts()))
+
+
+def test_person_trigger_in_scenarios() -> None:
+    """Eigener Auslöser je Person: Ben ohne Ortung wird über ihn erkannt; Handys schlafen ihn
+    nicht ein."""
+    options = {
+        **_options(auto_away_persons=[ANNA, BEN], auto_away_delay=10),
+        "presence_trigger": {BEN: {"entity": "input_boolean.ben_weg", "away": "on"}},
+    }
+    found = _by_key(scenarios(options, _facts(located=frozenset({ANNA}))))
+    leave = found["all_leave:away"]
+    assert leave["result"] == OK
+    assert any("eigener Auslöser" in step["text"] for step in leave["steps"])
+    assert found["phones_sleep:away"]["result"] == OK

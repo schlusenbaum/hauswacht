@@ -43,7 +43,15 @@ from .core.exit_detection import (
     parse_exit,
 )
 from .core.homecoming import direction_hint, presence
-from .core.presence_rules import DEFAULT_RULES, Signal, parse_presence_rules
+from .core.presence_rules import (
+    DEFAULT_RULES,
+    MODE_ONE,
+    PersonRules,
+    Signal,
+    parse_presence_rules,
+    trigger_value,
+    triggered,
+)
 from .core.profiles import profile_ids
 from .core.returning import parse_return
 from .names import display_name
@@ -63,6 +71,7 @@ def presence_persons(options: Mapping[str, Any]) -> list[str]:
     signals = options.get(OPT_HOMECOMING_SIGNALS, {})
     if isinstance(signals, Mapping):
         found.extend(p for p in signals if isinstance(p, str))
+    found.extend(triggered(options))
     for pid in profile_ids(options):
         found.extend(parse_automation(options, pid).away_persons)
         found.extend(parse_return(options, pid).persons)
@@ -137,7 +146,19 @@ class ExitDetector:
             return None
         return value == SIM_HOME
 
+    def _rules(self, person: str) -> PersonRules:
+        """Regeln der Person; mit eigenem Auslöser zählt nur er (wie „eines reicht“)."""
+        rule = parse_presence_rules(self.runtime.options).get(person, DEFAULT_RULES)
+        return PersonRules(mode=MODE_ONE) if rule.trigger else rule
+
     def _signals(self, person: str) -> list[Signal]:
+        rule = parse_presence_rules(self.runtime.options).get(person, DEFAULT_RULES)
+        if rule.trigger is not None:
+            # Eigener Auslöser der Person: nur er zählt
+            state = self.hass.states.get(rule.trigger)
+            value = trigger_value(state.state if state else None, rule.trigger_away)
+            since = state.last_changed.timestamp() if state is not None else 0.0
+            return [Signal(rule.trigger, value, since)]
         raw = self.runtime.options.get(OPT_HOMECOMING_SIGNALS, {})
         extra = raw.get(person, []) if isinstance(raw, Mapping) else []
         ssids = self._ssids()
@@ -182,12 +203,11 @@ class ExitDetector:
         if not inside_ok(config, [self._inside_last.get(e, 0.0) for e in config.inside], now):
             _LOGGER.debug("Ausgangserkennung: Melder im Haus ohne Meldung – normale Verzögerung")
             return None
-        rules = parse_presence_rules(runtime.options)
         home = frozenset(
             p
             for p in presence_persons(runtime.options)
             if (sim := self._simulated(p)) is True
-            or (sim is None and can_leave(rules.get(p, DEFAULT_RULES), self._signals(p)))
+            or (sim is None and can_leave(self._rules(p), self._signals(p)))
         )
         if not home:
             _LOGGER.debug("Ausgangserkennung: niemand nachweislich zuhause – normale Verzögerung")
@@ -236,13 +256,12 @@ class ExitDetector:
         if watch is None:
             return
         now = dt_util.utcnow().timestamp()
-        rules = parse_presence_rules(self.runtime.options)
         for person in watch.candidates:
             sim = self._simulated(person)
             if sim is not None:  # Testmodus: simulierte Anwesenheit (ADR 0016)
                 watch.note(person, not sim, now)
                 continue
-            away = gone(rules.get(person, DEFAULT_RULES), self._signals(person), watch.opened_at)
+            away = gone(self._rules(person), self._signals(person), watch.opened_at)
             wlan = bool(away) and all(self._wlan_dependent(e) for e in away)
             watch.note(person, bool(away), now, wlan_only=wlan)
         person = watch.left(now)

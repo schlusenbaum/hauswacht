@@ -19,7 +19,7 @@ from .const import DOMAIN
 from .core.automation import parse_automation
 from .core.away_proof import parse_proof_settings
 from .core.changes.system import save_homecoming
-from .core.presence_rules import parse_presence_rules
+from .core.presence_rules import parse_presence_rules, triggered
 from .core.presence_whatif import NIGHT, WhatIfInput, whatif
 from .core.profiles import profile_ids, profile_info
 
@@ -66,7 +66,8 @@ def build_whatif(main: Any, options: Mapping[str, Any]) -> dict[str, Any]:
         WhatIfInput(
             verdicts=verdicts,
             doors=doors,
-            persons=list(observer.persons),
+            # Personen mit eigenem Auslöser: er entscheidet allein, keine Nachrechnung
+            persons=[p for p in observer.persons if p not in triggered(options)],
             signals=signals,
             rules=parse_presence_rules(options),
             profiles=profiles,

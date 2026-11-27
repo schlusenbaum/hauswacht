@@ -37,7 +37,7 @@ from typing import Any
 from .automation import parse_automation
 from .away_proof import parse_proof_settings
 from .exit_detection import parse_exit
-from .presence_rules import leaves_by_door, parse_presence_rules
+from .presence_rules import leaves_by_door, parse_presence_rules, triggered
 from .profiles import profile_ids, profile_info, profile_settings
 from .returning import RETURN_AUTO_ONLY, parse_return
 
@@ -226,6 +226,24 @@ TEXTS: Mapping[str, Mapping[str, Mapping[str, str]]] = {
             "by mistake (and the house is armed while someone is there), Hauswacht ignores this "
             "location until it moves again. If it is permanently wrong, remove it from the "
             "person's signals under System → Presence.",
+        },
+    },
+    "person_trigger": {
+        "de": {
+            "text": "{person}: Ob {person} zuhause oder weg ist, entscheidet der eigene Auslöser "
+            "„{entity}“ – Hauswacht prüft das nicht selbst.",
+            "why": "Zeigt „{entity}“ den Zustand „{state}“, gilt {person} als weg – ohne Beleg, "
+            "egal was Handy und Ortung sagen. Irrt sich die Entität, kann „Scharf, wenn alle weg“ "
+            "scharf schalten, obwohl {person} zuhause ist. Die Signale unter Anwesenheit zählen "
+            "für {person} nicht.",
+        },
+        "en": {
+            "text": "{person}: whether {person} is home or away is decided by the own trigger "
+            "“{entity}” – Hauswacht does not check this itself.",
+            "why": "When “{entity}” shows the state “{state}”, {person} counts as away – without "
+            "proof, whatever phone and location say. If the entity is wrong, “arm when all away” "
+            "may arm although {person} is home. The signals under Presence do not count for "
+            "{person}.",
         },
     },
     "exit_no_inside": {
@@ -734,6 +752,18 @@ def _configured_persons(options: Mapping[str, Any]) -> list[str]:
 
 def _system(options: Mapping[str, Any], facts: Facts, lang: str) -> list[dict[str, Any]]:
     found = _frozen(facts, lang)
+    for person, rule in sorted(triggered(options).items()):
+        found.append(
+            _finding(
+                "person_trigger",
+                WARNING,
+                lang,
+                key=person,
+                person=facts.name(person),
+                entity=facts.name(rule.trigger or ""),
+                state=rule.trigger_away,
+            )
+        )
     for person in _configured_persons(options):
         if any(kind != USE_AWAY_IGNORED for kind, _pid in person_uses(options, person)):
             continue

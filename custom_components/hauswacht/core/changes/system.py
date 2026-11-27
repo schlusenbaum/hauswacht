@@ -20,7 +20,13 @@ from ..away_proof import (
     parse_proof_settings,
 )
 from ..pin import hash_pin, is_valid_pin_format
-from ..presence_rules import MODE_ALL, MODES, PersonRules, dump_presence_rules
+from ..presence_rules import (
+    DEFAULT_TRIGGER_AWAY,
+    MODE_ALL,
+    MODES,
+    PersonRules,
+    dump_presence_rules,
+)
 from ..profiles import MAX_STALE_HOURS, profile_ids
 from ..restart import (
     ARMED,
@@ -156,11 +162,16 @@ def _presence(raw: Mapping[str, Any], signals: Mapping[str, list[str]]) -> dict[
             return frozenset(e for e in items if isinstance(e, str) and e in own)
 
         mode = data.get("mode")
+        trigger = data.get("trigger")
+        away = data.get("trigger_away")
         rule = PersonRules(
             arrive_off=pick("arrive_off"),
             leave_off=pick("leave_off"),
             mode=mode if mode in MODES else MODE_ALL,
             door=data.get("door", True) is not False,
+            # Eigener Auslöser je Person (ersetzt die Signale)
+            trigger=trigger if isinstance(trigger, str) and "." in trigger else None,
+            trigger_away=away if isinstance(away, str) and away else DEFAULT_TRIGGER_AWAY,
         )
         if rule != PersonRules():
             rules[person] = rule

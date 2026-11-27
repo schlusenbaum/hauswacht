@@ -7,6 +7,7 @@ import itertools
 from custom_components.hauswacht.core.away_proof import (
     PROOF_ONE,
     PROOF_ONE_DOOR,
+    PROOF_TRIGGER,
     AwayTracker,
     Fix,
     ProofSettings,
@@ -21,6 +22,7 @@ from custom_components.hauswacht.core.presence_rules import (
     Signal,
     dump_presence_rules,
     parse_presence_rules,
+    trigger_value,
 )
 
 ANNA = "person.anna"
@@ -57,7 +59,7 @@ def test_parse_and_dump_roundtrip() -> None:
     }
     rules = parse_presence_rules(options)
     assert rules == {ANNA: PersonRules(frozenset({GPS}), frozenset({BLE}), MODE_ONE, door=False)}
-    assert dump_presence_rules(rules) == options
+    assert dump_presence_rules(rules) == {**options, "presence_trigger": {}}
 
 
 def test_parse_ignores_garbage_and_defaults() -> None:
@@ -226,3 +228,22 @@ def test_one_still_allows_all_with_proof() -> None:
     t.judge_signals(ANNA, [sig(WLAN, True)], [], 0.0)
     fix = Fix(True, True, 5000.0)
     assert t.judge_signals(ANNA, [sig(WLAN, False, 4000.0)], [fix], 5001.0) is False
+
+
+def test_trigger_parse_and_judge() -> None:
+    """Eigener Auslöser je Person: er allein entscheidet, ohne Beleg; unbekannt nie weg."""
+    options = {"presence_trigger": {ANNA: {"entity": "input_boolean.anna_weg", "away": "on"}}}
+    rules = parse_presence_rules(options)
+    assert rules[ANNA].trigger == "input_boolean.anna_weg"
+    assert rules[ANNA].trigger_away == "on"
+    assert not rules[ANNA].is_default
+    assert dump_presence_rules(rules)["presence_trigger"] == options["presence_trigger"]
+    assert trigger_value("on", "on") is False
+    assert trigger_value("off", "on") is True
+    assert trigger_value("unavailable", "on") is None
+    t = AwayTracker()
+    assert t.judge_trigger(ANNA, True, 0.0) is True
+    assert t.judge_trigger(ANNA, None, 10.0) is None
+    assert t.judge_trigger(ANNA, False, 20.0) is False
+    assert t.kind(ANNA) == (PROOF_TRIGGER, 20.0)
+    assert t.judge_trigger(ANNA, True, 30.0) is True

@@ -161,3 +161,19 @@ def test_save_presence_rules_per_person() -> None:
     untouched = save_homecoming(change.options, {"signals": data["signals"]})
     assert untouched.options is not None
     assert untouched.options["presence_leave_mode"] == {"person.anna": "one"}
+
+
+def test_save_person_trigger() -> None:
+    """Eigener Auslöser je Person wird gespeichert; ohne Punkt ist es keine Entität."""
+    data = {
+        "signals": {},
+        "presence": {
+            "person.anna": {"trigger": "input_boolean.anna_weg", "trigger_away": "on"},
+            "person.ben": {"trigger": "kaputt"},
+        },
+    }
+    change = save_homecoming(_options(), data)
+    assert change.options is not None
+    assert change.options["presence_trigger"] == {
+        "person.anna": {"entity": "input_boolean.anna_weg", "away": "on"}
+    }

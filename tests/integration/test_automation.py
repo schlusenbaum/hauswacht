@@ -257,6 +257,20 @@ async def test_one_signal_coming_back_cancels(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.DISARMED
 
 
+async def test_person_trigger_replaces_signals(hass: HomeAssistant) -> None:
+    """Eigener Auslöser je Person: er allein entscheidet – person.a sagt weiter „home“."""
+    hass.states.async_set("input_boolean.a_weg", "off")
+    trigger = {"presence_trigger": {A: {"entity": "input_boolean.a_weg", "away": "on"}}}
+    await _setup(hass, trigger, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set("input_boolean.a_weg", "on")
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+    hass.states.async_set("input_boolean.a_weg", "unavailable")  # unbekannt: nie weg …
+    await hass.async_block_till_done()
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY  # … aber schaltet nichts zurück
+
+
 async def test_simple_accuracy_counts_gps_jump(hass: HomeAssistant) -> None:
     near = {
         "latitude": hass.config.latitude + 0.002,

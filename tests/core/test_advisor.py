@@ -315,3 +315,15 @@ def test_exit_detection_findings() -> None:
     no_delay = advise(_options(exit_detect=on, entry_delay=0), _facts())
     assert _codes(no_delay) == ["exit_no_delay"]
     assert no_delay[0]["level"] == ERROR
+
+
+def test_person_trigger_warning_and_detectable() -> None:
+    options = {
+        **_options(auto_away_persons=[BEN]),
+        "presence_trigger": {BEN: {"entity": "input_boolean.ben_weg", "away": "on"}},
+    }
+    found = advise(options, _facts(names={**NAMES, "input_boolean.ben_weg": "Ben weg"}))
+    assert "away_never" not in _codes(found)  # über den Auslöser erkennbar
+    warn = next(f for f in found if f["code"] == "person_trigger")
+    assert warn["level"] == WARNING
+    assert "Ben weg" in warn["text"]

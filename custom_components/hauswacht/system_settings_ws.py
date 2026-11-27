@@ -86,6 +86,8 @@ def _presence_rules(options: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
             "leave_off": sorted(rule.leave_off),
             "mode": rule.mode,
             "door": rule.door,
+            "trigger": rule.trigger,
+            "trigger_away": rule.trigger_away,
         }
     return result
 
@@ -334,6 +336,21 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             # Ankommen/Weggehen je Signal und Person (ADR 0021) und was die Signale gerade sagen
             "presence": _presence_rules(options),
             "signal_now": _signal_now(hass, options),
+            # Eigener Auslöser je Person: wählbare Entitäten und was sie gerade zeigen
+            "trigger_choices": [
+                {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
+                for s in sorted(
+                    hass.states.async_all(
+                        ["input_boolean", "binary_sensor", "group", "device_tracker", "switch"]
+                    ),
+                    key=lambda s: display_name(hass, s.entity_id).casefold(),
+                )
+            ],
+            "trigger_now": {
+                r.trigger: (st.state if (st := hass.states.get(r.trigger)) else None)
+                for r in parse_presence_rules(options).values()
+                if r.trigger
+            },
             # „Was wäre wenn“ mit den gespeicherten Einstellungen (ADR 0021)
             "whatif": build_whatif(main, options),
             # Wofür die Anwesenheit jeder Person zählt (Profil-Automatik, Rückkehr, Beobachtung)
