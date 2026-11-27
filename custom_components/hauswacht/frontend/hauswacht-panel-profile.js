@@ -135,8 +135,8 @@ const PT = {
       closeNoDoors: "An, aber noch keine Ausgangstür gewählt.",
       passageOff: "Aus: Wer rein oder raus will, schaltet unscharf.",
       exitOff: "Aus: Wer beim Rausgehen den PIN vergisst, löst nach der Eingangsverzögerung Alarm aus.",
-      exitOn: "Geht eine Eingangstür auf, während jemand zuhause ist{inside}, wartet Hauswacht bis zu {w} min still. Sagt in der Zeit das Handy einer Person 30 s lang „weg“, bleibt das Profil scharf – sonst Alarm. Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm jetzt“.",
-      exitInsideHow: " und vorher der Melder im Haus etwas gemeldet hat",
+      exitOn: "Geht eine Eingangstür auf, während jemand zuhause ist, wartet Hauswacht bis zu {w} min still. Sagt in der Zeit das Handy einer Person 30 s lang „weg“, bleibt das Profil scharf – sonst Alarm. Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm jetzt“.",
+      exitInsideOn: "Hat der Melder im Haus höchstens 2 min vor dem Öffnen etwas gemeldet, kam jemand von innen: Die Tür ist für die Durchgangszeit ({p} min) frei – raus und wieder rein, z. B. zum Mülleimer –, das Profil bleibt scharf. Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm jetzt“. Ohne Meldung drinnen: normale Eingangsverzögerung.",
       passageOn: "Rein oder raus ohne unscharf: Die Tür ist {m} Minuten frei, {which}, Ende {end}. {n} Melder auf dem Weg sind frei, nach dem Schließen noch {after} s. Alles andere bleibt scharf.",
       passageWhich: { first: "nur die erste Tür", all: "alle Eingangstüren" },
       passageEnd: { time: "nach Ablauf der Zeit", returned: "sobald du zurück bist" },
@@ -174,7 +174,7 @@ const PT = {
       close_settle: "So lange muss die Tür nach dem Schließen zu bleiben, bevor scharf geschaltet wird. Geht sie vorher wieder auf, beginnt die Zeit neu.",
       exit_enabled: "Sicherheitsnetz, falls jemand beim Rausgehen PIN und Durchgang vergisst: Geht eine Eingangstür auf, während jemand nachweislich zuhause ist, läuft statt der Eingangsverzögerung eine stille Wartezeit. Sagt das Handy einer Person in der Zeit „weg“ (Regeln unter System → Anwesenheit), bleibt das Profil scharf – sonst gibt es danach Alarm. Alle Alarm-Empfänger bekommen sofort eine Nachricht mit „Alarm jetzt“.",
       exit_wait: "So lange wartet Hauswacht still, ob jemand rausgegangen ist. So lange bliebe ein Einbruch ohne Melder im Haus höchstens still. Die Messung „Weggehen“ zeigt, wie schnell eure Handys nach der Tür „weg“ sagen.",
-      exit_inside: "Bewegungsmelder, Licht oder Schalter im Haus (muss nicht scharf sein). Hat er höchstens 2 Minuten vor dem Öffnen „an“ gemeldet, kam jemand von innen – nur dann gilt die stille Wartezeit. Sonst normale Eingangsverzögerung.",
+      exit_inside: "Bewegungsmelder, Licht oder Schalter im Haus (muss nicht scharf sein). Hat er höchstens 2 Minuten vor dem Öffnen „an“ gemeldet, kam jemand von innen – dann ist die Tür wie beim Durchgang „rausgehen“ für die Durchgangszeit frei, auch zum Wiederreinkommen. Sonst normale Eingangsverzögerung.",
       passage_enabled: "An: In diesem Profil darf man rein oder raus, ohne unscharf zu schalten – mit PIN und Profil-Taste am Keypad, per Push-Knopf „Reinlassen“, Türschloss oder „Bei Rückkehr: Reinlassen“. Alles andere bleibt scharf.",
       passage_duration: "Rausgehen: so lange ist die Tür frei. Reinkommen: so lange darf die Tür offen stehen, bevor eine Warnung kommt.",
       passage_path_after: "Reinkommen: so lange bleiben die Melder auf dem Weg noch frei, nachdem die Tür zu ist.",
@@ -340,8 +340,8 @@ const PT = {
       closeNoDoors: "On, but no exit door chosen yet.",
       passageOff: "Off: whoever wants to go in or out disarms.",
       exitOff: "Off: whoever forgets the PIN when going out triggers an alarm after the entry delay.",
-      exitOn: "If an entry door opens while someone is home{inside}, Hauswacht waits silently up to {w} min. If a person's phone reports “away” for 30 s in that time, the profile stays armed – otherwise alarm. All alarm recipients immediately get a message with “Alarm now”.",
-      exitInsideHow: " and the sensor in the house reported something before",
+      exitOn: "If an entry door opens while someone is home, Hauswacht waits silently up to {w} min. If a person's phone reports “away” for 30 s in that time, the profile stays armed – otherwise alarm. All alarm recipients immediately get a message with “Alarm now”.",
+      exitInsideOn: "If the sensor in the house reported something at most 2 min before the opening, someone came from inside: the door is free for the passage time ({p} min) – out and back in, e.g. to the bin –, the profile stays armed. All alarm recipients immediately get a message with “Alarm now”. Without a report inside: normal entry delay.",
       passageOn: "In or out without disarming: the door is free for {m} minutes, {which}, ending {end}. {n} sensor(s) on the way are free, after closing for {after} s more. Everything else stays armed.",
       passageWhich: { first: "only the first door", all: "all entry doors" },
       passageEnd: { time: "when the time is up", returned: "as soon as you are back" },
@@ -379,7 +379,7 @@ const PT = {
       close_settle: "This long the door has to stay closed after closing before arming. If it opens again before, the time starts over.",
       exit_enabled: "Safety net if someone forgets PIN and passage when going out: if an entry door opens while someone is verifiably home, a silent waiting time runs instead of the entry delay. If a person's phone reports “away” during that time (rules under System → Presence), the profile stays armed – otherwise there is an alarm afterwards. All alarm recipients immediately get a message with “Alarm now”.",
       exit_wait: "This long Hauswacht waits silently whether someone went out. A break-in without a sensor in the house would stay silent at most this long. The “leaving” measurement shows how quickly your phones report “away” after the door.",
-      exit_inside: "Motion sensor, light or switch in the house (does not have to be armed). If it reported “on” at most 2 minutes before the opening, someone came from inside – only then the silent waiting time applies. Otherwise the normal entry delay.",
+      exit_inside: "Motion sensor, light or switch in the house (does not have to be armed). If it reported “on” at most 2 minutes before the opening, someone came from inside – then the door is free for the passage time like with the passage “going out”, also for coming back in. Otherwise the normal entry delay.",
       passage_enabled: "On: in this profile you may go in or out without disarming – with PIN and profile key on the keypad, the push button “Let in”, a door lock or “On return: let in”. Everything else stays armed.",
       passage_duration: "Going out: this long the door is free. Coming in: this long the door may stand open before a warning comes.",
       passage_path_after: "Coming in: this long the sensors on the way stay free after the door is closed.",
@@ -624,7 +624,8 @@ class HauswachtProfileEditor extends HTMLElement {
     if (id === "exit") {
       const x = d.exit_detect || {};
       if (!x.enabled) return h.exitOff;
-      return fill(h.exitOn, { w: x.wait, inside: (x.inside || []).length ? h.exitInsideHow : "" });
+      if ((x.inside || []).length) return fill(h.exitInsideOn, { p: (d.passage || {}).duration || 5 });
+      return fill(h.exitOn, { w: x.wait });
     }
     if (id === "passage") {
       const p = d.passage;
@@ -738,7 +739,7 @@ ${this._returnSection(c, lim, t)}
       : `<div class="muted">${pe(this._t("exitInsideNone"))}</div>`;
     return `<div class="chk" style="margin-top:12px"><input type="checkbox" data-x="enabled" ${x.enabled ? "checked" : ""}><span><b>${pe(this._t("exitOn"))}</b>${inf("exit_enabled")}</span></div>
       ${x.enabled && !Number(d.entry_delay) ? `<div class="warn">${pe(this._t("exitNoDelay"))}</div>` : ""}
-      ${x.enabled ? `<label>${pe(this._t("exitWait"))}${inf("exit_wait")}</label><input class="small" type="number" min="1" max="${max}" data-x="wait" data-num="1" value="${pe(Math.min(x.wait, max))}">
+      ${x.enabled ? `${x.inside.length ? "" : `<label>${pe(this._t("exitWait"))}${inf("exit_wait")}</label><input class="small" type="number" min="1" max="${max}" data-x="wait" data-num="1" value="${pe(Math.min(x.wait, max))}">`}
       <label>${pe(this._t("exitInside"))}${inf("exit_inside")}</label><div class="scroll">${inside}</div>
       ${x.inside.length ? "" : `<div class="warn">${pe(this._t("exitNoInside"))}</div>`}` : ""}
       ${this._how("exit")}

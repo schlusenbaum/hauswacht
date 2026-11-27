@@ -241,6 +241,7 @@ Türbeleg`, `Neustart`.
 | `DoorNoted` | „Unscharf mit Türbeleg“: Eingangstür erkannt | `profile_id`, `door` |
 | `EntryDelayExtended` | [Annäherung](profile.md#annäherung-verlängert-die-eingangsverzögerung): Eingangsverzögerung verlängert, weil sich eine Person aus „Bei Rückkehr“ genähert hat | `profile_id`, `seconds`, `normal`, `persons` |
 | `ExitWaitStarted` | [Ausgangserkennung](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung): stille Wartezeit statt Eingangsverzögerung, weil jemand nachweislich zuhause war | `profile_id`, `door`, `seconds`, `persons` |
+| `ExitPassage` | Ausgangserkennung: Der Melder im Haus meldete kurz vor dem Öffnen – automatischer Durchgang, die Tür ist für die Durchgangszeit frei | `profile_id`, `door` |
 | `ExitDetected` | Ausgangserkennung: Eine Person ist rausgegangen – das Profil bleibt scharf, die Tür ist bis zum Schließen überbrückt | `profile_id`, `door`, `person` |
 | `ExitLetThrough` | Ausgangserkennung: per Push „Durchlassen“ – das Profil bleibt scharf | `profile_id`, `door`, `person` (leer) |
 

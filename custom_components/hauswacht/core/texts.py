@@ -111,6 +111,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "rausgegangen ist – erst danach Alarm.",
         "exit_left": "{who} ist rausgegangen ({door}) – Profil {profile} bleibt scharf.",
         "exit_let": "{who} hat durchgelassen ({door}) – Profil {profile} bleibt scharf.",
+        "exit_auto": "{door} von innen geöffnet (Melder im Haus) – Durchgang für {minutes} min, "
+        "Profil {profile} bleibt scharf. Wenn das keiner von euch war: „Alarm jetzt“ drücken.",
+        "exit_label": "Ausgangserkennung",
         "passage_in": "{who} hereingelassen ({door}) – Profil {profile} bleibt scharf.",
         "passage_out": "{who}: Durchgang für {minutes} Minuten – Profil {profile} bleibt scharf.",
         "passage_open": "{door} nach dem Durchgang noch offen – wird nicht überwacht, bis sie "
@@ -378,6 +381,9 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "out – only then alarm.",
         "exit_left": "{who} went out ({door}) – profile {profile} stays armed.",
         "exit_let": "{who} let through ({door}) – profile {profile} stays armed.",
+        "exit_auto": "{door} opened from inside (sensor in the house) – passage for {minutes} min, "
+        "profile {profile} stays armed. If that was none of you: press “Alarm now”.",
+        "exit_label": "Exit detection",
         "passage_in": "{who} let in ({door}) – profile {profile} stays armed.",
         "passage_out": "{who}: passage for {minutes} minutes – profile {profile} stays armed.",
         "passage_open": "{door} still open after the passage – not monitored until it is "

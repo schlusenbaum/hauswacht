@@ -6,6 +6,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b12] - 2026-11-27
+
+### Geändert
+
+- **Ausgangserkennung mit Melder im Haus = automatischer Durchgang.** Hat der Melder im Haus kurz
+  vor dem Öffnen etwas gemeldet, ist die Tür jetzt sofort für die Durchgangszeit des Profils frei
+  – raus und wieder rein, z. B. zum Mülleimer. Das Handy spielt dafür keine Rolle. Bisher lief
+  auch hier die stille Wartezeit, und wer nur kurz rausging (Handy bleibt im WLAN), bekam nach
+  3 Minuten Alarm. Ohne Melder im Haus bleibt es bei der stillen Wartezeit mit Handy-Prüfung.
+- **[Alarm jetzt]** löst auch während des automatischen Durchgangs aus.
+- Neues Ereignis `ExitPassage`.
+
+### Korrigiert
+
+- **Vorbereitet auf Home Assistant 2027.12:** Beim Anlegen des Hauswacht-Geräts wird keine
+  `DeviceInfo` mehr entpackt (Home Assistant hatte dazu gewarnt).
+
 ## [0.66.0b11] - 2026-11-27
 
 ### Neu

@@ -96,6 +96,26 @@ Die Heimkehr-Beobachtung misst das Weggehen (wie schnell „weg“, Schweigepaus
 Nachklang). Daraus kommen die Empfehlung für die Wartezeit und die Hinweise, wer zuverlässig
 erkannt wird.
 
+## Nachtrag 0.66.0b12: Mit Melder im Haus wie Durchgang (Entscheidung C)
+
+Im Test zeigte sich: Wer nur kurz rausgeht (Mülleimer, Briefkasten), dessen Handy bleibt im WLAN
+und sagt nie „weg“ – die stille Wartezeit endet dann im Alarm. Der Melder im Haus ist dafür der
+bessere Hinweis als das Handy: Meldet er kurz vor dem Öffnen etwas, kam jemand von innen.
+
+Deshalb gilt jetzt:
+
+- **Mit Melder im Haus**, und er hat höchstens 2 Minuten vorher etwas gemeldet: **automatischer
+  Durchgang** wie mit der Durchgang-Taste „rausgehen“ – die geöffnete Tür ist für die
+  **Durchgangszeit des Profils** (Standard 5 Minuten) frei, raus und wieder rein; nur diese eine
+  Tür. Kein Handy nötig. Sofort eine Nachricht an alle Alarm-Empfänger mit **[Alarm jetzt]**
+  (auslösen geht auch während des Durchgangs, neues Ereignis `AlarmNow` im Kern).
+- **Mit Melder im Haus ohne Meldung:** normale Eingangsverzögerung.
+- **Ohne Melder im Haus:** wie bisher die stille Wartezeit mit Handy-Prüfung.
+
+Restrisiko (bewusst angenommen): Bricht in genau diesen Minuten jemand durch dieselbe Tür ein,
+kommt er ohne Alarm herein. Erwogen und verworfen: A (nur Handy – Mülleimer gibt Alarm) und B
+(automatischer Durchgang auch ohne Melder im Haus – dann gäbe es keinen Hinweis „von innen“).
+
 ## Abwägung
 
 - **Nur Ping:** schlafende iPhones antworten nicht → falsches „weg“. Verworfen; es gelten die

@@ -156,7 +156,35 @@ der Tür „weg“ ist, und lässt „Nacht“ einfach scharf.
 **„Rausgehen ohne PIN erkennen“**. Standard: aus. Die Eingangstür braucht eine
 Eingangsverzögerung (Typ Tür), sonst gibt es nichts aufzuschieben.
 
-### So läuft es ab
+Es gibt zwei Wege – je nachdem, ob ein **Melder im Haus** eingetragen ist:
+
+| | Mit Melder im Haus (empfohlen) | Ohne Melder im Haus |
+|---|---|---|
+| Woran Hauswacht erkennt, dass jemand rausgeht | Der Melder im Haus meldete kurz vor dem Öffnen etwas – jemand kam **von innen** | Das Handy einer Person, die zuhause war, sagt danach „weg“ |
+| Was dann passiert | **Automatischer Durchgang:** Die Tür ist für die Durchgangszeit frei – raus **und wieder rein** | Stille Wartezeit; erst wenn das Handy „weg“ sagt, bleibt das Profil scharf |
+| Mülleimer, Briefkasten (Handy bleibt im WLAN) | ✅ kein Alarm | ❌ Alarm nach der Wartezeit – dafür den Durchgang nutzen |
+| Zur Arbeit | ✅ | ✅ |
+| Einbruch von außen | normale Eingangsverzögerung (drinnen hat sich nichts bewegt) | Sirene erst nach der Wartezeit |
+
+### Mit Melder im Haus: automatischer Durchgang
+
+*Ab 0.66.0b12.* Hat der Melder im Haus **höchstens 2 Minuten vor dem Öffnen** etwas gemeldet, kam
+jemand von innen. Dann passiert dasselbe wie mit der Durchgang-Taste „rausgehen“: Die Tür, die
+aufging, ist für die **Durchgangszeit** des Profils (Standard 5 Minuten) frei – raus und wieder
+rein, so oft man will. Das Profil bleibt scharf, alles andere wird weiter überwacht. Ein Handy
+braucht es dafür nicht.
+
+Alle Alarm-Empfänger bekommen sofort: „Haustür von innen geöffnet (Melder im Haus) – Durchgang für
+5 min, Nacht bleibt scharf. Wenn das keiner von euch war: **[Alarm jetzt]**“.
+
+*Beispiel:* Der Bewegungsmelder an der Treppe ist als Melder im Haus eingetragen, „Nacht“ ist
+scharf. Anna geht die Treppe runter, bringt den Müll raus und kommt nach 2 Minuten zurück – kein
+Alarm. Wer nach der Durchgangszeit zurückkommt, braucht wie sonst PIN, Karte oder „Bei Rückkehr“.
+
+> Restrisiko: Bricht genau in diesen Minuten jemand von außen durch **dieselbe** Tür ein, kommt er
+> ohne Alarm herein. Wer drinnen ist, bekommt aber sofort die Nachricht mit [Alarm jetzt].
+
+### Ohne Melder im Haus: stille Wartezeit
 
 Eine Eingangstür geht auf, das Profil ist scharf, und **mindestens eine Person ist nachweislich
 zuhause** – eines ihrer Weggehen-Signale sagt gerade „zuhause“ (siehe
@@ -180,23 +208,18 @@ zuhause** – eines ihrer Weggehen-Signale sagt gerade „zuhause“ (siehe
 
 ### Melder im Haus – empfohlen
 
-> ⚠️ **Ohne Melder im Haus gilt die Wartezeit für jede Öffnung der Eingangstür, solange jemand
-> zuhause ist – auch für einen Einbruch.** Die Sirene käme dann erst nach der Wartezeit. Die
-> Nachricht mit [Alarm jetzt] kommt trotzdem sofort.
+> ⚠️ **Ohne Melder im Haus gilt die stille Wartezeit für jede Öffnung der Eingangstür, solange
+> jemand zuhause ist – auch für einen Einbruch.** Die Sirene käme dann erst nach der Wartezeit.
+> Die Nachricht mit [Alarm jetzt] kommt trotzdem sofort.
 
 Darum: Trag einen **Melder im Haus** ein – einen Bewegungsmelder im Flur oder an der Treppe, das
-Treppenlicht, einen Schalter. Er muss nicht scharf sein. Hat er **höchstens 2 Minuten vor dem
-Öffnen** etwas gemeldet (an), kam jemand von innen, und die Wartezeit gilt. Sonst läuft die
-normale Eingangsverzögerung – ein Einbruch von außen wird behandelt wie immer.
+Treppenlicht, einen Schalter. Er muss nicht scharf sein. Bricht jemand nachts die Haustür auf,
+ohne dass vorher drinnen etwas gemeldet hat, läuft die normale Eingangsverzögerung – Alarm wie
+immer.
 
-*Beispiel:* Der Bewegungsmelder an der Treppe ist als „Melder im Haus“ eingetragen. Ben läuft die
-Treppe runter (Melder: Bewegung), öffnet die Haustür → stille Wartezeit. Bricht jemand nachts die
-Haustür auf, ohne dass vorher drinnen jemand die Treppe herunterkam → normale
-Eingangsverzögerung, Alarm nach 30 s.
-
-**Ausprobieren** ohne Sirene: im [Testmodus](testmodus.md#so-funktioniert-die-simulation) den
-Melder im Haus in der Testkarte auf „an“, die Tür auf „offen“ und unter „Anwesenheit testen“ die
-Person auf „weg“ stellen.
+**Ausprobieren** ohne Sirene im [Testmodus](testmodus.md#so-funktioniert-die-simulation): Melder
+im Haus in der Testkarte auf „an“, dann die Tür auf „offen“ → das Profil bleibt scharf, die Tür
+ist frei. Ohne Melder im Haus: Tür auf, dann unter „Anwesenheit testen“ die Person auf „weg“.
 
 Der Assistent zeigt im Check-up eine Warnung, solange die Ausgangserkennung ohne Melder im Haus
 läuft, und die Szenario-Vorschau spielt „Einbruch durch die Haustür, während jemand zuhause ist“
@@ -206,7 +229,7 @@ durch.
 
 | Einstellung | Wert |
 |---|---|
-| **Wartezeit** | 1 bis 5 Minuten, Standard 3. So lange bliebe ein Einbruch ohne Melder im Haus höchstens still. Die Messung „Weggehen“ zeigt unter System → Anwesenheit, wie schnell eure Handys nach der Tür „weg“ sagen |
+| **Wartezeit** (nur ohne Melder im Haus) | 1 bis 5 Minuten, Standard 3. So lange bliebe ein Einbruch ohne Melder im Haus höchstens still. Die Messung „Weggehen“ zeigt unter System → Anwesenheit, wie schnell eure Handys nach der Tür „weg“ sagen |
 | **Länger als 5 Minuten** (unter „Mehr Einstellungen“, Expertenoption) | bis 15 Minuten – mit deutlichem Warnhinweis |
 
 ### Was sicher bleibt

@@ -280,6 +280,14 @@ class PassageEnd:
     close_doors: bool = True
 
 
+@dataclass(frozen=True)
+class AlarmNow:
+    """„Alarm jetzt“ (Ausgangserkennung, ADR 0014): sofort auslösen – nur scharf oder in der
+    Eingangsverzögerung. Macht die Anlage nur strenger, nie nachgiebiger."""
+
+    sensor_key: str
+
+
 Event = (
     Startup
     | ArmRequested
@@ -297,6 +305,7 @@ Event = (
     | PassageIn
     | PassageOut
     | PassageEnd
+    | AlarmNow
 )
 
 # ---------------------------------------------------------------------------
@@ -975,4 +984,8 @@ def step(ctx: AlarmContext, event: Event, now: float) -> Result:
             return _on_passage_out(ctx, event)
         case PassageEnd():
             return _on_passage_end(ctx, event)
+        case AlarmNow():
+            if ctx.state not in (AlarmState.ARMED, AlarmState.PENDING) or ctx.profile is None:
+                return ctx, (Rejected(reason="alarm_now_not_possible"),)
+            return _trigger(ctx, event.sensor_key, now, "alarm_now")
     raise TypeError(f"Unbekanntes Ereignis: {event!r}")  # pragma: no cover

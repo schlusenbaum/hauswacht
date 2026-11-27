@@ -188,8 +188,15 @@ class ExitDetector:
     # --- Ablauf -------------------------------------------------------------------------
 
     @callback
-    def begin(self) -> int | None:
-        """Eingangsverzögerung beginnt: stille Wartezeit? Rückgabe: Sekunden oder ``None``."""
+    def begin(self) -> str | None:
+        """Eingangsverzögerung beginnt – was nun?
+
+        - ``"passage"``: Melder im Haus hat kurz vorher etwas gemeldet – jemand kam von innen:
+          automatischer Durchgang (wie die Durchgang-Taste „rausgehen“), ohne Handy-Prüfung.
+        - ``"wait"``: kein Melder im Haus eingetragen, aber jemand nachweislich zuhause: stille
+          Wartezeit, das Handy muss „weg“ sagen.
+        - ``None``: normale Eingangsverzögerung.
+        """
         self.end()
         runtime = self.runtime
         profile = runtime.ctx.profile
@@ -203,6 +210,13 @@ class ExitDetector:
         if not inside_ok(config, [self._inside_last.get(e, 0.0) for e in config.inside], now):
             _LOGGER.debug("Ausgangserkennung: Melder im Haus ohne Meldung – normale Verzögerung")
             return None
+        if config.inside:
+            # Jemand kam von innen: automatischer Durchgang (Entscheidung C, ADR 0014)
+            _LOGGER.debug("Ausgangserkennung: Melder im Haus meldete – automatischer Durchgang")
+            runtime.fire_event(
+                {"type": "ExitPassage", "profile_id": profile.profile_id, "door": door}
+            )
+            return "passage"
         home = frozenset(
             p
             for p in presence_persons(runtime.options)
@@ -231,7 +245,7 @@ class ExitDetector:
                 "persons": sorted(home),
             }
         )
-        return config.wait * 60
+        return "wait"
 
     @callback
     def end(self) -> None:
