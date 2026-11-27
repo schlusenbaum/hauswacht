@@ -43,6 +43,10 @@ REDACT = {
     "persons",  # „Bei Rückkehr“, Durchgang
     "person",  # Bedingungen in Auslöseregeln
     "away_proof_weak",  # Personen mit „Tür + Signal“
+    "presence_arrive_off",  # Anwesenheit je Person (ADR 0021)
+    "presence_leave_off",
+    "presence_leave_mode",
+    "presence_leave_no_door",
     "no_fix",  # Übersicht: Personen ohne Ortung
     "weak_proof",  # Übersicht: Personen mit „Tür + Signal“
     "leaving",  # Übersicht: Empfehlung „Weggehen“ je Person

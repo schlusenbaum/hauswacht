@@ -217,6 +217,46 @@ async def test_weak_proof_door_then_wifi_gone(hass: HomeAssistant) -> None:
     assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
 
 
+async def test_one_signal_after_door_arms_while_person_entity_still_home(
+    hass: HomeAssistant,
+) -> None:
+    """„eines reicht (nach Tür)“ (ADR 0021): WLAN weg nach der Tür reicht, obwohl die
+    Personen-Entität noch „home“ sagt; ohne Tür reicht es nie."""
+    hass.states.async_set(SIGNAL, "on")
+    rules = {"homecoming_signals": {A: [SIGNAL]}, "presence_leave_mode": {A: "one"}}
+    await _setup(hass, rules, auto_away_persons=[A], auto_away_delay=1)
+    hass.states.async_set(SIGNAL, "off")  # ohne Tür: schlafendes Handy
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+    hass.states.async_set(SIGNAL, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(SIGNAL, "off")  # nach der Tür; person.* sagt weiter „home“
+    await hass.async_block_till_done()
+    await _later(hass, 3)
+    assert _state(hass) == AlarmControlPanelState.ARMED_AWAY
+
+
+async def test_one_signal_coming_back_cancels(hass: HomeAssistant) -> None:
+    """Kommt das WLAN in der Wartezeit zurück, wird nicht scharf geschaltet (ADR 0021)."""
+    hass.states.async_set(SIGNAL, "on")
+    rules = {"homecoming_signals": {A: [SIGNAL]}, "presence_leave_mode": {A: "one"}}
+    await _setup(hass, rules, auto_away_persons=[A], auto_away_delay=5)
+    set_sensor(hass, DOOR, "on")
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(SIGNAL, "off")
+    await hass.async_block_till_done()
+    await _later(hass, 1)
+    hass.states.async_set(SIGNAL, "on")  # doch noch da
+    await hass.async_block_till_done()
+    await _later(hass, 10)
+    assert _state(hass) == AlarmControlPanelState.DISARMED
+
+
 async def test_simple_accuracy_counts_gps_jump(hass: HomeAssistant) -> None:
     near = {
         "latitude": hass.config.latitude + 0.002,

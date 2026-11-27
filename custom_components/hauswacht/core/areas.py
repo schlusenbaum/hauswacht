@@ -26,6 +26,10 @@ MAIN_ONLY_KEYS = (
     "homecoming_persons",
     "homecoming_signals",
     "homecoming_ssids",
+    "presence_arrive_off",
+    "presence_leave_off",
+    "presence_leave_mode",
+    "presence_leave_no_door",
     "reminder_persons",
     "reminder_profile",
 )

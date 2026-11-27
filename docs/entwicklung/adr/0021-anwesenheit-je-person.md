@@ -1,6 +1,6 @@
 # ADR 0021: Anwesenheit je Person – Signale fürs Ankommen und Weggehen, mit „Was wäre wenn“
 
-- Status: Diskussion (geplant für 0.66, noch nichts gebaut)
+- Status: angenommen (wird in 0.66 umgesetzt)
 - Anlass: Rückmeldung aus dem eigenen Haushalt. „Scharf, wenn alle weg“ braucht teilweise mehr als
   15 Minuten, bis sicher feststeht, dass jemand weg ist. Zum Scharfschalten ist das zu lange. Die
   Einstellungen dafür sind auf drei Stellen verteilt und schwer zu durchschauen.

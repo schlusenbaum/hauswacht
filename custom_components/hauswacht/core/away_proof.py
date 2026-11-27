@@ -25,6 +25,8 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from .presence_rules import DEFAULT_RULES, MODE_ONE, PersonRules, Signal
+
 ACCURACY_STRICT = "strict"
 ACCURACY_SIMPLE = "simple"
 ACCURACY_MODES = (ACCURACY_STRICT, ACCURACY_SIMPLE)
@@ -180,6 +182,8 @@ SIM_VALUES = (SIM_HOME, SIM_AWAY, SIM_AWAY_NO_PROOF, SIM_APPROACHING, SIM_REAL)
 PROOF_FRESH = "fresh"  # frische, genaue Ortung allein
 PROOF_DOOR = "door"  # Tür und danach Ortung außerhalb
 PROOF_WEAK = "weak"  # Tür und danach Signal weg (unsicher)
+PROOF_ONE_DOOR = "one_door"  # „eines reicht“: Tür und danach eines der Signale weg (ADR 0021)
+PROOF_ONE = "one"  # „eines reicht“ ohne Tür (unsicher, ADR 0021)
 
 
 def proven_away(
@@ -259,24 +263,32 @@ class AwayTracker:
         self._home: set[str] = set()
         self._left: dict[str, list[float]] = {}  # Person -> wann ein Signal „weg“ wurde
         self._kind: dict[str, tuple[str, float]] = {}  # Person -> (Beleg, Zeitpunkt) – Anzeige
+        # Anwesenheit je Person (ADR 0021)
+        self.rules: Mapping[str, PersonRules] = {}
+        self._left_by: dict[str, dict[str, list[float]]] = {}  # Person -> Signal -> „weg“-Zeiten
+        self._left_home: dict[str, float] = {}  # Person -> wann sie zuletzt nicht mehr zuhause war
+        self._trigger: dict[str, tuple[str, float]] = {}  # „eines reicht“: welches Signal, wann
 
     def note_door(self, now: float) -> None:
         self.doors = prune_doors([*self.doors, now], now)
 
-    def note_signal_left(self, person: str, now: float) -> None:
-        """Ein Signal der Person wechselte von „da“ auf „weg“ (für „Tür + Signal“)."""
+    def note_signal_left(self, person: str, now: float, entity_id: str | None = None) -> None:
+        """Ein Signal der Person wechselte von „da“ auf „weg“ (für „Tür + Signal“).
+
+        Mit ``entity_id`` auch je Signal gemerkt – für „eines reicht“ (ADR 0021).
+        """
         self._left[person] = prune_doors([*self._left.get(person, []), now], now)
+        if entity_id is not None:
+            by = self._left_by.setdefault(person, {})
+            by[entity_id] = prune_doors([*by.get(entity_id, []), now], now)
 
     def judge(
         self, person: str, combined: bool | None, fixes: Iterable[Fix], now: float
     ) -> bool | None:
         if combined is True:
-            if person not in self._home:
-                self._home.add(person)
-                self._home_since[person] = now
-            self._proven.discard(person)
+            self._set_home(person, now)
             return True
-        self._home.discard(person)
+        self._leave_home(person, now)
         if combined is None:
             return None
         if person in self._proven:
@@ -290,6 +302,108 @@ class AwayTracker:
             self._proven.add(person)
             self._kind[person] = (kind, now)
             return False
+        return None
+
+    def _set_home(self, person: str, now: float) -> None:
+        if person not in self._home:
+            self._home.add(person)
+            self._home_since[person] = now
+        self._proven.discard(person)
+        self._trigger.pop(person, None)
+
+    def _leave_home(self, person: str, now: float) -> None:
+        if person in self._home:
+            self._home.discard(person)
+            self._left_home[person] = now
+
+    def judge_signals(
+        self, person: str, signals: Iterable[Signal], fixes: Iterable[Fix], now: float
+    ) -> bool | None:
+        """Wie ``judge``, aber mit den Regeln der Person für Ankommen und Weggehen (ADR 0021).
+
+        Ohne abweichende Regeln genau wie bisher: ein Signal zuhause -> zuhause, alle weg ->
+        weg mit Beleg.
+
+        Mit Regeln:
+
+        - **Zuhause bleiben:** Solange die Person zuhause ist und die Weggehen-Regel nicht erfüllt
+          ist, hält sie ein Ankommen-Signal zuhause.
+        - **Weggehen** hat Vorrang vor Ankommen-Signalen, die einfach weiter „da“ sagen
+          (Bluetooth sieht durch die Tür). Nach dem Weggehen zählt ein Ankommen-Signal erst
+          wieder, wenn es **danach** auf „da“ gewechselt ist.
+        - **„eines reicht“:** Tür, danach wechselt eines der Weggehen-Signale auf „weg“ und ist
+          noch weg. Kommt genau dieses Signal wieder auf „da“, war es ein Irrtum: zuhause.
+        - Daneben gilt immer auch „alle müssen“ mit Beleg – „eines reicht“ ist nie langsamer.
+        """
+        items = list(signals)
+        rules = self.rules.get(person, DEFAULT_RULES)
+        if rules.is_default:
+            values = [s.value for s in items]
+            if any(v is True for v in values):
+                combined: bool | None = True
+            elif values and all(v is False for v in values):
+                combined = False
+            else:
+                combined = None
+            return self.judge(person, combined, fixes, now)
+        arrive = [s for s in items if rules.arrives(s.entity_id)]
+        leave = [s for s in items if rules.leaves(s.entity_id)]
+        all_away = bool(leave) and all(s.value is False for s in leave)
+        one = self._one_left(person, rules, leave) if rules.mode == MODE_ONE else None
+        if person in self._home:
+            if one is None and not all_away and any(s.value is True for s in arrive):
+                return True
+            self._leave_home(person, now)
+        left_at = self._left_home.get(person)
+        trigger = self._trigger.get(person)
+        fresh = any(
+            s.value is True and (left_at is None or s.since >= left_at) for s in arrive
+        ) or (
+            trigger is not None
+            and any(
+                s.entity_id == trigger[0] and s.value is True and s.since > trigger[1]
+                for s in items
+            )
+        )
+        if fresh:
+            self._set_home(person, now)
+            return True
+        if person in self._proven:
+            return False
+        if one is not None:
+            self._proven.add(person)
+            self._trigger[person] = one
+            self._kind[person] = (PROOF_ONE_DOOR if rules.door else PROOF_ONE, now)
+            return False
+        if not all_away:
+            return None
+        since = self._home_since.get(person)
+        kind = proof_kind(fixes, self.doors, now, self.settings, since)
+        if kind is None and person in self.settings.weak:
+            left = self._left.get(person, [])
+            kind = PROOF_WEAK if weak_proof(self.doors, left, self.settings, since) else None
+        if kind is not None:
+            self._proven.add(person)
+            self._kind[person] = (kind, now)
+            return False
+        return None
+
+    def _one_left(
+        self, person: str, rules: PersonRules, leave: Iterable[Signal]
+    ) -> tuple[str, float] | None:
+        """„eines reicht“: welches Weggehen-Signal nach der Tür auf „weg“ wechselte (und wann)."""
+        start = self._home_since.get(person, float("-inf"))
+        opened = [d for d in self.doors if d >= start]
+        window = self.settings.weak_seconds
+        by = self._left_by.get(person, {})
+        for signal in leave:
+            if signal.value is not False:
+                continue
+            for t in reversed(by.get(signal.entity_id, [])):
+                if t < start:
+                    break
+                if not rules.door or any(d <= t <= d + window for d in opened):
+                    return signal.entity_id, t
         return None
 
     def mark_proven(self, person: str, kind: str, now: float) -> None:
