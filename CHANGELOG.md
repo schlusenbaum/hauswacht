@@ -6,6 +6,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b2] - 2026-11-27
+
+### Korrigiert
+
+- **„Welche Signale zählen?“ passt in die Breite.** Lange Signalnamen (z. B. Bermuda-Tracker)
+  haben die Tabelle nach rechts aus dem Seitenblatt geschoben, die Spalte „Jetzt“ war
+  abgeschnitten. Jetzt brechen lange Namen um, die Spalten mit den Haken haben eine feste Breite.
+
 ## [0.66.0b1] - 2026-11-27
 
 **Anwesenheit je Person**, Teil 1 ([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md)).

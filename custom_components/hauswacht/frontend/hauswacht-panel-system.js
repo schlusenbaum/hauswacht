@@ -560,7 +560,7 @@ class HauswachtSystemEditor extends HTMLElement {
     const modes = this._t("presModes");
     const one = rule.mode === "one";
     return `<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
-      <table class="pt"><thead><tr><th>${se(this._t("presSignal"))}</th><th>${se(this._t("presArrive"))}</th><th>${se(this._t("presLeave"))}</th><th>${se(this._t("presNow"))}</th></tr></thead><tbody>${body}</tbody></table>
+      <div class="ptwrap"><table class="pt"><thead><tr><th>${se(this._t("presSignal"))}</th><th>${se(this._t("presArrive"))}</th><th>${se(this._t("presLeave"))}</th><th>${se(this._t("presNow"))}</th></tr></thead><tbody>${body}</tbody></table></div>
       <label>${se(this._t("presMode"))} ${this._info("presMode", person)}</label>
       <select data-pmode="${se(person)}">${["all", "one"].map((m) => `<option value="${m}" ${rule.mode === m ? "selected" : ""}>${se(modes[m])}</option>`).join("")}</select>
       ${one ? `<div class="chk"><input type="checkbox" data-pdoor="${se(person)}" ${rule.door ? "checked" : ""}><span>${se(this._t("presDoor"))}${this._info("presDoor", person)}</span></div>` : ""}
@@ -908,9 +908,13 @@ class HauswachtSystemEditor extends HTMLElement {
       .how { margin: 8px 0 4px; font-size: .9rem; }
       details.more { margin-top: 10px; }
       .pres { margin: 10px 0; }
-      table.pt { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: .9rem; }
-      table.pt th, table.pt td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); }
+      .ptwrap { max-width: 100%; overflow-x: auto; }
+      table.pt { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6px 0; font-size: .9rem; }
+      table.pt th, table.pt td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); overflow-wrap: anywhere; vertical-align: middle; }
+      table.pt th:nth-child(2), table.pt th:nth-child(3) { width: 6.2em; }
+      table.pt th:nth-child(4) { width: 5.6em; }
       table.pt th:nth-child(2), table.pt th:nth-child(3), table.pt td.c { text-align: center; }
+      table.pt th { overflow-wrap: normal; hyphens: auto; }
       details.more summary { cursor: pointer; color: var(--primary-color); }`;
     this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style + (window.HauswachtAdvisor?.style || "")}</style><div class="sheet">${this._form()}
       ${this.kind === "homecoming" ? `<div class="advice" data-advice></div>` : ""}
