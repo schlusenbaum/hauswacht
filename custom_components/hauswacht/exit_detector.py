@@ -312,6 +312,9 @@ class ExitDetector:
         self.end()
         _LOGGER.info("Ausgangserkennung: %s ist rausgegangen", person)
         if mode == "passage":
+            # Die Meldung im Haus ist „verbraucht“: Wer jetzt die Tür öffnet, braucht eine neue
+            # Meldung von innen – sonst bekäme ein Einbrecher kurz danach wieder freien Durchgang.
+            self._inside_last.clear()
             self.runtime.exit_passage_left(display_name(self.hass, person), person)
         else:
             self.runtime.exit_let_out(door, display_name(self.hass, person), person)

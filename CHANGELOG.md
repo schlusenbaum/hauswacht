@@ -13,7 +13,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **Automatischer Durchgang endet vorzeitig.** Sagt während des Durchgangs (Melder im Haus) ein
   Signal fürs Weggehen einer Person, die beim Öffnen zuhause war, 30 Sekunden lang „weg“, ist der
   Durchgang sofort vorbei und die Tür wieder scharf – nicht erst nach der Durchgangszeit. Alle
-  Alarm-Empfänger bekommen eine Nachricht.
+  Alarm-Empfänger bekommen eine Nachricht. Danach braucht ein neuer automatischer Durchgang eine
+  neue Meldung des Melders im Haus.
 - **Testkarte zeigt die laufende Ausgangserkennung:** Durchgang oder stille Wartezeit, Restzeit,
   beobachtete Personen und wessen Handy seit wie vielen Sekunden „weg“ sagt. Neues Attribut
   `exit_detection` am Alarm-Panel.

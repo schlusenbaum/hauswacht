@@ -188,7 +188,10 @@ Alarm. Wer nach der Durchgangszeit zurückkommt, braucht wie sonst PIN, Karte od
 während des Durchgangs die Personen, die beim Öffnen zuhause waren. Sagt eines ihrer Signale
 fürs Weggehen **30 Sekunden lang** „weg“, ist die Person draußen – der Durchgang ist sofort vorbei,
 die Tür ist wieder scharf. Alle Alarm-Empfänger bekommen: „Ben ist weg – Durchgang an Haustür
-beendet, Profil Nacht ist wieder ganz scharf.“ Kommt Ben danach zurück, braucht er PIN, Karte oder „Bei Rückkehr“.
+beendet, Profil Nacht ist wieder ganz scharf.“ Kommt Ben danach zurück, braucht er PIN, Karte
+oder „Bei Rückkehr“. Die Meldung des Melders im Haus ist dann „verbraucht“: Öffnet danach jemand
+die Tür, gibt es nur wieder einen automatischen Durchgang, wenn der Melder im Haus **neu** etwas
+meldet – sonst läuft die normale Eingangsverzögerung.
 
 *Beispiel:* Ben geht bei scharfer „Nacht“ zur Arbeit. Der Melder an der Treppe hat ihn gesehen, die
 Haustür ist 5 Minuten frei. Nach einer Minute verliert sein Handy das WLAN – 30 Sekunden später ist

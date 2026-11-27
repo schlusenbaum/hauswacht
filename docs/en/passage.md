@@ -183,7 +183,10 @@ comes back after the passage time needs PIN, card or "On return" as usual.
 Hauswacht watches the persons who were home when the door opened. If one of their leaving signals
 says "away" **for 30 seconds**, the person is outside – the passage is over immediately and the
 door is armed again. All alarm recipients get: "Ben is away – passage at front door ended,
-profile Night is fully armed again." If Ben comes back afterwards, he needs PIN, card or "On return".
+profile Night is fully armed again." If Ben comes back afterwards, he needs PIN, card or "On
+return". The report of the sensor in the house is then "used up": if someone opens the door
+afterwards, there is only another automatic passage if the sensor in the house reports something
+**new** – otherwise the normal entry delay runs.
 
 *Example:* Ben goes to work while "Night" is armed. The sensor on the stairs saw him, the front
 door is free for 5 minutes. After one minute his phone loses the Wi-Fi – 30 seconds later the
