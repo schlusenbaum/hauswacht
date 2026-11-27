@@ -192,6 +192,12 @@ flowchart TD
 ihn „Tür + Signal“ erlaubt, gilt er als weg, wenn eine Tür aufging und danach sein Ping „weg“
 meldet. Sonst bleibt er für Hauswacht „nicht weg“, und „alle weg“ wartet auf ihn.
 
+**Ab 0.66.0b1** lässt sich je Person einstellen, welche Signale fürs **Ankommen** und welche
+fürs **Weggehen** zählen, und ob fürs Weggehen **eines reicht (nach Tür)**: Eine Eingangstür war
+auf, danach sagt eines der Weggehen-Signale „weg“ – das reicht dann auch ohne Ortung. Wer nichts
+einstellt, für den gilt alles wie oben. Mehr unter
+[Ankommen und Weggehen je Signal](profile.md#ankommen-und-weggehen-je-signal).
+
 Warum jemand gerade zuhause oder weg ist, zeigen die
 [Testkarte](testmodus.md#anwesenheit-testen) und die Einstellungsseite (System → Anwesenheit) –
 mit Grund, z. B. „Beleg: Tür + Ortung außerhalb“.

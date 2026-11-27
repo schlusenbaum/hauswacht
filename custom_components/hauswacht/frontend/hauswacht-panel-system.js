@@ -40,6 +40,27 @@ const ST = {
     ssids: "Heim-WLAN(s), durch Komma getrennt",
     signals: "Zusätzliche Signale je Person",
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
+    presTitle: "Welche Signale zählen?",
+    presSignal: "Signal",
+    presArrive: "Ankommen",
+    presLeave: "Weggehen",
+    presNow: "Jetzt",
+    presPersonRow: "{name} (Person)",
+    presNowVals: { home: "zuhause", away: "weg", unknown: "unbekannt", direction: "nur Richtung" },
+    presMode: "Weggehen erkennen",
+    presModes: { all: "alle müssen weg sein (sicher)", one: "eines reicht (nach Tür)" },
+    presDoor: "Nur nach einer Eingangstür (empfohlen)",
+    presNoDoorWarn: "Unsicher: Ohne Tür reicht ein einziges Signal, das „weg“ sagt. Schläft das Handy nachts ein, gilt {name} als weg – „Scharf, wenn alle weg“ kann dann scharf schalten, obwohl {name} zuhause ist.",
+    presNoArrive: "Kein Signal fürs Ankommen: {name} wird nie als zuhause erkannt.",
+    presNoLeave: "Kein Signal fürs Weggehen: {name} wird nie als weg erkannt.",
+    presOr: " oder ",
+    presAnd: ", ",
+    presHowArrive: "Ankommen: {name} gilt als zuhause, sobald {list} „zuhause“ sagt.",
+    presHowAll: "Weggehen: {name} gilt als weg, wenn alle diese Signale „weg“ sagen – {list} – und es einen Beleg gibt (siehe „Wann gilt jemand als weg?“ unten).",
+    presHowOne: "Weggehen: {name} gilt als weg, sobald eine Eingangstür auf war und danach (bis {w} Minuten) {list} „weg“ sagt. Kommt genau dieses Signal wieder auf „zuhause“, gilt {name} wieder als zuhause.",
+    presHowOneNoDoor: "Weggehen: {name} gilt als weg, sobald {list} „weg“ sagt – auch ohne Tür. Kommt genau dieses Signal wieder auf „zuhause“, gilt {name} wieder als zuhause.",
+    presHowStale: "Ein Signal, das nur fürs Ankommen zählt (z. B. Bluetooth, das durch die Tür sieht), hält {name} beim Weggehen nicht zuhause. Es zählt erst wieder, wenn es zwischendurch weg war.",
+    presHowAlso: "Daneben gilt auch hier: Sagen alle Weggehen-Signale „weg“ und gibt es einen Beleg, ist {name} ebenfalls weg.",
     proofKind: "Beleg für „weg“",
     proofKinds: { fix: "nur Ortung (sicher)", weak: "auch Tür + Signal (unsicher)" },
     geofence: "Zählt als Ortung (Geofence)",
@@ -76,6 +97,9 @@ const ST = {
       observe: "Misst nur, schaltet nichts: wann eure Handys beim Heimkommen und Weggehen reagieren. Daraus kommen die Empfehlungen (Eingangsverzögerung, Zeitfenster, Wartezeit).",
       persons: "Diese Personen werden beobachtet. Personen aus den Profil-Automatiken kommen automatisch dazu.",
       ssids: "Name eures WLANs (wie im Handy angezeigt). Ein WLAN-Sensor der Companion App gilt als „zuhause“, wenn das Handy in einem dieser Netze ist.",
+      presence: "Je Signal zwei Haken: „Ankommen“ – zählt das Signal, um zu erkennen, dass die Person heimkommt? „Weggehen“ – zählt es, um zu erkennen, dass sie weg ist? Beispiel: Bluetooth fürs Ankommen ja, fürs Weggehen nein, weil es oft noch durch die Tür sieht. „Jetzt“ zeigt, was das Signal gerade sagt.",
+      presMode: "„Alle müssen weg sein“: wie bisher – alle Weggehen-Signale sagen „weg“, dazu ein Beleg (Ortung außerhalb oder Tür + Ortung). Sicher, aber oft langsam: Es zählt das langsamste Signal. „Eines reicht (nach Tür)“: Eine Eingangstür war auf, danach sagt eines der Weggehen-Signale „weg“ – das reicht. Schnell, aber nur so gut wie das schnellste Signal: Wähle es nur, wenn die Signale dieser Person sich selten irren.",
+      presDoor: "Empfohlen. Ohne Tür reicht ein Signal, das „weg“ sagt – auch nachts, wenn das Handy einschläft.",
       signals: "Weitere Hinweise, ob eine Person zuhause ist: WLAN-Sensor der App, Ping, Bluetooth, Richtung („Nähe“, Places), weitere Tracker. Ein einziges „zuhause“ reicht für zuhause; für „weg“ müssen alle weg sein.",
       area_name: "Name des Bereichs, z. B. „Garage“. Jeder Bereich hat sein eigenes Bedienfeld und eigene Profile.",
       area_icon: "Symbol des Bereichs, z. B. mdi:garage.",
@@ -224,6 +248,27 @@ const ST = {
     ssids: "Home Wi-Fi(s), separated by commas",
     signals: "Additional signals per person",
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
+    presTitle: "Which signals count?",
+    presSignal: "Signal",
+    presArrive: "Arriving",
+    presLeave: "Leaving",
+    presNow: "Now",
+    presPersonRow: "{name} (person)",
+    presNowVals: { home: "home", away: "away", unknown: "unknown", direction: "direction only" },
+    presMode: "Detect leaving",
+    presModes: { all: "all must be away (safe)", one: "one is enough (after a door)" },
+    presDoor: "Only after an entry door (recommended)",
+    presNoDoorWarn: "Uncertain: without a door, a single signal reporting “away” is enough. If the phone falls asleep at night, {name} counts as away – “arm when everyone is away” may then arm although {name} is home.",
+    presNoArrive: "No signal for arriving: {name} is never detected as home.",
+    presNoLeave: "No signal for leaving: {name} is never detected as away.",
+    presOr: " or ",
+    presAnd: ", ",
+    presHowArrive: "Arriving: {name} counts as home as soon as {list} reports “home”.",
+    presHowAll: "Leaving: {name} counts as away when all these signals report “away” – {list} – and there is proof (see “When does someone count as away?” below).",
+    presHowOne: "Leaving: {name} counts as away as soon as an entry door was open and afterwards (up to {w} minutes) {list} reports “away”. If exactly that signal comes back to “home”, {name} counts as home again.",
+    presHowOneNoDoor: "Leaving: {name} counts as away as soon as {list} reports “away” – even without a door. If exactly that signal comes back to “home”, {name} counts as home again.",
+    presHowStale: "A signal that only counts for arriving (e.g. Bluetooth, which sees through the door) does not keep {name} home when leaving. It counts again once it was away in between.",
+    presHowAlso: "In addition: if all leaving signals report “away” and there is proof, {name} is away as well.",
     proofKind: "Proof for “away”",
     proofKinds: { fix: "location only (safe)", weak: "also door + signal (uncertain)" },
     geofence: "Counts as location (geofence)",
@@ -260,6 +305,9 @@ const ST = {
       observe: "Only measures, switches nothing: when your phones react when coming home and leaving. The recommendations (entry delay, time window, waiting time) come from this.",
       persons: "These persons are observed. Persons from the profile automations are added automatically.",
       ssids: "Name of your Wi-Fi (as shown on the phone). A Wi-Fi sensor of the Companion app counts as “home” when the phone is in one of these networks.",
+      presence: "Two ticks per signal: “Arriving” – does the signal count to detect that the person comes home? “Leaving” – does it count to detect that they are away? Example: Bluetooth yes for arriving, no for leaving, because it often still sees through the door. “Now” shows what the signal currently reports.",
+      presMode: "“All must be away”: as before – all leaving signals report “away”, plus proof (location outside or door + location). Safe, but often slow: the slowest signal decides. “One is enough (after a door)”: an entry door was open, afterwards one of the leaving signals reports “away” – that is enough. Fast, but only as good as the fastest signal: choose it only if this person's signals are rarely wrong.",
+      presDoor: "Recommended. Without a door, one signal reporting “away” is enough – even at night when the phone falls asleep.",
       signals: "More hints whether a person is home: Wi-Fi sensor of the app, ping, Bluetooth, direction (Proximity, Places), further trackers. A single “home” is enough for home; for “away” all must be away.",
       area_name: "Name of the area, e.g. “Garage”. Every area has its own panel and its own profiles.",
       area_icon: "Icon of the area, e.g. mdi:garage.",
@@ -485,6 +533,67 @@ class HauswachtSystemEditor extends HTMLElement {
     return { minutes: Math.min(d.proof_max_window, Math.max(15, Math.ceil(longest / 60) + 5)), measured: Math.ceil(longest / 60) };
   }
 
+  _presRule(person, d) {
+    d.presence = d.presence || {};
+    d.presence[person] = d.presence[person] || { arrive_off: [], leave_off: [], mode: "all", door: true };
+    return d.presence[person];
+  }
+
+  _presenceTable(person, d) {
+    // Anwesenheit je Person (ADR 0021): je Signal Ankommen/Weggehen, Weggehen-Regel, Klartext
+    const rule = this._presRule(person, d);
+    const pname = (d.person_choices.find((c) => c.id === person) || { name: person }).name;
+    const sname = (id) => (id === person ? this._t("presPersonRow").replace("{name}", pname) : (d.signal_choices.find((c) => c.id === id) || { name: id }).name);
+    const rows = [person, ...(d.signals[person] || [])];
+    const nowText = (id) => {
+      const v = (d.signal_now || {})[id];
+      const vals = this._t("presNowVals");
+      return v === true ? vals.home : v === false ? vals.away : v === "direction" ? vals.direction : vals.unknown;
+    };
+    const key = (id) => se(`${person}|${id}`);
+    const body = rows
+      .map((id) => `<tr><td title="${se(id)}">${se(sname(id))}</td>
+        <td class="c"><input type="checkbox" data-pa="${key(id)}" ${rule.arrive_off.includes(id) ? "" : "checked"} aria-label="${se(this._t("presArrive"))}"></td>
+        <td class="c"><input type="checkbox" data-pl="${key(id)}" ${rule.leave_off.includes(id) ? "" : "checked"} aria-label="${se(this._t("presLeave"))}"></td>
+        <td>${se(nowText(id))}</td></tr>`)
+      .join("");
+    const modes = this._t("presModes");
+    const one = rule.mode === "one";
+    return `<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
+      <table class="pt"><thead><tr><th>${se(this._t("presSignal"))}</th><th>${se(this._t("presArrive"))}</th><th>${se(this._t("presLeave"))}</th><th>${se(this._t("presNow"))}</th></tr></thead><tbody>${body}</tbody></table>
+      <label>${se(this._t("presMode"))} ${this._info("presMode", person)}</label>
+      <select data-pmode="${se(person)}">${["all", "one"].map((m) => `<option value="${m}" ${rule.mode === m ? "selected" : ""}>${se(modes[m])}</option>`).join("")}</select>
+      ${one ? `<div class="chk"><input type="checkbox" data-pdoor="${se(person)}" ${rule.door ? "checked" : ""}><span>${se(this._t("presDoor"))}${this._info("presDoor", person)}</span></div>` : ""}
+      ${one && !rule.door ? `<div class="warn">${se(this._t("presNoDoorWarn").replaceAll("{name}", pname))}</div>` : ""}
+      ${this._presenceWarn(person, pname, rows, rule)}
+      <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._presenceHow(person, pname, rows, rule, sname, d))}</div></div>`;
+  }
+
+  _presenceWarn(person, pname, rows, rule) {
+    const out = [];
+    if (!rows.some((id) => !rule.arrive_off.includes(id))) out.push(this._t("presNoArrive"));
+    if (!rows.some((id) => !rule.leave_off.includes(id))) out.push(this._t("presNoLeave"));
+    return out.map((t) => `<div class="warn">${se(t.replaceAll("{name}", pname))}</div>`).join("");
+  }
+
+  _presenceHow(person, pname, rows, rule, sname, d) {
+    const arrive = rows.filter((id) => !rule.arrive_off.includes(id)).map(sname);
+    const leave = rows.filter((id) => !rule.leave_off.includes(id)).map(sname);
+    const parts = [];
+    if (arrive.length) parts.push(this._t("presHowArrive").replace("{list}", arrive.join(this._t("presOr"))));
+    if (leave.length) {
+      if (rule.mode === "one") {
+        const text = rule.door ? this._t("presHowOne") : this._t("presHowOneNoDoor");
+        parts.push(text.replace("{list}", leave.join(this._t("presOr"))).replace("{w}", String(d.proof_weak_window)));
+        parts.push(this._t("presHowAlso"));
+      } else {
+        parts.push(this._t("presHowAll").replace("{list}", leave.join(this._t("presAnd"))));
+      }
+    }
+    if (rows.some((id) => !rule.arrive_off.includes(id) && rule.leave_off.includes(id))) parts.push(this._t("presHowStale"));
+    return parts.join(" ").replaceAll("{name}", pname);
+  }
+
   _weakPick(person, d) {
     // Beleg für „weg“ je Person: nur Ortung (sicher) oder auch Tür + Signal (unsicher)
     const weak = d.proof_weak.includes(person);
@@ -532,7 +641,7 @@ class HauswachtSystemEditor extends HTMLElement {
           <label>${se(this._t("proofWindow"))} ${this._info("window")}</label>
           <input class="small" type="number" min="1" max="${d.proof_max_window}" data-f="proof_window" value="${se(d.proof_window)}">
           <div class="muted">${se(recText)} ${Number(d.proof_window) === rec.minutes ? "" : `<button type="button" class="b" data-act="proof-rec" data-field="proof_window" data-value="${rec.minutes}">${se(this._t("apply"))}</button>`}</div>
-          ${d.proof_weak.length ? this._weakWindow(d) : ""}
+          ${d.proof_weak.length || Object.values(d.presence || {}).some((r) => r.mode === "one") ? this._weakWindow(d) : ""}
         </details></div>`;
   }
 
@@ -601,7 +710,7 @@ class HauswachtSystemEditor extends HTMLElement {
     if (k === "homecoming") {
       const persons = [...new Set([...d.persons, ...d.signal_persons])];
       const signals = persons
-        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._weakPick(p, d)}${this._geofencePick(p, d)}</div>`)
+        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._presenceTable(p, d)}${this._presRule(p, d).mode === "one" ? "" : this._weakPick(p, d)}${this._geofencePick(p, d)}</div>`)
         .join("");
       return `<h2>${se(this._t("homecoming"))}</h2>
         ${this._chk("observe", d.observe, this._t("observe"))}
@@ -699,6 +808,20 @@ class HauswachtSystemEditor extends HTMLElement {
       }
       const more = root.querySelector("details.more");
       if (more) this._moreOpen = more.open;
+      // Anwesenheit je Person (ADR 0021)
+      const flip = (attr, field) =>
+        root.querySelectorAll(`[${attr}]`).forEach((el) => {
+          const raw = el.getAttribute(attr);
+          const cut = raw.indexOf("|");
+          const rule = this._presRule(raw.slice(0, cut), d);
+          const id = raw.slice(cut + 1);
+          rule[field] = rule[field].filter((x) => x !== id);
+          if (!el.checked) rule[field].push(id);
+        });
+      flip("data-pa", "arrive_off");
+      flip("data-pl", "leave_off");
+      root.querySelectorAll("[data-pmode]").forEach((el) => (this._presRule(el.dataset.pmode, d).mode = el.value));
+      root.querySelectorAll("[data-pdoor]").forEach((el) => (this._presRule(el.dataset.pdoor, d).door = el.checked));
     }
   }
 
@@ -729,7 +852,7 @@ class HauswachtSystemEditor extends HTMLElement {
       case "network":
         return ["network_save", { entities: d.entities }];
       case "homecoming":
-        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window, proof_geofence: d.proof_geofence || [] }];
+        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window, proof_geofence: d.proof_geofence || [], presence: d.presence || {} }];
       case "area":
         return ["area_save", { id: this.item, name: d.name, icon: d.icon }];
       case "page":
@@ -784,6 +907,10 @@ class HauswachtSystemEditor extends HTMLElement {
       .tip { display: block; font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); font-weight: normal; }
       .how { margin: 8px 0 4px; font-size: .9rem; }
       details.more { margin-top: 10px; }
+      .pres { margin: 10px 0; }
+      table.pt { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: .9rem; }
+      table.pt th, table.pt td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); }
+      table.pt th:nth-child(2), table.pt th:nth-child(3), table.pt td.c { text-align: center; }
       details.more summary { cursor: pointer; color: var(--primary-color); }`;
     this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style + (window.HauswachtAdvisor?.style || "")}</style><div class="sheet">${this._form()}
       ${this.kind === "homecoming" ? `<div class="advice" data-advice></div>` : ""}
@@ -909,6 +1036,7 @@ class HauswachtSystemEditor extends HTMLElement {
       })
     );
     root.querySelectorAll("[data-weak]").forEach((el) => el.addEventListener("change", redraw));
+    root.querySelectorAll("[data-pa], [data-pl], [data-pmode], [data-pdoor]").forEach((el) => el.addEventListener("change", redraw));
     root.querySelectorAll("[data-geo]").forEach((el) => el.addEventListener("change", () => this._scheduleAdvice?.()));
     root.querySelector('[data-f="proof_window"]')?.addEventListener("input", (ev) => {
       const how = root.querySelector("[data-how]");

@@ -173,6 +173,65 @@ the Wi-Fi is gone too does the delay start.
 This way a signal that drops out briefly does not arm right away, and the fastest signal
 detects the arrival.
 
+#### Arriving and leaving per signal
+
+*From 0.66.0b1* ([ADR 0021](../entwicklung/adr/0021-anwesenheit-je-person.md), German). Not every
+signal is good for both directions. Bluetooth detects coming home quickly, but when leaving it
+often still sees through the front door. The app's location notices leaving reliably, but only
+after minutes. That is why the box of each person contains a table:
+
+| Column | Meaning |
+|---|---|
+| **Signal** | the person itself and each of their signals |
+| **Arriving** | ticked: the signal counts to detect that the person comes home |
+| **Leaving** | ticked: the signal counts to detect that the person is away |
+| **Now** | what the signal currently reports: home, away, unknown or direction only |
+
+Below it you choose how **leaving** is detected:
+
+- **all must be away (safe)** – as before: all leaving signals report "away", and there must be
+  [proof](#away-only-with-proof). Safe, but the slowest signal always decides.
+- **one is enough (after a door)** – fast: an entry door was open, and afterwards **one** of the
+  leaving signals reports "away". That is enough, no proof is needed. The time window after the
+  door is the same as for "door + signal" (under "More settings", default 5 minutes). If exactly
+  that signal comes back to "home", it was a mistake: the person counts as home again. "All away
+  with proof" still applies as well – so "one is enough" is never slower.
+- **Only after an entry door** (with "one is enough", on by default): if you switch it off, one
+  signal reporting "away" is enough even without a door. That is uncertain: if the phone falls
+  asleep at night, the person counts as away. That is why a warning appears.
+
+**Arriving** is always "one is enough": as soon as an arriving signal reports "home", the person
+is home. Detecting a homecoming quickly never causes a false alarm.
+
+**Leaving takes priority.** A signal that only counts for arriving and simply keeps reporting
+"home" (Bluetooth through the door) does not keep the person home when leaving. It counts again
+once it was away in between and then reports "home" again.
+
+Below the table, one sentence says **what happens** – it changes as soon as you tick a box. If a
+whole column has no tick, the page warns: without an arriving signal the person is never
+detected as home, without a leaving signal never as away.
+
+**Example:** Anna has Wi-Fi, ping, Bluetooth and the app's location.
+
+| Signal | Arriving | Leaving |
+|---|---|---|
+| Anna (person) | ☑ | ☑ |
+| Wi-Fi | ☑ | ☑ |
+| Ping | ☑ | ☑ |
+| Bluetooth | ☑ | ☐ |
+
+Leaving: **one is enough (after a door)**. Anna walks out of the front door in the morning,
+40 seconds later her Wi-Fi is gone → Anna is **away**, although ping and Bluetooth still report
+"home". Without a new door nothing happens at night when her Wi-Fi falls asleep.
+
+Ben only has ping, and it is wrong more often. For him **all must be away** stays the right
+choice.
+
+**If you change nothing, you notice no difference:** all boxes are ticked, leaving is set to
+"all must be away" – exactly as before 0.66. The [own trigger](#own-trigger-for-all-away) in the
+profile still applies instead of the persons. And the house still only counts as empty when
+**all** persons are away – "one is enough" only applies within one person.
+
 #### "Away" only with proof
 
 *From 0.61.* A sleeping phone must not make anybody away. If a phone in the house loses its Wi-Fi

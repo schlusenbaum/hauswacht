@@ -187,6 +187,12 @@ flowchart TD
 "door + signal" is allowed for him, he counts as away when a door opened and his ping then
 reports "away". Otherwise he stays "not away" for Hauswacht, and "everyone away" waits for him.
 
+**From 0.66.0b1** you can set per person which signals count for **arriving** and which for
+**leaving**, and whether **one is enough (after a door)** for leaving: an entry door was open,
+afterwards one of the leaving signals reports "away" – that is then enough even without a
+location. If you set nothing, everything works as described above. More under
+[Arriving and leaving per signal](profiles.md#arriving-and-leaving-per-signal).
+
 Why someone is home or away right now is shown on the [test card](test-mode.md#testing-presence)
 and on the settings page (System → Presence) – with the reason, e.g. "Proof: door + location
 outside".

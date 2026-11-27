@@ -51,7 +51,7 @@ const TEXT = {
       reasonHome: "zuhause laut: {by}",
       reasonNoProof: "alle Signale „weg“, aber kein Beleg – zählt nicht als weg",
       reasonUnclear: "unklar: {by}",
-      proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
+      proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", one_door: "Beleg: Tür + eines der Signale", one: "Beleg: eines der Signale (ohne Tür, unsicher)", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
       line: {
         otherArmed: "nicht nötig, „{other}“ ist scharf",
         armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
@@ -149,7 +149,7 @@ const TEXT = {
       reasonHome: "home according to: {by}",
       reasonNoProof: "all signals “away”, but no proof – does not count as away",
       reasonUnclear: "unclear: {by}",
-      proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", simulated: "Proof: simulated", other: "Proof available" },
+      proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", one_door: "Proof: door + one of the signals", one: "Proof: one of the signals (no door, uncertain)", simulated: "Proof: simulated", other: "Proof available" },
       line: {
         otherArmed: "not needed, \"{other}\" is armed",
         armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },

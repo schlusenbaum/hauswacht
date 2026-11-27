@@ -163,7 +163,7 @@ eine HomeKit-Variable „Martin zuhause“.
 | Die Person gilt als … | wenn … |
 |---|---|
 | **zuhause** | irgendein Signal zuhause meldet (die Person selbst oder eines der Signale) |
-| **weg** | **alle** Signale sicher „weg“ melden **und** es einen Beleg gibt (ab 0.61, siehe [unten](#weg-nur-mit-beleg)) |
+| **weg** | **alle** Signale sicher „weg“ melden **und** es einen Beleg gibt (ab 0.61, siehe [unten](#weg-nur-mit-beleg)) – oder ab 0.66 je Person „eines reicht (nach Tür)“, siehe [Ankommen und Weggehen je Signal](#ankommen-und-weggehen-je-signal) |
 | unbekannt | sonst, z. B. ein Signal ist „nicht verfügbar“ oder es fehlt der Beleg – das zählt **nie** als weg |
 
 **Richtung (Nähe, Places)** zählt nur mit zwei Werten: **„angekommen“** = zuhause und
@@ -178,6 +178,66 @@ weg ist, beginnt die Wartezeit.
 
 So schaltet ein kurz aussetzendes Signal nicht gleich scharf, und das schnellste Signal
 erkennt die Rückkehr.
+
+#### Ankommen und Weggehen je Signal
+
+*Ab 0.66.0b1* ([ADR 0021](entwicklung/adr/0021-anwesenheit-je-person.md)). Nicht jedes Signal
+taugt für beide Richtungen. Bluetooth erkennt das Heimkommen schnell, sieht beim Weggehen aber oft
+noch durch die Haustür. Die Ortung der App merkt das Weggehen zuverlässig, aber erst nach
+Minuten. Deshalb steht im Kasten jeder Person eine Tabelle:
+
+| Spalte | Bedeutung |
+|---|---|
+| **Signal** | die Person selbst und jedes ihrer Signale |
+| **Ankommen** | Haken an: Das Signal zählt, um zu erkennen, dass die Person heimkommt |
+| **Weggehen** | Haken an: Das Signal zählt, um zu erkennen, dass die Person weg ist |
+| **Jetzt** | was das Signal gerade sagt: zuhause, weg, unbekannt oder nur Richtung |
+
+Darunter wählst du, wie **Weggehen** erkannt wird:
+
+- **alle müssen weg sein (sicher)** – wie bisher: Alle Weggehen-Signale sagen „weg“, dazu braucht
+  es einen [Beleg](#weg-nur-mit-beleg). Sicher, aber es zählt immer das langsamste Signal.
+- **eines reicht (nach Tür)** – schnell: Eine Eingangstür war auf, und danach sagt **eines** der
+  Weggehen-Signale „weg“. Das reicht, ein Beleg ist nicht nötig. Das Zeitfenster nach der Tür
+  ist dasselbe wie bei „Tür + Signal“ (unter „Mehr Einstellungen“, Standard 5 Minuten). Kommt
+  genau dieses Signal wieder auf „zuhause“, war es ein Irrtum: Die Person gilt wieder als
+  zuhause. Daneben gilt weiter auch „alle weg mit Beleg“ – „eines reicht“ ist also nie
+  langsamer.
+- **Nur nach einer Eingangstür** (bei „eines reicht“, Standard an): Schaltest du es aus, reicht
+  ein Signal, das „weg“ sagt, auch ohne Tür. Das ist unsicher: Schläft das Handy nachts ein, gilt
+  die Person als weg. Deshalb steht dann eine Warnung da.
+
+**Ankommen** ist immer „eines reicht“: Sobald ein Ankommen-Signal „zuhause“ sagt, ist die Person
+zuhause. Schnelles Erkennen beim Heimkommen macht nie einen Fehlalarm.
+
+**Weggehen hat Vorrang.** Ein Signal, das nur fürs Ankommen zählt und einfach weiter „zuhause“
+sagt (Bluetooth durch die Tür), hält die Person beim Weggehen nicht zuhause. Es zählt erst
+wieder, wenn es zwischendurch weg war und dann wieder „zuhause“ sagt.
+
+Unter der Tabelle steht in einem Satz, **was passiert** – er ändert sich sofort, wenn du einen
+Haken setzt. Fehlt ein Haken in einer ganzen Spalte, warnt die Seite: Ohne Ankommen-Signal wird
+die Person nie als zuhause erkannt, ohne Weggehen-Signal nie als weg.
+
+**Beispiel:** Anna hat WLAN, Ping, Bluetooth und die Ortung der App.
+
+| Signal | Ankommen | Weggehen |
+|---|---|---|
+| Anna (Person) | ☑ | ☑ |
+| WLAN | ☑ | ☑ |
+| Ping | ☑ | ☑ |
+| Bluetooth | ☑ | ☐ |
+
+Weggehen: **eines reicht (nach Tür)**. Anna geht morgens aus der Haustür, 40 Sekunden später ist
+ihr WLAN weg → Anna ist **weg**, obwohl Ping und Bluetooth noch „zuhause“ sagen. Ohne neue Tür
+passiert nachts nichts, wenn ihr WLAN einschläft.
+
+Ben hat nur Ping, und das irrt sich öfter. Für ihn bleibt **alle müssen weg sein** die richtige
+Wahl.
+
+**Wer nichts ändert, merkt keinen Unterschied:** Alle Haken sind gesetzt, Weggehen steht auf
+„alle müssen weg sein“ – genau wie vor 0.66. Der [eigene Auslöser](#eigener-auslöser-für-alle-weg)
+im Profil gilt weiter statt der Personen. Und das Haus ist weiterhin erst leer, wenn **alle**
+Personen weg sind – „eines reicht“ gilt nur innerhalb einer Person.
 
 #### „weg“ nur mit Beleg
 

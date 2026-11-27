@@ -6,6 +6,36 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b1] - 2026-11-27
+
+**Anwesenheit je Person**, Teil 1 ([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md)).
+
+### Neu
+
+- **„Welche Signale zählen?“** unter System → Anwesenheit, im Kasten jeder Person: eine Tabelle
+  mit der Person und allen ihren Signalen. Je Signal ein Haken für **Ankommen** und einer für
+  **Weggehen**, dazu, was das Signal **jetzt** sagt. Beispiel: Bluetooth nur fürs Ankommen, weil
+  es beim Weggehen noch durch die Tür sieht.
+- **„Weggehen erkennen“** je Person:
+  - **alle müssen weg sein (sicher)** – wie bisher, mit Beleg;
+  - **eines reicht (nach Tür)** – eine Eingangstür war auf, danach sagt eines der
+    Weggehen-Signale „weg“. Das reicht, ohne Ortung. Kommt genau dieses Signal zurück, gilt die
+    Person wieder als zuhause.
+  - **Nur nach einer Eingangstür** lässt sich abschalten, dann mit Warnung.
+- **„So verhält sich das:“** unter der Tabelle sagt in Klartext, wann die Person als zuhause und
+  wann als weg gilt – und ändert sich sofort mit jedem Haken.
+- Anleitung mit Beispiel: [Ankommen und Weggehen je Signal](docs/profile.md#ankommen-und-weggehen-je-signal).
+
+### Unverändert
+
+- Wer nichts einstellt, merkt keinen Unterschied: Alle Haken sind gesetzt, Weggehen steht auf
+  „alle müssen weg sein“. Ein Test spielt alle Signalfolgen mit alter und neuer Regel durch.
+- Das Haus ist weiter erst leer, wenn **alle** Personen weg sind. Der eigene Auslöser im Profil,
+  Durchgang, Ausgangserkennung, „Bei Rückkehr“, 24h-Melder und Brandalarm bleiben, wie sie sind.
+
+Messwerte in der Tabelle und die Empfehlung mit „Was wäre wenn“ folgen in den nächsten
+Vorabversionen.
+
 ## [0.65.0] - 2026-11-27
 
 Zusammenfassung von 0.65.0b1 bis 0.65.0b9 – **Einrichten nach Zielen, Fehlersuche ohne
