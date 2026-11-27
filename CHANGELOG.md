@@ -6,6 +6,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0b6] - 2026-11-27
+
+### Geändert
+
+- **Empfehlung probiert alle Kombinationen von Signalen.** Bisher prüfte sie „eines reicht (nach
+  Tür)“ nur mit allen angehakten Signalen – ein einziges unruhiges Signal (z. B. Bluetooth) machte
+  die Empfehlung zunichte. Jetzt sagt sie konkret, was sich ändern soll („Fürs Weggehen abwählen:
+  …“), und „Empfehlung übernehmen“ setzt auch diese Haken.
+- **Bleibt es bei „alle müssen weg sein“, steht der Grund da**, z. B. „‚Eines reicht (nach Tür)‘
+  mit WLAN wäre schneller gewesen (~52 s), aber 1× vermutlich fälschlich“.
+- **Vorläufige Zahlen auch mit weniger als 5 Weggängen** – im selben Kasten wie bei den anderen,
+  nur ohne Empfehlung und ohne „Übernehmen“. Bisher stand dort nur eine kleine graue Zeile.
+- **„Was heißt das fürs Haus?“ nennt Profile mit eigenem Auslöser** („hier entscheidet die
+  Entität, keine Nachrechnung“) statt sie wegzulassen.
+
 ## [0.66.0b5] - 2026-11-27
 
 **Anwesenheit je Person**, Teil 2: Messwerte und „Was wäre wenn“

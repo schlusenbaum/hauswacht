@@ -109,9 +109,27 @@ def test_mistake_after_someone_elses_door_stops_recommendation() -> None:
     world.door(13 * DAY + 12 * 3600)  # Ben geht raus
     world.flip(ANNA, WLAN, 13 * DAY + 12 * 3600 + 60, 13 * DAY + 13 * 3600)  # Annas WLAN hakt
     anna = world.run({})["persons"][ANNA]
-    assert anna["advice"]["mode"] == MODE_ALL
+    # WLAN hat sich nach einer Tür geirrt -> eines reicht, aber ohne WLAN fürs Weggehen
+    assert anna["advice"]["mode"] == MODE_ONE
+    assert anna["advice"]["leave_off"] == [WLAN]
+    assert anna["advice"]["mistakes"] == 0
+    assert anna["advice"]["median"] == 180
     current = world.run({ANNA: PersonRules(mode=MODE_ONE)})["persons"][ANNA]["current"]
     assert current["mistakes"] == 1
+
+
+def test_all_signals_wrong_keeps_all_and_says_why() -> None:
+    world = World()
+    _five_trips(world)
+    for i, source in enumerate((WLAN, PING, ANNA)):
+        at = 13 * DAY + (10 + i) * 3600
+        world.door(at)
+        world.flip(ANNA, source, at + 30, at + 1800)  # jedes Signal irrt sich einmal nach Tür
+    anna = world.run({})["persons"][ANNA]
+    assert anna["advice"]["mode"] == MODE_ALL
+    assert anna["advice"]["leave_off"] == []  # nichts abwählen, was nicht hilft
+    assert anna["best_one"]["mistakes"] == 1
+    assert anna["best_one"]["median"] is not None
 
 
 def test_too_few_trips_no_recommendation() -> None:

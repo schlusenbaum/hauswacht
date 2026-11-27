@@ -269,10 +269,21 @@ So zählt Hauswacht:
 | **Irrtum** | Ein Signal sagt „weg“ und kommt zurück, **ohne** dass dabei eine Tür aufging – die Person war also gar nicht draußen |
 | **Vermutlich fälschlich „weg“** | So oft hätte die Regel jemanden als weg gezählt, obwohl es ein Irrtum war. Bei „nach Tür“ zählen nur Irrtümer kurz nach einer Tür |
 
-- Eine Empfehlung gibt es erst ab **5 Weggängen** in den 14 Tagen. Davor steht z. B. „Noch zu
-  wenig Daten (3 von 5 Weggängen)“.
+- Eine Empfehlung gibt es erst ab **5 Weggängen** in den 14 Tagen. Davor zeigt der Kasten
+  trotzdem die **vorläufigen Zahlen**, z. B. „Vorläufig für Ben – noch keine Empfehlung (4 von 5
+  Weggängen in 14 Tagen)“, aber ohne Knopf „Übernehmen“ (*ab 0.66.0b6*).
+- Die Empfehlung **probiert alle Kombinationen** der Signale fürs Weggehen durch (*ab 0.66.0b6*)
+  und sagt konkret, was sich ändern soll, z. B. „Fürs Weggehen abwählen: Bluetooth“.
+  „Empfehlung übernehmen“ setzt dann auch diese Haken.
 - „Eines reicht (nach Tür)“ wird nur empfohlen, wenn es in den 14 Tagen **nie** fälschlich gewesen
-  wäre und mindestens 4 von 5 Weggängen erkannt hätte.
+  wäre und mindestens 4 von 5 Weggängen erkannt hätte. Von allen Kombinationen, die das schaffen,
+  gewinnt die, die am meisten erkennt und am schnellsten ist.
+- Bleibt es bei „alle müssen weg sein“, steht der **Grund** darunter, z. B. „‚Eines reicht (nach
+  Tür)‘ mit WLAN wäre schneller gewesen (~52 s), aber 1× vermutlich fälschlich“. Bei „alle
+  müssen“ schlägt Hauswacht nur vor, Signale abzuwählen, die Weggänge **verhindern** (weil sie
+  beim Weggehen nie „weg“ sagen).
+- Hat ein Profil einen [eigenen Auslöser](#eigener-auslöser-für-alle-weg), steht bei „Was heißt das
+  fürs Haus?“: „eigener Auslöser – hier entscheidet die Entität, keine Nachrechnung“.
 - Bei **„alle müssen weg sein“** braucht es im Echtbetrieb zusätzlich den Beleg (Ortung). Den kann
   die Nachrechnung nicht nachspielen. Sie zeigt nur, wann alle Weggehen-Signale weg waren, und
   schreibt bei den Irrtümern „durch Beleg geschützt“.

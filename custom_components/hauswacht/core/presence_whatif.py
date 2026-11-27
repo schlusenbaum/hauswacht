@@ -24,6 +24,7 @@ from __future__ import annotations
 import statistics
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from itertools import combinations
 from typing import Any
 
 from .departure import DEPARTURE_EARLY, DEPARTURE_WINDOW, DepartureVerdict
@@ -32,6 +33,9 @@ from .presence_rules import MODE_ALL, MODE_ONE, PersonRules
 
 EVAL_DAYS = 14  # so weit zurück wird nachgerechnet
 MIN_TRIPS = 5  # so viele Weggänge braucht eine Empfehlung
+MAX_MISTAKES = 0  # so oft darf „eines reicht“ in den 14 Tagen fälschlich gewesen sein
+MIN_DETECTED = 0.8  # so viele Weggänge muss eine Empfehlung erkennen (Anteil)
+MAX_SEARCH = 8  # bis zu so vielen Signalen werden alle Kombinationen probiert
 SAME_EVENT = 60  # s: Irrtümer mehrerer Signale so nah beieinander zählen einmal
 SHORT_TRIP = 10 * 60  # s: so kurz weg = „nur kurz raus“ (Müll, Briefkasten)
 NIGHT = range(0, 6)  # Stunden, die als „nachts“ gelten
@@ -194,17 +198,81 @@ def signal_summary(signal: str, hist: History) -> dict[str, Any]:
     }
 
 
+def _subsets(signals: Sequence[str]) -> list[tuple[str, ...]]:
+    """Alle nicht leeren Kombinationen (bei sehr vielen Signalen nur alle und je eines weniger)."""
+    if len(signals) > MAX_SEARCH:
+        return [tuple(signals), *(tuple(x for x in signals if x != s) for s in signals)]
+    return [c for n in range(len(signals), 0, -1) for c in combinations(signals, n)]
+
+
+def _with_leave(
+    rules: PersonRules, signals: Sequence[str], leave: Iterable[str], mode: str
+) -> PersonRules:
+    off = frozenset(s for s in signals if s not in set(leave))
+    return PersonRules(rules.arrive_off, off, mode, door=True)
+
+
+@dataclass(frozen=True)
+class Advice:
+    rules: PersonRules  # empfohlene Regel (Haken fürs Weggehen und „Weggehen erkennen“)
+    outcome: Outcome
+    best_one: tuple[PersonRules, Outcome] | None  # schnellste „eines reicht“, auch wenn verworfen
+
+
+def _rank(outcome: Outcome) -> tuple[int, float]:
+    return (-outcome.detected, outcome.median if outcome.median is not None else 1e12)
+
+
+def advise(rules: PersonRules, signals: Sequence[str], hist: History) -> Advice:
+    """Empfehlung: Welche Signale fürs Weggehen, und reicht eines (nach Tür)?
+
+    Probiert alle Kombinationen von Weggehen-Signalen durch. „Eines reicht (nach Tür)“ wird
+    empfohlen, wenn es höchstens ``MAX_MISTAKES``-mal fälschlich gewesen wäre und mindestens
+    80 % der Weggänge erkannt hätte – die Kombination, die am meisten erkennt und am schnellsten
+    ist. Sonst „alle müssen weg sein“ mit den Signalen, die die meisten Weggänge erkennen.
+    Haken fürs Ankommen bleiben, wie sie sind.
+    """
+    need = max(1, round(len(hist.trips) * MIN_DETECTED))
+    best_one: tuple[PersonRules, Outcome] | None = None
+    good_one: tuple[PersonRules, Outcome] | None = None
+    best_all: tuple[PersonRules, Outcome, int] | None = None
+    for subset in _subsets(signals):
+        one = _with_leave(rules, signals, subset, MODE_ONE)
+        out, _a = simulate(one, signals, hist)
+        if best_one is None or (out.mistakes or 0, *_rank(out)) < (
+            best_one[1].mistakes or 0,
+            *_rank(best_one[1]),
+        ):
+            best_one = (one, out)
+        ok = (out.mistakes or 0) <= MAX_MISTAKES and out.detected >= need
+        if ok and (good_one is None or _rank(out) < _rank(good_one[1])):
+            good_one = (one, out)
+        # „alle müssen“: nur Signale abwählen, die Weggänge verhindern (nie „weg“ sagen) –
+        # bei gleich vielen erkannten Weggängen bleiben möglichst viele Signale (Beleg ist Pflicht)
+        every = _with_leave(rules, signals, subset, MODE_ALL)
+        out_all, _b = simulate(every, signals, hist)
+        if best_all is None or (-out_all.detected, -len(subset)) < (
+            -best_all[1].detected,
+            -best_all[2],
+        ):
+            best_all = (every, out_all, len(subset))
+    if good_one is not None and hist.trips:
+        return Advice(good_one[0], good_one[1], best_one)
+    if best_all is None or not hist.trips:
+        keep = PersonRules(rules.arrive_off, rules.leave_off, MODE_ALL, True)
+        out, _c = simulate(keep, signals, hist)
+        return Advice(keep, out, best_one)
+    # Bei „alle müssen“ nur abwählen, wenn dadurch mehr Weggänge erkannt werden
+    keep = PersonRules(rules.arrive_off, rules.leave_off, MODE_ALL, True)
+    out_keep, _d = simulate(keep, signals, hist)
+    if out_keep.detected >= best_all[1].detected:
+        return Advice(keep, out_keep, best_one)
+    return Advice(best_all[0], best_all[1], best_one)
+
+
 def recommend(rules: PersonRules, signals: Sequence[str], hist: History) -> PersonRules:
-    """Empfehlung: „eines reicht (nach Tür)“, wenn das nichts fälschlich gemacht hätte und fast
-    jeden Weggang erkennt – sonst „alle müssen weg sein“. Haken bleiben, wie sie sind."""
-    one = PersonRules(rules.arrive_off, rules.leave_off, MODE_ONE, door=True)
-    outcome, _away = simulate(one, signals, hist)
-    good = (
-        outcome.trips >= MIN_TRIPS
-        and outcome.mistakes == 0
-        and outcome.detected >= max(1, round(outcome.trips * 0.8))
-    )
-    return one if good else PersonRules(rules.arrive_off, rules.leave_off, MODE_ALL, True)
+    """Nur die empfohlene Regel (siehe :func:`advise`)."""
+    return advise(rules, signals, hist).rules
 
 
 def person_whatif(
@@ -213,18 +281,28 @@ def person_whatif(
     """Alles für eine Person: Messwerte je Signal, jetzt / Empfehlung / ohne Tür."""
     own = [person, *signals]
     current, _a = simulate(rules, own, hist)
-    best = recommend(rules, own, hist)
-    advised, _b = simulate(best, own, hist)
+    advice = advise(rules, own, hist)
     no_door = PersonRules(rules.arrive_off, rules.leave_off, MODE_ONE, door=False)
     without, _c = simulate(no_door, own, hist)
+    best_one = None
+    if advice.best_one is not None and advice.rules.mode != MODE_ONE:
+        one_rules, one_out = advice.best_one
+        best_one = {"leave": [s for s in own if one_rules.leaves(s)], **one_out.as_dict()}
     return {
         "person": person,
         "enough": len(hist.trips) >= MIN_TRIPS,
         "trips": len(hist.trips),
         "min_trips": MIN_TRIPS,
+        "max_mistakes": MAX_MISTAKES,
         "signals": [signal_summary(s, hist) for s in own],
         "current": current.as_dict(),
-        "advice": {"mode": best.mode, "door": best.door, **advised.as_dict()},
+        "advice": {
+            "mode": advice.rules.mode,
+            "door": advice.rules.door,
+            "leave_off": sorted(advice.rules.leave_off),
+            **advice.outcome.as_dict(),
+        },
+        "best_one": best_one,  # warum nicht „eines reicht“: so wäre es gewesen
         "no_door": without.as_dict(),
     }
 

@@ -52,10 +52,14 @@ def build_whatif(main: Any, options: Mapping[str, Any]) -> dict[str, Any]:
     }
     profiles: dict[str, tuple[list[str], int]] = {}
     names: dict[str, str] = {}
+    triggers: dict[str, str] = {}  # Profile mit eigenem Auslöser: keine Nachrechnung
     for pid in profile_ids(options):
         auto = parse_automation(options, pid)
-        if auto.away_entity or not auto.away_persons:
-            continue  # eigener Auslöser: Personen zählen nicht (ADR 0018)
+        if auto.away_entity:
+            triggers[pid] = profile_info(options, pid).name  # Personen zählen nicht (ADR 0018)
+            continue
+        if not auto.away_persons:
+            continue
         profiles[pid] = (list(auto.away_persons), auto.away_delay)
         names[pid] = profile_info(options, pid).name
     result = whatif(
@@ -73,6 +77,8 @@ def build_whatif(main: Any, options: Mapping[str, Any]) -> dict[str, Any]:
     )
     for pid, entry in result["profiles"].items():
         entry["name"] = names.get(pid, pid)
+    for pid, name in triggers.items():
+        result["profiles"][pid] = {"observed": False, "trigger": True, "name": name}
     return {"enabled": True, **result}
 
 

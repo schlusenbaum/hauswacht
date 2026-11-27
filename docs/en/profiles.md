@@ -263,10 +263,21 @@ How Hauswacht counts:
 | **Mistake** | A signal reports "away" and comes back **without** a door opening – so the person was not outside at all |
 | **Probably wrongly "away"** | How often the rule would have counted someone as away although it was a mistake. With "after a door" only mistakes shortly after a door count |
 
-- A recommendation needs at least **5 departures** in the 14 days. Before that it says e.g. "Not
-  enough data yet (3 of 5 departures)".
+- A recommendation needs at least **5 departures** in the 14 days. Before that the box still shows
+  the **preliminary numbers**, e.g. "Preliminary for Ben – no recommendation yet (4 of 5
+  departures in 14 days)", but without the "Apply" button (*from 0.66.0b6*).
+- The recommendation **tries all combinations** of leaving signals (*from 0.66.0b6*) and says
+  exactly what should change, e.g. "Untick for leaving: Bluetooth". "Apply recommendation" then
+  also sets these ticks.
 - "One is enough (after a door)" is only recommended if it would **never** have been wrong in the
-  14 days and would have detected at least 4 out of 5 departures.
+  14 days and would have detected at least 4 out of 5 departures. Of all combinations that
+  manage this, the one that detects the most and is fastest wins.
+- If it stays with "all must be away", the **reason** is shown below, e.g. "'One is enough (after
+  a door)' with Wi-Fi would have been faster (~52 s), but probably wrong 1×". With "all must be
+  away" Hauswacht only suggests unticking signals that **prevent** departures (because they never
+  report "away" when leaving).
+- If a profile has an [own trigger](#own-trigger-for-all-away), "What does this mean for the
+  house?" says: "own trigger – the entity decides here, no recalculation".
 - With **"all must be away"** real operation also needs proof (location). The recalculation cannot
   replay that. It only shows when all leaving signals were away and says "protected by proof" for
   mistakes.

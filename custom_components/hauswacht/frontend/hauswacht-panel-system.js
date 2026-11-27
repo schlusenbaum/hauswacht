@@ -43,6 +43,13 @@ const ST = {
     wiOff: "Messwerte und Empfehlung gibt es, sobald die Heimkehr-Beobachtung läuft (oben „Heimkehr beobachten“).",
     wiNotObserved: "{name} wird nicht beobachtet – keine Messwerte. Für Messwerte {name} oben bei „Personen für die Beobachtung“ eintragen.",
     wiFew: "Noch zu wenig Daten für eine Empfehlung ({n} von {m} Weggängen in den letzten {d} Tagen).",
+    wiPrelim: "Vorläufig für {name} – noch keine Empfehlung ({n} von {m} Weggängen in {d} Tagen)",
+    wiPrelimCol: "Vorläufiger Vorschlag",
+    wiUntick: "Fürs Weggehen abwählen: {list}.",
+    wiTick: "Fürs Weggehen wieder anhaken: {list}.",
+    wiWhyNot: "„Eines reicht (nach Tür)“ mit {list} wäre schneller gewesen ({t}), aber {n}× vermutlich fälschlich – erlaubt ist {max}×.",
+    wiWhyNotFew: "„Eines reicht (nach Tür)“ mit {list} hätte nur {d} von {n} Weggängen erkannt.",
+    wiHouseTrigger: "Profil {p}: eigener Auslöser für „alle weg“ – hier entscheidet die Entität, keine Nachrechnung.",
     wiTitle: "Empfehlung für {name}: {mode}",
     wiNow: "Jetzt",
     wiWith: "Mit Empfehlung",
@@ -287,6 +294,13 @@ const ST = {
     wiOff: "Measurements and recommendation are available as soon as the homecoming observation runs (“Observe homecoming” above).",
     wiNotObserved: "{name} is not observed – no measurements. For measurements, add {name} above under “Persons for the observation”.",
     wiFew: "Not enough data for a recommendation yet ({n} of {m} departures in the last {d} days).",
+    wiPrelim: "Preliminary for {name} – no recommendation yet ({n} of {m} departures in {d} days)",
+    wiPrelimCol: "Preliminary suggestion",
+    wiUntick: "Untick for leaving: {list}.",
+    wiTick: "Tick again for leaving: {list}.",
+    wiWhyNot: "“One is enough (after a door)” with {list} would have been faster ({t}), but probably wrong {n}× – {max}× is allowed.",
+    wiWhyNotFew: "“One is enough (after a door)” with {list} would only have detected {d} of {n} departures.",
+    wiHouseTrigger: "Profile {p}: own trigger for “all away” – the entity decides here, no recalculation.",
     wiTitle: "Recommendation for {name}: {mode}",
     wiNow: "Now",
     wiWith: "With recommendation",
@@ -686,9 +700,13 @@ class HauswachtSystemEditor extends HTMLElement {
     root.querySelectorAll('[data-act="wi-apply"]').forEach((btn) =>
       btn.addEventListener("click", () => {
         this._collect();
-        const rule = this._presRule(btn.dataset.person, d);
-        rule.mode = btn.dataset.mode;
+        const p = btn.dataset.person;
+        const adv = ((this._whatif || d.whatif || {}).persons || {})[p]?.advice;
+        if (!adv) return;
+        const rule = this._presRule(p, d);
+        rule.mode = adv.mode;
         rule.door = true;
+        rule.leave_off = [...(adv.leave_off || [])];
         this._render();
       })
     );
@@ -712,28 +730,54 @@ class HauswachtSystemEditor extends HTMLElement {
   _wiPerson(p, name, wi, info) {
     if (!wi.enabled) return `<div class="muted">${se(this._t("wiOff"))}</div>`;
     if (!info) return `<div class="muted">${se(this._t("wiNotObserved").replaceAll("{name}", name))}</div>`;
-    if (!info.enough) return `<div class="muted">${se(this._t("wiFew").replace("{n}", info.trips).replace("{m}", info.min_trips).replace("{d}", wi.days))}</div>`;
+    const d = this._draft;
     const modes = this._t("presModes");
     const adv = info.advice;
-    const rule = this._presRule(p, this._draft);
-    const same = rule.mode === adv.mode && (adv.mode === "all" || rule.door);
+    const rule = this._presRule(p, d);
+    const sname = (id) => (id === p ? name : (d.signal_choices.find((c) => c.id === id) || { name: id }).name);
+    const advOff = adv.leave_off || [];
+    const sameSet = advOff.length === rule.leave_off.length && advOff.every((x) => rule.leave_off.includes(x));
+    const same = rule.mode === adv.mode && (adv.mode === "all" || rule.door) && sameSet;
     const cell = (o, key) => {
       if (key === "median") return o.detected ? this._dur(o.median) : this._t("wiMissed");
       return o.mistakes === null ? this._t("wiProtected") : this._t("wiTimes").replace("{n}", o.mistakes);
     };
     const missed = (o) => (o.detected < o.trips ? ` (${o.trips - o.detected}× ${this._t("wiMissed").toLowerCase()})` : "");
     const night = info.no_door.night ? this._t("wiNight").replace("{n}", info.no_door.night) : "";
-    return `<div class="wibox"><b>${se(this._t("wiTitle").replace("{name}", name).replace("{mode}", modes[adv.mode]))}</b>
-      <table class="wt"><thead><tr><th></th><th>${se(this._t("wiNow"))}</th><th>${se(this._t("wiWith"))}</th></tr></thead><tbody>
+    const title = info.enough
+      ? this._t("wiTitle").replace("{name}", name).replace("{mode}", modes[adv.mode])
+      : this._t("wiPrelim").replace("{name}", name).replace("{n}", info.trips).replace("{m}", info.min_trips).replace("{d}", wi.days);
+    const untick = advOff.filter((x) => !rule.leave_off.includes(x)).map(sname);
+    const tick = rule.leave_off.filter((x) => !advOff.includes(x)).map(sname);
+    const changes = [
+      untick.length ? this._t("wiUntick").replace("{list}", untick.join(", ")) : "",
+      tick.length ? this._t("wiTick").replace("{list}", tick.join(", ")) : "",
+    ].filter(Boolean).join(" ");
+    let why = "";
+    const one = info.best_one;
+    if (adv.mode === "all" && one && one.trips) {
+      const list = one.leave.map(sname).join(", ");
+      const need = Math.max(1, Math.round(one.trips * 0.8));
+      why = (one.mistakes || 0) > info.max_mistakes
+        ? this._t("wiWhyNot").replace("{list}", list).replace("{t}", this._dur(one.median)).replace("{n}", one.mistakes).replace("{max}", info.max_mistakes)
+        : one.detected < need
+          ? this._t("wiWhyNotFew").replace("{list}", list).replace("{d}", one.detected).replace("{n}", one.trips)
+          : "";
+    }
+    return `<div class="wibox"><b>${se(title)}</b>
+      ${changes ? `<div>${se(changes)}</div>` : ""}
+      <table class="wt"><thead><tr><th></th><th>${se(this._t("wiNow"))}</th><th>${se(info.enough ? this._t("wiWith") : this._t("wiPrelimCol"))}</th></tr></thead><tbody>
       <tr><td>${se(this._t("wiDetected"))}</td><td>${se(cell(info.current, "median") + missed(info.current))}</td><td>${se(cell(adv, "median") + missed(adv))}</td></tr>
       <tr><td>${se(this._t("wiMistakes"))}</td><td>${se(cell(info.current, "m"))}</td><td>${se(cell(adv, "m"))}</td></tr></tbody></table>
+      ${why ? `<div class="muted">${se(why)}</div>` : ""}
       <div class="muted">${se(this._t("wiBasis").replace("{n}", info.trips).replace("{d}", wi.days))}</div>
       <div class="muted">${se(this._t("wiNoDoor").replace("{n}", info.no_door.mistakes).replace("{night}", night))}</div>
       ${rule.mode === "all" || adv.mode === "all" ? `<div class="muted">${se(this._t("wiAllNote"))}</div>` : ""}
-      ${same ? `<div class="muted">${se(this._t("wiSame"))}</div>` : `<button type="button" class="b" data-act="wi-apply" data-person="${se(p)}" data-mode="${se(adv.mode)}">${se(this._t("wiApply"))}</button>`}</div>`;
+      ${!info.enough ? "" : same ? `<div class="muted">${se(this._t("wiSame"))}</div>` : `<button type="button" class="b" data-act="wi-apply" data-person="${se(p)}">${se(this._t("wiApply"))}</button>`}</div>`;
   }
 
   _wiHouse(r, wi) {
+    if (r.trigger) return `<div class="muted">${se(this._t("wiHouseTrigger").replace("{p}", r.name || ""))}</div>`;
     if (!r.observed) return `<div class="muted">${se(this._t("wiHouseNot").replace("{p}", r.name || ""))}</div>`;
     const line = (label, res, wait) =>
       this._t("wiHouse")
