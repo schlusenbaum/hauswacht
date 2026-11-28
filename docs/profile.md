@@ -163,7 +163,7 @@ eine HomeKit-Variable „Martin zuhause“.
 | Die Person gilt als … | wenn … |
 |---|---|
 | **zuhause** | irgendein Signal zuhause meldet (die Person selbst oder eines der Signale) |
-| **weg** | **alle** Signale sicher „weg“ melden **und** es einen Beleg gibt (ab 0.61, siehe [unten](#weg-nur-mit-beleg)) |
+| **weg** | **alle** Signale sicher „weg“ melden **und** es einen Beleg gibt (ab 0.61, siehe [unten](#weg-nur-mit-beleg)) – oder ab 0.66 je Person „eines reicht (nach Tür)“, siehe [Ankommen und Weggehen je Signal](#ankommen-und-weggehen-je-signal) |
 | unbekannt | sonst, z. B. ein Signal ist „nicht verfügbar“ oder es fehlt der Beleg – das zählt **nie** als weg |
 
 **Richtung (Nähe, Places)** zählt nur mit zwei Werten: **„angekommen“** = zuhause und
@@ -178,6 +178,176 @@ weg ist, beginnt die Wartezeit.
 
 So schaltet ein kurz aussetzendes Signal nicht gleich scharf, und das schnellste Signal
 erkennt die Rückkehr.
+
+#### Ankommen und Weggehen je Signal
+
+*Ab 0.66.0b1* ([ADR 0021](entwicklung/adr/0021-anwesenheit-je-person.md)). Nicht jedes Signal
+taugt für beide Richtungen. Bluetooth erkennt das Heimkommen schnell, sieht beim Weggehen aber oft
+noch durch die Haustür. Die Ortung der App merkt das Weggehen zuverlässig, aber erst nach
+Minuten. Deshalb steht im Kasten jeder Person eine Tabelle:
+
+| Spalte | Bedeutung |
+|---|---|
+| **Signal** | die Person selbst und jedes ihrer Signale |
+| **Ankommen** | Haken an: Das Signal zählt, um zu erkennen, dass die Person heimkommt |
+| **Weggehen** | Haken an: Das Signal zählt, um zu erkennen, dass die Person weg ist |
+| **Jetzt** | was das Signal gerade sagt: zuhause, weg, unbekannt oder nur Richtung |
+
+Darunter wählst du, wie **Weggehen** erkannt wird:
+
+- **alle müssen weg sein (sicher)** – wie bisher: Alle Weggehen-Signale sagen „weg“, dazu braucht
+  es einen [Beleg](#weg-nur-mit-beleg). Sicher, aber es zählt immer das langsamste Signal.
+- **eines reicht (nach Tür)** – schnell: Eine Eingangstür war auf, und danach sagt **eines** der
+  Weggehen-Signale „weg“. Das reicht, ein Beleg ist nicht nötig. Das Zeitfenster nach der Tür
+  ist dasselbe wie bei „Tür + Signal“ (unter „Mehr Einstellungen“, Standard 5 Minuten). Kommt
+  genau dieses Signal wieder auf „zuhause“, war es ein Irrtum: Die Person gilt wieder als
+  zuhause. Daneben gilt weiter auch „alle weg mit Beleg“ – „eines reicht“ ist also nie
+  langsamer.
+- **Nur nach einer Eingangstür** (bei „eines reicht“, Standard an): Schaltest du es aus, reicht
+  ein Signal, das „weg“ sagt, auch ohne Tür. Das ist unsicher: Schläft das Handy nachts ein, gilt
+  die Person als weg. Deshalb steht dann eine Warnung da.
+
+**Ankommen** ist immer „eines reicht“: Sobald ein Ankommen-Signal „zuhause“ sagt, ist die Person
+zuhause. Schnelles Erkennen beim Heimkommen macht nie einen Fehlalarm.
+
+**Weggehen hat Vorrang.** Ein Signal, das nur fürs Ankommen zählt und einfach weiter „zuhause“
+sagt (Bluetooth durch die Tür), hält die Person beim Weggehen nicht zuhause. Es zählt erst
+wieder, wenn es zwischendurch weg war und dann wieder „zuhause“ sagt.
+
+Über der Tabelle steht **„Wofür zählt das?“** (*ab 0.66.0b3*): in welchen Profilen die Person bei
+„Scharf, wenn alle weg“ oder „Bei Rückkehr“ steht und ob die Heimkehr-Beobachtung sie misst. Steht
+sie in einem Profil mit [eigenem Auslöser](#eigener-auslöser-für-alle-weg), steht dort, dass sie
+in diesem Profil nicht zählt. Zählt sie nirgends, warnt die Seite: Dann ändern die Einstellungen
+in der Tabelle nichts.
+
+Unter der Tabelle steht in einem Satz, **was passiert** – er ändert sich sofort, wenn du einen
+Haken setzt. Fehlt ein Haken in einer ganzen Spalte, warnt die Seite: Ohne Ankommen-Signal wird
+die Person nie als zuhause erkannt, ohne Weggehen-Signal nie als weg.
+
+**Beispiel:** Anna hat WLAN, Ping, Bluetooth und die Ortung der App.
+
+| Signal | Ankommen | Weggehen |
+|---|---|---|
+| Anna (Person) | ☑ | ☑ |
+| WLAN | ☑ | ☑ |
+| Ping | ☑ | ☑ |
+| Bluetooth | ☑ | ☐ |
+
+Weggehen: **eines reicht (nach Tür)**. Anna geht morgens aus der Haustür, 40 Sekunden später ist
+ihr WLAN weg → Anna ist **weg**, obwohl Ping und Bluetooth noch „zuhause“ sagen. Ohne neue Tür
+passiert nachts nichts, wenn ihr WLAN einschläft.
+
+Ben hat nur Ping, und das irrt sich öfter. Für ihn bleibt **alle müssen weg sein** die richtige
+Wahl.
+
+#### Gemessen, Empfehlung und „Was wäre wenn“
+
+*Ab 0.66.0b5.* Läuft die [Heimkehr-Beobachtung](beobachtung.md#heimkehr-beobachtung) und wird
+die Person beobachtet, rechnet Hauswacht die Einstellungen auf den **letzten 14 Tagen** nach. Es
+wird dabei nichts geschaltet und nichts gespeichert.
+
+- **Unter jedem Signal** steht klein, was gemessen wurde, z. B. „weg nach ~40 s · 1 Irrtum“. Sagt
+  ein Signal beim Weggehen meist gar nicht „weg“ (Bluetooth, das durch die Tür sieht), steht dort
+  „sagt beim Weggehen meist nicht ‚weg‘ – fürs Weggehen besser abwählen“.
+- **Empfehlung je Person** mit Vergleich „Jetzt“ gegen „Mit Empfehlung“: nach wie vielen Sekunden
+  oder Minuten sie als weg erkannt worden wäre und wie oft vermutlich fälschlich. Darunter, was
+  ohne „nach Tür“ passiert wäre, mit der Zahl der Fälle nachts. Ein Knopf **„Empfehlung
+  übernehmen“** stellt „Weggehen erkennen“ um. Gespeichert wird erst mit „Speichern“.
+- **„Was heißt das fürs Haus?“** – je Profil mit „Scharf, wenn alle weg“: wie oft es in den
+  14 Tagen scharf geworden wäre und wie lange nach der Tür des Letzten. Einmal so wie jetzt,
+  einmal mit den Empfehlungen und – wenn die Wartezeit länger ist – mit 3 Minuten Wartezeit.
+  Dort steht auch, wie oft jemand nach weniger als 10 Minuten wieder da war. Die Wartezeit selbst
+  stellst du im Profil ein.
+
+Alles ändert sich **sofort**, wenn du einen Haken setzt oder „Weggehen erkennen“ umstellst.
+
+So zählt Hauswacht:
+
+| Begriff | Bedeutung |
+|---|---|
+| **Weggang** | Eine Eingangstür war auf, danach waren alle Signale der Person weg, und bei der Rückkehr ging wieder eine Tür auf (oder die Person ist noch weg) |
+| **Irrtum** | Ein Signal sagt „weg“ und kommt zurück, **ohne** dass dabei eine Tür aufging – die Person war also gar nicht draußen |
+| **Vermutlich fälschlich „weg“** | So oft hätte die Regel jemanden als weg gezählt, obwohl es ein Irrtum war – und zwar **länger als die Wartezeit** (siehe unten). Bei „nach Tür“ zählen nur Irrtümer kurz nach einer Tür |
+
+- **Nur Irrtümer, die länger als die Wartezeit dauern, zählen als fälschlich** (*ab 0.66.0b7*).
+  Kommt das Signal vorher zurück, gilt die Person wieder als zuhause, und Hauswacht bricht das
+  Scharfschalten ab – ein kurzer WLAN-Schluckauf schadet also nicht. Als Wartezeit gilt die
+  kürzeste der Profile, in denen die Person bei „Scharf, wenn alle weg“ steht; nutzt kein Profil
+  „alle weg“ mit Personen, die voreingestellten **15 Minuten**. Ändern lässt sie sich im Profil
+  unter Automatik. **Kürzere Wartezeit heißt strengere Empfehlung**, weil dann auch kürzere
+  Irrtümer zählen. Unter jedem Signal steht, wie lang der längste Irrtum war, z. B. „2 Irrtümer
+  (längster ~40 s)“, und wie viele davon länger als die Wartezeit waren.
+- Eine Empfehlung gibt es erst ab **5 Weggängen** in den 14 Tagen. Davor zeigt der Kasten
+  trotzdem die **vorläufigen Zahlen**, z. B. „Vorläufig für Ben – noch keine Empfehlung (4 von 5
+  Weggängen in 14 Tagen)“, aber ohne Knopf „Übernehmen“ (*ab 0.66.0b6*).
+- Die Empfehlung **probiert alle Kombinationen** der Signale fürs Weggehen durch (*ab 0.66.0b6*)
+  und sagt konkret, was sich ändern soll, z. B. „Fürs Weggehen abwählen: Bluetooth“.
+  „Empfehlung übernehmen“ setzt dann auch diese Haken.
+- „Eines reicht (nach Tür)“ wird nur empfohlen, wenn es in den 14 Tagen **nie** fälschlich gewesen
+  wäre und mindestens 4 von 5 Weggängen erkannt hätte. Von allen Kombinationen, die das schaffen,
+  gewinnt die, die am meisten erkennt und am schnellsten ist.
+- Bleibt es bei „alle müssen weg sein“, steht der **Grund** darunter, z. B. „‚Eines reicht (nach
+  Tür)‘ mit WLAN wäre schneller gewesen (~52 s), aber 1× vermutlich fälschlich“. Bei „alle
+  müssen“ schlägt Hauswacht nur vor, Signale abzuwählen, die Weggänge **verhindern** (weil sie
+  beim Weggehen nie „weg“ sagen).
+- Hat ein Profil einen [eigenen Auslöser](#eigener-auslöser-für-alle-weg), steht bei „Was heißt das
+  fürs Haus?“: „eigener Auslöser – hier entscheidet die Entität, keine Nachrechnung“. Schaltet
+  kein Profil bei „alle weg“, steht dort genau das.
+- Bei **„alle müssen weg sein“** braucht es im Echtbetrieb zusätzlich den Beleg (Ortung). Den kann
+  die Nachrechnung nicht nachspielen. Sie zeigt nur, wann alle Weggehen-Signale weg waren, und
+  schreibt bei den Irrtümern „durch Beleg geschützt“.
+- **Alles ist geschätzt.** Hauswacht weiß nicht sicher, wer wirklich draußen war, sondern schließt
+  es aus Türen und Rückkehr.
+- Gerechnet wird mit den Daten, die die Heimkehr-Beobachtung ohnehin speichert: nur Uhrzeiten,
+  keine Orte. Wie lange sie aufbewahrt werden, steht unter
+  [Beobachtungen](beobachtung.md#heimkehr-beobachtung).
+
+**Beispiel:** Bei Anna steht nach zwei Wochen:
+
+> Empfehlung für Anna: eines reicht (nach Tür)
+>
+> | | Jetzt | Mit Empfehlung |
+> |---|---|---|
+> | Als weg erkannt nach | ~9 min | ~45 s |
+> | Vermutlich fälschlich „weg“ | durch Beleg geschützt | 0× |
+>
+> Grundlage: 6 Weggänge, 14 Tage. Ohne „nach Tür“: vermutlich fälschlich 4×, davon 3× nachts.
+
+Und darunter: „Profil Abwesend (Wartezeit 15 min) – so wie jetzt: 5× scharf geworden, typisch
+24,5 min nach der Tür des Letzten. Mit den Empfehlungen und 3 min Wartezeit: 6× scharf geworden,
+typisch 3,9 min nach der Tür des Letzten, davon 1× nur kurz.“
+
+**Wer nichts ändert, merkt keinen Unterschied:** Alle Haken sind gesetzt, Weggehen steht auf
+„alle müssen weg sein“ – genau wie vor 0.66. Der [eigene Auslöser](#eigener-auslöser-für-alle-weg)
+im Profil gilt weiter statt der Personen. Und das Haus ist weiterhin erst leer, wenn **alle**
+Personen weg sind – „eines reicht“ gilt nur innerhalb einer Person.
+
+#### Eigener Auslöser je Person
+
+*Ab 0.66.0b11.* Wer für eine Person schon eine eigene Logik hat – einen Schalter
+`input_boolean.ben_weg`, eine HomeKit-Variable, eine Personengruppe, einen eigenen Tracker –, kann
+sie unter System → Anwesenheit im Kasten der Person bei **„Eigener Auslöser (statt der
+Signale)“** wählen, dazu den Zustand, der **„weg“** heißt (aus, an oder `not_home`).
+
+Dann gilt für diese Person **nur noch der Auslöser**:
+
+| | mit eigenem Auslöser |
+|---|---|
+| Zuhause oder weg | zeigt die Entität den gewählten Zustand: **weg**, sonst **zuhause**; unbekannt oder nicht verfügbar zählt **nie als weg** |
+| Signale, Haken, „Weggehen erkennen“ | werden **nicht beachtet** (die Tabelle ist ausgeblendet) |
+| „Weg nur mit Beleg“ | gilt **nicht** – die Entität braucht keinen Beleg |
+| „Scharf, wenn alle weg“ | die Person zählt über den Auslöser |
+| „Bei Rückkehr“ | Heimkommen = der Auslöser wechselt auf zuhause. Bei **„Unscharf mit Türbeleg“** braucht es weiterhin die **Tür** – der Auslöser allein schaltet nie unscharf |
+| Ausgangserkennung | rausgegangen = der Auslöser wechselt nach dem Öffnen auf „weg“ |
+| „Was wäre wenn“ | keine Nachrechnung für diese Person – die Entität entscheidet |
+
+> ⚠️ **Hauswacht prüft für diese Person nicht mehr selbst.** Irrt sich die Entität, während die
+> Person zuhause ist, kann „Scharf, wenn alle weg“ scharf schalten. Darauf weisen der Kasten der
+> Person und der Check-up hin.
+
+*Beispiel:* Ben hat kein Smartphone mit Companion App, aber eine Automation, die
+`input_boolean.ben_weg` einschaltet, wenn sein Auto die Einfahrt verlässt. Eigener Auslöser:
+`input_boolean.ben_weg`, „weg“ = an. Ist der Schalter an, ist Ben für Hauswacht weg – überall.
 
 #### „weg“ nur mit Beleg
 
@@ -298,6 +468,34 @@ Regeln bleiben (nur aus „unscharf“, offene Melder nie automatisch bestätigt
 > Irrt sich die Entität, während jemand zuhause ist, gibt es einen Fehlalarm. Der
 > [Assistent](assistent.md#was-geprüft-wird) zeigt dazu eine Warnung, und die Szenario-Vorschau
 > spielt „alle gehen weg“ für so ein Profil nicht durch. „Bei Rückkehr“ bleibt bei den Personen.
+
+**Was beim eigenen Auslöser noch zählt – und was nicht** (*ab 0.66.0b3*):
+
+| Einstellung | Zählt für dieses Profil? |
+|---|---|
+| Die Entität und ihr Zustand „alle weg“ | **ja** – nur sie entscheidet, ob alle weg sind |
+| Die Wartezeit („nach … Minuten“) | **ja** |
+| Die angehakten Personen bei „Scharf, wenn alle weg“ | **nein** – sie werden nicht beachtet |
+| Signale, Haken und „Weggehen erkennen“ dieser Personen unter System → Anwesenheit | **nein**, nicht für „alle weg“ in diesem Profil |
+| „Weg nur mit Beleg“ (Ortung, Zeitfenster, „Tür + Signal“) | **nein** – die Entität braucht keinen Beleg |
+| „Bei Rückkehr“ in diesem Profil | **ja** – das bleibt bei den Personen und ihren Signalen |
+| Andere Profile ohne eigenen Auslöser, Heimkehr-Beobachtung | **ja** – dort zählen Personen und Signale wie gewohnt |
+
+Damit man nichts einstellt, was gar nicht wirkt, zeigt Hauswacht das an drei Stellen:
+
+- **Im Profil** steht unter den Personen ein Hinweis, sobald ein eigener Auslöser gesetzt ist, und
+  der Satz „So verhält sich das:“ nennt die Entität statt der Personen.
+- **Unter System → Anwesenheit** steht bei jeder Person **„Wofür zählt das?“** – z. B.
+  „„Bei Rückkehr“ im Profil Abwesend · Heimkehr-Beobachtung“ – und darunter „Nicht im Profil
+  Nacht: Dort entscheidet ein eigener Auslöser …“. Zählt die Person nirgends, steht dort eine
+  Warnung.
+- **Im Check-up** des [Assistenten](assistent.md#was-geprüft-wird) stehen die Tipps „Personen
+  werden nicht beachtet“ (mit Vorschlag, sie abzuwählen) und „Einstellungen unter Anwesenheit
+  wirken nirgends“.
+
+*Beispiel:* Im Profil „Abwesend“ ist `input_boolean.alle_weg` als eigener Auslöser gesetzt, und
+Anna und Ben sind noch angehakt. Abwesend wird scharf, wenn der Schalter 15 Minuten „an“ ist –
+egal, was Annas WLAN sagt. Kommt Anna heim, greift „Bei Rückkehr“ trotzdem über ihre Signale.
 
 ### Bei Rückkehr
 
@@ -529,6 +727,12 @@ nichts.
 - **Gemeinsam für alle Bereiche:** PIN-Sperre, Testmodus und Sirenen. Der Testmodus lässt sich
   nur umschalten, wenn alle Bereiche unscharf sind; eine Sirene, die zwei Bereiche gleichzeitig
   nutzen, bleibt an, bis beide ihren Alarm beendet haben.
+- **Anwesenheit ist in allen Bereichen gleich** (*ab 0.66.0b4*): Signale je Person, Heim-WLANs,
+  [Ankommen und Weggehen je Signal](#ankommen-und-weggehen-je-signal), „Weg nur mit Beleg“ und
+  alle Eingangstüren gelten für jeden Bereich. Wer im Haus als weg gilt, gilt auch für „Scharf,
+  wenn alle weg“ in der Garage als weg. Bis 0.66.0b3 sah ein weiterer Bereich nur die
+  Personen-Entität, nicht die zusätzlichen Signale. Gemessen (Heimkehr-Beobachtung) wird nur im
+  ersten Bereich.
 - **Benachrichtigungen** tragen den Bereichsnamen im Titel, z. B. „Hauswacht: Alarm (Garage)“.
 - Ein Bereich lässt sich nur löschen, wenn ihm kein Alarmprofil mehr gehört. Gerät und
   Entitäten verschwinden dann mit.

@@ -6,6 +6,313 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-28
+
+Zusammenfassung von 0.66.0b1 bis 0.66.0b13 – **Anwesenheit je Person und Ausgangserkennung**
+([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md),
+[ADR 0014](docs/entwicklung/adr/0014-ausgangserkennung.md)).
+
+### Neu
+
+- **„Welche Signale zählen?“** unter System → Anwesenheit, je Person: für jedes Signal ein Haken
+  fürs **Ankommen** und fürs **Weggehen**, dazu, was es **jetzt** sagt. „Weggehen erkennen“: **alle
+  müssen weg sein (sicher)** oder **eines reicht (nach Tür)**; „nach Tür“ lässt sich mit Warnung
+  abschalten. „So verhält sich das:“ erklärt in Klartext, was passiert
+  ([Anleitung](docs/profile.md#ankommen-und-weggehen-je-signal)).
+- **Gemessen, Empfehlung und „Was wäre wenn“:** unter jedem Signal, wie schnell es beim Weggehen
+  „weg“ sagt und wie oft es sich geirrt hat. Ab 5 Weggängen eine Empfehlung (probiert alle
+  Kombinationen von Signalen) mit „Jetzt“ gegen „Mit Empfehlung“ und Knopf „Empfehlung
+  übernehmen“. Als Irrtum zählt nur, was länger dauert als die Wartezeit des Profils. „Was heißt
+  das fürs Haus?“ rechnet je Profil die letzten 14 Tage nach – alles live, ohne zu speichern
+  ([Anleitung](docs/profile.md#gemessen-empfehlung-und-was-wäre-wenn)).
+- **Eigener Auslöser je Person:** eine Entität und der Zustand, der „weg“ heißt. Ersetzt die
+  Signale der Person und gilt überall; mit Warnhinweis und im Check-up
+  ([Anleitung](docs/profile.md#eigener-auslöser-je-person)). Der eigene Auslöser für „alle weg“ im
+  Profil bleibt.
+- **„Wofür zählt das?“** je Person und neue Check-up-Tipps („Personen werden nicht beachtet“,
+  „Einstellungen unter Anwesenheit wirken nirgends“, Ausgangserkennung ohne Melder im Haus).
+- **Rausgehen ohne PIN erkennen (Ausgangserkennung)** je Profil, Standard aus:
+  - **Mit Melder im Haus** (empfohlen): Hat er kurz vor dem Öffnen etwas gemeldet, ist die Tür
+    für die Durchgangszeit frei – z. B. zum Mülleimer, ohne Handy. Sagt währenddessen das Handy
+    einer Person 30 s lang „weg“, endet der Durchgang sofort.
+  - **Ohne Melder im Haus:** stille Wartezeit (1–5 Minuten, Standard 3; bis 15 nur als
+    Expertenoption). Sagt ein Handy 30 s lang „weg“, bleibt das Profil scharf, sonst gibt es
+    Alarm. Schutz gegen WLAN-Ausfall.
+  - Sofort eine Nachricht an alle Alarm-Empfänger mit **[Alarm jetzt]** und **[Durchlassen]**
+  ([Anleitung](docs/durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung)).
+- **Testkarte:** Melder im Haus passend zum Profil (simulierbar), simulierte Anwesenheit gilt auch
+  für die Ausgangserkennung, Anzeige der laufenden Ausgangserkennung.
+- Neue Ereignisse `ExitWaitStarted`, `ExitDetected`, `ExitLetThrough`, `ExitPassage`; neues
+  Attribut `exit_detection`.
+
+### Geändert
+
+- **Anwesenheit gilt in allen Bereichen gleich** – weitere Bereiche (z. B. Garage) sehen jetzt
+  auch die zusätzlichen Signale, Heim-WLANs und Haken.
+- Wer „eines reicht (nach Tür)“ hat, gilt nicht mehr als „kann nie als weg erkannt werden“.
+- Bei „unklar“ steht der echte Zustand des Signals in Klammern.
+
+### Unverändert
+
+- Wer nichts einstellt, merkt keinen Unterschied: alle Haken gesetzt, „alle müssen weg sein“,
+  Ausgangserkennung aus. Durchgang, „Bei Rückkehr“, 24h-Melder und Brandalarm bleiben, wie sie
+  sind.
+
+### Korrigiert
+
+- Szenario-Vorschau und „Einrichten nach Zielen“ kennen „eines reicht (nach Tür)“.
+- Messung „Lebenszeichen rund um die Tür“: Rückkehr kurz danach zählt nicht mehr als Nachklang.
+- Kurze Irrtümer nach fremder Tür werden erkannt; die Tabelle „Welche Signale zählen?“ passt in
+  die Breite.
+- Vorbereitet auf Home Assistant 2027.12.
+
+### Doku
+
+- Roadmap: für 0.67 vorgemerkt – keine Koordinaten mehr speichern (Prüfwert statt Position),
+  einzelne Messwerte löschen, alle Links der Doku prüfen.
+
+## [0.66.0b13] - 2026-11-27
+
+### Geändert
+
+- **Automatischer Durchgang endet vorzeitig.** Sagt während des Durchgangs (Melder im Haus) ein
+  Signal fürs Weggehen einer Person, die beim Öffnen zuhause war, 30 Sekunden lang „weg“, ist der
+  Durchgang sofort vorbei und die Tür wieder scharf – nicht erst nach der Durchgangszeit. Alle
+  Alarm-Empfänger bekommen eine Nachricht. Danach braucht ein neuer automatischer Durchgang eine
+  neue Meldung des Melders im Haus.
+- **Testkarte zeigt die laufende Ausgangserkennung:** Durchgang oder stille Wartezeit, Restzeit,
+  beobachtete Personen und wessen Handy seit wie vielen Sekunden „weg“ sagt. Neues Attribut
+  `exit_detection` am Alarm-Panel.
+- **„unklar“ zeigt den echten Zustand:** In der Anwesenheit steht hinter dem unklaren Signal in
+  Klammern sein Zustand (z. B. `unknown`, `unavailable`) oder „gibt es nicht“.
+
+## [0.66.0b12] - 2026-11-27
+
+### Geändert
+
+- **Ausgangserkennung mit Melder im Haus = automatischer Durchgang.** Hat der Melder im Haus kurz
+  vor dem Öffnen etwas gemeldet, ist die Tür jetzt sofort für die Durchgangszeit des Profils frei
+  – raus und wieder rein, z. B. zum Mülleimer. Das Handy spielt dafür keine Rolle. Bisher lief
+  auch hier die stille Wartezeit, und wer nur kurz rausging (Handy bleibt im WLAN), bekam nach
+  3 Minuten Alarm. Ohne Melder im Haus bleibt es bei der stillen Wartezeit mit Handy-Prüfung.
+- **[Alarm jetzt]** löst auch während des automatischen Durchgangs aus.
+- Neues Ereignis `ExitPassage`.
+
+### Korrigiert
+
+- **Vorbereitet auf Home Assistant 2027.12:** Beim Anlegen des Hauswacht-Geräts wird keine
+  `DeviceInfo` mehr entpackt (Home Assistant hatte dazu gewarnt).
+
+## [0.66.0b11] - 2026-11-27
+
+### Neu
+
+- **Eigener Auslöser je Person** (System → Anwesenheit, im Kasten der Person): eine Entität
+  (Schalter, Binärsensor, Gruppe, Tracker) und der Zustand, der „weg“ heißt. Sie **ersetzt** die
+  Signale der Person und gilt **überall** – „Scharf, wenn alle weg“, „Bei Rückkehr“ und
+  Ausgangserkennung. Kein Beleg nötig, unbekannt zählt nie als weg; bei „Unscharf mit Türbeleg“
+  braucht es weiter die Tür. Deutlicher Warnhinweis im Kasten der Person und im Check-up.
+  Anleitung: [Eigener Auslöser je Person](docs/profile.md#eigener-auslöser-je-person).
+
+## [0.66.0b10] - 2026-11-27
+
+### Neu
+
+- **Testkarte zeigt die Melder im Haus** der Ausgangserkennung – passend zum gewählten bzw.
+  scharfen Profil; wechselt das Profil, wechselt die Liste mit. Im Testmodus lassen sie sich wie
+  jeder Melder auf „an“ simulieren, und das zählt für die Ausgangserkennung wie echt.
+- **Simulierte Anwesenheit** („Anwesenheit testen“) gilt auch für die Ausgangserkennung: Person
+  auf „weg“ stellen = rausgegangen. So lässt sich der ganze Ablauf ohne Sirene durchspielen.
+
+## [0.66.0b9] - 2026-11-27
+
+**Ausgangserkennung – Rausgehen ohne PIN erkennen**
+([ADR 0014](docs/entwicklung/adr/0014-ausgangserkennung.md)).
+
+### Neu
+
+- **„Rausgehen ohne PIN erkennen“** je Profil (Abschnitt Durchgang, Standard aus) – das
+  Sicherheitsnetz, wenn jemand bei scharfem Profil rausgeht und PIN und Durchgang vergisst. Geht
+  eine Eingangstür auf, während jemand nachweislich zuhause ist, läuft statt der
+  Eingangsverzögerung eine **stille Wartezeit** (1–5 Minuten, Standard 3). Sagt das Handy einer
+  Person in der Zeit 30 Sekunden lang „weg“ (Regeln aus „Welche Signale zählen?“), bleibt das
+  Profil scharf und die Tür wird bis zum Schließen überbrückt. Sonst gibt es danach Alarm.
+- **Sofort eine Nachricht an alle Alarm-Empfänger** mit **[Alarm jetzt]** und **[Durchlassen]**.
+- **Melder im Haus** (empfohlen, nicht Pflicht): Bewegungsmelder, Licht oder Schalter. Ist einer
+  eingetragen, gilt die stille Wartezeit nur, wenn er kurz vorher etwas gemeldet hat – ein
+  Einbruch von außen bekommt die normale Eingangsverzögerung. Ohne Melder im Haus steht ein
+  deutlicher Warnhinweis an der Einstellung, im Check-up und in der Szenario-Vorschau.
+- **Schutz gegen WLAN-Ausfall:** Sagen mehrere Personen fast gleichzeitig nur über WLAN „weg“,
+  zählt das nicht als rausgegangen.
+- Wartezeit über 5 Minuten (bis 15) nur als **Expertenoption** mit Warnhinweis.
+- Neue Ereignisse `ExitWaitStarted`, `ExitDetected`, `ExitLetThrough`.
+- Anleitung mit Beispiel:
+  [Rausgehen ohne PIN erkennen](docs/durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung).
+
+### Doku
+
+- **Fehlersuche:** Der Menüpunkt zum Mitlesen heißt in Home Assistant „Unveränderte Protokolle
+  anzeigen“ (englisch „Show raw logs“).
+- Assistent (Check-up, Szenarien), „So entscheidet Hauswacht“ und Referenz um die
+  Ausgangserkennung ergänzt.
+
+## [0.66.0b8] - 2026-11-27
+
+Durchsicht vor dem Abschluss von 0.66.
+
+### Korrigiert
+
+- **Szenario-Vorschau kennt „eines reicht (nach Tür)“.** „Alle gehen weg“ meldete für Personen
+  ohne Ortung „wird nie scharf“, obwohl sie mit „eines reicht“ erkannt werden. Jetzt spielt die
+  Vorschau die Regel durch: „Jemand geht kurz raus …“ gibt es auch für diese Personen, und mit
+  abgeschaltetem „nach Tür“ zeigt „Handys schlafen ein“ ❌.
+- **Einrichten nach Zielen:** Personen mit „eines reicht“ gelten im Schritt „Haushalt“ als „kann
+  als weg erkannt werden“.
+- **Messung „Lebenszeichen rund um die Tür“:** Der Nachklang nach dem Rausgehen zählt nur noch
+  bis „alle Signale weg“. Eine Rückkehr kurz danach wurde bisher als langer Nachklang gezählt.
+
+### Doku
+
+- Fehlersuche „Scharf, wenn alle weg schaltet nicht scharf“: Hinweis auf „Welche Signale zählen?“,
+  eigenen Auslöser und Wartezeit. Testmodus: neue Belege „Tür + eines der Signale“. Assistent:
+  Szenarien mit „eines reicht“. „So entscheidet Hauswacht“: Zeile „Welche Signale zählen?“.
+  README: Anwesenheit je Signal. ADR 0021: umgesetzt, mit Nachtrag.
+
+## [0.66.0b7] - 2026-11-27
+
+### Geändert
+
+- **Nur Irrtümer, die länger als die Wartezeit dauern, zählen als „fälschlich“.** Ein kurzer
+  WLAN-Schluckauf hätte nie scharf geschaltet – Hauswacht bricht ab, sobald die Person wieder als
+  zuhause gilt. Als Wartezeit gilt die des Profils mit „Scharf, wenn alle weg“ (die kürzeste, wenn
+  es mehrere sind), sonst 15 Minuten. Kürzere Wartezeit = strengere Empfehlung. Der Kasten
+  erklärt, welche Wartezeit gilt und woher sie kommt.
+- **Dauer der Irrtümer** unter jedem Signal, z. B. „2 Irrtümer (längster ~40 s)“, und wie viele
+  davon länger als die Wartezeit waren.
+- **„Was heißt das fürs Haus?“** sagt, wenn kein Profil bei „alle weg“ scharf schaltet, statt
+  leer zu bleiben.
+
+### Korrigiert
+
+- **Kurze Irrtümer wurden übersehen.** Die Tür, kurz bevor ein Signal wegfiel, zählte auch als
+  Tür bei dessen Rückkehr. Fiel das WLAN nach einer fremden Tür für ein paar Minuten weg, galt
+  das deshalb nicht als Irrtum, und „eines reicht“ sah sicherer aus, als es ist. Jetzt zählen
+  bei der Rückkehr nur Türen, die **danach** aufgingen.
+
+## [0.66.0b6] - 2026-11-27
+
+### Geändert
+
+- **Empfehlung probiert alle Kombinationen von Signalen.** Bisher prüfte sie „eines reicht (nach
+  Tür)“ nur mit allen angehakten Signalen – ein einziges unruhiges Signal (z. B. Bluetooth) machte
+  die Empfehlung zunichte. Jetzt sagt sie konkret, was sich ändern soll („Fürs Weggehen abwählen:
+  …“), und „Empfehlung übernehmen“ setzt auch diese Haken.
+- **Bleibt es bei „alle müssen weg sein“, steht der Grund da**, z. B. „‚Eines reicht (nach Tür)‘
+  mit WLAN wäre schneller gewesen (~52 s), aber 1× vermutlich fälschlich“.
+- **Vorläufige Zahlen auch mit weniger als 5 Weggängen** – im selben Kasten wie bei den anderen,
+  nur ohne Empfehlung und ohne „Übernehmen“. Bisher stand dort nur eine kleine graue Zeile.
+- **„Was heißt das fürs Haus?“ nennt Profile mit eigenem Auslöser** („hier entscheidet die
+  Entität, keine Nachrechnung“) statt sie wegzulassen.
+
+## [0.66.0b5] - 2026-11-27
+
+**Anwesenheit je Person**, Teil 2: Messwerte und „Was wäre wenn“
+([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md)).
+
+### Neu
+
+- **Gemessen** unter jedem Signal in „Welche Signale zählen?“: wie schnell es beim Weggehen „weg“
+  sagt und wie oft es sich geirrt hat (z. B. „weg nach ~40 s · 1 Irrtum“). Signale, die beim
+  Weggehen meist nicht „weg“ sagen, bekommen den Hinweis, sie fürs Weggehen abzuwählen.
+- **Empfehlung je Person** mit Vergleich „Jetzt“ gegen „Mit Empfehlung“: erkannt nach wie
+  vielen Sekunden oder Minuten, vermutlich fälschlich wie oft, und was ohne „nach Tür“ passiert
+  wäre (mit Fällen nachts). Knopf „Empfehlung übernehmen“. Eine Empfehlung gibt es erst ab
+  5 Weggängen.
+- **„Was heißt das fürs Haus?“**: je Profil mit „Scharf, wenn alle weg“, wie oft es in den letzten
+  14 Tagen scharf geworden wäre und wie lange nach der Tür des Letzten – so wie jetzt, mit den
+  Empfehlungen und mit 3 Minuten Wartezeit.
+- Alles rechnet **live** mit dem Entwurf nach, sobald du einen Haken setzt. Es wird nichts
+  gespeichert und nichts geschaltet. Grundlage sind die Messungen der Heimkehr-Beobachtung (nur
+  Uhrzeiten, keine Orte).
+- Anleitung mit Beispiel:
+  [Gemessen, Empfehlung und „Was wäre wenn“](docs/profile.md#gemessen-empfehlung-und-was-wäre-wenn).
+
+## [0.66.0b4] - 2026-11-27
+
+### Geändert
+
+- **Anwesenheit gilt in allen Bereichen gleich.** Weitere Bereiche (z. B. die Garage) haben für
+  „Scharf, wenn alle weg“ und „Bei Rückkehr“ bisher nur die Personen-Entität gesehen – nicht die
+  zusätzlichen Signale (WLAN, Ping, Bluetooth …), die Heim-WLANs und die Haken unter
+  „Welche Signale zählen?“. Jetzt entscheidet jeder Bereich genau wie das Haus, ob jemand
+  zuhause oder weg ist. Bei „alle müssen weg sein“ kann die Garage dadurch etwas später scharf
+  werden als bisher, weil jetzt alle Signale weg sein müssen. Gemessen wird weiter nur im
+  ersten Bereich ([Bereiche](docs/profile.md#bereiche)).
+
+## [0.66.0b3] - 2026-11-27
+
+Zeigen, was wirklich zählt – vor allem beim **eigenen Auslöser für „alle weg“**.
+
+### Neu
+
+- **„Wofür zählt das?“** unter System → Anwesenheit, bei jeder Person: in welchen Profilen sie bei
+  „Scharf, wenn alle weg“ oder „Bei Rückkehr“ steht und ob die Beobachtung sie misst. Bei einem
+  Profil mit eigenem Auslöser steht dort, dass sie in diesem Profil nicht zählt. Zählt sie
+  nirgends, warnt die Seite.
+- **Check-up:** zwei neue Tipps.
+  - „Personen werden nicht beachtet“: Ein eigener Auslöser ist gesetzt, aber bei „Scharf, wenn
+    alle weg“ sind noch Personen angehakt. Mit Vorschlag, sie abzuwählen.
+  - „Einstellungen unter Anwesenheit wirken nirgends“: Für eine Person sind Signale oder Regeln
+    eingestellt, aber sie steht in keinem Profil und wird nicht beobachtet.
+- **Profil:** Ist ein eigener Auslöser gesetzt, steht unter den Personen ein Hinweis, dass sie für
+  „alle weg“ nicht beachtet werden. „So verhält sich das:“ nennt die Entität statt der Personen.
+- **Doku:** Tabelle „Was beim eigenen Auslöser noch zählt – und was nicht“ unter
+  [Eigener Auslöser](docs/profile.md#eigener-auslöser-für-alle-weg).
+
+### Geändert
+
+- Wer bei Weggehen „eines reicht (nach Tür)“ hat, gilt nicht mehr als „kann nie als weg erkannt
+  werden“ – auch ohne Ortung. Der Fehler im Check-up und die Markierung „keine Ortung“ im Profil
+  entfallen dann.
+
+## [0.66.0b2] - 2026-11-27
+
+### Korrigiert
+
+- **„Welche Signale zählen?“ passt in die Breite.** Lange Signalnamen (z. B. Bermuda-Tracker)
+  haben die Tabelle nach rechts aus dem Seitenblatt geschoben, die Spalte „Jetzt“ war
+  abgeschnitten. Jetzt brechen lange Namen um, die Spalten mit den Haken haben eine feste Breite.
+
+## [0.66.0b1] - 2026-11-27
+
+**Anwesenheit je Person**, Teil 1 ([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md)).
+
+### Neu
+
+- **„Welche Signale zählen?“** unter System → Anwesenheit, im Kasten jeder Person: eine Tabelle
+  mit der Person und allen ihren Signalen. Je Signal ein Haken für **Ankommen** und einer für
+  **Weggehen**, dazu, was das Signal **jetzt** sagt. Beispiel: Bluetooth nur fürs Ankommen, weil
+  es beim Weggehen noch durch die Tür sieht.
+- **„Weggehen erkennen“** je Person:
+  - **alle müssen weg sein (sicher)** – wie bisher, mit Beleg;
+  - **eines reicht (nach Tür)** – eine Eingangstür war auf, danach sagt eines der
+    Weggehen-Signale „weg“. Das reicht, ohne Ortung. Kommt genau dieses Signal zurück, gilt die
+    Person wieder als zuhause.
+  - **Nur nach einer Eingangstür** lässt sich abschalten, dann mit Warnung.
+- **„So verhält sich das:“** unter der Tabelle sagt in Klartext, wann die Person als zuhause und
+  wann als weg gilt – und ändert sich sofort mit jedem Haken.
+- Anleitung mit Beispiel: [Ankommen und Weggehen je Signal](docs/profile.md#ankommen-und-weggehen-je-signal).
+
+### Unverändert
+
+- Wer nichts einstellt, merkt keinen Unterschied: Alle Haken sind gesetzt, Weggehen steht auf
+  „alle müssen weg sein“. Ein Test spielt alle Signalfolgen mit alter und neuer Regel durch.
+- Das Haus ist weiter erst leer, wenn **alle** Personen weg sind. Der eigene Auslöser im Profil,
+  Durchgang, Ausgangserkennung, „Bei Rückkehr“, 24h-Melder und Brandalarm bleiben, wie sie sind.
+
+Messwerte in der Tabelle und die Empfehlung mit „Was wäre wenn“ folgen in den nächsten
+Vorabversionen.
+
 ## [0.65.0] - 2026-11-27
 
 Zusammenfassung von 0.65.0b1 bis 0.65.0b9 – **Einrichten nach Zielen, Fehlersuche ohne

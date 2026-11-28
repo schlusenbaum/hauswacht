@@ -53,6 +53,12 @@ der Person „⚠ keine Ortung“, fehlt eine Ortung mit Koordinaten – Standor
 auf „Immer“ stellen. Meldet das GPS im Haus oft „außerhalb“, aber ungenau, bleibt „genau prüfen“
 die richtige Wahl; kommt bei euch nie „weg“, obwohl die Ortung stimmt, das Zeitfenster für den
 Beleg verlängern.
+*Ab 0.66:* Unter „Welche Signale zählen?“ steht bei jeder Person, was gemessen wurde. Ein Signal,
+das beim Weggehen „meist nicht ‚weg‘“ sagt (z. B. Bluetooth durch die Tür), hält „alle müssen weg
+sein“ auf – dann den Haken bei **Weggehen** rausnehmen oder die Empfehlung übernehmen. Steht im
+Profil ein **eigener Auslöser**, zählen die Personen dort gar nicht
+([mehr](profile.md#eigener-auslöser-für-alle-weg)). Und: Erst nach der **Wartezeit** im Profil
+wird scharf geschaltet (Standard 15 Minuten).
 
 **„Bei Rückkehr – Unscharf mit Türbeleg“ schaltet nicht unscharf.**
 Ist die Person unter „Bei Rückkehr“ → „Für diese Personen“ angekreuzt? Die Liste ist seit 0.61
@@ -248,7 +254,7 @@ Standardmäßig ist das Debug-Log **aus**; ohne Einschalten schreibt Hauswacht k
    allen Log-Zeilen seit dem Einschalten zum Herunterladen an.
 
 **Live mitlesen, ohne auszuschalten:** **Einstellungen → System → Protokolle**, oben rechts
-**⋮ → Vollständige Protokolle anzeigen** und ins Suchfeld `hauswacht` eintippen. Neue Zeilen
+**⋮ → Unveränderte Protokolle anzeigen** und ins Suchfeld `hauswacht` eintippen. Neue Zeilen
 erscheinen dort, sobald etwas passiert.
 
 **Über einen Neustart hinweg:** Tritt der Fehler gerade beim oder nach dem Neustart auf (z. B.

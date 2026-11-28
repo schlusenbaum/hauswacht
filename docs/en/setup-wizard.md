@@ -44,7 +44,7 @@ them even when no side sheet is open.
 
 | Hint | Level | Suggestion |
 |---|---|---|
-| A person in **"arm when all away"** can never be detected as away (no location, "door + signal" off) – the profile **never** arms automatically | ⛔ Error | Remove the person, or ⚠ allow "door + signal" for them |
+| A person in **"arm when all away"** can never be detected as away (no location, "door + signal" off, leaving not set to "one is enough") – the profile **never** arms automatically | ⛔ Error | Remove the person, or ⚠ allow "door + signal" for them |
 | **"Disarm only if armed automatically"**, but the profile has no automation (no time, no schedule, no "all away") | ⛔ Error | – |
 | **"Disarm with door proof"** or **"Let in"**, but the profile has no entry door (sensor of type door) | ⛔ Error | – |
 | A person in **"On return"** can never be detected as away – "On return" never applies to them | ⚠️ Warning | Remove the person, or ⚠ allow "door + signal" |
@@ -53,6 +53,11 @@ them even when no side sheet is open.
 | **"Entry delay when approaching"** is on, but no person in the list has a direction signal | ⚠️ Warning | Turn off the extension |
 | A **location has reported exactly the same position for at least 24 hours** outside home (faked or stuck app) – it does not count as proof ([more](profiles.md#away-only-with-proof)) | ⚠️ Warning | – (if permanently wrong: remove it from the signals under System → Presence) |
 | **"Arm when all away" follows an own trigger** (entity instead of persons) – Hauswacht does not check itself ([more](profiles.md#own-trigger-for-all-away)) | ⚠️ Warning | – |
+| **Exit detection** is on, but the profile has no entry delay – it never applies ([more](passage.md#detect-going-out-without-a-pin-exit-detection), from 0.66.0b9) | ⛔ Error | – |
+| **Exit detection without a sensor in the house** – a break-in through the entry door also only gives an alarm after the waiting time while someone is home (from 0.66.0b9) | ⚠️ Warning | – (add a sensor in the house in the profile) |
+| For a person an **own trigger** decides instead of the signals – Hauswacht does not check this person itself ([more](profiles.md#own-trigger-per-person), from 0.66.0b11) | ⚠️ Warning | – |
+| An **own trigger** is set, but persons are still ticked in "arm when all away" – they are ignored ([more](profiles.md#own-trigger-for-all-away), from 0.66.0b3) | 💡 Tip | Untick the persons |
+| Something is set for a person under **Presence** (signals, ticks, "detect leaving"), but the person counts **nowhere**: in no "arm when all away" without own trigger, in no "On return", not in the observation (from 0.66.0b3) | 💡 Tip | – |
 | **"Door + signal"** is on although the person has a location | 💡 Tip | Turn off "door + signal" |
 
 Measurements count only from **3 measurements** on – before that the assistant says nothing
@@ -138,11 +143,12 @@ Per profile, where it fits:
 | Scenario | When | What is played through |
 |---|---|---|
 | **Burglary through the door …** | per entry door of the profile | Profile armed, the door opens, nobody disarms |
+| **Burglary through the door … while someone is home** | profile has exit detection on (from 0.66.0b9) | Without a sensor in the house: ⚠️ siren only after the waiting time. With a sensor in the house: ✅ normal entry delay, because nobody came from inside |
 | **Burglary through a window** | profile has windows | Profile armed, a window opens |
 | **… comes home** | per person in "On return" | Everyone leaves (if "all away" arms the profile, it is armed automatically, otherwise by hand); two hours later the person comes home. The phone reports 30 s **before** the door – or, if measured, as late **after** the door as observed in your home |
-| **Everyone leaves** | profile has "arm when all away" | Everyone leaves through the door one after another, then the phone reports "away" |
-| **Everyone is home, the phones go to sleep** | profile has "arm when all away" | All phones report "away" without any door opening (also: Wi-Fi outage) |
-| **Someone steps out briefly – meanwhile the phone of … goes to sleep** | per person with "door + signal" | The others are out. Someone opens the door briefly (parcel, rubbish), shortly after that the person's phone goes to sleep |
+| **Everyone leaves** | profile has "arm when all away" | Everyone leaves through the door one after another, then the phone reports "away". Persons with "one is enough (after a door)" thus count as away, even without a location (from 0.66.0b8) |
+| **Everyone is home, the phones go to sleep** | profile has "arm when all away" | All phones report "away" without any door opening (also: Wi-Fi outage). If "after a door" is switched off for someone, the profile arms here – ❌ |
+| **Someone steps out briefly – meanwhile the phone of … goes to sleep** | per person with "door + signal" or "one is enough (after a door)" (from 0.66.0b8) | The others are out. Someone opens the door briefly (parcel, rubbish), shortly after that the person's phone goes to sleep |
 
 **Example:** profile Night with "disarm with door proof" for Anna, entry delay 30 s. Anna's phone
 reported up to 38 s after the door in three homecomings. The preview shows:
@@ -169,7 +175,7 @@ Instead of setting by setting, the assistant asks **what Hauswacht should do for
 **Assistant** → **Set up by goals**, a side sheet with six steps opens:
 
 1. **Household:** which people Home Assistant knows and whether they can be detected as "away"
-   (✓ location, "door + signal", ✓ direction, ⚠ location frozen, ⚠ cannot be detected as away).
+   (✓ location, "door + signal" or "one is enough", ✓ direction, ⚠ location frozen, ⚠ cannot be detected as away).
    Display only – set up locations and "door + signal" under System → Presence.
 2. **Doors and windows** (*since 0.65.0b2*), sorted by floor and room:
    - **Not in any sensor group yet:** doors, windows and motion sensors that Home Assistant knows

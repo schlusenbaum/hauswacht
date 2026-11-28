@@ -1,105 +1,145 @@
 # ADR 0014: Ausgangserkennung – Rausgehen ohne PIN erkennen
 
-- Status: vorgeschlagen (Messung umgesetzt in 0.60.0, ergänzt in 0.63.1; Umsetzung der Ausgangserkennung in 0.66 – vorher kommen ADR 0015, 0016 und 0017)
-- Datum: 2026-11-21
-- Baut auf: [ADR 0013 Durchgang](0013-durchgang.md)
+- Status: umgesetzt in 0.66.0 (Messung in 0.60.0, ergänzt in 0.63.1; Ausgangserkennung ab
+  0.66.0b9, automatischer Durchgang mit Melder im Haus ab 0.66.0b12, vorzeitiges Ende ab
+  0.66.0b13; Fassung vom 2026-11-27 auf Grundlage von ADR 0021)
+- Datum: 2026-11-21, überarbeitet 2026-11-27
+- Baut auf: [ADR 0013 Durchgang](0013-durchgang.md),
+  [ADR 0021 Anwesenheit je Person](0021-anwesenheit-je-person.md)
 
 ## Kontext
 
-„Nacht“ ist scharf, Niklas geht aus dem Haus und **vergisst den PIN**. Die Haustür geht auf,
-die Eingangsverzögerung läuft (30 s) – Niklas ist schon draußen, kommt nicht mehr ans Keypad,
-bemerkt auch keine Push-Nachricht. Ergebnis: Alarm, Sirene, Nachbarn.
+„Nacht“ ist scharf, Ben geht früh aus dem Haus und **vergisst den PIN** und den Durchgang. Die
+Haustür geht auf, die Eingangsverzögerung läuft (30 s) – Ben ist schon draußen, kommt nicht mehr
+ans Keypad, bemerkt auch keine Push-Nachricht. Ergebnis: Alarm, Sirene, alle wach.
 
 Hauswacht kann nicht unterscheiden, ob jemand **rein- oder rausgeht** – es sieht nur „Tür auf“.
-Ein Bewegungsmelder im Haus (Hinweis „kommt von innen“) ist nicht überall vorhanden.
 
-Was hilft: Die Anwesenheits-Signale jeder Person (Ping, WLAN der Companion App, Bluetooth über
-Bermuda, GPS/Zone, Router), die Hauswacht schon für „Anwesenheit und Heimkehr“ kennt. **Wer
-rausgeht, dessen Handy wird kurz danach „weg“.**
+Was hilft: die Anwesenheits-Signale jeder Person. **Wer rausgeht, dessen Handy ist kurz danach
+„weg“.** Seit ADR 0021 legt jede Person fest, welche Signale fürs Weggehen zählen und ob „eines
+reicht (nach Tür)“ – gemessen und mit Empfehlung. Genau das braucht die Ausgangserkennung.
 
-Grundsatz aus der Diskussion: **Ohne geöffnete Tür kann niemand weggehen.** Ein Handy, das
-schweigt, ohne dass eine Tür aufging, ist zuhause (es schläft).
+Grundsatz: **Ohne geöffnete Tür kann niemand weggehen.** Und: **Wer nicht zuhause war, kann
+nicht rausgehen.**
+
+Was es heute schon gibt: der **Durchgang** (ADR 0013) – Taste am Keypad oder Push-Knopf
+„rausgehen“, das Profil bleibt scharf. Die Ausgangserkennung ist das **Sicherheitsnetz** für den
+Fall, dass man ihn vergisst.
 
 ## Entscheidung
 
-### 1. Alarm aufschieben, nie unterdrücken ohne Beleg
+### 1. Einstellung je Profil, Standard aus
 
-Neue Einstellung je Profil **„Rausgehen ohne PIN erkennen“** (Standard aus). Ist sie an und
-geht eine Eingangstür auf, während mindestens eine Person **nachweislich zuhause** ist (frisches
-Lebenszeichen eines ihrer Signale kurz vor dem Öffnen), dann:
+Im Profil (Abschnitt Durchgang) **„Rausgehen ohne PIN erkennen“**, Standard **aus**. Gedacht vor
+allem für „Nacht“. Wer sie nicht einschaltet, merkt keinen Unterschied.
 
-1. Statt der Eingangsverzögerung beginnt eine **stille Wartezeit** (Standard 5 Minuten,
-   einstellbar 1–15, mit Empfehlung aus der Messung). Keine Sirene.
-2. **Sofort** kommt eine kritische Benachrichtigung: „Haustür geöffnet – wenn das keiner von euch
-   war: **[Alarm jetzt]**“, dazu **[Durchlassen]**.
-3. Während der Wartezeit bewertet Hauswacht je Person, die vor dem Öffnen zuhause war:
-   - **Irgendein Signal sagt „zuhause“** (Ping antwortet, WLAN verbunden, Bluetooth sieht das
-     Handy …) → die Person ist noch da.
-   - **Alle Signale sagen „weg“ oder schweigen – über die ganze Wartezeit** → die Person ist
-     rausgegangen.
-4. Ende der Wartezeit:
-   - mindestens eine Person ist rausgegangen → **kein Alarm**; die Tür wird wieder überwacht,
-     sobald sie zu ist; Nachricht „Niklas (Handy) ist rausgegangen – Nacht bleibt scharf“.
-   - sonst → **Alarm** (wie nach der Eingangsverzögerung).
-5. PIN/Karte am Keypad, [Durchlassen] oder [Alarm jetzt] beenden die Wartezeit sofort.
+### 2. Ablauf
 
-Die Wartezeit muss länger sein als die längste Pause, in der eure Handys nachts schlafen und
-nicht antworten: Ein schlafendes Handy meldet sich in der Zeit wieder (→ noch da → Alarm), ein
-Handy, das das Haus verlassen hat, bleibt still.
+Eine **Eingangstür** des Profils geht auf, das Profil ist scharf, und mindestens eine Person hat
+ein **frisches Lebenszeichen** (ein Signal sagte bis höchstens 3 Minuten vor dem Öffnen
+„zuhause“). Dann:
 
-### 2. Ohne Bewegungsmelder: bei jedem Öffnen
+1. Statt der Eingangsverzögerung beginnt eine **stille Wartezeit**. Keine Sirene.
+2. **Sofort** geht eine kritische Benachrichtigung an **alle Alarm-Empfänger** des Profils:
+   „Haustür geöffnet – wenn das keiner von euch war: **[Alarm jetzt]**“, dazu **[Durchlassen]**.
+3. Während der Wartezeit gelten für jede Person, die vorher zuhause war, **dieselben Regeln wie
+   unter „Welche Signale zählen?“** (ADR 0021): ihre Weggehen-Signale, „eines reicht (nach Tür)“
+   oder „alle müssen weg sein“. Bei „alle müssen“ reicht hier „alle Weggehen-Signale weg“ –
+   einen Ortungs-Beleg verlangt die Ausgangserkennung nicht, die Tür ist der Beleg.
+4. **Jemand ist als rausgegangen erkannt** → nach einem kleinen Puffer von **30 Sekunden** (kommt
+   das Signal in der Zeit zurück, war es ein Aussetzer) endet die Wartezeit **sofort**: **kein
+   Alarm**, das Profil bleibt scharf, die Tür wird wieder überwacht, sobald sie zu ist. Nachricht
+   an die Alarm-Empfänger: „Ben ist rausgegangen – Nacht bleibt scharf“.
+5. **Niemand ist rausgegangen**, wenn die Wartezeit abläuft → **Alarm** (wie nach der
+   Eingangsverzögerung).
+6. PIN, Karte, Keypad, **[Durchlassen]** oder **[Alarm jetzt]** beenden die Wartezeit sofort.
 
-Ohne Melder im Haus gilt die Wartezeit für **jede** Türöffnung, solange jemand nachweislich
-zuhause ist – **auch für einen echten Einbruch**: Der Alarm kommt dann erst nach der Wartezeit.
-Das ist bewusst so gewählt; die Einstellung sagt es deutlich, und [Alarm jetzt] erlaubt jedem
-Wachen, sofort auszulösen.
+### 3. Wartezeit
 
-Optional **„Melder im Haus“** (z. B. Bewegungsmelder im Flur, nicht scharf): Ist er gesetzt,
-gilt die Wartezeit nur, wenn er kurz vor dem Öffnen Bewegung gemeldet hat; sonst die normale
-Eingangsverzögerung.
+- Empfehlung aus der Messung „Weggehen“ (wie schnell die Signale nach der Tür „weg“ sagen, mit
+  Puffer).
+- Einstellbar **1 bis 5 Minuten**. So lange bliebe ein echter Einbruch höchstens still.
+- **Länger als 5 Minuten** (bis 15) nur unter „Mehr Einstellungen“ als **Expertenoption** mit
+  deutlichem Warnhinweis.
 
-### 3. Schutz gegen Ausfall von WLAN oder Router
+### 4. Melder im Haus – empfohlen, nicht Voraussetzung
 
-Fällt das WLAN aus, melden alle Handys gleichzeitig „weg“. Deshalb:
+Optional je Profil **„Melder im Haus“** (Bewegungsmelder, Treppenlicht, Keypad-Taste …, nicht
+scharf). Ist einer gesetzt, gilt die stille Wartezeit **nur**, wenn er kurz vor dem Öffnen (bis
+2 Minuten) drinnen etwas gemeldet hat – jemand kam also von innen. Sonst läuft die normale
+Eingangsverzögerung, ein Einbruch von außen wird wie bisher behandelt.
 
-- Melden **mehrere Personen gleichzeitig** „weg“ und **nur** über WLAN-abhängige Signale (Ping,
-  WLAN-Verbindung, Router), zählt das **nicht** als Beleg → Alarm.
-- Vom WLAN unabhängige Signale (Bluetooth, GPS/Zone) zählen weiter.
-- Empfehlung in der Doku: Router bzw. Fritzbox als [Infrastruktur](../../melder.md) überwachen.
+**Ohne Melder im Haus** gilt die Wartezeit für **jede** Öffnung der Eingangstür, solange jemand
+nachweislich zuhause ist – **auch für einen Einbruch**: Die Sirene käme dann erst nach der
+Wartezeit (die Push-Nachricht mit [Alarm jetzt] sofort). Das steht
 
-### 4. Messung zuerst (0.60)
+- als Warnhinweis direkt an der Einstellung,
+- als Warnung im Check-up mit der Empfehlung, einen Melder im Haus einzutragen,
+- als Szenario in der Vorschau („Einbruch durch die Haustür, während jemand schläft“).
 
-Die Heimkehr-Beobachtung wird um das **Weggehen** erweitert. Je Person und Signal:
+### 5. Schutz gegen Ausfall von WLAN oder Router
 
-- **Wie schnell** meldet es „weg“, nachdem die Person durch eine Tür rausgegangen ist?
-- **Schweigepausen nachts**: Wie oft und wie lange meldet es „weg“ bzw. antwortet nicht, obwohl
-  keine Tür aufging?
+Melden **mehrere Personen gleichzeitig** (bis 60 Sekunden auseinander) „weg“ und dabei **nur**
+über WLAN-abhängige Signale (Ping, WLAN-Verbindung, Router), zählt das **nicht** als
+„rausgegangen“ → Alarm. Vom WLAN unabhängige Signale (Bluetooth, Ortung) zählen weiter.
 
-Daraus je Person: **Empfehlung für die Wartezeit** und ob sie **zuverlässig erkennbar** ist.
-Nicht zuverlässig erkennbare Personen werden nicht ausgeschlossen, bekommen aber einen
-**Warnhinweis** – und in den Empfehlungen der Einstellungsseite den Tipp, ein besseres Signal
-einzurichten (z. B. Companion App mit WLAN-Sensor statt nur Ping).
+### 6. Was unberührt bleibt
 
-### 5. Reihenfolge
+- Brandalarm, 24h-Melder, Sabotage, Fenster und Türen, die keine Eingangstür sind.
+- **Durchgang hat Vorrang:** Wer ihn nutzt, für den läuft alles wie bisher.
+- Die Ausgangserkennung schaltet nie unscharf und hält nie eine Sirene an, die schon läuft.
+- Im Testmodus wie alles andere: keine Sirene.
 
-| Version | Inhalt |
-|---|---|
-| 0.59.0 | Durchgang (ADR 0013) ausprobieren und veröffentlichen |
-| 0.60 | Messung „Weggehen“ in der Beobachtung, Empfehlungen und Warnhinweise; ein, zwei Wochen laufen lassen |
-| 0.66 | Ausgangserkennung mit den gemessenen Werten (nach dem Assistenten, ADR 0017) |
+### 7. Messung (umgesetzt 0.60 und 0.63.1)
+
+Die Heimkehr-Beobachtung misst das Weggehen (wie schnell „weg“, Schweigepausen ohne Tür) und
+„Lebenszeichen rund um die Tür“ (Lebenszeichen vor dem Rausgehen, „noch da“ nach der Tür,
+Nachklang). Daraus kommen die Empfehlung für die Wartezeit und die Hinweise, wer zuverlässig
+erkannt wird.
+
+## Nachtrag 0.66.0b12: Mit Melder im Haus wie Durchgang (Entscheidung C)
+
+Im Test zeigte sich: Wer nur kurz rausgeht (Mülleimer, Briefkasten), dessen Handy bleibt im WLAN
+und sagt nie „weg“ – die stille Wartezeit endet dann im Alarm. Der Melder im Haus ist dafür der
+bessere Hinweis als das Handy: Meldet er kurz vor dem Öffnen etwas, kam jemand von innen.
+
+Deshalb gilt jetzt:
+
+- **Mit Melder im Haus**, und er hat höchstens 2 Minuten vorher etwas gemeldet: **automatischer
+  Durchgang** wie mit der Durchgang-Taste „rausgehen“ – die geöffnete Tür ist für die
+  **Durchgangszeit des Profils** (Standard 5 Minuten) frei, raus und wieder rein; nur diese eine
+  Tür. Kein Handy nötig. Sofort eine Nachricht an alle Alarm-Empfänger mit **[Alarm jetzt]**
+  (auslösen geht auch während des Durchgangs, neues Ereignis `AlarmNow` im Kern).
+- **Mit Melder im Haus ohne Meldung:** normale Eingangsverzögerung.
+- **Ohne Melder im Haus:** wie bisher die stille Wartezeit mit Handy-Prüfung.
+
+Restrisiko (bewusst angenommen): Bricht in genau diesen Minuten jemand durch dieselbe Tür ein,
+kommt er ohne Alarm herein. Erwogen und verworfen: A (nur Handy – Mülleimer gibt Alarm) und B
+(automatischer Durchgang auch ohne Melder im Haus – dann gäbe es keinen Hinweis „von innen“).
 
 ## Abwägung
 
-- **Nur Ping:** schlafende iPhones antworten nicht → falsches „weg“ → ein Einbrecher käme ohne
-  Alarm durch. Verworfen; alle Signale zusammen, ein Lebenszeichen genügt für „noch da“.
+- **Nur Ping:** schlafende iPhones antworten nicht → falsches „weg“. Verworfen; es gelten die
+  Weggehen-Signale je Person aus ADR 0021.
 - **Alarm ganz unterdrücken, sobald jemand zuhause ist:** zu unsicher. Verworfen.
-- **Längere Eingangsverzögerung für alle:** hilft Niklas, verzögert aber auch jeden Einbruch –
-  ohne den Beleg „Handy ist weg“. Verworfen zugunsten der Wartezeit mit Beleg.
-- **Nur mit Bewegungsmelder:** sicherer, aber nicht überall vorhanden. Als Option eingeplant.
+- **Längere Eingangsverzögerung für alle:** verzögert jeden Einbruch ohne Beleg. Verworfen.
+- **Melder im Haus als Voraussetzung:** sicherer, aber nicht überall vorhanden. Verworfen als
+  Pflicht, **empfohlen** mit Warnhinweis ohne.
+- **Volle Wartezeit abwarten, auch wenn jemand schon rausgegangen ist:** sicherer gegen
+  Aussetzer, aber die Tür bliebe lange unüberwacht. Stattdessen 30 Sekunden Puffer.
+- **Nachricht nur an Personen, die zuhause sind:** verworfen – alle Alarm-Empfänger sollen sofort
+  [Alarm jetzt] drücken können.
 
 ## Folgen
 
-- Bei Profilen mit eingeschalteter Ausgangserkennung kommt der Alarm bei einem echten Einbruch
-  später (bis zur Wartezeit), solange jemand zuhause ist. Steht deutlich in Einstellung und
-  Doku.
-- Die Beobachtung sammelt mehr Daten (weiterhin nur Zeiten und Zählungen, keine Orte).
+- Bei Profilen mit eingeschalteter Ausgangserkennung **ohne Melder im Haus** kommt die Sirene
+  bei einem echten Einbruch später (bis zur Wartezeit), solange jemand zuhause ist. Steht
+  deutlich in Einstellung, Check-up, Szenario-Vorschau und Doku.
+- Der Kern bekommt eine reine Entscheidung „wer ist rausgegangen“ mit denselben Regeln wie die
+  Anwesenheit (ADR 0021); Echtbetrieb und Vorschau nutzen sie.
+- Doku (deutsch und englisch) mit Beispiel: „Nacht“ ist scharf, Ben geht morgens raus und
+  vergisst den PIN. Der Bewegungsmelder an der Treppe ist als „Melder im Haus“ eingetragen.
+- Tests: Einbruch ohne Lebenszeichen → normale Eingangsverzögerung; mit Melder im Haus ohne
+  Bewegung → normale Eingangsverzögerung; Ben geht raus → kein Alarm; niemand geht → Alarm nach
+  der Wartezeit; WLAN-Ausfall bei allen → Alarm; Aussetzer kürzer als 30 s → kein „rausgegangen“;
+  Durchgang, Brand und 24h unverändert; Wartezeit über 5 Minuten nur als Expertenoption.

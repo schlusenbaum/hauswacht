@@ -15,7 +15,7 @@ Zigbee keypads, sirens with a fire lock, and a test mode in which no siren can g
 Hauswacht provides everything it knows as entities, attributes and events, you connect it with
 **everything Home Assistant can do** – lights, cameras, shutters, heating, speakers.
 
-> **Status: 0.65.0 – beta.** In use in my own home; feedback is very welcome. Real siren control
+> **Status: 0.66.0 – beta.** In use in my own home; feedback is very welcome. Real siren control
 > is **locked** after installation and has to be enabled deliberately.
 
 Everything you see in Home Assistant – setup dialogs, entities, cards, notifications, push
@@ -42,7 +42,8 @@ language of Home Assistant. The [documentation](docs/en/README.md) is available 
 - **Alarm profiles instead of fixed modes** – "Home", "Night", "Vacation" … as many as you like,
   each with its own sensor groups, delays, sirens and recipients. Automatic arming by time or when
   everyone has left – with presence from several signals per person (Wi-Fi, Bluetooth, router,
-  proximity …) – and **On return**: disarm with door proof or, at night, just let in. Different times per weekday via a
+  proximity …), per signal separately for arriving and leaving, with a recommendation from your
+  own measurements ("what if") – and **On return**: disarm with door proof or, at night, just let in. Different times per weekday via a
   schedule; **guest mode** so visitors are not locked out.
 - **Passage** – in or out **without disarming**: coming home at night with PIN and
   any key, briefly taking out the bins – only the door used is free, everything else stays armed.

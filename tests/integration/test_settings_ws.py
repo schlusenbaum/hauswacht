@@ -1021,3 +1021,38 @@ async def test_settings_page_uses_no_deprecated_registry_access(
     data = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
     assert "revision" in data
     assert "custom integration 'hauswacht'" not in caplog.text
+
+
+async def test_presence_whatif_needs_observation(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    await setup_entry(hass, make_entry())
+    off = await _ws(hass_ws_client, hass, type="hauswacht/presence/whatif")
+    assert off == {"enabled": False}
+
+
+async def test_presence_whatif(hass: HomeAssistant, hass_ws_client: Any) -> None:
+    """„Was wäre wenn“ (ADR 0021): rechnet den Entwurf nach, speichert nichts."""
+    hass.states.async_set("person.anna", "home")
+    observed = {
+        "homecoming_observe": True,
+        "homecoming_persons": ["person.anna"],
+        "profiles": {"away": {"name": "Abwesend", "auto_away_persons": ["person.anna"]}},
+    }
+    entry = make_entry(observed)
+    await setup_entry(hass, entry)
+    before = dict(entry.options)
+    draft = {
+        "observe": True,
+        "persons": ["person.anna"],
+        "signals": {},
+        "presence": {"person.anna": {"mode": "one", "door": True}},
+    }
+    data = await _ws(hass_ws_client, hass, type="hauswacht/presence/whatif", data=draft)
+    assert data["enabled"] is True
+    anna = data["persons"]["person.anna"]
+    assert anna["trips"] == 0
+    assert anna["enough"] is False
+    assert anna["current"]["mistakes"] == 0  # Entwurf „eines reicht“ wird nachgerechnet
+    assert data["profiles"]["away"]["name"] == "Abwesend"
+    assert dict(entry.options) == before  # nichts gespeichert
+    settings = await _ws(hass_ws_client, hass, type="hauswacht/settings/get")
+    assert settings["system"]["homecoming"]["whatif"]["enabled"] is True

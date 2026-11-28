@@ -597,6 +597,11 @@ class HomecomingObserver:
             departures, arrivals, doors, dt_util.utcnow().timestamp(), self.doors_since
         )
 
+    def whatif_data(self) -> tuple[list[DepartureVerdict], list[DoorOpening]]:
+        """Weggehen-Bewertungen und Türöffnungen für „Was wäre wenn“ (ADR 0021)."""
+        _arrivals, doors = self._parsed(everything=True)
+        return self.departure_verdicts(), doors
+
     def departure_advice(self) -> dict[str, dict[str, Any]]:
         """Je Person: Empfehlung für "Rausgehen ohne PIN erkennen" (ADR 0014)."""
         return wait_advice(self.departure_verdicts(), self.departure_days())

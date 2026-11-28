@@ -20,6 +20,13 @@ from ..away_proof import (
     parse_proof_settings,
 )
 from ..pin import hash_pin, is_valid_pin_format
+from ..presence_rules import (
+    DEFAULT_TRIGGER_AWAY,
+    MODE_ALL,
+    MODES,
+    PersonRules,
+    dump_presence_rules,
+)
 from ..profiles import MAX_STALE_HOURS, profile_ids
 from ..restart import (
     ARMED,
@@ -135,7 +142,40 @@ def save_homecoming(options: Mapping[str, Any], data: Mapping[str, Any]) -> Chan
         new[OPT_AWAY_WEAK] = sorted(proof.weak)
         new[OPT_AWAY_WEAK_WINDOW] = proof.weak_window
         new[OPT_AWAY_GEOFENCE] = sorted(proof.geofence)
+    # Ankommen/Weggehen je Person (ADR 0021): nur übernehmen, wenn mitgeschickt
+    if isinstance(data.get("presence"), Mapping):
+        new.update(_presence(data["presence"], new[OPT_HOMECOMING_SIGNALS]))
     return Change(options=new)
+
+
+def _presence(raw: Mapping[str, Any], signals: Mapping[str, list[str]]) -> dict[str, Any]:
+    """Regeln je Person aus dem Formular – nur Signale, die die Person wirklich hat."""
+    rules: dict[str, PersonRules] = {}
+    for person, data in raw.items():
+        if not isinstance(person, str) or not isinstance(data, Mapping):
+            continue
+        own = {person, *signals.get(person, [])}
+
+        def pick(key: str, own: set[str] = own, data: Mapping[str, Any] = data) -> frozenset[str]:
+            value = data.get(key)
+            items = value if isinstance(value, list | tuple) else []
+            return frozenset(e for e in items if isinstance(e, str) and e in own)
+
+        mode = data.get("mode")
+        trigger = data.get("trigger")
+        away = data.get("trigger_away")
+        rule = PersonRules(
+            arrive_off=pick("arrive_off"),
+            leave_off=pick("leave_off"),
+            mode=mode if mode in MODES else MODE_ALL,
+            door=data.get("door", True) is not False,
+            # Eigener Auslöser je Person (ersetzt die Signale)
+            trigger=trigger if isinstance(trigger, str) and "." in trigger else None,
+            trigger_away=away if isinstance(away, str) and away else DEFAULT_TRIGGER_AWAY,
+        )
+        if rule != PersonRules():
+            rules[person] = rule
+    return dump_presence_rules(rules)
 
 
 def save_settings_page(options: Mapping[str, Any], enabled: bool) -> Change:

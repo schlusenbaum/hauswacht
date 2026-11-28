@@ -46,10 +46,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: HauswachtConfigEntry) ->
     # Hauswacht-Gerät zuerst anlegen: Geräte weiterer Bereiche verweisen per ID darauf
     from homeassistant.helpers import device_registry as dr  # noqa: PLC0415
 
-    from .entity import main_device_info  # noqa: PLC0415
+    from .const import DOMAIN, NAME  # noqa: PLC0415
+    from .entity import PAGE_URL  # noqa: PLC0415
 
+    # Felder einzeln übergeben: DeviceInfo zu entpacken ist ab Home Assistant 2027.12 nicht
+    # mehr erlaubt (DeviceInfo ist dann eine Datenklasse)
     device = dr.async_get(hass).async_get_or_create(
-        config_entry_id=entry.entry_id, **main_device_info(entry)
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, entry.entry_id)},
+        name=NAME,
+        manufacturer="Hauswacht",
+        model="Einbruchmeldeanlage",
+        entry_type=dr.DeviceEntryType.SERVICE,
+        configuration_url=PAGE_URL,
     )
     runtime.device_id = device.id
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))

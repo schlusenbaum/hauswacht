@@ -103,6 +103,20 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "passage_key": "Durchgang (rein/raus, bleibt scharf)",
         "passage_by_phone": "{who} (Handy)",
         "btn_passage": "Reinlassen",
+        "btn_exit_alarm": "Alarm jetzt",
+        "btn_exit_let": "Durchlassen",
+        "exit_title": "Hauswacht: Tür geöffnet – war das jemand von euch?",
+        "exit_start": "{door} geöffnet, Profil {profile} ist scharf. Wenn das keiner von euch war: "
+        "„Alarm jetzt“ drücken. Sonst wartet Hauswacht still bis zu {minutes} min, ob jemand "
+        "rausgegangen ist – erst danach Alarm.",
+        "exit_left": "{who} ist rausgegangen ({door}) – Profil {profile} bleibt scharf.",
+        "exit_let": "{who} hat durchgelassen ({door}) – Profil {profile} bleibt scharf.",
+        "exit_auto": "{door} von innen geöffnet (Melder im Haus) – Durchgang für {minutes} min, "
+        "Profil {profile} bleibt scharf. Wenn das keiner von euch war: „Alarm jetzt“ drücken.",
+        "exit_label": "Ausgangserkennung",
+        "entity_missing": "gibt es nicht",
+        "exit_passage_left": "{who} ist weg – Durchgang an {door} beendet, Profil {profile} ist "
+        "wieder ganz scharf.",
         "passage_in": "{who} hereingelassen ({door}) – Profil {profile} bleibt scharf.",
         "passage_out": "{who}: Durchgang für {minutes} Minuten – Profil {profile} bleibt scharf.",
         "passage_open": "{door} nach dem Durchgang noch offen – wird nicht überwacht, bis sie "
@@ -362,6 +376,20 @@ TEXTS: Mapping[str, Mapping[str, str]] = {
         "passage_key": "Passage (in/out, stays armed)",
         "passage_by_phone": "{who} (phone)",
         "btn_passage": "Let in",
+        "btn_exit_alarm": "Alarm now",
+        "btn_exit_let": "Let through",
+        "exit_title": "Hauswacht: door opened – was that one of you?",
+        "exit_start": "{door} opened, profile {profile} is armed. If that was none of you: press "
+        "“Alarm now”. Otherwise Hauswacht waits silently up to {minutes} min whether someone went "
+        "out – only then alarm.",
+        "exit_left": "{who} went out ({door}) – profile {profile} stays armed.",
+        "exit_let": "{who} let through ({door}) – profile {profile} stays armed.",
+        "exit_auto": "{door} opened from inside (sensor in the house) – passage for {minutes} min, "
+        "profile {profile} stays armed. If that was none of you: press “Alarm now”.",
+        "exit_label": "Exit detection",
+        "entity_missing": "does not exist",
+        "exit_passage_left": "{who} is away – passage at {door} ended, profile {profile} is fully "
+        "armed again.",
         "passage_in": "{who} let in ({door}) – profile {profile} stays armed.",
         "passage_out": "{who}: passage for {minutes} minutes – profile {profile} stays armed.",
         "passage_open": "{door} still open after the passage – not monitored until it is "

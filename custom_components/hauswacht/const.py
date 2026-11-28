@@ -84,6 +84,9 @@ PUSH_ACTION_EVENT: Final = "mobile_app_notification_action"
 PUSH_ACTION_PREFIX: Final = "HAUSWACHT_DISARM_"
 # Push-Knopf "Reinlassen" in der Eingangs-Nachricht (Durchgang, ADR 0013)
 PUSH_PASSAGE_PREFIX: Final = "HAUSWACHT_PASSAGE_"
+# Ausgangserkennung (ADR 0014): „Alarm jetzt“ und „Durchlassen“ in der Nachricht zur Wartezeit
+PUSH_EXIT_ALARM_PREFIX: Final = "HAUSWACHT_EXIT_ALARM_"
+PUSH_EXIT_LET_PREFIX: Final = "HAUSWACHT_EXIT_LET_"
 PUSH_TAG: Final = "hauswacht"
 
 NOTIFICATION_RESTART: Final = "hauswacht_restart"

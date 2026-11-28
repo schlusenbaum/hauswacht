@@ -145,7 +145,7 @@ const TEXTS = {
       never: "nie",
       refresh: "Aktualisieren",
       unclear: "unklar: {by}",
-      proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", simulated: "simuliert", other: "Beleg vorhanden" },
+      proofs: { fresh: "frische Ortung außerhalb", door: "Tür + Ortung außerhalb", weak: "Tür + Signal (unsicher)", one_door: "Tür + eines der Signale", one: "eines der Signale (ohne Tür, unsicher)", trigger: "eigener Auslöser", simulated: "simuliert", other: "Beleg vorhanden" },
       line: {
         otherArmed: "nicht nötig, „{other}“ ist scharf",
         armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
@@ -402,7 +402,7 @@ const TEXTS = {
       never: "never",
       refresh: "Refresh",
       unclear: "unclear: {by}",
-      proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", simulated: "simulated", other: "proof available" },
+      proofs: { fresh: "fresh location outside", door: "door + location outside", weak: "door + signal (uncertain)", one_door: "door + one of the signals", one: "one of the signals (no door, uncertain)", trigger: "own trigger", simulated: "simulated", other: "proof available" },
       line: {
         otherArmed: "not needed, \"{other}\" is armed",
         armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },

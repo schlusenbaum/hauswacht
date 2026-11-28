@@ -288,7 +288,9 @@ Dazu gehört die Gegenprobe: **„zuhause“ nach dem Rausgehen.** Melden die Si
 der gerade rausgeht, nach dem Öffnen noch eine Weile „zuhause“? Das passiert z. B. bei Ping:
 Die Ping-Integration meldet ein Handy erst nach einer Nachlaufzeit (meist 3 Minuten) als „weg“.
 Die Ausgangserkennung muss solche Meldungen später richtig einordnen – die Messung zeigt, wie
-lange sie dauern.
+lange sie dauern. *Ab 0.66.0b8* zählt dieser Nachklang nur bis zu dem Moment, in dem alle
+Signale der Person „weg“ sagen. Ein „zuhause“ danach ist die Rückkehr. Vorher wurde z. B. eine
+Rückkehr nach 6 Minuten als 6 Minuten Nachklang gezählt.
 
 **Wo du das siehst:**
 

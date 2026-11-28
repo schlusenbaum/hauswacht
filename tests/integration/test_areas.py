@@ -5,6 +5,7 @@ Alle Sensoren sind Testzustände; es sind keine Sirenen eingerichtet.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 import pytest
@@ -13,13 +14,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import async_capture_events
+from homeassistant.util import dt as dt_util
+from pytest_homeassistant_custom_component.common import (
+    async_capture_events,
+    async_fire_time_changed,
+)
 
 from custom_components.hauswacht.const import DOMAIN, EVENT_HAUSWACHT
 from custom_components.hauswacht.core.changes.system import delete_area
 from custom_components.hauswacht.core.pin import hash_pin
 
-from .conftest import PANEL, WINDOW, ZONE_OPTIONS, make_entry, set_sensor, setup_entry
+from .conftest import DOOR, PANEL, WINDOW, ZONE_OPTIONS, make_entry, set_sensor, setup_entry
 
 GATE = "binary_sensor.garagenfenster"
 GARAGE_PANEL = "alarm_control_panel.hauswacht_garage"
@@ -281,3 +286,31 @@ async def test_system_wide_events_use_all(hass: HomeAssistant) -> None:
     )
     reset = next(e.data for e in events if e.data["type"] == "CodeLockReset")
     assert reset["area"] == "all"
+
+
+async def test_garage_uses_the_same_presence_signals(hass: HomeAssistant) -> None:
+    """Ab 0.66.0b4: Die Garage sieht die zusätzlichen Signale und „eines reicht (nach Tür)“."""
+    person, wlan = "person.a", "binary_sensor.a_wlan"
+    hass.states.async_set(person, "home")
+    hass.states.async_set(wlan, "on")
+    garage = {
+        **AREA_OPTIONS["profiles"]["garage_away"],
+        "auto_away_persons": [person],
+        "auto_away_delay": 1,
+    }
+    options = {
+        **AREA_OPTIONS,
+        "profiles": {"garage_away": garage},
+        "homecoming_signals": {person: [wlan]},
+        "presence_leave_mode": {person: "one"},
+    }
+    hass.states.async_set(GATE, "off", {"device_class": "window"})
+    await setup_entry(hass, make_entry(options))
+    set_sensor(hass, DOOR, "on")  # Haustür (Eingangstür des Hauses)
+    await hass.async_block_till_done()
+    set_sensor(hass, DOOR, "off")
+    hass.states.async_set(wlan, "off")  # danach WLAN weg, person.a sagt weiter „home“
+    await hass.async_block_till_done()
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=3))
+    await hass.async_block_till_done()
+    assert _state(hass, GARAGE_PANEL) == AlarmControlPanelState.ARMED_AWAY

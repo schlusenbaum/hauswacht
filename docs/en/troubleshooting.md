@@ -49,6 +49,12 @@ location outside (["away" only with proof](profiles.md#away-only-with-proof)). I
 to "Always". If the GPS in the house often reports "outside" but inaccurately, "check precisely"
 stays the right choice; if "away" is never detected although the location is right, lengthen the
 time window for the proof.
+*From 0.66:* under "Which signals count?" each person shows what was measured. A signal that
+"mostly does not report 'away'" when leaving (e.g. Bluetooth through the door) holds "all must be
+away" back – then untick **Leaving** for it or apply the recommendation. If the profile has an
+**own trigger**, the persons do not count there at all
+([more](profiles.md#own-trigger-for-all-away)). And: arming only happens after the **waiting
+time** in the profile (default 15 minutes).
 
 **"On return – Disarm with door proof" does not disarm.**
 Is the person ticked under "On return" → "For these persons"? Since 0.61 that list is independent
@@ -236,7 +242,7 @@ lines.
    since switching it on for download.
 
 **Reading along live without switching off:** **Settings → System → Logs**, at the top right
-**⋮ → Show full logs** and type `hauswacht` into the search field. New lines appear there as
+**⋮ → Show raw logs** and type `hauswacht` into the search field. New lines appear there as
 soon as something happens.
 
 **Across a restart:** if the error happens during or right after a restart (e.g. "behaviour

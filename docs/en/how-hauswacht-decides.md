@@ -58,6 +58,11 @@ How to read it:
   the alarm card or the [push button](notifications.md) – and "On return" with door proof (next
   section).
 - **Passage** means: in or out without disarming – see [passage](passage.md).
+- **Exit detection** (from 0.66.0b9, per profile, off by default): if someone is verifiably home
+  at the opening (and – if set – the sensor in the house reported something before), a silent
+  waiting time runs instead of the entry delay. If a person's phone reports "away" during that
+  time, the profile stays armed, otherwise there is an alarm afterwards – see
+  [detect going out without a PIN](passage.md#detect-going-out-without-a-pin-exit-detection).
 
 **Example:** "Night" is armed. Petra comes home at 11 pm, the front door opens → 30 s entry
 delay. Her phone reports "home" after 12 s, the profile is set to "disarm with door proof" →
@@ -187,6 +192,12 @@ flowchart TD
 "door + signal" is allowed for him, he counts as away when a door opened and his ping then
 reports "away". Otherwise he stays "not away" for Hauswacht, and "everyone away" waits for him.
 
+**From 0.66.0b1** you can set per person which signals count for **arriving** and which for
+**leaving**, and whether **one is enough (after a door)** for leaving: an entry door was open,
+afterwards one of the leaving signals reports "away" – that is then enough even without a
+location. If you set nothing, everything works as described above. More under
+[Arriving and leaving per signal](profiles.md#arriving-and-leaving-per-signal).
+
 Why someone is home or away right now is shown on the [test card](test-mode.md#testing-presence)
 and on the settings page (System → Presence) – with the reason, e.g. "Proof: door + location
 outside".
@@ -223,7 +234,9 @@ Everything on the [settings page](settings-page.md) (page "Hauswacht" in the sid
 | Arm automatically: time, schedule, everyone away | Profile → automation | [Automation](profiles.md#automation) |
 | On return, time window, approach | Profile → On return | [On return](profiles.md#on-return) |
 | Signals per person, proof for "away" | System → Presence | [How Hauswacht knows who is home](profiles.md#how-hauswacht-knows-who-is-home) |
+| Which signals count for arriving and leaving, "one is enough (after a door)", recommendation | System → Presence → "Which signals count?" | [Arriving and leaving per signal](profiles.md#arriving-and-leaving-per-signal) |
 | Passage | Profile, control devices | [Passage](passage.md) |
+| Detect going out without a PIN (exit detection) | Profile → Passage | [Exit detection](passage.md#detect-going-out-without-a-pin-exit-detection) |
 | Guest mode | Switch "Guest mode" | [Guest mode](profiles.md#guest-mode) |
 | What happens on alarm | Profile → sirens, notify | [Sirens](sirens.md), [Notifications](notifications.md) |
 | Measurements for good settings | System → Presence → Measurements | [Observations](observations.md) |

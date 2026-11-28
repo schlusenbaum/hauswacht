@@ -59,6 +59,11 @@ So liest du das:
   Alarmkarte oder der [Push-Knopf](benachrichtigungen.md) – und „Bei Rückkehr“ mit Türbeleg
   (nächster Abschnitt).
 - **Durchgang** heißt: rein oder raus, ohne unscharf zu schalten – siehe [Durchgang](durchgang.md).
+- **Ausgangserkennung** (ab 0.66.0b9, je Profil, Standard aus): Ist beim Öffnen jemand
+  nachweislich zuhause (und hat – falls eingetragen – der Melder im Haus vorher etwas gemeldet),
+  läuft statt der Eingangsverzögerung eine stille Wartezeit. Sagt das Handy einer Person in der
+  Zeit „weg“, bleibt das Profil scharf, sonst gibt es danach Alarm – siehe
+  [Rausgehen ohne PIN erkennen](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung).
 
 **Beispiel:** „Nacht“ ist scharf. Petra kommt um 23 Uhr heim, die Haustür geht auf → 30 s
 Eingangsverzögerung. Ihr Handy meldet nach 12 s „zuhause“, das Profil steht auf „Unscharf mit
@@ -192,6 +197,12 @@ flowchart TD
 ihn „Tür + Signal“ erlaubt, gilt er als weg, wenn eine Tür aufging und danach sein Ping „weg“
 meldet. Sonst bleibt er für Hauswacht „nicht weg“, und „alle weg“ wartet auf ihn.
 
+**Ab 0.66.0b1** lässt sich je Person einstellen, welche Signale fürs **Ankommen** und welche
+fürs **Weggehen** zählen, und ob fürs Weggehen **eines reicht (nach Tür)**: Eine Eingangstür war
+auf, danach sagt eines der Weggehen-Signale „weg“ – das reicht dann auch ohne Ortung. Wer nichts
+einstellt, für den gilt alles wie oben. Mehr unter
+[Ankommen und Weggehen je Signal](profile.md#ankommen-und-weggehen-je-signal).
+
 Warum jemand gerade zuhause oder weg ist, zeigen die
 [Testkarte](testmodus.md#anwesenheit-testen) und die Einstellungsseite (System → Anwesenheit) –
 mit Grund, z. B. „Beleg: Tür + Ortung außerhalb“.
@@ -228,7 +239,9 @@ Alles auf der [Einstellungsseite](einstellungsseite.md) (Seite „Hauswacht“ i
 | Automatisch scharf: Uhrzeit, Zeitplan, alle weg | Profil → Automatik | [Automatik](profile.md#automatik) |
 | Bei Rückkehr, Zeitfenster, Annäherung | Profil → Bei Rückkehr | [Bei Rückkehr](profile.md#bei-rückkehr) |
 | Signale je Person, Beleg für „weg“ | System → Anwesenheit | [Woran Hauswacht erkennt, wer zuhause ist](profile.md#woran-hauswacht-erkennt-wer-zuhause-ist) |
+| Welche Signale fürs Ankommen und Weggehen zählen, „eines reicht (nach Tür)“, Empfehlung | System → Anwesenheit → „Welche Signale zählen?“ | [Ankommen und Weggehen je Signal](profile.md#ankommen-und-weggehen-je-signal) |
 | Durchgang | Profil, Bedienteile | [Durchgang](durchgang.md) |
+| Rausgehen ohne PIN erkennen (Ausgangserkennung) | Profil → Durchgang | [Ausgangserkennung](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung) |
 | Gastmodus | Schalter „Gastmodus“ | [Gastmodus](profile.md#gastmodus) |
 | Was beim Alarm passiert | Profil → Sirenen, Benachrichtigen | [Sirenen](sirenen.md), [Benachrichtigungen](benachrichtigungen.md) |
 | Messwerte für gute Einstellungen | System → Anwesenheit → Messungen | [Beobachtungen](beobachtung.md) |

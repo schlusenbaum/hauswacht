@@ -45,7 +45,7 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 
 | Hinweis | Stufe | Vorschlag |
 |---|---|---|
-| Eine Person in **„Scharf, wenn alle weg“** kann nie als weg erkannt werden (keine Ortung, „Tür + Signal“ aus) – das Profil wird so **nie** automatisch scharf | ⛔ Fehler | Person aus der Liste nehmen, oder ⚠ „Tür + Signal“ für sie erlauben |
+| Eine Person in **„Scharf, wenn alle weg“** kann nie als weg erkannt werden (keine Ortung, „Tür + Signal“ aus, Weggehen nicht auf „eines reicht“) – das Profil wird so **nie** automatisch scharf | ⛔ Fehler | Person aus der Liste nehmen, oder ⚠ „Tür + Signal“ für sie erlauben |
 | **„Unscharf, nur wenn automatisch scharf“**, aber das Profil hat keine Automatik (keine Uhrzeit, kein Zeitplan, kein „alle weg“) | ⛔ Fehler | – |
 | **„Unscharf mit Türbeleg“** oder **„Reinlassen“**, aber das Profil hat keine Eingangstür (Melder vom Typ Tür) | ⛔ Fehler | – |
 | Eine Person in **„Bei Rückkehr“** kann nie als weg erkannt werden – für sie greift „Bei Rückkehr“ nie | ⚠️ Warnung | Person aus der Liste nehmen, oder ⚠ „Tür + Signal“ erlauben |
@@ -54,6 +54,11 @@ Hinweise der Stufe **Fehler** stehen zusätzlich in den [Prüfhinweisen](uebersi
 | **„Eingangsverzögerung bei Annäherung“** ist an, aber keine Person der Liste hat ein Richtungs-Signal | ⚠️ Warnung | Verlängerung ausschalten |
 | Eine **Ortung meldet seit mindestens 24 Stunden exakt dieselbe Position** außerhalb von Zuhause (vorgetäuscht oder hängende App) – sie zählt nicht als Beleg ([mehr](profile.md#weg-nur-mit-beleg)) | ⚠️ Warnung | – (bei dauerhaft falscher Ortung: unter System → Anwesenheit aus den Signalen nehmen) |
 | **„Scharf, wenn alle weg“ folgt einem eigenen Auslöser** (Entität statt Personen) – Hauswacht prüft dann nicht selbst ([mehr](profile.md#eigener-auslöser-für-alle-weg)) | ⚠️ Warnung | – |
+| **Ausgangserkennung** ist an, aber das Profil hat keine Eingangsverzögerung – sie greift nie ([mehr](durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung), ab 0.66.0b9) | ⛔ Fehler | – |
+| **Ausgangserkennung ohne Melder im Haus** – auch ein Einbruch durch die Eingangstür gibt erst nach der Wartezeit Alarm, solange jemand zuhause ist (ab 0.66.0b9) | ⚠️ Warnung | – (Melder im Haus im Profil eintragen) |
+| Für eine Person entscheidet ein **eigener Auslöser** statt der Signale – Hauswacht prüft für sie nicht selbst ([mehr](profile.md#eigener-auslöser-je-person), ab 0.66.0b11) | ⚠️ Warnung | – |
+| Ein **eigener Auslöser** ist gesetzt, aber bei „Scharf, wenn alle weg“ sind noch Personen angehakt – sie werden nicht beachtet ([mehr](profile.md#eigener-auslöser-für-alle-weg), ab 0.66.0b3) | 💡 Tipp | Personen abwählen |
+| Für eine Person ist unter **Anwesenheit** etwas eingestellt (Signale, Haken, „Weggehen erkennen“), aber sie zählt **nirgends**: in keinem „Scharf, wenn alle weg“ ohne eigenen Auslöser, in keinem „Bei Rückkehr“, nicht in der Beobachtung (ab 0.66.0b3) | 💡 Tipp | – |
 | **„Tür + Signal“** ist an, obwohl die Person eine Ortung hat | 💡 Tipp | „Tür + Signal“ ausschalten |
 
 Messwerte zählen erst ab **3 Messungen** – vorher sagt der Assistent dazu nichts.
@@ -142,11 +147,12 @@ Je Profil, soweit es passt:
 | Szenario | Wann | Was durchgespielt wird |
 |---|---|---|
 | **Einbruch durch die Tür …** | je Eingangstür des Profils | Profil scharf, die Tür geht auf, niemand schaltet unscharf |
+| **Einbruch durch die Tür …, während jemand zuhause ist** | Profil hat die Ausgangserkennung an (ab 0.66.0b9) | Ohne Melder im Haus: ⚠️ Sirene erst nach der Wartezeit. Mit Melder im Haus: ✅ normale Eingangsverzögerung, weil niemand von innen kam |
 | **Einbruch durch ein Fenster** | Profil hat Fenster | Profil scharf, ein Fenster geht auf |
 | **… kommt heim** | je Person aus „Bei Rückkehr“ | Alle gehen weg (schaltet „alle weg“, ist das Profil automatisch scharf, sonst von Hand), zwei Stunden später kommt die Person heim. Das Handy meldet sich 30 s **vor** der Tür – oder, wenn gemessen, so spät **nach** der Tür wie bei euch beobachtet |
-| **Alle gehen weg** | Profil hat „Scharf, wenn alle weg“ | Alle gehen nacheinander durch die Tür, danach meldet das Handy „weg“ |
-| **Alle sind zuhause, die Handys schlafen ein** | Profil hat „Scharf, wenn alle weg“ | Alle Handys melden „weg“, ohne dass eine Tür aufgeht (auch: WLAN fällt aus) |
-| **Jemand geht kurz raus – dabei schläft das Handy von … ein** | je Person mit „Tür + Signal“ | Die anderen sind unterwegs. Jemand öffnet kurz die Tür (Paket, Müll), kurz danach schläft das Handy der Person ein |
+| **Alle gehen weg** | Profil hat „Scharf, wenn alle weg“ | Alle gehen nacheinander durch die Tür, danach meldet das Handy „weg“. Personen mit „eines reicht (nach Tür)“ gelten damit als weg, auch ohne Ortung (ab 0.66.0b8) |
+| **Alle sind zuhause, die Handys schlafen ein** | Profil hat „Scharf, wenn alle weg“ | Alle Handys melden „weg“, ohne dass eine Tür aufgeht (auch: WLAN fällt aus). Ist bei jemandem „nach Tür“ abgeschaltet, wird das Profil hier scharf – ❌ |
+| **Jemand geht kurz raus – dabei schläft das Handy von … ein** | je Person mit „Tür + Signal“ oder „eines reicht (nach Tür)“ (ab 0.66.0b8) | Die anderen sind unterwegs. Jemand öffnet kurz die Tür (Paket, Müll), kurz danach schläft das Handy der Person ein |
 
 **Beispiel:** Profil Nacht mit „Unscharf mit Türbeleg“ für Anna, Eingangsverzögerung 30 s. Annas
 Handy hat sich in drei Heimkehrten bis zu 38 s nach der Tür gemeldet. Die Vorschau zeigt:
@@ -173,7 +179,7 @@ Statt Einstellung für Einstellung fragt der Assistent, **was Hauswacht für dic
 **Assistent** → **Einrichten nach Zielen** öffnet sich ein Seitenblatt mit sechs Schritten:
 
 1. **Haushalt:** Welche Personen Home Assistant kennt und ob sie als „weg“ erkannt werden können
-   (✓ Ortung, „Tür + Signal“, ✓ Richtung, ⚠ Ortung eingefroren, ⚠ kann nicht als weg erkannt
+   (✓ Ortung, „Tür + Signal“ bzw. „eines reicht“, ✓ Richtung, ⚠ Ortung eingefroren, ⚠ kann nicht als weg erkannt
    werden). Nur Anzeige – Ortung und „Tür + Signal“ stellst du unter System → Anwesenheit ein.
 2. **Türen und Fenster** (*seit 0.65.0b2*), sortiert nach Etage und Raum:
    - **Noch in keiner Meldergruppe:** Türen, Fenster und Bewegungsmelder, die Home Assistant kennt,

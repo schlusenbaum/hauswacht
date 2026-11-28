@@ -282,7 +282,9 @@ reported again. **A break-in would stay silent for at most this long.**
 The cross-check: **"home" after leaving.** Do the signals of someone who is just leaving still
 report "home" for a while after the door opened? This happens with ping, for example: the ping
 integration only reports a phone as "away" after a grace period (usually 3 minutes). Exit
-detection has to classify such reports correctly later – the measurement shows how long they last.
+detection has to classify such reports correctly later – the measurement shows how long they last. *From 0.66.0b8* this echo only counts until the
+moment all signals of the person report "away". A "home" afterwards is the return. Before, e.g. a
+return after 6 minutes was counted as 6 minutes of echo.
 
 **Where you see this:**
 

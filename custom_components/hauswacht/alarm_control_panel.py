@@ -262,6 +262,8 @@ class HauswachtAlarmPanel(_PassageMixin, _SirenTestMixin, AlarmControlPanelEntit
             "bypassed_sensors": sorted(ctx.bypassed),
             "bypassed_until_closed": sorted(ctx.bypassed_until_closed),
             "passage": self.runtime.passage_info(),
+            # Ausgangserkennung (ADR 0014): stille Wartezeit oder automatischer Durchgang
+            "exit_detection": self.runtime.exit.info(),
             "monitored_sensors": sorted(self.runtime.armed_sensors),
             "open_rule_sensors": sorted(self.runtime.open_rule_sensors()),
             "open_sensors": sorted(readiness.open_sensors),

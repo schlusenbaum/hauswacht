@@ -136,6 +136,124 @@ sensor on the way that still reports motion at the end.
 > **Careful with contacts that wrongly report "open":** then the door stays unmonitored although
 > it is closed. The warning shows this. Check the contact (often the magnet is too far away).
 
+## Detect going out without a PIN (exit detection)
+
+*From 0.66.0b9* ([ADR 0014](../entwicklung/adr/0014-ausgangserkennung.md), German). The safety
+net for everyone who forgets the passage.
+
+**Example:** "Night" is armed. Ben leaves for work at 6 am and forgets the PIN and the passage.
+Without exit detection the entry delay runs out and there is an alarm – Ben is long at the bus
+stop. With exit detection Hauswacht notices that Ben's phone is "away" shortly after the door and
+simply keeps "Night" armed.
+
+**Switching it on:** settings page → Profiles → profile (e.g. "Night") → section **Passage** →
+**"Detect going out without a PIN"**. Default: off. The entry door needs an entry delay (type
+door), otherwise there is nothing to postpone.
+
+There are two ways – depending on whether a **sensor in the house** is set:
+
+| | With a sensor in the house (recommended) | Without a sensor in the house |
+|---|---|---|
+| How Hauswacht recognises someone going out | The sensor in the house reported something shortly before the opening – someone came **from inside** | The phone of a person who was home reports "away" afterwards |
+| What happens then | **Automatic passage:** the door is free for the passage time – out **and back in** | Silent waiting time; only when the phone reports "away" the profile stays armed |
+| Bin, letterbox (phone stays in Wi-Fi) | ✅ no alarm | ❌ alarm after the waiting time – use the passage for that |
+| Going to work | ✅ | ✅ |
+| Break-in from outside | normal entry delay (nothing moved inside) | siren only after the waiting time |
+
+### With a sensor in the house: automatic passage
+
+*From 0.66.0b12.* If the sensor in the house reported something **at most 2 minutes before the
+opening**, someone came from inside. Then the same happens as with the passage key "going out":
+the door that opened is free for the profile's **passage time** (default 5 minutes) – out and back
+in as often as you like. The profile stays armed, everything else stays monitored. No phone is
+needed for this.
+
+All alarm recipients immediately get: "Front door opened from inside (sensor in the house) –
+passage for 5 min, Night stays armed. If that was none of you: **[Alarm now]**".
+
+*Example:* the motion sensor on the stairs is set as sensor in the house, "Night" is armed. Anna
+walks down the stairs, takes the rubbish out and comes back after 2 minutes – no alarm. Whoever
+comes back after the passage time needs PIN, card or "On return" as usual.
+
+> Residual risk: if someone breaks in from outside through the **same** door in exactly these
+> minutes, they get in without an alarm. Whoever is inside still gets the message with [Alarm now]
+> immediately.
+
+**The passage ends early as soon as the phone says "away"** (*from 0.66.0b13*): during the passage,
+Hauswacht watches the persons who were home when the door opened. If one of their leaving signals
+says "away" **for 30 seconds**, the person is outside – the passage is over immediately and the
+door is armed again. All alarm recipients get: "Ben is away – passage at front door ended,
+profile Night is fully armed again." If Ben comes back afterwards, he needs PIN, card or "On
+return". The report of the sensor in the house is then "used up": if someone opens the door
+afterwards, there is only another automatic passage if the sensor in the house reports something
+**new** – otherwise the normal entry delay runs.
+
+*Example:* Ben goes to work while "Night" is armed. The sensor on the stairs saw him, the front
+door is free for 5 minutes. After one minute his phone loses the Wi-Fi – 30 seconds later the
+front door is armed again, not only after 5 minutes. If Anna only takes the rubbish out and her
+phone stays in the Wi-Fi, the passage runs normally until the end.
+
+The test card shows what is going on: "Exit detection: passage (sensor in the house) – door free,
+4:12 left. Watched: Ben, Anna." If a phone says "away", it also says "Ben “away” for 12 s (counts
+from 30 s)". The same is in the alarm panel's `exit_detection` attribute
+([reference](reference.md)).
+
+### Without a sensor in the house: silent waiting time
+
+An entry door opens, the profile is armed, and **at least one person is verifiably home** – one
+of their leaving signals currently reports "home" (see
+[Which signals count?](profiles.md#arriving-and-leaving-per-signal)). Then:
+
+1. Instead of the entry delay a **silent waiting time** runs (default 3 minutes). No siren.
+2. **Immediately** **all alarm recipients** get an important message: "Door opened – was that one
+   of you?" with the buttons **[Alarm now]** and **[Let through]**.
+3. Hauswacht watches whether the leaving signals of one of these persons report "away" – with
+   their rules under "Which signals count?": with **"one is enough"** one signal, with **"all must
+   be away"** all of them (the door counts as proof here, no location is needed).
+4. If that holds for **30 seconds**, the person **went out**: no alarm, the profile stays armed,
+   the door is bypassed until closed. All alarm recipients get "Ben went out – Night stays
+   armed". If the signal comes back within the 30 seconds, it was a hiccup.
+5. If **nobody** went out by the end of the waiting time: **alarm** – as after the entry delay.
+6. **[Alarm now]** triggers immediately (every recipient may do that). **[Let through]** (only
+   with the push button and a valid user), PIN, card or keypad also end the waiting time.
+
+### Sensor in the house – recommended
+
+> ⚠️ **Without a sensor in the house the waiting time applies to every opening of the entry door
+> while someone is home – also to a break-in.** The siren would then only come after the waiting
+> time. The message with [Alarm now] still comes immediately.
+
+So: add a **sensor in the house** – a motion sensor in the hallway or on the stairs, the stair
+light, a switch. It does not have to be armed. If someone forces the front door at night without
+anything reported inside before, the normal entry delay runs – alarm as always.
+
+**Trying it out** without a siren in [test mode](test-mode.md#how-the-simulation-works): set the
+sensor in the house to "on" in the test card, then the door to "open" → the profile stays armed,
+the door is free. Without a sensor in the house: door open, then set the person to "away" under
+"Testing presence".
+
+The assistant shows a warning in the check-up as long as exit detection runs without a sensor in
+the house, and the scenario preview plays "break-in through the front door while someone is
+home".
+
+### Waiting time
+
+| Setting | Value |
+|---|---|
+| **Waiting time** (only without a sensor in the house) | 1 to 5 minutes, default 3. A break-in without a sensor in the house would stay silent at most this long. The "leaving" measurement under System → Presence shows how quickly your phones report "away" after the door |
+| **Longer than 5 minutes** (under "More settings", expert option) | up to 15 minutes – with a clear warning |
+
+### What stays safe
+
+- **Whoever was not home cannot go out.** If nobody reports "home" at the opening, the normal
+  entry delay applies.
+- **Wi-Fi outage:** if several persons report "away" almost at the same time only via
+  Wi-Fi-dependent signals (ping, router, Wi-Fi sensor of the app), it is more likely the Wi-Fi –
+  that does **not** count as going out. Bluetooth and location still count.
+- **Passage takes priority:** for whoever uses it, everything works as before.
+- Exit detection **never disarms**, never stops a running siren and changes nothing about fire
+  alarm, 24h sensors, tamper and windows.
+
 ## What else applies
 
 | Case | Behaviour |

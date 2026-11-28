@@ -21,6 +21,10 @@ OPTIONS = {
     },
     "always_active": {"sensors": ["binary_sensor.tresor"]},
     "reminder_persons": ["person.a"],
+    "homecoming_observe": True,
+    "homecoming_signals": {"person.a": ["sensor.a_wlan"]},
+    "homecoming_ssids": ["Heim"],
+    "presence_leave_mode": {"person.a": "one"},
 }
 
 
@@ -45,6 +49,11 @@ def test_profile_area_and_view() -> None:
     assert set(garage["profiles"]) == {"garage_zu"}
     assert "always_active" not in garage
     assert "reminder_persons" not in garage
+    assert "homecoming_observe" not in garage  # gemessen wird nur im Hauptbereich
+    # Anwesenheit je Person gilt in jedem Bereich gleich (0.66.0b4)
+    assert garage["homecoming_signals"] == {"person.a": ["sensor.a_wlan"]}
+    assert garage["homecoming_ssids"] == ["Heim"]
+    assert garage["presence_leave_mode"] == {"person.a": "one"}
 
 
 def test_stale_area_device() -> None:

@@ -18,8 +18,9 @@ from homeassistant.util import dt as dt_util
 
 from .const import MASTER_USER_ID
 from .core.action_codes import ACTION_CODE_KEYS, ALL_KEYPADS, CodeAction, parse_action_codes
+from .core.advisor import person_uses
 from .core.areas import parse_areas, profile_area
-from .core.automation import parse_automation
+from .core.automation import parse_automation, person_value
 from .core.away_proof import ACCURACY_MODES, is_locator, parse_proof_settings
 from .core.away_proof import MAX_WEAK_WINDOW as PROOF_MAX_WEAK_WINDOW
 from .core.away_proof import MAX_WINDOW as PROOF_MAX_WINDOW
@@ -33,12 +34,15 @@ from .core.controls import (
     lock_id_label,
     parse_controls,
 )
+from .core.homecoming import direction_hint, presence
+from .core.presence_rules import DEFAULT_RULES, leaves_by_door, parse_presence_rules
 from .core.profiles import MAX_STALE_HOURS, profile_ids, profile_info, stale_override_hours
 from .core.restart import BEHAVIORS, continue_alarm, restart_behavior
 from .core.returning import parse_return
 from .core.silence import format_duration
 from .names import display_name
 from .presence_proof import locatable
+from .presence_whatif_ws import build_whatif
 
 
 def _measurements(main: Any) -> dict[str, Any] | None:
@@ -69,6 +73,39 @@ def _geofence_choices(
             continue  # mit Koordinaten zählt es ohnehin als Ortung
         result.append({"id": entity_id, "name": display_name(hass, entity_id)})
     return result
+
+
+def _presence_rules(options: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """Ankommen/Weggehen je Person (ADR 0021) – für jede Person, auch ohne Abweichung."""
+    rules = parse_presence_rules(options)
+    result = {}
+    for person in _presence_persons(options):
+        rule = rules.get(person, DEFAULT_RULES)
+        result[person] = {
+            "arrive_off": sorted(rule.arrive_off),
+            "leave_off": sorted(rule.leave_off),
+            "mode": rule.mode,
+            "door": rule.door,
+            "trigger": rule.trigger,
+            "trigger_away": rule.trigger_away,
+        }
+    return result
+
+
+def _signal_now(hass: HomeAssistant, options: Mapping[str, Any]) -> dict[str, Any]:
+    """Was jedes Signal gerade sagt: True zuhause, False weg, None unbekannt, "direction"."""
+    ssids = frozenset(
+        s.strip() for s in options.get("homecoming_ssids", []) if isinstance(s, str) and s
+    )
+    now: dict[str, Any] = {}
+    for person in _presence_persons(options):
+        state = hass.states.get(person)
+        now[person] = person_value(state.state if state else None)
+        for signal in _signals(options, person):
+            tracked = hass.states.get(signal)
+            value = tracked.state if tracked else None
+            now[signal] = "direction" if direction_hint(value) else presence(value, ssids)
+    return now
 
 
 def _presence_persons(options: Mapping[str, Any]) -> list[str]:
@@ -296,6 +333,34 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
             "signal_persons": _presence_persons(options),
             "person_choices": _entities(hass, ["person"]),
             "signal_choices": _entities(hass, ["device_tracker", "binary_sensor", "sensor"]),
+            # Ankommen/Weggehen je Signal und Person (ADR 0021) und was die Signale gerade sagen
+            "presence": _presence_rules(options),
+            "signal_now": _signal_now(hass, options),
+            # Eigener Auslöser je Person: wählbare Entitäten und was sie gerade zeigen
+            "trigger_choices": [
+                {"id": s.entity_id, "name": display_name(hass, s.entity_id)}
+                for s in sorted(
+                    hass.states.async_all(
+                        ["input_boolean", "binary_sensor", "group", "device_tracker", "switch"]
+                    ),
+                    key=lambda s: display_name(hass, s.entity_id).casefold(),
+                )
+            ],
+            "trigger_now": {
+                r.trigger: (st.state if (st := hass.states.get(r.trigger)) else None)
+                for r in parse_presence_rules(options).values()
+                if r.trigger
+            },
+            # „Was wäre wenn“ mit den gespeicherten Einstellungen (ADR 0021)
+            "whatif": build_whatif(main, options),
+            # Wofür die Anwesenheit jeder Person zählt (Profil-Automatik, Rückkehr, Beobachtung)
+            "uses": {
+                p: [
+                    {"kind": kind, "profile": profile_info(options, pid).name if pid else None}
+                    for kind, pid in person_uses(options, p)
+                ]
+                for p in _presence_persons(options)
+            },
             # Wer gilt gerade als zuhause/weg und warum (ADR 0016)
             "status": _presence_status(main),
             # Messungen der Beobachtung (Heimkehr, Eingänge, Weggehen) – nur wenn sie läuft
@@ -319,6 +384,7 @@ def build_system_settings(hass: HomeAssistant, main: Any) -> dict[str, Any]:
                 display_name(hass, p)
                 for p in _presence_persons(options)
                 if p not in proof.weak
+                and p not in leaves_by_door(options)
                 and not locatable(hass, p, _signals(options, p), proof.geofence)
             ],
         },

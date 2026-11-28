@@ -40,6 +40,86 @@ const ST = {
     ssids: "Heim-WLAN(s), durch Komma getrennt",
     signals: "Zusätzliche Signale je Person",
     signalsHint: "Gelten auch für die Profil-Automatik („alle weg“, „Rückkehr“) – z. B. WLAN-Sensor der Companion App.",
+    wiOff: "Messwerte und Empfehlung gibt es, sobald die Heimkehr-Beobachtung läuft (oben „Heimkehr beobachten“).",
+    wiNotObserved: "{name} wird nicht beobachtet – keine Messwerte. Für Messwerte {name} oben bei „Personen für die Beobachtung“ eintragen.",
+    wiFew: "Noch zu wenig Daten für eine Empfehlung ({n} von {m} Weggängen in den letzten {d} Tagen).",
+    wiPrelim: "Vorläufig für {name} – noch keine Empfehlung ({n} von {m} Weggängen in {d} Tagen)",
+    wiPrelimCol: "Vorläufiger Vorschlag",
+    wiUntick: "Fürs Weggehen abwählen: {list}.",
+    wiTick: "Fürs Weggehen wieder anhaken: {list}.",
+    wiWhyNot: "„Eines reicht (nach Tür)“ mit {list} wäre schneller gewesen ({t}), aber {n}× vermutlich fälschlich – erlaubt ist {max}×.",
+    wiWhyNotFew: "„Eines reicht (nach Tür)“ mit {list} hätte nur {d} von {n} Weggängen erkannt.",
+    wiHouseTrigger: "Profil {p}: eigener Auslöser für „alle weg“ – hier entscheidet die Entität, keine Nachrechnung.",
+    wiTitle: "Empfehlung für {name}: {mode}",
+    wiNow: "Jetzt",
+    wiWith: "Mit Empfehlung",
+    wiDetected: "Als weg erkannt nach",
+    wiMistakes: "Vermutlich fälschlich „weg“",
+    wiMissed: "Nicht erkannt",
+    wiProtected: "durch Beleg geschützt",
+    wiBasis: "Grundlage: {n} Weggänge, {d} Tage. Alles geschätzt – Hauswacht weiß nicht sicher, wer wirklich draußen war.",
+    wiNoDoor: "Ohne „nach Tür“: vermutlich fälschlich {n}×{night}.",
+    wiNight: ", davon {n}× nachts",
+    wiSame: "Deine Einstellung entspricht der Empfehlung.",
+    wiApply: "Empfehlung übernehmen",
+    wiAllNote: "Bei „alle müssen weg sein“ kommt im Echtbetrieb noch der Beleg (Ortung) dazu – das kann länger dauern.",
+    wiTimes: "{n}×",
+    wmSeen: "weg nach {t}",
+    wmNever: "sagt beim Weggehen meist nicht „weg“ ({seen} von {n}) – fürs Weggehen besser abwählen",
+    wmMistakes: "{n} Irrtümer",
+    wmMistake1: "1 Irrtum",
+    wmLongest: " (längster {t})",
+    wmLong: ", {n} davon länger als die Wartezeit",
+    wiWait: "Gezählt werden nur Irrtümer, die länger als {w} min gedauert haben – kürzere hätten nicht scharf geschaltet, weil Hauswacht abbricht, sobald die Person wieder als zuhause gilt. {src}",
+    wiWaitProfile: "Die {w} min sind die Wartezeit im Profil {p} (Automatik → „Scharf, wenn alle weg“). Kürzer eingestellt, wird die Empfehlung strenger.",
+    wiWaitDefault: "Die {w} min sind die voreingestellte Wartezeit, weil noch kein Profil „Scharf, wenn alle weg“ mit Personen nutzt. Sobald eines das tut, gilt dessen Wartezeit.",
+    wiHouseNone: "Kein Profil schaltet bei „alle weg“ automatisch scharf. Einstellen lässt sich das im Profil unter Automatik.",
+    wmNone: "noch nicht gemessen",
+    wiHouseTitle: "Was heißt das fürs Haus?",
+    wiHouseNot: "Profil {p}: Nicht alle Personen bei „Scharf, wenn alle weg“ werden beobachtet – keine Nachrechnung.",
+    wiHouse: "Profil {p} (Wartezeit {w} min), letzte {d} Tage – {label}: {n}× scharf geworden{after}{wrong}{short}.",
+    wiHouseNow: "so wie jetzt",
+    wiHouseAdv: "mit den Empfehlungen",
+    wiHouseQuick: "mit den Empfehlungen und {w} min Wartezeit",
+    wiAfter: ", typisch {m} min nach der Tür des Letzten",
+    wiWrong: ", davon vermutlich {n}× fälschlich",
+    wiShort: ", davon {n}× nur kurz (nach unter 10 min wieder da)",
+    wiHouseHint: "Die Wartezeit stellst du im Profil unter Automatik ein. Kürzer heißt: schneller scharf, aber auch öfter scharf, wenn jemand nur kurz rausgeht.",
+    presTitle: "Welche Signale zählen?",
+    trigTitle: "Eigener Auslöser (statt der Signale)",
+    trigNone: "Keiner – es gelten die Signale unten.",
+    trigPick: "Entität wählen (Schalter, Binärsensor, Gruppe, Tracker) …",
+    trigAway: "Dieser Zustand heißt „weg“",
+    trigAways: { off: "aus (off)", on: "an (on)", not_home: "nicht zuhause (not_home)" },
+    trigClear: "Entfernen",
+    trigWarn: "Damit prüft Hauswacht für {name} nicht mehr selbst: Zeigt die Entität den Zustand, gilt {name} als weg – ohne Beleg, egal was Handy und Ortung sagen. Irrt sich die Entität, kann „Scharf, wenn alle weg“ scharf schalten, obwohl {name} zuhause ist. Unbekannt oder nicht verfügbar zählt nie als weg. Die Signale unten zählen dann nicht.",
+    trigHow: "{name} gilt als weg, wenn „{e}“ „{s}“ zeigt, sonst als zuhause (jetzt: „{now}“). Gilt für „Scharf, wenn alle weg“, „Bei Rückkehr“ (dort braucht es beim Türbeleg weiter die Tür) und die Ausgangserkennung.",
+    trigIgnored: "Wird nicht beachtet – es gilt der eigene Auslöser oben.",
+    wiTrigger: "Eigener Auslöser – keine Nachrechnung, die Entität entscheidet.",
+    presUses: "Wofür zählt das?",
+    presUseKinds: { away: "„Scharf, wenn alle weg“ im Profil {p}", return: "„Bei Rückkehr“ im Profil {p}", observe: "Heimkehr-Beobachtung (misst nur)" },
+    presUseIgnored: "Nicht im Profil {p}: Dort entscheidet ein eigener Auslöser, ob alle weg sind. {name} und diese Signale werden dafür nicht beachtet.",
+    presUseNone: "Wirkt zurzeit nirgends: {name} steht in keinem Profil bei „Scharf, wenn alle weg“ (ohne eigenen Auslöser) oder „Bei Rückkehr“ und wird nicht beobachtet. Diese Einstellungen ändern so nichts.",
+    presSignal: "Signal",
+    presArrive: "Ankommen",
+    presLeave: "Weggehen",
+    presNow: "Jetzt",
+    presPersonRow: "{name} (Person)",
+    presNowVals: { home: "zuhause", away: "weg", unknown: "unbekannt", direction: "nur Richtung" },
+    presMode: "Weggehen erkennen",
+    presModes: { all: "alle müssen weg sein (sicher)", one: "eines reicht (nach Tür)" },
+    presDoor: "Nur nach einer Eingangstür (empfohlen)",
+    presNoDoorWarn: "Unsicher: Ohne Tür reicht ein einziges Signal, das „weg“ sagt. Schläft das Handy nachts ein, gilt {name} als weg – „Scharf, wenn alle weg“ kann dann scharf schalten, obwohl {name} zuhause ist.",
+    presNoArrive: "Kein Signal fürs Ankommen: {name} wird nie als zuhause erkannt.",
+    presNoLeave: "Kein Signal fürs Weggehen: {name} wird nie als weg erkannt.",
+    presOr: " oder ",
+    presAnd: ", ",
+    presHowArrive: "Ankommen: {name} gilt als zuhause, sobald {list} „zuhause“ sagt.",
+    presHowAll: "Weggehen: {name} gilt als weg, wenn alle diese Signale „weg“ sagen – {list} – und es einen Beleg gibt (siehe „Wann gilt jemand als weg?“ unten).",
+    presHowOne: "Weggehen: {name} gilt als weg, sobald eine Eingangstür auf war und danach (bis {w} Minuten) {list} „weg“ sagt. Kommt genau dieses Signal wieder auf „zuhause“, gilt {name} wieder als zuhause.",
+    presHowOneNoDoor: "Weggehen: {name} gilt als weg, sobald {list} „weg“ sagt – auch ohne Tür. Kommt genau dieses Signal wieder auf „zuhause“, gilt {name} wieder als zuhause.",
+    presHowStale: "Ein Signal, das nur fürs Ankommen zählt (z. B. Bluetooth, das durch die Tür sieht), hält {name} beim Weggehen nicht zuhause. Es zählt erst wieder, wenn es zwischendurch weg war.",
+    presHowAlso: "Daneben gilt auch hier: Sagen alle Weggehen-Signale „weg“ und gibt es einen Beleg, ist {name} ebenfalls weg.",
     proofKind: "Beleg für „weg“",
     proofKinds: { fix: "nur Ortung (sicher)", weak: "auch Tür + Signal (unsicher)" },
     geofence: "Zählt als Ortung (Geofence)",
@@ -76,6 +156,9 @@ const ST = {
       observe: "Misst nur, schaltet nichts: wann eure Handys beim Heimkommen und Weggehen reagieren. Daraus kommen die Empfehlungen (Eingangsverzögerung, Zeitfenster, Wartezeit).",
       persons: "Diese Personen werden beobachtet. Personen aus den Profil-Automatiken kommen automatisch dazu.",
       ssids: "Name eures WLANs (wie im Handy angezeigt). Ein WLAN-Sensor der Companion App gilt als „zuhause“, wenn das Handy in einem dieser Netze ist.",
+      presence: "Je Signal zwei Haken: „Ankommen“ – zählt das Signal, um zu erkennen, dass die Person heimkommt? „Weggehen“ – zählt es, um zu erkennen, dass sie weg ist? Beispiel: Bluetooth fürs Ankommen ja, fürs Weggehen nein, weil es oft noch durch die Tür sieht. „Jetzt“ zeigt, was das Signal gerade sagt.",
+      presMode: "„Alle müssen weg sein“: wie bisher – alle Weggehen-Signale sagen „weg“, dazu ein Beleg (Ortung außerhalb oder Tür + Ortung). Sicher, aber oft langsam: Es zählt das langsamste Signal. „Eines reicht (nach Tür)“: Eine Eingangstür war auf, danach sagt eines der Weggehen-Signale „weg“ – das reicht. Schnell, aber nur so gut wie das schnellste Signal: Wähle es nur, wenn die Signale dieser Person sich selten irren.",
+      presDoor: "Empfohlen. Ohne Tür reicht ein Signal, das „weg“ sagt – auch nachts, wenn das Handy einschläft.",
       signals: "Weitere Hinweise, ob eine Person zuhause ist: WLAN-Sensor der App, Ping, Bluetooth, Richtung („Nähe“, Places), weitere Tracker. Ein einziges „zuhause“ reicht für zuhause; für „weg“ müssen alle weg sein.",
       area_name: "Name des Bereichs, z. B. „Garage“. Jeder Bereich hat sein eigenes Bedienfeld und eigene Profile.",
       area_icon: "Symbol des Bereichs, z. B. mdi:garage.",
@@ -224,6 +307,86 @@ const ST = {
     ssids: "Home Wi-Fi(s), separated by commas",
     signals: "Additional signals per person",
     signalsHint: "Also apply to the profile automation (“everyone away”, “arrival”) – e.g. the Wi-Fi sensor of the companion app.",
+    wiOff: "Measurements and recommendation are available as soon as the homecoming observation runs (“Observe homecoming” above).",
+    wiNotObserved: "{name} is not observed – no measurements. For measurements, add {name} above under “Persons for the observation”.",
+    wiFew: "Not enough data for a recommendation yet ({n} of {m} departures in the last {d} days).",
+    wiPrelim: "Preliminary for {name} – no recommendation yet ({n} of {m} departures in {d} days)",
+    wiPrelimCol: "Preliminary suggestion",
+    wiUntick: "Untick for leaving: {list}.",
+    wiTick: "Tick again for leaving: {list}.",
+    wiWhyNot: "“One is enough (after a door)” with {list} would have been faster ({t}), but probably wrong {n}× – {max}× is allowed.",
+    wiWhyNotFew: "“One is enough (after a door)” with {list} would only have detected {d} of {n} departures.",
+    wiHouseTrigger: "Profile {p}: own trigger for “all away” – the entity decides here, no recalculation.",
+    wiTitle: "Recommendation for {name}: {mode}",
+    wiNow: "Now",
+    wiWith: "With recommendation",
+    wiDetected: "Detected as away after",
+    wiMistakes: "Probably wrongly “away”",
+    wiMissed: "Not detected",
+    wiProtected: "protected by proof",
+    wiBasis: "Based on {n} departures, {d} days. All estimated – Hauswacht does not know for sure who was really outside.",
+    wiNoDoor: "Without “after a door”: probably wrongly away {n}×{night}.",
+    wiNight: ", {n}× of them at night",
+    wiSame: "Your setting matches the recommendation.",
+    wiApply: "Apply recommendation",
+    wiAllNote: "With “all must be away”, real operation also needs proof (location) – that can take longer.",
+    wiTimes: "{n}×",
+    wmSeen: "away after {t}",
+    wmNever: "mostly does not report “away” when leaving ({seen} of {n}) – better untick for leaving",
+    wmMistakes: "{n} mistakes",
+    wmMistake1: "1 mistake",
+    wmLongest: " (longest {t})",
+    wmLong: ", {n} of them longer than the waiting time",
+    wiWait: "Only mistakes that lasted longer than {w} min count – shorter ones would not have armed, because Hauswacht stops as soon as the person counts as home again. {src}",
+    wiWaitProfile: "The {w} min are the waiting time in profile {p} (Automation → “arm when all away”). Set shorter, the recommendation gets stricter.",
+    wiWaitDefault: "The {w} min are the default waiting time, because no profile uses “arm when all away” with persons yet. As soon as one does, its waiting time applies.",
+    wiHouseNone: "No profile arms automatically when everyone is away. You can set this in the profile under Automation.",
+    wmNone: "not measured yet",
+    wiHouseTitle: "What does this mean for the house?",
+    wiHouseNot: "Profile {p}: not all persons in “arm when all away” are observed – no recalculation.",
+    wiHouse: "Profile {p} (waiting time {w} min), last {d} days – {label}: armed {n}×{after}{wrong}{short}.",
+    wiHouseNow: "as now",
+    wiHouseAdv: "with the recommendations",
+    wiHouseQuick: "with the recommendations and {w} min waiting time",
+    wiAfter: ", typically {m} min after the last person's door",
+    wiWrong: ", {n}× of them probably wrong",
+    wiShort: ", {n}× of them only briefly (back after less than 10 min)",
+    wiHouseHint: "You set the waiting time in the profile under Automation. Shorter means: armed sooner, but also armed more often when someone only steps out briefly.",
+    presTitle: "Which signals count?",
+    trigTitle: "Own trigger (instead of the signals)",
+    trigNone: "None – the signals below apply.",
+    trigPick: "Choose an entity (switch, binary sensor, group, tracker) …",
+    trigAway: "This state means “away”",
+    trigAways: { off: "off", on: "on", not_home: "not home (not_home)" },
+    trigClear: "Remove",
+    trigWarn: "Hauswacht then no longer checks {name} itself: when the entity shows the state, {name} counts as away – without proof, whatever phone and location say. If the entity is wrong, “arm when all away” may arm although {name} is home. Unknown or unavailable never counts as away. The signals below do not count then.",
+    trigHow: "{name} counts as away when “{e}” shows “{s}”, otherwise as home (now: “{now}”). Applies to “arm when all away”, “On return” (the door proof still needs the door there) and exit detection.",
+    trigIgnored: "Ignored – the own trigger above applies.",
+    wiTrigger: "Own trigger – no recalculation, the entity decides.",
+    presUses: "What does this count for?",
+    presUseKinds: { away: "“arm when all away” in profile {p}", return: "“On return” in profile {p}", observe: "homecoming observation (only measures)" },
+    presUseIgnored: "Not in profile {p}: an own trigger decides there whether everyone is away. {name} and these signals are ignored for that.",
+    presUseNone: "Currently has no effect: {name} is not in “arm when all away” (without an own trigger) or “On return” of any profile and is not observed. These settings therefore change nothing.",
+    presSignal: "Signal",
+    presArrive: "Arriving",
+    presLeave: "Leaving",
+    presNow: "Now",
+    presPersonRow: "{name} (person)",
+    presNowVals: { home: "home", away: "away", unknown: "unknown", direction: "direction only" },
+    presMode: "Detect leaving",
+    presModes: { all: "all must be away (safe)", one: "one is enough (after a door)" },
+    presDoor: "Only after an entry door (recommended)",
+    presNoDoorWarn: "Uncertain: without a door, a single signal reporting “away” is enough. If the phone falls asleep at night, {name} counts as away – “arm when everyone is away” may then arm although {name} is home.",
+    presNoArrive: "No signal for arriving: {name} is never detected as home.",
+    presNoLeave: "No signal for leaving: {name} is never detected as away.",
+    presOr: " or ",
+    presAnd: ", ",
+    presHowArrive: "Arriving: {name} counts as home as soon as {list} reports “home”.",
+    presHowAll: "Leaving: {name} counts as away when all these signals report “away” – {list} – and there is proof (see “When does someone count as away?” below).",
+    presHowOne: "Leaving: {name} counts as away as soon as an entry door was open and afterwards (up to {w} minutes) {list} reports “away”. If exactly that signal comes back to “home”, {name} counts as home again.",
+    presHowOneNoDoor: "Leaving: {name} counts as away as soon as {list} reports “away” – even without a door. If exactly that signal comes back to “home”, {name} counts as home again.",
+    presHowStale: "A signal that only counts for arriving (e.g. Bluetooth, which sees through the door) does not keep {name} home when leaving. It counts again once it was away in between.",
+    presHowAlso: "In addition: if all leaving signals report “away” and there is proof, {name} is away as well.",
     proofKind: "Proof for “away”",
     proofKinds: { fix: "location only (safe)", weak: "also door + signal (uncertain)" },
     geofence: "Counts as location (geofence)",
@@ -260,6 +423,9 @@ const ST = {
       observe: "Only measures, switches nothing: when your phones react when coming home and leaving. The recommendations (entry delay, time window, waiting time) come from this.",
       persons: "These persons are observed. Persons from the profile automations are added automatically.",
       ssids: "Name of your Wi-Fi (as shown on the phone). A Wi-Fi sensor of the Companion app counts as “home” when the phone is in one of these networks.",
+      presence: "Two ticks per signal: “Arriving” – does the signal count to detect that the person comes home? “Leaving” – does it count to detect that they are away? Example: Bluetooth yes for arriving, no for leaving, because it often still sees through the door. “Now” shows what the signal currently reports.",
+      presMode: "“All must be away”: as before – all leaving signals report “away”, plus proof (location outside or door + location). Safe, but often slow: the slowest signal decides. “One is enough (after a door)”: an entry door was open, afterwards one of the leaving signals reports “away” – that is enough. Fast, but only as good as the fastest signal: choose it only if this person's signals are rarely wrong.",
+      presDoor: "Recommended. Without a door, one signal reporting “away” is enough – even at night when the phone falls asleep.",
       signals: "More hints whether a person is home: Wi-Fi sensor of the app, ping, Bluetooth, direction (Proximity, Places), further trackers. A single “home” is enough for home; for “away” all must be away.",
       area_name: "Name of the area, e.g. “Garage”. Every area has its own panel and its own profiles.",
       area_icon: "Icon of the area, e.g. mdi:garage.",
@@ -392,7 +558,7 @@ const se = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // Befunde der gemeinsamen Prüfung, die zum Seitenblatt „Anwesenheit“ gehören
-const PRESENCE_CODES = ["away_never", "return_never", "weak_not_needed", "approach_without_direction", "location_frozen"];
+const PRESENCE_CODES = ["presence_unused", "away_never", "return_never", "weak_not_needed", "approach_without_direction", "location_frozen"];
 
 class HauswachtSystemEditor extends HTMLElement {
   // open({hass, settings, kind, item}) – item: ID (Bereich, Aktions-Code, Bedienteil) oder null
@@ -408,7 +574,11 @@ class HauswachtSystemEditor extends HTMLElement {
     if (kind === "restart") this._draft = copy(sys.restart);
     else if (kind === "silence") this._draft = copy(sys.silence);
     else if (kind === "network") this._draft = copy(sys.network);
-    else if (kind === "homecoming") this._draft = copy(sys.homecoming);
+    else if (kind === "homecoming") {
+      this._draft = copy(sys.homecoming);
+      this._whatif = null;
+      this._wiDirty = false;
+    }
     else if (kind === "page") this._draft = { enabled: sys.settings_page };
     else if (kind === "pinrules") this._draft = { ...copy(sys.pin_rules), master_pin: "", remove_master_pin: false };
     else if (kind === "learn") this._draft = { minutes: sys.controls.learn_minutes };
@@ -485,6 +655,256 @@ class HauswachtSystemEditor extends HTMLElement {
     return { minutes: Math.min(d.proof_max_window, Math.max(15, Math.ceil(longest / 60) + 5)), measured: Math.ceil(longest / 60) };
   }
 
+  _presRule(person, d) {
+    d.presence = d.presence || {};
+    d.presence[person] = d.presence[person] || { arrive_off: [], leave_off: [], mode: "all", door: true, trigger: null, trigger_away: "off" };
+    return d.presence[person];
+  }
+
+  _presenceTable(person, d) {
+    // Anwesenheit je Person (ADR 0021): je Signal Ankommen/Weggehen, Weggehen-Regel, Klartext
+    const rule = this._presRule(person, d);
+    const pname = (d.person_choices.find((c) => c.id === person) || { name: person }).name;
+    const sname = (id) => (id === person ? this._t("presPersonRow").replace("{name}", pname) : (d.signal_choices.find((c) => c.id === id) || { name: id }).name);
+    const rows = [person, ...(d.signals[person] || [])];
+    const nowText = (id) => {
+      const v = (d.signal_now || {})[id];
+      const vals = this._t("presNowVals");
+      return v === true ? vals.home : v === false ? vals.away : v === "direction" ? vals.direction : vals.unknown;
+    };
+    const key = (id) => se(`${person}|${id}`);
+    const body = rows
+      .map((id) => `<tr><td title="${se(id)}">${se(sname(id))}<div class="wm" data-wm="${key(id)}"></div></td>
+        <td class="c"><input type="checkbox" data-pa="${key(id)}" ${rule.arrive_off.includes(id) ? "" : "checked"} aria-label="${se(this._t("presArrive"))}"></td>
+        <td class="c"><input type="checkbox" data-pl="${key(id)}" ${rule.leave_off.includes(id) ? "" : "checked"} aria-label="${se(this._t("presLeave"))}"></td>
+        <td>${se(nowText(id))}</td></tr>`)
+      .join("");
+    const modes = this._t("presModes");
+    const one = rule.mode === "one";
+    const trig = rule.trigger;
+    if (trig) {
+      const tname = (d.trigger_choices || []).find((c) => c.id === trig)?.name || trig;
+      const now = (d.trigger_now || {})[trig];
+      return `${this._presenceUses(person, pname, d)}${this._triggerBlock(person, pname, rule, d)}
+        <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._t("trigHow").replaceAll("{name}", pname).replace("{e}", tname).replace("{s}", rule.trigger_away).replace("{now}", now ?? "–"))}</div>
+        <div class="pres muted"><b>${se(this._t("presTitle"))}</b> ${se(this._t("trigIgnored"))}</div>`;
+    }
+    return `${this._presenceUses(person, pname, d)}${this._triggerBlock(person, pname, rule, d)}<div class="pres"><b>${se(this._t("presTitle"))}</b>${this._info("presence", person)}
+      <div class="ptwrap"><table class="pt"><thead><tr><th>${se(this._t("presSignal"))}</th><th>${se(this._t("presArrive"))}</th><th>${se(this._t("presLeave"))}</th><th>${se(this._t("presNow"))}</th></tr></thead><tbody>${body}</tbody></table></div>
+      <label>${se(this._t("presMode"))} ${this._info("presMode", person)}</label>
+      <select data-pmode="${se(person)}">${["all", "one"].map((m) => `<option value="${m}" ${rule.mode === m ? "selected" : ""}>${se(modes[m])}</option>`).join("")}</select>
+      ${one ? `<div class="chk"><input type="checkbox" data-pdoor="${se(person)}" ${rule.door ? "checked" : ""}><span>${se(this._t("presDoor"))}${this._info("presDoor", person)}</span></div>` : ""}
+      ${one && !rule.door ? `<div class="warn">${se(this._t("presNoDoorWarn").replaceAll("{name}", pname))}</div>` : ""}
+      ${this._presenceWarn(person, pname, rows, rule)}
+      <div class="how"><b>${se(this._t("howLabel"))}</b> ${se(this._presenceHow(person, pname, rows, rule, sname, d))}</div>
+      <div class="wi" data-wi="${se(person)}"></div></div>`;
+  }
+
+  _triggerBlock(person, pname, rule, d) {
+    // Eigener Auslöser je Person: ersetzt die Signale (ohne Beleg)
+    const choices = d.trigger_choices || [];
+    const shown = rule.trigger ? (choices.find((c) => c.id === rule.trigger)?.name || rule.trigger) : "";
+    const list = `hw-sys-trig`;
+    const aways = this._t("trigAways");
+    return `<details class="geo"${rule.trigger ? " open" : ""}><summary>${se(this._t("trigTitle"))}</summary>
+      <input list="${list}" data-ptrig="${se(person)}" value="${se(shown)}" placeholder="${se(this._t("trigPick"))}">
+      ${rule.trigger
+        ? `<label>${se(this._t("trigAway"))}</label><select data-ptaway="${se(person)}">${Object.entries(aways).map(([v, l]) => `<option value="${v}" ${v === rule.trigger_away ? "selected" : ""}>${se(l)}</option>`).join("")}</select>
+           <button type="button" class="b" data-act="trig-clear" data-person="${se(person)}">${se(this._t("trigClear"))}</button>
+           <div class="warn">${se(this._t("trigWarn").replaceAll("{name}", pname))}</div>`
+        : `<div class="muted">${se(this._t("trigNone"))}</div>`}
+      ${this._datalist("trig", choices)}</details>`;
+  }
+
+  _presenceUses(person, pname, d) {
+    // Wofür die Anwesenheit dieser Person zählt – und wo sie wegen eines eigenen Auslösers nicht zählt
+    const uses = (d.uses || {})[person];
+    if (!uses) return "";
+    const kinds = this._t("presUseKinds");
+    const used = uses.filter((u) => u.kind !== "away_ignored").map((u) => kinds[u.kind].replace("{p}", u.profile || ""));
+    const ignored = uses.filter((u) => u.kind === "away_ignored").map((u) => `<div class="muted">${se(this._t("presUseIgnored").replace("{p}", u.profile).replace("{name}", pname))}</div>`).join("");
+    const line = used.length
+      ? `<div class="uses"><b>${se(this._t("presUses"))}</b> ${se(used.join(" · "))}</div>`
+      : `<div class="warn">${se(this._t("presUseNone").replaceAll("{name}", pname))}</div>`;
+    return line + ignored;
+  }
+
+  // --- „Was wäre wenn“ (ADR 0021): Messwerte, Empfehlung, Haus – live mit dem Entwurf ----------
+
+  _dur(sec) {
+    if (sec === null || sec === undefined) return "–";
+    return sec < 90 ? `~${Math.round(sec)} s` : `~${Math.round(sec / 60)} min`;
+  }
+
+  _wiFill() {
+    const root = this.shadowRoot;
+    const d = this._draft;
+    if (!root || !d || this.kind !== "homecoming") return;
+    const wi = this._whatif || d.whatif || { enabled: false };
+    const persons = wi.persons || {};
+    const pname = (p) => (d.person_choices.find((c) => c.id === p) || { name: p }).name;
+    root.querySelectorAll("[data-wm]").forEach((el) => {
+      const raw = el.dataset.wm;
+      const cut = raw.indexOf("|");
+      const info = (persons[raw.slice(0, cut)]?.signals || []).find((x) => x.id === raw.slice(cut + 1));
+      el.textContent = info ? this._wmText(info) : "";
+    });
+    root.querySelectorAll("[data-wi]").forEach((el) => {
+      const p = el.dataset.wi;
+      el.innerHTML = this._wiPerson(p, pname(p), wi, persons[p]);
+    });
+    root.querySelectorAll('[data-act="wi-apply"]').forEach((btn) =>
+      btn.addEventListener("click", () => {
+        this._collect();
+        const p = btn.dataset.person;
+        const adv = ((this._whatif || d.whatif || {}).persons || {})[p]?.advice;
+        if (!adv) return;
+        const rule = this._presRule(p, d);
+        rule.mode = adv.mode;
+        rule.door = true;
+        rule.leave_off = [...(adv.leave_off || [])];
+        this._render();
+      })
+    );
+    const house = root.querySelector("[data-wihouse]");
+    if (house) {
+      const rows = Object.values(wi.enabled ? wi.profiles || {} : {});
+      house.hidden = !wi.enabled;
+      house.innerHTML = !wi.enabled
+        ? ""
+        : rows.length
+          ? `<b>${se(this._t("wiHouseTitle"))}</b>${rows.map((r) => this._wiHouse(r, wi)).join("")}<div class="muted">${se(this._t("wiHouseHint"))}</div>`
+          : `<b>${se(this._t("wiHouseTitle"))}</b><div class="muted">${se(this._t("wiHouseNone"))}</div>`;
+    }
+  }
+
+  _wmText(info) {
+    if (!info.trips) return this._t("wmNone");
+    const parts = [];
+    if (info.seen >= Math.max(1, Math.round(info.trips * 0.5))) parts.push(this._t("wmSeen").replace("{t}", this._dur(info.median)));
+    else parts.push(this._t("wmNever").replace("{seen}", info.seen).replace("{n}", info.trips));
+    let mist = info.mistakes === 1 ? this._t("wmMistake1") : this._t("wmMistakes").replace("{n}", info.mistakes);
+    if (info.mistakes && info.longest_mistake) mist += this._t("wmLongest").replace("{t}", this._dur(info.longest_mistake));
+    if (info.mistakes_long) mist += this._t("wmLong").replace("{n}", info.mistakes_long);
+    parts.push(mist);
+    return parts.join(" · ");
+  }
+
+  _wiPerson(p, name, wi, info) {
+    if (!wi.enabled) return `<div class="muted">${se(this._t("wiOff"))}</div>`;
+    if (this._presRule(p, this._draft).trigger) return `<div class="muted">${se(this._t("wiTrigger"))}</div>`;
+    if (!info) return `<div class="muted">${se(this._t("wiNotObserved").replaceAll("{name}", name))}</div>`;
+    const d = this._draft;
+    const modes = this._t("presModes");
+    const adv = info.advice;
+    const rule = this._presRule(p, d);
+    const sname = (id) => (id === p ? name : (d.signal_choices.find((c) => c.id === id) || { name: id }).name);
+    const advOff = adv.leave_off || [];
+    const sameSet = advOff.length === rule.leave_off.length && advOff.every((x) => rule.leave_off.includes(x));
+    const same = rule.mode === adv.mode && (adv.mode === "all" || rule.door) && sameSet;
+    const cell = (o, key) => {
+      if (key === "median") return o.detected ? this._dur(o.median) : this._t("wiMissed");
+      return o.mistakes === null ? this._t("wiProtected") : this._t("wiTimes").replace("{n}", o.mistakes);
+    };
+    const missed = (o) => (o.detected < o.trips ? ` (${o.trips - o.detected}× ${this._t("wiMissed").toLowerCase()})` : "");
+    const night = info.no_door.night ? this._t("wiNight").replace("{n}", info.no_door.night) : "";
+    const title = info.enough
+      ? this._t("wiTitle").replace("{name}", name).replace("{mode}", modes[adv.mode])
+      : this._t("wiPrelim").replace("{name}", name).replace("{n}", info.trips).replace("{m}", info.min_trips).replace("{d}", wi.days);
+    const untick = advOff.filter((x) => !rule.leave_off.includes(x)).map(sname);
+    const tick = rule.leave_off.filter((x) => !advOff.includes(x)).map(sname);
+    const changes = [
+      untick.length ? this._t("wiUntick").replace("{list}", untick.join(", ")) : "",
+      tick.length ? this._t("wiTick").replace("{list}", tick.join(", ")) : "",
+    ].filter(Boolean).join(" ");
+    let why = "";
+    const one = info.best_one;
+    if (adv.mode === "all" && one && one.trips) {
+      const list = one.leave.map(sname).join(", ");
+      const need = Math.max(1, Math.round(one.trips * 0.8));
+      why = (one.mistakes || 0) > info.max_mistakes
+        ? this._t("wiWhyNot").replace("{list}", list).replace("{t}", this._dur(one.median)).replace("{n}", one.mistakes).replace("{max}", info.max_mistakes)
+        : one.detected < need
+          ? this._t("wiWhyNotFew").replace("{list}", list).replace("{d}", one.detected).replace("{n}", one.trips)
+          : "";
+    }
+    return `<div class="wibox"><b>${se(title)}</b>
+      ${changes ? `<div>${se(changes)}</div>` : ""}
+      <table class="wt"><thead><tr><th></th><th>${se(this._t("wiNow"))}</th><th>${se(info.enough ? this._t("wiWith") : this._t("wiPrelimCol"))}</th></tr></thead><tbody>
+      <tr><td>${se(this._t("wiDetected"))}</td><td>${se(cell(info.current, "median") + missed(info.current))}</td><td>${se(cell(adv, "median") + missed(adv))}</td></tr>
+      <tr><td>${se(this._t("wiMistakes"))}</td><td>${se(cell(info.current, "m"))}</td><td>${se(cell(adv, "m"))}</td></tr></tbody></table>
+      ${why ? `<div class="muted">${se(why)}</div>` : ""}
+      <div class="muted">${se(this._t("wiWait").replace("{w}", info.wait).replace("{src}", (info.wait_profile_name ? this._t("wiWaitProfile").replace("{p}", info.wait_profile_name) : this._t("wiWaitDefault")).replace("{w}", info.wait)))}</div>
+      <div class="muted">${se(this._t("wiBasis").replace("{n}", info.trips).replace("{d}", wi.days))}</div>
+      <div class="muted">${se(this._t("wiNoDoor").replace("{n}", info.no_door.mistakes).replace("{night}", night))}</div>
+      ${rule.mode === "all" || adv.mode === "all" ? `<div class="muted">${se(this._t("wiAllNote"))}</div>` : ""}
+      ${!info.enough ? "" : same ? `<div class="muted">${se(this._t("wiSame"))}</div>` : `<button type="button" class="b" data-act="wi-apply" data-person="${se(p)}">${se(this._t("wiApply"))}</button>`}</div>`;
+  }
+
+  _wiHouse(r, wi) {
+    if (r.trigger) return `<div class="muted">${se(this._t("wiHouseTrigger").replace("{p}", r.name || ""))}</div>`;
+    if (!r.observed) return `<div class="muted">${se(this._t("wiHouseNot").replace("{p}", r.name || ""))}</div>`;
+    const line = (label, res, wait) =>
+      this._t("wiHouse")
+        .replace("{p}", r.name)
+        .replace("{w}", wait)
+        .replace("{d}", wi.days)
+        .replace("{label}", label)
+        .replace("{n}", res.armed)
+        .replace("{after}", res.after !== null ? this._t("wiAfter").replace("{m}", String(res.after).replace(".", this._lang === "de" ? "," : ".")) : "")
+        .replace("{wrong}", res.wrong ? this._t("wiWrong").replace("{n}", res.wrong) : "")
+        .replace("{short}", res.short ? this._t("wiShort").replace("{n}", res.short) : "");
+    const out = [line(this._t("wiHouseNow"), r.current, r.delay), line(this._t("wiHouseAdv"), r.advised, r.delay)];
+    if (r.advised_quick.delay < r.delay) out.push(line(this._t("wiHouseQuick").replace("{w}", r.advised_quick.delay), r.advised_quick, r.advised_quick.delay));
+    return out.map((t) => `<div class="wih">${se(t)}</div>`).join("");
+  }
+
+  _scheduleWhatif() {
+    if (this.kind !== "homecoming") return;
+    clearTimeout(this._wiTimer);
+    this._wiTimer = setTimeout(() => this._fetchWhatif(), 400);
+  }
+
+  async _fetchWhatif() {
+    if (!this.isConnected || !this.hass) return;
+    this._collect();
+    const seq = (this._wiSeq = (this._wiSeq || 0) + 1);
+    const [, data] = this._payload();
+    try {
+      const result = await this.hass.callWS({ type: "hauswacht/presence/whatif", data });
+      if (seq !== this._wiSeq) return;
+      this._whatif = result;
+      this._wiFill();
+    } catch (err) {
+      // Nur Anzeige – bei einem Fehler bleibt der letzte Stand stehen
+    }
+  }
+
+  _presenceWarn(person, pname, rows, rule) {
+    const out = [];
+    if (!rows.some((id) => !rule.arrive_off.includes(id))) out.push(this._t("presNoArrive"));
+    if (!rows.some((id) => !rule.leave_off.includes(id))) out.push(this._t("presNoLeave"));
+    return out.map((t) => `<div class="warn">${se(t.replaceAll("{name}", pname))}</div>`).join("");
+  }
+
+  _presenceHow(person, pname, rows, rule, sname, d) {
+    const arrive = rows.filter((id) => !rule.arrive_off.includes(id)).map(sname);
+    const leave = rows.filter((id) => !rule.leave_off.includes(id)).map(sname);
+    const parts = [];
+    if (arrive.length) parts.push(this._t("presHowArrive").replace("{list}", arrive.join(this._t("presOr"))));
+    if (leave.length) {
+      if (rule.mode === "one") {
+        const text = rule.door ? this._t("presHowOne") : this._t("presHowOneNoDoor");
+        parts.push(text.replace("{list}", leave.join(this._t("presOr"))).replace("{w}", String(d.proof_weak_window)));
+        parts.push(this._t("presHowAlso"));
+      } else {
+        parts.push(this._t("presHowAll").replace("{list}", leave.join(this._t("presAnd"))));
+      }
+    }
+    if (rows.some((id) => !rule.arrive_off.includes(id) && rule.leave_off.includes(id))) parts.push(this._t("presHowStale"));
+    return parts.join(" ").replaceAll("{name}", pname);
+  }
+
   _weakPick(person, d) {
     // Beleg für „weg“ je Person: nur Ortung (sicher) oder auch Tür + Signal (unsicher)
     const weak = d.proof_weak.includes(person);
@@ -532,7 +952,7 @@ class HauswachtSystemEditor extends HTMLElement {
           <label>${se(this._t("proofWindow"))} ${this._info("window")}</label>
           <input class="small" type="number" min="1" max="${d.proof_max_window}" data-f="proof_window" value="${se(d.proof_window)}">
           <div class="muted">${se(recText)} ${Number(d.proof_window) === rec.minutes ? "" : `<button type="button" class="b" data-act="proof-rec" data-field="proof_window" data-value="${rec.minutes}">${se(this._t("apply"))}</button>`}</div>
-          ${d.proof_weak.length ? this._weakWindow(d) : ""}
+          ${d.proof_weak.length || Object.values(d.presence || {}).some((r) => r.mode === "one") ? this._weakWindow(d) : ""}
         </details></div>`;
   }
 
@@ -601,13 +1021,14 @@ class HauswachtSystemEditor extends HTMLElement {
     if (k === "homecoming") {
       const persons = [...new Set([...d.persons, ...d.signal_persons])];
       const signals = persons
-        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._weakPick(p, d)}${this._geofencePick(p, d)}</div>`)
+        .map((p, i) => `<div class="box"><b>${se((d.person_choices.find((c) => c.id === p) || { name: p }).name)}</b>${this._entityList(`sig:${i}`, d.signals[p] || [], d.signal_choices)}${this._presenceTable(p, d)}${this._presRule(p, d).mode === "one" ? "" : this._weakPick(p, d)}${this._geofencePick(p, d)}</div>`)
         .join("");
       return `<h2>${se(this._t("homecoming"))}</h2>
         ${this._chk("observe", d.observe, this._t("observe"))}
         ${this._lab("persons", this._t("persons"))}${this._entityList("per", d.persons, d.person_choices)}${this._datalist("per", d.person_choices)}
         ${this._lab("ssids", this._t("ssids"))}<input data-f="ssids" value="${se(d.ssids.join(", "))}">
         ${this._lab("signals", this._t("signals"))}<div class="muted">${se(this._t("signalsHint"))}</div>${signals}${this._datalist("sig", d.signal_choices)}
+        <div class="box" data-wihouse></div>
         ${this._proofForm(d)}`;
     }
     if (k === "area") {
@@ -699,6 +1120,28 @@ class HauswachtSystemEditor extends HTMLElement {
       }
       const more = root.querySelector("details.more");
       if (more) this._moreOpen = more.open;
+      // Anwesenheit je Person (ADR 0021)
+      const flip = (attr, field) =>
+        root.querySelectorAll(`[${attr}]`).forEach((el) => {
+          const raw = el.getAttribute(attr);
+          const cut = raw.indexOf("|");
+          const rule = this._presRule(raw.slice(0, cut), d);
+          const id = raw.slice(cut + 1);
+          rule[field] = rule[field].filter((x) => x !== id);
+          if (!el.checked) rule[field].push(id);
+        });
+      flip("data-pa", "arrive_off");
+      flip("data-pl", "leave_off");
+      root.querySelectorAll("[data-pmode]").forEach((el) => (this._presRule(el.dataset.pmode, d).mode = el.value));
+      root.querySelectorAll("[data-pdoor]").forEach((el) => (this._presRule(el.dataset.pdoor, d).door = el.checked));
+      root.querySelectorAll("[data-ptrig]").forEach((el) => {
+        const value = el.value.trim();
+        const rule = this._presRule(el.dataset.ptrig, d);
+        const match = (d.trigger_choices || []).find((c) => c.id === value || c.name === value);
+        rule.trigger = match ? match.id : value.includes(".") ? value : null;
+        rule.trigger_away = rule.trigger_away || "off";
+      });
+      root.querySelectorAll("[data-ptaway]").forEach((el) => (this._presRule(el.dataset.ptaway, d).trigger_away = el.value));
     }
   }
 
@@ -729,7 +1172,7 @@ class HauswachtSystemEditor extends HTMLElement {
       case "network":
         return ["network_save", { entities: d.entities }];
       case "homecoming":
-        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window, proof_geofence: d.proof_geofence || [] }];
+        return ["homecoming_save", { observe: d.observe, persons: d.persons, ssids: d.ssids, signals: d.signals, proof_window: d.proof_window, proof_accuracy: d.proof_accuracy, proof_weak: d.proof_weak, proof_weak_window: d.proof_weak_window, proof_geofence: d.proof_geofence || [], presence: d.presence || {} }];
       case "area":
         return ["area_save", { id: this.item, name: d.name, icon: d.icon }];
       case "page":
@@ -784,6 +1227,21 @@ class HauswachtSystemEditor extends HTMLElement {
       .tip { display: block; font-size: .85rem; margin: 4px 0 6px; padding: 8px 10px; border-radius: 6px; background: var(--secondary-background-color); font-weight: normal; }
       .how { margin: 8px 0 4px; font-size: .9rem; }
       details.more { margin-top: 10px; }
+      .pres { margin: 10px 0; }
+      .uses { margin: 8px 0 2px; font-size: .9rem; }
+      .wm { font-size: .8rem; color: var(--secondary-text-color); }
+      .wibox { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: var(--secondary-background-color); font-size: .9rem; }
+      table.wt { width: 100%; border-collapse: collapse; margin: 6px 0; table-layout: fixed; }
+      table.wt th, table.wt td { text-align: left; padding: 3px 4px; overflow-wrap: anywhere; }
+      .wih { margin: 6px 0; font-size: .9rem; }
+      [data-wihouse][hidden] { display: none; }
+      .ptwrap { max-width: 100%; overflow-x: auto; }
+      table.pt { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 6px 0; font-size: .9rem; }
+      table.pt th, table.pt td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--divider-color); overflow-wrap: anywhere; vertical-align: middle; }
+      table.pt th:nth-child(2), table.pt th:nth-child(3) { width: 6.2em; }
+      table.pt th:nth-child(4) { width: 5.6em; }
+      table.pt th:nth-child(2), table.pt th:nth-child(3), table.pt td.c { text-align: center; }
+      table.pt th { overflow-wrap: normal; hyphens: auto; }
       details.more summary { cursor: pointer; color: var(--primary-color); }`;
     this.shadowRoot.innerHTML = `<style>${(window.HauswachtEditStyle || "") + style + (window.HauswachtAdvisor?.style || "")}</style><div class="sheet">${this._form()}
       ${this.kind === "homecoming" ? `<div class="advice" data-advice></div>` : ""}
@@ -798,6 +1256,9 @@ class HauswachtSystemEditor extends HTMLElement {
     if (this.kind === "homecoming") {
       this._showAdvice();
       this._scheduleAdvice();
+      this._wiFill();
+      if (this._wiDirty) this._scheduleWhatif();
+      this._wiDirty = true;
     }
   }
 
@@ -909,6 +1370,15 @@ class HauswachtSystemEditor extends HTMLElement {
       })
     );
     root.querySelectorAll("[data-weak]").forEach((el) => el.addEventListener("change", redraw));
+    root.querySelectorAll("[data-pa], [data-pl], [data-pmode], [data-pdoor], [data-ptrig], [data-ptaway]").forEach((el) => el.addEventListener("change", redraw));
+    root.querySelectorAll('[data-act="trig-clear"]').forEach((btn) =>
+      btn.addEventListener("click", () => {
+        this._collect();
+        const rule = this._presRule(btn.dataset.person, this._draft);
+        rule.trigger = null;
+        this._render();
+      })
+    );
     root.querySelectorAll("[data-geo]").forEach((el) => el.addEventListener("change", () => this._scheduleAdvice?.()));
     root.querySelector('[data-f="proof_window"]')?.addEventListener("input", (ev) => {
       const how = root.querySelector("[data-how]");

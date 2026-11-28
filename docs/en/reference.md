@@ -94,6 +94,7 @@ in its attributes. For automations **`phase`** is the most important trigger.
 | `open_rule_sensors` | Open sensors that only appear in trigger rules of the active profile | `[]` |
 | `bypassed_sensors`, `bypassed_until_closed` | Bypassed sensors (until disarmed or until closed) | `[]` |
 | `passage` | Running [passage](passage.md): `direction` (`in` coming in, `out` going out), `until` (end when going out), `by`, `doors` (doors used), `doors_allowed` (doors still allowed when going out), `sensors` (currently bypassed by the passage); otherwise empty | `{"direction": "out", "until": "…", …}` |
+| `exit_detection` | Running [exit detection](passage.md#detect-going-out-without-a-pin-exit-detection): `mode` (`passage` automatic passage, `wait` silent waiting time), `until` (end), `persons` (watched, were home at the opening), `gone` (person → "away" since), `confirm` (seconds "away" must hold); otherwise empty | `{"mode": "passage", "until": "…", "persons": ["person.anna"], …}` |
 | `zones` | Sensor groups with their actual sensors | `{"Outside": […]}` |
 | `last_contact` | Last contact per sensor | `{…}` |
 | `sirens_hardware_enabled` | Real siren control released | `true` |
@@ -239,6 +240,10 @@ proof), `Neustart` (restart).
 | `PhoneArrivalNoted` | [On return: let in](passage.md#let-in-by-phone): arrival detected (away for at least 5 minutes before), profile armed | `profile_id`, `persons` |
 | `DoorNoted` | "Disarm with door proof": entry door detected | `profile_id`, `door` |
 | `EntryDelayExtended` | [Approach](profiles.md#approach-extends-the-entry-delay): entry delay extended because a person from "On return" approached | `profile_id`, `seconds`, `normal`, `persons` |
+| `ExitWaitStarted` | [Exit detection](passage.md#detect-going-out-without-a-pin-exit-detection): silent waiting time instead of the entry delay, because someone was verifiably home | `profile_id`, `door`, `seconds`, `persons` |
+| `ExitPassage` | Exit detection: the sensor in the house reported shortly before the opening – automatic passage, the door is free for the passage time | `profile_id`, `door` |
+| `ExitDetected` | Exit detection: a person went out – the profile stays armed, the door is bypassed until closed | `profile_id`, `door`, `person` |
+| `ExitLetThrough` | Exit detection: "Let through" via push – the profile stays armed | `profile_id`, `door`, `person` (empty) |
 
 ### Operation
 

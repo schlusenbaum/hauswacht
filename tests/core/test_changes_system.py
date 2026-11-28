@@ -135,3 +135,45 @@ def test_action_codes() -> None:
     deleted = delete_action_code(change.options, code_id)
     assert deleted.options is not None
     assert deleted.options["action_codes"] == {}
+
+
+def test_save_presence_rules_per_person() -> None:
+    """Ankommen/Weggehen je Person (ADR 0021): nur eigene Signale, nur Abweichungen."""
+    data = {
+        "signals": {"person.anna": ["sensor.wlan", "device_tracker.ble"]},
+        "presence": {
+            "person.anna": {
+                "arrive_off": ["person.anna", "sensor.fremd"],
+                "leave_off": ["device_tracker.ble"],
+                "mode": "one",
+                "door": False,
+            },
+            "person.ben": {"arrive_off": [], "leave_off": [], "mode": "all", "door": True},
+        },
+    }
+    change = save_homecoming(_options(), data)
+    assert change.options is not None
+    assert change.options["presence_arrive_off"] == {"person.anna": ["person.anna"]}
+    assert change.options["presence_leave_off"] == {"person.anna": ["device_tracker.ble"]}
+    assert change.options["presence_leave_mode"] == {"person.anna": "one"}
+    assert change.options["presence_leave_no_door"] == ["person.anna"]
+    # ohne „presence“ im Formular bleibt alles, wie es war
+    untouched = save_homecoming(change.options, {"signals": data["signals"]})
+    assert untouched.options is not None
+    assert untouched.options["presence_leave_mode"] == {"person.anna": "one"}
+
+
+def test_save_person_trigger() -> None:
+    """Eigener Auslöser je Person wird gespeichert; ohne Punkt ist es keine Entität."""
+    data = {
+        "signals": {},
+        "presence": {
+            "person.anna": {"trigger": "input_boolean.anna_weg", "trigger_away": "on"},
+            "person.ben": {"trigger": "kaputt"},
+        },
+    }
+    change = save_homecoming(_options(), data)
+    assert change.options is not None
+    assert change.options["presence_trigger"] == {
+        "person.anna": {"entity": "input_boolean.anna_weg", "away": "on"}
+    }

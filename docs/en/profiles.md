@@ -173,6 +173,159 @@ the Wi-Fi is gone too does the delay start.
 This way a signal that drops out briefly does not arm right away, and the fastest signal
 detects the arrival.
 
+#### Arriving and leaving per signal
+
+*From 0.66.0b1* ([ADR 0021](../entwicklung/adr/0021-anwesenheit-je-person.md), German). Not every
+signal is good for both directions. Bluetooth detects coming home quickly, but when leaving it
+often still sees through the front door. The app's location notices leaving reliably, but only
+after minutes. That is why the box of each person contains a table:
+
+| Column | Meaning |
+|---|---|
+| **Signal** | the person itself and each of their signals |
+| **Arriving** | ticked: the signal counts to detect that the person comes home |
+| **Leaving** | ticked: the signal counts to detect that the person is away |
+| **Now** | what the signal currently reports: home, away, unknown or direction only |
+
+Below it you choose how **leaving** is detected:
+
+- **all must be away (safe)** – as before: all leaving signals report "away", and there must be
+  [proof](#away-only-with-proof). Safe, but the slowest signal always decides.
+- **one is enough (after a door)** – fast: an entry door was open, and afterwards **one** of the
+  leaving signals reports "away". That is enough, no proof is needed. The time window after the
+  door is the same as for "door + signal" (under "More settings", default 5 minutes). If exactly
+  that signal comes back to "home", it was a mistake: the person counts as home again. "All away
+  with proof" still applies as well – so "one is enough" is never slower.
+- **Only after an entry door** (with "one is enough", on by default): if you switch it off, one
+  signal reporting "away" is enough even without a door. That is uncertain: if the phone falls
+  asleep at night, the person counts as away. That is why a warning appears.
+
+**Arriving** is always "one is enough": as soon as an arriving signal reports "home", the person
+is home. Detecting a homecoming quickly never causes a false alarm.
+
+**Leaving takes priority.** A signal that only counts for arriving and simply keeps reporting
+"home" (Bluetooth through the door) does not keep the person home when leaving. It counts again
+once it was away in between and then reports "home" again.
+
+Above the table, **"What does this count for?"** (*from 0.66.0b3*) shows in which profiles the
+person is in "arm when all away" or "On return" and whether the homecoming observation measures
+them. If they are in a profile with an [own trigger](#own-trigger-for-all-away), it says that they
+do not count in that profile. If they count nowhere, the page warns: then the settings in the
+table change nothing.
+
+Below the table, one sentence says **what happens** – it changes as soon as you tick a box. If a
+whole column has no tick, the page warns: without an arriving signal the person is never
+detected as home, without a leaving signal never as away.
+
+**Example:** Anna has Wi-Fi, ping, Bluetooth and the app's location.
+
+| Signal | Arriving | Leaving |
+|---|---|---|
+| Anna (person) | ☑ | ☑ |
+| Wi-Fi | ☑ | ☑ |
+| Ping | ☑ | ☑ |
+| Bluetooth | ☑ | ☐ |
+
+Leaving: **one is enough (after a door)**. Anna walks out of the front door in the morning,
+40 seconds later her Wi-Fi is gone → Anna is **away**, although ping and Bluetooth still report
+"home". Without a new door nothing happens at night when her Wi-Fi falls asleep.
+
+Ben only has ping, and it is wrong more often. For him **all must be away** stays the right
+choice.
+
+#### Measured, recommendation and "what if"
+
+*From 0.66.0b5.* If the [homecoming observation](observations.md#homecoming-observation) runs and
+the person is observed, Hauswacht recalculates the settings on the **last 14 days**. Nothing is
+switched and nothing is saved.
+
+- **Below each signal** a small line shows what was measured, e.g. "away after ~40 s · 1 mistake".
+  If a signal mostly does not report "away" when leaving (Bluetooth that sees through the door),
+  it says "mostly does not report 'away' when leaving – better untick for leaving".
+- **Recommendation per person** with the comparison "Now" against "With recommendation": after
+  how many seconds or minutes they would have been detected as away and how often probably
+  wrongly. Below it, what would have happened without "after a door", with the number of cases at
+  night. A button **"Apply recommendation"** switches "detect leaving". It is only saved with
+  "Save".
+- **"What does this mean for the house?"** – per profile with "arm when all away": how often it
+  would have armed in the 14 days and how long after the last person's door. Once as now, once
+  with the recommendations and – if the waiting time is longer – with 3 minutes waiting time. It
+  also says how often someone was back after less than 10 minutes. You set the waiting time
+  itself in the profile.
+
+Everything changes **immediately** when you tick a box or switch "detect leaving".
+
+How Hauswacht counts:
+
+| Term | Meaning |
+|---|---|
+| **Departure** | An entry door was open, afterwards all signals of the person were away, and on return a door opened again (or the person is still away) |
+| **Mistake** | A signal reports "away" and comes back **without** a door opening – so the person was not outside at all |
+| **Probably wrongly "away"** | How often the rule would have counted someone as away although it was a mistake – for **longer than the waiting time** (see below). With "after a door" only mistakes shortly after a door count |
+
+- **Only mistakes that last longer than the waiting time count as wrong** (*from 0.66.0b7*). If
+  the signal comes back earlier, the person counts as home again and Hauswacht stops arming – so
+  a short Wi-Fi hiccup does no harm. The waiting time is the shortest of the profiles in which the
+  person is in "arm when all away"; if no profile uses "all away" with persons, the default
+  **15 minutes**. You change it in the profile under Automation. **A shorter waiting time means a
+  stricter recommendation**, because shorter mistakes count then too. Below each signal you see
+  how long the longest mistake was, e.g. "2 mistakes (longest ~40 s)", and how many of them were
+  longer than the waiting time.
+- A recommendation needs at least **5 departures** in the 14 days. Before that the box still shows
+  the **preliminary numbers**, e.g. "Preliminary for Ben – no recommendation yet (4 of 5
+  departures in 14 days)", but without the "Apply" button (*from 0.66.0b6*).
+- The recommendation **tries all combinations** of leaving signals (*from 0.66.0b6*) and says
+  exactly what should change, e.g. "Untick for leaving: Bluetooth". "Apply recommendation" then
+  also sets these ticks.
+- "One is enough (after a door)" is only recommended if it would **never** have been wrong in the
+  14 days and would have detected at least 4 out of 5 departures. Of all combinations that
+  manage this, the one that detects the most and is fastest wins.
+- If it stays with "all must be away", the **reason** is shown below, e.g. "'One is enough (after
+  a door)' with Wi-Fi would have been faster (~52 s), but probably wrong 1×". With "all must be
+  away" Hauswacht only suggests unticking signals that **prevent** departures (because they never
+  report "away" when leaving).
+- If a profile has an [own trigger](#own-trigger-for-all-away), "What does this mean for the
+  house?" says: "own trigger – the entity decides here, no recalculation". If no profile arms when
+  everyone is away, it says exactly that.
+- With **"all must be away"** real operation also needs proof (location). The recalculation cannot
+  replay that. It only shows when all leaving signals were away and says "protected by proof" for
+  mistakes.
+- **Everything is estimated.** Hauswacht does not know for sure who was really outside; it infers
+  it from doors and returns.
+- It uses the data the homecoming observation stores anyway: only times, no locations. How long
+  they are kept is described under [observations](observations.md#homecoming-observation).
+
+**If you change nothing, you notice no difference:** all boxes are ticked, leaving is set to
+"all must be away" – exactly as before 0.66. The [own trigger](#own-trigger-for-all-away) in the
+profile still applies instead of the persons. And the house still only counts as empty when
+**all** persons are away – "one is enough" only applies within one person.
+
+#### Own trigger per person
+
+*From 0.66.0b11.* If you already have your own logic for a person – a switch
+`input_boolean.ben_weg`, a HomeKit variable, a person group, your own tracker –, you can choose it
+under System → Presence in the person's box at **"Own trigger (instead of the signals)"**, plus
+the state that means **"away"** (off, on or `not_home`).
+
+Then **only the trigger** applies to this person:
+
+| | with own trigger |
+|---|---|
+| Home or away | if the entity shows the chosen state: **away**, otherwise **home**; unknown or unavailable **never counts as away** |
+| Signals, ticks, "detect leaving" | are **ignored** (the table is hidden) |
+| "Away only with proof" | does **not** apply – the entity needs no proof |
+| "Arm when all away" | the person counts via the trigger |
+| "On return" | coming home = the trigger switches to home. With **"disarm with door proof"** the **door** is still required – the trigger alone never disarms |
+| Exit detection | went out = the trigger switches to "away" after the opening |
+| "What if" | no recalculation for this person – the entity decides |
+
+> ⚠️ **Hauswacht no longer checks this person itself.** If the entity is wrong while the person is
+> home, "arm when all away" may arm. The person's box and the check-up point this out.
+
+*Example:* Ben has no smartphone with the Companion app, but an automation that switches on
+`input_boolean.ben_weg` when his car leaves the driveway. Own trigger: `input_boolean.ben_weg`,
+"away" = on. While the switch is on, Ben is away for Hauswacht – everywhere.
+
 #### "Away" only with proof
 
 *From 0.61.* A sleeping phone must not make anybody away. If a phone in the house loses its Wi-Fi
@@ -289,6 +442,32 @@ the waiting time; unknown or unavailable never counts as away. The other rules s
 > proof. If the entity is wrong while someone is home, there is a false alarm. The
 > [assistant](setup-wizard.md#what-is-checked) shows a warning, and the scenario preview does not
 > play through "everyone leaves" for such a profile. "On return" stays with the persons.
+
+**What still counts with an own trigger – and what does not** (*from 0.66.0b3*):
+
+| Setting | Counts for this profile? |
+|---|---|
+| The entity and its state "all away" | **yes** – only it decides whether everyone is away |
+| The waiting time ("after … minutes") | **yes** |
+| The ticked persons in "arm when all away" | **no** – they are ignored |
+| Signals, ticks and "detect leaving" of these persons under System → Presence | **no**, not for "all away" in this profile |
+| "Away only with proof" (location, time window, "door + signal") | **no** – the entity needs no proof |
+| "On return" in this profile | **yes** – that stays with the persons and their signals |
+| Other profiles without an own trigger, homecoming observation | **yes** – persons and signals count there as usual |
+
+So that nobody sets something that has no effect, Hauswacht shows this in three places:
+
+- **In the profile** a note appears below the persons as soon as an own trigger is set, and the
+  sentence "This is how it behaves:" names the entity instead of the persons.
+- **Under System → Presence** each person shows **"What does this count for?"** – e.g. ""On
+  return" in profile Away · homecoming observation" – and below it "Not in profile Night: an own
+  trigger decides there …". If the person counts nowhere, a warning appears.
+- **In the check-up** of the [assistant](setup-wizard.md#what-is-checked) the tips "persons are
+  ignored" (with a suggestion to untick them) and "settings under Presence have no effect" appear.
+
+*Example:* In the profile "Away", `input_boolean.alle_weg` is set as own trigger, and Anna and Ben
+are still ticked. Away arms when the switch has been "on" for 15 minutes – whatever Anna's Wi-Fi
+says. When Anna comes home, "On return" still works via her signals.
 
 ### On return
 
@@ -511,6 +690,12 @@ armed while someone is in the house. Without further areas nothing changes.
 - **Shared by all areas:** PIN lockout, test mode and sirens. Test mode can only be switched
   while all areas are disarmed; a siren used by two areas at the same time stays on until both
   have ended their alarm.
+- **Presence is the same in all areas** (*from 0.66.0b4*): signals per person, home Wi-Fis,
+  [arriving and leaving per signal](#arriving-and-leaving-per-signal), "away only with proof" and
+  all entry doors apply to every area. Whoever counts as away in the house also counts as away for
+  "arm when all away" in the garage. Up to 0.66.0b3 an additional area only saw the person
+  entity, not the additional signals. Measuring (homecoming observation) only happens in the
+  first area.
 - **Notifications** carry the area name in the title, e.g. "Hauswacht: alarm (Garage)".
 - An area can only be deleted when no alarm profile belongs to it any more. Its device and
   entities disappear with it.

@@ -70,6 +70,7 @@ from .export_ws import async_register_export_websocket
 from .goals_ws import async_register_goals_websocket
 from .names import display_name
 from .people_settings_ws import build_people_settings, ha_user_choices, to_iso
+from .presence_whatif_ws import async_register_whatif_websocket
 from .profile_settings_ws import build_profile_settings
 from .rule_settings_ws import build_rule_settings, ws_rule_check
 from .runtime import device_class_of, entities_by_label
@@ -566,4 +567,5 @@ def async_register_settings_websocket(hass: HomeAssistant) -> None:
     async_register_advisor_websocket(hass)
     async_register_goals_websocket(hass)
     async_register_export_websocket(hass)
+    async_register_whatif_websocket(hass)
     hass.data[DATA_WS] = True

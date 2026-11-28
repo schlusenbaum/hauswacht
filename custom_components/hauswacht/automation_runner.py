@@ -76,6 +76,13 @@ from .core.debug_log import describe
 from .core.homecoming import DIRECTION_HINT as DIRECTION_APPROACH
 from .core.homecoming import direction_hint, presence
 from .core.notify_events import NotifyEvent
+from .core.presence_rules import (
+    DEFAULT_RULES,
+    MODE_ONE,
+    Signal,
+    parse_presence_rules,
+    trigger_value,
+)
 from .core.profiles import profile_ids
 from .core.returning import ReturnConfig, parse_return
 from .core.state_machine import AlarmState
@@ -144,6 +151,7 @@ class AutomationRunner:
     def start(self) -> None:
         options = self.runtime.options
         self.proof.settings = parse_proof_settings(options)
+        self.proof.rules = parse_presence_rules(options)  # Ankommen/Weggehen je Person (ADR 0021)
         configs = {
             pid: cfg
             for pid in profile_ids(options)
@@ -193,6 +201,9 @@ class AutomationRunner:
             owners: dict[str, list[str]] = {}
             for person in persons:
                 sources = [person, *self.signals.get(person, ())]
+                rule = self.proof.rules.get(person)
+                if rule is not None and rule.trigger is not None:
+                    sources.append(rule.trigger)  # eigener Auslöser der Person
                 state = self.hass.states.get(person)
                 trackers = state.attributes.get("device_trackers", []) if state else []
                 if isinstance(trackers, list):  # Ortungen der Person (Frische, Beleg)
@@ -286,6 +297,11 @@ class AutomationRunner:
 
     # --- Anwesenheit ----------------------------------------------------------
 
+    def _since(self, entity_id: str) -> float:
+        """Seit wann das Signal seinen Zustand hat (für Ankommen nach dem Weggehen, ADR 0021)."""
+        state = self.hass.states.get(entity_id)
+        return state.last_changed.timestamp() if state is not None else 0.0
+
     def _state(self, entity_id: str) -> str | None:
         state = self.hass.states.get(entity_id)
         return state.state if state else None
@@ -317,6 +333,12 @@ class AutomationRunner:
             if not self.proof.proven(person):
                 self.proof.mark_proven(person, "simulated", now)
             return False, {"kind": "simulated"}
+        rule = self.proof.rules.get(person)
+        if rule is not None and rule.trigger is not None:
+            # Eigener Auslöser der Person: er allein entscheidet, ohne Beleg
+            state = self._state(rule.trigger)
+            value = trigger_value(state, rule.trigger_away)
+            return self.proof.judge_trigger(person, value, now), {"kind": "entity", "state": state}
         signals = self.signals.get(person, ())
         values = {person: person_value(self._state(person))}
         for signal in signals:
@@ -324,6 +346,7 @@ class AutomationRunner:
             if not direction_hint(state):
                 values[signal] = presence(state, self.ssids)
         combined = combine(list(values.values()))
+        rules_set = person in self.proof.rules
         fixes = (
             person_fixes(
                 self.hass,
@@ -332,10 +355,15 @@ class AutomationRunner:
                 self.proof.settings.accuracy,
                 self.proof.settings.geofence,
             )
-            if combined is False
+            if combined is False or (rules_set and False in values.values())
             else []
         )
-        result = self.proof.judge(person, combined, fixes, now)
+        result = self.proof.judge_signals(
+            person,
+            [Signal(e, v, self._since(e)) for e, v in values.items()],
+            fixes,
+            now,
+        )
         if result is True:
             return True, {"kind": "home", "by": [e for e, v in values.items() if v is True]}
         if result is False:
@@ -345,7 +373,7 @@ class AutomationRunner:
                 "proof": kind[0] if kind else None,
                 "at": kind[1] if kind else None,
             }
-        if combined is False:
+        if combined is False or (rules_set and False in values.values()):
             # Was fehlt? (ADR 0018: „Warum nicht scharf?“)
             settings = self.proof.settings
             return None, {
@@ -374,6 +402,7 @@ class AutomationRunner:
             for p in self._home
             if p not in self.proof.settings.weak
             and p not in self._away_entities()
+            and self.proof.rules.get(p, DEFAULT_RULES).mode != MODE_ONE
             and not locatable(self.hass, p, self.signals.get(p, ()), self.proof.settings.geofence)
         ]
 
@@ -474,7 +503,7 @@ class AutomationRunner:
             and self._signal_value(entity_id, new_state.state) is False
         ):
             for owner in self._owners.get(entity_id, ()):
-                self.proof.note_signal_left(owner, now)
+                self.proof.note_signal_left(owner, now, entity_id)
         # Annäherung (Richtung „nähert sich“) – verlängert die Eingangsverzögerung (ADR 0015)
         if new_state is not None and new_state.state in DIRECTION_APPROACH:
             for owner in self._owners.get(entity_id, ()):

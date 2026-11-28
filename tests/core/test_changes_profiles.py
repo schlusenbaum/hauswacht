@@ -182,3 +182,21 @@ def test_full_form_stores_schedule() -> None:
     change = save_profile(_options(), None, _form(automation={"auto_schedule": "schedule.x"}))
     assert change.options is not None
     assert change.options["profiles"]["abwesend"]["auto_schedule"] == "schedule.x"
+
+
+def test_exit_detection_saved_with_limits() -> None:
+    """ADR 0014: Ausgangserkennung im Profil – über 5 Minuten nur als Expertenoption."""
+    form = {"exit_detect": {"enabled": True, "wait": 9, "inside": ["binary_sensor.treppe"]}}
+    change = save_profile(_options(), "night", {"name": "Nacht", **form}, partial=True)
+    assert change.options is not None
+    stored = change.options["profiles"]["night"]["exit_detect"]
+    assert stored == {
+        "enabled": True,
+        "wait": 5,
+        "expert": False,
+        "inside": ["binary_sensor.treppe"],
+    }
+    form["exit_detect"]["expert"] = True
+    change = save_profile(_options(), "night", {"name": "Nacht", **form}, partial=True)
+    assert change.options is not None
+    assert change.options["profiles"]["night"]["exit_detect"]["wait"] == 9

@@ -50,8 +50,9 @@ const TEXT = {
       reasonSim: "simuliert (nur für Hauswacht)",
       reasonHome: "zuhause laut: {by}",
       reasonNoProof: "alle Signale „weg“, aber kein Beleg – zählt nicht als weg",
+      reasonEntity: "eigener Auslöser, Zustand „{s}“",
       reasonUnclear: "unklar: {by}",
-      proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
+      proofs: { fresh: "Beleg: frische Ortung außerhalb", door: "Beleg: Tür + Ortung außerhalb", weak: "Beleg: Tür + Signal (unsicher)", one_door: "Beleg: Tür + eines der Signale", one: "Beleg: eines der Signale (ohne Tür, unsicher)", trigger: "eigener Auslöser", simulated: "Beleg: simuliert", other: "Beleg vorhanden" },
       line: {
         otherArmed: "nicht nötig, „{other}“ ist scharf",
         armedStates: { armed: "ist scharf", arming: "wird scharf (Ausgangsverzögerung)", pending: "Eingangsverzögerung läuft", triggered: "Alarm", alarm_hold: "Alarm" },
@@ -119,6 +120,7 @@ const TEXT = {
       in_rule: "nur in Auslöseregeln:",
       always_active: "immer aktiv – löst auch unscharf aus",
       not_monitored: "nicht im aktiven Profil – wird ignoriert",
+      exit_inside: "Melder im Haus für „Rausgehen ohne PIN erkennen“ – löst selbst nichts aus",
       bypassed: "überbrückt – bis zum Unscharfschalten nicht überwacht",
       bypassed_until_closed: "überbrückt bis zum Schließen – erst „Zu“, dann wieder überwacht",
       tamper_alarm: "Manipulation löst Alarm aus",
@@ -133,6 +135,13 @@ const TEXT = {
       alarm_hold: "Alarm (Sirenen aus, noch nicht beendet)",
     },
     profile: "Profil",
+    exit: {
+      passage: "Ausgangserkennung: Durchgang (Melder im Haus) – Tür frei, noch {t}.",
+      wait: "Ausgangserkennung: stille Wartezeit – Alarm in {t}, wenn niemand rausgeht.",
+      watched: "Beobachtet: {who}.",
+      gone: "{who} „weg“ seit {s} s (zählt ab 30 s)",
+    },
+    exitInsideToo: "auch Melder im Haus für „Rausgehen ohne PIN erkennen“",
     rules: "Auslöseregeln im aktiven Profil",
     ruleIdle: "nicht begonnen",
     ruleStep: "Schritt {done} von {steps} erfüllt",
@@ -148,8 +157,9 @@ const TEXT = {
       reasonSim: "simulated (for Hauswacht only)",
       reasonHome: "home according to: {by}",
       reasonNoProof: "all signals “away”, but no proof – does not count as away",
+      reasonEntity: "own trigger, state “{s}”",
       reasonUnclear: "unclear: {by}",
-      proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", simulated: "Proof: simulated", other: "Proof available" },
+      proofs: { fresh: "Proof: fresh location outside", door: "Proof: door + location outside", weak: "Proof: door + signal (uncertain)", one_door: "Proof: door + one of the signals", one: "Proof: one of the signals (no door, uncertain)", trigger: "own trigger", simulated: "Proof: simulated", other: "Proof available" },
       line: {
         otherArmed: "not needed, \"{other}\" is armed",
         armedStates: { armed: "is armed", arming: "arming (exit delay)", pending: "entry delay running", triggered: "alarm", alarm_hold: "alarm" },
@@ -217,6 +227,7 @@ const TEXT = {
       in_rule: "only in trigger rules:",
       always_active: "always active – triggers even when disarmed",
       not_monitored: "not in the active profile – ignored",
+      exit_inside: "sensor in the house for “detect going out without a PIN” – triggers nothing itself",
       bypassed: "bypassed – not monitored until disarming",
       bypassed_until_closed: "bypassed until closed – press \"Closed\" to monitor again",
       tamper_alarm: "tamper triggers an alarm",
@@ -231,6 +242,13 @@ const TEXT = {
       alarm_hold: "alarm (sirens off, not ended yet)",
     },
     profile: "Profile",
+    exit: {
+      passage: "Exit detection: passage (sensor in the house) – door free, {t} left.",
+      wait: "Exit detection: silent waiting time – alarm in {t} if nobody goes out.",
+      watched: "Watched: {who}.",
+      gone: "{who} “away” for {s} s (counts from 30 s)",
+    },
+    exitInsideToo: "also sensor in the house for “detect going out without a PIN”",
     rules: "Trigger rules in the active profile",
     ruleIdle: "not started",
     ruleStep: "step {done} of {steps} fulfilled",
@@ -663,10 +681,28 @@ class HauswachtTestCard extends HTMLElement {
       const left = Math.max(0, Math.ceil((Date.parse(attrs.timer_ends_at) - Date.now()) / 1000));
       text += ` · ${left} s`;
     }
+    // Ausgangserkennung (ADR 0014): was gerade läuft
+    const ex = attrs.exit_detection;
+    let exitRunning = false;
+    if (ex && ex.mode) {
+      const name = (id) => (this._hass.states[id] && this._hass.states[id].attributes.friendly_name) || id;
+      const left = ex.until ? Math.max(0, Math.ceil((Date.parse(ex.until) - Date.now()) / 1000)) : null;
+      const clock = left === null ? "" : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+      const e = this._t("exit");
+      let line = (ex.mode === "passage" ? e.passage : e.wait).replace("{t}", clock);
+      if (ex.persons && ex.persons.length) line += " " + e.watched.replace("{who}", ex.persons.map(name).join(", "));
+      const gone = Object.entries(ex.gone || {});
+      if (gone.length) {
+        line += " " + gone.map(([p, since]) => e.gone.replace("{who}", name(p)).replace("{s}", Math.max(0, Math.round((Date.now() - Date.parse(since)) / 1000)))).join(", ");
+      }
+      text += `\n${line}`;
+      exitRunning = true;
+    }
     this._phase.textContent = text;
+    this._phase.style.whiteSpace = "pre-line";
     this._phase.classList.toggle("alarm", phase === "triggered" || phase === "alarm_hold");
-    this._phase.classList.toggle("delay", Boolean(delay));
-    this._delayRunning = Boolean(delay);
+    this._phase.classList.toggle("delay", Boolean(delay) || exitRunning);
+    this._delayRunning = Boolean(delay) || exitRunning;
   }
 
   _updateRules() {
@@ -758,6 +794,7 @@ class HauswachtTestCard extends HTMLElement {
     if (r.kind === "home") return t.reasonHome.replace("{by}", (r.by || []).join(", ") || "–");
     if (r.kind === "away") return (t.proofs[r.proof] || t.proofs.other) + (r.at ? ` (${time(r.at)})` : "");
     if (r.kind === "no_proof") return t.reasonNoProof;
+    if (r.kind === "entity") return t.reasonEntity.replace("{s}", r.state ?? "–");
     if (r.kind === "unclear") return t.reasonUnclear.replace("{by}", (r.by || []).join(", ") || "–");
     return "";
   }
@@ -852,6 +889,9 @@ class HauswachtTestCard extends HTMLElement {
       let statusText = (this._t("status") || {})[sensor.status] || "";
       if (sensor.status === "in_rule" && Array.isArray(sensor.rules)) {
         statusText += " " + sensor.rules.join(", ");
+      }
+      if (sensor.exit_inside && sensor.status !== "exit_inside") {
+        statusText = statusText ? `${statusText} · ${this._t("exitInsideToo")}` : this._t("exitInsideToo");
       }
       if (statusText && sensor.area) statusText += ` [${sensor.area}]`;
       item.status.textContent = statusText;

@@ -157,3 +157,54 @@ def test_own_trigger_is_not_played_through() -> None:
     assert leave["result"] == WARN
     assert "Alle weg" in leave["summary"]
     assert "phones_sleep:away" not in found
+
+
+def test_one_is_enough_in_scenarios() -> None:
+    """ADR 0021: „eines reicht (nach Tür)“ – Ben ohne Ortung wird erkannt; ohne Tür unsicher."""
+    options = {
+        **_options(auto_away_persons=[ANNA, BEN], auto_away_delay=10),
+        "presence_leave_mode": {BEN: "one"},
+    }
+    found = _by_key(scenarios(options, _facts(located=frozenset({ANNA}))))
+    leave = found["all_leave:away"]
+    assert leave["result"] == OK
+    assert any("eines reicht" in step["text"] for step in leave["steps"])
+    assert found["phones_sleep:away"]["result"] == OK  # schlafendes Handy ohne Tür: nichts
+    assert found[f"short_out:away:{BEN}"]["result"] == WARN  # fremde Tür + Handy schläft
+    # „nach Tür“ abgeschaltet: ein schlafendes Handy schaltet scharf
+    no_door = {
+        **_options(auto_away_persons=[BEN], auto_away_delay=10),
+        "presence_leave_mode": {BEN: "one"},
+        "presence_leave_no_door": [BEN],
+    }
+    found = _by_key(scenarios(no_door, _facts(located=frozenset({ANNA}))))
+    assert found["phones_sleep:away"]["result"] == BAD
+    assert found["all_leave:away"]["result"] == WARN
+
+
+def test_burglary_while_someone_home_with_exit_detection() -> None:
+    """ADR 0014: ohne Melder im Haus kommt die Sirene erst nach der Wartezeit."""
+    options = _options(exit_detect={"enabled": True, "wait": 3})
+    found = _by_key(scenarios(options, _facts()))
+    home = found[f"burglary_home:away:{DOOR}"]
+    assert home["result"] == WARN
+    assert "3 min" in home["summary"]
+    inside = _options(exit_detect={"enabled": True, "wait": 3, "inside": ["binary_sensor.treppe"]})
+    home = _by_key(scenarios(inside, _facts()))[f"burglary_home:away:{DOOR}"]
+    assert home["result"] == OK
+    assert "30 s" in home["summary"]
+    assert f"burglary_home:away:{DOOR}" not in _by_key(scenarios(_options(), _facts()))
+
+
+def test_person_trigger_in_scenarios() -> None:
+    """Eigener Auslöser je Person: Ben ohne Ortung wird über ihn erkannt; Handys schlafen ihn
+    nicht ein."""
+    options = {
+        **_options(auto_away_persons=[ANNA, BEN], auto_away_delay=10),
+        "presence_trigger": {BEN: {"entity": "input_boolean.ben_weg", "away": "on"}},
+    }
+    found = _by_key(scenarios(options, _facts(located=frozenset({ANNA}))))
+    leave = found["all_leave:away"]
+    assert leave["result"] == OK
+    assert any("eigener Auslöser" in step["text"] for step in leave["steps"])
+    assert found["phones_sleep:away"]["result"] == OK
