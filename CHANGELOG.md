@@ -6,6 +6,71 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-28
+
+Zusammenfassung von 0.66.0b1 bis 0.66.0b13 – **Anwesenheit je Person und Ausgangserkennung**
+([ADR 0021](docs/entwicklung/adr/0021-anwesenheit-je-person.md),
+[ADR 0014](docs/entwicklung/adr/0014-ausgangserkennung.md)).
+
+### Neu
+
+- **„Welche Signale zählen?“** unter System → Anwesenheit, je Person: für jedes Signal ein Haken
+  fürs **Ankommen** und fürs **Weggehen**, dazu, was es **jetzt** sagt. „Weggehen erkennen“: **alle
+  müssen weg sein (sicher)** oder **eines reicht (nach Tür)**; „nach Tür“ lässt sich mit Warnung
+  abschalten. „So verhält sich das:“ erklärt in Klartext, was passiert
+  ([Anleitung](docs/profile.md#ankommen-und-weggehen-je-signal)).
+- **Gemessen, Empfehlung und „Was wäre wenn“:** unter jedem Signal, wie schnell es beim Weggehen
+  „weg“ sagt und wie oft es sich geirrt hat. Ab 5 Weggängen eine Empfehlung (probiert alle
+  Kombinationen von Signalen) mit „Jetzt“ gegen „Mit Empfehlung“ und Knopf „Empfehlung
+  übernehmen“. Als Irrtum zählt nur, was länger dauert als die Wartezeit des Profils. „Was heißt
+  das fürs Haus?“ rechnet je Profil die letzten 14 Tage nach – alles live, ohne zu speichern
+  ([Anleitung](docs/profile.md#gemessen-empfehlung-und-was-wäre-wenn)).
+- **Eigener Auslöser je Person:** eine Entität und der Zustand, der „weg“ heißt. Ersetzt die
+  Signale der Person und gilt überall; mit Warnhinweis und im Check-up
+  ([Anleitung](docs/profile.md#eigener-auslöser-je-person)). Der eigene Auslöser für „alle weg“ im
+  Profil bleibt.
+- **„Wofür zählt das?“** je Person und neue Check-up-Tipps („Personen werden nicht beachtet“,
+  „Einstellungen unter Anwesenheit wirken nirgends“, Ausgangserkennung ohne Melder im Haus).
+- **Rausgehen ohne PIN erkennen (Ausgangserkennung)** je Profil, Standard aus:
+  - **Mit Melder im Haus** (empfohlen): Hat er kurz vor dem Öffnen etwas gemeldet, ist die Tür
+    für die Durchgangszeit frei – z. B. zum Mülleimer, ohne Handy. Sagt währenddessen das Handy
+    einer Person 30 s lang „weg“, endet der Durchgang sofort.
+  - **Ohne Melder im Haus:** stille Wartezeit (1–5 Minuten, Standard 3; bis 15 nur als
+    Expertenoption). Sagt ein Handy 30 s lang „weg“, bleibt das Profil scharf, sonst gibt es
+    Alarm. Schutz gegen WLAN-Ausfall.
+  - Sofort eine Nachricht an alle Alarm-Empfänger mit **[Alarm jetzt]** und **[Durchlassen]**
+  ([Anleitung](docs/durchgang.md#rausgehen-ohne-pin-erkennen-ausgangserkennung)).
+- **Testkarte:** Melder im Haus passend zum Profil (simulierbar), simulierte Anwesenheit gilt auch
+  für die Ausgangserkennung, Anzeige der laufenden Ausgangserkennung.
+- Neue Ereignisse `ExitWaitStarted`, `ExitDetected`, `ExitLetThrough`, `ExitPassage`; neues
+  Attribut `exit_detection`.
+
+### Geändert
+
+- **Anwesenheit gilt in allen Bereichen gleich** – weitere Bereiche (z. B. Garage) sehen jetzt
+  auch die zusätzlichen Signale, Heim-WLANs und Haken.
+- Wer „eines reicht (nach Tür)“ hat, gilt nicht mehr als „kann nie als weg erkannt werden“.
+- Bei „unklar“ steht der echte Zustand des Signals in Klammern.
+
+### Unverändert
+
+- Wer nichts einstellt, merkt keinen Unterschied: alle Haken gesetzt, „alle müssen weg sein“,
+  Ausgangserkennung aus. Durchgang, „Bei Rückkehr“, 24h-Melder und Brandalarm bleiben, wie sie
+  sind.
+
+### Korrigiert
+
+- Szenario-Vorschau und „Einrichten nach Zielen“ kennen „eines reicht (nach Tür)“.
+- Messung „Lebenszeichen rund um die Tür“: Rückkehr kurz danach zählt nicht mehr als Nachklang.
+- Kurze Irrtümer nach fremder Tür werden erkannt; die Tabelle „Welche Signale zählen?“ passt in
+  die Breite.
+- Vorbereitet auf Home Assistant 2027.12.
+
+### Doku
+
+- Roadmap: für 0.67 vorgemerkt – keine Koordinaten mehr speichern (Prüfwert statt Position),
+  einzelne Messwerte löschen, alle Links der Doku prüfen.
+
 ## [0.66.0b13] - 2026-11-27
 
 ### Geändert
